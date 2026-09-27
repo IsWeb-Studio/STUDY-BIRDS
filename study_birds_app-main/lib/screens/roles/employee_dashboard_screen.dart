@@ -100,7 +100,7 @@ final List<_SectionEntry> _sectionScreens = [
   _SectionEntry('recognitions', Icons.workspace_premium_outlined, 'الاعتمادات',
       (_) => const AdminRecognitionsScreen()),
   _SectionEntry('services', Icons.design_services_outlined, 'الخدمات',
-      (_) => const AdminServicesScreen()),
+      (_) => const EmployeeServicesHubScreen()),
   _SectionEntry('faqs', Icons.help_outline_rounded, 'الأسئلة الشائعة',
       (_) => const AdminFaqsScreen()),
   _SectionEntry('our-story', Icons.auto_stories_outlined, 'قصتنا',
