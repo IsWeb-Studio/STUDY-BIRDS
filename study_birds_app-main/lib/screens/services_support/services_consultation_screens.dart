@@ -478,7 +478,7 @@ class _ConsultationConfirmationScreenState
     }
   }
 
-  Future<void> _addToCalendar(BuildContext ctx) async {
+  Future<void> _addToGoogleCalendar(BuildContext ctx) async {
     final startsAt = DateTime.tryParse('${slot['startsAt'] ?? ''}');
     if (startsAt == null) return;
     final endsAt = startsAt.add(const Duration(minutes: 30));
@@ -507,6 +507,54 @@ class _ConsultationConfirmationScreenState
             const SnackBar(content: Text('تعذر فتح تطبيق التقويم.')));
       }
     }
+  }
+
+  Future<void> _addToAppleCalendar(BuildContext ctx) async {
+    final bookingId = '${slot['_id'] ?? slot['bookingId'] ?? ''}';
+    if (bookingId.isEmpty) return;
+    // Download .ics from server and open with the system handler (iOS opens in Calendar)
+    final icsUri = Uri.parse('${ApiClient.baseUrl}/consultations/bookings/$bookingId/ics');
+    try {
+      if (!await launchUrl(icsUri, mode: LaunchMode.externalApplication)) {
+        throw StateError('unavailable');
+      }
+    } catch (_) {
+      if (ctx.mounted) {
+        ScaffoldMessenger.of(ctx).showSnackBar(
+            const SnackBar(content: Text('تعذر تحميل ملف التقويم.')));
+      }
+    }
+  }
+
+  Future<void> _showCalendarOptions(BuildContext ctx) async {
+    await showModalBottomSheet<void>(
+      context: ctx,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 16),
+              const Text('أضف للتقويم', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              const SizedBox(height: 12),
+              ListTile(
+                leading: const Icon(Icons.calendar_month, color: Color(0xFF4285F4)),
+                title: const Text('Google Calendar'),
+                onTap: () { Navigator.pop(ctx); _addToGoogleCalendar(ctx); },
+              ),
+              ListTile(
+                leading: const Icon(Icons.calendar_today, color: Colors.black87),
+                title: const Text('Apple Calendar / iCal'),
+                onTap: () { Navigator.pop(ctx); _addToAppleCalendar(ctx); },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -575,7 +623,7 @@ class _ConsultationConfirmationScreenState
                 side: const BorderSide(color: AppColors.navy),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button)),
               ),
-              onPressed: () => _addToCalendar(context),
+              onPressed: () => _showCalendarOptions(context),
             ),
           ],
         ),
