@@ -467,6 +467,116 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
     }
   }
 
+  Future<void> _showRedeemSheet() async {
+    final balance = (_data?['balance'] as num?)?.toDouble() ?? 0;
+    List<dynamic> unpaidInvoices = [];
+    try {
+      final fin = await ApiClient.instance.get('/students/financials', token: AuthSession.instance.token) as Map;
+      unpaidInvoices = ((fin['invoices'] as List?) ?? [])
+          .where((i) => (i as Map)['status'] == 'unpaid')
+          .toList();
+    } catch (_) {}
+
+    if (!mounted) return;
+    if (unpaidInvoices.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('لا توجد فواتير غير مدفوعة حاليًا.')));
+      return;
+    }
+
+    Map<String, dynamic>? selectedInvoice;
+    final amountCtrl = TextEditingController();
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(builder: (ctx2, setSheet) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx2).viewInsets.bottom, left: 20, right: 20, top: 20),
+        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
+          const Text('استخدام رصيد المحفظة', style: AppTextStyles.cardTitle),
+          const SizedBox(height: 4),
+          Text('رصيدك المتاح: ${balance.toStringAsFixed(0)} نقطة', style: AppTextStyles.caption),
+          const SizedBox(height: 16),
+          const Text('اختر الفاتورة', style: AppTextStyles.sectionLabel),
+          const SizedBox(height: 8),
+          for (final inv in unpaidInvoices) ...[
+            GestureDetector(
+              onTap: () => setSheet(() => selectedInvoice = inv as Map<String, dynamic>),
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: selectedInvoice?['_id'] == (inv as Map)['_id']
+                      ? AppColors.navy.withValues(alpha: 0.08)
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(AppRadius.card),
+                  border: Border.all(
+                    color: selectedInvoice?['_id'] == inv['_id']
+                        ? AppColors.navy
+                        : AppColors.border),
+                ),
+                child: Row(children: [
+                  Icon(
+                    selectedInvoice?['_id'] == inv['_id']
+                        ? Icons.check_circle_rounded
+                        : Icons.circle_outlined,
+                    size: 20,
+                    color: selectedInvoice?['_id'] == inv['_id']
+                        ? AppColors.navy
+                        : AppColors.textSecondary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(child: Text(
+                    '${inv['description'] ?? 'فاتورة'} — ${inv['amount']} ${inv['currency'] ?? ''}',
+                    style: AppTextStyles.body)),
+                ]),
+              ),
+            ),
+          ],
+          const SizedBox(height: 8),
+          TextField(
+            controller: amountCtrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'المبلغ المراد خصمه (نقاط)',
+              border: OutlineInputBorder(),
+              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(width: double.infinity, child: PrimaryButton(
+            label: 'تأكيد الخصم',
+            onPressed: () async {
+              final inv = selectedInvoice;
+              final amount = double.tryParse(amountCtrl.text.trim()) ?? 0;
+              if (inv == null || amount <= 0) {
+                ScaffoldMessenger.of(ctx2).showSnackBar(
+                  const SnackBar(content: Text('اختر فاتورة وأدخل مبلغاً صحيحاً.')));
+                return;
+              }
+              final nav = Navigator.of(ctx2);
+              final messenger = ScaffoldMessenger.of(ctx2);
+              try {
+                await ApiClient.instance.post('/students/wallet/redeem',
+                    token: AuthSession.instance.token,
+                    body: { 'invoiceId': inv['_id'], 'amount': amount });
+                nav.pop();
+                await _load();
+                messenger.showSnackBar(const SnackBar(content: Text('تم خصم الرصيد بنجاح.')));
+              } catch (e) {
+                messenger.showSnackBar(
+                  SnackBar(content: Text(e is ApiException ? e.message : 'تعذر تنفيذ الخصم.')));
+              }
+            },
+          )),
+          const SizedBox(height: 20),
+        ]),
+      )),
+    );
+    amountCtrl.dispose();
+  }
+
   @override
   Widget build(BuildContext context) => AppScaffold(
         title: 'محفظتي',
@@ -492,7 +602,7 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
       padding: const EdgeInsets.all(16),
       physics: const AlwaysScrollableScrollPhysics(),
       children: [
-        _WalletBalanceCard(balance: balance, referralCode: referralCode),
+        _WalletBalanceCard(balance: balance, referralCode: referralCode, onRedeem: balance > 0 ? _showRedeemSheet : null),
         const SizedBox(height: 20),
         if (referrals.isNotEmpty) ...[
           const Text('إحالاتك', style: AppTextStyles.sectionLabel),
@@ -543,7 +653,8 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
 class _WalletBalanceCard extends StatelessWidget {
   final double balance;
   final String referralCode;
-  const _WalletBalanceCard({required this.balance, required this.referralCode});
+  final VoidCallback? onRedeem;
+  const _WalletBalanceCard({required this.balance, required this.referralCode, this.onRedeem});
 
   @override
   Widget build(BuildContext context) => AppCard(
@@ -603,26 +714,42 @@ class _WalletBalanceCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            OutlinedButton.icon(
-              onPressed: () {
-                final msg = Uri.encodeComponent(
-                    'سجّل في Study Birds باستخدام كود الإحالة الخاص بي: $referralCode 🎓\nhttps://studybirds.app');
-                launchUrl(
-                  Uri.parse('https://wa.me/?text=$msg'),
-                  mode: LaunchMode.externalApplication,
-                );
-              },
-              icon: const Icon(Icons.share_rounded, size: 16),
-              label: const Text('مشاركة عبر واتساب'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.success,
-                side: const BorderSide(color: AppColors.success),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.button)),
-              ),
-            ),
+            Row(children: [
+              Expanded(child: OutlinedButton.icon(
+                onPressed: () {
+                  final msg = Uri.encodeComponent(
+                      'سجّل في Study Birds باستخدام كود الإحالة الخاص بي: $referralCode 🎓\nhttps://studybirds.app');
+                  launchUrl(
+                    Uri.parse('https://wa.me/?text=$msg'),
+                    mode: LaunchMode.externalApplication,
+                  );
+                },
+                icon: const Icon(Icons.share_rounded, size: 16),
+                label: const Text('مشاركة'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.success,
+                  side: const BorderSide(color: AppColors.success),
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.button)),
+                ),
+              )),
+              if (onRedeem != null) ...[
+                const SizedBox(width: 8),
+                Expanded(child: OutlinedButton.icon(
+                  onPressed: onRedeem,
+                  icon: const Icon(Icons.payment_rounded, size: 16),
+                  label: const Text('استخدام الرصيد'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppColors.navy,
+                    side: const BorderSide(color: AppColors.navy),
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.button)),
+                  ),
+                )),
+              ],
+            ]),
           ],
         ]),
       );
