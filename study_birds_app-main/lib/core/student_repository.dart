@@ -148,6 +148,9 @@ class StudentRepository {
   }
 
   static const _overviewCacheKey = 'sb_overview_cache';
+  static const _appsCacheKey = 'sb_apps_cache';
+  static const _docsCacheKey = 'sb_docs_cache';
+  static const _financialsCacheKey = 'sb_financials_cache';
 
   Future<DashboardOverview> getOverview({bool forceRefresh = false}) async {
     if (!forceRefresh) {
@@ -174,6 +177,52 @@ class StudentRepository {
       await prefs.setString(_overviewCacheKey, jsonEncode(map));
     } catch (_) {}
     return DashboardOverview.fromJson(map);
+  }
+
+  Future<List<dynamic>> _cachedList(String path, String cacheKey, {bool forceRefresh = false}) async {
+    if (!forceRefresh) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final cached = prefs.getString(cacheKey);
+        if (cached != null) {
+          _fetchAndCacheList(path, cacheKey).ignore();
+          return jsonDecode(cached) as List<dynamic>;
+        }
+      } catch (_) {}
+    }
+    return _fetchAndCacheList(path, cacheKey);
+  }
+
+  Future<List<dynamic>> _fetchAndCacheList(String path, String cacheKey) async {
+    final data = await ApiClient.instance.get(path, token: _token) as List<dynamic>;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(cacheKey, jsonEncode(data));
+    } catch (_) {}
+    return data;
+  }
+
+  Future<Map<String, dynamic>> getFinancials({bool forceRefresh = false}) async {
+    if (!forceRefresh) {
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final cached = prefs.getString(_financialsCacheKey);
+        if (cached != null) {
+          _fetchAndCacheFinancials().ignore();
+          return jsonDecode(cached) as Map<String, dynamic>;
+        }
+      } catch (_) {}
+    }
+    return _fetchAndCacheFinancials();
+  }
+
+  Future<Map<String, dynamic>> _fetchAndCacheFinancials() async {
+    final data = await ApiClient.instance.get('/students/financials', token: _token) as Map<String, dynamic>;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_financialsCacheKey, jsonEncode(data));
+    } catch (_) {}
+    return data;
   }
 
   Future<void> clearOverviewCache() async {
@@ -212,16 +261,12 @@ class StudentRepository {
     });
   }
 
-  Future<List<dynamic>> getApplications() async {
-    final data =
-        await ApiClient.instance.get('/students/applications', token: _token);
-    return data as List<dynamic>;
+  Future<List<dynamic>> getApplications({bool forceRefresh = false}) async {
+    return _cachedList('/students/applications', _appsCacheKey, forceRefresh: forceRefresh);
   }
 
-  Future<List<dynamic>> getDocuments() async {
-    final data =
-        await ApiClient.instance.get('/students/documents', token: _token);
-    return data as List<dynamic>;
+  Future<List<dynamic>> getDocuments({bool forceRefresh = false}) async {
+    return _cachedList('/students/documents', _docsCacheKey, forceRefresh: forceRefresh);
   }
 
   /// Uploads a document — matches POST /api/students/documents
@@ -257,12 +302,6 @@ class StudentRepository {
   Future<void> markNotificationRead(String id) async {
     await ApiClient.instance
         .patch('/students/notifications/$id/read', token: _token);
-  }
-
-  Future<Map<String, dynamic>> getFinancials() async {
-    final data =
-        await ApiClient.instance.get('/students/financials', token: _token);
-    return data as Map<String, dynamic>;
   }
 
   /// Real endpoint covering flight + airport pickup + housing + visa/residence

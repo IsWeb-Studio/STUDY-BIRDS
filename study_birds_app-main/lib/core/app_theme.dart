@@ -206,7 +206,7 @@ class AppScaffold extends StatelessWidget {
           ),
           actions: actions,
         ),
-        body: SafeArea(child: body),
+        body: SafeArea(child: OfflineBannerWrapper(child: body)),
         floatingActionButton: floatingActionButton,
         bottomNavigationBar: bottomBar,
       ),

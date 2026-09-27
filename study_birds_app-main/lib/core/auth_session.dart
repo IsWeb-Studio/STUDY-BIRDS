@@ -303,6 +303,9 @@ class AuthSession extends ChangeNotifier {
     token = null;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('session_token');
+    for (final key in ['sb_overview_cache', 'sb_apps_cache', 'sb_docs_cache', 'sb_financials_cache']) {
+      await prefs.remove(key);
+    }
     const storage = FlutterSecureStorage();
     await storage.delete(key: 'active_session_token');
     await storage.delete(key: 'refresh_token');
