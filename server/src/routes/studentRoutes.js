@@ -33,6 +33,8 @@ router.use(protect);
 router.get("/profile", getProfile);
 router.put("/profile", authorize("student", "partner"), updateProfile);
 router.use(authorize("student"));
+router.get('/insurance', require('../controllers/studentServicesController').mine('insurance'));
+router.get('/equivalency', require('../controllers/studentServicesController').mine('equivalency'));
 router.get("/agency-request", getAgencyRequest);
 router.post("/agency-request", createAgencyRequest);
 router.get("/overview", getDashboardOverview);

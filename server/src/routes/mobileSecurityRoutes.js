@@ -65,6 +65,7 @@ router.delete('/sessions/:id', run(async (req, res) => {
   if (!row) fail(res, 'الجلسة غير موجودة', 404); res.json({ revoked: true });
 }));
 router.post('/sessions/revoke-all', run(async (req, res) => {
+  await User.updateOne({ _id: req.user._id }, { $inc: { tokenVersion: 1 }, $unset: { refreshTokenHash: 1, refreshTokenExpiry: 1 } });
   await Session.updateMany({ user: req.user._id, revoked: false }, { $set: { revoked: true } });
   res.json({ revoked: true });
 }));

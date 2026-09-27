@@ -10,6 +10,9 @@ const requireSection = (section) => (req, res, next) => hasSection(req.user, sec
 const authorizeAdminSection = (req, res, next) => {
   if (req.user?.role === "admin") return next();
   if (req.user?.role !== "employee") return forbidden(res);
+  if (/^\/students\/[^/]+\/(insurance|equivalency)$/.test(req.path)) {
+    return hasSection(req.user, 'services') ? next() : forbidden(res);
+  }
   const resource = req.path.split("/").filter(Boolean)[0];
   const section = sections.find((item) => item.resources.includes(resource));
   if (section && hasSection(req.user, section.key)) return next();

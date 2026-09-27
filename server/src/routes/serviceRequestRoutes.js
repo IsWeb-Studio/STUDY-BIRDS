@@ -11,6 +11,17 @@ const { sendPushToUser } = require('../utils/pushNotifications');
 const router = express.Router();
 router.use(protect);
 
+const managesServices = user => user.role === 'admin' ||
+  (user.role === 'employee' && (hasSection(user, 'services') || hasSection(user, 'support')));
+const canManage = (req, res, next) => managesServices(req.user)
+  ? next() : res.status(403).json({ message: 'غير مصرح' });
+// Explicit student projection: internal notes and employee identities never leave staff routes.
+const studentView = row => {
+  const value = row.toObject ? row.toObject() : row;
+  const { staffNote, statusHistory, ...visible } = value;
+  return { ...visible, statusHistory: (statusHistory || []).map(h => ({ status: h.status, changedAt: h.changedAt })) };
+};
+
 // ── Student endpoints ──────────────────────────────────────────────────────
 
 // POST /api/service-requests — submit a new service request
@@ -32,7 +43,7 @@ router.post('/', authorize('student'), run(async (req, res) => {
     notes: String(notes || '').trim().slice(0, 2000),
     statusHistory: [{ status: 'pending', changedBy: req.user._id, note: 'طلب جديد' }],
   });
-  res.status(201).json(request);
+  res.status(201).json(studentView(request));
 }));
 
 // GET /api/service-requests/mine — student's own requests
@@ -42,11 +53,12 @@ router.get('/mine', authorize('student'), run(async (req, res) => {
     .populate('service', 'title image')
     .populate('assignedTo', 'name')
     .lean();
-  res.json(rows);
+  res.json(rows.map(studentView));
 }));
 
 // GET /api/service-requests/:id — get a single request (student owns it OR staff)
 router.get('/:id', run(async (req, res) => {
+  if (req.user.role !== 'student' && !managesServices(req.user)) return res.status(403).json({ message: 'غير مصرح' });
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Not found' });
   const filter = { _id: req.params.id };
   if (req.user.role === 'student') filter.student = req.user._id;
@@ -56,16 +68,10 @@ router.get('/:id', run(async (req, res) => {
     .populate('assignedTo', 'name')
     .lean();
   if (!req_) return res.status(404).json({ message: 'الطلب غير موجود' });
-  res.json(req_);
+  res.json(req.user.role === 'student' ? studentView(req_) : req_);
 }));
 
 // ── Admin / Employee endpoints ─────────────────────────────────────────────
-
-const canManage = (req, res, next) => {
-  if (req.user.role === 'admin') return next();
-  if (req.user.role === 'employee' && (hasSection(req.user, 'services') || hasSection(req.user, 'support'))) return next();
-  return res.status(403).json({ message: 'غير مصرح' });
-};
 
 // GET /api/service-requests — list all (admin/employee)
 router.get('/', canManage, run(async (req, res) => {
@@ -86,6 +92,12 @@ router.patch('/:id', canManage, run(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Not found' });
   const { status, assignedTo, staffNote } = req.body;
   const { SERVICE_STATUSES } = require('../models/ServiceRequest');
+  if (status !== undefined && !SERVICE_STATUSES.includes(status)) return res.status(400).json({ message: 'حالة غير صالحة' });
+  if (assignedTo !== undefined && assignedTo !== null) {
+    if (!mongoose.isValidObjectId(assignedTo)) return res.status(400).json({ message: 'معرّف الموظف غير صالح' });
+    const assignee = await require('../models/User').findById(assignedTo).lean();
+    if (!assignee?.isActive || !managesServices(assignee)) return res.status(400).json({ message: 'اختر مسؤول خدمات مخوّلًا ونشطًا' });
+  }
 
   const existing = await ServiceRequest.findById(req.params.id).populate('student', 'name').lean();
   if (!existing) return res.status(404).json({ message: 'الطلب غير موجود' });

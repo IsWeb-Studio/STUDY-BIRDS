@@ -102,6 +102,10 @@ userSchema.pre("save", async function preSave(next) {
   }
 
   const salt = await bcrypt.genSalt(10);
+    if (!this.isNew) {
+      this.refreshTokenHash = undefined;
+      this.refreshTokenExpiry = undefined;
+    }
   this.password = await bcrypt.hash(this.password, salt);
   next();
 });

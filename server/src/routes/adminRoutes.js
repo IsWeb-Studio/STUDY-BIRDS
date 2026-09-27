@@ -123,6 +123,11 @@ const router = express.Router();
 const { authorizeAdminSection } = require("../middleware/employeeAccess");
 
 router.use(protect, authorizeAdminSection);
+for (const kind of ['insurance', 'equivalency']) {
+  const controller = require('../controllers/studentServicesController');
+  router.get(`/students/:id/${kind}`, controller.staffRead(kind));
+  router.put(`/students/:id/${kind}`, controller.save(kind));
+}
 router.get("/my-kpis", getMyKpis);
 router.get("/overview", getOverview);
 router.get("/stats", getStats);

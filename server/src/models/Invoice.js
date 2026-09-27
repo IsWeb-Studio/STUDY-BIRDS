@@ -49,6 +49,11 @@ const invoiceSchema = new mongoose.Schema(
       ref: "User",
     },
     stripeSessionId: { type: String },
+    currency: { type: String, default: 'USD', uppercase: true },
+    stripeCheckoutExpiresAt: Date,
+    stripeExpectedAmount: Number,
+    stripeExpectedCurrency: String,
+    stripeCheckoutUrl: String,
   },
   { timestamps: true }
 );

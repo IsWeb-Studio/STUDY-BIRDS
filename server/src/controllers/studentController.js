@@ -151,14 +151,32 @@ const updateProfile = asyncHandler(async (req, res) => {
     address,
   };
 
-  if (typeof applicationStage === "string" && applicationStage.trim()) {
-    profilePayload.applicationStage = applicationStage.trim();
+  // Journey state is controlled by staff workflows, never by self-service profile edits.
+  for (const field of ['parentInfo', 'emergencyContact']) {
+    if (req.body[field] !== undefined) {
+      const contact = req.body[field];
+      if (!contact || typeof contact !== 'object' || Array.isArray(contact) ||
+          ['name', 'phone', 'relationship'].some(key => contact[key] !== undefined &&
+            (typeof contact[key] !== 'string' || contact[key].length > 200))) {
+        return res.status(400).json({ message: 'Invalid contact information' });
+      }
+      profilePayload[field] = Object.fromEntries(['name', 'phone', 'relationship'].map(key => [key, (contact[key] || '').trim()]));
+    }
+  }
+  if (req.body.nativeLanguage !== undefined) {
+    if (typeof req.body.nativeLanguage !== 'string' || req.body.nativeLanguage.length > 100) return res.status(400).json({ message: 'Invalid language' });
+    profilePayload.nativeLanguage = req.body.nativeLanguage.trim();
+  }
+  if (req.body.otherLanguages !== undefined) {
+    if (!Array.isArray(req.body.otherLanguages) || req.body.otherLanguages.length > 30 ||
+        req.body.otherLanguages.some(value => typeof value !== 'string' || value.length > 100)) return res.status(400).json({ message: 'Invalid languages' });
+    profilePayload.otherLanguages = [...new Set(req.body.otherLanguages.map(value => value.trim()).filter(Boolean))];
   }
 
   const profile = await StudentProfile.findOneAndUpdate(
     { user: req.user._id },
     profilePayload,
-    { new: true, upsert: true }
+    { new: true, upsert: true, runValidators: true }
   ).populate("user", "-password");
 
   res.json(profile);
