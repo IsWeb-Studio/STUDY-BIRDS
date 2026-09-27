@@ -1,41 +1,56 @@
+import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
+import 'auth_session.dart';
+import 'notification_links.dart';
 import '../screens/home_journey/notifications_screen.dart';
 
-/// Handles incoming deep links (both custom scheme studybirds:// and
-/// https://studybirds.app) and navigates to the matching screen.
-///
-/// Call [init] once from main(), passing the app's navigator key.
 class DeepLinkService {
   DeepLinkService._();
-  static final DeepLinkService instance = DeepLinkService._();
-
+  static final instance = DeepLinkService._();
   final _appLinks = AppLinks();
   GlobalKey<NavigatorState>? _navigatorKey;
+  StreamSubscription<Uri>? _subscription;
+  String? _pending;
+  bool _initialized = false;
 
   Future<void> init(GlobalKey<NavigatorState> navigatorKey) async {
     _navigatorKey = navigatorKey;
-
-    // Cold-start link (app opened via link while not running)
+    if (_initialized) return;
+    _initialized = true;
+    AuthSession.instance.addListener(_flush);
+    _subscription = _appLinks.uriLinkStream.listen(
+        (uri) => open(uri.toString()), onError: (_) {});
     try {
       final uri = await _appLinks.getInitialLink();
-      if (uri != null) _handle(uri);
+      if (uri != null) open(uri.toString());
     } catch (_) {}
-
-    // Warm-start links (app already running)
-    _appLinks.uriLinkStream.listen(_handle, onError: (_) {});
   }
 
-  void _handle(Uri uri) {
-    // Normalise: extract path from both
-    // studybirds://student/payments  ->  /student/payments
-    // https://studybirds.app/student/payments  ->  /student/payments
-    final path = uri.path.isNotEmpty ? uri.path : '/${uri.host}${uri.path}';
-    final screen = notificationScreenForLink(path);
-    if (screen == null) return;
+  void open(String link) {
+    _pending = notificationPath(link);
+    _flush();
+  }
 
-    final nav = _navigatorKey?.currentState;
-    if (nav == null) return;
-    nav.push(MaterialPageRoute(builder: (_) => screen));
+  void _flush() {
+    if (_pending == null || AuthSession.instance.currentUser == null) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_pending == null) return;
+      final user = AuthSession.instance.currentUser;
+      if (user == null) return;
+      if (user.role != UserRole.student) { _pending = null; return; }
+      final navigator = _navigatorKey?.currentState;
+      if (navigator == null) return;
+      final screen = notificationScreenForLink(_pending);
+      _pending = null;
+      if (screen != null) navigator.push(MaterialPageRoute(builder: (_) => screen));
+    });
+  }
+
+  void dispose() {
+    _subscription?.cancel();
+    AuthSession.instance.removeListener(_flush);
+    _pending = null;
+    _initialized = false;
   }
 }

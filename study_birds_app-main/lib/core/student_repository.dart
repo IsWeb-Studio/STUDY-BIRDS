@@ -1,5 +1,4 @@
-import 'dart:convert';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'secure_data_cache.dart';
 import 'api_client.dart';
 import 'auth_session.dart';
 
@@ -147,89 +146,36 @@ class StudentRepository {
     return token;
   }
 
-  static const _overviewCacheKey = 'sb_overview_cache';
-  static const _appsCacheKey = 'sb_apps_cache';
-  static const _docsCacheKey = 'sb_docs_cache';
-  static const _financialsCacheKey = 'sb_financials_cache';
-
-  Future<DashboardOverview> getOverview({bool forceRefresh = false}) async {
-    if (!forceRefresh) {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final cached = prefs.getString(_overviewCacheKey);
-        if (cached != null) {
-          final map = jsonDecode(cached) as Map<String, dynamic>;
-          // Try fresh in background; return cache immediately
-          _fetchAndCacheOverview().ignore();
-          return DashboardOverview.fromJson(map);
-        }
-      } catch (_) {}
-    }
-    return _fetchAndCacheOverview();
-  }
-
-  Future<DashboardOverview> _fetchAndCacheOverview() async {
-    final data =
-        await ApiClient.instance.get('/students/overview', token: _token);
-    final map = data as Map<String, dynamic>;
+  Future<dynamic> _loadSnapshot(String resource, {bool forceRefresh = false}) async {
+    final owner = AuthSession.instance.currentUser?.id ?? '';
+    final sessionToken = _token;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_overviewCacheKey, jsonEncode(map));
-    } catch (_) {}
-    return DashboardOverview.fromJson(map);
-  }
-
-  Future<List<dynamic>> _cachedList(String path, String cacheKey, {bool forceRefresh = false}) async {
-    if (!forceRefresh) {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final cached = prefs.getString(cacheKey);
-        if (cached != null) {
-          _fetchAndCacheList(path, cacheKey).ignore();
-          return jsonDecode(cached) as List<dynamic>;
-        }
-      } catch (_) {}
+      final data = await ApiClient.instance.get('/students/$resource', token: sessionToken);
+      // A response from the account that just signed out must not refill its cache.
+      if (owner.isNotEmpty && AuthSession.instance.currentUser?.id == owner && AuthSession.instance.token != null) {
+        try { await SecureDataCache.write(owner, resource, data as Object); } catch (_) {}
+      }
+      return data;
+    } catch (error) {
+      if (error is ApiException && error.statusCode < 500 && error.statusCode != 0) rethrow;
+      if (!forceRefresh && AuthSession.instance.currentUser?.id == owner) {
+        try {
+          final cached = await SecureDataCache.read(owner, resource);
+          if (cached != null) return cached;
+        } catch (_) {}
+      }
+      rethrow;
     }
-    return _fetchAndCacheList(path, cacheKey);
   }
 
-  Future<List<dynamic>> _fetchAndCacheList(String path, String cacheKey) async {
-    final data = await ApiClient.instance.get(path, token: _token) as List<dynamic>;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(cacheKey, jsonEncode(data));
-    } catch (_) {}
-    return data;
-  }
+  Future<DashboardOverview> getOverview({bool forceRefresh = false}) async =>
+      DashboardOverview.fromJson(await _loadSnapshot('overview', forceRefresh: forceRefresh) as Map<String, dynamic>);
 
-  Future<Map<String, dynamic>> getFinancials({bool forceRefresh = false}) async {
-    if (!forceRefresh) {
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final cached = prefs.getString(_financialsCacheKey);
-        if (cached != null) {
-          _fetchAndCacheFinancials().ignore();
-          return jsonDecode(cached) as Map<String, dynamic>;
-        }
-      } catch (_) {}
-    }
-    return _fetchAndCacheFinancials();
-  }
-
-  Future<Map<String, dynamic>> _fetchAndCacheFinancials() async {
-    final data = await ApiClient.instance.get('/students/financials', token: _token) as Map<String, dynamic>;
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_financialsCacheKey, jsonEncode(data));
-    } catch (_) {}
-    return data;
-  }
+  Future<Map<String, dynamic>> getFinancials({bool forceRefresh = false}) async =>
+      await _loadSnapshot('financials', forceRefresh: forceRefresh) as Map<String, dynamic>;
 
   Future<void> clearOverviewCache() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_overviewCacheKey);
-    } catch (_) {}
+    await SecureDataCache.clear(AuthSession.instance.currentUser?.id ?? '');
   }
 
   Future<Map<String, dynamic>?> getProfile() async {
@@ -253,7 +199,11 @@ class StudentRepository {
       'targetCountries',
       'intake',
       'bio',
-      'address'
+      'address',
+      'parentInfo',
+      'emergencyContact',
+      'nativeLanguage',
+      'otherLanguages',
     ];
     await ApiClient.instance.put('/students/profile', token: _token, body: {
       for (final field in fields)
@@ -262,11 +212,11 @@ class StudentRepository {
   }
 
   Future<List<dynamic>> getApplications({bool forceRefresh = false}) async {
-    return _cachedList('/students/applications', _appsCacheKey, forceRefresh: forceRefresh);
+    return await _loadSnapshot('applications', forceRefresh: forceRefresh) as List<dynamic>;
   }
 
   Future<List<dynamic>> getDocuments({bool forceRefresh = false}) async {
-    return _cachedList('/students/documents', _docsCacheKey, forceRefresh: forceRefresh);
+    return await _loadSnapshot('documents', forceRefresh: forceRefresh) as List<dynamic>;
   }
 
   /// Uploads a document — matches POST /api/students/documents

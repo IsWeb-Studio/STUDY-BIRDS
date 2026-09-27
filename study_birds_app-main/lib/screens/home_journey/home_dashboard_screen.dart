@@ -24,7 +24,7 @@ import '../universities_programs_countries/programs_screens.dart';
 import '../universities_programs_countries/explore_hub_screen.dart';
 import '../visa_travel_accommodation/arrival_services_screen.dart';
 import '../visa_travel_accommodation/accommodation_arrival_screens.dart';
-import '../visa_travel_accommodation/visa_travel_screens.dart' show InsuranceScreen, EquivalencyScreen;
+import '../visa_travel_accommodation/visa_travel_screens.dart' show InsuranceScreen, EquivalencyScreen, VisaCenterScreen, TravelCenterScreen;
 import 'smart_home_sections.dart';
 
 /// Real, live Home Dashboard — fetches GET /api/students/overview on load.
@@ -164,32 +164,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     );
   }
 
-  Widget _quickActionScreen(String label) {
-    switch (label) {
-      case 'طلباتي':
-        return const ApplicationsListScreen();
-      case 'الجامعات':
-        return const UniversitiesExplorerScreen();
-      case 'مستنداتي':
-        return const MyDocumentsScreen();
-      case 'المدفوعات':
-        return const PaymentsSummaryScreen();
-      case 'Bird AI':
-        return const BirdAIChatScreen();
-      case 'استشارة':
-        return const ConsultationBookingScreen();
-      case 'المجتمع':
-        return const StudentCommunityScreen();
-      case 'الدعم':
-        return const SupportCenterScreen();
-      default:
-        return const UniversitiesExplorerScreen();
-    }
-  }
 
   /// Opens a home destination key sent by the server (context card, dates,
-  /// sections, quick actions). Visa and travel go to the live journey and
-  /// arrival screens, not the static demo visa/travel screens.
+  /// sections, quick actions).
   void _openDestination(String destination) {
     if (destination == 'consultation') {
       showAnimatedBottomSheet(context,
@@ -200,8 +177,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       return;
     }
     final Widget screen = switch (destination) {
-      'journey' || 'visa' => const JourneyTrackerScreen(),
-      'travel' || 'accommodation' => const ArrivalServicesScreen(),
+      'journey' => const JourneyTrackerScreen(),
+      'visa' => const VisaCenterScreen(),
+      'travel' => const TravelCenterScreen(),
+      'accommodation' => const AccommodationScreen(),
       'university-registration' => const UniversityRegistrationScreen(),
       'insurance' => const InsuranceScreen(),
       'equivalency' => const EquivalencyScreen(),
@@ -545,23 +524,17 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                               ? 'تفاصيل الرحلة'
                               : 'عرض التفاصيل',
                           expand: false,
-                          onPressed: () =>
+                          onPressed: () {
+                            final destination = overview.nextAction?['destination'] as String?;
+                            if (destination == null || destination == 'journey') {
                               Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => overview.nextAction == null ||
-                                    overview.nextAction?['destination'] ==
-                                        'journey'
-                                ? JourneyTrackerScreen(
+                                builder: (_) => JourneyTrackerScreen(
                                     currentStageKey: overview.journeyStage,
-                                    journeyPathLabel: journeyPathLabel)
-                                : _quickActionScreen(const {
-                                      'payments': 'المدفوعات',
-                                      'documents': 'مستنداتي',
-                                      'applications': 'طلباتي',
-                                      'support': 'الدعم',
-                                      'catalog': 'الجامعات'
-                                    }[overview.nextAction!['destination']] ??
-                                    'طلباتي'),
-                          )),
+                                    journeyPathLabel: journeyPathLabel)));
+                            } else {
+                              _openDestination(destination);
+                            }
+                          },
                         ),
                       ],
                     ),

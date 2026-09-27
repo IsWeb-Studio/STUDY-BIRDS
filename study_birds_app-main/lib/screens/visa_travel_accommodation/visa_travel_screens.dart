@@ -1,5 +1,6 @@
 import 'arrival_services_screen.dart';
 import 'package:flutter/material.dart';
+import '../../core/document_access.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_theme.dart';
 import '../../core/api_client.dart';
@@ -878,7 +879,7 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                               const SizedBox(height: 16),
                               PrimaryButton(
                                 onPressed: () async {
-                                  final url = Uri.tryParse(_data!['cardFileUrl'] as String);
+                                  final url = await resolveDocumentDownload(_data!['cardFileUrl'] as String);
                                   if (url != null && !await launchUrl(url, mode: LaunchMode.externalApplication)) {
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(
@@ -1103,7 +1104,7 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
                             const SizedBox(height: 16),
                             PrimaryButton(
                               onPressed: () async {
-                                final url = Uri.tryParse(_data!['resultFileUrl'] as String);
+                                final url = await resolveDocumentDownload(_data!['resultFileUrl'] as String);
                                 if (url != null && !await launchUrl(url, mode: LaunchMode.externalApplication)) {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(

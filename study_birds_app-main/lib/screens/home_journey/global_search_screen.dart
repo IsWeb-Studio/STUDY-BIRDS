@@ -7,6 +7,7 @@ import '../universities_programs_countries/universities_screens.dart';
 import '../universities_programs_countries/programs_screens.dart';
 import '../universities_programs_countries/countries_scholarships_screens.dart';
 import '../services_support/faq_screen.dart';
+import '../services_support/knowledge_base_screen.dart';
 
 /// Real search across the public catalog (universities, programs,
 /// countries, FAQs). The backend has no dedicated search endpoint, so this
@@ -27,6 +28,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   List<dynamic> _programs = [];
   List<dynamic> _countries = [];
   List<dynamic> _faqs = [];
+  List<dynamic> _articles = [];
   bool _loading = true;
   String? _error;
   String _query = '';
@@ -56,6 +58,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         CatalogRepository.instance.getPrograms(),
         CatalogRepository.instance.getCountries(),
         CatalogRepository.instance.getFaqs(),
+        CatalogRepository.instance.getArticles(),
       ]);
       if (!mounted) return;
       setState(() {
@@ -63,6 +66,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         _programs = results[1];
         _countries = results[2];
         _faqs = results[3];
+        _articles = results[4];
         _loading = false;
       });
     } catch (_) {
@@ -111,10 +115,20 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                 _matches((f as Map<String, dynamic>)['question'] as String?))
             .toList()
         : [];
+    final matchedArticles = showResults
+        ? _articles
+            .where((a) {
+              final m = a as Map<String, dynamic>;
+              return _matches(m['title'] as String?) ||
+                  _matches(m['summary'] as String?);
+            })
+            .toList()
+        : [];
     final totalMatches = matchedUniversities.length +
         matchedPrograms.length +
         matchedCountries.length +
-        matchedFaqs.length;
+        matchedFaqs.length +
+        matchedArticles.length;
 
     return AppScaffold(
       title: 'البحث',
@@ -132,7 +146,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                 autofocus: true,
                 textAlign: TextAlign.right,
                 decoration: const InputDecoration(
-                  hintText: 'ابحث عن جامعة، برنامج، دولة...',
+                  hintText: 'ابحث عن جامعة، برنامج، دولة، مقال...',
                   hintStyle:
                       TextStyle(color: AppColors.textSecondary, fontSize: 13.5),
                   prefixIcon: Icon(Icons.search_rounded, color: AppColors.navy),
@@ -224,6 +238,21 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                             onTap: () => Navigator.of(context).push(
                                 MaterialPageRoute(
                                     builder: (_) => const FaqScreen())),
+                          );
+                        }).toList()),
+                  if (matchedArticles.isNotEmpty)
+                    _section(
+                        'المقالات',
+                        matchedArticles.map((a) {
+                          final article = Map<String, dynamic>.from(a as Map);
+                          return _ResultTile(
+                            icon: Icons.article_outlined,
+                            title: article['title'] as String? ?? '—',
+                            subtitle: article['summary'] as String? ?? 'مقال',
+                            onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (_) =>
+                                        ExhibitionArticleScreen(item: article))),
                           );
                         }).toList()),
                 ],

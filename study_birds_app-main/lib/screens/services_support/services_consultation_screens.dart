@@ -1,5 +1,7 @@
 ﻿import 'live_consultation_screen.dart';
 import 'package:flutter/material.dart';
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_theme.dart';
 import '../../core/api_client.dart';
@@ -443,7 +445,6 @@ class _ConsultationConfirmationScreenState
     super.initState();
     AnalyticsService.instance.consultationBooked(
         '${slot['advisor']?['_id'] ?? slot['advisorId'] ?? 'unknown'}');
-    _scheduleReminder();
   }
 
   void _scheduleReminder() {
@@ -515,11 +516,9 @@ class _ConsultationConfirmationScreenState
     final bookingId = '${slot['_id'] ?? slot['bookingId'] ?? ''}';
     if (bookingId.isEmpty) return;
     // Download .ics from server and open with the system handler (iOS opens in Calendar)
-    final icsUri = Uri.parse('${ApiClient.baseUrl}/consultations/bookings/$bookingId/ics');
     try {
-      if (!await launchUrl(icsUri, mode: LaunchMode.externalApplication)) {
-        throw StateError('unavailable');
-      }
+      final bytes = await ApiClient.instance.download('/consultations/bookings/$bookingId/ics', token: AuthSession.instance.token);
+      await FilePicker.platform.saveFile(dialogTitle: 'حفظ موعد التقويم', fileName: 'consultation-$bookingId.ics', bytes: Uint8List.fromList(bytes));
     } catch (_) {
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
@@ -549,7 +548,7 @@ class _ConsultationConfirmationScreenState
               ),
               ListTile(
                 leading: const Icon(Icons.calendar_today, color: Colors.black87),
-                title: const Text('Apple Calendar / iCal'),
+                title: const Text('تصدير ملف التقويم (Apple / iCal)'),
                 onTap: () { Navigator.pop(ctx); _addToAppleCalendar(ctx); },
               ),
             ],

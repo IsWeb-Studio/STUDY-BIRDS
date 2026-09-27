@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
+import 'deep_link_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -24,7 +25,7 @@ class NotificationScheduler {
   bool _ready = false;
 
   Future<void> init() async {
-    if (_ready || kIsWeb) return;
+    if (_ready || kIsWeb || ![TargetPlatform.android, TargetPlatform.iOS].contains(defaultTargetPlatform)) return;
     tz.initializeTimeZones();
 
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
@@ -35,8 +36,14 @@ class NotificationScheduler {
     );
     await _plugin.initialize(
       const InitializationSettings(android: android, iOS: ios),
+      onDidReceiveNotificationResponse: (response) {
+        if (response.payload != null) DeepLinkService.instance.open(response.payload!);
+      },
     );
     _ready = true;
+    final launch = await _plugin.getNotificationAppLaunchDetails();
+    final payload = launch?.notificationResponse?.payload;
+    if (launch?.didNotificationLaunchApp == true && payload != null) DeepLinkService.instance.open(payload);
   }
 
   // ── schedule helpers ──────────────────────────────────────────────────────
@@ -48,7 +55,7 @@ class NotificationScheduler {
     required DateTime at,
     String body = 'انقر للانضمام أو إلغاء الحجز.',
   }) =>
-      _schedule(_idFor(id), title, body, at);
+      _schedule(_idFor('consultation:$id'), title, body, at.subtract(const Duration(hours: 1)), '/student/consultations');
 
   /// Schedules a payment due-date reminder.
   Future<void> schedulePaymentDue({
@@ -57,10 +64,11 @@ class NotificationScheduler {
     required DateTime dueDate,
   }) =>
       _schedule(
-        _idFor(invoiceId),
+        _idFor('payment:$invoiceId'),
         'تذكير بدفعة مستحقة',
         'الدفعة $amount مستحقة اليوم. انقر للدفع الآن.',
         dueDate.subtract(const Duration(hours: 6)),
+        '/student/payments',
       );
 
   /// Schedules a reminder when a document is about to expire.
@@ -70,10 +78,11 @@ class NotificationScheduler {
     required DateTime expiryDate,
   }) =>
       _schedule(
-        _idFor(docId),
+        _idFor('document:$docId'),
         'مستند على وشك الانتهاء',
         '$docName تنتهي صلاحيته قريباً. يُرجى تجديده.',
         expiryDate.subtract(const Duration(days: 7)),
+        '/student/documents',
       );
 
   /// Cancels a scheduled reminder by its source ID.
@@ -94,6 +103,7 @@ class NotificationScheduler {
     String title,
     String body,
     DateTime at,
+    String path,
   ) async {
     if (!_ready) return;
     final when = tz.TZDateTime.from(at, tz.local);
@@ -117,12 +127,13 @@ class NotificationScheduler {
       body,
       when,
       const NotificationDetails(android: androidDetails, iOS: iosDetails),
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      payload: path,
+      androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
   }
 
   /// Converts a string ID to a stable int for the notifications plugin.
-  int _idFor(String id) => id.hashCode.abs() % 100000;
+  int _idFor(String id) => id.codeUnits.fold<int>(2166136261, (hash, unit) => ((hash ^ unit) * 16777619) & 0x7fffffff);
 }

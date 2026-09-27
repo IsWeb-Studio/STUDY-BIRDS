@@ -107,34 +107,13 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
   }
 
   void _onPushTap(String screen, Map<String, dynamic> data) {
-    final nav = rootNavigatorKey.currentState;
-    if (nav == null) return;
-    switch (screen) {
-      case 'payments':
-        nav.push(MaterialPageRoute(
-            builder: (_) => const PaymentsSummaryScreen()));
-      case 'documents':
-        nav.push(MaterialPageRoute(
-            builder: (_) => const MyDocumentsScreen()));
-      case 'applications':
-        nav.push(MaterialPageRoute(
-            builder: (_) => const ApplicationsListScreen()));
-      case 'notifications':
-        nav.push(MaterialPageRoute(
-            builder: (_) => const NotificationsScreen()));
-      case 'consultation':
-        nav.push(MaterialPageRoute(
-            builder: (_) => const ConsultationBookingScreen()));
-      case 'support':
-        nav.push(MaterialPageRoute(
-            builder: (_) => const SupportTicketsListScreen()));
-      case 'journey':
-        nav.push(MaterialPageRoute(
-            builder: (_) => const JourneyTrackerScreen()));
-      default:
-        nav.push(MaterialPageRoute(
-            builder: (_) => const NotificationsScreen()));
-    }
+    DeepLinkService.instance.open(data['link']?.toString() ?? screen);
+  }
+
+  @override
+  void dispose() {
+    DeepLinkService.instance.dispose();
+    super.dispose();
   }
 
   @override

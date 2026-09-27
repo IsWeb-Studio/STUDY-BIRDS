@@ -64,4 +64,9 @@ class CatalogRepository {
     final data = await ApiClient.instance.get('/content/exhibitions/$slug');
     return data as Map<String, dynamic>;
   }
+
+  Future<List<dynamic>> getArticles() async {
+    final data = await ApiClient.instance.get('/content/blog');
+    return data as List<dynamic>;
+  }
 }

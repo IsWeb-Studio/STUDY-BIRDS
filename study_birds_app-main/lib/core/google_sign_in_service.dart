@@ -44,7 +44,7 @@ class GoogleSignInService {
       );
       final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
       final token = data['token'] as String;
-      await AuthSession.instance.login(user, authToken: token);
+      await AuthSession.instance.login(user, authToken: token, refreshToken: data['refreshToken'] as String?);
       AnalyticsService.instance.loginCompleted(user.role.name);
       return true;
     } on GoogleSignInException catch (e) {

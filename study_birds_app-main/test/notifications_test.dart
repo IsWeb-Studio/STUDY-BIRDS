@@ -1,3 +1,4 @@
+import 'package:study_birds/core/notification_links.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:study_birds/screens/home_journey/notifications_screen.dart';
 import 'package:study_birds/screens/services_support/services_consultation_screens.dart';
@@ -5,7 +6,7 @@ import 'package:study_birds/screens/home_journey/journey_tracker_screen.dart';
 import 'package:study_birds/screens/applications_documents_payments/documents_screens.dart';
 import 'package:study_birds/screens/applications_documents_payments/payments_screens.dart';
 import 'package:study_birds/screens/applications_documents_payments/applications_screens.dart';
-import 'package:study_birds/screens/visa_travel_accommodation/arrival_services_screen.dart';
+import 'package:study_birds/screens/visa_travel_accommodation/visa_travel_screens.dart';
 import 'package:study_birds/screens/visa_travel_accommodation/accommodation_arrival_screens.dart';
 import 'package:study_birds/screens/services_support/support_team_ai_screens.dart';
 import 'package:study_birds/screens/services_support/community_screen.dart';
@@ -16,13 +17,20 @@ void main() {
   // ── notificationScreenForLink ─────────────────────────────────────────────
 
   group('notificationScreenForLink', () {
+    test('custom links preserve student host and reject other websites', () {
+      expect(notificationPath('studybirds://student/payments'), '/student/payments');
+      expect(notificationPath('https://studybirds.app/student/documents'), '/student/documents');
+      expect(notificationPath('https://untrusted.test/student/payments'), isNull);
+      expect(notificationPath('//untrusted.test/student/payments'), isNull);
+      expect(notificationScreenForLink('payments'), isA<PaymentsSummaryScreen>());
+    });
     test('null link returns null', () {
       expect(notificationScreenForLink(null), isNull);
     });
 
     test('link without /student/ prefix returns null', () {
       expect(notificationScreenForLink('/admin/something'), isNull);
-      expect(notificationScreenForLink('consultations'), isNull);
+      expect(notificationScreenForLink('consultations'), isA<ConsultationBookingScreen>());
       expect(notificationScreenForLink(''), isNull);
     });
 
@@ -38,7 +46,7 @@ void main() {
 
     test('/student/visa → JourneyTrackerScreen', () {
       expect(notificationScreenForLink('/student/visa'),
-          isA<JourneyTrackerScreen>());
+          isA<VisaCenterScreen>());
     });
 
     test('/student/documents → MyDocumentsScreen', () {
@@ -63,12 +71,12 @@ void main() {
 
     test('/student/travel → ArrivalServicesScreen', () {
       expect(notificationScreenForLink('/student/travel'),
-          isA<ArrivalServicesScreen>());
+          isA<TravelCenterScreen>());
     });
 
     test('/student/accommodation → ArrivalServicesScreen', () {
       expect(notificationScreenForLink('/student/accommodation'),
-          isA<ArrivalServicesScreen>());
+          isA<AccommodationScreen>());
     });
 
     test('/student/university-registration → UniversityRegistrationScreen', () {

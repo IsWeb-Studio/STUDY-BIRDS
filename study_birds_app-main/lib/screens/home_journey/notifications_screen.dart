@@ -4,6 +4,7 @@ import '../../core/app_theme.dart';
 import '../../core/student_repository.dart';
 import '../../core/analytics_service.dart';
 import '../../core/realtime_sync_service.dart';
+import '../../core/notification_links.dart';
 import '../services_support/services_consultation_screens.dart';
 import '../services_support/support_team_ai_screens.dart';
 import '../services_support/community_screen.dart';
@@ -12,7 +13,7 @@ import '../applications_documents_payments/documents_screens.dart';
 import '../applications_documents_payments/payments_screens.dart';
 import '../visa_travel_accommodation/arrival_services_screen.dart';
 import '../visa_travel_accommodation/accommodation_arrival_screens.dart';
-import '../visa_travel_accommodation/visa_travel_screens.dart' show InsuranceScreen, EquivalencyScreen;
+import '../visa_travel_accommodation/visa_travel_screens.dart' show InsuranceScreen, EquivalencyScreen, VisaCenterScreen, TravelCenterScreen;
 import 'journey_tracker_screen.dart';
 
 /// Returns a short action label for a notification link, or null if no action.
@@ -37,12 +38,17 @@ String? notificationActionLabel(String? link) {
 /// Maps a backend notification link (e.g. '/student/documents') to the widget
 /// that should be pushed. Returns null for unknown or non-navigable links.
 Widget? notificationScreenForLink(String? link) {
+  link = notificationPath(link ?? '');
   if (link == null || !link.startsWith('/student/')) return null;
   final dest = link.replaceFirst('/student/', '');
   return switch (dest) {
     'consultations' => const ConsultationBookingScreen(),
-    'journey' || 'visa' => const JourneyTrackerScreen(),
-    'travel' || 'accommodation' => const ArrivalServicesScreen(),
+    'journey' => const JourneyTrackerScreen(),
+    'visa' => const VisaCenterScreen(),
+    'travel' => const TravelCenterScreen(),
+    'accommodation' => const AccommodationScreen(),
+    'services' => const MyServiceRequestsScreen(),
+    'notifications' => const NotificationsScreen(),
     'university-registration' => const UniversityRegistrationScreen(),
     'insurance' => const InsuranceScreen(),
     'equivalency' => const EquivalencyScreen(),

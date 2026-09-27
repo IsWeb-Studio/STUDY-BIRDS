@@ -90,14 +90,17 @@ class _LiveConsultationScreenState extends State<LiveConsultationScreen> {
       return;
     }
     if (!mounted) return;
+    Map<String, dynamic>? confirmed;
     await change(
-        () => previous == null
-            ? repo.book(slot['_id'])
-            : repo.reschedule(previous, slot['_id']),
+        () async {
+          confirmed = previous == null
+              ? await repo.book(slot['_id'])
+              : await repo.reschedule(previous, slot['_id']);
+        },
         'تم تأكيد الموعد',
         onSuccess: () {
           widget.onBooked?.call();
-          widget.onSlotBooked?.call(slot);
+          widget.onSlotBooked?.call({...slot, ...?confirmed, 'advisor': slot['advisor']});
         });
   }
 
