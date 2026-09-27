@@ -103,6 +103,22 @@ export const ConsultationsPage = ({ staff = false }: { staff?: boolean }) => {
         {b.status === "booked" && new Date(b.startsAt) > new Date() && <div className="flex flex-wrap gap-3">
           {!staff && <button className={button} disabled={busy} onClick={() => { setMoving(b); setMode(""); setAdvisor(""); setDay(""); }}>{t("تغيير الموعد", "Reschedule")}</button>}
           <button className={button} disabled={busy} onClick={() => { if (window.confirm(`${t("إلغاء الموعد؟", "Cancel appointment?")} ${when(b.startsAt)}`)) void change(() => api.post(`/consultations/bookings/${b._id}/cancel`, { version: b.__v }), t("أُلغي الموعد", "Appointment cancelled")); }}>{t("إلغاء الحجز", "Cancel booking")}</button>
+          {/* #99: Calendar sync */}
+          <a className={button} style={{ textDecoration: "none" }} target="_blank" rel="noopener noreferrer"
+            href={(() => {
+              const start = new Date(b.startsAt);
+              const end = new Date(start.getTime() + 30 * 60 * 1000);
+              const fmt = (d: Date) => d.toISOString().replace(/[-:]/g, "").split(".")[0] + "Z";
+              const advisor = b.advisor?.name || "المستشار";
+              const meetingUrl = b.slot?.meetingUrl || "";
+              const details = meetingUrl ? `استشارة مع ${advisor}\nرابط: ${meetingUrl}` : `استشارة مع ${advisor}`;
+              return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`استشارة Study Birds`)}&dates=${fmt(start)}/${fmt(end)}&details=${encodeURIComponent(details)}`;
+            })()}
+          >📅 {t("Google Calendar", "Google Calendar")}</a>
+          <a className={button} style={{ textDecoration: "none" }}
+            href={`${api.defaults.baseURL}/consultations/bookings/${b._id}/ics`}
+            download={`consultation-${b._id}.ics`}
+          >🗓 {t("Apple / Outlook", "Apple / Outlook")}</a>
         </div>}
       </article>)}
     </section>

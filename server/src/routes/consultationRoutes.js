@@ -179,4 +179,50 @@ router.patch('/staff/slots/:id', run(async (req, res) => {
   if (!slot) return res.status(409).json({ message: 'الموعد تغيّر أو محجوز أو غير متاح لك. ألغِ الحجز أولًا عند الحاجة.' });
   res.json(slot);
 }));
+
+// #99: Calendar export — returns an .ics file for any booking the caller owns
+router.get('/bookings/:id/ics', run(async (req, res) => {
+  if (!validId(req.params.id)) return res.status(404).json({ message: 'Not found' });
+  const booking = await Booking.findOne({ _id: req.params.id, ...visibleBookingQuery(req.user) })
+    .populate('advisor', 'name').populate('slot', 'mode meetingUrl instructions').lean();
+  if (!booking) return res.status(404).json({ message: 'الحجز غير موجود' });
+
+  const start = new Date(booking.startsAt);
+  const end = new Date(start.getTime() + 30 * 60 * 1000);
+  const fmt = d => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const uid = `${booking._id}@studybirds.net`;
+  const advisorName = booking.advisor?.name || 'المستشار';
+  const meetingUrl = booking.slot?.meetingUrl || '';
+  const modeLabel = { online: 'عبر الإنترنت', phone: 'هاتفياً', office: 'في المكتب' }[booking.slot?.mode] || '';
+  const description = [
+    `استشارة Study Birds مع ${advisorName}`,
+    modeLabel && `النوع: ${modeLabel}`,
+    meetingUrl && `رابط الاجتماع: ${meetingUrl}`,
+    booking.slot?.instructions && `تعليمات: ${booking.slot.instructions}`,
+  ].filter(Boolean).join('\\n');
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Study Birds//Consultation//AR',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${fmt(new Date())}`,
+    `DTSTART:${fmt(start)}`,
+    `DTEND:${fmt(end)}`,
+    `SUMMARY:استشارة Study Birds`,
+    `DESCRIPTION:${description}`,
+    meetingUrl ? `URL:${meetingUrl}` : '',
+    `STATUS:${booking.status === 'cancelled' ? 'CANCELLED' : 'CONFIRMED'}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].filter(Boolean).join('\r\n');
+
+  res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="consultation-${booking._id}.ics"`);
+  res.send(ics);
+}));
+
 module.exports = router;
