@@ -23,7 +23,7 @@ const {
   getOrientationTestResult,
   submitOrientationTest,
 } = require("../controllers/studentController");
-const { getMyWallet, redeemWalletCredit } = require("../controllers/studentWalletController");
+const { getMyRewards, getMyWallet, redeemWalletCredit } = require("../controllers/studentWalletController");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
@@ -53,6 +53,7 @@ router.post("/favorites/toggle", toggleStudentFavorite);
 router.delete("/favorites/:id", removeStudentFavorite);
 router.get("/orientation-test", getOrientationTestResult);
 router.post("/orientation-test", submitOrientationTest);
+router.get("/rewards", getMyRewards);
 router.get("/wallet", getMyWallet);
 router.post("/wallet/redeem", redeemWalletCredit);
 
