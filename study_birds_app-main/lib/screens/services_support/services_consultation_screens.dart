@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_theme.dart';
 import '../../core/api_client.dart';
-import '../../core/student_repository.dart';
 import '../../core/catalog_repository.dart';
 import '../../core/notification_scheduler.dart';
 import '../../core/analytics_service.dart';
@@ -189,35 +188,38 @@ class ServiceDetailScreen extends StatefulWidget {
 
 class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   bool _submitting = false;
+  final _notesCtrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _notesCtrl.dispose();
+    super.dispose();
+  }
 
   Future<void> _requestService() async {
     final confirmed = await showAppConfirmDialog(
       context,
       title: 'تأكيد طلب الخدمة',
-      message:
-          'سيتم إرسال طلبك لفريق الدعم للمتابعة معك، والدفع لاحقًا حسب توجيهاتهم. متابعة؟',
+      message: 'سيتم إرسال طلبك للفريق وستصلك إشعارات عند تحديث الحالة. متابعة؟',
     );
     if (confirmed != true || !mounted) return;
 
     setState(() => _submitting = true);
     try {
-      await StudentRepository.instance.createSupportTicket(
-        subject: 'طلب خدمة: ${widget.service['name']}',
-        message:
-            'أرغب في طلب خدمة "${widget.service['name']}" (${widget.service['price']}). برجاء التواصل معي لمتابعة التفاصيل.',
-        category: 'other',
-      );
+      final serviceId = widget.service['_id']?.toString() ?? '';
+      await ApiClient.instance.post('/service-requests', body: {
+        'serviceId': serviceId,
+        'notes': _notesCtrl.text.trim(),
+      });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('تم إرسال طلبك، سيتواصل معك فريق الدعم قريبًا'),
+          content: Text('تم إرسال طلبك — تابع حالته من "طلباتي"'),
           backgroundColor: AppColors.success));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(e is ApiException
-              ? e.message
-              : 'تعذر إرسال الطلب، حاول مرة أخرى')));
+          content: Text(e is ApiException ? e.message : 'تعذر إرسال الطلب، حاول مرة أخرى')));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -227,7 +229,14 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   Widget build(BuildContext context) {
     final service = widget.service;
     return AppScaffold(
-      title: service['name'] as String? ?? 'الخدمة',
+      title: service['name'] as String? ?? service['title'] as String? ?? 'الخدمة',
+      actions: [
+        TextButton.icon(
+          icon: const Icon(Icons.list_alt_rounded, size: 18),
+          label: const Text('طلباتي'),
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyServiceRequestsScreen())),
+        ),
+      ],
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -235,23 +244,31 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           children: [
             AppCard(
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _Row(
-                      label: 'السعر',
-                      value: service['price'] as String? ?? '—'),
-                  const Divider(height: 20),
-                  Text(
-                      service['detailBody']
-                              ?.toString()
-                              .replaceAll(RegExp(r'<[^>]*>'), '') ??
-                          '',
-                      style: AppTextStyles.body),
+                  if ((service['detailBody'] as String? ?? '').isNotEmpty)
+                    Text(
+                        (service['detailBody'] as String).replaceAll(RegExp(r'<[^>]*>'), ''),
+                        style: AppTextStyles.body),
                 ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: _notesCtrl,
+              maxLines: 3,
+              maxLength: 500,
+              decoration: InputDecoration(
+                labelText: 'ملاحظات إضافية (اختياري)',
+                hintText: 'أي تفاصيل تريد إضافتها للفريق...',
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.button)),
+                filled: true,
+                fillColor: Colors.grey.shade50,
               ),
             ),
             const SizedBox(height: 8),
             const Text(
-              'هذه الخدمة تُطلب عبر فريق الدعم — بعد الإرسال هيتواصل معاك فريق Study Birds لتفاصيل الدفع والمتابعة.',
+              'بعد الإرسال سيتواصل معك فريق Study Birds لتحديد التفاصيل والدفع.',
               style: AppTextStyles.caption,
             ),
             const SizedBox(height: 20),
@@ -262,6 +279,115 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// Tracks the student's own service requests with live status
+class MyServiceRequestsScreen extends StatefulWidget {
+  const MyServiceRequestsScreen({super.key});
+  @override
+  State<MyServiceRequestsScreen> createState() => _MyServiceRequestsScreenState();
+}
+
+class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
+  late Future<List<dynamic>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _future = ApiClient.instance.get('/service-requests/mine').then((d) => d is List ? d : []);
+  }
+
+  Future<void> _refresh() async {
+    setState(() => _future = ApiClient.instance.get('/service-requests/mine').then((d) => d is List ? d : []));
+    await _future;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      title: 'طلبات الخدمات',
+      body: FutureBuilder<List<dynamic>>(
+        future: _future,
+        builder: (context, snap) {
+          if (snap.connectionState != ConnectionState.done) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (snap.hasError) return ErrorState(message: 'تعذر تحميل الطلبات', onRetry: _refresh);
+          final rows = (snap.data ?? []).whereType<Map>().toList();
+          if (rows.isEmpty) {
+            return const EmptyState(icon: Icons.assignment_outlined, title: 'لا توجد طلبات بعد', message: 'اطلب خدمة من مركز الخدمات وستظهر هنا.');
+          }
+          return RefreshIndicator(
+            onRefresh: _refresh,
+            color: AppColors.navy,
+            child: ListView.separated(
+              padding: const EdgeInsets.all(16),
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemCount: rows.length,
+              itemBuilder: (_, i) {
+                final r = Map<String, dynamic>.from(rows[i]);
+                final title = (r['serviceTitle'] as String?) ?? (r['service'] is Map ? r['service']['title'] : '') ?? '';
+                final status = r['status'] as String? ?? 'pending';
+                final assignedTo = r['assignedTo'] is Map ? r['assignedTo']['name'] as String? : null;
+                final staffNote = r['staffNote'] as String? ?? '';
+                return AppCard(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(child: Text(title, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700))),
+                          _StatusChip(status),
+                        ],
+                      ),
+                      if (assignedTo != null) ...[
+                        const SizedBox(height: 6),
+                        Text('الموظف المسؤول: $assignedTo', style: AppTextStyles.caption),
+                      ],
+                      if (staffNote.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text('ملاحظة: $staffNote', style: AppTextStyles.caption.copyWith(color: AppColors.navy)),
+                      ],
+                      const SizedBox(height: 6),
+                      Text(_formatDate(r['createdAt']), style: AppTextStyles.caption),
+                    ],
+                  ),
+                );
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  String _formatDate(dynamic raw) {
+    final d = DateTime.tryParse('$raw')?.toLocal();
+    if (d == null) return '';
+    return '${d.year}/${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String status;
+  const _StatusChip(this.status);
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (status) {
+      'pending'     => ('في الانتظار', Colors.orange),
+      'assigned'    => ('تم التعيين', Colors.blue),
+      'in-progress' => ('قيد التنفيذ', AppColors.navy),
+      'completed'   => ('مكتمل', AppColors.success),
+      'cancelled'   => ('ملغى', Colors.red),
+      _             => (status, Colors.grey),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
+      child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
     );
   }
 }
