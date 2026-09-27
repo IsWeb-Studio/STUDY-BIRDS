@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_theme.dart';
 import '../../core/api_client.dart';
+import '../../core/auth_session.dart';
 import '../../core/catalog_repository.dart';
 import '../../core/notification_scheduler.dart';
 import '../../core/analytics_service.dart';
@@ -207,7 +208,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     setState(() => _submitting = true);
     try {
       final serviceId = widget.service['_id']?.toString() ?? '';
-      await ApiClient.instance.post('/service-requests', body: {
+      final token = AuthSession.instance.token;
+      await ApiClient.instance.post('/service-requests', token: token, body: {
         'serviceId': serviceId,
         'notes': _notesCtrl.text.trim(),
       });
@@ -296,11 +298,11 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
   @override
   void initState() {
     super.initState();
-    _future = ApiClient.instance.get('/service-requests/mine').then((d) => d is List ? d : []);
+    _future = ApiClient.instance.get('/service-requests/mine', token: AuthSession.instance.token).then((d) => d is List ? d : []);
   }
 
   Future<void> _refresh() async {
-    setState(() => _future = ApiClient.instance.get('/service-requests/mine').then((d) => d is List ? d : []));
+    setState(() => _future = ApiClient.instance.get('/service-requests/mine', token: AuthSession.instance.token).then((d) => d is List ? d : []));
     await _future;
   }
 
