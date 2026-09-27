@@ -158,6 +158,9 @@ app.get('/.well-known/apple-app-site-association', (req, res) => {
 // #34: Stripe payment gateway (set STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET on Render)
 app.use('/api/payments/stripe', requireDatabaseConnection, require('./routes/stripeRoutes'));
 
+// #35-43: Independent service request lifecycle
+app.use('/api/service-requests', requireDatabaseConnection, require('./routes/serviceRequestRoutes'));
+
 app.use(notFound);
 app.use(errorHandler);
 
