@@ -1,3 +1,4 @@
+import 'journey_timeline_widgets.dart';
 import '../../core/student_repository.dart';
 import 'important_dates_screen.dart';
 import 'package:flutter/material.dart';
@@ -31,10 +32,11 @@ class JourneyRequirementsView extends StatelessWidget {
         screen = ApplicationDetailScreen(
             application: Map<String, dynamic>.from(matches.first as Map));
       } catch (_) {
-        if (context.mounted)
+        if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text(
                   'تعذر تحميل الطلب. اسحب لتحديث الرحلة ثم أعد المحاولة.')));
+        }
         return;
       }
       if (!context.mounted) return;
@@ -46,150 +48,164 @@ class JourneyRequirementsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) => AppScaffold(
         title: 'رحلتي',
-        showBackButton: false,
+        showBackButton: Navigator.of(context).canPop(),
         actions: [
-          IconButton(
-              tooltip: 'المواعيد المهمة',
-              icon: const Icon(Icons.event_note_rounded),
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => const ImportantDatesScreen()))),
-          IconButton(
-              tooltip: 'التقويم',
-              icon: const Icon(Icons.calendar_month_rounded),
-              onPressed: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => const CalendarScreen()))),
-          IconButton(
-              tooltip: 'خدمات الوصول',
-              icon: const Icon(Icons.flight_land_rounded),
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => const ArrivalServicesScreen()))),
+          PopupMenuButton<String>(
+            tooltip: 'خيارات الرحلة',
+            onSelected: (value) => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => value == 'dates'
+                    ? const ImportantDatesScreen()
+                    : value == 'calendar'
+                        ? const CalendarScreen()
+                        : const ArrivalServicesScreen())),
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'dates', child: Text('المواعيد المهمة')),
+              PopupMenuItem(value: 'calendar', child: Text('التقويم')),
+              PopupMenuItem(value: 'arrival', child: Text('خدمات الوصول')),
+            ],
+          )
         ],
         body: RefreshIndicator(
             onRefresh: onRefresh,
             color: AppColors.navy,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
-                Text('متابعة طلباتك خطوة بخطوة',
-                    style: AppTextStyles.cardTitle),
-                const SizedBox(height: 8),
-                Text(
-                    'تابع مستندات وفواتير كل طلب، ومراحل ما بعد القبول وفق تحديثات الفريق.',
-                    style: AppTextStyles.caption),
-                const SizedBox(height: 16),
                 if (journeys.isEmpty)
-                  Builder(builder: (context) => EmptyState(
+                  EmptyState(
                       icon: Icons.route_rounded,
                       title: 'لم تبدأ رحلة تقديم بعد',
                       message:
                           'اختر برنامجك الدراسي وقدّم طلبك لتظهر متطلباته هنا.',
                       ctaLabel: 'استكشف الجامعات',
-                      onCta: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ExploreHubScreen())))),
-                for (final journey in journeys) ...[
-                  AppCard(
-                      child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                        Text(journey['title'] as String? ?? 'طلب دراسي',
-                            style: AppTextStyles.cardTitle),
-                        if (journey['followUp'] is Map) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                              journey['followUp']['advisor'] is Map
-                                  ? 'مسؤول المتابعة: ${journey['followUp']['advisor']['name']}'
-                                  : 'لم يُعيّن مسؤول متابعة بعد',
-                              style: AppTextStyles.caption),
-                          if (journey['followUp']['dueAt'] is String)
-                            Text(
-                                'موعد المتابعة: ${followUpDate(context, journey['followUp']['dueAt'])}',
-                                style: AppTextStyles.caption),
-                          if (journey['followUp']['overdue'] == true)
-                            const Text('تأخرت متابعة الفريق عن الموعد المحدد',
-                                style: TextStyle(color: AppColors.danger)),
-                        ],
-                        if (journey['closed'] == true)
-                          const Text('طلب منتهٍ — للمتابعة والأرشفة'),
-                        if (journey['nextAction'] is Map) ...[
-                          const SizedBox(height: 12),
-                          Text(
-                              journey['nextAction']['titleAr'] as String? ??
-                                  'الخطوة التالية',
-                              style: AppTextStyles.cardTitle
-                                  .copyWith(color: AppColors.orange)),
-                          const SizedBox(height: 4),
-                          Text(
-                              journey['nextAction']['descriptionAr']
-                                      as String? ??
-                                  '',
-                              style: AppTextStyles.caption),
-                        ],
-                        for (final stage
-                            in (journey['stages'] as List<dynamic>? ?? [])) ...[
-                          const Divider(height: 28),
-                          Wrap(
-                              spacing: 8,
-                              runSpacing: 8,
-                              crossAxisAlignment: WrapCrossAlignment.center,
-                              children: [
-                                Icon(
-                                    stage['status'] == 'completed'
-                                        ? Icons.check_circle_outline_rounded
-                                        : Icons.radio_button_unchecked_rounded,
-                                    color: color(stage['status'])),
-                                Text(stage['titleAr'] as String? ?? '',
-                                    style: AppTextStyles.cardTitle),
-                                StatusBadge(
-                                    label: label(stage['status']),
-                                    color: color(stage['status'])),
-                              ]),
-                          const SizedBox(height: 8),
-                          Text(stage['descriptionAr'] as String? ?? '',
-                              style: AppTextStyles.caption),
-                          if (stage['dueAt'] is String)
-                            Text(
-                                'موعد المرحلة: ${followUpDate(context, stage['dueAt'])}',
-                                style: AppTextStyles.caption),
-                          if ((stage['reference'] as String? ?? '').isNotEmpty)
-                            Text('مرجع التحقق: ${stage['reference']}',
-                                style: AppTextStyles.caption),
-                          if (stage['status'] == 'overdue' &&
-                              stage['recordedStatus'] != null)
-                            Text('بانتظار: ${label(stage['recordedStatus'])}',
-                                style: AppTextStyles.caption),
-                          if (journey['closed'] != true &&
-                              stage['destination'] == 'support' &&
-                              !['completed', 'not-required']
-                                  .contains(stage['recordedStatus']))
-                            TextButton.icon(
-                                onPressed: () => open(context, 'support'),
-                                icon: const Icon(Icons.support_agent),
-                                label: Text(
-                                    'تواصل بشأن ${stage['titleAr'] ?? 'المرحلة'}')),
-                        ],
-                        const SizedBox(height: 14),
-                        OutlinedButton.icon(
-                            onPressed: () => open(context, 'applications',
-                                journey['applicationId'] as String?),
-                            icon: const Icon(Icons.assignment_outlined),
-                            label: const Text('مراجعة الطلب والمستندات')),
-                        if (journey['nextAction'] is Map &&
-                            journey['nextAction']['destination'] == 'payments')
-                          FilledButton.icon(
-                              onPressed: () => open(context, 'payments'),
-                              icon: const Icon(Icons.receipt_long_outlined),
-                              label: const Text('مراجعة المدفوعات')),
-                        if (journey['nextAction'] is Map &&
-                            journey['nextAction']['destination'] == 'support')
-                          OutlinedButton(
-                              onPressed: () => open(context, 'support'),
-                              child: const Text('التواصل مع الفريق')),
-                      ])),
-                  const SizedBox(height: 16),
-                ],
+                      onCta: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const ExploreHubScreen()))),
+                for (final journey in journeys) ..._journey(context, journey),
               ],
             )),
       );
+
+  List<Widget> _journey(BuildContext context, Map<String, dynamic> journey) {
+    final stages = (journey['stages'] as List? ?? []).whereType<Map>().toList();
+    final required =
+        stages.where((stage) => stage['status'] != 'not-required').toList();
+    final completed =
+        required.where((stage) => stage['status'] == 'completed').length;
+    final currentIndex = journey['closed'] == true
+        ? -1
+        : stages.indexWhere((stage) => ![
+              'completed',
+              'not-required',
+              'not-started',
+              'upcoming'
+            ].contains(stage['status']));
+    return [
+      JourneySummaryCard(
+          title: journey['title'] as String? ?? 'رحلتك الدراسية',
+          completed: completed,
+          total: required.length),
+      const SizedBox(height: 22),
+      for (var i = 0; i < stages.length; i++)
+        _stage(context, journey, stages[i], i,
+            current: i == currentIndex, last: i == stages.length - 1),
+      if (journey['closed'] == true)
+        const Text('طلب منتهٍ — للمتابعة والأرشفة',
+            style: AppTextStyles.caption),
+      if (journey['followUp'] is Map) ...[
+        const SizedBox(height: 8),
+        Text(
+            journey['followUp']['advisor'] is Map
+                ? 'مسؤول المتابعة: ${journey['followUp']['advisor']['name']}'
+                : 'لم يُعيّن مسؤول متابعة بعد',
+            style: AppTextStyles.caption),
+        if (journey['followUp']['dueAt'] is String)
+          Text(
+              'موعد المتابعة: ${followUpDate(context, journey['followUp']['dueAt'])}',
+              style: AppTextStyles.caption),
+        if (journey['followUp']['overdue'] == true)
+          const Text('تأخرت متابعة الفريق عن الموعد المحدد',
+              style: TextStyle(color: AppColors.danger, fontSize: 12)),
+      ],
+      const SizedBox(height: 12),
+      OutlinedButton.icon(
+          onPressed: () => open(
+              context, 'applications', journey['applicationId'] as String?),
+          icon: const Icon(Icons.assignment_outlined),
+          label: const Text('مراجعة الطلب والمستندات')),
+      if (journey['nextAction'] is Map &&
+          journey['nextAction']['destination'] == 'payments')
+        FilledButton.icon(
+            onPressed: () => open(context, 'payments'),
+            icon: const Icon(Icons.receipt_long_outlined),
+            label: const Text('مراجعة المدفوعات')),
+      if (journey['nextAction'] is Map &&
+          journey['nextAction']['destination'] == 'support')
+        OutlinedButton(
+            onPressed: () => open(context, 'support'),
+            child: const Text('التواصل مع الفريق')),
+      const SizedBox(height: 24),
+    ];
+  }
+
+  Widget _stage(BuildContext context, Map journey, Map stage, int index,
+      {required bool current, required bool last}) {
+    final status = stage['status'];
+    final description = stage['descriptionAr'] as String? ?? '';
+    final showDescription =
+        current || ['action-required', 'overdue', 'rejected'].contains(status);
+    final details = <Widget>[
+      if (stage['completedSubCount'] is int && stage['totalSubCount'] is int)
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Text(
+            '${stage['completedSubCount']} / ${stage['totalSubCount']} مراحل مكتملة',
+            style: AppTextStyles.caption.copyWith(
+              fontWeight: FontWeight.w600,
+              color: stage['completedSubCount'] == stage['totalSubCount']
+                  ? const Color(0xFF16A34A)
+                  : AppColors.navy,
+            ),
+          ),
+        ),
+      if (showDescription && description.isNotEmpty)
+        Text(description,
+            style: AppTextStyles.caption.copyWith(fontSize: 11, height: 1.6)),
+      if (stage['dueAt'] is String)
+        Text('موعد المرحلة: ${followUpDate(context, stage['dueAt'])}',
+            style: AppTextStyles.caption),
+      if ((stage['reference'] as String? ?? '').isNotEmpty)
+        Text('مرجع التحقق: ${stage['reference']}',
+            style: AppTextStyles.caption),
+      if (status == 'overdue' && stage['recordedStatus'] != null)
+        Text('بانتظار: ${label(stage['recordedStatus'])}',
+            style: AppTextStyles.caption),
+      if (journey['closed'] != true &&
+          stage['destination'] == 'support' &&
+          !['completed', 'not-required'].contains(stage['recordedStatus']))
+        TextButton.icon(
+            onPressed: () => open(context, 'support'),
+            icon: const Icon(Icons.support_agent, size: 16),
+            label: Text('تواصل بشأن ${stage['titleAr'] ?? 'المرحلة'}')),
+    ];
+    return JourneyTimelineTile(
+      number: index + 1,
+      title: stage['titleAr'] as String? ?? '',
+      completed: status == 'completed',
+      current: current,
+      last: last,
+      alert: ['overdue', 'rejected'].contains(status),
+      statusLabel: label(status),
+      onTap: stage['destination'] == null
+          ? null
+          : () => open(context, stage['destination'] as String?,
+              journey['applicationId'] as String?),
+      details: details.isEmpty
+          ? null
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start, children: details),
+    );
+  }
 
   String followUpDate(BuildContext context, String raw) {
     final date = DateTime.tryParse(raw)?.toLocal();
@@ -200,8 +216,8 @@ class JourneyRequirementsView extends StatelessWidget {
   String label(dynamic status) =>
       const {
         'completed': 'مكتملة',
-        'not-started': 'لم تبدأ',
-        'in-progress': 'قيد التنفيذ',
+        'not-started': 'قادمة',
+        'in-progress': 'جارية الآن',
         'not-required': 'غير مطلوبة',
         'waiting': 'بانتظار المراجعة',
         'waiting-team': 'بانتظار فريق Study Birds',
