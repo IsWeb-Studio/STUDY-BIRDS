@@ -12,6 +12,14 @@ type Booking = {
   _id: string; __v: number; status: string; moveInDate: string | null; notes: string; staffNote: string;
   student?: { _id: string; name: string }; listing: Listing;
 };
+type ArrivalHousingItem = {
+  _id: string;
+  status: string;
+  student?: { _id: string; name: string; email?: string };
+  arrivalDate?: string | null;
+  notes?: string;
+  services: { studentHousing: boolean; airportPickup: boolean; residencePermitSupport: boolean; visaSupport: boolean };
+};
 const typeLabels: Record<string, [string, string]> = { single: ["فردي", "Single"], shared: ["مشترك", "Shared"], apartment: ["شقة طلابية", "Apartment"] };
 const statusLabels: Record<string, [string, string]> = {
   pending: ["قيد المراجعة", "Pending"], confirmed: ["مؤكد", "Confirmed"], rejected: ["مرفوض", "Rejected"], cancelled: ["ملغى", "Cancelled"],
@@ -24,6 +32,7 @@ export const AccommodationPage = ({ staff = false }: { staff?: boolean }) => {
   const t = (a: string, b: string) => ar ? a : b;
   const [listings, setListings] = useState<Listing[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [arrivalHousing, setArrivalHousing] = useState<ArrivalHousingItem[]>([]);
   const [universities, setUniversities] = useState<University[]>([]);
   const [loading, setLoading] = useState(true), [busy, setBusy] = useState(false);
   const [error, setError] = useState(""), [success, setSuccess] = useState("");
@@ -36,12 +45,14 @@ export const AccommodationPage = ({ staff = false }: { staff?: boolean }) => {
     setLoading(true);
     try {
       if (staff) {
-        const [l, b, u] = await Promise.all([
+        const [l, b, u, arr] = await Promise.all([
           api.get<Listing[]>("/admin/accommodation-listings"),
           api.get<Booking[]>("/admin/accommodation-bookings"),
           api.get<University[]>("/universities"),
+          api.get<ArrivalHousingItem[]>("/admin/student-arrival-requests"),
         ]);
         setListings(l.data); setBookings(b.data); setUniversities(u.data);
+        setArrivalHousing(arr.data.filter((r) => r.services?.studentHousing));
       } else {
         const [l, b] = await Promise.all([api.get<Listing[]>("/accommodation/listings"), api.get<Booking[]>("/accommodation/bookings/mine")]);
         setListings(l.data); setBookings(b.data);
@@ -120,6 +131,33 @@ export const AccommodationPage = ({ staff = false }: { staff?: boolean }) => {
           </div>
         </div>)}
       </div>
+    </section>}
+
+    {staff && arrivalHousing.length > 0 && <section className="space-y-3 rounded-2xl border bg-white p-5">
+      <h2 className="text-xl font-semibold">{t("طلبات السكن عبر خدمة الوصول", "Housing via Arrival Requests")}</h2>
+      <p className="text-sm text-slate-500">{t("هؤلاء الطلاب اختاروا خيار السكن ضمن طلب خدمة الوصول.", "These students selected housing as part of their arrival service request.")}</p>
+      {arrivalHousing.map((r) => (
+        <article key={r._id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-4">
+          <div>
+            <p className="font-semibold">{r.student?.name || "--"}</p>
+            {r.student?.email && <p className="text-sm text-slate-500">{r.student.email}</p>}
+            {r.arrivalDate && <p className="text-sm text-slate-500">{t("تاريخ الوصول: ", "Arrival: ")}{new Date(r.arrivalDate).toLocaleDateString(ar ? "ar" : "en")}</p>}
+            <p className="mt-1 text-xs text-slate-400">{t("الحالة: ", "Status: ")}{r.status}</p>
+          </div>
+          <div className="flex gap-2">
+            <button
+              className="rounded-xl border border-amber-400 px-3 py-2 text-sm font-semibold text-amber-700 disabled:opacity-50"
+              disabled={busy}
+              onClick={() => void change(() => api.patch(`/admin/student-arrival-requests/${r._id}`, { serviceKey: "studentHousing", serviceStatus: "in-progress" }), t("تم تحديث حالة السكن.", "Housing status updated."))}
+            >{t("قيد التنفيذ", "In Progress")}</button>
+            <button
+              className={`${button} disabled:opacity-50`}
+              disabled={busy}
+              onClick={() => void change(() => api.patch(`/admin/student-arrival-requests/${r._id}`, { serviceKey: "studentHousing", serviceStatus: "completed" }), t("تم إتمام السكن.", "Housing completed."))}
+            >{t("مكتمل", "Completed")}</button>
+          </div>
+        </article>
+      ))}
     </section>}
 
     <section className="space-y-3"><h2 className="text-xl font-semibold">{staff ? t("طلبات الحجز", "Booking requests") : t("طلبات حجزي", "My requests")}</h2>
