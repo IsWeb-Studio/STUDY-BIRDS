@@ -31,6 +31,7 @@ export const AdminStudentFinancialsEnhancedPage = () => {
     invoiceNumber: string;
   } | null>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
+  const [updatingInvoiceId, setUpdatingInvoiceId] = useState<string | null>(null);
   const { toasts, pushToast, dismissToast } = useToasts();
   const [form, setForm] = useState({
     studentId: "",
@@ -135,6 +136,22 @@ export const AdminStudentFinancialsEnhancedPage = () => {
       pushToast(isArabic ? "تعذر إصدار الفاتورة." : "Unable to create invoice.", "error");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleInvoiceStatusChange = async (id: string, status: InvoiceItem["status"]) => {
+    setUpdatingInvoiceId(id);
+    try {
+      const updated = await adminService.updateStudentInvoice(id, { status });
+      setInvoices((current) => current.map((item) => (item._id === id ? updated : item)));
+      pushToast(
+        isArabic ? "تم تحديث حالة الفاتورة." : "Invoice status updated.",
+        "success"
+      );
+    } catch (issue) {
+      pushToast(getErrorMessage(issue, isArabic ? "تعذر تحديث حالة الفاتورة." : "Unable to update invoice status."), "error");
+    } finally {
+      setUpdatingInvoiceId(null);
     }
   };
 
@@ -258,6 +275,7 @@ export const AdminStudentFinancialsEnhancedPage = () => {
                 <th className="px-4 py-3 font-medium">{isArabic ? "المبلغ" : "Amount"}</th>
                 <th className="px-4 py-3 font-medium">{isArabic ? "الحالة" : "Status"}</th>
                 <th className="px-4 py-3 font-medium">{isArabic ? "الاستحقاق" : "Due Date"}</th>
+                <th className="px-4 py-3 font-medium">{isArabic ? "تغيير الحالة" : "Change Status"}</th>
               </tr>
             </thead>
             <tbody>
@@ -267,8 +285,28 @@ export const AdminStudentFinancialsEnhancedPage = () => {
                   <td className="px-4 py-4">{invoice.invoiceNumber}</td>
                   <td className="px-4 py-4">{invoice.description}</td>
                   <td className="px-4 py-4">{formatCurrency(invoice.amount)}</td>
-                  <td className="px-4 py-4">{invoice.status}</td>
+                  <td className="px-4 py-4">
+                    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                      invoice.status === "paid" ? "bg-emerald-100 text-emerald-700" :
+                      invoice.status === "rejected" ? "bg-rose-100 text-rose-700" :
+                      invoice.status === "pending-confirmation" ? "bg-amber-100 text-amber-700" :
+                      "bg-slate-100 text-slate-700"
+                    }`}>{invoice.status}</span>
+                  </td>
                   <td className="px-4 py-4">{formatDate(invoice.dueDate)}</td>
+                  <td className="px-4 py-4">
+                    <select
+                      value={invoice.status}
+                      disabled={updatingInvoiceId === invoice._id}
+                      onChange={(e) => handleInvoiceStatusChange(invoice._id, e.target.value as InvoiceItem["status"])}
+                      className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm outline-none focus:ring disabled:opacity-50"
+                    >
+                      <option value="unpaid">{isArabic ? "غير مدفوعة" : "Unpaid"}</option>
+                      <option value="pending-confirmation">{isArabic ? "بانتظار التأكيد" : "Pending Confirmation"}</option>
+                      <option value="paid">{isArabic ? "مدفوعة ✓" : "Paid ✓"}</option>
+                      <option value="rejected">{isArabic ? "مرفوضة" : "Rejected"}</option>
+                    </select>
+                  </td>
                 </tr>
               ))}
             </tbody>
