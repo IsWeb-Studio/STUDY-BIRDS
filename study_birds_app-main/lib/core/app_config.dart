@@ -3,9 +3,9 @@
 class AppConfig {
   AppConfig._();
 
-  // PostHog — get from app.posthog.com > Project Settings > Project API Key
+  // PostHog — injected at build time via --dart-define=POSTHOG_API_KEY=phx_...
   // Leave empty to disable analytics silently.
-  static const posthogApiKey = 'phx_CoDdxqf2boidfjFWWWDHERsEfj8n5mn72QpL2Dar868JeRUw';
+  static const posthogApiKey = String.fromEnvironment('POSTHOG_API_KEY', defaultValue: '');
   static const posthogHost = 'https://us.i.posthog.com';
 
   // Sentry — crash & performance monitoring (sentry.io > study-birds-mobile > Settings > Client Keys)
