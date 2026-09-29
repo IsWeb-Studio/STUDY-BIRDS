@@ -119,6 +119,7 @@ const {
   listPostsAdmin, getPostAdmin, listReportsAdmin, listModerationLogAdmin, moderatePost, moderateComment,
   listSuspensionsAdmin, suspendUser, liftSuspension, getSettingsAdmin, updateSettingsAdmin,
 } = require("../controllers/communityController");
+const { unifiedSearch } = require("../controllers/unifiedSearchController");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
@@ -131,6 +132,8 @@ for (const kind of ['insurance', 'equivalency']) {
   router.get(`/students/:id/${kind}`, controller.staffRead(kind));
   router.put(`/students/:id/${kind}`, controller.save(kind));
 }
+// #PRD-Admin: Unified global search across all entities
+router.get("/search", unifiedSearch);
 router.get("/my-kpis", getMyKpis);
 router.get("/overview", getOverview);
 router.get("/stats", getStats);

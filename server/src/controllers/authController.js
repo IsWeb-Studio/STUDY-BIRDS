@@ -6,6 +6,7 @@ const { OAuth2Client } = require("google-auth-library");
 const asyncHandler = require("../utils/asyncHandler");
 const generateToken = require("../utils/generateToken");
 const { recordReferralSignup } = require("../utils/studentWallet");
+const { Challenge } = require('../models/IdentityCredential');
 
 const googleClient = new OAuth2Client();
 
@@ -289,6 +290,54 @@ const logout = asyncHandler(async (req, res) => {
   res.json({ ok: true });
 });
 
+// #6: Phone OTP login — step 1: request OTP via Twilio Verify
+const requestOtp = asyncHandler(async (req, res) => {
+  const twilioReady = () => process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_VERIFY_SERVICE_SID;
+  if (!twilioReady()) return res.status(503).json({ message: 'Phone login is not configured' });
+  const phone = String(req.body.phone || '').trim();
+  if (!/^\+[1-9]\d{7,14}$/.test(phone)) return res.status(400).json({ message: 'أدخل رقمًا دوليًا يبدأ بـ + ورمز الدولة' });
+  const key = `otp-login:${phone}`;
+  const existing = await Challenge.findOne({ key });
+  if (existing && Date.now() - existing.createdAt.getTime() < 60000) return res.status(429).json({ message: 'انتظر دقيقة قبل طلب رمز جديد' });
+  await Challenge.deleteOne({ key });
+  await fetch(`https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/Verifications`, {
+    method: 'POST',
+    headers: { Authorization: 'Basic ' + Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ To: phone, Channel: 'sms' }),
+    signal: AbortSignal.timeout(15000),
+  }).then(r => { if (!r.ok) throw new Error('SMS provider error'); });
+  await Challenge.create({ key, value: phone, createdAt: new Date() });
+  res.json({ sent: true });
+});
+
+// #6: Phone OTP login — step 2: verify OTP + issue JWT
+const verifyOtp = asyncHandler(async (req, res) => {
+  const twilioReady = () => process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_VERIFY_SERVICE_SID;
+  if (!twilioReady()) return res.status(503).json({ message: 'Phone login is not configured' });
+  const phone = String(req.body.phone || '').trim();
+  const code = String(req.body.code || '').trim();
+  if (!/^\+[1-9]\d{7,14}$/.test(phone) || !/^\d{4,10}$/.test(code)) return res.status(400).json({ message: 'رقم أو رمز غير صالح' });
+  const result = await fetch(`https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/VerificationCheck`, {
+    method: 'POST',
+    headers: { Authorization: 'Basic ' + Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ To: phone, Code: code }),
+    signal: AbortSignal.timeout(15000),
+  }).then(r => r.json());
+  if (result.status !== 'approved') return res.status(401).json({ message: 'رمز التحقق غير صحيح أو منتهي الصلاحية' });
+  await Challenge.deleteOne({ key: `otp-login:${phone}` });
+  let user = await User.findOne({ verifiedPhone: phone });
+  if (!user) {
+    user = await User.create({ name: phone, email: `${phone.replace('+', '')}@phone.studybirds.net`, verifiedPhone: phone, authProvider: 'phone', role: 'student' });
+    await ensureStudentProfile(user._id);
+  }
+  if (!user.isActive) return res.status(403).json({ message: 'الحساب موقوف' });
+  user.verifiedPhone = phone;
+  user.lastLoginAt = new Date();
+  await user.save();
+  const tokens = await issueTokenPair(user);
+  res.json({ ...tokens, user: serializeUser(user) });
+});
+
 module.exports = {
   serializeUser,
   ensureStudentProfile,
@@ -296,6 +345,8 @@ module.exports = {
   register,
   login,
   googleLogin,
+  requestOtp,
+  verifyOtp,
   me,
   changePassword,
   refresh,

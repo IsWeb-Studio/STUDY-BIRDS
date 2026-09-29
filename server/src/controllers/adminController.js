@@ -201,6 +201,14 @@ const buildOurServiceSlug = async (title, currentId) => {
 };
 
 const buildOurServicePayload = async (body, currentService = null) => {
+  const details = {};
+  for (const [key, limit] of Object.entries({ priceDescription: 200, estimatedDuration: 200, requirementsText: 4000, documentsText: 4000 })) {
+    const value = body[key] === undefined ? currentService?.[key] || '' : body[key];
+    if (typeof value !== 'string' || value.length > limit) {
+      throw Object.assign(new Error(`Invalid service field: ${key}`), { statusCode: 400 });
+    }
+    details[key] = value.trim();
+  }
   const title = normalizeOptionalText(body.title, currentService?.title || "");
   const titleChanged = title && title !== currentService?.title;
   const slug =
@@ -209,6 +217,7 @@ const buildOurServicePayload = async (body, currentService = null) => {
       : await buildOurServiceSlug(title, currentService?._id);
 
   return {
+    ...details,
     title,
     slug,
     image: body.image || "",

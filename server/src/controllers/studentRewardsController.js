@@ -59,6 +59,17 @@ async function reconcileRewards(student) {
   }
 }
 
+// Loyalty tiers based on cumulative points
+const LOYALTY_TIERS = [
+  { name: 'platinum', minPoints: 5000 },
+  { name: 'gold',     minPoints: 1500 },
+  { name: 'silver',   minPoints: 500  },
+  { name: 'bronze',   minPoints: 0    },
+];
+function loyaltyTier(points) {
+  return LOYALTY_TIERS.find(t => points >= t.minPoints)?.name || 'bronze';
+}
+
 const getMyRewards = run(async (req, res) => {
   await reconcileRewards(req.user._id);
   const [totals, entries] = await Promise.all([
@@ -66,7 +77,14 @@ const getMyRewards = run(async (req, res) => {
       { $group: { _id: null, total: { $sum: '$points' } } }]),
     Entry.find({ student: req.user._id }).sort({ createdAt: -1 }).limit(100).lean(),
   ]);
-  res.json({ totalPoints: totals[0]?.total || 0, entries: entries.map(e => ({ ...e, type: e.event === 'referral-qualified' ? 'referral' : 'milestone' })) });
+  const totalPoints = totals[0]?.total || 0;
+  const tier = loyaltyTier(totalPoints);
+  const nextTier = LOYALTY_TIERS.find(t => t.minPoints > totalPoints && t.minPoints > 0);
+  res.json({
+    totalPoints, tier,
+    nextTier: nextTier ? { name: nextTier.name, pointsNeeded: nextTier.minPoints - totalPoints } : null,
+    entries: entries.map(e => ({ ...e, type: e.event === 'referral-qualified' ? 'referral' : 'milestone' })),
+  });
 });
 
 const listRules = run(async (_req, res) => res.json(await Rule.find().sort({ event: 1 }).lean()));

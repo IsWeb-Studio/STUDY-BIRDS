@@ -12,7 +12,7 @@ const alumniProfileSchema = new mongoose.Schema({
   bio: { type: String, trim: true, maxlength: 1000 },
   linkedinUrl: { type: String, trim: true },
   openToMentoring: { type: Boolean, default: false },
-  isPublic: { type: Boolean, default: true },
+  isPublic: { type: Boolean, default: false },
 }, { timestamps: true });
 
 module.exports = mongoose.model('AlumniProfile', alumniProfileSchema);

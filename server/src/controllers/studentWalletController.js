@@ -8,22 +8,7 @@ const { withLease } = require("../utils/leaseLock");
 
 // ---- Student: their own wallet ------------------------------------------
 
-const getMyRewards = asyncHandler(async (req, res) => {
-  const entries = await StudentWalletEntry.find({ student: req.user._id, direction: "credit" })
-    .sort({ createdAt: -1 }).limit(100).lean();
-  const kindToType = { "referral-reward": "referral", adjustment: "admin" };
-  const totalPoints = entries.reduce((sum, e) => sum + (e.amount || 0), 0);
-  res.json({
-    totalPoints: Math.round(totalPoints),
-    entries: entries.map((e) => ({
-      _id: e._id,
-      type: kindToType[e.kind] || "bonus",
-      points: Math.round(e.amount || 0),
-      description: e.notes || (e.kind === "referral-reward" ? "مكافأة إحالة" : "نقاط مضافة"),
-      createdAt: e.createdAt,
-    })),
-  });
-});
+const { getMyRewards } = require('./studentRewardsController');
 
 const getMyWallet = asyncHandler(async (req, res) => {
   const [referralCode, balance, referrals, transactions] = await Promise.all([

@@ -3,6 +3,8 @@ const {
   register,
   login,
   googleLogin,
+  requestOtp,
+  verifyOtp,
   me,
   changePassword,
   refresh,
@@ -15,6 +17,9 @@ const router = express.Router();
 router.post("/register", register);
 router.post("/login", login);
 router.post("/google", googleLogin);
+// #6: Phone OTP login
+router.post("/otp/request", requestOtp);
+router.post("/otp/verify", verifyOtp);
 router.get("/me", protect, me);
 router.post("/change-password", protect, changePassword);
 router.post("/refresh", refresh);

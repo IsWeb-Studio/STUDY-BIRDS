@@ -633,27 +633,31 @@ const getStudentFavorites = asyncHandler(async (req, res) => {
 
 const toggleStudentFavorite = asyncHandler(async (req, res) => {
   const itemType = String(req.body.itemType || "").trim();
-  if (!["university", "program"].includes(itemType)) {
+  if (!["university", "program", "article"].includes(itemType)) {
     res.status(400);
     throw new Error("Invalid favorite item type");
   }
 
   const universityId = itemType === "university" ? String(req.body.universityId || "").trim() : "";
   const programId = itemType === "program" ? String(req.body.programId || "").trim() : "";
+  const articleSlug = itemType === "article" ? String(req.body.articleSlug || "").trim() : "";
+  const articleTitle = itemType === "article" ? String(req.body.articleTitle || "").trim() : "";
 
   if (itemType === "university" && !universityId) {
-    res.status(400);
-    throw new Error("University id is required");
+    res.status(400); throw new Error("University id is required");
   }
-
   if (itemType === "program" && !programId) {
-    res.status(400);
-    throw new Error("Program id is required");
+    res.status(400); throw new Error("Program id is required");
+  }
+  if (itemType === "article" && !articleSlug) {
+    res.status(400); throw new Error("Article slug is required");
   }
 
   const query = itemType === "university"
     ? { student: req.user._id, itemType, university: universityId }
-    : { student: req.user._id, itemType, program: programId };
+    : itemType === "program"
+    ? { student: req.user._id, itemType, program: programId }
+    : { student: req.user._id, itemType, articleSlug };
 
   const existing = await FavoriteItem.findOne(query);
   if (existing) {
@@ -664,18 +668,11 @@ const toggleStudentFavorite = asyncHandler(async (req, res) => {
 
   if (itemType === "university") {
     const university = await University.findById(universityId).select("_id");
-    if (!university) {
-      res.status(404);
-      throw new Error("University not found");
-    }
+    if (!university) { res.status(404); throw new Error("University not found"); }
   }
-
   if (itemType === "program") {
     const program = await Program.findById(programId).select("_id");
-    if (!program) {
-      res.status(404);
-      throw new Error("Program not found");
-    }
+    if (!program) { res.status(404); throw new Error("Program not found"); }
   }
 
   const favorite = await FavoriteItem.create({
@@ -683,6 +680,8 @@ const toggleStudentFavorite = asyncHandler(async (req, res) => {
     itemType,
     university: itemType === "university" ? universityId : undefined,
     program: itemType === "program" ? programId : undefined,
+    articleSlug: itemType === "article" ? articleSlug : undefined,
+    articleTitle: itemType === "article" ? articleTitle : undefined,
     notes: String(req.body.notes || "").trim(),
   });
 
@@ -701,7 +700,9 @@ const removeStudentFavorite = asyncHandler(async (req, res) => {
 });
 
 const getOrientationTestResult = asyncHandler(async (req, res) => {
-  const result = await OrientationTestResult.findOne({ student: req.user._id });
+  const result = await OrientationTestResult.findOne({ student: req.user._id })
+    .populate('matchedPrograms.program', 'title fieldOfStudy language degreeLevel tuition university')
+    .lean();
   res.json(result);
 });
 
@@ -721,7 +722,26 @@ const submitOrientationTest = asyncHandler(async (req, res) => {
     ? answers.interestedFields
     : answers.favoriteSubjects.slice(0, 3);
   const suggestedCountries = answers.preferredCountry ? [answers.preferredCountry] : [];
-  const recommendationSummary = `Focus on ${suggestedFields.join(", ") || "broad academic exploration"} with ${answers.preferredLanguage || "your preferred language"} and a ${answers.studyStyle || "balanced"} study style.`;
+  const recommendationSummary = suggestedFields.length
+    ? `توصيات مبنية على اهتمامك بـ ${suggestedFields.join('، ')} مع تفضيل ${answers.preferredLanguage || 'أي لغة'} ومستوى ${answers.desiredDegreeLevel || 'أي درجة'}`
+    : 'أجب على الأسئلة لتحصل على توصيات مخصصة';
+
+  // #23: Score and rank matching programs
+  const budgetNum = parseInt(String(answers.approximateBudget).replace(/[^\d]/g, ''), 10) || 0;
+  const allPrograms = await Program.find({})
+    .select('title fieldOfStudy language degreeLevel tuition university')
+    .populate('university', 'name country')
+    .lean();
+  const scored = allPrograms.map(p => {
+    let score = 0;
+    const field = (p.fieldOfStudy || '').toLowerCase();
+    for (const f of suggestedFields) if (field.includes(f.toLowerCase()) || f.toLowerCase().includes(field)) score += 30;
+    if (answers.preferredLanguage && p.language && p.language.toLowerCase().includes(answers.preferredLanguage.toLowerCase())) score += 20;
+    if (answers.desiredDegreeLevel && p.degreeLevel && p.degreeLevel.toLowerCase() === answers.desiredDegreeLevel.toLowerCase()) score += 20;
+    if (budgetNum > 0 && p.tuition && p.tuition <= budgetNum) score += 10;
+    for (const f of (answers.avoidFields || [])) if (field.includes(f.toLowerCase())) score -= 40;
+    return { ...p, matchScore: score };
+  }).filter(p => p.matchScore > 0).sort((a, b) => b.matchScore - a.matchScore).slice(0, 10);
 
   const result = await OrientationTestResult.findOneAndUpdate(
     { student: req.user._id },
@@ -730,6 +750,7 @@ const submitOrientationTest = asyncHandler(async (req, res) => {
       recommendationSummary,
       suggestedFields,
       suggestedCountries,
+      matchedPrograms: scored.map(p => ({ program: p._id, score: p.matchScore })),
     },
     { new: true, upsert: true }
   );

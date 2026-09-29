@@ -174,7 +174,7 @@ router.patch('/:id', canManage, run(async (req, res) => {
 
   // Push notification to student on status change
   if (status && status !== existing.status) {
-    const statusLabels = { assigned: 'تم تعيين موظف لطلبك', 'in-progress': 'طلبك قيد التنفيذ', completed: 'تم إنجاز طلبك', cancelled: 'تم إلغاء طلبك' };
+    const statusLabels = { assigned: 'تم تعيين موظف لطلبك', 'in-progress': 'طلبك قيد التنفيذ', 'en-route': 'السائق في الطريق إليك', completed: 'تم إنجاز طلبك', cancelled: 'تم إلغاء طلبك' };
     const label = statusLabels[status];
     if (label) {
       sendPushToUser(existing.student._id, {
@@ -189,6 +189,30 @@ router.patch('/:id', canManage, run(async (req, res) => {
     }
   }
 
+  res.json(updated);
+}));
+
+// PATCH /api/service-requests/:id/driver — update driver tracking details (staff only)
+router.patch('/:id/driver', canManage, run(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Not found' });
+  const { name = '', phone = '', vehicleType = '', vehicleNumber = '', etaMinutes = null } = req.body;
+  if (typeof name !== 'string' || name.length > 120) return res.status(400).json({ message: 'اسم السائق غير صالح' });
+  if (typeof phone !== 'string' || phone.length > 30) return res.status(400).json({ message: 'رقم الهاتف غير صالح' });
+  if (etaMinutes !== null && (!Number.isInteger(etaMinutes) || etaMinutes < 0)) return res.status(400).json({ message: 'وقت الوصول المتوقع غير صالح' });
+
+  const updated = await ServiceRequest.findByIdAndUpdate(req.params.id, {
+    $set: { driverDetails: { name: name.trim(), phone: phone.trim(), vehicleType: String(vehicleType).trim().slice(0, 60), vehicleNumber: String(vehicleNumber).trim().slice(0, 30), etaMinutes, updatedAt: new Date() } },
+  }, { new: true }).lean();
+  if (!updated) return res.status(404).json({ message: 'الطلب غير موجود' });
+
+  // Notify student if driver is assigned
+  if (name.trim()) {
+    sendPushToUser(updated.student, {
+      title: 'تفاصيل السائق',
+      body: `السائق ${name.trim()}${etaMinutes ? ` — وصول تقريبي خلال ${etaMinutes} دقيقة` : ''}`,
+      link: '/student/services',
+    }).catch(() => {});
+  }
   res.json(updated);
 }));
 

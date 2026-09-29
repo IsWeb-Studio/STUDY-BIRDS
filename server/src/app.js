@@ -84,7 +84,16 @@ app.get("/ping", (req, res) => {
 });
 
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", service: "study-birds-api" });
+  const mongoose = require('mongoose');
+  const dbState = mongoose.connection.readyState;
+  const dbStatus = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' }[dbState] || 'unknown';
+  const healthy = dbState === 1;
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? 'ok' : 'degraded',
+    service: 'study-birds-api',
+    db: dbStatus,
+    uptime: Math.floor(process.uptime()),
+  });
 });
 
 const requireDatabaseConnection = (req, res, next) => {
