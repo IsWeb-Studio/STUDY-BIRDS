@@ -535,15 +535,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                               : 'عرض التفاصيل',
                           expand: false,
                           onPressed: () {
-                            final destination = overview.nextAction?['destination'] as String?;
-                            if (destination == null || destination == 'journey') {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (_) => JourneyTrackerScreen(
-                                    currentStageKey: overview.journeyStage,
-                                    journeyPathLabel: journeyPathLabel)));
-                            } else {
-                              _openDestination(destination);
-                            }
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => JourneyTrackerScreen(
+                                  currentStageKey: overview.journeyStage,
+                                  journeyPathLabel: journeyPathLabel)));
                           },
                         ),
                       ],
