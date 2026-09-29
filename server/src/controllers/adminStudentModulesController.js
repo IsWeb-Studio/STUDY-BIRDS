@@ -315,8 +315,33 @@ const updateArrivalRequestAdmin = asyncHandler(async (req, res) => {
     if (pickup.driverName !== undefined) item.pickup.driverName = String(pickup.driverName || "").trim();
     if (pickup.driverPhone !== undefined) item.pickup.driverPhone = String(pickup.driverPhone || "").trim();
   }
+  const prevStatus = item.status;
   item.updatedBy = req.user._id;
   await item.save();
+
+  // sync postAdmission.travel so the mobile journey tracker reflects arrival status
+  if (item.status !== prevStatus) {
+    const postAdmissionStatus = item.status === 'completed' ? 'completed'
+      : item.status === 'in-progress' ? 'in-progress'
+      : 'not-started';
+    const eligibleApp = await Application.findOne({
+      student: item.student,
+      status: { $nin: ['rejected', 'file-completed-rejected', 'file-completed-accepted'] },
+      $or: [
+        { detailedStatus: { $in: ['accepted', 'final-admission', 'visa-preparation'] } },
+        { status: 'final-accepted' },
+      ],
+    }).sort({ createdAt: -1 });
+    if (eligibleApp) {
+      await Application.updateOne({ _id: eligibleApp._id }, {
+        $set: {
+          'postAdmission.travel.status': postAdmissionStatus,
+          'postAdmission.travel.updatedAt': new Date(),
+        },
+      });
+      if (item.status === 'completed') advanceTo(item.student, 'travel').catch(() => {});
+    }
+  }
 
   await Notification.create({
     user: item.student,
