@@ -7,7 +7,7 @@ function studentJourneys({ applications = [], documents = [], invoices = [] }, n
   return applications.map(app => {
     const linked = new Set((app.documents || []).map(id));
     const files = documents.filter(doc => linked.has(id(doc)));
-    const bills = invoices.filter(invoice => id(invoice.application) === id(app));
+    const bills = invoices.filter(invoice => !invoice.application || id(invoice.application) === id(app));
     const state = app.status === 'rejected' ? 'rejected' : app.detailedStatus || app.status;
     const closed = ['rejected', 'completed'].includes(state);
     const required = app.requiredDocumentTypes ?? requiredDocumentTypesFor(app.program);
