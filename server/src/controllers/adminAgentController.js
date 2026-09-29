@@ -10,6 +10,8 @@ const AgentWalletEntry = require("../models/AgentWalletEntry");
 const Notification = require("../models/Notification");
 const asyncHandler = require("../utils/asyncHandler");
 const { uploadFileToCloudinary } = require("../utils/uploadToCloudinary");
+const { sendPushToUser } = require("../utils/pushNotifications");
+const { hasSection } = require("../middleware/employeeAccess");
 
 const getPartnersAdmin = asyncHandler(async (req, res) => {
   const partners = await User.find({ role: "partner" }).select("-password").sort({ createdAt: -1 }).lean();
@@ -287,6 +289,66 @@ const replySupportTicketAdmin = asyncHandler(async (req, res) => {
   res.json(ticket);
 });
 
+// #44: Assign ticket to a support staff member
+const assignSupportTicketAdmin = asyncHandler(async (req, res) => {
+  const ticket = await SupportTicket.findById(req.params.id);
+  if (!ticket) return res.status(404).json({ message: 'Support ticket not found' });
+  const { assignedTo } = req.body;
+  if (assignedTo !== null && assignedTo !== undefined) {
+    const assignee = await User.findById(assignedTo).lean();
+    if (!assignee?.isActive || !hasSection(assignee, 'support')) {
+      return res.status(400).json({ message: 'اختر موظف دعم مخوّلًا ونشطًا' });
+    }
+    ticket.assignedTo = assignee._id;
+  } else {
+    ticket.assignedTo = null;
+  }
+  await ticket.save();
+  res.json(ticket);
+});
+
+// #45: Escalate / de-escalate a ticket
+const escalateSupportTicketAdmin = asyncHandler(async (req, res) => {
+  const ticket = await SupportTicket.findById(req.params.id);
+  if (!ticket) return res.status(404).json({ message: 'Support ticket not found' });
+  const escalated = Boolean(req.body.escalated);
+  const note = String(req.body.escalationNote || '').trim().slice(0, 1000);
+  ticket.escalated = escalated;
+  ticket.escalationNote = note;
+  ticket.status = escalated ? 'in-progress' : ticket.status;
+  await ticket.save();
+  // Notify the ticket owner
+  await Notification.create({
+    user: ticket.user || ticket.agent,
+    title: escalated ? 'تصعيد التذكرة' : 'إلغاء تصعيد التذكرة',
+    message: `تذكرتك "${ticket.subject}" ${escalated ? 'صُعِّدت للمدير.' : 'تم إلغاء تصعيدها.'}`,
+    type: 'info',
+  });
+  res.json(ticket);
+});
+
+// #51: Mark ticket as emergency and notify all support staff
+const markTicketEmergency = asyncHandler(async (req, res) => {
+  const ticket = await SupportTicket.findById(req.params.id);
+  if (!ticket) return res.status(404).json({ message: 'Support ticket not found' });
+  ticket.isEmergency = Boolean(req.body.isEmergency);
+  await ticket.save();
+  if (ticket.isEmergency) {
+    const staffUsers = await User.find({
+      isActive: { $ne: false },
+      $or: [{ role: 'admin' }, { role: 'employee', permissions: 'support' }],
+    }).select('_id').lean();
+    for (const staff of staffUsers) {
+      sendPushToUser(staff._id, {
+        title: '🚨 تذكرة طارئة',
+        body: `تذكرة "${ticket.subject}" بحاجة إلى استجابة فورية`,
+        link: '/admin/support',
+      }).catch(() => {});
+    }
+  }
+  res.json(ticket);
+});
+
 const getKnowledgeBaseAdmin = asyncHandler(async (req, res) => {
   const items = await KnowledgeBaseItem.find().sort({ sortOrder: 1, createdAt: -1 });
   res.json(items);
@@ -362,6 +424,9 @@ module.exports = {
   reviewVerificationDocumentAdmin,
   getSupportTicketsAdmin,
   replySupportTicketAdmin,
+  assignSupportTicketAdmin,
+  escalateSupportTicketAdmin,
+  markTicketEmergency,
   getKnowledgeBaseAdmin,
   createKnowledgeBaseItemAdmin,
   updateKnowledgeBaseItemAdmin,

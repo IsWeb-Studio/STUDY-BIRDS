@@ -73,6 +73,11 @@ const supportTicketSchema = new mongoose.Schema(
       enum: ["open", "in-progress", "answered", "closed"],
       default: "open",
     },
+    // #44: assignment / escalation
+    assignedTo:     { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
+    isEmergency:    { type: Boolean, default: false },
+    escalated:      { type: Boolean, default: false },
+    escalationNote: { type: String, trim: true, maxlength: 1000, default: '' },
     attachmentStorage: { type: new mongoose.Schema({ publicId: String, resourceType: String, deliveryType: String, format: String }, { _id: false }), select: false },
     attachment: {
       fileName: String,
@@ -80,6 +85,13 @@ const supportTicketSchema = new mongoose.Schema(
       mimeType: String,
       size: Number,
     },
+    // #46: multiple attachments (max 5) in addition to the legacy single attachment
+    attachments: [{
+      fileName: { type: String },
+      filePath: { type: String },
+      mimeType: { type: String },
+      size:     { type: Number },
+    }],
     replies: [supportReplySchema],
   },
   { timestamps: true }

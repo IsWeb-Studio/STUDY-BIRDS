@@ -77,6 +77,9 @@ const {
   reviewVerificationDocumentAdmin,
   getSupportTicketsAdmin,
   replySupportTicketAdmin,
+  assignSupportTicketAdmin,
+  escalateSupportTicketAdmin,
+  markTicketEmergency,
   getKnowledgeBaseAdmin,
   createKnowledgeBaseItemAdmin,
   updateKnowledgeBaseItemAdmin,
@@ -203,6 +206,9 @@ router.get("/verification-documents", getVerificationQueueAdmin);
 router.patch("/verification-documents/:id", reviewVerificationDocumentAdmin);
 router.get("/support-tickets", getSupportTicketsAdmin);
 router.patch("/support-tickets/:id/reply", replySupportTicketAdmin);
+router.patch("/support-tickets/:id/assign", assignSupportTicketAdmin);
+router.patch("/support-tickets/:id/escalate", escalateSupportTicketAdmin);
+router.patch("/support-tickets/:id/emergency", markTicketEmergency);
 router.get("/knowledge-base", getKnowledgeBaseAdmin);
 router.post("/knowledge-base", createKnowledgeBaseItemAdmin);
 router.put("/knowledge-base/:id", updateKnowledgeBaseItemAdmin);
@@ -216,6 +222,14 @@ router.post("/student-financials/invoices", createStudentInvoiceAdmin);
 router.patch("/student-financials/invoices/:id", updateStudentInvoiceAdmin);
 router.patch("/student-financials/payment-proofs/:id", reviewPaymentProofAdmin);
 router.get("/student-financials/wallet-entries", getWalletEntriesAdmin);
+const rewardRules = require('../controllers/studentRewardsController');
+router.get('/student-financials/reward-rules', rewardRules.listRules);
+const studentListings = require('../controllers/studentListingsController');
+router.get('/community-posts/listings', studentListings.list(true));
+router.post('/community-posts/listings', studentListings.save);
+router.put('/community-posts/listings/:id', studentListings.save);
+router.post('/student-financials/reward-rules', rewardRules.saveRule);
+router.put('/student-financials/reward-rules/:id', rewardRules.saveRule);
 router.post("/student-financials/wallet-entries", createWalletAdjustmentAdmin);
 router.get("/community-posts", listPostsAdmin);
 router.get("/community-posts/:id", getPostAdmin);
@@ -248,5 +262,10 @@ router.post("/university-accounts", createUniversityAccountAdmin);
 router.patch("/university-accounts/:id", updateUniversityAccountAdmin);
 router.get("/employees", getEmployeesAdmin);
 router.patch("/employees/:id/role", updateEmployeeRoleAdmin);
+
+// #62/109/110: Employee productivity KPI
+const { getEmployeeStats, getEmployeeStatsById } = require('../controllers/employeeStatsController');
+router.get("/employee-stats", getEmployeeStats);
+router.get("/employee-stats/:id", getEmployeeStatsById);
 
 module.exports = router;

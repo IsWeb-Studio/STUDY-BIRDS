@@ -66,6 +66,8 @@ const universitySchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    // #76: documents required before application to this university
+    requiredDocuments: { type: [String], default: [] },
   },
   { timestamps: true }
 );

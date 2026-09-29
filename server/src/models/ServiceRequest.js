@@ -10,8 +10,19 @@ const serviceRequestSchema = new mongoose.Schema({
   serviceTitle: { type: String, required: true, trim: true }, // snapshot at submission time
   status:     { type: String, enum: SERVICE_STATUSES, default: 'pending', index: true },
   assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
-  notes:      { type: String, trim: true, maxlength: 2000, default: '' }, // student's initial note
-  staffNote:  { type: String, trim: true, maxlength: 2000, default: '' }, // internal staff note
+  notes:      { type: String, trim: true, maxlength: 2000, default: '' },
+  staffNote:  { type: String, trim: true, maxlength: 2000, default: '' },
+  // #114: price/duration snapshot from OurService at submission time
+  price:       { type: Number, min: 0, default: 0 },
+  durationDays:{ type: Number, min: 0, default: 0 },
+  // #36: documents attached to the request (uploaded by student or staff)
+  documents: [{
+    fileName: { type: String },
+    filePath: { type: String },
+    mimeType: { type: String },
+    size:     { type: Number },
+    uploadedAt: { type: Date, default: Date.now },
+  }],
   invoice:    { type: mongoose.Schema.Types.ObjectId, ref: 'Invoice', default: null },
   statusHistory: [{
     status:    { type: String },

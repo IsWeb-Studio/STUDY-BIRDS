@@ -6,7 +6,9 @@ const { hasSection } = require('../middleware/employeeAccess');
 const run = require('../utils/asyncHandler');
 const ServiceRequest = require('../models/ServiceRequest');
 const OurService = require('../models/OurService');
+const Invoice = require('../models/Invoice');
 const { sendPushToUser } = require('../utils/pushNotifications');
+const { withLease } = require('../utils/leaseLock');
 
 const router = express.Router();
 router.use(protect);
@@ -22,6 +24,33 @@ const studentView = row => {
   return { ...visible, statusHistory: (statusHistory || []).map(h => ({ status: h.status, changedAt: h.changedAt })) };
 };
 
+async function autoCreateInvoice(request) {
+  if (!request.price || request.price <= 0) return null;
+  const ts = Date.now().toString(36).toUpperCase();
+  const invoiceNumber = `SRV-${ts}`;
+  try {
+    const inv = await Invoice.create({
+      student: request.student,
+      invoiceNumber,
+      description: `خدمة: ${request.serviceTitle}`,
+      amount: request.price,
+      category: 'service',
+      currency: 'USD',
+    });
+    await ServiceRequest.findByIdAndUpdate(request._id, { $set: { invoice: inv._id } });
+    sendPushToUser(request.student, {
+      title: 'فاتورة جديدة',
+      body: `صدرت فاتورة خدمة "${request.serviceTitle}" بقيمة $${request.price}`,
+      link: '/student/payments',
+    }).catch(() => {});
+    return inv;
+  } catch (err) {
+    // duplicate invoice number is safe to ignore; log others
+    if (err.code !== 11000) console.error('[serviceRequest] invoice create failed:', err.message);
+    return null;
+  }
+}
+
 // ── Student endpoints ──────────────────────────────────────────────────────
 
 // POST /api/service-requests — submit a new service request
@@ -33,6 +62,7 @@ router.post('/', authorize('student'), run(async (req, res) => {
   const service = await OurService.findById(serviceId).lean();
   if (!service) return res.status(404).json({ message: 'الخدمة غير موجودة' });
 
+  await withLease(`service-request:${req.user._id}:${serviceId}`, async () => {
   const existing = await ServiceRequest.findOne({ student: req.user._id, service: serviceId, status: { $in: ['pending', 'assigned', 'in-progress'] } });
   if (existing) return res.status(409).json({ message: 'لديك طلب نشط لهذه الخدمة بالفعل', requestId: existing._id });
 
@@ -41,9 +71,12 @@ router.post('/', authorize('student'), run(async (req, res) => {
     service: serviceId,
     serviceTitle: service.title,
     notes: String(notes || '').trim().slice(0, 2000),
+    price: service.price || 0,
+    durationDays: service.durationDays || 0,
     statusHistory: [{ status: 'pending', changedBy: req.user._id, note: 'طلب جديد' }],
   });
   res.status(201).json(studentView(request));
+  });
 }));
 
 // GET /api/service-requests/mine — student's own requests
@@ -69,6 +102,25 @@ router.get('/:id', run(async (req, res) => {
     .lean();
   if (!req_) return res.status(404).json({ message: 'الطلب غير موجود' });
   res.json(req.user.role === 'student' ? studentView(req_) : req_);
+}));
+
+// POST /api/service-requests/:id/documents — attach a document URL to a request
+// #36: student or staff can attach documents (HTTPS links only)
+router.post('/:id/documents', run(async (req, res) => {
+  if (req.user.role !== 'student' && !managesServices(req.user)) return res.status(403).json({ message: 'غير مصرح' });
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Not found' });
+  const { fileName, filePath, mimeType, size } = req.body;
+  if (typeof filePath !== 'string' || !/^https:\/\/[^\s]+$/.test(filePath)) return res.status(400).json({ message: 'رابط المستند غير صالح' });
+  if (typeof fileName !== 'string' || !fileName.trim() || fileName.length > 250) return res.status(400).json({ message: 'اسم الملف مطلوب' });
+  const filter = { _id: req.params.id };
+  if (req.user.role === 'student') filter.student = req.user._id;
+  const existing = await ServiceRequest.findOne(filter);
+  if (!existing) return res.status(404).json({ message: 'الطلب غير موجود' });
+  if ((existing.documents || []).length >= 20) return res.status(409).json({ message: 'وصل الطلب إلى الحد الأقصى من المستندات' });
+  const doc = { fileName: fileName.trim(), filePath, mimeType: typeof mimeType === 'string' ? mimeType.trim() : '', size: Number(size) || 0, uploadedAt: new Date() };
+  existing.documents.push(doc);
+  await existing.save();
+  res.status(201).json(studentView(existing));
 }));
 
 // ── Admin / Employee endpoints ─────────────────────────────────────────────
@@ -101,8 +153,11 @@ router.patch('/:id', canManage, run(async (req, res) => {
 
   const existing = await ServiceRequest.findById(req.params.id).populate('student', 'name').lean();
   if (!existing) return res.status(404).json({ message: 'الطلب غير موجود' });
+  if (req.body.expectedVersion !== undefined && req.body.expectedVersion !== (existing.__v || 0)) {
+    return res.status(409).json({ message: 'تغيّر الطلب بواسطة موظف آخر؛ حدّث القائمة قبل الحفظ' });
+  }
 
-  const update = { $set: {} };
+  const update = { $set: {}, $inc: { __v: 1 } };
   if (status && SERVICE_STATUSES.includes(status)) {
     update.$set.status = status;
     update.$push = { statusHistory: { status, changedBy: req.user._id, note: staffNote || '' } };
@@ -113,8 +168,9 @@ router.patch('/:id', canManage, run(async (req, res) => {
   }
   if (staffNote !== undefined) update.$set.staffNote = String(staffNote).trim().slice(0, 2000);
 
-  const updated = await ServiceRequest.findByIdAndUpdate(existing._id, update, { new: true })
+  const updated = await ServiceRequest.findOneAndUpdate({ _id: existing._id, __v: existing.__v || 0 }, update, { new: true, runValidators: true })
     .populate('service', 'title').populate('student', 'name email').populate('assignedTo', 'name').lean();
+  if (!updated) return res.status(409).json({ message: 'تغيّر الطلب؛ حدّث القائمة قبل الحفظ' });
 
   // Push notification to student on status change
   if (status && status !== existing.status) {
@@ -126,6 +182,10 @@ router.patch('/:id', canManage, run(async (req, res) => {
         body: label,
         link: '/student/services',
       }).catch(() => {});
+    }
+    // #35: auto-create invoice when service request is completed and has a price
+    if (status === 'completed' && !existing.invoice) {
+      autoCreateInvoice(updated).catch(() => {});
     }
   }
 
