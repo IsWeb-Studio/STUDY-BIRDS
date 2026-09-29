@@ -71,6 +71,7 @@ final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
   await SentryFlutter.init(
     (options) {
       options.dsn = AppConfig.sentryDsn;
