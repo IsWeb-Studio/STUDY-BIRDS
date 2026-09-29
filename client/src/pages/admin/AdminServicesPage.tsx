@@ -16,12 +16,27 @@ const normalizeService = (service: OurService): OurService => ({
   detailBody: repairMojibake(service.detailBody),
 });
 
+const JOURNEY_STAGES = [
+  { value: "", labelAr: "— لا ترتبط بمرحلة —", labelEn: "— No journey link —" },
+  { value: "visa",         labelAr: "التأشيرة",               labelEn: "Visa" },
+  { value: "travel",       labelAr: "ترتيبات السفر",          labelEn: "Travel arrangements" },
+  { value: "housing",      labelAr: "السكن",                  labelEn: "Accommodation" },
+  { value: "arrival",      labelAr: "الوصول والاستقبال",      labelEn: "Arrival & pickup" },
+  { value: "registration", labelAr: "التسجيل في الجامعة",     labelEn: "University registration" },
+  { value: "residence",    labelAr: "الإقامة والدعم المستمر", labelEn: "Residence & support" },
+];
+
 const emptyServiceForm = {
   title: "",
   image: "",
   detailTitle: "",
   detailBody: "",
   detailImage: "",
+  priceDescription: "",
+  estimatedDuration: "",
+  price: "0",
+  durationDays: "0",
+  journeyStage: "",
   featured: true,
   sortOrder: "0",
   country: "",
@@ -91,6 +106,11 @@ export const AdminServicesPage = () => {
       detailTitle: serviceForm.detailTitle || serviceForm.title,
       detailBody: serviceForm.detailBody || "",
       detailImage: serviceForm.detailImage || serviceForm.image || "",
+      priceDescription: serviceForm.priceDescription || "",
+      estimatedDuration: serviceForm.estimatedDuration || "",
+      price: Number(serviceForm.price || 0),
+      durationDays: Number(serviceForm.durationDays || 0),
+      journeyStage: serviceForm.journeyStage || "",
       featured: serviceForm.featured,
       sortOrder: Number(serviceForm.sortOrder || 0),
       country: serviceForm.country || null,
@@ -144,6 +164,44 @@ export const AdminServicesPage = () => {
                 onChange={(event) => setServiceForm((current) => ({ ...current, sortOrder: event.target.value }))}
                 className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring"
               />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "السعر (بالدولار)" : "Price (USD)"}</span>
+              <input type="number" min="0" step="0.01"
+                value={serviceForm.price}
+                onChange={(e) => setServiceForm((c) => ({ ...c, price: e.target.value }))}
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "المدة التقريبية (أيام)" : "Duration (days)"}</span>
+              <input type="number" min="0"
+                value={serviceForm.durationDays}
+                onChange={(e) => setServiceForm((c) => ({ ...c, durationDays: e.target.value }))}
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "وصف السعر (نص يظهر للطالب)" : "Price description (shown to student)"}</span>
+              <input maxLength={200}
+                value={serviceForm.priceDescription}
+                onChange={(e) => setServiceForm((c) => ({ ...c, priceDescription: e.target.value }))}
+                placeholder={language === "ar" ? "مثال: يبدأ من $50" : "e.g. Starting from $50"}
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "مرحلة الرحلة المرتبطة" : "Linked journey stage"}</span>
+              <select
+                value={serviceForm.journeyStage}
+                onChange={(e) => setServiceForm((c) => ({ ...c, journeyStage: e.target.value }))}
+                className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring"
+              >
+                {JOURNEY_STAGES.map((s) => (
+                  <option key={s.value} value={s.value}>{language === "ar" ? s.labelAr : s.labelEn}</option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs text-slate-400">{language === "ar" ? "عند إتمام طلب هذه الخدمة يتحدث هذا القسم في رحلة الطالب تلقائياً." : "When this service request is completed, the linked journey stage updates automatically."}</p>
             </label>
             <label className="block md:col-span-2">
               <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "الدولة" : "Country"}</span>
@@ -281,6 +339,11 @@ export const AdminServicesPage = () => {
                     </span>
                   )}
                 </div>
+                {service.journeyStage ? (
+                  <span className="mt-2 inline-block rounded-full bg-violet-100 px-3 py-1 text-xs font-semibold text-violet-700">
+                    {language === "ar" ? "رحلة: " : "Journey: "}{JOURNEY_STAGES.find((s) => s.value === service.journeyStage)?.[language === "ar" ? "labelAr" : "labelEn"] || service.journeyStage}
+                  </span>
+                ) : null}
                 {service.detailTitle ? <p className="mt-3 text-sm font-medium text-slate-800">{service.detailTitle}</p> : null}
                 {service.detailBody ? <p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-500">{service.detailBody}</p> : null}
               </div>
@@ -294,6 +357,11 @@ export const AdminServicesPage = () => {
                       detailTitle: service.detailTitle || "",
                       detailBody: service.detailBody || "",
                       detailImage: service.detailImage || "",
+                      priceDescription: service.priceDescription || "",
+                      estimatedDuration: service.estimatedDuration || "",
+                      price: String(service.price ?? 0),
+                      durationDays: String(service.durationDays ?? 0),
+                      journeyStage: service.journeyStage || "",
                       featured: Boolean(service.featured),
                       sortOrder: String(service.sortOrder || 0),
                       country: service.country && typeof service.country !== "string" ? service.country._id : typeof service.country === "string" ? service.country : "",

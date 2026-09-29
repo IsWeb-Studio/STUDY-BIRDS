@@ -180,7 +180,7 @@ export const adminService = {
     const { data } = await api.get<{ invoices: InvoiceItem[]; paymentProofs: PaymentProofItem[] }>("/admin/student-financials");
     return data;
   },
-  createStudentInvoice: async (payload: Partial<InvoiceItem> & { studentId: string }) => {
+  createStudentInvoice: async (payload: Partial<InvoiceItem> & { studentId: string; applicationId?: string }) => {
     const { data } = await api.post<InvoiceItem>("/admin/student-financials/invoices", payload);
     return data;
   },

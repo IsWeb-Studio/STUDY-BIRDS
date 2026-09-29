@@ -1,7 +1,7 @@
 import { DocumentFileLink } from '../../components/DocumentFileLink';
 import { useEffect, useMemo, useState } from "react";
 import { adminService } from "../../services/adminService";
-import type { InvoiceItem, PaymentProofItem, User } from "../../types";
+import type { Application, InvoiceItem, PaymentProofItem, User } from "../../types";
 import { ConfirmationModal } from "../../components/ConfirmationModal";
 import { AdminPagination } from "../../components/admin/AdminPagination";
 import { ToastViewport } from "../../components/ToastViewport";
@@ -32,9 +32,11 @@ export const AdminStudentFinancialsEnhancedPage = () => {
   } | null>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [updatingInvoiceId, setUpdatingInvoiceId] = useState<string | null>(null);
+  const [studentApplications, setStudentApplications] = useState<Application[]>([]);
   const { toasts, pushToast, dismissToast } = useToasts();
   const [form, setForm] = useState({
     studentId: "",
+    applicationId: "",
     invoiceNumber: "",
     description: "",
     amount: "",
@@ -105,6 +107,19 @@ export const AdminStudentFinancialsEnhancedPage = () => {
     if (proofPage > proofTotalPages) setProofPage(proofTotalPages);
   }, [proofPage, proofTotalPages]);
 
+  const handleStudentChange = async (studentId: string) => {
+    setForm((current) => ({ ...current, studentId, applicationId: "" }));
+    setStudentApplications([]);
+    if (!studentId) return;
+    try {
+      const details = await adminService.getStudentDetails(studentId);
+      setStudentApplications(details.applications || []);
+      if (details.applications?.length === 1) {
+        setForm((current) => ({ ...current, applicationId: details.applications[0]._id }));
+      }
+    } catch {}
+  };
+
   const handleCreateInvoice = async (event: React.FormEvent) => {
     event.preventDefault();
     setCreating(true);
@@ -112,21 +127,24 @@ export const AdminStudentFinancialsEnhancedPage = () => {
     try {
       const created = await adminService.createStudentInvoice({
         studentId: form.studentId,
+        applicationId: form.applicationId || undefined,
         invoiceNumber: form.invoiceNumber,
         description: form.description,
         amount: Number(form.amount),
         dueDate: form.dueDate,
         category: form.category as InvoiceItem["category"],
-      });
+      } as Parameters<typeof adminService.createStudentInvoice>[0]);
       setInvoices((current) => [created, ...current]);
       setForm({
         studentId: "",
+        applicationId: "",
         invoiceNumber: "",
         description: "",
         amount: "",
         dueDate: "",
         category: "application-fee",
       });
+      setStudentApplications([]);
       pushToast(
         isArabic ? "تم إصدار الفاتورة وإضافتها لحساب الطالب." : "Invoice created successfully.",
         "success"
@@ -225,7 +243,7 @@ export const AdminStudentFinancialsEnhancedPage = () => {
         <form onSubmit={handleCreateInvoice} className="mt-6 grid gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-5 md:grid-cols-2 xl:grid-cols-3">
           <label>
             <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "الطالب" : "Student"}</span>
-            <select value={form.studentId} onChange={(event) => setForm((current) => ({ ...current, studentId: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
+            <select value={form.studentId} onChange={(event) => handleStudentChange(event.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
               <option value="">{isArabic ? "اختر الطالب" : "Select student"}</option>
               {students.map((student) => (
                 <option key={student._id} value={student._id}>
@@ -234,6 +252,19 @@ export const AdminStudentFinancialsEnhancedPage = () => {
               ))}
             </select>
           </label>
+          {studentApplications.length > 0 && (
+            <label>
+              <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "الطلب (اختياري)" : "Application (optional)"}</span>
+              <select value={form.applicationId} onChange={(event) => setForm((current) => ({ ...current, applicationId: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
+                <option value="">{isArabic ? "غير مرتبط بطلب" : "Not linked to application"}</option>
+                {studentApplications.map((app) => (
+                  <option key={app._id} value={app._id}>
+                    {(app as Application & { program?: { title?: string } }).program?.title || app._id} — {app.status}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label>
             <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "رقم الفاتورة" : "Invoice Number"}</span>
             <input value={form.invoiceNumber} onChange={(event) => setForm((current) => ({ ...current, invoiceNumber: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring" />
