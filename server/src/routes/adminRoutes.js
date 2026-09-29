@@ -96,6 +96,7 @@ const {
   reviewPaymentProofAdmin,
   getArrivalRequestsAdmin,
   updateArrivalRequestAdmin,
+  syncArrivalStagesAdmin,
   getStudentFavoritesAdmin,
   getOrientationResultsAdmin,
   updateOrientationResultAdmin,
@@ -247,6 +248,7 @@ router.get("/community-settings", getSettingsAdmin);
 router.put("/community-settings", updateSettingsAdmin);
 router.get("/student-arrival-requests", getArrivalRequestsAdmin);
 router.patch("/student-arrival-requests/:id", updateArrivalRequestAdmin);
+router.post("/student-arrival-requests/sync-stages", syncArrivalStagesAdmin);
 router.get("/student-favorites", getStudentFavoritesAdmin);
 router.get("/student-orientation-results", getOrientationResultsAdmin);
 router.patch("/student-orientation-results/:id", updateOrientationResultAdmin);
