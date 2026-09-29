@@ -33,10 +33,14 @@ export const AdminStudentFinancialsEnhancedPage = () => {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [updatingInvoiceId, setUpdatingInvoiceId] = useState<string | null>(null);
   const [studentApplications, setStudentApplications] = useState<Application[]>([]);
+  const [studentServiceRequests, setStudentServiceRequests] = useState<Array<{ _id: string; serviceTitle: string; status: string }>>([]);
+  const [studentAccommodationBookings, setStudentAccommodationBookings] = useState<Array<{ _id: string; listing?: { title?: string }; status: string }>>([]);
   const { toasts, pushToast, dismissToast } = useToasts();
   const [form, setForm] = useState({
     studentId: "",
     applicationId: "",
+    serviceRequestId: "",
+    accommodationBookingId: "",
     invoiceNumber: "",
     description: "",
     amount: "",
@@ -108,12 +112,20 @@ export const AdminStudentFinancialsEnhancedPage = () => {
   }, [proofPage, proofTotalPages]);
 
   const handleStudentChange = async (studentId: string) => {
-    setForm((current) => ({ ...current, studentId, applicationId: "" }));
+    setForm((current) => ({ ...current, studentId, applicationId: "", serviceRequestId: "", accommodationBookingId: "" }));
     setStudentApplications([]);
+    setStudentServiceRequests([]);
+    setStudentAccommodationBookings([]);
     if (!studentId) return;
     try {
-      const details = await adminService.getStudentDetails(studentId);
+      const [details, serviceReqs, accommodationBookings] = await Promise.all([
+        adminService.getStudentDetails(studentId),
+        adminService.getStudentServiceRequests(studentId),
+        adminService.getStudentAccommodationBookings(studentId),
+      ]);
       setStudentApplications(details.applications || []);
+      setStudentServiceRequests(serviceReqs || []);
+      setStudentAccommodationBookings(accommodationBookings || []);
       if (details.applications?.length === 1) {
         setForm((current) => ({ ...current, applicationId: details.applications[0]._id }));
       }
@@ -127,17 +139,21 @@ export const AdminStudentFinancialsEnhancedPage = () => {
     try {
       const created = await adminService.createStudentInvoice({
         studentId: form.studentId,
-        applicationId: form.applicationId || undefined,
+        applicationId: ["application-fee", "tuition"].includes(form.category) ? (form.applicationId || undefined) : undefined,
+        serviceRequestId: form.category === "service" ? (form.serviceRequestId || undefined) : undefined,
+        accommodationBookingId: form.category === "housing" ? (form.accommodationBookingId || undefined) : undefined,
         invoiceNumber: form.invoiceNumber,
         description: form.description,
         amount: Number(form.amount),
         dueDate: form.dueDate,
         category: form.category as InvoiceItem["category"],
-      } as Parameters<typeof adminService.createStudentInvoice>[0]);
+      });
       setInvoices((current) => [created, ...current]);
       setForm({
         studentId: "",
         applicationId: "",
+        serviceRequestId: "",
+        accommodationBookingId: "",
         invoiceNumber: "",
         description: "",
         amount: "",
@@ -145,6 +161,8 @@ export const AdminStudentFinancialsEnhancedPage = () => {
         category: "application-fee",
       });
       setStudentApplications([]);
+      setStudentServiceRequests([]);
+      setStudentAccommodationBookings([]);
       pushToast(
         isArabic ? "تم إصدار الفاتورة وإضافتها لحساب الطالب." : "Invoice created successfully.",
         "success"
@@ -252,17 +270,45 @@ export const AdminStudentFinancialsEnhancedPage = () => {
               ))}
             </select>
           </label>
-          {studentApplications.length > 0 && (
+          {["application-fee", "tuition"].includes(form.category) && studentApplications.length > 0 && (
             <label>
-              <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "الطلب (اختياري)" : "Application (optional)"}</span>
+              <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "الطلب" : "Application"}</span>
               <select value={form.applicationId} onChange={(event) => setForm((current) => ({ ...current, applicationId: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
-                <option value="">{isArabic ? "غير مرتبط بطلب" : "Not linked to application"}</option>
+                <option value="">{isArabic ? "اختر الطلب" : "Select application"}</option>
                 {studentApplications.map((app) => (
                   <option key={app._id} value={app._id}>
                     {(app as Application & { program?: { title?: string } }).program?.title || app._id} — {app.status}
                   </option>
                 ))}
               </select>
+            </label>
+          )}
+          {form.category === "service" && form.studentId && (
+            <label>
+              <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "طلب الخدمة" : "Service Request"}</span>
+              <select value={form.serviceRequestId} onChange={(event) => setForm((current) => ({ ...current, serviceRequestId: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
+                <option value="">{isArabic ? "اختر الخدمة" : "Select service"}</option>
+                {studentServiceRequests.map((req) => (
+                  <option key={req._id} value={req._id}>
+                    {req.service?.title || req._id} — {req.status}
+                  </option>
+                ))}
+              </select>
+              {studentServiceRequests.length === 0 && <p className="mt-1 text-xs text-slate-400">{isArabic ? "لا توجد طلبات خدمة لهذا الطالب" : "No service requests found"}</p>}
+            </label>
+          )}
+          {form.category === "housing" && form.studentId && (
+            <label>
+              <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "حجز السكن" : "Accommodation Booking"}</span>
+              <select value={form.accommodationBookingId} onChange={(event) => setForm((current) => ({ ...current, accommodationBookingId: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
+                <option value="">{isArabic ? "اختر الحجز" : "Select booking"}</option>
+                {studentAccommodationBookings.map((booking) => (
+                  <option key={booking._id} value={booking._id}>
+                    {booking.listing?.title || booking._id} — {booking.status}
+                  </option>
+                ))}
+              </select>
+              {studentAccommodationBookings.length === 0 && <p className="mt-1 text-xs text-slate-400">{isArabic ? "لا توجد حجوزات سكن لهذا الطالب" : "No accommodation bookings found"}</p>}
             </label>
           )}
           <label>
@@ -283,7 +329,7 @@ export const AdminStudentFinancialsEnhancedPage = () => {
           </label>
           <label>
             <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "الفئة" : "Category"}</span>
-            <select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
+            <select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value, applicationId: "", serviceRequestId: "", accommodationBookingId: "" }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
               <option value="application-fee">{isArabic ? "رسوم التقديم" : "Application Fee"}</option>
               <option value="tuition">{isArabic ? "رسوم دراسية" : "Tuition"}</option>
               <option value="service">{isArabic ? "خدمة" : "Service"}</option>
