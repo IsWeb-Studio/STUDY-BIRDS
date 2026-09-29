@@ -3,6 +3,7 @@ const Application = require('../models/Application');
 const asyncHandler = require('../utils/asyncHandler');
 const { hasSection } = require('../middleware/employeeAccess');
 const { VISA_STATES, isVisaCaseEligible, visaCaseView } = require('../utils/visaCase');
+const { advanceTo } = require('../utils/journeyAutomation');
 
 const listVisaCases = asyncHandler(async (req, res) => {
   const candidates = await Application.find({ status: { $nin: ['rejected', 'file-completed-rejected', 'file-completed-accepted'] } })
@@ -64,6 +65,8 @@ const updateVisaCase = asyncHandler(async (req, res) => {
     $push: { visaCaseHistory: { fromStatus: app.visaCase?.status || 'not-started', status, changedBy: req.user._id, changedAt: now } },
   }, { new: true, runValidators: true }).lean();
   if (!updated) return res.status(409).json({ message: 'Application changed. Refresh and retry.' });
+  // بند 115: visa approved → advance journeyStage to 'visa'
+  if (status === 'approved') advanceTo(updated.student, 'visa').catch(() => {});
   res.json(visaCaseView(updated));
 });
 

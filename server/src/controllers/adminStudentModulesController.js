@@ -1,4 +1,4 @@
-const { onPaymentApproved } = require("../utils/journeyAutomation");
+const { onPaymentApproved, advanceTo } = require("../utils/journeyAutomation");
 const { sendPushToUser } = require("../utils/pushNotifications");
 const User = require("../models/User");
 const StudentProfile = require("../models/StudentProfile");
@@ -83,6 +83,8 @@ const reviewStudentDocumentAdmin = asyncHandler(async (req, res) => {
   const notice = documentStatusNotice(updated, documentLabel(updated.type));
   await Notification.create({ user: updated.student._id, ...notice, link: "/student/documents" });
   sendPushToUser(updated.student._id, { title: notice.title, body: notice.message || 'تحقق من حالة مستنداتك.', link: '/student/documents' }).catch(() => {});
+  // بند 115: advance journeyStage to documents-review on first employee document review
+  advanceTo(updated.student._id, 'documents-review').catch(() => {});
   res.json({ ...updated, statusInfo: documentStatusInfo(updated) });
 });
 

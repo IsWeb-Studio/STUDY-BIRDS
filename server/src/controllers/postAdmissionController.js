@@ -3,6 +3,17 @@ const Application = require('../models/Application');
 const asyncHandler = require('../utils/asyncHandler');
 const { hasSection } = require('../middleware/employeeAccess');
 const { STAGES, STATES, isPostAdmissionEligible, postAdmissionStages } = require('../utils/postAdmissionJourney');
+const { advanceTo } = require('../utils/journeyAutomation');
+
+// Maps post-admission stage keys → journey stage keys (بند 115)
+const POST_ADMISSION_TO_JOURNEY = {
+  visa:         'visa',
+  travel:       'travel',
+  housing:      'accommodation',
+  arrival:      'reception',
+  registration: 'university-registration',
+  residence:    'studies-started',
+};
 const view = app => ({ version: app.__v, eligible: isPostAdmissionEligible(app), stages: postAdmissionStages(app), studiesStartAt: app.studiesStartAt || null });
 const getPostAdmission = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Application not found' });
@@ -35,6 +46,11 @@ const updatePostAdmission = asyncHandler(async (req, res) => {
     $push: { postAdmissionHistory: { stage, fromStatus: app.postAdmission?.[stage]?.status || 'not-started', ...values, changedBy: req.user._id, changedAt: now } },
   }, { new: true, runValidators: true }).lean();
   if (!updated) return res.status(409).json({ message: 'Application changed. Refresh and retry.' });
+  // بند 115: auto-advance journeyStage when a post-admission stage is completed
+  if (status === 'completed') {
+    const journeyStage = POST_ADMISSION_TO_JOURNEY[stage];
+    if (journeyStage) advanceTo(updated.student, journeyStage).catch(() => {});
+  }
   res.json(view(updated));
 });
 module.exports = { getPostAdmission, updatePostAdmission };

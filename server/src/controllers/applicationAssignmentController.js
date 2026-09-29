@@ -3,6 +3,7 @@ const Application = require('../models/Application');
 const User = require('../models/User');
 const asyncHandler = require('../utils/asyncHandler');
 const { isAutomaticAssignmentStage, canRequeueAssignment } = require('../utils/automaticAssignmentEligibility');
+const { advanceTo } = require('../utils/journeyAutomation');
 const eligible = { isActive: { $ne: false }, $or: [{ role: 'admin' }, { role: 'employee', permissions: 'applications' }] };
 const getAssignment = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Application not found' });
@@ -35,6 +36,8 @@ const updateAssignment = asyncHandler(async (req, res) => {
     $push: { assignmentHistory: { advisor: advisorId, dueAt: due, changedBy: req.user._id, changedAt: new Date() } },
   }, { new: true, runValidators: true }).select('assignedAdvisor followUpDueAt __v');
   if (!updated) return res.status(409).json({ message: 'Application changed. Refresh and try again.' });
+  // بند 115: assigning an advisor means the team is actively selecting a university
+  if (advisorId) advanceTo(application.student, 'university-selection').catch(() => {});
   res.json(updated);
 });
 // Re-enters a manually cleared (unassigned, with history) application into the

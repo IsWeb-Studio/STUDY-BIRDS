@@ -7,6 +7,7 @@ const Invoice = require('../models/Invoice');
 const StudentWalletEntry = require('../models/StudentWalletEntry');
 const Notification = require('../models/Notification');
 const { sendPushToUser } = require('../utils/pushNotifications');
+const { onPaymentApproved } = require('../utils/journeyAutomation');
 
 const router = express.Router();
 const { withLease } = require('../utils/leaseLock');
@@ -114,6 +115,8 @@ router.post('/webhook', express.raw({ type: 'application/json' }), async (req, r
         if (updated) {
           await Notification.create({ user: studentId, title: 'تم استلام الدفع بنجاح', message: `تم تأكيد دفع الفاتورة ${updated.invoiceNumber || ''}.`, type: 'success', link: '/student/payments' });
           sendPushToUser(studentId, { title: 'تم استلام الدفع', body: 'تم تأكيد دفعتك بنجاح.', link: '/student/payments' }).catch(() => {});
+          // بند 115: advance journeyStage to first-payment when Stripe payment is confirmed
+          onPaymentApproved(studentId).catch(() => {});
         }
       } catch (err) {
         console.error('[Stripe webhook] failed to mark invoice paid:', err.message);
