@@ -260,15 +260,40 @@ class StudentRepository {
   /// Real endpoint covering flight + airport pickup + housing + visa/residence
   /// support in ONE consolidated request (see ArrivalServiceRequest.js).
   /// Returns null if the student hasn't submitted one yet.
-  Future<Map<String, dynamic>?> getArrivalServices() async {
+  Future<List<dynamic>> getArrivalServices() async {
     final data = await ApiClient.instance
         .get('/students/arrival-services', token: _token);
-    return data as Map<String, dynamic>?;
+    if (data is List) return data;
+    if (data is Map) return [data]; // backward compat
+    return [];
   }
 
-  /// Throws ApiException(400, ...) if the student hasn't reached
-  /// final-accepted / travel-and-settlement yet — the backend enforces this.
-  Future<Map<String, dynamic>> upsertArrivalServices({
+  Map<String, dynamic> _arrivalBody({
+    String? arrivalDate,
+    String? arrivalTime,
+    String? flightNumber,
+    String? airport,
+    String? notes,
+    required bool airportPickup,
+    required bool studentHousing,
+    required bool residencePermitSupport,
+    required bool visaSupport,
+  }) =>
+      {
+        if (arrivalDate != null) 'arrivalDate': arrivalDate,
+        if (arrivalTime != null) 'arrivalTime': arrivalTime,
+        if (flightNumber != null) 'flightNumber': flightNumber,
+        if (airport != null) 'airport': airport,
+        if (notes != null) 'notes': notes,
+        'services': {
+          'airportPickup': airportPickup,
+          'studentHousing': studentHousing,
+          'residencePermitSupport': residencePermitSupport,
+          'visaSupport': visaSupport,
+        },
+      };
+
+  Future<Map<String, dynamic>> createArrivalService({
     String? arrivalDate,
     String? arrivalTime,
     String? flightNumber,
@@ -279,20 +304,42 @@ class StudentRepository {
     required bool residencePermitSupport,
     required bool visaSupport,
   }) async {
-    final data = await ApiClient.instance
-        .put('/students/arrival-services', token: _token, body: {
-      if (arrivalDate != null) 'arrivalDate': arrivalDate,
-      if (arrivalTime != null) 'arrivalTime': arrivalTime,
-      if (flightNumber != null) 'flightNumber': flightNumber,
-      if (airport != null) 'airport': airport,
-      if (notes != null) 'notes': notes,
-      'services': {
-        'airportPickup': airportPickup,
-        'studentHousing': studentHousing,
-        'residencePermitSupport': residencePermitSupport,
-        'visaSupport': visaSupport,
-      },
-    });
+    final data = await ApiClient.instance.post('/students/arrival-services',
+        token: _token,
+        body: _arrivalBody(
+          arrivalDate: arrivalDate, arrivalTime: arrivalTime,
+          flightNumber: flightNumber, airport: airport, notes: notes,
+          airportPickup: airportPickup, studentHousing: studentHousing,
+          residencePermitSupport: residencePermitSupport, visaSupport: visaSupport,
+        ));
+    return data as Map<String, dynamic>;
+  }
+
+  /// Throws ApiException(400, ...) if the student hasn't reached
+  /// final-accepted / travel-and-settlement yet — the backend enforces this.
+  Future<Map<String, dynamic>> upsertArrivalServices({
+    String? id,
+    String? arrivalDate,
+    String? arrivalTime,
+    String? flightNumber,
+    String? airport,
+    String? notes,
+    required bool airportPickup,
+    required bool studentHousing,
+    required bool residencePermitSupport,
+    required bool visaSupport,
+  }) async {
+    final path = id != null
+        ? '/students/arrival-services/$id'
+        : '/students/arrival-services';
+    final data = await ApiClient.instance.put(path,
+        token: _token,
+        body: _arrivalBody(
+          arrivalDate: arrivalDate, arrivalTime: arrivalTime,
+          flightNumber: flightNumber, airport: airport, notes: notes,
+          airportPickup: airportPickup, studentHousing: studentHousing,
+          residencePermitSupport: residencePermitSupport, visaSupport: visaSupport,
+        ));
     return data as Map<String, dynamic>;
   }
 
