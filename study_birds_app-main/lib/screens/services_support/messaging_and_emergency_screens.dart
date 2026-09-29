@@ -47,7 +47,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     _httpClient?.close(force: true);
     final tok = token;
     if (tok == null) return;
-    final baseUrl = ApiClient.instance.baseUrl;
+    final baseUrl = ApiClient.baseUrl;
     final uri = Uri.parse('$baseUrl/mobile-workspace/events');
     _httpClient = HttpClient();
     _httpClient!.getUrl(uri).then((req) {
@@ -68,7 +68,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
           final currentId = '${contact?['_id']}';
           if (senderId != currentId || !mounted) return;
           setState(() {
-            final existing = {'${payload['_id']}'};
+            final existing = <String>{};
             for (final m in messages) existing.add('${m['_id']}');
             if (!existing.contains('${payload['_id']}')) {
               messages = [...messages, payload];
