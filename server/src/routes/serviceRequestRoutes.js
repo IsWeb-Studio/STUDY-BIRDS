@@ -130,6 +130,7 @@ router.post('/:id/documents', run(async (req, res) => {
 router.get('/', canManage, run(async (req, res) => {
   const filter = {};
   if (req.query.status) filter.status = req.query.status;
+  if (req.query.student) filter.student = req.query.student;
   const rows = await ServiceRequest.find(filter)
     .sort({ createdAt: -1 })
     .limit(200)

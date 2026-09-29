@@ -4,10 +4,11 @@ const { studentNextAction } = require('./studentNextAction');
 const { postAdmissionStages } = require('./postAdmissionJourney');
 const id = value => String(value?._id || value || '');
 function studentJourneys({ applications = [], documents = [], invoices = [] }, now = new Date()) {
-  return applications.map(app => {
+  return applications.map((app, appIndex) => {
     const linked = new Set((app.documents || []).map(id));
     const files = documents.filter(doc => linked.has(id(doc)));
-    const bills = invoices.filter(invoice => !invoice.application || id(invoice.application) === id(app));
+    // Unlinked invoices appear only on the newest application (index 0) to avoid carry-over across journeys
+    const bills = invoices.filter(invoice => id(invoice.application) === id(app) || (!invoice.application && appIndex === 0));
     const state = app.status === 'rejected' ? 'rejected' : app.detailedStatus || app.status;
     const closed = ['rejected', 'completed'].includes(state);
     const required = app.requiredDocumentTypes ?? requiredDocumentTypesFor(app.program);

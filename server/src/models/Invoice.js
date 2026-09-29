@@ -42,6 +42,8 @@ const invoiceSchema = new mongoose.Schema(
       enum: ["application-fee", "tuition", "service", "housing", "other"],
       default: "other",
     },
+    serviceRequest: { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest', default: null },
+    accommodationBooking: { type: mongoose.Schema.Types.ObjectId, ref: 'AccommodationBooking', default: null },
     adminNote: String,
     reviewedAt: Date,
     reviewedBy: {

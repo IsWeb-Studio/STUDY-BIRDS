@@ -183,6 +183,8 @@ const createStudentInvoiceAdmin = asyncHandler(async (req, res) => {
   const invoice = await Invoice.create({
     student: studentId,
     application: req.body.applicationId || undefined,
+    serviceRequest: req.body.serviceRequestId || undefined,
+    accommodationBooking: req.body.accommodationBookingId || undefined,
     invoiceNumber,
     description,
     amount,
