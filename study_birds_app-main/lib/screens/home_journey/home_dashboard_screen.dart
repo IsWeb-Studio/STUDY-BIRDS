@@ -385,6 +385,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 children: [
                   _HeroIconButton(
                       icon: Icons.menu_rounded,
+                      tooltip: 'القائمة',
                       onPressed: () => _openMenu(context)),
                   Expanded(
                     child: Column(
@@ -411,6 +412,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   ),
                   _HeroIconButton(
                     icon: Icons.notifications_none_rounded,
+                    tooltip: 'الإشعارات',
                     badgeCount: overview.stats.unreadNotifications,
                     onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
@@ -700,10 +702,12 @@ class _HeroIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;
   final int badgeCount;
+  final String? tooltip;
   const _HeroIconButton(
       {required this.icon,
       required this.onPressed,
-      this.badgeCount = 0});
+      this.badgeCount = 0,
+      this.tooltip});
 
   @override
   Widget build(BuildContext context) {
@@ -717,6 +721,7 @@ class _HeroIconButton extends StatelessWidget {
               shape: BoxShape.circle),
           child: IconButton(
               onPressed: onPressed,
+              tooltip: tooltip,
               icon: Icon(icon, color: Colors.white, size: 20)),
         ),
         if (hasBadge)

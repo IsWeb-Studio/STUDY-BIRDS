@@ -4,6 +4,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/app_theme.dart';
 import '../../core/google_sign_in_service.dart';
 import '../../core/api_client.dart';
+import '../../core/auth_session.dart';
+import '../../core/analytics_service.dart';
 
 class _AppTextField extends StatelessWidget {
   final String label;
@@ -233,6 +235,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 10),
+                OutlinedButton.icon(
+                  onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => PhoneOtpLoginScreen(onSuccess: widget.onGoogleSignInSuccess))),
+                  icon: const Icon(Icons.phone_android_rounded, size: 20),
+                  label: const Text('المتابعة برقم الهاتف'),
+                  style: OutlinedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 48),
+                    side: const BorderSide(color: AppColors.border),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.button),
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 24),
                 Center(
                   child: TextButton(
@@ -385,6 +401,137 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+// #6: Phone OTP login screen
+class PhoneOtpLoginScreen extends StatefulWidget {
+  final VoidCallback? onSuccess;
+  const PhoneOtpLoginScreen({super.key, this.onSuccess});
+  @override
+  State<PhoneOtpLoginScreen> createState() => _PhoneOtpLoginScreenState();
+}
+
+class _PhoneOtpLoginScreenState extends State<PhoneOtpLoginScreen> {
+  final _phone = TextEditingController();
+  final _code = TextEditingController();
+  bool _sent = false, _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _phone.dispose();
+    _code.dispose();
+    super.dispose();
+  }
+
+  Future<void> _requestOtp() async {
+    final phone = _phone.text.trim();
+    if (!RegExp(r'^\+[1-9]\d{7,14}$').hasMatch(phone)) {
+      setState(() => _error = 'أدخل رقمًا دوليًا يبدأ بـ + ورمز الدولة');
+      return;
+    }
+    setState(() { _busy = true; _error = null; });
+    try {
+      await ApiClient.instance.post('/auth/otp/request', body: {'phone': phone});
+      if (mounted) setState(() => _sent = true);
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _verifyOtp() async {
+    final code = _code.text.trim();
+    if (!RegExp(r'^\d{4,10}$').hasMatch(code)) {
+      setState(() => _error = 'أدخل رمز SMS الصحيح');
+      return;
+    }
+    setState(() { _busy = true; _error = null; });
+    try {
+      final data = await ApiClient.instance.post('/auth/otp/verify', body: {'phone': _phone.text.trim(), 'code': code});
+      final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
+      await AuthSession.instance.login(user, authToken: data['token'] as String, refreshToken: data['refreshToken'] as String?);
+      AnalyticsService.instance.loginCompleted(user.role.name);
+      if (mounted) widget.onSuccess?.call();
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        appBar: AppBar(title: const Text('تسجيل الدخول برقم الهاتف'), backgroundColor: Colors.white, foregroundColor: AppColors.navy, elevation: 0),
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 16),
+                const Text('أدخل رقمك الدولي', style: AppTextStyles.screenTitle),
+                const SizedBox(height: 6),
+                const Text('سنرسل رمز SMS للتحقق من هويتك', style: AppTextStyles.caption),
+                const SizedBox(height: 28),
+                Container(
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppRadius.button), border: Border.all(color: AppColors.border)),
+                  child: TextField(
+                    controller: _phone,
+                    readOnly: _sent,
+                    enabled: !_busy,
+                    textDirection: TextDirection.ltr,
+                    keyboardType: TextInputType.phone,
+                    decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12), hintText: '+905...', prefixIcon: Icon(Icons.phone_android_rounded)),
+                  ),
+                ),
+                if (_sent) ...[
+                  const SizedBox(height: 14),
+                  Container(
+                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppRadius.button), border: Border.all(color: AppColors.border)),
+                    child: TextField(
+                      controller: _code,
+                      enabled: !_busy,
+                      textDirection: TextDirection.ltr,
+                      keyboardType: TextInputType.number,
+                      autofillHints: const [AutofillHints.oneTimeCode],
+                      decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12), hintText: 'رمز SMS', prefixIcon: Icon(Icons.lock_outline_rounded)),
+                    ),
+                  ),
+                ],
+                if (_error != null) ...[
+                  const SizedBox(height: 10),
+                  Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12.5)),
+                ],
+                const SizedBox(height: 24),
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _busy ? null : (_sent ? _verifyOtp : _requestOtp),
+                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))),
+                    child: Text(_busy ? 'جارٍ...' : (_sent ? 'تأكيد الرمز' : 'إرسال رمز SMS'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                  ),
+                ),
+                if (_sent) ...[
+                  const SizedBox(height: 10),
+                  Center(child: TextButton(
+                    onPressed: _busy ? null : () => setState(() { _sent = false; _code.clear(); }),
+                    child: const Text('تغيير الرقم أو إعادة الإرسال', style: TextStyle(color: AppColors.orange)),
+                  )),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
