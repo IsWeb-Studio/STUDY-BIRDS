@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_theme.dart';
@@ -18,57 +20,71 @@ class ConversationThreadScreen extends StatefulWidget {
 class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
   List<dynamic> contacts = [], messages = [];
   Map? contact;
-  Timer? poller;
-  bool polling = false;
+  HttpClient? _httpClient;
+  StreamSubscription<String>? _sseSub;
   bool loading = true, sending = false, older = false;
   String? error;
   final text = TextEditingController();
   String? get token => AuthSession.instance.token;
+
   @override
   void initState() {
     super.initState();
     load();
-    poller = Timer.periodic(const Duration(seconds: 10), (_) => poll());
   }
 
   @override
   void dispose() {
-    poller?.cancel();
+    _sseSub?.cancel();
+    _httpClient?.close(force: true);
     text.dispose();
     super.dispose();
   }
 
-  Future<void> poll() async {
-    final selected = contact;
-    if (!mounted ||
-        selected == null ||
-        loading ||
-        sending ||
-        polling ||
-        ModalRoute.of(context)?.isCurrent != true ||
-        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed)
-      return;
-    polling = true;
-    try {
-      final query =
-          Uri(queryParameters: {'recipient': '${selected['_id']}'}).query;
-      final value = await ApiClient.instance
-          .get('/mobile-workspace/messages?$query', token: token) as List;
-      if (!mounted || contact?['_id'] != selected['_id']) return;
-      final merged = {
-        for (final row in messages) '${row['_id']}': row,
-        for (final row in value) '${row['_id']}': row
-      };
-      final sorted = merged.values.toList()
-        ..sort((a, b) => '${a['_id']}'.compareTo('${b['_id']}'));
-      setState(() => messages = sorted);
-      await ApiClient.instance.post('/mobile-workspace/messages/read',
-          token: token, body: {'sender': selected['_id']});
-    } catch (_) {
-      /* Keep the conversation and unsent draft visible during a transient failure. */
-    } finally {
-      polling = false;
-    }
+  // Opens SSE connection to receive real-time messages from the server.
+  void _connectSse() {
+    _sseSub?.cancel();
+    _httpClient?.close(force: true);
+    final tok = token;
+    if (tok == null) return;
+    final baseUrl = ApiClient.instance.baseUrl;
+    final uri = Uri.parse('$baseUrl/mobile-workspace/events');
+    _httpClient = HttpClient();
+    _httpClient!.getUrl(uri).then((req) {
+      req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $tok');
+      req.headers.set(HttpHeaders.acceptHeader, 'text/event-stream');
+      req.headers.set(HttpHeaders.cacheControlHeader, 'no-cache');
+      return req.close();
+    }).then((res) {
+      _sseSub = res
+          .transform(const Utf8Decoder())
+          .transform(const LineSplitter())
+          .listen((line) {
+        if (!line.startsWith('data:')) return;
+        try {
+          final payload = jsonDecode(line.substring(5).trim());
+          if (payload is! Map) return;
+          final senderId = '${payload['sender']}';
+          final currentId = '${contact?['_id']}';
+          if (senderId != currentId || !mounted) return;
+          setState(() {
+            final existing = {'${payload['_id']}'};
+            for (final m in messages) existing.add('${m['_id']}');
+            if (!existing.contains('${payload['_id']}')) {
+              messages = [...messages, payload];
+            }
+          });
+          // Mark as read immediately
+          ApiClient.instance.post('/mobile-workspace/messages/read',
+              token: token, body: {'sender': senderId}).catchError((_) {});
+        } catch (_) {}
+      }, onError: (_) {
+        // Reconnect after 5s on connection error
+        if (mounted) Future.delayed(const Duration(seconds: 5), _connectSse);
+      }, cancelOnError: true);
+    }).catchError((_) {
+      if (mounted) Future.delayed(const Duration(seconds: 5), _connectSse);
+    });
   }
 
   Future<void> load({bool previous = false}) async {
@@ -97,6 +113,8 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
         });
         await ApiClient.instance.post('/mobile-workspace/messages/read',
             token: token, body: {'sender': selected['_id']});
+        // Start SSE real-time stream (replaces polling)
+        _connectSse();
       }
     } catch (e) {
       if (mounted)

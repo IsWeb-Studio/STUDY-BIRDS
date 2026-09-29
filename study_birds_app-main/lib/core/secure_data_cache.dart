@@ -35,8 +35,20 @@ class SecureDataCache {
     }
   }
 
+  static const _cachedResources = [
+    'overview',
+    'applications',
+    'documents',
+    'financials',
+    'notifications',
+    'journey',
+    'scholarships',
+    'rewards',
+    'service-requests',
+  ];
+
   static Future<void> clear(String owner) async {
-    for (final resource in ['overview', 'applications', 'documents', 'financials']) {
+    for (final resource in _cachedResources) {
       await _storage.delete(key: _key(owner, resource));
     }
   }

@@ -350,6 +350,9 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
                 final status = r['status'] as String? ?? 'pending';
                 final assignedTo = r['assignedTo'] is Map ? r['assignedTo']['name'] as String? : null;
                 final staffNote = r['staffNote'] as String? ?? '';
+                final driver = r['driverDetails'] is Map ? Map<String, dynamic>.from(r['driverDetails'] as Map) : null;
+                final showDriver = status == 'en-route' && driver != null &&
+                    (driver['name'] as String? ?? '').isNotEmpty;
                 return AppCard(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -363,6 +366,35 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
                       if (assignedTo != null) ...[
                         const SizedBox(height: 6),
                         Text('الموظف المسؤول: $assignedTo', style: AppTextStyles.caption),
+                      ],
+                      if (showDriver) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: AppColors.navy.withValues(alpha: 0.06),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: AppColors.navy.withValues(alpha: 0.2)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(children: [
+                                const Icon(Icons.directions_car_rounded, size: 16, color: AppColors.navy),
+                                const SizedBox(width: 6),
+                                Text('السائق في الطريق إليك', style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w700, color: AppColors.navy)),
+                              ]),
+                              const SizedBox(height: 6),
+                              Text('الاسم: ${driver['name'] ?? ''}', style: AppTextStyles.caption),
+                              if ((driver['phone'] as String? ?? '').isNotEmpty)
+                                Text('الهاتف: ${driver['phone']}', style: AppTextStyles.caption),
+                              if ((driver['vehicleType'] as String? ?? '').isNotEmpty)
+                                Text('المركبة: ${driver['vehicleType']}${(driver['vehicleNumber'] as String? ?? '').isNotEmpty ? ' — ${driver['vehicleNumber']}' : ''}', style: AppTextStyles.caption),
+                              if (driver['etaMinutes'] != null)
+                                Text('الوصول المتوقع: ${driver['etaMinutes']} دقيقة', style: AppTextStyles.caption.copyWith(color: AppColors.orange, fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
                       ],
                       if (staffNote.isNotEmpty) ...[
                         const SizedBox(height: 6),
@@ -398,6 +430,7 @@ class _StatusChip extends StatelessWidget {
       'pending'     => ('في الانتظار', Colors.orange),
       'assigned'    => ('تم التعيين', Colors.blue),
       'in-progress' => ('قيد التنفيذ', AppColors.navy),
+      'en-route'    => ('السائق في الطريق', AppColors.orange),
       'completed'   => ('مكتمل', AppColors.success),
       'cancelled'   => ('ملغى', Colors.red),
       _             => (status, Colors.grey),

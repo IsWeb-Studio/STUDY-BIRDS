@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_client.dart';
 import '../../core/auth_session.dart';
 import '../../core/app_theme.dart';
@@ -447,7 +448,14 @@ class _AlumniNetworkScreenState extends State<AlumniNetworkScreen> {
         const SizedBox(height: 12),
         _TappableInfoCard(
           icon: Icons.work_outline_rounded,
-          title: 'فرص العمل والتدريب',
+          title: 'وظائف وتدريب الخريجين',
+          body: 'فرص نشرها خريجو Study Birds — تقديم مباشر.',
+          onTap: (ctx) => Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const JobPostsScreen())),
+        ),
+        const SizedBox(height: 12),
+        _TappableInfoCard(
+          icon: Icons.format_list_bulleted_rounded,
+          title: 'إعلانات وفرص الطلاب',
           body: 'استعرض الفرص المنشورة وشروطها ورابط التقديم.',
           onTap: (ctx) => Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const StudentListingsScreen(kind: 'opportunity'))),
         ),
@@ -862,3 +870,252 @@ class _MyScholarshipsTab extends StatelessWidget {
     );
   }
 }
+
+// ─── وظائف وتدريب الخريجين (JobPost backend) ─────────────────────────────────
+
+class JobPostsScreen extends StatefulWidget {
+  const JobPostsScreen({super.key});
+  @override
+  State<JobPostsScreen> createState() => _JobPostsScreenState();
+}
+
+class _JobPostsScreenState extends State<JobPostsScreen> {
+  List<dynamic> _posts = [];
+  bool _loading = true;
+  String? _error;
+
+  static const _typeLabels = {
+    'internship': 'تدريب',
+    'part-time': 'دوام جزئي',
+    'full-time': 'دوام كامل',
+    'freelance': 'عمل حر',
+    'volunteer': 'تطوع',
+  };
+  static const _typeColors = {
+    'internship': AppColors.navy,
+    'part-time': AppColors.info,
+    'full-time': AppColors.success,
+    'freelance': AppColors.orange,
+    'volunteer': AppColors.warning,
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final data = await ApiClient.instance.get('/alumni/jobs', token: AuthSession.instance.token);
+      if (mounted) setState(() => _posts = data is List ? data : []);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'تعذر تحميل الوظائف. أعد المحاولة.');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _delete(String id) async {
+    final yes = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('حذف الإعلان'),
+        content: const Text('سيتم حذف هذا الإعلان نهائيًا. متابعة؟'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('حذف', style: TextStyle(color: Colors.red))),
+        ],
+      ),
+    );
+    if (yes != true || !mounted) return;
+    try {
+      await ApiClient.instance.delete('/alumni/jobs/$id', token: AuthSession.instance.token);
+      await _load();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر الحذف')));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => AppScaffold(
+    title: 'وظائف وتدريب الخريجين',
+    actions: [
+      IconButton(
+        tooltip: 'نشر إعلان',
+        icon: const Icon(Icons.add_rounded),
+        onPressed: () async {
+          final posted = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => const _PostJobScreen()));
+          if (posted == true) _load();
+        },
+      ),
+    ],
+    body: _loading
+        ? const LoadingState(message: 'جاري تحميل الوظائف...')
+        : _error != null
+            ? ErrorState(message: _error!, onRetry: _load)
+            : RefreshIndicator(
+                onRefresh: _load,
+                color: AppColors.navy,
+                child: _posts.isEmpty
+                    ? const EmptyState(icon: Icons.work_outline_rounded, title: 'لا توجد وظائف منشورة بعد', message: 'كن أول من ينشر فرصة للطلاب!')
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        physics: const AlwaysScrollableScrollPhysics(),
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemCount: _posts.length,
+                        itemBuilder: (_, i) {
+                          final p = Map<String, dynamic>.from(_posts[i] as Map);
+                          final type = p['type'] as String? ?? 'internship';
+                          final myId = AuthSession.instance.currentUser?.id ?? '';
+                          final postedById = p['postedBy'] is Map ? '${(p['postedBy'] as Map)['_id']}' : '${p['postedBy']}';
+                          final isOwn = postedById == myId;
+                          return AppCard(
+                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              Row(children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                  decoration: BoxDecoration(
+                                    color: (_typeColors[type] ?? AppColors.navy).withValues(alpha: 0.12),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(_typeLabels[type] ?? type, style: TextStyle(color: _typeColors[type] ?? AppColors.navy, fontSize: 11, fontWeight: FontWeight.w600)),
+                                ),
+                                const Spacer(),
+                                if (isOwn) IconButton(icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red), tooltip: 'حذف', onPressed: () => _delete('${p['_id']}')),
+                              ]),
+                              const SizedBox(height: 6),
+                              Text('${p['title'] ?? ''}', style: AppTextStyles.cardTitle),
+                              if ('${p['company'] ?? ''}'.isNotEmpty) ...[
+                                const SizedBox(height: 4),
+                                Row(children: [
+                                  const Icon(Icons.business_rounded, size: 14, color: AppColors.textSecondary),
+                                  const SizedBox(width: 4),
+                                  Text('${p['company']}', style: AppTextStyles.caption),
+                                  if ('${p['location'] ?? ''}'.isNotEmpty) ...[
+                                    const Text(' · ', style: AppTextStyles.caption),
+                                    Text('${p['location']}', style: AppTextStyles.caption),
+                                  ],
+                                ]),
+                              ],
+                              if ('${p['description'] ?? ''}'.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text('${p['description']}', style: AppTextStyles.body, maxLines: 3, overflow: TextOverflow.ellipsis),
+                              ],
+                              if ('${p['contactEmail'] ?? ''}'.isNotEmpty || '${p['externalUrl'] ?? ''}'.isNotEmpty) ...[
+                                const SizedBox(height: 10),
+                                Row(children: [
+                                  if ('${p['externalUrl'] ?? ''}'.isNotEmpty)
+                                    TextButton.icon(
+                                      icon: const Icon(Icons.open_in_new_rounded, size: 14),
+                                      label: const Text('التقديم'),
+                                      onPressed: () async {
+                                        final uri = Uri.tryParse('${p['externalUrl']}');
+                                        if (uri == null || (!uri.scheme.startsWith('http'))) return;
+                                        try { await launchUrl(uri, mode: LaunchMode.externalApplication); } catch (_) {}
+                                      },
+                                    ),
+                                  if ('${p['contactEmail'] ?? ''}'.isNotEmpty)
+                                    TextButton.icon(
+                                      icon: const Icon(Icons.email_outlined, size: 14),
+                                      label: Text('${p['contactEmail']}', overflow: TextOverflow.ellipsis),
+                                      onPressed: () async {
+                                        final uri = Uri.parse('mailto:${p['contactEmail']}');
+                                        try { await launchUrl(uri); } catch (_) {}
+                                      },
+                                    ),
+                                ]),
+                              ],
+                            ]),
+                          );
+                        },
+                      ),
+              ),
+  );
+}
+
+class _PostJobScreen extends StatefulWidget {
+  const _PostJobScreen();
+  @override
+  State<_PostJobScreen> createState() => _PostJobScreenState();
+}
+
+class _PostJobScreenState extends State<_PostJobScreen> {
+  final _title = TextEditingController();
+  final _company = TextEditingController();
+  final _location = TextEditingController();
+  final _description = TextEditingController();
+  final _requirements = TextEditingController();
+  final _email = TextEditingController();
+  final _url = TextEditingController();
+  String _type = 'internship';
+  bool _submitting = false;
+
+  static const _types = ['internship', 'part-time', 'full-time', 'freelance', 'volunteer'];
+  static const _typeLabels = {'internship': 'تدريب', 'part-time': 'دوام جزئي', 'full-time': 'دوام كامل', 'freelance': 'عمل حر', 'volunteer': 'تطوع'};
+
+  @override
+  void dispose() {
+    for (final c in [_title, _company, _location, _description, _requirements, _email, _url]) c.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (_title.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('أدخل عنوان الوظيفة')));
+      return;
+    }
+    setState(() => _submitting = true);
+    try {
+      await ApiClient.instance.post('/alumni/jobs', token: AuthSession.instance.token, body: {
+        'title': _title.text.trim(),
+        'company': _company.text.trim(),
+        'location': _location.text.trim(),
+        'type': _type,
+        'description': _description.text.trim(),
+        'requirements': _requirements.text.trim(),
+        'contactEmail': _email.text.trim(),
+        'externalUrl': _url.text.trim(),
+      });
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر النشر. تأكد من وجود ملف خريج عام.')));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => AppScaffold(
+    title: 'نشر إعلان وظيفة',
+    body: SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        TextField(controller: _title, decoration: const InputDecoration(labelText: 'عنوان الوظيفة *'), maxLength: 200),
+        const SizedBox(height: 10),
+        TextField(controller: _company, decoration: const InputDecoration(labelText: 'الشركة/المؤسسة'), maxLength: 200),
+        const SizedBox(height: 10),
+        TextField(controller: _location, decoration: const InputDecoration(labelText: 'الموقع (مدينة/دولة)'), maxLength: 200),
+        const SizedBox(height: 10),
+        DropdownButtonFormField<String>(
+          value: _type,
+          decoration: const InputDecoration(labelText: 'نوع الفرصة'),
+          items: _types.map((t) => DropdownMenuItem(value: t, child: Text(_typeLabels[t] ?? t))).toList(),
+          onChanged: (v) => setState(() => _type = v ?? _type),
+        ),
+        const SizedBox(height: 10),
+        TextField(controller: _description, decoration: const InputDecoration(labelText: 'وصف الوظيفة'), maxLines: 4, maxLength: 3000),
+        const SizedBox(height: 10),
+        TextField(controller: _requirements, decoration: const InputDecoration(labelText: 'المتطلبات'), maxLines: 3, maxLength: 2000),
+        const SizedBox(height: 10),
+        TextField(controller: _email, decoration: const InputDecoration(labelText: 'البريد للتواصل'), keyboardType: TextInputType.emailAddress),
+        const SizedBox(height: 10),
+        TextField(controller: _url, decoration: const InputDecoration(labelText: 'رابط التقديم (https://...)'), keyboardType: TextInputType.url),
+        const SizedBox(height: 20),
+        PrimaryButton(label: _submitting ? 'جاري النشر...' : 'نشر الإعلان', onPressed: _submitting ? null : _submit),
+      ]),
+    ),
+  );
+}
+
