@@ -7,8 +7,8 @@ function studentJourneys({ applications = [], documents = [], invoices = [] }, n
   return applications.map((app, appIndex) => {
     const linked = new Set((app.documents || []).map(id));
     const files = documents.filter(doc => linked.has(id(doc)));
-    // Unlinked invoices appear only on the newest application (index 0) to avoid carry-over across journeys
-    const bills = invoices.filter(invoice => id(invoice.application) === id(app) || (!invoice.application && appIndex === 0));
+    // Unlinked invoices appear only on the oldest application to avoid showing on newly created journeys
+    const bills = invoices.filter(invoice => id(invoice.application) === id(app) || (!invoice.application && appIndex === applications.length - 1));
     const state = app.status === 'rejected' ? 'rejected' : app.detailedStatus || app.status;
     const closed = ['rejected', 'completed'].includes(state);
     const required = app.requiredDocumentTypes ?? requiredDocumentTypesFor(app.program);

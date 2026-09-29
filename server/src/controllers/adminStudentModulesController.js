@@ -174,10 +174,28 @@ const createStudentInvoiceAdmin = asyncHandler(async (req, res) => {
   const invoiceNumber = String(req.body.invoiceNumber || "").trim();
   const description = String(req.body.description || "").trim();
   const amount = Number(req.body.amount || 0);
+  const category = req.body.category || "other";
 
   if (!studentId || !invoiceNumber || !description || !amount) {
     res.status(400);
     throw new Error("Student, invoice number, description, and amount are required");
+  }
+
+  // Cap total invoiced amount at program tuition for tuition/application-fee categories
+  if (req.body.applicationId && ['application-fee', 'tuition'].includes(category)) {
+    const app = await Application.findById(req.body.applicationId).populate('program', 'tuition').lean();
+    const tuition = app?.program?.tuition;
+    if (tuition) {
+      const [existing] = await Invoice.aggregate([
+        { $match: { application: app._id, status: { $ne: 'rejected' } } },
+        { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]);
+      const existingTotal = existing?.total || 0;
+      if (existingTotal + amount > tuition) {
+        res.status(400);
+        throw new Error(`المبلغ الإجمالي (${existingTotal + amount}$) يتجاوز الرسوم الدراسية للبرنامج (${tuition}$). المتبقي: ${tuition - existingTotal}$`);
+      }
+    }
   }
 
   const invoice = await Invoice.create({

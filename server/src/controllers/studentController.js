@@ -511,16 +511,22 @@ const getStudentKnowledgeBase = asyncHandler(async (req, res) => {
 });
 
 const getStudentFinancials = asyncHandler(async (req, res) => {
-  const [invoices, paymentProofs] = await Promise.all([
+  const [invoices, paymentProofs, applications] = await Promise.all([
     Invoice.find({ student: req.user._id }).populate("application", "status").sort({ createdAt: -1 }),
     PaymentProof.find({ student: req.user._id }).populate("invoice", "invoiceNumber description amount status").sort({ createdAt: -1 }),
+    Application.find({ student: req.user._id }).populate('program', 'tuition').lean(),
   ]);
+
+  const paidAmount = invoices.filter((item) => item.status === "paid").reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const totalProgramFees = applications.reduce((sum, app) => sum + Number(app.program?.tuition || 0), 0);
 
   res.json({
     summary: {
       outstandingAmount: invoices.filter((item) => item.status === "unpaid" || item.status === "rejected").reduce((sum, item) => sum + Number(item.amount || 0), 0),
       pendingConfirmationAmount: invoices.filter((item) => item.status === "pending-confirmation").reduce((sum, item) => sum + Number(item.amount || 0), 0),
-      paidAmount: invoices.filter((item) => item.status === "paid").reduce((sum, item) => sum + Number(item.amount || 0), 0),
+      paidAmount,
+      totalProgramFees,
+      remainingFees: totalProgramFees > 0 ? Math.max(0, totalProgramFees - paidAmount) : null,
       invoiceCount: invoices.length,
     },
     invoices,
