@@ -319,8 +319,9 @@ const updateArrivalRequestAdmin = asyncHandler(async (req, res) => {
   item.updatedBy = req.user._id;
   await item.save();
 
-  // sync postAdmission.travel so the mobile journey tracker reflects arrival status
+  // sync postAdmission stages so the mobile journey tracker reflects arrival status
   if (item.status !== prevStatus) {
+    const now2 = new Date();
     const postAdmissionStatus = item.status === 'completed' ? 'completed'
       : item.status === 'in-progress' ? 'in-progress'
       : 'not-started';
@@ -333,13 +334,29 @@ const updateArrivalRequestAdmin = asyncHandler(async (req, res) => {
       ],
     }).sort({ createdAt: -1 });
     if (eligibleApp) {
-      await Application.updateOne({ _id: eligibleApp._id }, {
-        $set: {
-          'postAdmission.travel.status': postAdmissionStatus,
-          'postAdmission.travel.updatedAt': new Date(),
-        },
-      });
-      if (item.status === 'completed') advanceTo(item.student, 'travel').catch(() => {});
+      const stageUpdate = {
+        'postAdmission.travel.status': postAdmissionStatus,
+        'postAdmission.travel.updatedAt': now2,
+      };
+      // map each selected service to its journey stage
+      if (item.services?.airportPickup) {
+        stageUpdate['postAdmission.arrival.status'] = postAdmissionStatus;
+        stageUpdate['postAdmission.arrival.updatedAt'] = now2;
+      }
+      if (item.services?.studentHousing) {
+        stageUpdate['postAdmission.housing.status'] = postAdmissionStatus;
+        stageUpdate['postAdmission.housing.updatedAt'] = now2;
+      }
+      if (item.services?.residencePermitSupport) {
+        stageUpdate['postAdmission.residence.status'] = postAdmissionStatus;
+        stageUpdate['postAdmission.residence.updatedAt'] = now2;
+      }
+      await Application.updateOne({ _id: eligibleApp._id }, { $set: stageUpdate });
+      if (item.status === 'completed') {
+        advanceTo(item.student, 'travel').catch(() => {});
+        if (item.services?.airportPickup) advanceTo(item.student, 'reception').catch(() => {});
+        if (item.services?.studentHousing) advanceTo(item.student, 'accommodation').catch(() => {});
+      }
     }
   }
 
