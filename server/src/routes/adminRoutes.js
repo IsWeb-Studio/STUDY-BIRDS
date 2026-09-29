@@ -93,6 +93,7 @@ const {
   getStudentFinancialsAdmin,
   createStudentInvoiceAdmin,
   updateStudentInvoiceAdmin,
+  deleteStudentInvoiceAdmin,
   reviewPaymentProofAdmin,
   getArrivalRequestsAdmin,
   updateArrivalRequestAdmin,
@@ -224,6 +225,7 @@ router.patch("/student-documents/:id", reviewStudentDocumentAdmin);
 router.get("/student-notifications", getStudentNotificationsAdmin);
 router.post("/student-financials/invoices", createStudentInvoiceAdmin);
 router.patch("/student-financials/invoices/:id", updateStudentInvoiceAdmin);
+router.delete("/student-financials/invoices/:id", deleteStudentInvoiceAdmin);
 router.patch("/student-financials/payment-proofs/:id", reviewPaymentProofAdmin);
 router.get("/student-financials/wallet-entries", getWalletEntriesAdmin);
 const rewardRules = require('../controllers/studentRewardsController');

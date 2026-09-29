@@ -258,6 +258,17 @@ const updateStudentInvoiceAdmin = asyncHandler(async (req, res) => {
   res.json(await Invoice.findById(invoice._id).populate("student", "name email").populate("reviewedBy", "name email"));
 });
 
+const deleteStudentInvoiceAdmin = asyncHandler(async (req, res) => {
+  const invoice = await Invoice.findById(req.params.id);
+  if (!invoice) { res.status(404); throw new Error("Invoice not found"); }
+  if (invoice.status === 'paid') {
+    res.status(409);
+    throw new Error("لا يمكن حذف فاتورة مدفوعة. غيّر حالتها أولاً إذا لزم.");
+  }
+  await invoice.deleteOne();
+  res.json({ deleted: true, _id: req.params.id });
+});
+
 const reviewPaymentProofAdmin = asyncHandler(async (req, res) => {
   const proof = await PaymentProof.findById(req.params.id).populate("invoice");
   if (!proof) {
@@ -520,6 +531,7 @@ module.exports = {
   getStudentFinancialsAdmin,
   createStudentInvoiceAdmin,
   updateStudentInvoiceAdmin,
+  deleteStudentInvoiceAdmin,
   reviewPaymentProofAdmin,
   getArrivalRequestsAdmin,
   updateArrivalRequestAdmin,
