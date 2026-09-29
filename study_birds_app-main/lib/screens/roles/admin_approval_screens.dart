@@ -137,28 +137,33 @@ class _AdminAgentsScreenState extends State<AdminAgentsScreen> {
   @override
   void initState() {
     super.initState();
-    AdminModulesRepository.instance.getPartners().then((data) {
-      if (mounted) setState(() {
-        _agents = data;
-        _loading = false;
-      });
-    }).catchError((e) {
-      if (mounted) setState(() {
-        _error = 'تعذر تحميل قائمة الوكلاء.';
-        _loading = false;
-      });
-    });
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final data = await AdminModulesRepository.instance.getPartners();
+      if (!mounted) return;
+      setState(() { _agents = data; _loading = false; });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() { _error = 'تعذر تحميل قائمة الوكلاء.'; _loading = false; });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'ملفات الوكلاء',
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: () {})
-              : ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState()
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: _agents.length,
                   itemBuilder: (context, i) {
@@ -174,6 +179,7 @@ class _AdminAgentsScreenState extends State<AdminAgentsScreen> {
                     );
                   },
                 ),
+      ),
     );
   }
 }

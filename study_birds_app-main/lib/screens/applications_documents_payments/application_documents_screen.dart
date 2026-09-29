@@ -159,11 +159,14 @@ class _ApplicationDocumentsScreenState
     };
     return AppScaffold(
         title: 'استكمال مستندات الطلب',
-        body: loading
-            ? const LoadingState(message: 'جاري تحميل المستندات...')
-            : application == null
-                ? ErrorState(message: error ?? 'تعذر التحميل', onRetry: load)
-                : ListView(padding: const EdgeInsets.all(16), children: [
+        body: RefreshIndicator(
+          onRefresh: load,
+          color: AppColors.navy,
+          child: loading
+              ? const LoadingState(message: 'جاري تحميل المستندات...')
+              : application == null
+                  ? ErrorState(message: error ?? 'تعذر التحميل', onRetry: load)
+                  : ListView(padding: const EdgeInsets.all(16), physics: const AlwaysScrollableScrollPhysics(), children: [
                     const Text(
                         'ارفع ملفًا جديدًا أو اختر ملفًا صالحًا من مستنداتك، ثم أرفقه بهذا الطلب.',
                         style: AppTextStyles.body),
@@ -249,6 +252,6 @@ class _ApplicationDocumentsScreenState
                     TextButton(
                         onPressed: busy ? null : load,
                         child: const Text('تحديث البيانات')),
-                  ]));
+                  ])));
   }
 }

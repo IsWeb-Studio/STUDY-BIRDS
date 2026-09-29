@@ -55,16 +55,19 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'طلبات الطلاب',
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _apps.isEmpty
-                  ? const EmptyState(
-                      icon: Icons.description_outlined,
-                      title: 'لا توجد طلبات',
-                      message: 'ستظهر هنا كل طلبات الطلاب على المنصة.')
-                  : ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState()
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _apps.isEmpty
+                    ? const EmptyState(
+                        icon: Icons.description_outlined,
+                        title: 'لا توجد طلبات',
+                        message: 'ستظهر هنا كل طلبات الطلاب على المنصة.')
+                    : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _apps.length,
                       itemBuilder: (context, i) {
@@ -95,6 +98,7 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
                         );
                       },
                     ),
+      ),
     );
   }
 }
@@ -116,35 +120,38 @@ class _AdminStudentDocumentsScreenState
   @override
   void initState() {
     super.initState();
-    AdminModulesRepository.instance.getStudentDocuments().then((data) {
-      if (mounted)
-        setState(() {
-          _docs = data;
-          _loading = false;
-        });
-    }).catchError((_) {
-      if (mounted)
-        setState(() {
-          _error = 'تعذر تحميل المستندات.';
-          _loading = false;
-        });
-    });
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final data = await AdminModulesRepository.instance.getStudentDocuments();
+      if (!mounted) return;
+      setState(() { _docs = data; _loading = false; });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() { _error = 'تعذر تحميل المستندات.'; _loading = false; });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'مستندات الطلاب',
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: () {})
-              : _docs.isEmpty
-                  ? const EmptyState(
-                      icon: Icons.folder_open_outlined,
-                      title: 'لا توجد مستندات',
-                      message: 'ستظهر هنا مستندات كل الطلاب.')
-                  : ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState()
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _docs.isEmpty
+                    ? const EmptyState(
+                        icon: Icons.folder_open_outlined,
+                        title: 'لا توجد مستندات',
+                        message: 'ستظهر هنا مستندات كل الطلاب.')
+                    : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _docs.length,
                       itemBuilder: (context, i) {
@@ -172,6 +179,7 @@ class _AdminStudentDocumentsScreenState
                         );
                       },
                     ),
+      ),
     );
   }
 }

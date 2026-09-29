@@ -98,39 +98,46 @@ class _AdminStudentFinancialsScreenState extends State<AdminStudentFinancialsScr
   Widget _buildInvoices() {
     final invoices = _data!['invoices'] as List<dynamic>? ?? [];
     if (invoices.isEmpty) return const EmptyState(icon: Icons.receipt_long_outlined, title: 'لا توجد فواتير', message: 'ستظهر هنا كل الفواتير المُصدرة.');
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: invoices.length,
-      itemBuilder: (context, i) {
-        final inv = invoices[i] as Map<String, dynamic>;
-        final student = inv['student'] as Map<String, dynamic>?;
-        return AppCard(
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(inv['description'] as String? ?? '—', style: AppTextStyles.cardTitle),
-                    Text(student?['name'] as String? ?? '', style: AppTextStyles.caption),
-                  ],
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: AppColors.navy,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: invoices.length,
+        itemBuilder: (context, i) {
+          final inv = invoices[i] as Map<String, dynamic>;
+          final student = inv['student'] as Map<String, dynamic>?;
+          return AppCard(
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(inv['description'] as String? ?? '—', style: AppTextStyles.cardTitle),
+                      Text(student?['name'] as String? ?? '', style: AppTextStyles.caption),
+                    ],
+                  ),
                 ),
-              ),
-              Text('\$${inv['amount'] ?? 0}', style: AppTextStyles.cardTitle),
-            ],
-          ),
-        );
-      },
+                Text('\$${inv['amount'] ?? 0}', style: AppTextStyles.cardTitle),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 
   Widget _buildProofs() {
     final proofs = _data!['paymentProofs'] as List<dynamic>? ?? [];
     if (proofs.isEmpty) return const EmptyState(icon: Icons.receipt_outlined, title: 'لا توجد إثباتات', message: 'ستظهر هنا إثباتات الدفع المرفوعة من الطلاب.');
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: proofs.length,
-      itemBuilder: (context, i) {
+    return RefreshIndicator(
+      onRefresh: _load,
+      color: AppColors.navy,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: proofs.length,
+        itemBuilder: (context, i) {
         final proof = proofs[i] as Map<String, dynamic>;
         final student = proof['student'] as Map<String, dynamic>?;
         final status = proof['status'] as String? ?? 'pending';
@@ -164,7 +171,8 @@ class _AdminStudentFinancialsScreenState extends State<AdminStudentFinancialsScr
             ],
           ),
         );
-      },
+        },
+      ),
     );
   }
 }
@@ -221,27 +229,31 @@ class _AdminMarketingAssetsScreenState extends State<AdminMarketingAssetsScreen>
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'المواد التسويقية',
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _assets.isEmpty
-                  ? const EmptyState(icon: Icons.campaign_outlined, title: 'لا توجد مواد', message: 'المواد التسويقية بترفع حاليًا من لوحة التحكم على الويب.')
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _assets.length,
-                      itemBuilder: (context, i) {
-                        final asset = _assets[i] as Map<String, dynamic>;
-                        return AppCard(
-                          child: Row(
-                            children: [
-                              Expanded(child: Text(asset['title'] as String? ?? asset['fileName'] as String? ?? '—', style: AppTextStyles.cardTitle)),
-                              IconButton(icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger), onPressed: () => _delete(asset['_id'] as String)),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState()
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _assets.isEmpty
+                    ? const EmptyState(icon: Icons.campaign_outlined, title: 'لا توجد مواد', message: 'المواد التسويقية بترفع حاليًا من لوحة التحكم على الويب.')
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _assets.length,
+                        itemBuilder: (context, i) {
+                          final asset = _assets[i] as Map<String, dynamic>;
+                          return AppCard(
+                            child: Row(
+                              children: [
+                                Expanded(child: Text(asset['title'] as String? ?? asset['fileName'] as String? ?? '—', style: AppTextStyles.cardTitle)),
+                                IconButton(icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger), onPressed: () => _delete(asset['_id'] as String)),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+      ),
     );
   }
 }

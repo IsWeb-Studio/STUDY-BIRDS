@@ -1,5 +1,15 @@
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
+import 'core/analytics_service.dart';
+import 'core/google_sign_in_service.dart';
+import 'core/app_config.dart';
+import 'core/realtime_sync_service.dart';
+import 'core/currency_service.dart';
 import 'core/device_lock.dart';
 import 'core/api_client.dart';
+import 'core/deep_link_service.dart';
+import 'core/notification_scheduler.dart';
+import 'core/push_notification_service.dart';
 import 'screens/auth/email_challenge_screen.dart';
 import 'package:flutter/material.dart';
 import 'core/app_theme.dart';
@@ -56,17 +66,71 @@ import 'screens/roles/admin_users_access_screen.dart';
 /// already been disposed and its own context is no longer valid.
 final rootScaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
 
-void main() => runApp(const StudyBirdsApp());
+/// Navigator key shared with DeepLinkService so incoming links can push
+/// screens without a BuildContext.
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 
-class StudyBirdsApp extends StatelessWidget {
+void main() async {
+  await SentryFlutter.init(
+    (options) {
+      options.dsn = AppConfig.sentryDsn;
+      options.tracesSampleRate = 0.2;
+      options.profilesSampleRate = 0.1;
+      options.attachScreenshot = true;
+      options.attachViewHierarchy = true;
+    },
+    appRunner: () async {
+      await PushNotificationService.instance.init();
+      await CurrencyService.instance.load();
+      await AnalyticsService.instance.init();
+      await GoogleSignInService.instance.init();
+      RealtimeSyncService.instance.start();
+      runApp(SentryWidget(child: const StudyBirdsApp()));
+    },
+  );
+}
+
+class StudyBirdsApp extends StatefulWidget {
   const StudyBirdsApp({super.key});
+
+  @override
+  State<StudyBirdsApp> createState() => _StudyBirdsAppState();
+}
+
+class _StudyBirdsAppState extends State<StudyBirdsApp> {
+  @override
+  void initState() {
+    super.initState();
+    DeepLinkService.instance.init(rootNavigatorKey);
+    NotificationScheduler.instance.init();
+    PushNotificationService.instance.setTapHandler(_onPushTap);
+  }
+
+  void _onPushTap(String screen, Map<String, dynamic> data) {
+    DeepLinkService.instance.open(data['link']?.toString() ?? screen);
+  }
+
+  @override
+  void dispose() {
+    DeepLinkService.instance.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Study Birds',
-      builder: (context, child) =>
-          DeviceLockGate(child: child ?? const SizedBox.shrink()),
+      navigatorKey: rootNavigatorKey,
+      locale: const Locale('ar'),
+      supportedLocales: const [Locale('ar')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      builder: (context, child) => DeviceLockGate(
+          child: OfflineBannerWrapper(
+              child: child ?? const SizedBox.shrink())),
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light
@@ -144,7 +208,18 @@ class ConnectedPrototypeEntry extends StatelessWidget {
   static void _goOnboardingServices(BuildContext context) {
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (ctx) =>
-          OnboardingServicesScreen(onContinue: () => _goLogin(ctx)),
+          OnboardingServicesScreen(onContinue: () => _goAccountType(ctx)),
+    ));
+  }
+
+  static void _goAccountType(BuildContext context) {
+    Navigator.of(context).pushReplacement(MaterialPageRoute(
+      builder: (ctx) => AccountTypeSelectionScreen(
+        onSelected: (_) {
+          AnalyticsService.instance.onboardingCompleted();
+          _goLogin(ctx);
+        },
+      ),
     ));
   }
 
@@ -160,6 +235,12 @@ class ConnectedPrototypeEntry extends StatelessWidget {
               onRegisterAttempt: (name, email, password) =>
                   _attemptRegister(ctx2, name, email, password)),
         )),
+        onGoogleSignInSuccess: () {
+          if (!ctx.mounted) return;
+          Navigator.of(ctx).pushAndRemoveUntil(
+              MaterialPageRoute(builder: (_) => const RootChooserScreen()),
+              (route) => false);
+        },
       ),
     ));
   }
@@ -173,7 +254,7 @@ class ConnectedPrototypeEntry extends StatelessWidget {
     String email,
     String password,
   ) async {
-    late ({AuthUser user, String token}) result;
+    late ({AuthUser user, String token, String? refreshToken}) result;
     try {
       result = await AuthService.instance.loginOrThrow(email, password);
     } on ApiException catch (e) {
@@ -191,7 +272,7 @@ class ConnectedPrototypeEntry extends StatelessWidget {
     final user = result.user;
     final token = result.token;
 
-    await AuthSession.instance.login(user, authToken: token);
+    await AuthSession.instance.login(user, authToken: token, refreshToken: result.refreshToken);
 
     if (!context.mounted) return true;
     Navigator.of(context).pushAndRemoveUntil(
@@ -220,16 +301,18 @@ class ConnectedPrototypeEntry extends StatelessWidget {
   ) async {
     final AuthUser user;
     final String token;
+    String? refreshToken;
     try {
       final result = await AuthService.instance
           .register(name: name, email: email, password: password);
       user = result.user;
       token = result.token;
+      refreshToken = result.refreshToken;
     } catch (_) {
       return false; // RegisterScreen shows its generic "couldn't create account" message.
     }
 
-    await AuthSession.instance.login(user, authToken: token);
+    await AuthSession.instance.login(user, authToken: token, refreshToken: refreshToken);
     if (!context.mounted) return true;
     final navigator = Navigator.of(context);
     navigator.pushAndRemoveUntil(
@@ -355,8 +438,15 @@ class _ScreensGalleryState extends State<ScreensGallery> {
               })),
       _GalleryEntry(
           'Consultation Booking', () => const ConsultationBookingScreen()),
-      _GalleryEntry('Consultation Confirmation',
-          () => const ConsultationConfirmationScreen()),
+      _GalleryEntry(
+          'Consultation Confirmation',
+          () => const ConsultationConfirmationScreen(slot: {
+                '_id': 'demo',
+                'startsAt': '2026-09-25T09:00:00.000Z',
+                'mode': 'online',
+                'advisor': {'name': 'سارة أحمد'},
+                'meetingUrl': 'https://meet.studybirds.com/xyz',
+              })),
       _GalleryEntry('Support Center', () => const SupportCenterScreen()),
       _GalleryEntry('New Support Ticket', () => const NewSupportTicketScreen()),
       _GalleryEntry('My Support Tickets (live data)',

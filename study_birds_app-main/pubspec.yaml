@@ -9,8 +9,15 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  intl: ^0.20.0
   cupertino_icons: ^1.0.6
   url_launcher: ^6.3.0
+  app_links: ^6.3.4
+  flutter_local_notifications: ^18.0.1
+  timezone: ^0.9.4
+  connectivity_plus: ^6.1.1
   shared_preferences: ^2.3.2
   flutter_secure_storage: ^9.2.4
   http: ^1.2.2
@@ -19,6 +26,10 @@ dependencies:
   file_picker: ^8.1.2
   local_auth: ^3.0.2
   crypto: ^3.0.7
+  onesignal_flutter: ^5.2.6
+  posthog_flutter: ^5.49.0
+  google_sign_in: ^7.2.0
+  sentry_flutter: ^8.14.2
 
 dev_dependencies:
   flutter_test:

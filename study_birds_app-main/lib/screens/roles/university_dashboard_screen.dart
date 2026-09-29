@@ -79,11 +79,14 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                 builder: (_) => const SecuritySettingsScreen()))),
       ],
       title: 'لوحة الجامعة',
-      body: _loading
-          ? const LoadingState(message: 'جاري تحميل الطلبات...')
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : ListView(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState(message: 'جاري تحميل الطلبات...')
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
                     Row(
@@ -145,6 +148,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
                       }),
                   ],
                 ),
+      ),
     );
   }
 }

@@ -147,13 +147,16 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 builder: (_) => const SecuritySettingsScreen()))),
       ],
       title: 'حساب ولي الأمر',
-      body: _loadingChildren
-          ? const LoadingState(message: 'جاري تحميل بياناتك...')
-          : _loadError != null
-              ? ErrorState(message: _loadError!, onRetry: _loadChildren)
-              : ListView(
-                  padding: const EdgeInsets.all(16),
-                  children: [
+      body: RefreshIndicator(
+        onRefresh: _loadChildren,
+        color: AppColors.navy,
+        child: _loadingChildren
+            ? const LoadingState(message: 'جاري تحميل بياناتك...')
+            : _loadError != null
+                ? ErrorState(message: _loadError!, onRetry: _loadChildren)
+                : ListView(
+                    padding: const EdgeInsets.all(16),
+                    children: [
                     _buildLinkRequestForm(),
                     if (_linkRequests.isNotEmpty) ...[
                       const SizedBox(height: 12),
@@ -239,6 +242,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                     ],
                   ],
                 ),
+      ),
     );
   }
 

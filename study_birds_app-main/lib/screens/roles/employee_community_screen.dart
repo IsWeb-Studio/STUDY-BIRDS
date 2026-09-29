@@ -122,6 +122,7 @@ class _EmployeeCommunityScreenState extends State<EmployeeCommunityScreen> {
     }
     return RefreshIndicator(
       onRefresh: load,
+      color: AppColors.navy,
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: reports.length,
@@ -332,6 +333,7 @@ class _EmployeeCommunityPostScreenState
       title: 'مراجعة موضوع',
       body: RefreshIndicator(
         onRefresh: load,
+        color: AppColors.navy,
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [

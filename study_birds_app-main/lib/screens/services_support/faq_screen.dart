@@ -46,13 +46,23 @@ class _FaqScreenState extends State<FaqScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'الأسئلة الشائعة',
-      body: _loading
-          ? const LoadingState(message: 'جاري التحميل...')
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _faqs.isEmpty
-                  ? const EmptyState(icon: Icons.help_outline_rounded, title: 'لا توجد أسئلة بعد', message: 'سيتم إضافتها من لوحة التحكم قريبًا.')
-                  : ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: 5,
+                itemBuilder: (_, __) => const Padding(
+                    padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _faqs.isEmpty
+                    ? const EmptyState(
+                        icon: Icons.help_outline_rounded,
+                        title: 'لا توجد أسئلة بعد',
+                        message: 'سيتم إضافتها من لوحة التحكم قريبًا.')
+                    : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _faqs.length,
                       itemBuilder: (context, i) {
@@ -83,6 +93,7 @@ class _FaqScreenState extends State<FaqScreen> {
                         );
                       },
                     ),
+      ),
     );
   }
 }

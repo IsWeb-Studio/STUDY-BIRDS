@@ -139,13 +139,16 @@ class _GenericApprovalListBodyState extends State<_GenericApprovalListBody> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: widget.title,
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _items.isEmpty
-                  ? EmptyState(icon: Icons.inbox_outlined, title: 'لا توجد عناصر', message: widget.emptyMessage)
-                  : ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState()
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _items.isEmpty
+                    ? EmptyState(icon: Icons.inbox_outlined, title: 'لا توجد عناصر', message: widget.emptyMessage)
+                    : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _items.length,
                       itemBuilder: (context, i) {
@@ -184,6 +187,7 @@ class _GenericApprovalListBodyState extends State<_GenericApprovalListBody> {
                         );
                       },
                     ),
+      ),
     );
   }
 }

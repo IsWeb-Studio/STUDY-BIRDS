@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_theme.dart';
 import '../../core/api_client.dart';
@@ -182,6 +182,7 @@ class _EmployeeConsultationsScreenState
           ? const LoadingState()
           : RefreshIndicator(
               onRefresh: load,
+              color: AppColors.navy,
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [

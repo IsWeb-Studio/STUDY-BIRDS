@@ -99,14 +99,17 @@ class _UniversityApplicationReviewScreenState extends State<UniversityApplicatio
 
     return AppScaffold(
       title: student?['name'] as String? ?? 'مراجعة طلب',
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          AppCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(program?['title'] as String? ?? '—', style: AppTextStyles.cardTitle),
+      body: RefreshIndicator(
+        onRefresh: _refresh,
+        color: AppColors.navy,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(program?['title'] as String? ?? '—', style: AppTextStyles.cardTitle),
                 const SizedBox(height: 10),
                 _Row(label: 'الفصل الدراسي', value: program?['intake'] as String? ?? '—'),
                 const Divider(height: 20),
@@ -164,6 +167,7 @@ class _UniversityApplicationReviewScreenState extends State<UniversityApplicatio
             child: const Text('طلب مستند إضافي من الطالب'),
           ),
         ],
+        ),
       ),
     );
   }

@@ -259,7 +259,7 @@ void main() {
         () => MockClient(
             (request) async => response(request.url.path.endsWith('financials')
                 ? {'invoices': []}
-                : request.url.path.endsWith('/consultations/mine')
+                  : request.url.path.endsWith('/consultations/mine') || request.url.path.endsWith('/students/documents')
                     ? []
                     : null)));
   });

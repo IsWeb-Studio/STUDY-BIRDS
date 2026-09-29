@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import 'app_theme.dart';
 
@@ -87,7 +87,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
                         return const LoadingState();
                       },
                       errorBuilder: (context, error, stackTrace) => Container(
-                        color: AppColors.navy.withOpacity(0.06),
+                        color: AppColors.navy.withValues(alpha: 0.06),
                         alignment: Alignment.center,
                         child: const Icon(Icons.image_not_supported_outlined, color: AppColors.textSecondary, size: 32),
                       ),

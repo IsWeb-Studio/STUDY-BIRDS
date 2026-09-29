@@ -42,6 +42,14 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   bool _loading = true;
   String? _error;
   final _searchController = TextEditingController();
+  String? _statusFilter; // null = all
+
+  static const _statusOptions = [
+    (key: 'under-review', label: 'قيد المراجعة'),
+    (key: 'preliminary-accepted', label: 'قبول مبدئي'),
+    (key: 'final-accepted', label: 'قبول نهائي'),
+    (key: 'rejected', label: 'مرفوض'),
+  ];
 
   @override
   void initState() {
@@ -70,9 +78,9 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
       setState(() {
         _overview = results[0] as Map<String, dynamic>;
         _students = results[1] as List<dynamic>;
-        _filtered = _students;
         _loading = false;
       });
+      _applyFilter();
     } catch (_) {
       if (!mounted) return;
       setState(() {
@@ -85,14 +93,15 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   void _applyFilter() {
     final q = _searchController.text.trim().toLowerCase();
     setState(() {
-      _filtered = q.isEmpty
-          ? _students
-          : _students
-              .where((s) =>
-                  ((s as Map<String, dynamic>)['name'] as String? ?? '')
-                      .toLowerCase()
-                      .contains(q))
-              .toList();
+      _filtered = _students.where((s) {
+        final student = s as Map<String, dynamic>;
+        final nameMatch = q.isEmpty ||
+            (student['name'] as String? ?? '').toLowerCase().contains(q) ||
+            (student['desiredUniversity'] as String? ?? '').toLowerCase().contains(q);
+        final statusMatch = _statusFilter == null ||
+            student['applicationStatus'] == _statusFilter;
+        return nameMatch && statusMatch;
+      }).toList();
     });
   }
 
@@ -137,11 +146,14 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
               builder: (_) => const AgentProgramPricingScreen())),
         ),
       ],
-      body: _loading
-          ? const LoadingState(message: 'جاري تحميل لوحتك...')
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : ListView(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState(message: 'جاري تحميل لوحتك...')
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : ListView(
                   padding: const EdgeInsets.all(16),
                   children: [
                     Row(
@@ -180,6 +192,33 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                           prefixIcon:
                               Icon(Icons.search_rounded, color: AppColors.navy),
                         ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 36,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _FilterChip(
+                            label: 'الكل',
+                            selected: _statusFilter == null,
+                            onTap: () {
+                              setState(() => _statusFilter = null);
+                              _applyFilter();
+                            },
+                          ),
+                          ..._statusOptions.map((opt) => _FilterChip(
+                                label: opt.label,
+                                selected: _statusFilter == opt.key,
+                                color: agentStudentStatusMeta(opt.key).color,
+                                onTap: () {
+                                  setState(() => _statusFilter =
+                                      _statusFilter == opt.key ? null : opt.key);
+                                  _applyFilter();
+                                },
+                              )),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -239,6 +278,37 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                       }),
                   ],
                 ),
+      ),
+    );
+  }
+}
+
+class _FilterChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color? color;
+  final VoidCallback onTap;
+  const _FilterChip({required this.label, required this.selected, required this.onTap, this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final activeColor = color ?? AppColors.navy;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(left: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? activeColor : Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.chip),
+          border: Border.all(color: selected ? activeColor : AppColors.border),
+        ),
+        child: Text(label,
+            style: TextStyle(
+                color: selected ? Colors.white : AppColors.textPrimary,
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.normal)),
+      ),
     );
   }
 }

@@ -120,11 +120,14 @@ class _CompareListScreenState extends State<CompareListScreen> {
                             ? null
                             : () => setState(() => comparing = true),
                   ))),
-      body: loading
-          ? const LoadingState()
-          : error != null
-              ? ErrorState(message: error!, onRetry: load)
-              : FeatureBody(children: [
+      body: RefreshIndicator(
+        onRefresh: load,
+        color: AppColors.navy,
+        child: loading
+            ? const LoadingState()
+            : error != null
+                ? ErrorState(message: error!, onRetry: load)
+                : FeatureBody(children: [
                   FeatureIntro(
                       title:
                           comparing ? 'قارن قبل أن تختار' : 'أي جامعة تناسبك؟',
@@ -188,6 +191,7 @@ class _CompareListScreenState extends State<CompareListScreen> {
                         'الرسوم كما وردت في بيانات الجامعة. راجع البرنامج لمعرفة رسومه النهائية.'),
                   ],
                 ]),
+        ),
     );
   }
 }

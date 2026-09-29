@@ -1,8 +1,13 @@
+import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'analytics_service.dart';
 import 'device_lock.dart';
+import 'push_notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_client.dart';
+import 'secure_data_cache.dart';
+import 'notification_scheduler.dart';
 import '../app_shell.dart';
 import '../screens/roles/parent_dashboard_screen.dart';
 import '../screens/roles/agent_dashboard_screen.dart';
@@ -139,6 +144,16 @@ class AuthUser {
           : (linked is Map ? linked['_id'] as String? : null),
     );
   }
+
+  Map<String, dynamic> toJson() => {
+        '_id': id,
+        'name': name,
+        'email': email,
+        'role': role.wireValue,
+        if (employeeRole != null) 'employeeRole': employeeRole,
+        'permissions': permissions.toList(),
+        if (linkedUniversityId != null) 'linkedUniversity': linkedUniversityId,
+      };
 }
 
 /// Real backend authentication — talks to the Study Birds API on Render.
@@ -161,7 +176,7 @@ class AuthService {
   /// Same as [login] but throws [ApiException] with the backend's own
   /// message on failure (e.g. "Invalid credentials") instead of swallowing
   /// it — use this where the UI can show a specific error.
-  Future<({AuthUser user, String token})> loginOrThrow(
+  Future<({AuthUser user, String token, String? refreshToken})> loginOrThrow(
       String email, String password,
       {String? twoFactorCode}) async {
     final data = await ApiClient.instance.post('/auth/login', body: {
@@ -171,13 +186,13 @@ class AuthService {
     });
     final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
     final token = data['token'] as String;
-    return (user: user, token: token);
+    return (user: user, token: token, refreshToken: data['refreshToken'] as String?);
   }
 
   /// Public registration — the backend always forces role="student" here,
   /// matching the spec rule that nobody can self-register as
   /// parent/agent/university/admin.
-  Future<({AuthUser user, String token})> register({
+  Future<({AuthUser user, String token, String? refreshToken})> register({
     required String name,
     required String email,
     required String password,
@@ -189,7 +204,22 @@ class AuthService {
     });
     final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
     final token = data['token'] as String;
-    return (user: user, token: token);
+    return (user: user, token: token, refreshToken: data['refreshToken'] as String?);
+  }
+
+  /// Tries to get a fresh access token using the stored refresh token.
+  /// Returns null if the refresh token is missing or invalid.
+  Future<({AuthUser user, String token, String? refreshToken})?> tryRefresh(String refreshToken) async {
+    try {
+      final data = await ApiClient.instance.post('/auth/refresh', body: {'refreshToken': refreshToken});
+      final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
+      final token = data['token'] as String;
+      final newRefresh = data['refreshToken'] as String?;
+      return (user: user, token: token, refreshToken: newRefresh);
+    } on ApiException catch (error) {
+      if (error.statusCode == 401 || error.statusCode == 403) return null;
+      rethrow;
+    }
   }
 
   /// Re-fetches the current user from a previously-stored token — used on
@@ -211,35 +241,129 @@ class AuthService {
 /// survives app restarts. On restore, the token is re-validated against the
 /// backend (`/api/auth/me`) rather than trusting any locally-cached role.
 class AuthSession extends ChangeNotifier {
-  AuthSession._();
+  AuthSession._() {
+    ApiClient.instance.refreshSession = refreshAccessToken;
+  }
   static final AuthSession instance = AuthSession._();
 
   AuthUser? currentUser;
   String? token;
   bool _restored = false;
   bool get isRestored => _restored;
+  int _revision = 0;
+  String? _previousToken;
+  Future<String?>? _refreshing;
+
+  Future<void> _cacheUser(AuthUser user) async {
+    await const FlutterSecureStorage().write(key: 'cached_user', value: jsonEncode({
+      'user': user.toJson(), 'savedAt': DateTime.now().toUtc().toIso8601String(),
+    }));
+  }
+
+  Future<String?> refreshAccessToken(String failedToken) async {
+    if (token != failedToken) return failedToken == _previousToken ? token : null;
+    if (_refreshing != null) return _refreshing;
+    final operation = _renew(failedToken);
+    _refreshing = operation;
+    try { return await operation; } finally { _refreshing = null; }
+  }
+
+  Future<String?> _renew(String failedToken) async {
+    final revision = _revision;
+    const storage = FlutterSecureStorage();
+    final refresh = await storage.read(key: 'refresh_token');
+    if (refresh == null) return null;
+    try {
+      final result = await AuthService.instance.tryRefresh(refresh);
+      if (revision != _revision || token != failedToken) return null;
+      if (result == null) {
+        await logout(revoke: false);
+        return null;
+      }
+      _previousToken = failedToken;
+      token = result.token;
+      currentUser = result.user;
+      await storage.write(key: 'active_session_token', value: result.token);
+      await _cacheUser(result.user);
+      if (result.refreshToken != null) await storage.write(key: 'refresh_token', value: result.refreshToken);
+      notifyListeners();
+      return token;
+    } catch (_) {
+      // A transport failure must not erase a valid saved session.
+      return null;
+    }
+  }
 
   Future<void> restore() async {
     if (_restored) return;
     final prefs = await SharedPreferences.getInstance();
-    var storedToken =
-        await const FlutterSecureStorage().read(key: 'active_session_token');
+    const storage = FlutterSecureStorage();
+    var storedToken = await storage.read(key: 'active_session_token');
     final legacy = prefs.getString('session_token');
     if (storedToken == null && legacy != null) {
-      await const FlutterSecureStorage()
-          .write(key: 'active_session_token', value: legacy);
+      await storage.write(key: 'active_session_token', value: legacy);
       storedToken = legacy;
     }
     await prefs.remove('session_token');
 
     if (storedToken != null) {
-      final user = await AuthService.instance.fetchCurrentUser(storedToken);
-      if (user != null) {
-        currentUser = user;
-        token = storedToken;
-      } else {
-        // Token expired/invalid — clear it so we don't keep retrying.
-        await const FlutterSecureStorage().delete(key: 'active_session_token');
+      try {
+        final user = await AuthService.instance.fetchCurrentUser(storedToken);
+        if (user != null) {
+          currentUser = user;
+          token = storedToken;
+          await _cacheUser(user);
+        } else {
+          // Access token expired — try refresh token before giving up.
+          final storedRefresh = await storage.read(key: 'refresh_token');
+          if (storedRefresh != null) {
+            final refreshed = await AuthService.instance.tryRefresh(storedRefresh);
+            if (refreshed != null) {
+              currentUser = refreshed.user;
+              token = refreshed.token;
+              await storage.write(key: 'active_session_token', value: refreshed.token);
+              await _cacheUser(refreshed.user);
+              if (refreshed.refreshToken != null) await storage.write(key: 'refresh_token', value: refreshed.refreshToken);
+            } else {
+              await storage.delete(key: 'active_session_token');
+              await storage.delete(key: 'refresh_token');
+              await storage.delete(key: 'cached_user');
+            }
+          } else {
+            await storage.delete(key: 'active_session_token');
+            await storage.delete(key: 'cached_user');
+          }
+        }
+      } catch (error) {
+        if (error is ApiException &&
+            (error.statusCode == 401 || error.statusCode == 403)) {
+          await storage.delete(key: 'active_session_token');
+          await storage.delete(key: 'refresh_token');
+          await storage.delete(key: 'cached_user');
+          _restored = true;
+          notifyListeners();
+          return;
+        }
+        // Network or transport error — restore from cached user snapshot so
+        // the app can work offline with stale data; the next successful request
+        // will re-validate the token via the 401 refresh path.
+        final cachedRaw = await storage.read(key: 'cached_user');
+        if (cachedRaw != null) {
+          try {
+            final cached = jsonDecode(cachedRaw) as Map;
+            final savedAt = DateTime.tryParse('${cached['savedAt']}');
+            final age = savedAt == null ? null : DateTime.now().difference(savedAt);
+            final user = AuthUser.fromJson(Map<String, dynamic>.from(cached['user'] as Map));
+            // Staff permissions must be verified online before opening tools.
+            if (user.role == UserRole.student && age != null && !age.isNegative && age < const Duration(days: 7)) {
+              currentUser = user;
+              token = storedToken;
+            }
+          } catch (_) {
+            // A missing/old snapshot is not proof that saved credentials were revoked.
+            await storage.delete(key: 'cached_user');
+          }
+        }
       }
     }
 
@@ -247,27 +371,55 @@ class AuthSession extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> login(AuthUser user, {String? authToken}) async {
+  Future<void> login(AuthUser user, {String? authToken, String? refreshToken}) async {
+    _revision++;
+    _previousToken = null;
     final prefs = await SharedPreferences.getInstance();
+    final storage = const FlutterSecureStorage();
     if (authToken != null) {
-      await const FlutterSecureStorage()
-          .write(key: 'active_session_token', value: authToken);
+      await storage.write(key: 'active_session_token', value: authToken);
     } else {
-      await const FlutterSecureStorage().delete(key: 'active_session_token');
+      await storage.delete(key: 'active_session_token');
     }
+    if (refreshToken != null) {
+      await storage.write(key: 'refresh_token', value: refreshToken);
+    } else {
+      await storage.delete(key: 'refresh_token');
+    }
+    await _cacheUser(user);
     await prefs.remove('session_token');
     currentUser = user;
     token = authToken;
+    PushNotificationService.instance.setUser(user.id);
+    AnalyticsService.instance.identify(user.id, traits: {'role': user.role.name, 'name': user.name});
     notifyListeners();
   }
 
-  Future<void> logout() async {
+  Future<void> logout({bool revoke = true}) async {
+    _revision++;
+    _previousToken = null;
+    final owner = currentUser?.id ?? '';
     currentUser = null;
     token = null;
+    notifyListeners();
+    const storage = FlutterSecureStorage();
+    final refresh = await storage.read(key: 'refresh_token');
+    if (revoke && refresh != null) {
+      try { await ApiClient.instance.post('/auth/logout', body: {'refreshToken': refresh}); } catch (_) {}
+    }
+    await SecureDataCache.clear(owner);
+    await NotificationScheduler.instance.cancelAll();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('session_token');
-    await const FlutterSecureStorage().delete(key: 'active_session_token');
+    for (final key in ['sb_overview_cache', 'sb_apps_cache', 'sb_docs_cache', 'sb_financials_cache']) {
+      await prefs.remove(key);
+    }
+    await storage.delete(key: 'active_session_token');
+    await storage.delete(key: 'refresh_token');
+    await storage.delete(key: 'cached_user');
     await DeviceLock.instance.clear();
+    PushNotificationService.instance.clearUser();
+    AnalyticsService.instance.reset();
     notifyListeners();
   }
 }

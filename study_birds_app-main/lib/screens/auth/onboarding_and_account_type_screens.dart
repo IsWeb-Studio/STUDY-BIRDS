@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/app_theme.dart';
 import '../../core/animations.dart';
@@ -129,8 +129,8 @@ class _OnboardingIntroScreenState extends State<OnboardingIntroScreen> with Sing
                                         height: 220,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          border: Border.all(color: AppColors.orange.withOpacity(0.15), width: 6),
-                                          boxShadow: [BoxShadow(color: AppColors.navy.withOpacity(0.08), blurRadius: 24, offset: const Offset(0, 10))],
+                                          border: Border.all(color: AppColors.orange.withValues(alpha: 0.15), width: 6),
+                                          boxShadow: [BoxShadow(color: AppColors.navy.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, 10))],
                                         ),
                                         child: ClipOval(
                                           child: Image.network(
@@ -139,12 +139,12 @@ class _OnboardingIntroScreenState extends State<OnboardingIntroScreen> with Sing
                                             loadingBuilder: (context, child, progress) {
                                               if (progress == null) return child;
                                               return Container(
-                                                color: AppColors.navy.withOpacity(0.06),
+                                                color: AppColors.navy.withValues(alpha: 0.06),
                                                 child: const Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.orange)),
                                               );
                                             },
                                             errorBuilder: (context, error, stackTrace) => Container(
-                                              color: AppColors.navy.withOpacity(0.06),
+                                              color: AppColors.navy.withValues(alpha: 0.06),
                                               child: Icon(s.icon, size: 60, color: AppColors.navy),
                                             ),
                                           ),
@@ -159,7 +159,7 @@ class _OnboardingIntroScreenState extends State<OnboardingIntroScreen> with Sing
                                             color: AppColors.orange,
                                             shape: BoxShape.circle,
                                             border: Border.all(color: Colors.white, width: 3),
-                                            boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.15), blurRadius: 8)],
+                                            boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8)],
                                           ),
                                           child: Icon(s.icon, size: 22, color: Colors.white),
                                         ),
@@ -279,7 +279,7 @@ class OnboardingServicesScreen extends StatelessWidget {
                           width: 42,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: AppColors.orange.withOpacity(0.12),
+                            color: AppColors.orange.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: Icon(s.icon, color: AppColors.orange, size: 20),
@@ -354,7 +354,7 @@ class _AccountTypeSelectionScreenState
                       curve: Curves.easeOut,
                       decoration: BoxDecoration(
                         color: selected
-                            ? AppColors.orange.withOpacity(0.08)
+                            ? AppColors.orange.withValues(alpha: 0.08)
                             : Colors.white,
                         borderRadius: BorderRadius.circular(AppRadius.card),
                         border: Border.all(

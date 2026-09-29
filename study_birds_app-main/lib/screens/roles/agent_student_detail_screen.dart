@@ -208,11 +208,15 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'محفظتي',
-      body: _loading
-          ? const LoadingState(message: 'جاري تحميل المحفظة...')
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _buildContent(context, _wallet!),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState(message: 'جاري تحميل المحفظة...')
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _buildContent(context, _wallet!),
+      ),
     );
   }
 

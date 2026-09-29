@@ -25,8 +25,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     'address': 'العنوان',
     'bio': 'نبذة',
   };
+  // حقول بند 8
+  static const parentFields = {
+    'parentName': 'اسم ولي الأمر',
+    'parentPhone': 'هاتف ولي الأمر',
+    'parentRelationship': 'صلة القرابة',
+  };
+  static const emergencyFields = {
+    'emergencyName': 'اسم جهة الطوارئ',
+    'emergencyPhone': 'هاتف الطوارئ',
+    'emergencyRelationship': 'صلة القرابة',
+  };
+  static const langFields = {
+    'nativeLanguage': 'اللغة الأم',
+    'otherLanguages': 'لغات أخرى (افصل بفاصلة)',
+  };
+
   final controllers = {
-    for (final key in fields.keys) key: TextEditingController()
+    for (final key in fields.keys) key: TextEditingController(),
+    for (final key in parentFields.keys) key: TextEditingController(),
+    for (final key in emergencyFields.keys) key: TextEditingController(),
+    for (final key in langFields.keys) key: TextEditingController(),
   };
   final form = GlobalKey<FormState>();
   Map<String, dynamic> profile = {};
@@ -55,12 +74,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             raw is List ? raw.join('، ') : raw?.toString() ?? '';
       }
       final dob = DateTime.tryParse(controllers['dateOfBirth']!.text);
-      if (dob != null)
+      if (dob != null) {
         controllers['dateOfBirth']!.text =
             dob.toIso8601String().split('T').first;
+      }
       level = value['currentEducationLevel']?.toString() ?? '';
-      if (!['', 'high-school', 'bachelor', 'master', 'phd'].contains(level))
+      if (!['', 'high-school', 'bachelor', 'master', 'phd'].contains(level)) {
         level = '';
+      }
+      // بند 8: ولي الأمر وجهة الطوارئ واللغات
+      final pi = value['parentInfo'] as Map? ?? {};
+      controllers['parentName']!.text = '${pi['name'] ?? ''}';
+      controllers['parentPhone']!.text = '${pi['phone'] ?? ''}';
+      controllers['parentRelationship']!.text = '${pi['relationship'] ?? ''}';
+      final ec = value['emergencyContact'] as Map? ?? {};
+      controllers['emergencyName']!.text = '${ec['name'] ?? ''}';
+      controllers['emergencyPhone']!.text = '${ec['phone'] ?? ''}';
+      controllers['emergencyRelationship']!.text = '${ec['relationship'] ?? ''}';
+      controllers['nativeLanguage']!.text = '${value['nativeLanguage'] ?? ''}';
+      final others = value['otherLanguages'];
+      controllers['otherLanguages']!.text =
+          others is List ? others.join('، ') : '';
     } catch (e) {
       if (mounted) error = e.toString();
     } finally {
@@ -77,8 +111,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final next = {
         ...profile,
-        for (final entry in controllers.entries)
-          entry.key: entry.value.text.trim()
+        for (final key in fields.keys) key: controllers[key]!.text.trim(),
       };
       next['targetCountries'] = controllers['targetCountries']!
           .text
@@ -90,6 +123,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ? null
           : controllers['dateOfBirth']!.text.trim();
       next['currentEducationLevel'] = level;
+      // بند 8
+      next['parentInfo'] = {
+        'name': controllers['parentName']!.text.trim(),
+        'phone': controllers['parentPhone']!.text.trim(),
+        'relationship': controllers['parentRelationship']!.text.trim(),
+      };
+      next['emergencyContact'] = {
+        'name': controllers['emergencyName']!.text.trim(),
+        'phone': controllers['emergencyPhone']!.text.trim(),
+        'relationship': controllers['emergencyRelationship']!.text.trim(),
+      };
+      next['nativeLanguage'] = controllers['nativeLanguage']!.text.trim();
+      next['otherLanguages'] = controllers['otherLanguages']!
+          .text
+          .split(RegExp('[,،]'))
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
       await StudentRepository.instance.updateProfile(next);
       if (!mounted) return;
       if (widget.onSaved != null) {
@@ -169,6 +220,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         },
       ));
 
+  Widget _extraField(
+    String key,
+    Map<String, String> labels, {
+    String? hint,
+    TextInputType keyboard = TextInputType.text,
+    bool ltr = false,
+  }) =>
+      Padding(
+          padding: const EdgeInsets.only(bottom: 18),
+          child: TextFormField(
+            controller: controllers[key],
+            enabled: !saving,
+            textDirection: ltr ? TextDirection.ltr : null,
+            keyboardType: keyboard,
+            decoration: featureInput(labels[key]!, hint: hint),
+          ));
+
   @override
   Widget build(BuildContext context) => AppScaffold(
         title: 'الملف الشخصي',
@@ -247,6 +315,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             field('targetCountries'),
                             field('intake'),
                             field('bio')
+                          ])),
+                      FeaturePanel(
+                          title: 'اللغات',
+                          subtitle: 'يساعدنا هذا في اختيار المستشار المناسب.',
+                          child: Column(children: [
+                            _extraField('nativeLanguage', langFields),
+                            _extraField('otherLanguages', langFields,
+                                hint: 'مثال: الإنجليزية، الفرنسية'),
+                          ])),
+                      FeaturePanel(
+                          title: 'ولي الأمر',
+                          subtitle: 'للتواصل في حالات الضرورة.',
+                          child: Column(children: [
+                            _extraField('parentName', parentFields),
+                            _extraField('parentPhone', parentFields,
+                                keyboard: TextInputType.phone, ltr: true),
+                            _extraField('parentRelationship', parentFields),
+                          ])),
+                      FeaturePanel(
+                          title: 'جهة الاتصال الطارئة',
+                          subtitle: 'شخص يمكن التواصل معه في حالات الطوارئ.',
+                          child: Column(children: [
+                            _extraField('emergencyName', emergencyFields),
+                            _extraField('emergencyPhone', emergencyFields,
+                                keyboard: TextInputType.phone, ltr: true),
+                            _extraField('emergencyRelationship',
+                                emergencyFields),
                           ])),
                     ])),
       );

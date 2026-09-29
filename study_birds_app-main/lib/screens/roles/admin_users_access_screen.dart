@@ -237,15 +237,18 @@ class _AdminUsersAccessScreenState extends State<AdminUsersAccessScreen> {
             ),
           ),
           Expanded(
-            child: _loading
-                ? const LoadingState()
-                : _error != null
-                    ? ErrorState(message: _error!, onRetry: _load)
-                    : _filtered.isEmpty
-                        ? const EmptyState(icon: Icons.people_outline_rounded, title: 'لا يوجد مستخدمون', message: 'لا توجد نتائج مطابقة.')
-                        : ListView.builder(
-                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                            itemCount: _filtered.length,
+            child: RefreshIndicator(
+              onRefresh: _load,
+              color: AppColors.navy,
+              child: _loading
+                  ? const LoadingState()
+                  : _error != null
+                      ? ErrorState(message: _error!, onRetry: _load)
+                      : _filtered.isEmpty
+                          ? const EmptyState(icon: Icons.people_outline_rounded, title: 'لا يوجد مستخدمون', message: 'لا توجد نتائج مطابقة.')
+                          : ListView.builder(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                              itemCount: _filtered.length,
                             itemBuilder: (context, i) {
                               final user = _filtered[i] as Map<String, dynamic>;
                               final isActive = user['isActive'] != false;
@@ -301,6 +304,7 @@ class _AdminUsersAccessScreenState extends State<AdminUsersAccessScreen> {
                               );
                             },
                           ),
+            ),
           ),
         ],
       ),

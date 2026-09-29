@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'core/app_theme.dart';
 import 'screens/home_journey/home_dashboard_screen.dart';
 import 'screens/home_journey/journey_tracker_screen.dart';
@@ -18,6 +19,7 @@ class StudentAppShell extends StatefulWidget {
 
 class _StudentAppShellState extends State<StudentAppShell> {
   int _index = 0;
+  bool _offline = false;
 
   static const _navItems = [
     _NavItemData(icon: Icons.home_rounded, label: 'الرئيسية'),
@@ -26,6 +28,38 @@ class _StudentAppShellState extends State<StudentAppShell> {
     _NavItemData(icon: Icons.miscellaneous_services_outlined, label: 'الخدمات'),
     _NavItemData(icon: Icons.person_outline_rounded, label: 'حسابي'),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _checkConnectivity();
+    Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
+  }
+
+  Future<void> _checkConnectivity() async {
+    try {
+      final result = await Connectivity().checkConnectivity();
+      if (mounted) {
+        setState(() => _offline = result.contains(ConnectivityResult.none) &&
+            result.length == 1);
+      }
+    } catch (_) {}
+  }
+
+  void _onConnectivityChanged(List<ConnectivityResult> results) {
+    if (!mounted) return;
+    final wasOffline = _offline;
+    final nowOffline =
+        results.contains(ConnectivityResult.none) && results.length == 1;
+    setState(() => _offline = nowOffline);
+    if (wasOffline && !nowOffline) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('عاد الاتصال بالإنترنت'),
+        backgroundColor: AppColors.success,
+        duration: Duration(seconds: 2),
+      ));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,7 +74,38 @@ class _StudentAppShellState extends State<StudentAppShell> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        body: IndexedStack(index: _index, children: tabs),
+        body: Column(
+          children: [
+            if (_offline)
+              Material(
+                color: Colors.grey.shade800,
+                child: SafeArea(
+                  bottom: false,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
+                    child: Row(
+                      children: const [
+                        Icon(Icons.wifi_off_rounded,
+                            size: 16, color: Colors.white),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'لا يوجد اتصال بالإنترنت — بعض البيانات قد تكون غير محدّثة',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12.5,
+                                fontWeight: FontWeight.w500),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            Expanded(child: IndexedStack(index: _index, children: tabs)),
+          ],
+        ),
         bottomNavigationBar: _AnimatedBottomNav(
           currentIndex: _index,
           items: _navItems,
@@ -77,7 +142,7 @@ class _AnimatedBottomNav extends StatelessWidget {
           color: Colors.white,
           boxShadow: [
             BoxShadow(
-                color: Colors.black.withOpacity(0.06),
+                color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 12,
                 offset: const Offset(0, -2))
           ],

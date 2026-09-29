@@ -1,7 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../core/api_client.dart';
 import '../../core/auth_session.dart';
+import '../../core/analytics_service.dart';
 import '../../core/community_repository.dart';
 
 /// Arabic message for a failed community call; server messages are English.
@@ -55,6 +56,7 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen> {
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.screenView('community');
     load();
     loadLookups();
     loadStatus();
@@ -247,6 +249,7 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen> {
     }
     return RefreshIndicator(
       onRefresh: load,
+      color: AppColors.navy,
       child: ListView.separated(
         physics: const AlwaysScrollableScrollPhysics(),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
@@ -723,6 +726,7 @@ class _CommunityThreadScreenState extends State<CommunityThreadScreen> {
                     Expanded(
                       child: RefreshIndicator(
                         onRefresh: load,
+                        color: AppColors.navy,
                         child: ListView(
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.all(16),

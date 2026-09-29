@@ -1,8 +1,11 @@
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../core/animations.dart';
 import '../../core/student_repository.dart';
 import '../../core/auth_session.dart';
+import '../../core/analytics_service.dart';
+import '../../core/realtime_sync_service.dart';
 import '../../main.dart' show RootChooserScreen;
 import '../profile_account/profile_account_screens.dart';
 import 'notifications_screen.dart';
@@ -18,7 +21,10 @@ import '../services_support/services_consultation_screens.dart';
 import '../services_support/support_team_ai_screens.dart';
 import '../services_support/community_screen.dart';
 import '../universities_programs_countries/programs_screens.dart';
+import '../universities_programs_countries/explore_hub_screen.dart';
 import '../visa_travel_accommodation/arrival_services_screen.dart';
+import '../visa_travel_accommodation/accommodation_arrival_screens.dart';
+import '../visa_travel_accommodation/visa_travel_screens.dart' show InsuranceScreen, EquivalencyScreen, VisaCenterScreen, TravelCenterScreen;
 import 'smart_home_sections.dart';
 
 /// Real, live Home Dashboard — fetches GET /api/students/overview on load.
@@ -38,6 +44,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   DashboardOverview? _overview;
   bool _loading = true;
   String? _error;
+  StreamSubscription<DateTime>? _syncSub;
 
   // Mock — in production this list comes from the admin panel/CMS (spec
   // points 75/76). No /banners endpoint exists on the backend yet.
@@ -56,6 +63,19 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   void initState() {
     super.initState();
     _load();
+    AnalyticsService.instance.screenView('home_dashboard');
+    _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
+      StudentRepository.instance
+          .getOverview(forceRefresh: true)
+          .then((data) { if (mounted) setState(() => _overview = data); })
+          .catchError((_) {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -128,6 +148,14 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   style: TextStyle(color: AppColors.danger)),
               onTap: () async {
                 Navigator.pop(sheetContext);
+                final confirmed = await showAppConfirmDialog(
+                  context,
+                  title: 'تسجيل الخروج',
+                  message: 'هل تريد تسجيل الخروج من حسابك؟',
+                  confirmLabel: 'تسجيل الخروج',
+                  danger: true,
+                );
+                if (!confirmed || !context.mounted) return;
                 await AuthSession.instance.logout();
                 if (context.mounted) {
                   Navigator.of(context).pushAndRemoveUntil(
@@ -144,32 +172,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     );
   }
 
-  Widget _quickActionScreen(String label) {
-    switch (label) {
-      case 'طلباتي':
-        return const ApplicationsListScreen();
-      case 'الجامعات':
-        return const UniversitiesExplorerScreen();
-      case 'مستنداتي':
-        return const MyDocumentsScreen();
-      case 'المدفوعات':
-        return const PaymentsSummaryScreen();
-      case 'Bird AI':
-        return const BirdAIChatScreen();
-      case 'استشارة':
-        return const ConsultationBookingScreen();
-      case 'المجتمع':
-        return const StudentCommunityScreen();
-      case 'الدعم':
-        return const SupportCenterScreen();
-      default:
-        return const UniversitiesExplorerScreen();
-    }
-  }
 
   /// Opens a home destination key sent by the server (context card, dates,
-  /// sections, quick actions). Visa and travel go to the live journey and
-  /// arrival screens, not the static demo visa/travel screens.
+  /// sections, quick actions).
   void _openDestination(String destination) {
     if (destination == 'consultation') {
       showAnimatedBottomSheet(context,
@@ -180,8 +185,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       return;
     }
     final Widget screen = switch (destination) {
-      'journey' || 'visa' => const JourneyTrackerScreen(),
-      'travel' || 'accommodation' => const ArrivalServicesScreen(),
+      'journey' => const JourneyTrackerScreen(),
+      'visa' => const VisaCenterScreen(),
+      'travel' => const TravelCenterScreen(),
+      'accommodation' => const AccommodationScreen(),
+      'university-registration' => const UniversityRegistrationScreen(),
+      'insurance' => const InsuranceScreen(),
+      'equivalency' => const EquivalencyScreen(),
       'programs' || 'catalog' => const ProgramsExplorerScreen(),
       'universities' => const UniversitiesExplorerScreen(),
       'documents' || 'upload-document' => const MyDocumentsScreen(),
@@ -251,11 +261,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       child: Scaffold(
         backgroundColor: AppColors.background,
         body: SafeArea(
-          child: _loading
-              ? const LoadingState(message: 'جاري تحميل رحلتك...')
-              : _error != null
-                  ? ErrorState(message: _error!, onRetry: _load)
-                  : _buildContent(context, _overview!),
+          child: RefreshIndicator(
+            onRefresh: _load,
+            color: AppColors.navy,
+            child: _loading
+                ? const LoadingState(message: 'جاري تحميل رحلتك...')
+                : _error != null
+                    ? ErrorState(message: _error!, onRetry: _load)
+                    : _buildContent(context, _overview!),
+          ),
         ),
         bottomNavigationBar: widget.embedInShell
             ? null
@@ -264,6 +278,22 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 selectedItemColor: AppColors.navy,
                 unselectedItemColor: AppColors.textSecondary,
                 type: BottomNavigationBarType.fixed,
+                onTap: (i) {
+                  switch (i) {
+                    case 1:
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const JourneyTrackerScreen()));
+                    case 2:
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const ExploreHubScreen()));
+                    case 3:
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const ServicesCenterScreen()));
+                    case 4:
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const ProfileScreen()));
+                  }
+                },
                 items: const [
                   BottomNavigationBarItem(
                       icon: Icon(Icons.home_rounded), label: 'الرئيسية'),
@@ -344,7 +374,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             gradient: LinearGradient(
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
-              colors: [AppColors.navy, AppColors.navy.withOpacity(0.92)],
+              colors: [AppColors.navy, AppColors.navy.withValues(alpha: 0.92)],
             ),
             borderRadius:
                 const BorderRadius.vertical(bottom: Radius.circular(28)),
@@ -355,6 +385,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 children: [
                   _HeroIconButton(
                       icon: Icons.menu_rounded,
+                      tooltip: 'القائمة',
                       onPressed: () => _openMenu(context)),
                   Expanded(
                     child: Column(
@@ -381,7 +412,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   ),
                   _HeroIconButton(
                     icon: Icons.notifications_none_rounded,
-                    showDot: overview.stats.unreadNotifications > 0,
+                    tooltip: 'الإشعارات',
+                    badgeCount: overview.stats.unreadNotifications,
                     onPressed: () => Navigator.of(context).push(
                         MaterialPageRoute(
                             builder: (_) => const NotificationsScreen())),
@@ -502,23 +534,17 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                               ? 'تفاصيل الرحلة'
                               : 'عرض التفاصيل',
                           expand: false,
-                          onPressed: () =>
+                          onPressed: () {
+                            final destination = overview.nextAction?['destination'] as String?;
+                            if (destination == null || destination == 'journey') {
                               Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => overview.nextAction == null ||
-                                    overview.nextAction?['destination'] ==
-                                        'journey'
-                                ? JourneyTrackerScreen(
+                                builder: (_) => JourneyTrackerScreen(
                                     currentStageKey: overview.journeyStage,
-                                    journeyPathLabel: journeyPathLabel)
-                                : _quickActionScreen(const {
-                                      'payments': 'المدفوعات',
-                                      'documents': 'مستنداتي',
-                                      'applications': 'طلباتي',
-                                      'support': 'الدعم',
-                                      'catalog': 'الجامعات'
-                                    }[overview.nextAction!['destination']] ??
-                                    'طلباتي'),
-                          )),
+                                    journeyPathLabel: journeyPathLabel)));
+                            } else {
+                              _openDestination(destination);
+                            }
+                          },
                         ),
                       ],
                     ),
@@ -675,31 +701,53 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 class _HeroIconButton extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;
-  final bool showDot;
+  final int badgeCount;
+  final String? tooltip;
   const _HeroIconButton(
-      {required this.icon, required this.onPressed, this.showDot = false});
+      {required this.icon,
+      required this.onPressed,
+      this.badgeCount = 0,
+      this.tooltip});
 
   @override
   Widget build(BuildContext context) {
+    final hasBadge = badgeCount > 0;
     return Stack(
       clipBehavior: Clip.none,
       children: [
         Container(
           decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.12), shape: BoxShape.circle),
+              color: Colors.white.withValues(alpha: 0.12),
+              shape: BoxShape.circle),
           child: IconButton(
               onPressed: onPressed,
+              tooltip: tooltip,
               icon: Icon(icon, color: Colors.white, size: 20)),
         ),
-        if (showDot)
+        if (hasBadge)
           Positioned(
-            right: 6,
-            top: 6,
-            child: Container(
-                width: 7,
-                height: 7,
-                decoration: const BoxDecoration(
-                    color: AppColors.orange, shape: BoxShape.circle)),
+            right: 4,
+            top: 4,
+            child: badgeCount > 0
+                ? Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 5, vertical: 1),
+                    decoration: BoxDecoration(
+                        color: AppColors.orange,
+                        borderRadius: BorderRadius.circular(10)),
+                    child: Text(
+                      badgeCount > 99 ? '99+' : '$badgeCount',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800),
+                    ),
+                  )
+                : Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                        color: AppColors.orange, shape: BoxShape.circle)),
           ),
       ],
     );

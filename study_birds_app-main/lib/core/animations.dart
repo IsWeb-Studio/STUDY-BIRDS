@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'app_theme.dart';
 
@@ -257,7 +257,7 @@ Future<T?> showAnimatedBottomSheet<T>(BuildContext context, {required WidgetBuil
               opacity: curved,
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 6 * curved.value, sigmaY: 6 * curved.value),
-                child: Container(color: Colors.black.withOpacity(0.25 * curved.value)),
+                child: Container(color: Colors.black.withValues(alpha: 0.25 * curved.value)),
               ),
             ),
           ),
@@ -330,7 +330,7 @@ class _SuccessCheckAnimationState extends State<SuccessCheckAnimation> with Sing
             child: Container(
               width: 84,
               height: 84,
-              decoration: BoxDecoration(color: AppColors.success.withOpacity(0.12), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: AppColors.success.withValues(alpha: 0.12), shape: BoxShape.circle),
               child: const Icon(Icons.check_rounded, color: AppColors.success, size: 44),
             ),
           ),
@@ -351,7 +351,7 @@ Future<void> showSuccessModal(BuildContext context, {required String title, Stri
     context: context,
     barrierDismissible: true,
     barrierLabel: 'dismiss',
-    barrierColor: Colors.black.withOpacity(0.35),
+    barrierColor: Colors.black.withValues(alpha: 0.35),
     transitionDuration: const Duration(milliseconds: 250),
     pageBuilder: (context, a1, a2) => Center(
       child: Container(

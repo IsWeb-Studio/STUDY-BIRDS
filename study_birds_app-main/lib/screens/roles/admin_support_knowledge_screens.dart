@@ -72,13 +72,16 @@ class _AdminSupportTicketsScreenState extends State<AdminSupportTicketsScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'تذاكر الدعم',
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _tickets.isEmpty
-                  ? const EmptyState(icon: Icons.confirmation_number_outlined, title: 'لا توجد تذاكر', message: 'ستظهر هنا تذاكر الدعم من الطلاب والوكلاء.')
-                  : ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState()
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _tickets.isEmpty
+                    ? const EmptyState(icon: Icons.confirmation_number_outlined, title: 'لا توجد تذاكر', message: 'ستظهر هنا تذاكر الدعم من الطلاب والوكلاء.')
+                    : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _tickets.length,
                       itemBuilder: (context, i) {
@@ -103,6 +106,7 @@ class _AdminSupportTicketsScreenState extends State<AdminSupportTicketsScreen> {
                         );
                       },
                     ),
+      ),
     );
   }
 }
@@ -200,13 +204,16 @@ class _AdminKnowledgeBaseScreenState extends State<AdminKnowledgeBaseScreen> {
     return AppScaffold(
       title: 'مركز المعرفة',
       actions: [IconButton(onPressed: _openCreateForm, icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white))],
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _items.isEmpty
-                  ? EmptyState(icon: Icons.menu_book_outlined, title: 'لا يوجد محتوى', message: 'أضف أول مقال من زر الإضافة أعلى الشاشة.', ctaLabel: 'إضافة', onCta: _openCreateForm)
-                  : ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState()
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _items.isEmpty
+                    ? EmptyState(icon: Icons.menu_book_outlined, title: 'لا يوجد محتوى', message: 'أضف أول مقال من زر الإضافة أعلى الشاشة.', ctaLabel: 'إضافة', onCta: _openCreateForm)
+                    : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _items.length,
                       itemBuilder: (context, i) {
@@ -229,6 +236,7 @@ class _AdminKnowledgeBaseScreenState extends State<AdminKnowledgeBaseScreen> {
                         );
                       },
                     ),
+      ),
     );
   }
 }

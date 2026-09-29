@@ -1,3 +1,4 @@
+import 'secure_data_cache.dart';
 import 'api_client.dart';
 import 'auth_session.dart';
 
@@ -145,10 +146,36 @@ class StudentRepository {
     return token;
   }
 
-  Future<DashboardOverview> getOverview() async {
-    final data =
-        await ApiClient.instance.get('/students/overview', token: _token);
-    return DashboardOverview.fromJson(data as Map<String, dynamic>);
+  Future<dynamic> _loadSnapshot(String resource, {bool forceRefresh = false}) async {
+    final owner = AuthSession.instance.currentUser?.id ?? '';
+    final sessionToken = _token;
+    try {
+      final data = await ApiClient.instance.get('/students/$resource', token: sessionToken);
+      // A response from the account that just signed out must not refill its cache.
+      if (owner.isNotEmpty && AuthSession.instance.currentUser?.id == owner && AuthSession.instance.token != null) {
+        try { await SecureDataCache.write(owner, resource, data as Object); } catch (_) {}
+      }
+      return data;
+    } catch (error) {
+      if (error is ApiException && error.statusCode < 500 && error.statusCode != 0) rethrow;
+      if (!forceRefresh && AuthSession.instance.currentUser?.id == owner) {
+        try {
+          final cached = await SecureDataCache.read(owner, resource);
+          if (cached != null) return cached;
+        } catch (_) {}
+      }
+      rethrow;
+    }
+  }
+
+  Future<DashboardOverview> getOverview({bool forceRefresh = false}) async =>
+      DashboardOverview.fromJson(await _loadSnapshot('overview', forceRefresh: forceRefresh) as Map<String, dynamic>);
+
+  Future<Map<String, dynamic>> getFinancials({bool forceRefresh = false}) async =>
+      await _loadSnapshot('financials', forceRefresh: forceRefresh) as Map<String, dynamic>;
+
+  Future<void> clearOverviewCache() async {
+    await SecureDataCache.clear(AuthSession.instance.currentUser?.id ?? '');
   }
 
   Future<Map<String, dynamic>?> getProfile() async {
@@ -172,7 +199,11 @@ class StudentRepository {
       'targetCountries',
       'intake',
       'bio',
-      'address'
+      'address',
+      'parentInfo',
+      'emergencyContact',
+      'nativeLanguage',
+      'otherLanguages',
     ];
     await ApiClient.instance.put('/students/profile', token: _token, body: {
       for (final field in fields)
@@ -180,16 +211,12 @@ class StudentRepository {
     });
   }
 
-  Future<List<dynamic>> getApplications() async {
-    final data =
-        await ApiClient.instance.get('/students/applications', token: _token);
-    return data as List<dynamic>;
+  Future<List<dynamic>> getApplications({bool forceRefresh = false}) async {
+    return await _loadSnapshot('applications', forceRefresh: forceRefresh) as List<dynamic>;
   }
 
-  Future<List<dynamic>> getDocuments() async {
-    final data =
-        await ApiClient.instance.get('/students/documents', token: _token);
-    return data as List<dynamic>;
+  Future<List<dynamic>> getDocuments({bool forceRefresh = false}) async {
+    return await _loadSnapshot('documents', forceRefresh: forceRefresh) as List<dynamic>;
   }
 
   /// Uploads a document — matches POST /api/students/documents
@@ -198,9 +225,10 @@ class StudentRepository {
     required List<int> fileBytes,
     required String fileName,
     required String type,
-    // A new version of an existing document, or a certified translation of one.
     String? replaces,
     String? translationOf,
+    void Function(double)? onProgress,
+    UploadCancellation? cancellation,
   }) async {
     final data = await ApiClient.instance.postMultipart(
       '/students/documents',
@@ -212,6 +240,8 @@ class StudentRepository {
         if (translationOf != null) 'translationOf': translationOf,
       },
       token: _token,
+      onProgress: onProgress,
+      cancellation: cancellation,
     );
     return data as Map<String, dynamic>;
   }
@@ -225,12 +255,6 @@ class StudentRepository {
   Future<void> markNotificationRead(String id) async {
     await ApiClient.instance
         .patch('/students/notifications/$id/read', token: _token);
-  }
-
-  Future<Map<String, dynamic>> getFinancials() async {
-    final data =
-        await ApiClient.instance.get('/students/financials', token: _token);
-    return data as Map<String, dynamic>;
   }
 
   /// Real endpoint covering flight + airport pickup + housing + visa/residence
@@ -350,12 +374,16 @@ class StudentRepository {
   Future<Map<String, dynamic>> toggleFavorite(
       {required String itemType,
       String? universityId,
-      String? programId}) async {
+      String? programId,
+      String? articleSlug,
+      String? articleTitle}) async {
     final data = await ApiClient.instance
         .post('/students/favorites/toggle', token: _token, body: {
       'itemType': itemType,
       if (universityId != null) 'universityId': universityId,
       if (programId != null) 'programId': programId,
+      if (articleSlug != null) 'articleSlug': articleSlug,
+      if (articleTitle != null) 'articleTitle': articleTitle,
     });
     return data as Map<String, dynamic>;
   }
@@ -402,6 +430,20 @@ class StudentRepository {
       if (desiredDegreeLevel != null) 'desiredDegreeLevel': desiredDegreeLevel,
       if (avoidFields != null) 'avoidFields': avoidFields,
     });
+    return data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>?> getInsurance() async {
+    final data = await ApiClient.instance
+        .get('/students/insurance', token: _token);
+    if (data == null) return null;
+    return data as Map<String, dynamic>;
+  }
+
+  Future<Map<String, dynamic>?> getEquivalency() async {
+    final data = await ApiClient.instance
+        .get('/students/equivalency', token: _token);
+    if (data == null) return null;
     return data as Map<String, dynamic>;
   }
 }

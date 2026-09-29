@@ -242,13 +242,16 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
     return AppScaffold(
       title: widget.title,
       actions: [IconButton(onPressed: () => _openForm(), icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white))],
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _items.isEmpty
-                  ? EmptyState(icon: Icons.inbox_outlined, title: 'لا توجد عناصر', message: 'أضف أول عنصر من زر الإضافة أعلى الشاشة.', ctaLabel: 'إضافة', onCta: () => _openForm())
-                  : ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState()
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _items.isEmpty
+                    ? EmptyState(icon: Icons.inbox_outlined, title: 'لا توجد عناصر', message: 'أضف أول عنصر من زر الإضافة أعلى الشاشة.', ctaLabel: 'إضافة', onCta: () => _openForm())
+                    : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _items.length,
                       itemBuilder: (context, i) {
@@ -276,6 +279,7 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
                         );
                       },
                     ),
+      ),
     );
   }
 }

@@ -45,3 +45,6 @@ app.*.map.json
 /android/app/release
 
 .build-tools/
+
+# Personal Claude Code settings
+.claude/settings.local.json

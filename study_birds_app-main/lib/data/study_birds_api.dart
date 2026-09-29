@@ -98,6 +98,55 @@ class StudyBirdsApi extends ChangeNotifier {
     await _storage.delete(key: 'study_birds_token');
   }
 
+  /// Permanently deletes the authenticated account.
+  /// Requires [password] so a stolen unlocked phone cannot wipe the account
+  /// silently. On success the local session is cleared. On a 401 (wrong
+  /// password) the session is preserved and an [ApiException] is thrown so
+  /// the UI can show the error without logging the user out.
+  Future<void> deleteAccount(String password) async {
+    if (password.isEmpty) {
+      throw const ApiException('كلمة المرور مطلوبة.');
+    }
+    final req = http.Request('DELETE', uri('/auth/account'));
+    req.headers['Accept'] = 'application/json';
+    req.headers['Content-Type'] = 'application/json';
+    req.headers['X-Study-Birds-Client'] = 'mobile';
+    if (_token != null) req.headers['Authorization'] = 'Bearer $_token';
+    req.body = jsonEncode({'password': password});
+
+    // Bypasses the _send() 401→auto-logout guard so a wrong password does not
+    // silently end the session. We handle each outcome explicitly here.
+    final response = await _client
+        .send(req)
+        .then(http.Response.fromStream)
+        .timeout(const Duration(seconds: 45));
+
+    dynamic data;
+    try {
+      data = response.body.isEmpty ? null : jsonDecode(utf8.decode(response.bodyBytes));
+    } catch (_) {
+      throw ApiException(
+          'استجابة غير صالحة من الخادم (${response.statusCode}).', response.statusCode);
+    }
+
+    if (response.statusCode == 401) {
+      throw ApiException(
+        data is Map
+            ? (data['message'] ?? 'كلمة المرور غير صحيحة.').toString()
+            : 'كلمة المرور غير صحيحة.',
+        401,
+      );
+    }
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        data is Map ? (data['message'] ?? 'تعذر تنفيذ الطلب').toString() : 'تعذر تنفيذ الطلب',
+        response.statusCode,
+      );
+    }
+
+    await logout();
+  }
+
   Uri uri(String path) =>
       Uri.parse('${baseUrl.replaceFirst(RegExp(r'/$'), '')}$path');
   Future<dynamic> request(String method, String path, {Object? body}) async {

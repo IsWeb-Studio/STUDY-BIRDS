@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../core/animations.dart';
 import '../../core/student_repository.dart';
+import '../../core/analytics_service.dart';
 import 'calendar_screen.dart';
 import 'important_dates_screen.dart';
 import '../visa_travel_accommodation/arrival_services_screen.dart';
@@ -221,6 +222,13 @@ class LiveJourneyScreen extends StatefulWidget {
 class _LiveJourneyScreenState extends State<LiveJourneyScreen> {
   late Future<DashboardOverview> future =
       StudentRepository.instance.getOverview();
+
+  @override
+  void initState() {
+    super.initState();
+    AnalyticsService.instance.screenView('journey_tracker');
+  }
+
   void refresh() =>
       setState(() => future = StudentRepository.instance.getOverview());
   @override
@@ -250,23 +258,30 @@ class _LiveJourneyScreenState extends State<LiveJourneyScreen> {
                   IconButton(
                       onPressed: refresh, icon: const Icon(Icons.refresh))
                 ],
-                body: ListView(children: [
-                  for (final item in overview.stages)
-                    ListTile(
-                        title: Text(item.titleAr),
-                        subtitle: Text(item.descriptionAr),
-                        leading: Icon(item.status == 'completed'
-                            ? Icons.check_circle
-                            : item.status == 'current'
-                                ? Icons.radio_button_checked
-                                : Icons.circle_outlined)),
-                ]));
+                body: RefreshIndicator(
+                    onRefresh: () async {
+                      refresh();
+                      await future;
+                    },
+                    color: AppColors.navy,
+                    child: ListView(children: [
+                      for (final item in overview.stages)
+                        ListTile(
+                            title: Text(item.titleAr),
+                            subtitle: Text(item.descriptionAr),
+                            leading: Icon(item.status == 'completed'
+                                ? Icons.check_circle
+                                : item.status == 'current'
+                                    ? Icons.radio_button_checked
+                                    : Icons.circle_outlined)),
+                    ])));
           }
           return RefreshIndicator(
               onRefresh: () async {
                 refresh();
                 await future;
               },
+              color: AppColors.navy,
               child: JourneyTrackerScreen(
                   currentStageKey: stage, useServer: false));
         },

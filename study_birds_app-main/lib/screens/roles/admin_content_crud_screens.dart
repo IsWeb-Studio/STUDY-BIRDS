@@ -64,6 +64,10 @@ class AdminServicesScreen extends StatelessWidget {
       fields: const [
         CrudField('title', 'العنوان', required: true),
         CrudField('detailBody', 'الوصف', type: CrudFieldType.multiline),
+        CrudField('priceDescription', 'السعر والعملة أو شروط التسعير'),
+        CrudField('estimatedDuration', 'الوقت التقديري للتنفيذ'),
+        CrudField('requirementsText', 'متطلبات التقديم', type: CrudFieldType.multiline),
+        CrudField('documentsText', 'المستندات اللازمة', type: CrudFieldType.multiline),
         CrudField('image', 'الصورة', type: CrudFieldType.image),
         CrudField('featured', 'مميز؟', type: CrudFieldType.boolean),
       ],

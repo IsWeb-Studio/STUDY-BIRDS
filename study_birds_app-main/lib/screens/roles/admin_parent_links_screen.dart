@@ -64,13 +64,16 @@ class _AdminParentLinksScreenState extends State<AdminParentLinksScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'طلبات ربط أولياء الأمور',
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _links.isEmpty
-                  ? const EmptyState(icon: Icons.family_restroom_outlined, title: 'لا توجد طلبات', message: 'ستظهر هنا طلبات أولياء الأمور لمتابعة أبنائهم.')
-                  : ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState()
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _links.isEmpty
+                    ? const EmptyState(icon: Icons.family_restroom_outlined, title: 'لا توجد طلبات', message: 'ستظهر هنا طلبات أولياء الأمور لمتابعة أبنائهم.')
+                    : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _links.length,
                       itemBuilder: (context, i) {
@@ -118,6 +121,7 @@ class _AdminParentLinksScreenState extends State<AdminParentLinksScreen> {
                         );
                       },
                     ),
+      ),
     );
   }
 }

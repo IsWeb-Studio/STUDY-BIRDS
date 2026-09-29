@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../core/api_client.dart';
 import '../../core/student_repository.dart';
@@ -124,11 +124,15 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'خدمات الوصول',
-      body: _loading
-          ? const LoadingState(message: 'جاري التحميل...')
-          : _loadError != null
-              ? ErrorState(message: _loadError!, onRetry: _load)
-              : _buildForm(context),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState(message: 'جاري التحميل...')
+            : _loadError != null
+                ? ErrorState(message: _loadError!, onRetry: _load)
+                : _buildForm(context),
+      ),
     );
   }
 
@@ -198,7 +202,7 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
             const SizedBox(height: 10),
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: AppColors.warning.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+              decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
               child: Text(_saveError!, style: const TextStyle(color: AppColors.warning, fontSize: 12.5)),
             ),
           ],

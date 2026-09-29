@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_theme.dart';
 import '../../core/feature_ui.dart';
 import '../../core/api_client.dart';
@@ -17,57 +20,71 @@ class ConversationThreadScreen extends StatefulWidget {
 class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
   List<dynamic> contacts = [], messages = [];
   Map? contact;
-  Timer? poller;
-  bool polling = false;
+  HttpClient? _httpClient;
+  StreamSubscription<String>? _sseSub;
   bool loading = true, sending = false, older = false;
   String? error;
   final text = TextEditingController();
   String? get token => AuthSession.instance.token;
+
   @override
   void initState() {
     super.initState();
     load();
-    poller = Timer.periodic(const Duration(seconds: 10), (_) => poll());
   }
 
   @override
   void dispose() {
-    poller?.cancel();
+    _sseSub?.cancel();
+    _httpClient?.close(force: true);
     text.dispose();
     super.dispose();
   }
 
-  Future<void> poll() async {
-    final selected = contact;
-    if (!mounted ||
-        selected == null ||
-        loading ||
-        sending ||
-        polling ||
-        ModalRoute.of(context)?.isCurrent != true ||
-        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed)
-      return;
-    polling = true;
-    try {
-      final query =
-          Uri(queryParameters: {'recipient': '${selected['_id']}'}).query;
-      final value = await ApiClient.instance
-          .get('/mobile-workspace/messages?$query', token: token) as List;
-      if (!mounted || contact?['_id'] != selected['_id']) return;
-      final merged = {
-        for (final row in messages) '${row['_id']}': row,
-        for (final row in value) '${row['_id']}': row
-      };
-      final sorted = merged.values.toList()
-        ..sort((a, b) => '${a['_id']}'.compareTo('${b['_id']}'));
-      setState(() => messages = sorted);
-      await ApiClient.instance.post('/mobile-workspace/messages/read',
-          token: token, body: {'sender': selected['_id']});
-    } catch (_) {
-      /* Keep the conversation and unsent draft visible during a transient failure. */
-    } finally {
-      polling = false;
-    }
+  // Opens SSE connection to receive real-time messages from the server.
+  void _connectSse() {
+    _sseSub?.cancel();
+    _httpClient?.close(force: true);
+    final tok = token;
+    if (tok == null) return;
+    final baseUrl = ApiClient.baseUrl;
+    final uri = Uri.parse('$baseUrl/mobile-workspace/events');
+    _httpClient = HttpClient();
+    _httpClient!.getUrl(uri).then((req) {
+      req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $tok');
+      req.headers.set(HttpHeaders.acceptHeader, 'text/event-stream');
+      req.headers.set(HttpHeaders.cacheControlHeader, 'no-cache');
+      return req.close();
+    }).then((res) {
+      _sseSub = res
+          .transform(const Utf8Decoder())
+          .transform(const LineSplitter())
+          .listen((line) {
+        if (!line.startsWith('data:')) return;
+        try {
+          final payload = jsonDecode(line.substring(5).trim());
+          if (payload is! Map) return;
+          final senderId = '${payload['sender']}';
+          final currentId = '${contact?['_id']}';
+          if (senderId != currentId || !mounted) return;
+          setState(() {
+            final existing = <String>{};
+            for (final m in messages) existing.add('${m['_id']}');
+            if (!existing.contains('${payload['_id']}')) {
+              messages = [...messages, payload];
+            }
+          });
+          // Mark as read immediately
+          ApiClient.instance.post('/mobile-workspace/messages/read',
+              token: token, body: {'sender': senderId}).catchError((_) {});
+        } catch (_) {}
+      }, onError: (_) {
+        // Reconnect after 5s on connection error
+        if (mounted) Future.delayed(const Duration(seconds: 5), _connectSse);
+      }, cancelOnError: true);
+    }).catchError((_) {
+      if (mounted) Future.delayed(const Duration(seconds: 5), _connectSse);
+    });
   }
 
   Future<void> load({bool previous = false}) async {
@@ -96,6 +113,8 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
         });
         await ApiClient.instance.post('/mobile-workspace/messages/read',
             token: token, body: {'sender': selected['_id']});
+        // Start SSE real-time stream (replaces polling)
+        _connectSse();
       }
     } catch (e) {
       if (mounted)
@@ -294,6 +313,167 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
 
 class EmergencySupportScreen extends StatelessWidget {
   const EmergencySupportScreen({super.key});
+
+  static const _phone = '+905000000000';
+  static const _whatsapp = 'https://wa.me/905000000000';
+
+  Future<void> _launch(BuildContext context, String url) async {
+    try {
+      final uri = Uri.parse(url);
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) throw '';
+    } catch (_) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('تعذر فتح التطبيق الخارجي')));
+      }
+    }
+  }
+
   @override
-  Widget build(BuildContext context) => const ConversationThreadScreen();
+  Widget build(BuildContext context) {
+    return AppScaffold(
+      title: 'مساعدة عاجلة',
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.danger.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              border: Border.all(
+                  color: AppColors.danger.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: const [
+                Icon(Icons.emergency_share_rounded,
+                    color: AppColors.danger, size: 28),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('خط الطوارئ متاح 24/7',
+                          style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 14,
+                              color: AppColors.danger)),
+                      SizedBox(height: 4),
+                      Text(
+                        'للحالات الحرجة فقط: مشاكل في المطار، أزمات السكن، موعد السفارة الغد.',
+                        style: TextStyle(
+                            fontSize: 12.5,
+                            color: AppColors.textPrimary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text('تواصل فوري مع مسؤول الطوارئ',
+              style: AppTextStyles.sectionLabel),
+          const SizedBox(height: 14),
+          _EmergencyButton(
+            icon: Icons.phone_rounded,
+            label: 'اتصل بمسؤول الطوارئ',
+            subtitle: _phone,
+            color: AppColors.success,
+            onTap: () => _launch(context, 'tel:$_phone'),
+          ),
+          const SizedBox(height: 12),
+          _EmergencyButton(
+            icon: Icons.chat_rounded,
+            label: 'تواصل عبر واتساب',
+            subtitle: 'ردّ فوري خلال دقائق',
+            color: const Color(0xFF25D366),
+            onTap: () => _launch(context, _whatsapp),
+          ),
+          const SizedBox(height: 28),
+          const Divider(),
+          const SizedBox(height: 20),
+          const Text('بديل: تذكرة دعم عاجلة',
+              style: AppTextStyles.sectionLabel),
+          const SizedBox(height: 8),
+          const Text(
+            'إذا لم تستطع الاتصال، أرسل تذكرة دعم وسيرد عليك الفريق فور رؤيتها.',
+            style: AppTextStyles.caption,
+          ),
+          const SizedBox(height: 14),
+          PrimaryButton(
+            label: 'إرسال تذكرة عاجلة',
+            icon: Icons.confirmation_number_outlined,
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const NewSupportTicketScreen(
+                    initialSubject: '[عاجل] '))),
+          ),
+          const SizedBox(height: 24),
+          const Divider(),
+          const SizedBox(height: 16),
+          const Text('أو تحدّث مع فريقك',
+              style: AppTextStyles.sectionLabel),
+          const SizedBox(height: 14),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.message_outlined),
+            label: const Text('فتح المحادثة الداخلية'),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const ConversationThreadScreen())),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmergencyButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+  const _EmergencyButton(
+      {required this.icon,
+      required this.label,
+      required this.subtitle,
+      required this.color,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: color,
+      borderRadius: BorderRadius.circular(AppRadius.button),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(AppRadius.button),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.white, size: 24),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(label,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 15)),
+                    Text(subtitle,
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12.5)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white60, size: 14),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }

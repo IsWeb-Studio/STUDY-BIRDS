@@ -62,6 +62,7 @@ class _FollowUpRemindersState extends State<FollowUpRemindersScreen> {
               ? ErrorState(message: error!, onRetry: load)
               : RefreshIndicator(
                   onRefresh: load,
+                  color: AppColors.navy,
                   child: ListView(
                       physics: const AlwaysScrollableScrollPhysics(),
                       padding: const EdgeInsets.all(16),

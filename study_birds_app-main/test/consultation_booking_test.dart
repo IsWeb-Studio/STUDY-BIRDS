@@ -1,4 +1,4 @@
-import 'dart:convert';
+﻿import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -48,7 +48,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(booked, true);
       expect(confirmed, 1);
-      expect(find.text('الحجز مؤكد'), findsOneWidget);
+      // After booking the app navigates to ConsultationConfirmationScreen.
+      expect(find.text('تم تأكيد موعدك بنجاح'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },
         () => MockClient((r) async {
@@ -151,7 +152,7 @@ void main() {
     final events = calendarEvents(
         {},
         null,
-        [
+        consultations: [
           booking,
           {...booking, 'status': 'cancelled'}
         ]);

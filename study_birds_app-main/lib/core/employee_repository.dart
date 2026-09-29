@@ -22,6 +22,11 @@ class EmployeeRepository {
     return data as Map<String, dynamic>;
   }
 
+  Future<Map<String, dynamic>> getMyKpis() async {
+    final data = await ApiClient.instance.get('/admin/my-kpis', token: _token);
+    return data as Map<String, dynamic>;
+  }
+
   /// All students on the platform (not scoped to this employee — the
   /// backend has no per-employee assignment concept).
   Future<List<dynamic>> getAllStudents() async {

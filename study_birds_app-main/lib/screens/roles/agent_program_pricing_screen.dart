@@ -49,43 +49,47 @@ class _AgentProgramPricingScreenState extends State<AgentProgramPricingScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'أسعار الوكلاء',
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _programs.isEmpty
-                  ? const EmptyState(icon: Icons.menu_book_outlined, title: 'لا توجد برامج', message: 'ستظهر هنا كل البرامج المتاحة بأسعار الوكلاء.')
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _programs.length,
-                      itemBuilder: (context, i) {
-                        final p = _programs[i] as Map<String, dynamic>;
-                        final uni = p['university'] as Map<String, dynamic>?;
-                        final publicPrice = p['tuition'];
-                        final partnerPrice = p['partnerTuition'];
-                        return AppCard(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(p['title'] as String? ?? '—', style: AppTextStyles.cardTitle),
-                              Text(uni?['name'] as String? ?? '', style: AppTextStyles.caption),
-                              const Divider(height: 20),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  if (publicPrice != null)
-                                    Text('السعر العام: \$$publicPrice', style: AppTextStyles.caption.copyWith(decoration: TextDecoration.lineThrough)),
-                                  if (partnerPrice != null)
-                                    Text('سعرك: \$$partnerPrice', style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w800, fontSize: 15))
-                                  else
-                                    const Text('لا يوجد سعر وكيل مسجّل', style: AppTextStyles.caption),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState()
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _programs.isEmpty
+                    ? const EmptyState(icon: Icons.menu_book_outlined, title: 'لا توجد برامج', message: 'ستظهر هنا كل البرامج المتاحة بأسعار الوكلاء.')
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _programs.length,
+                        itemBuilder: (context, i) {
+                          final p = _programs[i] as Map<String, dynamic>;
+                          final uni = p['university'] as Map<String, dynamic>?;
+                          final publicPrice = p['tuition'];
+                          final partnerPrice = p['partnerTuition'];
+                          return AppCard(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(p['title'] as String? ?? '—', style: AppTextStyles.cardTitle),
+                                Text(uni?['name'] as String? ?? '', style: AppTextStyles.caption),
+                                const Divider(height: 20),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    if (publicPrice != null)
+                                      Text('السعر العام: \$$publicPrice', style: AppTextStyles.caption.copyWith(decoration: TextDecoration.lineThrough)),
+                                    if (partnerPrice != null)
+                                      Text('سعرك: \$$partnerPrice', style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w800, fontSize: 15))
+                                    else
+                                      const Text('لا يوجد سعر وكيل مسجّل', style: AppTextStyles.caption),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
+      ),
     );
   }
 }

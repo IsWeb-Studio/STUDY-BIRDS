@@ -1,5 +1,6 @@
 import 'api_client.dart';
 import 'auth_session.dart';
+import 'notification_scheduler.dart';
 
 class ConsultationRepository {
   ConsultationRepository._();
@@ -15,9 +16,12 @@ class ConsultationRepository {
 
   Future<List<Map<String, dynamic>>> slots() => _list('/slots');
   Future<List<Map<String, dynamic>>> mine() => _list('/mine');
-  Future<void> book(String slotId) async {
-    await ApiClient.instance.post('/consultations/bookings',
+  Future<Map<String, dynamic>> book(String slotId) async {
+    final result = await ApiClient.instance.post('/consultations/bookings',
         token: _token, body: {'slotId': slotId});
+    final booking = Map<String, dynamic>.from(result as Map);
+    await _remind(booking);
+    return booking;
   }
 
   Future<void> cancel(Map<String, dynamic> booking) async {
@@ -25,13 +29,26 @@ class ConsultationRepository {
         '/consultations/bookings/${booking['_id']}/cancel',
         token: _token,
         body: {'version': booking['__v']});
+    await NotificationScheduler.instance.cancel('consultation:${booking['_id']}');
   }
 
-  Future<void> reschedule(Map<String, dynamic> booking, String slotId) async {
-    await ApiClient.instance.post(
+  Future<Map<String, dynamic>> reschedule(Map<String, dynamic> booking, String slotId) async {
+    final result = await ApiClient.instance.post(
         '/consultations/bookings/${booking['_id']}/reschedule',
         token: _token,
         body: {'version': booking['__v'], 'slotId': slotId});
+    await NotificationScheduler.instance.cancel('consultation:${booking['_id']}');
+    final updated = Map<String, dynamic>.from(result as Map);
+    await _remind(updated);
+    return updated;
+  }
+
+  Future<void> _remind(Map<String, dynamic> booking) async {
+    final at = DateTime.tryParse('${booking['startsAt']}');
+    if (at == null || booking['_id'] == null) return;
+    try {
+      await NotificationScheduler.instance.scheduleConsultation(id: '${booking['_id']}', title: 'تذكير: استشارتك بعد ساعة', at: at);
+    } catch (_) { /* The booking remains valid when device reminders are denied. */ }
   }
 
   // ---- Staff availability & bookings (requires the 'consultations'

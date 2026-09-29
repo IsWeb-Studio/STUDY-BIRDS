@@ -1,14 +1,18 @@
+﻿import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/auth_session.dart';
 import 'application_documents_screen.dart';
 import '../../core/app_theme.dart';
 import '../../core/status_info.dart';
+import '../../core/analytics_service.dart';
 import 'application_card_view.dart';
 import '../../core/student_repository.dart';
+import '../../core/realtime_sync_service.dart';
 import '../services_support/messaging_and_emergency_screens.dart'
     show ConversationThreadScreen;
 import 'documents_screens.dart'
     show docStatusMeta, docTypeLabel, DocumentDetailScreen;
+import '../universities_programs_countries/explore_hub_screen.dart';
 
 /// Maps the backend's application status (legacy 5-value `status`, or the
 /// richer 14-value `detailedStatus` when present) to Arabic label + color.
@@ -78,11 +82,25 @@ class _ApplicationsListScreenState extends State<ApplicationsListScreen> {
   List<dynamic> _apps = [];
   bool _loading = true;
   String? _error;
+  StreamSubscription<DateTime>? _syncSub;
 
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.screenView('applications');
     _load();
+    _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
+      StudentRepository.instance
+          .getApplications(forceRefresh: true)
+          .then((data) { if (mounted) setState(() => _apps = data); })
+          .catchError((_) {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -111,16 +129,27 @@ class _ApplicationsListScreenState extends State<ApplicationsListScreen> {
     return AppScaffold(
       title: 'طلباتي',
       body: _loading
-          ? const LoadingState(message: 'جاري تحميل طلباتك...')
+          ? ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: 4,
+              itemBuilder: (_, __) => const Padding(
+                  padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
           : _error != null
               ? ErrorState(message: _error!, onRetry: _load)
               : _apps.isEmpty
-                  ? const EmptyState(
+                  ? EmptyState(
                       icon: Icons.description_outlined,
                       title: 'لا توجد طلبات بعد',
                       message: 'ابدأ رحلتك بتقديم طلبك الأول لجامعة تناسبك.',
+                      ctaLabel: 'استكشف الجامعات',
+                      onCta: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => const ExploreHubScreen())),
                     )
-                  : ListView.builder(
+                  : RefreshIndicator(
+                      onRefresh: _load,
+                      color: AppColors.navy,
+                      child: ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _apps.length,
                       itemBuilder: (context, i) {
@@ -163,6 +192,7 @@ class _ApplicationsListScreenState extends State<ApplicationsListScreen> {
                         );
                       },
                     ),
+                  ),
     );
   }
 }
@@ -231,7 +261,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
                         width: 46,
                         height: 46,
                         decoration: BoxDecoration(
-                            color: AppColors.navy.withOpacity(0.08),
+                            color: AppColors.navy.withValues(alpha: 0.08),
                             borderRadius: BorderRadius.circular(10)),
                         child: const Icon(Icons.account_balance_rounded,
                             color: AppColors.navy),

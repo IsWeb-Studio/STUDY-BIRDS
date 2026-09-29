@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../core/catalog_repository.dart';
+import '../../core/favorites_service.dart';
 
 String catalogText(dynamic value) => value is String ? value.trim() : '';
 Map<String, dynamic> catalogMap(dynamic value) =>
@@ -373,6 +374,7 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
                             onCta: rows.isEmpty ? load : clear))
                     : RefreshIndicator(
                         onRefresh: load,
+                        color: AppColors.navy,
                         child: ListView.builder(
                             physics: const AlwaysScrollableScrollPhysics(),
                             padding: const EdgeInsets.all(16),
@@ -636,14 +638,45 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
   }
 }
 
-class _CatalogCard extends StatelessWidget {
+class _CatalogCard extends StatefulWidget {
   final Map<String, dynamic> row;
   final bool universities;
   final VoidCallback onTap;
   const _CatalogCard(
       {required this.row, required this.universities, required this.onTap});
   @override
+  State<_CatalogCard> createState() => _CatalogCardState();
+}
+
+class _CatalogCardState extends State<_CatalogCard> {
+  bool _isFav = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadFav();
+  }
+
+  Future<void> _loadFav() async {
+    final id = '${widget.row['_id'] ?? ''}';
+    if (id.isEmpty) return;
+    final v = await FavoritesService.instance
+        .isFavorite(id, university: widget.universities);
+    if (mounted) setState(() => _isFav = v);
+  }
+
+  Future<void> _toggle() async {
+    final id = '${widget.row['_id'] ?? ''}';
+    if (id.isEmpty) return;
+    final nowFav = await FavoritesService.instance
+        .toggle(id, university: widget.universities);
+    if (mounted) setState(() => _isFav = nowFav);
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final row = widget.row;
+    final universities = widget.universities;
     final uni = universities ? row : catalogMap(row['university']);
     final logo = catalogText(uni['logo']);
     final fee = catalogTuition(row, universities);
@@ -652,7 +685,7 @@ class _CatalogCard extends StatelessWidget {
       catalogFacet(row, 'country', universities)
     ].where((v) => v.isNotEmpty).join('، ');
     return AppCard(
-        onTap: onTap,
+        onTap: widget.onTap,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Container(
@@ -687,8 +720,14 @@ class _CatalogCard extends StatelessWidget {
                   if (location.isNotEmpty)
                     Text(location, style: AppTextStyles.caption),
                 ])),
-            const Icon(Icons.chevron_left_rounded,
-                size: 20, color: AppColors.textSecondary),
+            GestureDetector(
+              onTap: _toggle,
+              child: Icon(
+                _isFav ? Icons.bookmark_rounded : Icons.bookmark_outline_rounded,
+                size: 22,
+                color: _isFav ? AppColors.navy : AppColors.textSecondary,
+              ),
+            ),
           ]),
           const SizedBox(height: 14),
           Wrap(spacing: 6, runSpacing: 6, children: [

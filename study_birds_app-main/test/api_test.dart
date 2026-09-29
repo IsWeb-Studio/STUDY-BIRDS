@@ -4,7 +4,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
+import 'package:http/testing.dart'; 
 import 'package:study_birds/data/study_birds_api.dart';
 
 void main() {
@@ -135,5 +135,105 @@ void main() {
     addTearDown(api.dispose);
     await expectLater(
         api.request('GET', '/mobile/config'), throwsA(isA<ApiException>()));
+  });
+
+  // ── Account deletion ────────────────────────────────────────────────────────
+
+  // Returns a mock that replies with a valid student user for /auth/me and
+  // delegates every other request to [other].
+  MockClient withMeStub(
+      Future<http.Response> Function(http.Request) other) {
+    return MockClient((req) async {
+      if (req.url.path.endsWith('/auth/me')) {
+        return http.Response(
+            jsonEncode({'user': {'_id': 'u1', 'role': 'student'}}), 200);
+      }
+      return other(req);
+    });
+  }
+
+  test('deleteAccount sends DELETE to /auth/account with password in body',
+      () async {
+    FlutterSecureStorage.setMockInitialValues(
+        {'study_birds_token': 'live-token'});
+    http.Request? captured;
+    final api = StudyBirdsApi(
+        client: withMeStub((req) async {
+          captured = req;
+          return http.Response('{}', 200);
+        }),
+        storage: const FlutterSecureStorage());
+    addTearDown(api.dispose);
+    await api.restore();
+    await api.deleteAccount('correctPassword');
+    expect(captured, isNotNull);
+    expect(captured!.method, 'DELETE');
+    expect(captured!.url.path, endsWith('/auth/account'));
+    final body = jsonDecode(captured!.body) as Map;
+    expect(body['password'], 'correctPassword');
+    expect(captured!.headers['Authorization'], 'Bearer live-token');
+  });
+
+  test('deleteAccount clears the session on 200', () async {
+    FlutterSecureStorage.setMockInitialValues(
+        {'study_birds_token': 'live-token'});
+    final api = StudyBirdsApi(
+        client: withMeStub((_) async => http.Response('{}', 200)),
+        storage: const FlutterSecureStorage());
+    addTearDown(api.dispose);
+    await api.restore();
+    expect(api.authenticated, isTrue);
+    await api.deleteAccount('correctPassword');
+    expect(api.authenticated, isFalse);
+    expect(
+        await const FlutterSecureStorage().read(key: 'study_birds_token'),
+        isNull);
+  });
+
+  test('deleteAccount with wrong password keeps session alive', () async {
+    FlutterSecureStorage.setMockInitialValues(
+        {'study_birds_token': 'live-token'});
+    final api = StudyBirdsApi(
+        client: withMeStub((_) async =>
+            http.Response('{"message":"Invalid password"}', 401)),
+        storage: const FlutterSecureStorage());
+    addTearDown(api.dispose);
+    await api.restore();
+    expect(api.authenticated, isTrue);
+    await expectLater(
+        api.deleteAccount('wrongPassword'), throwsA(isA<ApiException>()));
+    // Session must survive a wrong-password attempt.
+    expect(api.authenticated, isTrue);
+    expect(
+        await const FlutterSecureStorage().read(key: 'study_birds_token'),
+        'live-token');
+  });
+
+  test('deleteAccount with empty password throws without any network call',
+      () async {
+    final api = StudyBirdsApi(
+        client: MockClient((_) async {
+          throw StateError('Network must not be called');
+        }));
+    addTearDown(api.dispose);
+    await expectLater(api.deleteAccount(''), throwsA(isA<ApiException>()));
+  });
+
+  test('deleteAccount path is always /auth/account — never /auth/account/{id}',
+      () async {
+    FlutterSecureStorage.setMockInitialValues({'study_birds_token': 'tok'});
+    final paths = <String>[];
+    final api = StudyBirdsApi(
+        client: withMeStub((req) async {
+          paths.add(req.url.path);
+          return http.Response('{}', 200);
+        }),
+        storage: const FlutterSecureStorage());
+    addTearDown(api.dispose);
+    await api.restore();
+    await api.deleteAccount('pass');
+    // Path must end with /auth/account exactly — no trailing ID segment.
+    expect(paths.last, endsWith('/auth/account'));
+    expect(paths.last, isNot(matches(RegExp(r'/auth/account/.+'))));
   });
 }

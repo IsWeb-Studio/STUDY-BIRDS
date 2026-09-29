@@ -72,24 +72,35 @@ class _AdminEventRegistrationsScreenState extends State<AdminEventRegistrationsS
   @override
   void initState() {
     super.initState();
-    AdminModulesRepository.instance.getEventRegistrations().then((data) {
-      if (mounted) setState(() { _regs = data; _loading = false; });
-    }).catchError((_) {
-      if (mounted) setState(() { _error = 'تعذر تحميل التسجيلات.'; _loading = false; });
-    });
+    _load();
+  }
+
+  Future<void> _load() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      final data = await AdminModulesRepository.instance.getEventRegistrations();
+      if (!mounted) return;
+      setState(() { _regs = data; _loading = false; });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() { _error = 'تعذر تحميل التسجيلات.'; _loading = false; });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'تسجيلات الحضور',
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: () {})
-              : _regs.isEmpty
-                  ? const EmptyState(icon: Icons.how_to_reg_outlined, title: 'لا توجد تسجيلات', message: 'ستظهر هنا تسجيلات الحضور للفعاليات.')
-                  : ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState()
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _regs.isEmpty
+                    ? const EmptyState(icon: Icons.how_to_reg_outlined, title: 'لا توجد تسجيلات', message: 'ستظهر هنا تسجيلات الحضور للفعاليات.')
+                    : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _regs.length,
                       itemBuilder: (context, i) {
@@ -105,6 +116,7 @@ class _AdminEventRegistrationsScreenState extends State<AdminEventRegistrationsS
                         );
                       },
                     ),
+      ),
     );
   }
 }

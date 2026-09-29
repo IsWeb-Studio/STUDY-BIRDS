@@ -59,17 +59,21 @@ class _SimpleAdminListScreenState extends State<_SimpleAdminListScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: widget.title,
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _items.isEmpty
-                  ? EmptyState(icon: widget.emptyIcon, title: widget.emptyTitle, message: widget.emptyMessage)
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _items.length,
-                      itemBuilder: (context, i) => widget.itemBuilder(_items[i] as Map<String, dynamic>),
-                    ),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState()
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _items.isEmpty
+                    ? EmptyState(icon: widget.emptyIcon, title: widget.emptyTitle, message: widget.emptyMessage)
+                    : ListView.builder(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _items.length,
+                        itemBuilder: (context, i) => widget.itemBuilder(_items[i] as Map<String, dynamic>),
+                      ),
+      ),
     );
   }
 }

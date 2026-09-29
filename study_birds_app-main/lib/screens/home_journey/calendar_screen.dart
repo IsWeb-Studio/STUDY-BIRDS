@@ -45,7 +45,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   .length;
               final days = DateUtils.getDaysInMonth(month.year, month.month);
               final offset = month.weekday % 7;
-              return FeatureBody(children: [
+              return RefreshIndicator(
+                onRefresh: () async { refresh(); await future; },
+                color: AppColors.navy,
+                child: FeatureBody(children: [
                 const FeatureIntro(
                     title: 'خطّط لخطوتك القادمة',
                     subtitle:
@@ -215,7 +218,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                         style: AppTextStyles.caption))
                             ])),
                       ])),
-              ]);
+              ]),
+              );
             }),
       );
 }

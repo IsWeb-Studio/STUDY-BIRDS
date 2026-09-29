@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
 /// Study Birds shared design system.
@@ -204,7 +206,7 @@ class AppScaffold extends StatelessWidget {
           ),
           actions: actions,
         ),
-        body: SafeArea(child: body),
+        body: SafeArea(child: OfflineBannerWrapper(child: body)),
         floatingActionButton: floatingActionButton,
         bottomNavigationBar: bottomBar,
       ),
@@ -362,6 +364,76 @@ class LoadingState extends StatelessWidget {
   }
 }
 
+/// Skeleton shimmer placeholder — for loading states that need layout fidelity.
+/// Animates opacity 0.3→0.7→0.3 to communicate "loading in progress".
+class SkeletonBox extends StatefulWidget {
+  final double width;
+  final double height;
+  final double borderRadius;
+  const SkeletonBox(
+      {super.key,
+      this.width = double.infinity,
+      this.height = 16,
+      this.borderRadius = 8});
+  @override
+  State<SkeletonBox> createState() => _SkeletonBoxState();
+}
+
+class _SkeletonBoxState extends State<SkeletonBox>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _ctrl;
+  late final Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 900))
+      ..repeat(reverse: true);
+    _anim = Tween<double>(begin: 0.25, end: 0.65).animate(_ctrl);
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AnimatedBuilder(
+        animation: _anim,
+        builder: (_, __) => Opacity(
+          opacity: _anim.value,
+          child: Container(
+            width: widget.width,
+            height: widget.height,
+            decoration: BoxDecoration(
+              color: AppColors.border,
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+            ),
+          ),
+        ),
+      );
+}
+
+/// A skeleton card that mimics an AppCard with two text lines.
+class SkeletonCard extends StatelessWidget {
+  const SkeletonCard({super.key});
+  @override
+  Widget build(BuildContext context) => AppCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: const [
+            SkeletonBox(height: 14, width: 160),
+            SizedBox(height: 10),
+            SkeletonBox(height: 12),
+            SizedBox(height: 6),
+            SkeletonBox(height: 12, width: 120),
+          ],
+        ),
+      );
+}
+
 /// Standard error state — never a blank/broken screen, per spec point 69.
 class ErrorState extends StatelessWidget {
   final String message;
@@ -515,6 +587,74 @@ class EmptyState extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// Wraps a [child] and shows a persistent banner at the top when the device
+/// has no internet connection. Listens to connectivity changes in real time.
+///
+/// PRD بند 69 — Offline Banner.
+class OfflineBannerWrapper extends StatefulWidget {
+  final Widget child;
+  const OfflineBannerWrapper({super.key, required this.child});
+
+  @override
+  State<OfflineBannerWrapper> createState() => _OfflineBannerWrapperState();
+}
+
+class _OfflineBannerWrapperState extends State<OfflineBannerWrapper> {
+  bool _offline = false;
+  StreamSubscription<List<ConnectivityResult>>? _sub;
+
+  @override
+  void initState() {
+    super.initState();
+    Connectivity().checkConnectivity().then(_update);
+    _sub = Connectivity().onConnectivityChanged.listen(_update);
+  }
+
+  void _update(List<ConnectivityResult> results) {
+    final offline = results.every((r) => r == ConnectivityResult.none);
+    if (mounted && offline != _offline) setState(() => _offline = offline);
+  }
+
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (!_offline) return widget.child;
+    return Column(
+      children: [
+        Material(
+          color: AppColors.warning,
+          child: SafeArea(
+            bottom: false,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Row(children: [
+                const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 18),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'لا يوجد اتصال بالإنترنت — تعرض البيانات المحفوظة',
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+              ]),
+            ),
+          ),
+        ),
+        Expanded(child: widget.child),
+      ],
     );
   }
 }

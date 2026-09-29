@@ -1,11 +1,15 @@
+﻿import 'dart:async';
+import 'package:study_birds/core/api_client.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/document_access.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/app_theme.dart';
 import '../../core/status_info.dart';
 import '../../core/student_repository.dart';
+import '../../core/analytics_service.dart';
+import '../../core/notification_scheduler.dart';
+import '../../core/realtime_sync_service.dart';
 
 /// Maps the backend's document status (legacy 3-value `status`, or the
 /// richer 8-value `detailedStatus` when present) to Arabic label + color.
@@ -52,23 +56,28 @@ const List<Map<String, String>> kDocumentTypes = [
   {'key': 'latest-qualification', 'label': 'آخر مؤهل دراسي'},
   {'key': 'transcript', 'label': 'كشف الدرجات'},
   {'key': 'language-certificate', 'label': 'شهادة اللغة'},
+  {'key': 'english-test', 'label': 'شهادة اختبار الإنجليزية'},
   {'key': 'high-school-certificate', 'label': 'شهادة الثانوية'},
   {'key': 'university-degree', 'label': 'الشهادة الجامعية'},
   {'key': 'birth-certificate', 'label': 'شهادة الميلاد'},
+  {'key': 'bank-statement', 'label': 'كشف حساب بنكي'},
+  {'key': 'no-criminal-record', 'label': 'شهادة عدم السوابق'},
   {'key': 'recommendation-letter', 'label': 'خطاب توصية'},
   {'key': 'personal-statement', 'label': 'خطاب الدافع'},
   {'key': 'cv', 'label': 'السيرة الذاتية'},
   {'key': 'other', 'label': 'أخرى'},
 ];
 
-// Labels for keys used by older website uploads and for translations.
+// Labels for keys returned by older website uploads and for translations.
+// Keys already in kDocumentTypes are intentionally omitted here.
 const Map<String, String> _extraDocumentLabels = {
   'translation': 'ترجمة معتمدة',
   'language-certificates': 'شهادات اللغة',
   'personal-photos': 'صور شخصية',
-  'english-test': 'شهادة اختبار الإنجليزية',
   'resume': 'السيرة الذاتية',
   'other-documents': 'مستندات أخرى',
+  'police-clearance': 'صحيفة الحالة الجنائية',
+  'financial-statement': 'إفادة مالية',
 };
 
 String docTypeLabel(String? key) {
@@ -97,6 +106,60 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
           const SnackBar(content: Text('تعذر قراءة الملف المختار')));
     return false;
   }
+  if (file.size > 10 * 1024 * 1024) {
+    if (context.mounted)
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('حجم الملف كبير جدًا (الحد الأقصى 10 ميجابايت)')));
+    return false;
+  }
+
+  if (!context.mounted) return false;
+
+  final sizeKb = file.size ~/ 1024;
+  final sizeStr =
+      sizeKb >= 1024 ? '${(sizeKb / 1024).toStringAsFixed(1)} MB' : '$sizeKb KB';
+  final progressNotifier = ValueNotifier<double>(0.0);
+  final cancellation = UploadCancellation();
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => PopScope(canPop: false, child: AlertDialog(
+      actions: [TextButton(onPressed: cancellation.cancel, child: const Text('إلغاء الرفع'))],
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('جاري رفع المستند...', style: AppTextStyles.cardTitle),
+          const SizedBox(height: 10),
+          Text(file.name,
+              style: AppTextStyles.caption, overflow: TextOverflow.ellipsis),
+          Text(sizeStr, style: AppTextStyles.caption),
+          const SizedBox(height: 14),
+          ValueListenableBuilder<double>(
+            valueListenable: progressNotifier,
+            builder: (_, value, __) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LinearProgressIndicator(
+                  value: value > 0 ? value : null,
+                  backgroundColor: AppColors.border,
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(AppColors.navy),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  value >= 1 ? 'جارٍ حفظ المستند...' : value > 0 ? '${(value * 100).round()}%' : 'جاري الاتصال...',
+                  style: AppTextStyles.caption,
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    )),
+  );
 
   try {
     await StudentRepository.instance.uploadDocument(
@@ -104,20 +167,88 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
         fileName: file.name,
         type: type,
         replaces: replaces,
-        translationOf: translationOf);
+        translationOf: translationOf,
+        cancellation: cancellation,
+        onProgress: (p) => progressNotifier.value = p);
     if (context.mounted) {
+      Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('تم رفع المستند بنجاح'),
           backgroundColor: AppColors.success));
     }
     return true;
-  } catch (_) {
-    if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('تعذر رفع المستند، حاول مرة أخرى'),
-          backgroundColor: AppColors.danger));
+  } catch (error) {
+    if (!context.mounted) return false;
+    Navigator.of(context, rootNavigator: true).pop();
+    if (error is ApiException && error.statusCode == 499) return false;
+    final retry = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('تعذّر رفع المستند',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
+        content: const Text(
+            'قد يكون السبب ضعف الاتصال أو مشكلة مؤقتة في الخادم.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('إلغاء')),
+          ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.navy),
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('إعادة المحاولة',
+                  style: TextStyle(color: Colors.white))),
+        ],
+      ),
+    );
+    if (retry == true && context.mounted) {
+      return pickAndUploadDocument(context, type,
+          replaces: replaces, translationOf: translationOf);
     }
     return false;
+  } finally {
+    // The dialog may still be animating out, so dispose after the frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) => progressNotifier.dispose());
+  }
+}
+
+class _DocThumb extends StatelessWidget {
+  final Map<String, dynamic> document;
+  const _DocThumb({required this.document});
+  @override
+  Widget build(BuildContext context) {
+    final name = (document['fileName'] as String? ?? '').toLowerCase();
+    final isPdf = name.endsWith('.pdf');
+    final isImg = name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png');
+    final thumbUrl = document['thumbnailUrl'] as String?;
+    final color = isPdf ? AppColors.danger : isImg ? AppColors.orange : AppColors.navy;
+    final icon = isPdf
+        ? Icons.picture_as_pdf_outlined
+        : isImg
+            ? Icons.image_outlined
+            : Icons.insert_drive_file_outlined;
+    if (isImg && thumbUrl != null && thumbUrl.isNotEmpty) {
+      return ClipRRect(
+          borderRadius: BorderRadius.circular(10),
+          child: Image.network(thumbUrl,
+              width: 40,
+              height: 40,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) => Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.10),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: Icon(icon, color: color, size: 19))));
+    }
+    return Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(10)),
+        child: Icon(icon, color: color, size: 19));
   }
 }
 
@@ -133,11 +264,26 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
   bool _loading = true;
   String? _error;
   bool _uploading = false;
+  StreamSubscription<DateTime>? _syncSub;
 
   @override
   void initState() {
     super.initState();
+    AnalyticsService.instance.screenView('my_documents');
     _load();
+    _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
+      if (_uploading) return;
+      StudentRepository.instance
+          .getDocuments(forceRefresh: true)
+          .then((docs) { if (mounted) setState(() => _docs = docs.whereType<Map>().where((d) => d['isLatest'] != false && d['translationOf'] == null).toList()); })
+          .catchError((_) {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -148,6 +294,16 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
     try {
       final docs = await StudentRepository.instance.getDocuments();
       if (!mounted) return;
+      // Schedule local expiry reminders for documents nearing their deadline.
+      for (final d in docs) {
+        final exp = DateTime.tryParse('${(d as Map<String, dynamic>)['expiresAt'] ?? ''}');
+        final id = d['_id']?.toString();
+        final name = d['originalName']?.toString() ?? d['type']?.toString() ?? 'مستند';
+        if (exp != null && id != null && exp.isAfter(DateTime.now())) {
+          NotificationScheduler.instance.scheduleDocumentExpiry(
+              docId: id, docName: name, expiryDate: exp);
+        }
+      }
       setState(() {
         // Current files only: older versions and translations live inside
         // their document's detail screen (PRD 29).
@@ -217,83 +373,141 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
                   color: Colors.white),
         ),
       ],
-      body: _loading
-          ? const LoadingState(message: 'جاري تحميل مستنداتك...')
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _docs.isEmpty
-                  ? EmptyState(
-                      icon: Icons.folder_open_outlined,
-                      title: 'لا توجد مستندات بعد',
-                      message: 'ابدأ برفع أول مستند من زر الإضافة أعلى الشاشة.',
-                      ctaLabel: 'رفع مستند',
-                      onCta: _pickTypeAndUpload,
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _docs.length,
-                      itemBuilder: (context, i) {
-                        final d = _docs[i] as Map<String, dynamic>;
-                        final meta = docStatusMeta(d);
-                        final info = StatusInfo.of(d);
-                        // Surface what to fix without opening the document.
-                        final needsAction = info != null &&
-                            (info.tone == 'action' || info.tone == 'danger');
-                        return AppCard(
-                          onTap: () async {
-                            // The detail pops true after a new version or
-                            // translation was uploaded.
-                            final changed = await Navigator.of(context)
-                                .push<bool>(MaterialPageRoute(
-                                    builder: (_) =>
-                                        DocumentDetailScreen(document: d)));
-                            if (changed == true) _load();
-                          },
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(
-                                    color: AppColors.navy.withOpacity(0.08),
-                                    borderRadius: BorderRadius.circular(10)),
-                                child: const Icon(
-                                    Icons.insert_drive_file_outlined,
-                                    color: AppColors.navy,
-                                    size: 19),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                  child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(docTypeLabel(d['type'] as String?),
-                                      style: AppTextStyles.cardTitle),
-                                  if (needsAction)
-                                    Text(info.meaning,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTextStyles.caption
-                                            .copyWith(color: meta.color)),
-                                ],
-                              )),
-                              const SizedBox(width: 8),
-                              StatusBadge(label: meta.label, color: meta.color),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState(message: 'جاري تحميل مستنداتك...')
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _docs.isEmpty
+                    ? EmptyState(
+                        icon: Icons.folder_open_outlined,
+                        title: 'لا توجد مستندات بعد',
+                        message:
+                            'ابدأ برفع أول مستند من زر الإضافة أعلى الشاشة.',
+                        ctaLabel: 'رفع مستند',
+                        onCta: _pickTypeAndUpload,
+                      )
+                    : _buildDocsList(),
+      ),
+    );
+  }
+
+  Widget _buildDocsList() {
+    final now = DateTime.now();
+    final expiringSoon = _docs.whereType<Map<String, dynamic>>().where((d) {
+      final exp = DateTime.tryParse('${d['expiresAt'] ?? ''}');
+      return exp != null && exp.isAfter(now) && exp.difference(now).inDays <= 30;
+    }).toList();
+    final hasBanner = expiringSoon.isNotEmpty;
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _docs.length + (hasBanner ? 1 : 0),
+      itemBuilder: (context, i) {
+        if (hasBanner && i == 0) {
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.warning.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(AppRadius.card),
+              border: Border.all(color: AppColors.warning.withValues(alpha: 0.5)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded,
+                    color: AppColors.warning, size: 18),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    'لديك ${expiringSoon.length} مستند${expiringSoon.length > 1 ? 'ات' : ''} ستنتهي صلاحيتها خلال 30 يومًا.',
+                    style: AppTextStyles.caption
+                        .copyWith(color: AppColors.warning),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+        final docIndex = hasBanner ? i - 1 : i;
+        final d = _docs[docIndex] as Map<String, dynamic>;
+        final meta = docStatusMeta(d);
+        final info = StatusInfo.of(d);
+        final needsAction = info != null &&
+            (info.tone == 'action' || info.tone == 'danger');
+        return AppCard(
+          onTap: () async {
+            final changed = await Navigator.of(context)
+                .push<bool>(MaterialPageRoute(
+                    builder: (_) => DocumentDetailScreen(document: d)));
+            if (changed == true) _load();
+          },
+          child: Row(
+            children: [
+              _DocThumb(document: d),
+              const SizedBox(width: 12),
+              Expanded(
+                  child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(docTypeLabel(d['type'] as String?),
+                      style: AppTextStyles.cardTitle),
+                  if (needsAction)
+                    Text(info.meaning,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppTextStyles.caption
+                            .copyWith(color: meta.color)),
+                ],
+              )),
+              const SizedBox(width: 8),
+              StatusBadge(label: meta.label, color: meta.color),
+            ],
+          ),
+        );
+      },
     );
   }
 }
 
-class DocumentDetailScreen extends StatelessWidget {
+class DocumentDetailScreen extends StatefulWidget {
   final Map<String, dynamic> document;
   const DocumentDetailScreen({super.key, required this.document});
 
   @override
+  State<DocumentDetailScreen> createState() => _DocumentDetailScreenState();
+}
+
+class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
+  Uri? _previewUri;
+  bool _loadingPreview = false;
+
+  bool get _isImage {
+    final name = (widget.document['fileName'] as String? ?? '').toLowerCase();
+    return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png');
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (_isImage && widget.document['filePath'] is String) _loadPreview();
+  }
+
+  Future<void> _loadPreview() async {
+    setState(() => _loadingPreview = true);
+    try {
+      final uri = await resolveDocumentDownload(widget.document['filePath'] as String);
+      if (mounted) setState(() => _previewUri = uri);
+    } catch (_) {
+    } finally {
+      if (mounted) setState(() => _loadingPreview = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final document = widget.document;
     final meta = docStatusMeta(document);
     final info = StatusInfo.of(document);
     final reviewNote = document['reviewNote'] as String?;
@@ -330,14 +544,32 @@ class DocumentDetailScreen extends StatelessWidget {
             Container(
               height: 180,
               width: double.infinity,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: AppColors.navy.withOpacity(0.05),
+                color: AppColors.navy.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(AppRadius.card),
                 border: Border.all(color: AppColors.border),
               ),
-              child: const Center(
-                  child: Icon(Icons.description_outlined,
-                      size: 48, color: AppColors.textSecondary)),
+              child: _loadingPreview
+                  ? const Center(
+                      child: CircularProgressIndicator(color: AppColors.navy))
+                  : _previewUri != null
+                      ? Image.network(
+                          _previewUri.toString(),
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                          errorBuilder: (_, __, ___) => const Center(
+                              child: Icon(Icons.description_outlined,
+                                  size: 48, color: AppColors.textSecondary)),
+                        )
+                      : Center(
+                          child: Icon(
+                            _isImage
+                                ? Icons.image_outlined
+                                : Icons.description_outlined,
+                            size: 48,
+                            color: AppColors.textSecondary,
+                          )),
             ),
             const SizedBox(height: 16),
             AppCard(
@@ -422,9 +654,9 @@ class DocumentDetailScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: AppColors.danger.withOpacity(0.08),
+                  color: AppColors.danger.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(AppRadius.card),
-                  border: Border.all(color: AppColors.danger.withOpacity(0.3)),
+                  border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,

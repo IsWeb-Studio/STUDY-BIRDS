@@ -84,35 +84,39 @@ class _ScholarshipApplicationsScreenState
                   icon: Icons.school_outlined,
                   title: 'لا توجد طلبات',
                   message: 'ستظهر طلبات الطلاب هنا.');
-            return ListView(
-                padding: const EdgeInsets.all(16),
-                children: rows
-                    .map((row) => AppCard(
-                            child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                              Text('${row['student']?['name'] ?? 'طالب'}',
-                                  style: AppTextStyles.cardTitle),
-                              Text('${row['scholarship']?['title'] ?? 'منحة'}'),
-                              DropdownButton<String>(
-                                  value: row['status'] as String,
-                                  items: const {
-                                    'submitted': 'تم التقديم',
-                                    'reviewing': 'قيد المراجعة',
-                                    'accepted': 'مقبول',
-                                    'rejected': 'غير مقبول'
-                                  }
-                                      .entries
-                                      .map((e) => DropdownMenuItem(
-                                          value: e.key, child: Text(e.value)))
-                                      .toList(),
-                                  onChanged: saving != null
-                                      ? null
-                                      : (value) {
-                                          if (value != null)
-                                            update(row as Map, value);
-                                        })
-                            ])))
-                    .toList());
+            return RefreshIndicator(
+              onRefresh: () async { setState(() => future = fetch()); await future; },
+              color: AppColors.navy,
+              child: ListView(
+                  padding: const EdgeInsets.all(16),
+                  children: rows
+                      .map((row) => AppCard(
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                Text('${row['student']?['name'] ?? 'طالب'}',
+                                    style: AppTextStyles.cardTitle),
+                                Text('${row['scholarship']?['title'] ?? 'منحة'}'),
+                                DropdownButton<String>(
+                                    value: row['status'] as String,
+                                    items: const {
+                                      'submitted': 'تم التقديم',
+                                      'reviewing': 'قيد المراجعة',
+                                      'accepted': 'مقبول',
+                                      'rejected': 'غير مقبول'
+                                    }
+                                        .entries
+                                        .map((e) => DropdownMenuItem(
+                                            value: e.key, child: Text(e.value)))
+                                        .toList(),
+                                    onChanged: saving != null
+                                        ? null
+                                        : (value) {
+                                            if (value != null)
+                                              update(row as Map, value);
+                                          })
+                              ])))
+                      .toList()),
+            );
           }));
 }

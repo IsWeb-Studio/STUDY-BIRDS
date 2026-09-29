@@ -142,6 +142,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                     child: IndexedStack(index: tab, children: [
                   RefreshIndicator(
                       onRefresh: load,
+                      color: AppColors.navy,
                       child: ListView(
                           physics: const AlwaysScrollableScrollPhysics(),
                           padding: const EdgeInsets.all(16),

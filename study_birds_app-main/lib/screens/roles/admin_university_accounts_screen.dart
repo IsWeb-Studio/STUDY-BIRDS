@@ -53,13 +53,16 @@ class _AdminUniversityAccountsScreenState extends State<AdminUniversityAccountsS
     return AppScaffold(
       title: 'حسابات الجامعات',
       actions: [IconButton(onPressed: _openCreateForm, icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white))],
-      body: _loading
-          ? const LoadingState()
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _accounts.isEmpty
-                  ? EmptyState(icon: Icons.school_outlined, title: 'لا توجد حسابات جامعات', message: 'أنشئ حساب دخول لجامعة من زر الإضافة أعلى الشاشة.', ctaLabel: 'إنشاء حساب', onCta: _openCreateForm)
-                  : ListView.builder(
+      body: RefreshIndicator(
+        onRefresh: _load,
+        color: AppColors.navy,
+        child: _loading
+            ? const LoadingState()
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : _accounts.isEmpty
+                    ? EmptyState(icon: Icons.school_outlined, title: 'لا توجد حسابات جامعات', message: 'أنشئ حساب دخول لجامعة من زر الإضافة أعلى الشاشة.', ctaLabel: 'إنشاء حساب', onCta: _openCreateForm)
+                    : ListView.builder(
                       padding: const EdgeInsets.all(16),
                       itemCount: _accounts.length,
                       itemBuilder: (context, i) {
@@ -85,6 +88,7 @@ class _AdminUniversityAccountsScreenState extends State<AdminUniversityAccountsS
                         );
                       },
                     ),
+      ),
     );
   }
 }

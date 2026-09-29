@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../core/api_client.dart';
 import '../../core/employee_repository.dart';
@@ -85,7 +85,7 @@ class _EmployeeSectionsPickerScreenState extends State<EmployeeSectionsPickerScr
                     width: double.infinity,
                     padding: const EdgeInsets.all(10),
                     margin: const EdgeInsets.only(bottom: 8),
-                    decoration: BoxDecoration(color: AppColors.warning.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+                    decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
                     child: const Text('بدون أقسام، لن يستطيع الموظف فتح أي قسم إداري.', style: TextStyle(color: AppColors.warning, fontSize: 12.5)),
                   ),
                 if (_error != null)
