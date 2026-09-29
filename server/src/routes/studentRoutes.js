@@ -16,6 +16,7 @@ const {
   getStudentFinancials,
   uploadPaymentProof,
   getArrivalServiceRequest,
+  createArrivalServiceRequest,
   upsertArrivalServiceRequest,
   getStudentFavorites,
   toggleStudentFavorite,
@@ -49,7 +50,9 @@ router.get("/knowledge-base", getStudentKnowledgeBase);
 router.get("/financials", getStudentFinancials);
 router.post("/financials/invoices/:id/payment-proof", upload.single("file"), uploadPaymentProof);
 router.get("/arrival-services", getArrivalServiceRequest);
+router.post("/arrival-services", createArrivalServiceRequest);
 router.put("/arrival-services", upsertArrivalServiceRequest);
+router.put("/arrival-services/:id", upsertArrivalServiceRequest);
 router.get("/favorites", getStudentFavorites);
 router.post("/favorites/toggle", toggleStudentFavorite);
 router.delete("/favorites/:id", removeStudentFavorite);

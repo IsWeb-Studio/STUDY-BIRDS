@@ -576,46 +576,55 @@ const uploadPaymentProof = asyncHandler(async (req, res) => {
 });
 
 const getArrivalServiceRequest = asyncHandler(async (req, res) => {
-  const request = await ArrivalServiceRequest.findOne({ student: req.user._id });
-  res.json(request);
+  const requests = await ArrivalServiceRequest.find({ student: req.user._id }).sort({ createdAt: -1 });
+  res.json(requests);
+});
+
+const _buildArrivalPayload = (body) => ({
+  arrivalDate: body.arrivalDate || null,
+  arrivalTime: String(body.arrivalTime || "").trim(),
+  flightNumber: String(body.flightNumber || "").trim(),
+  airport: String(body.airport || "").trim(),
+  notes: String(body.notes || "").trim(),
+  services: {
+    airportPickup: Boolean(body.services?.airportPickup),
+    studentHousing: Boolean(body.services?.studentHousing),
+    residencePermitSupport: Boolean(body.services?.residencePermitSupport),
+    visaSupport: Boolean(body.services?.visaSupport),
+  },
+  status: "submitted",
+});
+
+const createArrivalServiceRequest = asyncHandler(async (req, res) => {
+  const profile = await StudentProfile.findOne({ user: req.user._id }).lean();
+  const currentStage = profile?.applicationStage || "file-received";
+  if (!["final-accepted", "travel-and-settlement"].includes(currentStage)) {
+    res.status(400);
+    throw new Error("Arrival services become available after final acceptance");
+  }
+  const request = await ArrivalServiceRequest.create({ student: req.user._id, ..._buildArrivalPayload(req.body) });
+  await Notification.create({ user: req.user._id, title: "Arrival services submitted", message: "Your new arrival request has been submitted for coordination.", type: "info" });
+  res.status(201).json(request);
 });
 
 const upsertArrivalServiceRequest = asyncHandler(async (req, res) => {
   const profile = await StudentProfile.findOne({ user: req.user._id }).lean();
   const currentStage = profile?.applicationStage || "file-received";
-
   if (!["final-accepted", "travel-and-settlement"].includes(currentStage)) {
     res.status(400);
     throw new Error("Arrival services become available after final acceptance");
   }
-
-  const payload = {
-    arrivalDate: req.body.arrivalDate || null,
-    arrivalTime: String(req.body.arrivalTime || "").trim(),
-    flightNumber: String(req.body.flightNumber || "").trim(),
-    airport: String(req.body.airport || "").trim(),
-    notes: String(req.body.notes || "").trim(),
-    services: {
-      airportPickup: Boolean(req.body.services?.airportPickup),
-      studentHousing: Boolean(req.body.services?.studentHousing),
-      residencePermitSupport: Boolean(req.body.services?.residencePermitSupport),
-      visaSupport: Boolean(req.body.services?.visaSupport),
-    },
-    status: "submitted",
-  };
-
-  const request = await ArrivalServiceRequest.findOneAndUpdate({ student: req.user._id }, payload, {
-    new: true,
-    upsert: true,
-  });
-
-  await Notification.create({
-    user: req.user._id,
-    title: "Arrival services updated",
-    message: "Your arrival and services request has been submitted for coordination.",
-    type: "info",
-  });
-
+  const payload = _buildArrivalPayload(req.body);
+  // Update by ID if provided, otherwise fallback to upsert-first for backward compat
+  if (req.params.id) {
+    const existing = await ArrivalServiceRequest.findOne({ _id: req.params.id, student: req.user._id });
+    if (!existing) { res.status(404); throw new Error("Request not found"); }
+    Object.assign(existing, payload);
+    await existing.save();
+    return res.json(existing);
+  }
+  const request = await ArrivalServiceRequest.findOneAndUpdate({ student: req.user._id }, payload, { new: true, upsert: true });
+  await Notification.create({ user: req.user._id, title: "Arrival services updated", message: "Your arrival and services request has been submitted for coordination.", type: "info" });
   res.json(request);
 });
 
@@ -788,6 +797,7 @@ module.exports = {
   getStudentFinancials,
   uploadPaymentProof,
   getArrivalServiceRequest,
+  createArrivalServiceRequest,
   upsertArrivalServiceRequest,
   getStudentFavorites,
   toggleStudentFavorite,
