@@ -33,7 +33,7 @@ export const AdminStudentFinancialsEnhancedPage = () => {
   const [reviewLoading, setReviewLoading] = useState(false);
   const [updatingInvoiceId, setUpdatingInvoiceId] = useState<string | null>(null);
   const [studentApplications, setStudentApplications] = useState<Application[]>([]);
-  const [studentServiceRequests, setStudentServiceRequests] = useState<Array<{ _id: string; serviceTitle: string; status: string }>>([]);
+  const [studentServiceRequests, setStudentServiceRequests] = useState<Array<{ _id: string; service?: { title?: string }; status: string }>>([]);
   const [studentAccommodationBookings, setStudentAccommodationBookings] = useState<Array<{ _id: string; listing?: { title?: string }; status: string }>>([]);
   const { toasts, pushToast, dismissToast } = useToasts();
   const [form, setForm] = useState({
