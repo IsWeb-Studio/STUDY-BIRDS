@@ -20,6 +20,8 @@ import 'admin_financials_marketing_screens.dart';
 import 'admin_content_crud_screens.dart';
 import 'admin_singleton_hub_screens.dart';
 import 'employee_consultations_screen.dart';
+import 'admin_reward_rules_screen.dart';
+import '../services_support/student_listings_screen.dart';
 
 /// Admin/Employee Home. HONESTY NOTE: the backend has no per-employee
 /// "tasks assigned to me" concept — role="admin" sees the whole platform
@@ -55,6 +57,8 @@ final List<_SectionEntry> _sectionScreens = [
       'مستندات الطلاب', (_) => const AdminStudentDocumentsScreen()),
   _SectionEntry('student-financials', Icons.payments_outlined, 'مالية الطلاب',
       (_) => const AdminStudentFinancialsScreen()),
+  _SectionEntry('student-financials', Icons.workspace_premium_outlined, 'قواعد مكافآت الطلاب',
+      (_) => const AdminRewardRulesScreen()),
   _SectionEntry('student-arrivals', Icons.flight_land_rounded, 'وصول الطلاب',
       (_) => const AdminArrivalRequestsScreen()),
   _SectionEntry('support', Icons.support_agent_outlined, 'دعم الطلاب والوكلاء',
@@ -83,6 +87,10 @@ final List<_SectionEntry> _sectionScreens = [
       'ربط أولياء الأمور', (_) => const AdminParentLinksScreen()),
   _SectionEntry('community', Icons.forum_outlined, 'مجتمع الطلاب',
       (_) => const EmployeeCommunityScreen()),
+  _SectionEntry('community', Icons.local_offer_outlined, 'إدارة عروض الطلاب',
+      (_) => const AdminStudentListingsScreen(kind: 'offer')),
+  _SectionEntry('community', Icons.work_outline, 'إدارة فرص العمل والتدريب',
+      (_) => const AdminStudentListingsScreen(kind: 'opportunity')),
   _SectionEntry('university-accounts', Icons.school_outlined, 'حسابات الجامعات',
       (_) => const AdminUniversityAccountsScreen()),
   _SectionEntry('consultations', Icons.event_available_outlined,

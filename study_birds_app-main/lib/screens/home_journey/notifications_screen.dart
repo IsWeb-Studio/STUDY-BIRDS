@@ -37,10 +37,25 @@ String? notificationActionLabel(String? link) {
 
 /// Maps a backend notification link (e.g. '/student/documents') to the widget
 /// that should be pushed. Returns null for unknown or non-navigable links.
+/// Also handles deep links with IDs, e.g. '/student/applications/abc123'.
 Widget? notificationScreenForLink(String? link) {
   link = notificationPath(link ?? '');
   if (link == null || !link.startsWith('/student/')) return null;
   final dest = link.replaceFirst('/student/', '');
+  final parts = dest.split('/');
+  final base = parts[0];
+  final id = parts.length > 1 && parts[1].isNotEmpty ? parts[1] : null;
+
+  // Deep link to a specific record by ID.
+  if (id != null) {
+    return switch (base) {
+      'applications' => _ApplicationById(id: id),
+      'documents'    => _DocumentById(id: id),
+      'payments'     => _PaymentById(id: id),
+      _              => null,
+    };
+  }
+
   return switch (dest) {
     'consultations' => const ConsultationBookingScreen(),
     'journey' => const JourneyTrackerScreen(),
@@ -60,6 +75,99 @@ Widget? notificationScreenForLink(String? link) {
     'bird-ai' => const BirdAIChatScreen(),
     _ => null,
   };
+}
+
+// ── Deep-link helpers: fetch a specific record by ID from cached lists ──────
+
+class _ApplicationById extends StatefulWidget {
+  final String id;
+  const _ApplicationById({required this.id});
+  @override
+  State<_ApplicationById> createState() => _ApplicationByIdState();
+}
+
+class _ApplicationByIdState extends State<_ApplicationById> {
+  bool _loading = true;
+  Map<String, dynamic>? _app;
+
+  @override
+  void initState() {
+    super.initState();
+    StudentRepository.instance.getApplications().then((list) {
+      final match = list.whereType<Map<String, dynamic>>().cast<Map<String, dynamic>?>()
+          .firstWhere((a) => (a?['_id'] ?? a?['id'])?.toString() == widget.id,
+              orElse: () => null);
+      if (mounted) setState(() { _loading = false; _app = match; });
+    }).catchError((_) { if (mounted) setState(() => _loading = false); });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_app == null) return const ApplicationsListScreen();
+    return ApplicationDetailScreen(application: _app!);
+  }
+}
+
+class _DocumentById extends StatefulWidget {
+  final String id;
+  const _DocumentById({required this.id});
+  @override
+  State<_DocumentById> createState() => _DocumentByIdState();
+}
+
+class _DocumentByIdState extends State<_DocumentById> {
+  bool _loading = true;
+  Map<String, dynamic>? _doc;
+
+  @override
+  void initState() {
+    super.initState();
+    StudentRepository.instance.getDocuments().then((list) {
+      final match = list.whereType<Map<String, dynamic>>().cast<Map<String, dynamic>?>()
+          .firstWhere((d) => (d?['_id'] ?? d?['id'])?.toString() == widget.id,
+              orElse: () => null);
+      if (mounted) setState(() { _loading = false; _doc = match; });
+    }).catchError((_) { if (mounted) setState(() => _loading = false); });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_doc == null) return const MyDocumentsScreen();
+    return DocumentDetailScreen(document: _doc!);
+  }
+}
+
+class _PaymentById extends StatefulWidget {
+  final String id;
+  const _PaymentById({required this.id});
+  @override
+  State<_PaymentById> createState() => _PaymentByIdState();
+}
+
+class _PaymentByIdState extends State<_PaymentById> {
+  bool _loading = true;
+  Map<String, dynamic>? _invoice;
+
+  @override
+  void initState() {
+    super.initState();
+    StudentRepository.instance.getFinancials().then((fin) {
+      final list = (fin['invoices'] as List<dynamic>? ?? []);
+      final match = list.whereType<Map<String, dynamic>>().cast<Map<String, dynamic>?>()
+          .firstWhere((inv) => (inv?['_id'] ?? inv?['id'])?.toString() == widget.id,
+              orElse: () => null);
+      if (mounted) setState(() { _loading = false; _invoice = match; });
+    }).catchError((_) { if (mounted) setState(() => _loading = false); });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_invoice == null) return const PaymentsSummaryScreen();
+    return PaymentDetailScreen(invoice: _invoice!);
+  }
 }
 
 IconData _notificationIcon(String? type) {

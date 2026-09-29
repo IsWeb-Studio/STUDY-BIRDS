@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿import 'dart:async';
+import 'package:flutter/material.dart';
 import '../../core/auth_session.dart';
 import 'application_documents_screen.dart';
 import '../../core/app_theme.dart';
@@ -6,6 +7,7 @@ import '../../core/status_info.dart';
 import '../../core/analytics_service.dart';
 import 'application_card_view.dart';
 import '../../core/student_repository.dart';
+import '../../core/realtime_sync_service.dart';
 import '../services_support/messaging_and_emergency_screens.dart'
     show ConversationThreadScreen;
 import 'documents_screens.dart'
@@ -80,12 +82,25 @@ class _ApplicationsListScreenState extends State<ApplicationsListScreen> {
   List<dynamic> _apps = [];
   bool _loading = true;
   String? _error;
+  StreamSubscription<DateTime>? _syncSub;
 
   @override
   void initState() {
     super.initState();
     AnalyticsService.instance.screenView('applications');
     _load();
+    _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
+      StudentRepository.instance
+          .getApplications(forceRefresh: true)
+          .then((data) { if (mounted) setState(() => _apps = data); })
+          .catchError((_) {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {

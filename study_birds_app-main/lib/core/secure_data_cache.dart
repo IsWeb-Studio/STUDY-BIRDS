@@ -20,10 +20,19 @@ class SecureDataCache {
     if (owner.isEmpty) return null;
     final raw = await _storage.read(key: _key(owner, resource));
     if (raw == null) return null;
-    final value = jsonDecode(raw) as Map;
-    final savedAt = DateTime.tryParse('${value['savedAt']}');
-    if (savedAt == null || DateTime.now().difference(savedAt).inDays >= 7) return null;
-    return value['data'];
+    try {
+      final value = jsonDecode(raw) as Map;
+      final savedAt = DateTime.tryParse('${value['savedAt']}');
+      final age = savedAt == null ? null : DateTime.now().difference(savedAt);
+      if (age == null || age.isNegative || age >= const Duration(days: 7)) {
+        return null;
+      }
+      return value['data'];
+    } on FormatException {
+      return null;
+    } on TypeError {
+      return null;
+    }
   }
 
   static Future<void> clear(String owner) async {

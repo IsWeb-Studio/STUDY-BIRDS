@@ -2,6 +2,27 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
+class UploadCancellation {
+  bool cancelled = false;
+  void Function()? _abort;
+  void cancel() { cancelled = true; _abort?.call(); }
+}
+
+class _ProgressUpload extends http.MultipartRequest {
+  final void Function(double)? onProgress;
+  _ProgressUpload(super.method, super.url, this.onProgress);
+  @override
+  http.ByteStream finalize() {
+    final total = contentLength;
+    var sent = 0;
+    return http.ByteStream(super.finalize().map((chunk) {
+      sent += chunk.length;
+      onProgress?.call(total == 0 ? 1 : (sent / total).clamp(0.0, 1.0));
+      return chunk;
+    }));
+  }
+}
+
 /// Thrown by [ApiClient] for any non-2xx response. [message] is the
 /// backend's own `{ message: "..." }` string when present, since the
 /// Express error middleware always returns that shape.
@@ -98,6 +119,7 @@ class ApiClient {
   /// Multipart upload (matches Multer's `upload.single("file")` on the
   /// backend). [fields] become additional form fields (e.g. `type` for a
   /// document's category) alongside the file itself.
+  /// [onProgress] receives values 0.0–1.0 as bytes are sent.
   Future<dynamic> postMultipart(
     String path, {
     required List<int> fileBytes,
@@ -105,16 +127,28 @@ class ApiClient {
     String fileFieldName = 'file',
     Map<String, String>? fields,
     String? token,
+    void Function(double)? onProgress,
+    UploadCancellation? cancellation,
   }) async {
     final response = await _authorized(token, (credential) async {
-      final request = http.MultipartRequest('POST', Uri.parse('$baseUrl$path'));
+      if (cancellation?.cancelled == true) throw const ApiException(499, 'تم إلغاء الرفع');
+      final request = _ProgressUpload('POST', Uri.parse('$baseUrl$path'), onProgress);
       if (credential != null) request.headers['Authorization'] = 'Bearer $credential';
       request.headers['X-Study-Birds-Client'] = 'mobile';
       if (fields != null) request.fields.addAll(fields);
       request.files.add(http.MultipartFile.fromBytes(fileFieldName, fileBytes, filename: fileName, contentType: _mimeTypeFor(fileName)));
       final client = http.Client();
-      try { return await http.Response.fromStream(await client.send(request)); }
-      finally { client.close(); }
+      if (cancellation != null) cancellation._abort = client.close;
+      try {
+        final streamed = await client.send(request);
+        return await http.Response.fromStream(streamed);
+      } catch (_) {
+        if (cancellation?.cancelled == true) throw const ApiException(499, 'تم إلغاء الرفع');
+        rethrow;
+      } finally {
+        if (cancellation != null) cancellation._abort = null;
+        client.close();
+      }
     });
     return _decode(response);
   }

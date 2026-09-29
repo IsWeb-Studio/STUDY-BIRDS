@@ -148,6 +148,14 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   style: TextStyle(color: AppColors.danger)),
               onTap: () async {
                 Navigator.pop(sheetContext);
+                final confirmed = await showAppConfirmDialog(
+                  context,
+                  title: 'تسجيل الخروج',
+                  message: 'هل تريد تسجيل الخروج من حسابك؟',
+                  confirmLabel: 'تسجيل الخروج',
+                  danger: true,
+                );
+                if (!confirmed || !context.mounted) return;
                 await AuthSession.instance.logout();
                 if (context.mounted) {
                   Navigator.of(context).pushAndRemoveUntil(

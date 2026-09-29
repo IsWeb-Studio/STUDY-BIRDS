@@ -368,6 +368,7 @@ class _EmployeeServiceRequestsScreenState extends State<EmployeeServiceRequestsS
                         padding: const EdgeInsets.fromLTRB(12, 0, 12, 16),
                         itemCount: _requests.length,
                         itemBuilder: (_, i) => _RequestCard(
+                          key: ValueKey('${_requests[i]['_id']}:${_requests[i]['__v']}'),
                           req: _requests[i] as Map,
                           statusLabels: _statusLabels,
                           statusColors: _statusColors,
@@ -397,7 +398,7 @@ class _RequestCard extends StatefulWidget {
   final Map<String, Color> statusColors;
   final List<String> statuses;
   final Future<void> Function(String id, Map<String, dynamic> body) onUpdate;
-  const _RequestCard({required this.req, required this.statusLabels,
+  const _RequestCard({super.key, required this.req, required this.statusLabels,
       required this.statusColors, required this.statuses, required this.onUpdate});
   @override
   State<_RequestCard> createState() => _RequestCardState();
@@ -455,13 +456,13 @@ class _RequestCardState extends State<_RequestCard> {
           TextField(
             controller: _noteCtrl,
             maxLines: 2,
-            decoration: const InputDecoration(labelText: 'ملاحظة للطالب', border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
+            decoration: const InputDecoration(labelText: 'ملاحظة داخلية للفريق', border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
           ),
           const SizedBox(height: 8),
           Align(alignment: AlignmentDirectional.centerEnd, child: TextButton(
             onPressed: _saving ? null : () async {
               setState(() => _saving = true);
-              await widget.onUpdate('${req['_id']}', {'status': _status, 'staffNote': _noteCtrl.text.trim()});
+              await widget.onUpdate('${req['_id']}', {'status': _status, 'staffNote': _noteCtrl.text.trim(), 'expectedVersion': req['__v'] ?? 0});
               if (mounted) setState(() { _saving = false; _expanded = false; });
             },
             child: _saving ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('حفظ'),

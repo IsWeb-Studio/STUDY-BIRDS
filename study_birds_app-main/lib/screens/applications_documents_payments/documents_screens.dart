@@ -1,4 +1,6 @@
-﻿import 'package:url_launcher/url_launcher.dart';
+﻿import 'dart:async';
+import 'package:study_birds/core/api_client.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/document_access.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -6,6 +8,8 @@ import '../../core/app_theme.dart';
 import '../../core/status_info.dart';
 import '../../core/student_repository.dart';
 import '../../core/analytics_service.dart';
+import '../../core/notification_scheduler.dart';
+import '../../core/realtime_sync_service.dart';
 
 /// Maps the backend's document status (legacy 3-value `status`, or the
 /// richer 8-value `detailedStatus` when present) to Arabic label + color.
@@ -109,34 +113,53 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
     return false;
   }
 
-  if (context.mounted) {
-    final sizeKb = file.size ~/ 1024;
-    final sizeStr = sizeKb >= 1024
-        ? '${(sizeKb / 1024).toStringAsFixed(1)} MB'
-        : '$sizeKb KB';
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) => AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Row(children: [
-              CircularProgressIndicator(color: AppColors.navy),
-              SizedBox(width: 16),
-              Text('جاري رفع المستند...'),
-            ]),
-            const SizedBox(height: 10),
-            Text(file.name,
-                style: AppTextStyles.caption,
-                overflow: TextOverflow.ellipsis),
-            Text(sizeStr, style: AppTextStyles.caption),
-          ],
-        ),
+  if (!context.mounted) return false;
+
+  final sizeKb = file.size ~/ 1024;
+  final sizeStr =
+      sizeKb >= 1024 ? '${(sizeKb / 1024).toStringAsFixed(1)} MB' : '$sizeKb KB';
+  final progressNotifier = ValueNotifier<double>(0.0);
+  final cancellation = UploadCancellation();
+
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => PopScope(canPop: false, child: AlertDialog(
+      actions: [TextButton(onPressed: cancellation.cancel, child: const Text('إلغاء الرفع'))],
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('جاري رفع المستند...', style: AppTextStyles.cardTitle),
+          const SizedBox(height: 10),
+          Text(file.name,
+              style: AppTextStyles.caption, overflow: TextOverflow.ellipsis),
+          Text(sizeStr, style: AppTextStyles.caption),
+          const SizedBox(height: 14),
+          ValueListenableBuilder<double>(
+            valueListenable: progressNotifier,
+            builder: (_, value, __) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                LinearProgressIndicator(
+                  value: value > 0 ? value : null,
+                  backgroundColor: AppColors.border,
+                  valueColor:
+                      const AlwaysStoppedAnimation<Color>(AppColors.navy),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  value >= 1 ? 'جارٍ حفظ المستند...' : value > 0 ? '${(value * 100).round()}%' : 'جاري الاتصال...',
+                  style: AppTextStyles.caption,
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
-    );
-  }
+    )),
+  );
 
   try {
     await StudentRepository.instance.uploadDocument(
@@ -144,7 +167,9 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
         fileName: file.name,
         type: type,
         replaces: replaces,
-        translationOf: translationOf);
+        translationOf: translationOf,
+        cancellation: cancellation,
+        onProgress: (p) => progressNotifier.value = p);
     if (context.mounted) {
       Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -152,9 +177,10 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
           backgroundColor: AppColors.success));
     }
     return true;
-  } catch (_) {
+  } catch (error) {
     if (!context.mounted) return false;
     Navigator.of(context, rootNavigator: true).pop();
+    if (error is ApiException && error.statusCode == 499) return false;
     final retry = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -180,6 +206,9 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
           replaces: replaces, translationOf: translationOf);
     }
     return false;
+  } finally {
+    // The dialog may still be animating out, so dispose after the frame.
+    WidgetsBinding.instance.addPostFrameCallback((_) => progressNotifier.dispose());
   }
 }
 
@@ -235,12 +264,26 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
   bool _loading = true;
   String? _error;
   bool _uploading = false;
+  StreamSubscription<DateTime>? _syncSub;
 
   @override
   void initState() {
     super.initState();
     AnalyticsService.instance.screenView('my_documents');
     _load();
+    _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
+      if (_uploading) return;
+      StudentRepository.instance
+          .getDocuments(forceRefresh: true)
+          .then((docs) { if (mounted) setState(() => _docs = docs.whereType<Map>().where((d) => d['isLatest'] != false && d['translationOf'] == null).toList()); })
+          .catchError((_) {});
+    });
+  }
+
+  @override
+  void dispose() {
+    _syncSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -251,6 +294,16 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
     try {
       final docs = await StudentRepository.instance.getDocuments();
       if (!mounted) return;
+      // Schedule local expiry reminders for documents nearing their deadline.
+      for (final d in docs) {
+        final exp = DateTime.tryParse('${(d as Map<String, dynamic>)['expiresAt'] ?? ''}');
+        final id = d['_id']?.toString();
+        final name = d['originalName']?.toString() ?? d['type']?.toString() ?? 'مستند';
+        if (exp != null && id != null && exp.isAfter(DateTime.now())) {
+          NotificationScheduler.instance.scheduleDocumentExpiry(
+              docId: id, docName: name, expiryDate: exp);
+        }
+      }
       setState(() {
         // Current files only: older versions and translations live inside
         // their document's detail screen (PRD 29).

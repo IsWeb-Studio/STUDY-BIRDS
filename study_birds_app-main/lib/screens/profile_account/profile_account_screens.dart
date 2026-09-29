@@ -14,6 +14,7 @@ import '../services_support/support_team_ai_screens.dart' show SupportCenterScre
 import '../universities_programs_countries/explore_hub_screen.dart';
 import 'student_rewards_currency_screens.dart';
 import '../services_support/student_life_alumni_screens.dart';
+import '../services_support/knowledge_base_screen.dart' show ExhibitionArticleScreen;
 
 /// Real Profile screen — fetches GET /api/students/profile. Sections shown
 /// match the ACTUAL StudentProfile schema on the backend; the previous
@@ -641,27 +642,43 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       itemCount: _favorites.length,
                       itemBuilder: (context, i) {
                         final fav = _favorites[i] as Map<String, dynamic>;
-                        final isUniversity = fav['itemType'] == 'university';
+                        final itemType = fav['itemType'] as String? ?? 'university';
+                        final isUniversity = itemType == 'university';
+                        final isArticle = itemType == 'article';
                         final university =
                             fav['university'] as Map<String, dynamic>?;
                         final program = fav['program'] as Map<String, dynamic>?;
-                        final label = isUniversity
-                            ? (university?['name'] as String? ?? '—')
-                            : (program?['title'] as String? ?? '—');
-                        final subtitle = isUniversity
-                            ? null
-                            : (program?['university']
-                                as Map<String, dynamic>?)?['name'] as String?;
+                        final String label;
+                        final String? subtitle;
+                        final IconData icon;
+                        if (isUniversity) {
+                          label = university?['name'] as String? ?? '—';
+                          subtitle = null;
+                          icon = Icons.account_balance_rounded;
+                        } else if (isArticle) {
+                          label = fav['articleTitle'] as String? ?? '—';
+                          subtitle = 'مقال';
+                          icon = Icons.article_outlined;
+                        } else {
+                          label = program?['title'] as String? ?? '—';
+                          subtitle = (program?['university']
+                              as Map<String, dynamic>?)?['name'] as String?;
+                          icon = Icons.menu_book_rounded;
+                        }
 
                         return AppCard(
+                          onTap: isArticle
+                              ? () => Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                      builder: (_) => ExhibitionArticleScreen(
+                                          item: {
+                                            'slug': fav['articleSlug'],
+                                            'title': fav['articleTitle'],
+                                          })))
+                              : null,
                           child: Row(
                             children: [
-                              Icon(
-                                  isUniversity
-                                      ? Icons.account_balance_rounded
-                                      : Icons.menu_book_rounded,
-                                  color: AppColors.navy,
-                                  size: 20),
+                              Icon(icon, color: AppColors.navy, size: 20),
                               const SizedBox(width: 10),
                               Expanded(
                                 child: Column(

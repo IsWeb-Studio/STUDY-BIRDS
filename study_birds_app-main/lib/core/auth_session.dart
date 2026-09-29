@@ -149,7 +149,7 @@ class AuthUser {
         '_id': id,
         'name': name,
         'email': email,
-        'role': role.name,
+        'role': role.wireValue,
         if (employeeRole != null) 'employeeRole': employeeRole,
         'permissions': permissions.toList(),
         if (linkedUniversityId != null) 'linkedUniversity': linkedUniversityId,
@@ -254,6 +254,12 @@ class AuthSession extends ChangeNotifier {
   String? _previousToken;
   Future<String?>? _refreshing;
 
+  Future<void> _cacheUser(AuthUser user) async {
+    await const FlutterSecureStorage().write(key: 'cached_user', value: jsonEncode({
+      'user': user.toJson(), 'savedAt': DateTime.now().toUtc().toIso8601String(),
+    }));
+  }
+
   Future<String?> refreshAccessToken(String failedToken) async {
     if (token != failedToken) return failedToken == _previousToken ? token : null;
     if (_refreshing != null) return _refreshing;
@@ -278,7 +284,7 @@ class AuthSession extends ChangeNotifier {
       token = result.token;
       currentUser = result.user;
       await storage.write(key: 'active_session_token', value: result.token);
-      await storage.write(key: 'cached_user', value: jsonEncode(result.user.toJson()));
+      await _cacheUser(result.user);
       if (result.refreshToken != null) await storage.write(key: 'refresh_token', value: result.refreshToken);
       notifyListeners();
       return token;
@@ -306,7 +312,7 @@ class AuthSession extends ChangeNotifier {
         if (user != null) {
           currentUser = user;
           token = storedToken;
-          await storage.write(key: 'cached_user', value: jsonEncode(user.toJson()));
+          await _cacheUser(user);
         } else {
           // Access token expired — try refresh token before giving up.
           final storedRefresh = await storage.read(key: 'refresh_token');
@@ -316,7 +322,7 @@ class AuthSession extends ChangeNotifier {
               currentUser = refreshed.user;
               token = refreshed.token;
               await storage.write(key: 'active_session_token', value: refreshed.token);
-              await storage.write(key: 'cached_user', value: jsonEncode(refreshed.user.toJson()));
+              await _cacheUser(refreshed.user);
               if (refreshed.refreshToken != null) await storage.write(key: 'refresh_token', value: refreshed.refreshToken);
             } else {
               await storage.delete(key: 'active_session_token');
@@ -328,24 +334,33 @@ class AuthSession extends ChangeNotifier {
             await storage.delete(key: 'cached_user');
           }
         }
-      } on ApiException {
-        // Server explicitly rejected the token — clear the session.
-        await storage.delete(key: 'active_session_token');
-        await storage.delete(key: 'refresh_token');
-        await storage.delete(key: 'cached_user');
-      } catch (_) {
+      } catch (error) {
+        if (error is ApiException &&
+            (error.statusCode == 401 || error.statusCode == 403)) {
+          await storage.delete(key: 'active_session_token');
+          await storage.delete(key: 'refresh_token');
+          await storage.delete(key: 'cached_user');
+          _restored = true;
+          notifyListeners();
+          return;
+        }
         // Network or transport error — restore from cached user snapshot so
         // the app can work offline with stale data; the next successful request
         // will re-validate the token via the 401 refresh path.
         final cachedRaw = await storage.read(key: 'cached_user');
         if (cachedRaw != null) {
           try {
-            final user = AuthUser.fromJson(
-                Map<String, dynamic>.from(jsonDecode(cachedRaw) as Map));
-            currentUser = user;
-            token = storedToken;
+            final cached = jsonDecode(cachedRaw) as Map;
+            final savedAt = DateTime.tryParse('${cached['savedAt']}');
+            final age = savedAt == null ? null : DateTime.now().difference(savedAt);
+            final user = AuthUser.fromJson(Map<String, dynamic>.from(cached['user'] as Map));
+            // Staff permissions must be verified online before opening tools.
+            if (user.role == UserRole.student && age != null && !age.isNegative && age < const Duration(days: 7)) {
+              currentUser = user;
+              token = storedToken;
+            }
           } catch (_) {
-            await storage.delete(key: 'active_session_token');
+            // A missing/old snapshot is not proof that saved credentials were revoked.
             await storage.delete(key: 'cached_user');
           }
         }
@@ -371,7 +386,7 @@ class AuthSession extends ChangeNotifier {
     } else {
       await storage.delete(key: 'refresh_token');
     }
-    await storage.write(key: 'cached_user', value: jsonEncode(user.toJson()));
+    await _cacheUser(user);
     await prefs.remove('session_token');
     currentUser = user;
     token = authToken;

@@ -225,9 +225,10 @@ class StudentRepository {
     required List<int> fileBytes,
     required String fileName,
     required String type,
-    // A new version of an existing document, or a certified translation of one.
     String? replaces,
     String? translationOf,
+    void Function(double)? onProgress,
+    UploadCancellation? cancellation,
   }) async {
     final data = await ApiClient.instance.postMultipart(
       '/students/documents',
@@ -239,6 +240,8 @@ class StudentRepository {
         if (translationOf != null) 'translationOf': translationOf,
       },
       token: _token,
+      onProgress: onProgress,
+      cancellation: cancellation,
     );
     return data as Map<String, dynamic>;
   }
@@ -371,12 +374,16 @@ class StudentRepository {
   Future<Map<String, dynamic>> toggleFavorite(
       {required String itemType,
       String? universityId,
-      String? programId}) async {
+      String? programId,
+      String? articleSlug,
+      String? articleTitle}) async {
     final data = await ApiClient.instance
         .post('/students/favorites/toggle', token: _token, body: {
       'itemType': itemType,
       if (universityId != null) 'universityId': universityId,
       if (programId != null) 'programId': programId,
+      if (articleSlug != null) 'articleSlug': articleSlug,
+      if (articleTitle != null) 'articleTitle': articleTitle,
     });
     return data as Map<String, dynamic>;
   }

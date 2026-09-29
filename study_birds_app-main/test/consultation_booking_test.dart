@@ -152,7 +152,7 @@ void main() {
     final events = calendarEvents(
         {},
         null,
-        [
+        consultations: [
           booking,
           {...booking, 'status': 'cancelled'}
         ]);

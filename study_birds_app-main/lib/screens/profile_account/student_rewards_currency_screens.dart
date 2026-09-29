@@ -539,7 +539,7 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
             controller: amountCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(
-              labelText: 'المبلغ المراد خصمه (نقاط)',
+              labelText: 'المبلغ المراد خصمه (دولار)',
               border: OutlineInputBorder(),
               contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),

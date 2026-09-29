@@ -96,7 +96,6 @@ class _ServicesCenterScreenState extends State<ServicesCenterScreen> {
                                         ServiceDetailScreen(service: {
                                           ...row,
                                           'name': title,
-                                          'price': 'يحدد بعد مراجعة الطلب',
                                         }))),
                             child: Padding(
                                 padding: const EdgeInsets.all(13),
@@ -121,7 +120,9 @@ class _ServicesCenterScreenState extends State<ServicesCenterScreen> {
                                             height: 1.5,
                                             fontWeight: FontWeight.w500)),
                                     const SizedBox(height: 16),
-                                    const Text('السعر عند الطلب',
+                                    Text((row['priceDescription']?.toString().trim().isNotEmpty ?? false)
+                                        ? '${row['priceDescription']}' : 'السعر عند الطلب',
+                                        maxLines: 2, overflow: TextOverflow.ellipsis,
                                         style: AppTextStyles.caption),
                                   ],
                                 )),
@@ -254,6 +255,19 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                     Text(
                         (service['detailBody'] as String).replaceAll(RegExp(r'<[^>]*>'), ''),
                         style: AppTextStyles.body),
+                  const SizedBox(height: 12),
+                  _Row(label: 'السعر', value: (service['priceDescription']?.toString().trim().isNotEmpty ?? false)
+                      ? '${service['priceDescription']}' : 'يحدد بعد مراجعة الطلب'),
+                  for (final field in const {
+                    'estimatedDuration': 'الوقت التقديري للتنفيذ',
+                    'requirementsText': 'متطلبات التقديم',
+                    'documentsText': 'المستندات اللازمة',
+                  }.entries)
+                    if (service[field.key]?.toString().trim().isNotEmpty ?? false) ...[
+                      const SizedBox(height: 12),
+                      Text(field.value, style: AppTextStyles.sectionLabel),
+                      Text('${service[field.key]}', style: AppTextStyles.body),
+                    ],
                 ],
               ),
             ),
@@ -454,7 +468,7 @@ class _ConsultationConfirmationScreenState
     NotificationScheduler.instance.scheduleConsultation(
       id: id,
       title: 'تذكير: استشارتك بعد ساعة',
-      at: startsAt,
+      at: startsAt.subtract(const Duration(hours: 1)),
     );
   }
 

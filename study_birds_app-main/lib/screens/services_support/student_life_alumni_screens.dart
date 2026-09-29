@@ -3,6 +3,8 @@ import '../../core/api_client.dart';
 import '../../core/auth_session.dart';
 import '../../core/app_theme.dart';
 import 'community_screen.dart' show StudentCommunityScreen;
+import 'alumni_directory_screen.dart';
+import 'student_listings_screen.dart';
 
 // ─── shared helpers ───────────────────────────────────────────────────────────
 
@@ -92,6 +94,8 @@ class _StudentLifeOffersScreenState extends State<StudentLifeOffersScreen> {
   @override
   Widget build(BuildContext context) => AppScaffold(
         title: 'الحياة الطلابية والفعاليات',
+        actions: [TextButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => const StudentListingsScreen(kind: 'offer'))), child: const Text('عروض الطلاب'))],
         body: RefreshIndicator(
           onRefresh: _load,
           color: AppColors.navy,
@@ -434,11 +438,18 @@ class _AlumniNetworkScreenState extends State<AlumniNetworkScreen> {
       );
 
   List<Widget> _alumniCards(BuildContext context) => [
-        const _InfoCard(
+        _TappableInfoCard(
+          icon: Icons.people_outline,
+          title: 'دليل الخريجين وملفي',
+          body: 'تعرّف على الخريجين المتاحين للإرشاد وأدر ظهور ملفك.',
+          onTap: (ctx) => Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const AlumniDirectoryScreen())),
+        ),
+        const SizedBox(height: 12),
+        _TappableInfoCard(
           icon: Icons.work_outline_rounded,
           title: 'فرص العمل والتدريب',
-          body:
-              'نربطك بأفضل فرص العمل والتدريب المهني في مجالك بعد التخرج. ترقّب الإعلانات في مجتمع الطلاب.',
+          body: 'استعرض الفرص المنشورة وشروطها ورابط التقديم.',
+          onTap: (ctx) => Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const StudentListingsScreen(kind: 'opportunity'))),
         ),
         const SizedBox(height: 12),
         _TappableInfoCard(

@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 /// Routes a notification tap to the correct screen name.
@@ -32,13 +31,10 @@ class PushNotificationService {
       else { _tapHandler!(screen, data); }
     });
 
-    // Foreground: show a brief snackbar instead of a system popup.
+    // Foreground: display the system banner so the user sees it even while
+    // the app is open. Without calling display() OneSignal 5.x suppresses it.
     OneSignal.Notifications.addForegroundWillDisplayListener((event) {
-      // Allow the SDK to display foreground notifications.
-      final title = event.notification.title ?? '';
-      final body = event.notification.body ?? '';
-      debugPrint('[Push] $title — $body');
-      // The notification is still stored in NotificationsScreen on the server.
+      event.notification.display();
     });
   }
 

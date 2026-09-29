@@ -2,6 +2,7 @@
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_theme.dart';
 import '../../core/student_repository.dart';
+import '../../core/auth_session.dart';
 import '../../core/catalog_repository.dart';
 
 IconData _resourceIcon(String? type) {
@@ -273,29 +274,71 @@ class _ExhibitionCard extends StatelessWidget {
   }
 }
 
-class ExhibitionArticleScreen extends StatelessWidget {
+class ExhibitionArticleScreen extends StatefulWidget {
   final Map<String, dynamic> item;
   const ExhibitionArticleScreen({super.key, required this.item});
+  @override
+  State<ExhibitionArticleScreen> createState() => _ExhibitionArticleScreenState();
+}
 
-  Future<void> _openVideo(BuildContext context, String url) async {
+class _ExhibitionArticleScreenState extends State<ExhibitionArticleScreen> {
+  bool _favorited = false;
+  bool _toggling = false;
+
+  bool get _isLoggedIn => AuthSession.instance.token != null;
+
+  Future<void> _openVideo(String url) async {
     final uri = Uri.tryParse(url);
     if (uri == null) return;
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تعذر فتح الرابط.')));
-      }
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تعذر فتح الرابط.')));
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    if (_toggling) return;
+    setState(() => _toggling = true);
+    try {
+      final slug = widget.item['slug']?.toString() ?? '';
+      final title = widget.item['title']?.toString() ?? '';
+      final res = await StudentRepository.instance.toggleFavorite(
+          itemType: 'article', articleSlug: slug, articleTitle: title);
+      if (mounted) setState(() => _favorited = res['removed'] != true);
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تعذر تحديث المفضلة.')));
+    } finally {
+      if (mounted) setState(() => _toggling = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = item['image'] as String?;
-    final youtubeUrl = item['youtubeUrl'] as String?;
-    final body = (item['body'] as String? ?? '').trim();
+    final imageUrl = widget.item['image'] as String?;
+    final youtubeUrl = widget.item['youtubeUrl'] as String?;
+    final body = (widget.item['body'] as String? ?? '').trim();
 
     return AppScaffold(
-      title: item['title'] as String? ?? 'مقال',
+      title: widget.item['title'] as String? ?? 'مقال',
+      actions: _isLoggedIn
+          ? [
+              IconButton(
+                tooltip: _favorited ? 'إزالة من المفضلة' : 'إضافة للمفضلة',
+                icon: _toggling
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : Icon(
+                        _favorited
+                            ? Icons.favorite_rounded
+                            : Icons.favorite_border_rounded,
+                        color: _favorited ? AppColors.danger : null),
+                onPressed: _toggleFavorite,
+              ),
+            ]
+          : null,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -311,12 +354,12 @@ class ExhibitionArticleScreen extends StatelessWidget {
               ),
             ),
           if (imageUrl != null && imageUrl.isNotEmpty) const SizedBox(height: 16),
-          Text(item['title'] as String? ?? '',
+          Text(widget.item['title'] as String? ?? '',
               style: AppTextStyles.screenTitle
                   .copyWith(fontSize: 20, height: 1.4)),
-          if ((item['summary'] as String?)?.isNotEmpty == true) ...[
+          if ((widget.item['summary'] as String?)?.isNotEmpty == true) ...[
             const SizedBox(height: 8),
-            Text(item['summary'] as String,
+            Text(widget.item['summary'] as String,
                 style: AppTextStyles.body
                     .copyWith(color: AppColors.textSecondary)),
           ],
@@ -328,7 +371,7 @@ class ExhibitionArticleScreen extends StatelessWidget {
           if (youtubeUrl != null && youtubeUrl.isNotEmpty) ...[
             const SizedBox(height: 20),
             OutlinedButton.icon(
-              onPressed: () => _openVideo(context, youtubeUrl),
+              onPressed: () => _openVideo(youtubeUrl),
               icon: const Icon(Icons.play_circle_outline_rounded, size: 20),
               label: const Text('شاهد الفيديو على يوتيوب'),
               style: OutlinedButton.styleFrom(
