@@ -1,4 +1,4 @@
-package com.example.study_birds
+package com.studybirds.app
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 

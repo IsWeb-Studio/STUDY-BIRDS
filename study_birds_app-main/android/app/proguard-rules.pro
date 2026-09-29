@@ -1,3 +1,6 @@
+# Keep the app's own classes (R8 must not strip MainActivity)
+-keep class com.studybirds.app.** { *; }
+
 # Flutter Play Store split/deferred components (not used but referenced by Flutter engine)
 -dontwarn com.google.android.play.core.**
 -keep class com.google.android.play.core.** { *; }
