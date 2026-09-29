@@ -468,7 +468,7 @@ class _ConsultationConfirmationScreenState
     NotificationScheduler.instance.scheduleConsultation(
       id: id,
       title: 'تذكير: استشارتك بعد ساعة',
-      at: startsAt.subtract(const Duration(hours: 1)),
+      at: startsAt,
     );
   }
 
