@@ -320,7 +320,7 @@ const updateArrivalRequestAdmin = asyncHandler(async (req, res) => {
   await item.save();
 
   // sync postAdmission stages so the mobile journey tracker reflects arrival status
-  if (item.status !== prevStatus) {
+  if (item.status === 'completed' || item.status !== prevStatus) {
     const now2 = new Date();
     const postAdmissionStatus = item.status === 'completed' ? 'completed'
       : item.status === 'in-progress' ? 'in-progress'
@@ -423,6 +423,45 @@ const updateOrientationResultAdmin = asyncHandler(async (req, res) => {
   res.json(await OrientationTestResult.findById(item._id).populate("student", "name email").populate("reviewedBy", "name email"));
 });
 
+const syncArrivalStagesAdmin = asyncHandler(async (req, res) => {
+  const completed = await ArrivalServiceRequest.find({ status: 'completed' });
+  let count = 0;
+  const now2 = new Date();
+  for (const item of completed) {
+    const eligibleApp = await Application.findOne({
+      student: item.student,
+      status: { $nin: ['rejected', 'file-completed-rejected', 'file-completed-accepted'] },
+      $or: [
+        { detailedStatus: { $in: ['accepted', 'final-admission', 'visa-preparation'] } },
+        { status: 'final-accepted' },
+      ],
+    }).sort({ createdAt: -1 });
+    if (!eligibleApp) continue;
+    const stageUpdate = {
+      'postAdmission.travel.status': 'completed',
+      'postAdmission.travel.updatedAt': now2,
+    };
+    if (item.services?.airportPickup) {
+      stageUpdate['postAdmission.arrival.status'] = 'completed';
+      stageUpdate['postAdmission.arrival.updatedAt'] = now2;
+    }
+    if (item.services?.studentHousing) {
+      stageUpdate['postAdmission.housing.status'] = 'completed';
+      stageUpdate['postAdmission.housing.updatedAt'] = now2;
+    }
+    if (item.services?.residencePermitSupport) {
+      stageUpdate['postAdmission.residence.status'] = 'completed';
+      stageUpdate['postAdmission.residence.updatedAt'] = now2;
+    }
+    await Application.updateOne({ _id: eligibleApp._id }, { $set: stageUpdate });
+    advanceTo(item.student, 'travel').catch(() => {});
+    if (item.services?.airportPickup) advanceTo(item.student, 'reception').catch(() => {});
+    if (item.services?.studentHousing) advanceTo(item.student, 'accommodation').catch(() => {});
+    count++;
+  }
+  res.json({ synced: count });
+});
+
 module.exports = {
   getStudentDetailsAdmin,
   getStudentDocumentsAdmin,
@@ -434,6 +473,7 @@ module.exports = {
   reviewPaymentProofAdmin,
   getArrivalRequestsAdmin,
   updateArrivalRequestAdmin,
+  syncArrivalStagesAdmin,
   getStudentFavoritesAdmin,
   getOrientationResultsAdmin,
   updateOrientationResultAdmin,
