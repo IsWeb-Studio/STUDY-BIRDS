@@ -273,4 +273,14 @@ const { getEmployeeStats, getEmployeeStatsById } = require('../controllers/emplo
 router.get("/employee-stats", getEmployeeStats);
 router.get("/employee-stats/:id", getEmployeeStatsById);
 
+// one-time migration: rename "التقديم على الجامعات" → "التسجيل بالجامعة" and link to registration stage
+router.post('/migrate/service-registration-link', require('../utils/asyncHandler')(async (req, res) => {
+  const OurService = require('../models/OurService');
+  const result = await OurService.updateMany(
+    { title: { $regex: 'التقديم على الجامعات', $options: 'i' } },
+    { $set: { title: 'التسجيل بالجامعة', journeyStage: 'registration' } }
+  );
+  res.json({ matched: result.matchedCount, modified: result.modifiedCount });
+}));
+
 module.exports = router;
