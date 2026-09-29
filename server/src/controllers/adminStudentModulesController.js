@@ -214,6 +214,7 @@ const updateStudentInvoiceAdmin = asyncHandler(async (req, res) => {
   if (req.body.description !== undefined) invoice.description = String(req.body.description || "").trim();
   if (req.body.amount !== undefined) invoice.amount = Number(req.body.amount || 0);
   if (req.body.dueDate !== undefined) invoice.dueDate = req.body.dueDate || null;
+  const prevStatus = invoice.status;
   if (req.body.status !== undefined) invoice.status = req.body.status;
   if (req.body.invoiceUrl !== undefined) invoice.invoiceUrl = String(req.body.invoiceUrl || "").trim();
   if (req.body.category !== undefined) invoice.category = req.body.category;
@@ -221,6 +222,11 @@ const updateStudentInvoiceAdmin = asyncHandler(async (req, res) => {
   invoice.reviewedAt = new Date();
   invoice.reviewedBy = req.user._id;
   await invoice.save();
+
+  // advance journey when admin marks invoice as paid directly (without payment proof)
+  if (invoice.status === "paid" && prevStatus !== "paid") {
+    onPaymentApproved(invoice.student).catch(() => {});
+  }
 
   await Notification.create({
     user: invoice.student,
