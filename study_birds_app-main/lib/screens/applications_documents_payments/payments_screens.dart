@@ -116,6 +116,8 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
   Widget _buildContent(BuildContext context, Map<String, dynamic> financials) {
     final summary = financials['summary'] as Map<String, dynamic>? ?? {};
     final invoices = financials['invoices'] as List<dynamic>? ?? [];
+    final remainingFees = summary['remainingFees'] as num?;
+    final totalProgramFees = summary['totalProgramFees'] as num?;
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -134,11 +136,20 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
                   color: AppColors.info),
               _SummaryStat(
                   label: 'المتبقي',
-                  value: _money(summary['outstandingAmount'] as num?),
-                  color: AppColors.warning),
+                  value: remainingFees != null ? _money(remainingFees) : _money(summary['outstandingAmount'] as num?),
+                  color: remainingFees == 0 ? AppColors.success : AppColors.warning),
             ],
           ),
         ),
+        if (totalProgramFees != null && totalProgramFees > 0)
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 4),
+            child: Text(
+              'إجمالي الرسوم الدراسية: ${_money(totalProgramFees)}',
+              style: AppTextStyles.caption.copyWith(color: AppColors.navy),
+              textAlign: TextAlign.center,
+            ),
+          ),
         const SizedBox(height: 8),
         const Text('الفواتير', style: AppTextStyles.sectionLabel),
         const SizedBox(height: 10),
