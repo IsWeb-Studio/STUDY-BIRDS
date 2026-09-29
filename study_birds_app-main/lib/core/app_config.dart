@@ -5,7 +5,7 @@ class AppConfig {
 
   // PostHog — get from app.posthog.com > Project Settings > Project API Key
   // Leave empty to disable analytics silently.
-  static const posthogApiKey = '';
+  static const posthogApiKey = 'phx_CoDdxqf2boidfjFWWWDHERsEfj8n5mn72QpL2Dar868JeRUw';
   static const posthogHost = 'https://us.i.posthog.com';
 
   // Sentry — crash & performance monitoring (sentry.io > study-birds-mobile > Settings > Client Keys)
