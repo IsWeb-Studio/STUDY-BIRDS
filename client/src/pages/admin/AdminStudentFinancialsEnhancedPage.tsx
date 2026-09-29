@@ -34,6 +34,7 @@ export const AdminStudentFinancialsEnhancedPage = () => {
   const [updatingInvoiceId, setUpdatingInvoiceId] = useState<string | null>(null);
   const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ id: string; invoiceNumber: string } | null>(null);
+  const [filterStudentId, setFilterStudentId] = useState("");
   const [studentApplications, setStudentApplications] = useState<Array<Application & { program?: { title?: string; tuition?: number } }>>([]);
   const [studentServiceRequests, setStudentServiceRequests] = useState<Array<{ _id: string; service?: { title?: string }; status: string }>>([]);
   const [studentAccommodationBookings, setStudentAccommodationBookings] = useState<Array<{ _id: string; listing?: { title?: string }; status: string }>>([]);
@@ -69,8 +70,10 @@ export const AdminStudentFinancialsEnhancedPage = () => {
 
   const filteredInvoices = useMemo(() => {
     const query = invoiceQuery.trim().toLowerCase();
-    if (!query) return invoices;
-    return invoices.filter((invoice) =>
+    let list = invoices;
+    if (filterStudentId) list = list.filter((inv) => inv.student?._id === filterStudentId);
+    if (!query) return list;
+    return list.filter((invoice) =>
       [
         invoice.student?.name,
         invoice.student?.email,
@@ -81,12 +84,14 @@ export const AdminStudentFinancialsEnhancedPage = () => {
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(query))
     );
-  }, [invoiceQuery, invoices]);
+  }, [invoiceQuery, invoices, filterStudentId]);
 
   const filteredProofs = useMemo(() => {
     const query = proofQuery.trim().toLowerCase();
-    if (!query) return paymentProofs;
-    return paymentProofs.filter((proof) =>
+    let list = paymentProofs;
+    if (filterStudentId) list = list.filter((p) => p.student?._id === filterStudentId);
+    if (!query) return list;
+    return list.filter((proof) =>
       [
         proof.student?.name,
         proof.student?.email,
@@ -97,15 +102,15 @@ export const AdminStudentFinancialsEnhancedPage = () => {
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(query))
     );
-  }, [paymentProofs, proofQuery]);
+  }, [paymentProofs, proofQuery, filterStudentId]);
 
   const invoiceTotalPages = Math.max(1, Math.ceil(filteredInvoices.length / PAGE_SIZE));
   const proofTotalPages = Math.max(1, Math.ceil(filteredProofs.length / PAGE_SIZE));
   const visibleInvoices = filteredInvoices.slice((invoicePage - 1) * PAGE_SIZE, invoicePage * PAGE_SIZE);
   const visibleProofs = filteredProofs.slice((proofPage - 1) * PAGE_SIZE, proofPage * PAGE_SIZE);
 
-  useEffect(() => setInvoicePage(1), [invoiceQuery]);
-  useEffect(() => setProofPage(1), [proofQuery]);
+  useEffect(() => setInvoicePage(1), [invoiceQuery, filterStudentId]);
+  useEffect(() => setProofPage(1), [proofQuery, filterStudentId]);
   useEffect(() => {
     if (invoicePage > invoiceTotalPages) setInvoicePage(invoiceTotalPages);
   }, [invoicePage, invoiceTotalPages]);
@@ -259,10 +264,27 @@ export const AdminStudentFinancialsEnhancedPage = () => {
       <ToastViewport items={toasts} onDismiss={dismissToast} />
 
       <section className="panel p-6">
-        <h1 className="text-3xl font-semibold text-slate-900">{isArabic ? "مالية الطلاب" : "Student Financials"}</h1>
-        <p className="mt-2 text-sm text-slate-500">
-          {isArabic ? "مراجعة الفواتير وإثباتات الدفع الخاصة بالطلاب." : "Review student invoices and uploaded payment proofs."}
-        </p>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold text-slate-900">{isArabic ? "مالية الطلاب" : "Student Financials"}</h1>
+            <p className="mt-2 text-sm text-slate-500">
+              {isArabic ? "مراجعة الفواتير وإثباتات الدفع الخاصة بالطلاب." : "Review student invoices and uploaded payment proofs."}
+            </p>
+          </div>
+          <label className="block w-full max-w-xs shrink-0">
+            <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "عرض طالب محدد" : "Filter by student"}</span>
+            <select
+              value={filterStudentId}
+              onChange={(e) => setFilterStudentId(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring"
+            >
+              <option value="">{isArabic ? "كل الطلاب" : "All students"}</option>
+              {students.map((s) => (
+                <option key={s._id} value={s._id}>{s.name} — {s.email}</option>
+              ))}
+            </select>
+          </label>
+        </div>
         {error ? <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
       </section>
 
