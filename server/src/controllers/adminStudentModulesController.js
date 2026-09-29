@@ -299,6 +299,37 @@ const updateArrivalRequestAdmin = asyncHandler(async (req, res) => {
     throw new Error("Arrival request not found");
   }
 
+  // Per-service stage update — updates only one service's postAdmission stage
+  const SERVICE_STAGE_MAP = { airportPickup: 'arrival', studentHousing: 'housing', residencePermitSupport: 'residence', visaSupport: 'visa' };
+  if (req.body.serviceKey !== undefined) {
+    const { serviceKey, serviceStatus } = req.body;
+    const stageName = SERVICE_STAGE_MAP[serviceKey];
+    if (!stageName || !item.services?.[serviceKey]) {
+      res.status(400); throw new Error("Service not selected or invalid serviceKey");
+    }
+    if (!['completed', 'in-progress', 'not-started'].includes(serviceStatus)) {
+      res.status(400); throw new Error("Invalid serviceStatus");
+    }
+    const now3 = new Date();
+    const eligibleApp3 = await Application.findOne({
+      student: item.student,
+      status: { $nin: ['rejected', 'file-completed-rejected', 'file-completed-accepted'] },
+      $or: [
+        { detailedStatus: { $in: ['accepted', 'final-admission', 'visa-preparation'] } },
+        { status: 'final-accepted' },
+      ],
+    }).sort({ createdAt: -1 });
+    if (eligibleApp3) {
+      await Application.updateOne({ _id: eligibleApp3._id }, {
+        $set: { [`postAdmission.${stageName}.status`]: serviceStatus, [`postAdmission.${stageName}.updatedAt`]: now3 }
+      });
+    }
+    item.updatedBy = req.user._id;
+    await item.save();
+    return res.json(await ArrivalServiceRequest.findById(item._id).populate("student", "name email").populate("updatedBy", "name email"));
+  }
+
+  const prevStatus = item.status;
   if (req.body.status !== undefined) item.status = req.body.status;
   if (req.body.adminNote !== undefined) item.adminNote = String(req.body.adminNote || "").trim();
   if (req.body.travelAlert !== undefined) item.travelAlert = String(req.body.travelAlert || "").trim();
@@ -315,7 +346,6 @@ const updateArrivalRequestAdmin = asyncHandler(async (req, res) => {
     if (pickup.driverName !== undefined) item.pickup.driverName = String(pickup.driverName || "").trim();
     if (pickup.driverPhone !== undefined) item.pickup.driverPhone = String(pickup.driverPhone || "").trim();
   }
-  const prevStatus = item.status;
   item.updatedBy = req.user._id;
   await item.save();
 
