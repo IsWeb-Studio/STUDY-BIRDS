@@ -7,6 +7,7 @@ const run = require('../utils/asyncHandler');
 const ServiceRequest = require('../models/ServiceRequest');
 const OurService = require('../models/OurService');
 const Invoice = require('../models/Invoice');
+const Application = require('../models/Application');
 const { sendPushToUser } = require('../utils/pushNotifications');
 const { withLease } = require('../utils/leaseLock');
 
@@ -186,6 +187,27 @@ router.patch('/:id', canManage, run(async (req, res) => {
     // #35: auto-create invoice when service request is completed and has a price
     if (status === 'completed' && !existing.invoice) {
       autoCreateInvoice(updated).catch(() => {});
+    }
+    // #75/76: if service has a journeyStage, update postAdmission on student's application
+    if (status === 'completed') {
+      const svc = await OurService.findById(existing.service).lean().catch(() => null);
+      const stage = svc?.journeyStage?.trim();
+      if (stage) {
+        Application.findOne({
+          student: existing.student._id,
+          status: { $nin: ['rejected', 'file-completed-rejected', 'file-completed-accepted'] },
+          $or: [
+            { detailedStatus: { $in: ['accepted', 'final-admission', 'visa-preparation'] } },
+            { status: 'final-accepted' },
+          ],
+        }).sort({ createdAt: -1 }).then(app => {
+          if (!app) return;
+          const now4 = new Date();
+          return Application.updateOne({ _id: app._id }, {
+            $set: { [`postAdmission.${stage}.status`]: 'completed', [`postAdmission.${stage}.updatedAt`]: now4 }
+          });
+        }).catch(() => {});
+      }
     }
   }
 
