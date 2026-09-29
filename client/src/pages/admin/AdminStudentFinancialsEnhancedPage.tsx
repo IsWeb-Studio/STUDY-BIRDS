@@ -32,7 +32,9 @@ export const AdminStudentFinancialsEnhancedPage = () => {
   } | null>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [updatingInvoiceId, setUpdatingInvoiceId] = useState<string | null>(null);
-  const [studentApplications, setStudentApplications] = useState<Application[]>([]);
+  const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; invoiceNumber: string } | null>(null);
+  const [studentApplications, setStudentApplications] = useState<Array<Application & { program?: { title?: string; tuition?: number } }>>([]);
   const [studentServiceRequests, setStudentServiceRequests] = useState<Array<{ _id: string; service?: { title?: string }; status: string }>>([]);
   const [studentAccommodationBookings, setStudentAccommodationBookings] = useState<Array<{ _id: string; listing?: { title?: string }; status: string }>>([]);
   const { toasts, pushToast, dismissToast } = useToasts();
@@ -175,6 +177,31 @@ export const AdminStudentFinancialsEnhancedPage = () => {
     }
   };
 
+  const handleApplicationChange = (appId: string) => {
+    const selected = studentApplications.find((a) => a._id === appId);
+    const tuition = selected?.program?.tuition;
+    setForm((current) => ({
+      ...current,
+      applicationId: appId,
+      amount: tuition && ["application-fee", "tuition"].includes(current.category) ? String(tuition) : current.amount,
+    }));
+  };
+
+  const handleDeleteInvoice = async () => {
+    if (!pendingDelete) return;
+    setDeletingInvoiceId(pendingDelete.id);
+    try {
+      await adminService.deleteStudentInvoice(pendingDelete.id);
+      setInvoices((current) => current.filter((item) => item._id !== pendingDelete.id));
+      pushToast(isArabic ? "تم حذف الفاتورة." : "Invoice deleted.", "success");
+    } catch (issue) {
+      pushToast(getErrorMessage(issue, isArabic ? "تعذر حذف الفاتورة." : "Unable to delete invoice."), "error");
+    } finally {
+      setDeletingInvoiceId(null);
+      setPendingDelete(null);
+    }
+  };
+
   const handleInvoiceStatusChange = async (id: string, status: InvoiceItem["status"]) => {
     setUpdatingInvoiceId(id);
     try {
@@ -272,15 +299,30 @@ export const AdminStudentFinancialsEnhancedPage = () => {
           </label>
           {["application-fee", "tuition"].includes(form.category) && studentApplications.length > 0 && (
             <label>
-              <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "الطلب" : "Application"}</span>
-              <select value={form.applicationId} onChange={(event) => setForm((current) => ({ ...current, applicationId: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
+              <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "الطلب والبرنامج" : "Application / Program"}</span>
+              <select value={form.applicationId} onChange={(e) => handleApplicationChange(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
                 <option value="">{isArabic ? "اختر الطلب" : "Select application"}</option>
                 {studentApplications.map((app) => (
                   <option key={app._id} value={app._id}>
-                    {(app as Application & { program?: { title?: string } }).program?.title || app._id} — {app.status}
+                    {app.program?.title || app._id}
+                    {app.program?.tuition ? ` — $${app.program.tuition.toLocaleString()}` : ""}
+                    {" — "}{app.status}
                   </option>
                 ))}
               </select>
+              {form.applicationId && (() => {
+                const sel = studentApplications.find((a) => a._id === form.applicationId);
+                const tuition = sel?.program?.tuition;
+                if (!tuition) return null;
+                const paid = invoices.filter((inv) => (inv as InvoiceItem & { application?: { _id?: string } }).application?._id === form.applicationId && inv.status !== "rejected").reduce((s, inv) => s + Number(inv.amount || 0), 0);
+                const remaining = tuition - paid;
+                return (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {isArabic ? `إجمالي الرسوم: $${tuition.toLocaleString()} | مُصدَر: $${paid.toLocaleString()} | المتبقي: ` : `Tuition: $${tuition.toLocaleString()} | Billed: $${paid.toLocaleString()} | Remaining: `}
+                    <span className={remaining <= 0 ? "font-semibold text-emerald-600" : "font-semibold text-slate-700"}>${remaining.toLocaleString()}</span>
+                  </p>
+                );
+              })()}
             </label>
           )}
           {form.category === "service" && form.studentId && (
@@ -329,7 +371,7 @@ export const AdminStudentFinancialsEnhancedPage = () => {
           </label>
           <label>
             <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "الفئة" : "Category"}</span>
-            <select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value, applicationId: "", serviceRequestId: "", accommodationBookingId: "" }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
+            <select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value, applicationId: "", serviceRequestId: "", accommodationBookingId: "", amount: "" }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
               <option value="application-fee">{isArabic ? "رسوم التقديم" : "Application Fee"}</option>
               <option value="tuition">{isArabic ? "رسوم دراسية" : "Tuition"}</option>
               <option value="service">{isArabic ? "خدمة" : "Service"}</option>
@@ -353,6 +395,7 @@ export const AdminStudentFinancialsEnhancedPage = () => {
                 <th className="px-4 py-3 font-medium">{isArabic ? "الحالة" : "Status"}</th>
                 <th className="px-4 py-3 font-medium">{isArabic ? "الاستحقاق" : "Due Date"}</th>
                 <th className="px-4 py-3 font-medium">{isArabic ? "تغيير الحالة" : "Change Status"}</th>
+                <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -383,6 +426,16 @@ export const AdminStudentFinancialsEnhancedPage = () => {
                       <option value="paid">{isArabic ? "مدفوعة ✓" : "Paid ✓"}</option>
                       <option value="rejected">{isArabic ? "مرفوضة" : "Rejected"}</option>
                     </select>
+                  </td>
+                  <td className="px-4 py-4">
+                    <button
+                      type="button"
+                      disabled={deletingInvoiceId === invoice._id}
+                      onClick={() => setPendingDelete({ id: invoice._id, invoiceNumber: invoice.invoiceNumber })}
+                      className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-40"
+                    >
+                      {isArabic ? "حذف" : "Delete"}
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -496,6 +549,24 @@ export const AdminStudentFinancialsEnhancedPage = () => {
           />
         </div>
       </section>
+
+      <ConfirmationModal
+        open={Boolean(pendingDelete)}
+        title={isArabic ? "حذف الفاتورة" : "Delete Invoice"}
+        description={
+          pendingDelete
+            ? isArabic
+              ? `سيتم حذف الفاتورة رقم ${pendingDelete.invoiceNumber} نهائياً. لا يمكن التراجع عن هذا الإجراء.`
+              : `Invoice ${pendingDelete.invoiceNumber} will be permanently deleted.`
+            : ""
+        }
+        confirmLabel={isArabic ? "تأكيد الحذف" : "Confirm Delete"}
+        cancelLabel={isArabic ? "إلغاء" : "Cancel"}
+        tone="danger"
+        loading={deletingInvoiceId !== null}
+        onConfirm={handleDeleteInvoice}
+        onClose={() => !deletingInvoiceId && setPendingDelete(null)}
+      />
 
       <ConfirmationModal
         open={Boolean(pendingReview)}

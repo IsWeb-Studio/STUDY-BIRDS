@@ -196,6 +196,9 @@ export const adminService = {
     const { data } = await api.patch<InvoiceItem>(`/admin/student-financials/invoices/${id}`, payload);
     return data;
   },
+  deleteStudentInvoice: async (id: string) => {
+    await api.delete(`/admin/student-financials/invoices/${id}`);
+  },
   reviewPaymentProof: async (id: string, payload: { status: PaymentProofItem["status"]; reviewNote?: string }) => {
     const { data } = await api.patch<PaymentProofItem>(`/admin/student-financials/payment-proofs/${id}`, payload);
     return data;
