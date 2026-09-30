@@ -437,6 +437,11 @@ const markStudentNotificationAsRead = asyncHandler(async (req, res) => {
   res.json(notification);
 });
 
+const markAllStudentNotificationsRead = asyncHandler(async (req, res) => {
+  await Notification.updateMany({ user: req.user._id, isRead: false }, { $set: { isRead: true } });
+  res.json({ ok: true });
+});
+
 const getStudentSupportTickets = asyncHandler(async (req, res) => {
   const tickets = await SupportTicket.find({
     $or: [{ user: req.user._id }, { agent: req.user._id }],
@@ -825,6 +830,7 @@ module.exports = {
   createAgencyRequest,
   getStudentNotifications,
   markStudentNotificationAsRead,
+  markAllStudentNotificationsRead,
   getStudentSupportTickets,
   createStudentSupportTicket,
   getStudentKnowledgeBase,

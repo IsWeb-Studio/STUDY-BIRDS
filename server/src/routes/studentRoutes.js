@@ -10,6 +10,7 @@ const {
   createAgencyRequest,
   getStudentNotifications,
   markStudentNotificationAsRead,
+  markAllStudentNotificationsRead,
   getStudentSupportTickets,
   createStudentSupportTicket,
   getStudentKnowledgeBase,
@@ -43,6 +44,7 @@ router.post("/documents", upload.single("file"), uploadDocument);
 router.get("/documents", getDocuments);
 router.get("/applications", getApplications);
 router.get("/notifications", getStudentNotifications);
+router.patch("/notifications/read-all", markAllStudentNotificationsRead);
 router.patch("/notifications/:id/read", markStudentNotificationAsRead);
 router.get("/support-tickets", getStudentSupportTickets);
 router.post("/support-tickets", upload.single("file"), createStudentSupportTicket);
