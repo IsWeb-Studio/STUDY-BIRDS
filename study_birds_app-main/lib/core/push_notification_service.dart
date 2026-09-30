@@ -37,9 +37,11 @@ class PushNotificationService {
     });
   }
 
-  /// Prompt the user for push-notification permission.
-  /// Call this once from within the running app (e.g. initState of the root
-  /// widget) so the OS dialog has an activity/window to attach to.
+  /// true if the OS has already granted push permission.
+  bool get permissionGranted => _ready && OneSignal.Notifications.permission;
+
+  /// Triggers the OS permission dialog.
+  /// Show your own rationale first, then call this on user acceptance.
   Future<void> requestPermission() async {
     if (!_ready) return;
     await OneSignal.Notifications.requestPermission(true);
