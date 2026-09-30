@@ -115,76 +115,197 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
 
   Widget _buildContent(BuildContext context, Map<String, dynamic> financials) {
     final summary = financials['summary'] as Map<String, dynamic>? ?? {};
-    final invoices = financials['invoices'] as List<dynamic>? ?? [];
+    final groups = financials['applicationGroups'] as List<dynamic>? ?? [];
+    // Fallback for old API: flat invoice list
+    final flatInvoices = financials['invoices'] as List<dynamic>? ?? [];
+    final totalProgramFees = summary['totalProgramFees'] as num?;
+    final paidAmount = summary['paidAmount'] as num? ?? 0;
+    final remainingFees = summary['remainingFees'] as num?;
+
+    final hasGroups = groups.isNotEmpty;
 
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
+        // ── إجمالي سريع في الأعلى ──
         AppCard(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          child: Column(
             children: [
-              _SummaryStat(
-                  label: 'المدفوع',
-                  value: _money(summary['paidAmount'] as num?),
-                  color: AppColors.success),
-              _SummaryStat(
-                  label: 'قيد التحقق',
-                  value: _money(summary['pendingConfirmationAmount'] as num?),
-                  color: AppColors.info),
-              _SummaryStat(
-                  label: 'المتبقي',
-                  value: _money(summary['outstandingAmount'] as num?),
-                  color: AppColors.warning),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _SummaryStat(
+                      label: 'إجمالي المدفوع',
+                      value: _money(paidAmount),
+                      color: AppColors.success),
+                  _SummaryStat(
+                      label: 'قيد التحقق',
+                      value: _money(summary['pendingConfirmationAmount'] as num?),
+                      color: AppColors.info),
+                  _SummaryStat(
+                      label: remainingFees != null ? 'المتبقي' : 'مستحق',
+                      value: remainingFees != null ? _money(remainingFees) : _money(summary['outstandingAmount'] as num?),
+                      color: remainingFees == 0 ? AppColors.success : AppColors.warning),
+                ],
+              ),
+              if (totalProgramFees != null && totalProgramFees > 0) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'إجمالي الرسوم: ${_money(totalProgramFees)}',
+                  style: AppTextStyles.caption.copyWith(color: AppColors.navy),
+                ),
+              ],
             ],
           ),
         ),
-        const SizedBox(height: 8),
-        const Text('الفواتير', style: AppTextStyles.sectionLabel),
-        const SizedBox(height: 10),
-        if (invoices.isEmpty)
+        const SizedBox(height: 16),
+
+        if (hasGroups) ...[
+          // ── قسم لكل برنامج/جامعة ──
+          ...groups.map((g) => _buildApplicationGroup(context, g as Map<String, dynamic>)),
+        ] else if (flatInvoices.isEmpty)
           const EmptyState(
               icon: Icons.receipt_long_outlined,
               title: 'لا توجد فواتير بعد',
               message: 'ستظهر هنا أي فواتير أو دفعات مطلوبة منك.')
-        else
-          ...invoices.map((inv) {
-            final invoice = inv as Map<String, dynamic>;
-            final meta = invoiceStatusMeta(invoice['status'] as String?);
-            return AppCard(
-              onTap: () => Navigator.of(context)
-                  .push(MaterialPageRoute(
-                      builder: (_) => PaymentDetailScreen(invoice: invoice)))
-                  .then((_) => _load()),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(invoice['description'] as String? ?? '—',
-                            style: AppTextStyles.cardTitle),
-                        const SizedBox(height: 3),
-                        Text(invoice['invoiceNumber'] as String? ?? '',
-                            style: AppTextStyles.caption),
-                      ],
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(_money(invoice['amount'] as num?),
-                          style: AppTextStyles.cardTitle),
-                      const SizedBox(height: 4),
-                      StatusBadge(label: meta.label, color: meta.color),
-                    ],
-                  ),
-                ],
-              ),
-            );
-          }),
+        else ...[
+          const Text('الفواتير', style: AppTextStyles.sectionLabel),
+          const SizedBox(height: 10),
+          ...flatInvoices.map((inv) => _invoiceCard(context, inv as Map<String, dynamic>)),
+        ],
       ],
     );
+  }
+
+  Widget _buildApplicationGroup(BuildContext context, Map<String, dynamic> group) {
+    final title = group['programTitle'] as String? ?? 'طلب دراسي';
+    final tuition = group['tuition'] as num? ?? 0;
+    final paid = group['paidAmount'] as num? ?? 0;
+    final pending = group['pendingAmount'] as num? ?? 0;
+    final remaining = group['remainingAmount'] as num?;
+    final status = group['paymentStatus'] as String? ?? 'not-issued';
+    final invoices = group['invoices'] as List<dynamic>? ?? [];
+
+    final statusColor = _paymentGroupColor(status);
+    final statusLabel = _paymentGroupLabel(status);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header البرنامج
+        Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.navy,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: AppTextStyles.cardTitle.copyWith(color: Colors.white, fontSize: 14)),
+                    if (tuition > 0)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Row(
+                          children: [
+                            _GroupStat(label: 'المدفوع', value: _money(paid), color: AppColors.success),
+                            const SizedBox(width: 16),
+                            if (pending > 0)
+                              _GroupStat(label: 'قيد التحقق', value: _money(pending), color: AppColors.info),
+                            if (pending > 0) const SizedBox(width: 16),
+                            if (remaining != null)
+                              _GroupStat(
+                                label: 'المتبقي',
+                                value: _money(remaining),
+                                color: remaining == 0 ? AppColors.success : AppColors.warning,
+                              ),
+                          ],
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              StatusBadge(label: statusLabel, color: statusColor),
+            ],
+          ),
+        ),
+        // الفواتير داخل هذا البرنامج
+        if (invoices.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 16, left: 8),
+            child: Text('لا توجد فواتير لهذا البرنامج بعد',
+                style: AppTextStyles.caption.copyWith(color: AppColors.neutral)),
+          )
+        else
+          ...invoices.map((inv) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _invoiceCard(context, inv as Map<String, dynamic>),
+              )),
+        const SizedBox(height: 8),
+      ],
+    );
+  }
+
+  Widget _invoiceCard(BuildContext context, Map<String, dynamic> invoice) {
+    final meta = invoiceStatusMeta(invoice['status'] as String?);
+    return AppCard(
+      onTap: () => Navigator.of(context)
+          .push(MaterialPageRoute(
+              builder: (_) => PaymentDetailScreen(invoice: invoice)))
+          .then((_) => _load()),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(invoice['description'] as String? ?? '—',
+                    style: AppTextStyles.cardTitle),
+                const SizedBox(height: 3),
+                Text(invoice['invoiceNumber'] as String? ?? '',
+                    style: AppTextStyles.caption),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Text(_money(invoice['amount'] as num?), style: AppTextStyles.cardTitle),
+              const SizedBox(height: 4),
+              StatusBadge(label: meta.label, color: meta.color),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _paymentGroupColor(String status) {
+    switch (status) {
+      case 'completed': return AppColors.success;
+      case 'partial': return AppColors.info;
+      case 'action-required': return AppColors.orange;
+      case 'overdue': return AppColors.danger;
+      case 'waiting': return AppColors.info;
+      default: return AppColors.neutral;
+    }
+  }
+
+  String _paymentGroupLabel(String status) {
+    switch (status) {
+      case 'completed': return 'مكتمل';
+      case 'partial': return 'مدفوع جزئياً';
+      case 'action-required': return 'يستلزم الدفع';
+      case 'overdue': return 'متأخر';
+      case 'waiting': return 'قيد التحقق';
+      case 'not-issued': return 'لا فواتير';
+      default: return 'متابعة';
+    }
   }
 }
 
@@ -203,6 +324,24 @@ class _SummaryStat extends StatelessWidget {
                 .copyWith(color: color ?? AppColors.navy, fontSize: 16)),
         const SizedBox(height: 2),
         Text(label, style: AppTextStyles.caption),
+      ],
+    );
+  }
+}
+
+class _GroupStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  const _GroupStat({required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
+        Text(label, style: const TextStyle(color: Colors.white60, fontSize: 10)),
       ],
     );
   }
@@ -521,15 +660,17 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                                     p['filePath'] as String);
                                             if (!await launchUrl(uri,
                                                 mode: LaunchMode
-                                                    .externalApplication))
+                                                    .externalApplication)) {
                                               throw Exception(
                                                   'Cannot open file');
+                                            }
                                           } catch (_) {
-                                            if (context.mounted)
+                                            if (context.mounted) {
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(const SnackBar(
                                                       content: Text(
                                                           'تعذر فتح إثبات الدفع. تحقق من الجلسة والصلاحيات.')));
+                                            }
                                           }
                                         }),
                                 ],

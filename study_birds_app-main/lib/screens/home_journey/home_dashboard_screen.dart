@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../core/animations.dart';
@@ -22,14 +22,11 @@ import '../services_support/support_team_ai_screens.dart';
 import '../services_support/community_screen.dart';
 import '../universities_programs_countries/programs_screens.dart';
 import '../universities_programs_countries/explore_hub_screen.dart';
-import '../visa_travel_accommodation/arrival_services_screen.dart';
 import '../visa_travel_accommodation/accommodation_arrival_screens.dart';
 import '../visa_travel_accommodation/visa_travel_screens.dart' show InsuranceScreen, EquivalencyScreen, VisaCenterScreen, TravelCenterScreen;
 import 'smart_home_sections.dart';
 
 /// Real, live Home Dashboard — fetches GET /api/students/overview on load.
-/// Uses the server next action when available; older deployments fall back
-/// to the current journey description.
 class HomeDashboardScreen extends StatefulWidget {
   /// When true (used inside StudentAppShell), this screen has no Scaffold/
   /// bottom-nav of its own — the shell provides one shared bar instead.
@@ -45,23 +42,25 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   bool _loading = true;
   String? _error;
   StreamSubscription<DateTime>? _syncSub;
+  int _selectedJourneyIndex = 0;
+  late final PageController _journeyPageController;
 
-  // Mock — in production this list comes from the admin panel/CMS (spec
-  // points 75/76). No /banners endpoint exists on the backend yet.
+  // Quick-access items shown in the horizontal strip.
   static const List<Map<String, dynamic>> _quickActions = [
-    {'label': 'طلباتي', 'icon': Icons.description_outlined},
+    {'label': 'طلباتي',   'icon': Icons.description_outlined},
     {'label': 'الجامعات', 'icon': Icons.account_balance_outlined},
     {'label': 'مستنداتي', 'icon': Icons.folder_open_outlined},
     {'label': 'المدفوعات', 'icon': Icons.payments_outlined},
-    {'label': 'Bird AI', 'icon': null},
-    {'label': 'استشارة', 'icon': Icons.support_agent_outlined},
-    {'label': 'الدعم', 'icon': Icons.headset_mic_outlined},
-    {'label': 'المجتمع', 'icon': Icons.forum_outlined},
+    {'label': 'Bird AI',   'icon': null},
+    {'label': 'استشارة',  'icon': Icons.support_agent_outlined},
+    {'label': 'الدعم',    'icon': Icons.headset_mic_outlined},
+    {'label': 'المجتمع',  'icon': Icons.forum_outlined},
   ];
 
   @override
   void initState() {
     super.initState();
+    _journeyPageController = PageController();
     _load();
     AnalyticsService.instance.screenView('home_dashboard');
     _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
@@ -74,6 +73,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   @override
   void dispose() {
+    _journeyPageController.dispose();
     _syncSub?.cancel();
     super.dispose();
   }
@@ -103,75 +103,126 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.person_outline_rounded,
-                  color: AppColors.navy),
-              title: const Text('حسابي'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ProfileScreen()));
-              },
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (sheetContext) {
+        void go(Widget screen) {
+          Navigator.pop(sheetContext);
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+        }
+
+        Widget row(IconData icon, String label, VoidCallback onTap,
+            {bool danger = false}) {
+          final color = danger ? AppColors.danger : AppColors.orange;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.5), width: 0.8),
             ),
-            ListTile(
-              leading: const Icon(Icons.notifications_outlined,
-                  color: AppColors.navy),
-              title: const Text('الإشعارات'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const NotificationsScreen()));
-              },
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.12),
+                            shape: BoxShape.circle),
+                        child: Icon(icon, color: color, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(label,
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: danger
+                                  ? AppColors.danger
+                                  : AppColors.textPrimary)),
+                      const Spacer(),
+                      Icon(Icons.arrow_back_ios_new_rounded,
+                          size: 13,
+                          color: Colors.grey.shade400),
+                    ],
+                  ),
+                ),
+              ),
             ),
-            ListTile(
-              leading: const Icon(Icons.support_agent_outlined,
-                  color: AppColors.navy),
-              title: const Text('مركز الدعم'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const SupportCenterScreen()));
-              },
+          );
+        }
+
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.78,
             ),
-            const Divider(height: 1),
-            ListTile(
-              leading:
-                  const Icon(Icons.logout_rounded, color: AppColors.danger),
-              title: const Text('تسجيل الخروج',
-                  style: TextStyle(color: AppColors.danger)),
-              onTap: () async {
-                Navigator.pop(sheetContext);
-                final confirmed = await showAppConfirmDialog(
-                  context,
-                  title: 'تسجيل الخروج',
-                  message: 'هل تريد تسجيل الخروج من حسابك؟',
-                  confirmLabel: 'تسجيل الخروج',
-                  danger: true,
-                );
-                if (!confirmed || !context.mounted) return;
-                await AuthSession.instance.logout();
-                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                          builder: (_) => const RootChooserScreen()),
-                      (route) => false);
-                }
-              },
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Container(
+                  margin: const EdgeInsets.only(top: 12, bottom: 14),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2)),
+                ),
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
+                      children: [
+                        row(Icons.description_outlined,     'طلباتي',     () => go(const ApplicationsListScreen())),
+                        row(Icons.account_balance_outlined, 'الجامعات',   () => go(const UniversitiesExplorerScreen())),
+                        row(Icons.menu_book_outlined,       'البرامج',    () => go(const ProgramsExplorerScreen())),
+                        row(Icons.school_outlined,          'المنح',      () => go(const ScholarshipsScreen())),
+                        row(Icons.person_outline_rounded,   'حسابي',      () => go(const ProfileScreen())),
+                        row(Icons.notifications_outlined,   'الإشعارات',  () => go(const NotificationsScreen())),
+                        row(Icons.headset_mic_outlined,     'مركز الدعم', () => go(const SupportCenterScreen())),
+                        row(Icons.forum_outlined,           'المجتمع',    () => go(const StudentCommunityScreen())),
+                        const Divider(height: 20),
+                        row(Icons.logout_rounded, 'تسجيل الخروج', () async {
+                          Navigator.pop(sheetContext);
+                          final confirmed = await showAppConfirmDialog(
+                            context,
+                            title: 'تسجيل الخروج',
+                            message: 'هل تريد تسجيل الخروج من حسابك؟',
+                            confirmLabel: 'تسجيل الخروج',
+                            danger: true,
+                          );
+                          if (!confirmed || !context.mounted) return;
+                          await AuthSession.instance.logout();
+                          if (context.mounted) {
+                            Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                    builder: (_) => const RootChooserScreen()),
+                                (route) => false);
+                          }
+                        }, danger: true),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
-
 
   /// Opens a home destination key sent by the server (context card, dates,
   /// sections, quick actions).
@@ -185,73 +236,74 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       return;
     }
     final Widget screen = switch (destination) {
-      'journey' => const JourneyTrackerScreen(),
-      'visa' => const VisaCenterScreen(),
-      'travel' => const TravelCenterScreen(),
-      'accommodation' => const AccommodationScreen(),
-      'university-registration' => const UniversityRegistrationScreen(),
-      'insurance' => const InsuranceScreen(),
-      'equivalency' => const EquivalencyScreen(),
-      'programs' || 'catalog' => const ProgramsExplorerScreen(),
-      'universities' => const UniversitiesExplorerScreen(),
+      'journey'                  => const JourneyTrackerScreen(),
+      'visa'                     => const VisaCenterScreen(),
+      'travel'                   => const TravelCenterScreen(),
+      'accommodation'            => const AccommodationScreen(),
+      'university-registration'  => const UniversityRegistrationScreen(),
+      'insurance'                => const InsuranceScreen(),
+      'equivalency'              => const EquivalencyScreen(),
+      'programs' || 'catalog'    => const ProgramsExplorerScreen(),
+      'universities'             => const UniversitiesExplorerScreen(),
       'documents' || 'upload-document' => const MyDocumentsScreen(),
-      'payments' => const PaymentsSummaryScreen(),
-      'support' => const SupportCenterScreen(),
-      'notifications' => const NotificationsScreen(),
-      'bird-ai' => const BirdAIChatScreen(),
-      'community' => const StudentCommunityScreen(),
-      _ => const ApplicationsListScreen(),
+      'payments'                 => const PaymentsSummaryScreen(),
+      'support'                  => const SupportCenterScreen(),
+      'notifications'            => const NotificationsScreen(),
+      'bird-ai'                  => const BirdAIChatScreen(),
+      'community'                => const StudentCommunityScreen(),
+      _                          => const ApplicationsListScreen(),
     };
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
   }
 
   static const Map<String, IconData> _quickActionIcons = {
-    'programs': Icons.menu_book_outlined,
-    'universities': Icons.account_balance_outlined,
-    'applications': Icons.description_outlined,
+    'programs':       Icons.menu_book_outlined,
+    'universities':   Icons.account_balance_outlined,
+    'applications':   Icons.description_outlined,
     'upload-document': Icons.upload_file_outlined,
-    'consultation': Icons.support_agent_outlined,
-    'visa': Icons.badge_outlined,
-    'travel': Icons.flight_takeoff_outlined,
-    'accommodation': Icons.home_work_outlined,
-    'payments': Icons.payments_outlined,
-    'support': Icons.headset_mic_outlined,
-    'community': Icons.forum_outlined,
+    'consultation':   Icons.support_agent_outlined,
+    'visa':           Icons.badge_outlined,
+    'travel':         Icons.flight_takeoff_outlined,
+    'accommodation':  Icons.home_work_outlined,
+    'payments':       Icons.payments_outlined,
+    'support':        Icons.headset_mic_outlined,
+    'community':      Icons.forum_outlined,
   };
 
-  /// Server-driven shortcuts (PRD 11) when available, plus the app-only
-  /// community shortcut; the local list otherwise.
   List<Map<String, dynamic>> _visibleQuickActions(Map<String, dynamic>? home) {
     final server = home?['quickActions'];
+    List<Map<String, dynamic>> actions;
     if (server is! List || server.isEmpty) {
-      return _quickActions
+      actions = _quickActions
           .map((q) => {...q, 'destination': _legacyDestinations[q['label']]})
           .toList();
-    }
-    return [
-      for (final item in server.whereType<Map>())
+    } else {
+      actions = [
+        for (final item in server.whereType<Map>())
+          {
+            'label':       '${item['labelAr'] ?? item['key']}',
+            'icon':        _quickActionIcons[item['key']],
+            'destination': '${item['destination'] ?? item['key']}',
+          },
         {
-          'label': '${item['labelAr'] ?? item['key']}',
-          'icon': _quickActionIcons[item['key']],
-          'destination': '${item['destination'] ?? item['key']}',
+          'label':       'المجتمع',
+          'icon':        Icons.forum_outlined,
+          'destination': 'community',
         },
-      {
-        'label': 'المجتمع',
-        'icon': Icons.forum_outlined,
-        'destination': 'community'
-      },
-    ];
+      ];
+    }
+    return actions;
   }
 
   static const Map<String, String> _legacyDestinations = {
-    'طلباتي': 'applications',
+    'طلباتي':   'applications',
     'الجامعات': 'universities',
     'مستنداتي': 'documents',
     'المدفوعات': 'payments',
-    'Bird AI': 'bird-ai',
-    'استشارة': 'consultation',
-    'الدعم': 'support',
-    'المجتمع': 'community',
+    'Bird AI':   'bird-ai',
+    'استشارة':  'consultation',
+    'الدعم':    'support',
+    'المجتمع':  'community',
   };
 
   @override
@@ -313,7 +365,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   Widget _buildContent(BuildContext context, DashboardOverview overview) {
-    // Preserve compatibility until the next-action backend is deployed.
     final currentStage = overview.stages.firstWhere(
       (s) => s.status == 'current',
       orElse: () => overview.stages.isNotEmpty
@@ -330,7 +381,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     final homeStatus = home?['statusCard'] is Map
         ? Map<String, dynamic>.from(home!['statusCard'] as Map)
         : null;
-    // Server progress counts the real stages of the main application.
     final progress = home?['progressPercent'] is num
         ? (home!['progressPercent'] as num).clamp(0, 100) / 100
         : overview.stages.isEmpty
@@ -340,12 +390,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         ? '${(home!['greeting'] as Map)['name'] ?? ''}'.trim()
         : '';
 
-    // Journey path label: derived from the most recent application if one
-    // exists, otherwise a generic placeholder — no invented university name.
     String journeyPathLabel = 'لم تبدأ رحلة تقديم بعد';
     final journey = home?['currentJourney'];
     if (journey is Map) {
-      // e.g. "Turkey - Istanbul - Physiotherapy" (PRD 9).
       final parts = [journey['country'], journey['city'], journey['program']]
           .map((e) => '${e ?? ''}'.trim())
           .where((e) => e.isNotEmpty);
@@ -363,11 +410,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     }
 
     final latestNotification = overview.latestNotification;
+    final quickActions = _visibleQuickActions(home);
 
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        // Hero
+        // ── Hero ──────────────────────────────────────────────────────────────
         Container(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 34),
           decoration: BoxDecoration(
@@ -445,229 +493,144 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             ],
           ),
         ),
-        // Unified status card — real stage + real stats.
-        Transform.translate(
-          offset: const Offset(0, -20),
-          child: Padding(
+
+        // ── Journey card(s) ───────────────────────────────────────────────────
+        _buildJourneySection(
+            context, overview, currentStage, journeyPathLabel, progress, homeStatus),
+
+        const SizedBox(height: 4),
+
+        // ── Context card ──────────────────────────────────────────────────────
+        if (home != null) ...[
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+            child: SmartHomeContextCard(home: home, onOpen: _openDestination),
+          ),
+          const SizedBox(height: 16),
+        ],
+
+        // ── Quick-access label ────────────────────────────────────────────────
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Text('الوصول السريع', style: AppTextStyles.sectionLabel),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // ── Quick-access horizontal scroll ────────────────────────────────────
+        SizedBox(
+          height: 90,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: AppCard(
-              margin: EdgeInsets.zero,
-              onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => JourneyTrackerScreen(
-                    currentStageKey: overview.journeyStage,
-                    journeyPathLabel: journeyPathLabel),
-              )),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text('رحلتك الحالية',
-                                style: AppTextStyles.sectionLabel),
-                            const SizedBox(height: 4),
-                            Text(journeyPathLabel, style: AppTextStyles.body),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      SizedBox(
-                        width: 44,
-                        height: 44,
-                        child: AnimatedProgressRing(
-                          value: progress,
-                          size: 44,
-                          strokeWidth: 4,
-                          centerBuilder: (v) => Text('${(v * 100).round()}%',
-                              style: const TextStyle(
-                                  fontWeight: FontWeight.w700,
-                                  fontSize: 10.5,
-                                  color: AppColors.navy)),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 14),
-                  IntrinsicHeight(
-                    child: Row(
+            itemCount: quickActions.length,
+            itemBuilder: (context, i) {
+              final q = quickActions[i];
+              return Padding(
+                padding:
+                    EdgeInsets.only(left: i < quickActions.length - 1 ? 12 : 0),
+                child: GestureDetector(
+                  onTap: () => _openDestination('${q['destination']}'),
+                  child: SizedBox(
+                    width: 68,
+                    child: Column(
                       children: [
                         Container(
-                            width: 3,
-                            decoration: BoxDecoration(
-                                color: AppColors.orange,
-                                borderRadius: BorderRadius.circular(2))),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                  overview.nextAction?['waiting'] == true
-                                      ? 'متابعة الفريق'
-                                      : 'الخطوة القادمة',
-                                  style: AppTextStyles.caption),
-                              const SizedBox(height: 2),
-                              // Status card (PRD 97): the exact next step.
-                              if ('${homeStatus?['nextStepAr'] ?? ''}'
-                                  .isNotEmpty)
-                                Text('${homeStatus!['nextStepAr']}',
-                                    style: AppTextStyles.body.copyWith(
-                                        fontWeight: FontWeight.w700,
-                                        color: AppColors.navy)),
-                              Text(
-                                  overview.nextAction?['descriptionAr']
-                                          as String? ??
-                                      currentStage.descriptionAr,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13,
-                                      color: AppColors.textPrimary)),
-                            ],
+                          width: 52,
+                          height: 52,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.border),
+                          ),
+                          child: Center(
+                            child: AppIconTile(q['icon'] as IconData? ??
+                                Icons.auto_awesome_rounded),
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        PrimaryButton(
-                          label: overview.nextAction == null
-                              ? 'تفاصيل الرحلة'
-                              : 'عرض التفاصيل',
-                          expand: false,
-                          onPressed: () {
-                            final destination = overview.nextAction?['destination'] as String?;
-                            if (destination == null || destination == 'journey') {
-                              Navigator.of(context).push(MaterialPageRoute(
-                                builder: (_) => JourneyTrackerScreen(
-                                    currentStageKey: overview.journeyStage,
-                                    journeyPathLabel: journeyPathLabel)));
-                            } else {
-                              _openDestination(destination);
-                            }
-                          },
+                        const SizedBox(height: 6),
+                        Text(
+                          q['label'] as String,
+                          textAlign: TextAlign.center,
+                          style: AppTextStyles.caption,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 14),
-                  const Divider(height: 1, color: AppColors.border),
-                  const SizedBox(height: 12),
-                  // Real stats from the server — no invented "profile completion %".
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _InlineStat(
-                          icon: Icons.description_outlined,
-                          value: '${overview.stats.currentApplications}',
-                          label: 'الطلبات النشطة',
-                        ),
-                      ),
-                      Container(width: 1, height: 32, color: AppColors.border),
-                      Expanded(
-                        child: _InlineStat(
-                          icon: Icons.verified_outlined,
-                          value: '${overview.stats.acceptedDocuments}',
-                          label: 'مستندات مقبولة',
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+                ),
+              );
+            },
           ),
         ),
-        const SizedBox(height: 4),
 
+        // ── Dates + sections ──────────────────────────────────────────────────
+        if (home != null) ...[
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SmartHomeDates(home: home, onOpen: _openDestination),
+          ),
+          const SizedBox(height: 16),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: SmartHomeSections(home: home, onOpen: _openDestination),
+          ),
+        ],
+
+        // ── Scholarships ──────────────────────────────────────────────────────
+        const SizedBox(height: 16),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const SizedBox(height: 12),
-              // Context card (PRD 96): what to do now, first thing on screen.
-              if (home != null) ...[
-                SmartHomeContextCard(home: home, onOpen: _openDestination),
-                const SizedBox(height: 16),
-              ],
-              const Align(
-                  alignment: Alignment.centerRight,
-                  child:
-                      Text('الوصول السريع', style: AppTextStyles.sectionLabel)),
-              const SizedBox(height: 10),
-              Wrap(
-                alignment: WrapAlignment.start,
-                spacing: 12,
-                runSpacing: 16,
-                children: _visibleQuickActions(home)
-                    .map((q) => GestureDetector(
-                          onTap: () => _openDestination('${q['destination']}'),
-                          child: SizedBox(
-                              width: 72,
-                              child: Column(
-                                children: [
-                                  Container(
-                                    width: 52,
-                                    height: 52,
-                                    decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(14),
-                                        border: Border.all(
-                                            color: AppColors.border)),
-                                    child: AppIconTile(q['icon'] as IconData? ??
-                                        Icons.auto_awesome_rounded),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Text(q['label'] as String,
-                                      textAlign: TextAlign.center,
-                                      style: AppTextStyles.caption),
-                                ],
-                              )),
-                        ))
-                    .toList(),
+              const Flexible(
+                child: Text('المنح الدراسية المتاحة',
+                    style: AppTextStyles.sectionLabel),
               ),
-              if (home != null) ...[
-                const SizedBox(height: 20),
-                SmartHomeDates(home: home, onOpen: _openDestination),
-                const SizedBox(height: 16),
-                SmartHomeSections(home: home, onOpen: _openDestination),
-              ],
-              const SizedBox(height: 16),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Flexible: on narrow phones the title wraps instead of
-                  // pushing "عرض الكل" off screen.
-                  const Flexible(
-                    child: Text('المنح الدراسية المتاحة',
-                        style: AppTextStyles.sectionLabel),
-                  ),
-                  GestureDetector(
-                    onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => const ScholarshipsScreen())),
-                    child: const Text('عرض الكل',
-                        style: TextStyle(
-                            color: AppColors.orange,
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w700)),
-                  ),
-                ],
+              GestureDetector(
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const ScholarshipsScreen())),
+                child: const Text('عرض الكل',
+                    style: TextStyle(
+                        color: AppColors.orange,
+                        fontSize: 12.5,
+                        fontWeight: FontWeight.w700)),
               ),
-              const SizedBox(height: 10),
-              AppCard(
-                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const ScholarshipsScreen())),
-                  child: const ListTile(
-                      leading: Icon(Icons.school_outlined),
-                      title: Text('استكشف المنح المنشورة'),
-                      subtitle:
-                          Text('اطّلع على الشروط وقدّم طلبك وتابع حالته.'))),
-              const SizedBox(height: 16),
-              const Align(
-                  alignment: Alignment.centerRight,
-                  child: Text('آخر إشعار', style: AppTextStyles.sectionLabel)),
-              const SizedBox(height: 10),
-              if (latestNotification != null)
-                AppCard(
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: AppCard(
+              onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const ScholarshipsScreen())),
+              child: const ListTile(
+                  leading: Icon(Icons.school_outlined),
+                  title: Text('استكشف المنح المنشورة'),
+                  subtitle:
+                      Text('اطّلع على الشروط وقدّم طلبك وتابع حالته.'))),
+        ),
+
+        // ── Latest notification ───────────────────────────────────────────────
+        const SizedBox(height: 16),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Text('آخر إشعار', style: AppTextStyles.sectionLabel),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: latestNotification != null
+              ? AppCard(
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => const NotificationsScreen())),
                   child: Row(
@@ -682,19 +645,360 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     ],
                   ),
                 )
-              else
-                AppCard(
+              : AppCard(
                   onTap: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => const ActivityLogScreen())),
                   child: const Text('لا يوجد إشعارات جديدة حتى الآن.',
                       style: AppTextStyles.caption),
                 ),
-            ],
-          ),
         ),
+
+        const SizedBox(height: 24),
       ],
     );
   }
+
+  // ── Journey section: single card or multi-journey PageView ──────────────────
+
+  Widget _buildJourneySection(
+    BuildContext context,
+    DashboardOverview overview,
+    DashboardStage currentStage,
+    String journeyPathLabel,
+    double progress,
+    Map<String, dynamic>? homeStatus,
+  ) {
+    var apps = overview.recentApplications
+        .whereType<Map<String, dynamic>>()
+        .toList();
+
+    // Reorder to match tracker screen (overview.journeys order)
+    if (overview.journeys?.isNotEmpty == true) {
+      final ordered = <Map<String, dynamic>>[];
+      for (final j in overview.journeys!) {
+        final jId = (j as Map)['applicationId']?.toString();
+        final match = apps.where((a) => a['_id']?.toString() == jId);
+        if (match.isNotEmpty) ordered.add(match.first);
+      }
+      for (final a in apps) {
+        if (!ordered.any((o) => o['_id']?.toString() == a['_id']?.toString())) {
+          ordered.add(a);
+        }
+      }
+      if (ordered.isNotEmpty) apps = ordered;
+    }
+
+    if (apps.length <= 1) {
+      return Transform.translate(
+        offset: const Offset(0, -20),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: _buildMainJourneyCard(
+              context, overview, currentStage, journeyPathLabel, progress, homeStatus),
+        ),
+      );
+    }
+
+    // Multiple journeys — horizontal PageView + dots indicator.
+    return Transform.translate(
+      offset: const Offset(0, -20),
+      child: Column(
+        children: [
+          SizedBox(
+            height: 248,
+            child: PageView.builder(
+              controller: _journeyPageController,
+              itemCount: apps.length,
+              onPageChanged: (i) =>
+                  setState(() => _selectedJourneyIndex = i),
+              itemBuilder: (context, i) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: _buildCompactJourneyCard(
+                  context,
+                  overview,
+                  i,
+                  apps[i],
+                  _labelFromApp(apps[i]),
+                  _realProgressFromJourneys(overview, apps[i]['_id'] as String?),
+                  homeStatus,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(
+              apps.length,
+              (i) => AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: _selectedJourneyIndex == i ? 16.0 : 6.0,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: _selectedJourneyIndex == i
+                      ? AppColors.navy
+                      : AppColors.border,
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Full detailed card — used only when there is a single journey.
+  Widget _buildMainJourneyCard(
+    BuildContext context,
+    DashboardOverview overview,
+    DashboardStage currentStage,
+    String journeyPathLabel,
+    double progress,
+    Map<String, dynamic>? homeStatus,
+  ) {
+    return AppCard(
+      margin: EdgeInsets.zero,
+      onTap: () => Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => JourneyTrackerScreen(
+            currentStageKey: overview.journeyStage,
+            journeyPathLabel: journeyPathLabel),
+      )),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('رحلتك الحالية',
+                        style: AppTextStyles.sectionLabel),
+                    const SizedBox(height: 4),
+                    Text(journeyPathLabel, style: AppTextStyles.body),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 44,
+                height: 44,
+                child: AnimatedProgressRing(
+                  value: progress,
+                  size: 44,
+                  strokeWidth: 4,
+                  centerBuilder: (v) => Text('${(v * 100).round()}%',
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 10.5,
+                          color: AppColors.navy)),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          IntrinsicHeight(
+            child: Row(
+              children: [
+                Container(
+                    width: 3,
+                    decoration: BoxDecoration(
+                        color: AppColors.orange,
+                        borderRadius: BorderRadius.circular(2))),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                          overview.nextAction?['waiting'] == true
+                              ? 'متابعة الفريق'
+                              : 'الخطوة القادمة',
+                          style: AppTextStyles.caption),
+                      const SizedBox(height: 2),
+                      if ('${homeStatus?['nextStepAr'] ?? ''}'.isNotEmpty)
+                        Text('${homeStatus!['nextStepAr']}',
+                            style: AppTextStyles.body.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.navy)),
+                      Text(
+                          overview.nextAction?['descriptionAr'] as String? ??
+                              currentStage.descriptionAr,
+                          style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: AppColors.textPrimary)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                PrimaryButton(
+                  label: overview.nextAction == null
+                      ? 'تفاصيل الرحلة'
+                      : 'عرض التفاصيل',
+                  expand: false,
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => JourneyTrackerScreen(
+                            currentStageKey: overview.journeyStage,
+                            journeyPathLabel: journeyPathLabel)));
+                  },
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1, color: AppColors.border),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _InlineStat(
+                  icon: Icons.description_outlined,
+                  value: '${overview.stats.currentApplications}',
+                  label: 'الطلبات النشطة',
+                ),
+              ),
+              Container(width: 1, height: 32, color: AppColors.border),
+              Expanded(
+                child: _InlineStat(
+                  icon: Icons.verified_outlined,
+                  value: '${overview.stats.acceptedDocuments}',
+                  label: 'مستندات مقبولة',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Unified journey card used in the multi-journey PageView.
+  /// Same layout for every journey — only the data values differ.
+  Widget _buildCompactJourneyCard(
+    BuildContext context,
+    DashboardOverview overview,
+    int index,
+    Map<String, dynamic> app,
+    String label,
+    double progress,
+    Map<String, dynamic>? homeStatus,
+  ) {
+    final status = app['status'] as String? ?? 'submitted';
+    final ringValue = progress;
+    final bottomText = _appStatusLabel(status);
+
+    void openDetail() {
+      final appId = app['_id'] as String?;
+      Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => JourneyTrackerScreen(applicationId: appId),
+      ));
+    }
+
+    return AppCard(
+      margin: EdgeInsets.zero,
+      onTap: openDetail,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('رحلة دراسية',
+                        style: AppTextStyles.sectionLabel),
+                    const SizedBox(height: 4),
+                    Text(label,
+                        style:
+                            AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 44,
+                height: 44,
+                child: AnimatedProgressRing(
+                  value: ringValue,
+                  size: 44,
+                  strokeWidth: 4,
+                  centerBuilder: (v) => Text(
+                    '${(v * 100).round()}%',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10.5,
+                        color: AppColors.navy),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          const Divider(height: 1, color: AppColors.border),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  bottomText,
+                  style: AppTextStyles.caption,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 8),
+              PrimaryButton(
+                label: 'تفاصيل الرحلة',
+                expand: false,
+                onPressed: openDetail,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+String _labelFromApp(Map<String, dynamic> app) {
+    final program = app['program'] as Map<String, dynamic>?;
+    final university = program?['university'] as Map<String, dynamic>?;
+    final parts = <String>[
+      if (university?['name'] is String) university!['name'] as String,
+      if (program?['name'] is String) program!['name'] as String,
+    ];
+    return parts.isNotEmpty ? parts.join(' — ') : 'طلب دراسي';
+  }
+
+  double _realProgressFromJourneys(DashboardOverview overview, String? appId) {
+    if (appId == null || overview.journeys == null) return 0.0;
+    final matches = overview.journeys!
+        .whereType<Map<String, dynamic>>()
+        .where((j) => j['applicationId']?.toString() == appId)
+        .toList();
+    if (matches.isEmpty) return 0.0;
+    final journey = matches.first;
+    final stages = (journey['stages'] as List? ?? []).whereType<Map>().toList();
+    final active = stages.where((s) => s['status'] != 'not-required').toList();
+    if (active.isEmpty) return 0.0;
+    final done = active.where((s) => s['status'] == 'completed').length;
+    return done / active.length;
+  }
+
+  String _appStatusLabel(String status) => switch (status) {
+        'submitted'                           => 'مُقدَّم',
+        'under_review' || 'in_review' || 'reviewing' => 'قيد المراجعة',
+        'accepted' || 'approved'              => 'مقبول',
+        'rejected'                            => 'مرفوض',
+        'pending' || 'pending_docs'           => 'معلّق',
+        _                                     => status,
+      };
 }
 
 /// Soft frosted circular icon button used in the hero.
@@ -753,6 +1057,7 @@ class _HeroIconButton extends StatelessWidget {
     );
   }
 }
+
 
 /// Calm inline stat — icon, value, label, no border/box around it.
 class _InlineStat extends StatelessWidget {

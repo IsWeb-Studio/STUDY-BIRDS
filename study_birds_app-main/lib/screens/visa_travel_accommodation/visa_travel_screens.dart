@@ -479,10 +479,10 @@ class _TravelCenterScreenState extends State<TravelCenterScreen> {
       _error = null;
     });
     try {
-      final data = await StudentRepository.instance.getArrivalServices();
+      final list = await StudentRepository.instance.getArrivalServices();
       if (!mounted) return;
       setState(() {
-        _data = data;
+        _data = list.isNotEmpty ? list.first as Map<String, dynamic>? : null;
         _loading = false;
       });
     } on ApiException catch (e) {
@@ -607,10 +607,10 @@ class _AirportPickupScreenState extends State<AirportPickupScreen> {
       _error = null;
     });
     try {
-      final data = await StudentRepository.instance.getArrivalServices();
+      final list = await StudentRepository.instance.getArrivalServices();
       if (!mounted) return;
       setState(() {
-        _data = data;
+        _data = list.isNotEmpty ? list.first as Map<String, dynamic>? : null;
         _loading = false;
       });
     } on ApiException catch (e) {

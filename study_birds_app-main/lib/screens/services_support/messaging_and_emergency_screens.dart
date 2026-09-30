@@ -172,37 +172,6 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
             onPressed: loading || sending ? null : load,
             icon: const Icon(Icons.refresh)),
       ],
-      bottomBar: contact == null || error != null
-          ? null
-          : SafeArea(
-              top: false,
-              child: Container(
-                  color: Colors.white,
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Expanded(
-                            child: TextField(
-                                controller: text,
-                                enabled: !sending,
-                                maxLength: 4000,
-                                minLines: 1,
-                                maxLines: 4,
-                                decoration: featureInput('رسالتك')
-                                    .copyWith(counterText: ''))),
-                        const SizedBox(width: 8),
-                        IconButton.filled(
-                            tooltip: 'إرسال',
-                            onPressed: sending ? null : send,
-                            icon: sending
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                        strokeWidth: 2))
-                                : const Icon(Icons.send_rounded)),
-                      ]))),
       body: loading
           ? const LoadingState()
           : error != null
@@ -238,77 +207,119 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
                                   load();
                                 })),
                     ])
-                  : ListView(
-                      reverse: true,
-                      padding: const EdgeInsets.all(16),
+                  : Column(
                       children: [
-                          for (final row in messages.reversed)
-                            Align(
-                                alignment: '${row['sender']}' ==
-                                        AuthSession.instance.currentUser?.id
-                                    ? Alignment.centerLeft
-                                    : Alignment.centerRight,
-                                child: Container(
-                                  constraints: BoxConstraints(
-                                      maxWidth:
-                                          MediaQuery.sizeOf(context).width *
-                                              .8),
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  padding: const EdgeInsets.all(14),
-                                  decoration: BoxDecoration(
-                                      color: '${row['sender']}' ==
-                                              AuthSession
-                                                  .instance.currentUser?.id
-                                          ? AppColors.navy
-                                          : Colors.white,
-                                      borderRadius: BorderRadius.circular(16)),
-                                  child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text('${row['body']}',
-                                            style: TextStyle(
-                                                color: '${row['sender']}' ==
-                                                        AuthSession.instance
-                                                            .currentUser?.id
-                                                    ? Colors.white
-                                                    : AppColors.textPrimary,
-                                                height: 1.5)),
-                                        const SizedBox(height: 5),
-                                        Text(
-                                            '${row['createdAt'] ?? ''}'
-                                                .replaceFirst('T', ' ')
-                                                .split('.')
-                                                .first,
-                                            style: TextStyle(
-                                                fontSize: 10,
-                                                color: '${row['sender']}' ==
-                                                        AuthSession.instance
-                                                            .currentUser?.id
-                                                    ? Colors.white70
-                                                    : AppColors.textSecondary)),
-                                        if ('${row['sender']}' ==
-                                            AuthSession
-                                                .instance.currentUser?.id)
-                                          Text(
-                                              row['readAt'] != null
-                                                  ? 'مقروءة'
-                                                  : 'تم الإرسال',
-                                              style: const TextStyle(
-                                                  fontSize: 10,
-                                                  color: Colors.white70))
-                                      ]),
-                                )),
-                          if (older)
-                            TextButton(
-                                onPressed: () => load(previous: true),
-                                child: const Text('رسائل أقدم')),
-                          if (messages.isEmpty)
-                            const Padding(
-                                padding: EdgeInsets.all(24),
-                                child: Text('ابدأ المحادثة بإرسال رسالة.',
-                                    textAlign: TextAlign.center)),
-                        ]));
+                        Expanded(
+                          child: ListView(
+                            reverse: true,
+                            padding: const EdgeInsets.all(16),
+                            children: [
+                              for (final row in messages.reversed)
+                                Align(
+                                    alignment: '${row['sender']}' ==
+                                            AuthSession.instance.currentUser?.id
+                                        ? Alignment.centerLeft
+                                        : Alignment.centerRight,
+                                    child: Container(
+                                      constraints: BoxConstraints(
+                                          maxWidth:
+                                              MediaQuery.sizeOf(context).width *
+                                                  .8),
+                                      margin: const EdgeInsets.only(bottom: 12),
+                                      padding: const EdgeInsets.all(14),
+                                      decoration: BoxDecoration(
+                                          color: '${row['sender']}' ==
+                                                  AuthSession
+                                                      .instance.currentUser?.id
+                                              ? AppColors.navy
+                                              : Colors.white,
+                                          borderRadius:
+                                              BorderRadius.circular(16)),
+                                      child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text('${row['body']}',
+                                                style: TextStyle(
+                                                    color: '${row['sender']}' ==
+                                                            AuthSession.instance
+                                                                .currentUser?.id
+                                                        ? Colors.white
+                                                        : AppColors.textPrimary,
+                                                    height: 1.5)),
+                                            const SizedBox(height: 5),
+                                            Text(
+                                                '${row['createdAt'] ?? ''}'
+                                                    .replaceFirst('T', ' ')
+                                                    .split('.')
+                                                    .first,
+                                                style: TextStyle(
+                                                    fontSize: 10,
+                                                    color: '${row['sender']}' ==
+                                                            AuthSession.instance
+                                                                .currentUser?.id
+                                                        ? Colors.white70
+                                                        : AppColors
+                                                            .textSecondary)),
+                                            if ('${row['sender']}' ==
+                                                AuthSession
+                                                    .instance.currentUser?.id)
+                                              Text(
+                                                  row['readAt'] != null
+                                                      ? 'مقروءة'
+                                                      : 'تم الإرسال',
+                                                  style: const TextStyle(
+                                                      fontSize: 10,
+                                                      color: Colors.white70))
+                                          ]),
+                                    )),
+                              if (older)
+                                TextButton(
+                                    onPressed: () => load(previous: true),
+                                    child: const Text('رسائل أقدم')),
+                              if (messages.isEmpty)
+                                const Padding(
+                                    padding: EdgeInsets.all(24),
+                                    child: Text('ابدأ المحادثة بإرسال رسالة.',
+                                        textAlign: TextAlign.center)),
+                            ],
+                          ),
+                        ),
+                        // Input bar — sits above the keyboard
+                        SafeArea(
+                          top: false,
+                          child: Container(
+                            color: Colors.white,
+                            padding: const EdgeInsets.all(12),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                    child: TextField(
+                                        controller: text,
+                                        enabled: !sending,
+                                        maxLength: 4000,
+                                        minLines: 1,
+                                        maxLines: 4,
+                                        decoration: featureInput('رسالتك')
+                                            .copyWith(counterText: ''))),
+                                const SizedBox(width: 8),
+                                IconButton.filled(
+                                    tooltip: 'إرسال',
+                                    onPressed: sending ? null : send,
+                                    icon: sending
+                                        ? const SizedBox(
+                                            width: 18,
+                                            height: 18,
+                                            child: CircularProgressIndicator(
+                                                strokeWidth: 2))
+                                        : const Icon(Icons.send_rounded)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ));
 }
 
 class EmergencySupportScreen extends StatelessWidget {

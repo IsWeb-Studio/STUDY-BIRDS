@@ -11,7 +11,6 @@ import '../services_support/community_screen.dart';
 import '../applications_documents_payments/applications_screens.dart';
 import '../applications_documents_payments/documents_screens.dart';
 import '../applications_documents_payments/payments_screens.dart';
-import '../visa_travel_accommodation/arrival_services_screen.dart';
 import '../visa_travel_accommodation/accommodation_arrival_screens.dart';
 import '../visa_travel_accommodation/visa_travel_screens.dart' show InsuranceScreen, EquivalencyScreen, VisaCenterScreen, TravelCenterScreen;
 import 'journey_tracker_screen.dart';
@@ -27,6 +26,7 @@ String? notificationActionLabel(String? link) {
     'support'                        => 'فتح الدعم',
     'journey' || 'visa'              => 'متابعة الرحلة',
     'travel' || 'accommodation'      => 'خدمات الوصول',
+    'services'                       => 'خدمات الوصول',
     'university-registration'        => 'التسجيل الجامعي',
     'insurance'                      => 'التأمين الصحي',
     'equivalency'                    => 'معادلة الشهادة',
@@ -237,12 +237,34 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _notifications = data;
         _loading = false;
       });
+      // Mark all as read in the background — user has seen them.
+      _markAllReadSilent();
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل الإشعارات.';
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _markAllReadSilent() async {
+    final hasUnread = _notifications
+        .cast<Map<String, dynamic>>()
+        .any((n) => n['isRead'] != true);
+    if (!hasUnread) return;
+    // Optimistic local update first.
+    if (mounted) {
+      setState(() {
+        for (final n in _notifications.cast<Map<String, dynamic>>()) {
+          n['isRead'] = true;
+        }
+      });
+    }
+    try {
+      await StudentRepository.instance.markAllNotificationsRead();
+    } catch (_) {
+      // Silent failure — unread dots are a convenience, not critical state.
     }
   }
 
@@ -258,11 +280,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _markAllRead() async {
-    final unread = _notifications
-        .cast<Map<String, dynamic>>()
-        .where((n) => n['isRead'] != true)
-        .toList();
-    await Future.wait(unread.map((n) => _markRead(n, 0)));
+    await _markAllReadSilent();
   }
 
   @override
@@ -306,14 +324,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
                         final link = n['link'] as String?;
                         final actionLabel = notificationActionLabel(link);
+                        final screen = notificationScreenForLink(link) ?? const JourneyTrackerScreen();
                         void navigate() async {
+                          // Capture navigator before any await so it stays valid.
+                          final navigator = Navigator.of(context);
                           await _markRead(n, i);
-                          if (!context.mounted) return;
-                          final screen = notificationScreenForLink(link);
-                          if (screen != null) {
-                            await Navigator.of(context).push(
-                                MaterialPageRoute(builder: (_) => screen));
-                          }
+                          await navigator.push(
+                              MaterialPageRoute(builder: (_) => screen));
                         }
 
                         return AppCard(
