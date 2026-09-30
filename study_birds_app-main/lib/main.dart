@@ -105,6 +105,10 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
     DeepLinkService.instance.init(rootNavigatorKey);
     NotificationScheduler.instance.init();
     PushNotificationService.instance.setTapHandler(_onPushTap);
+    // Request push-notification permission now that the activity/window exists.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      PushNotificationService.instance.requestPermission();
+    });
   }
 
   void _onPushTap(String screen, Map<String, dynamic> data) {

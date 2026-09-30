@@ -15,12 +15,11 @@ class PushNotificationService {
   Map<String, dynamic>? _pendingTap;
 
   /// Call once in main() before runApp.
+  /// Does NOT prompt for permission — call [requestPermission] from within
+  /// the app (after runApp) so the activity/window is already visible.
   Future<void> init() async {
     OneSignal.initialize(_appId);
     _ready = true;
-
-    // Ask for permission (Android 13+ and iOS).
-    await OneSignal.Notifications.requestPermission(true);
 
     // Handle tap when app is in background / closed.
     OneSignal.Notifications.addClickListener((event) {
@@ -36,6 +35,14 @@ class PushNotificationService {
     OneSignal.Notifications.addForegroundWillDisplayListener((event) {
       event.notification.display();
     });
+  }
+
+  /// Prompt the user for push-notification permission.
+  /// Call this once from within the running app (e.g. initState of the root
+  /// widget) so the OS dialog has an activity/window to attach to.
+  Future<void> requestPermission() async {
+    if (!_ready) return;
+    await OneSignal.Notifications.requestPermission(true);
   }
 
   /// Link this device to the logged-in user.
