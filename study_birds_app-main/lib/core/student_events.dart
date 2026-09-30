@@ -108,12 +108,15 @@ List<StudentEvent> activityEvents(
 Future<List<StudentEvent>> loadCalendarEvents() async {
   final repo = StudentRepository.instance;
   final results = await Future.wait([
-    repo.getFinancials(),
-    repo.getArrivalServices(),
-    repo.getDocuments(),
+    repo.getFinancials().catchError((_) => <String, dynamic>{}),
+    repo.getArrivalServices().catchError((_) => <dynamic>[]),
+    repo.getDocuments().catchError((_) => <dynamic>[]),
   ]);
   final financials = results[0] as Map<String, dynamic>;
-  final arrival = results[1] as Map<String, dynamic>?;
+  final arrivalList = results[1] as List<dynamic>;
+  final arrival = arrivalList.isNotEmpty
+      ? arrivalList.first as Map<String, dynamic>?
+      : null;
   final documents = results[2] as List<dynamic>;
   List<Map<String, dynamic>> consultations;
   try {
