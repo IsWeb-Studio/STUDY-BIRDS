@@ -498,6 +498,74 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         _buildJourneySection(
             context, overview, currentStage, journeyPathLabel, progress, homeStatus),
 
+        // ── Accreditations slider ─────────────────────────────────────────────
+        if (overview.accreditations.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text('الشهادات والاعترافات', style: AppTextStyles.sectionLabel),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 76,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: overview.accreditations.length,
+              itemBuilder: (context, i) {
+                final acc = overview.accreditations[i];
+                final logo = acc['logo'] as String? ?? '';
+                final name = acc['name'] as String? ?? '';
+                return Container(
+                  margin: EdgeInsets.only(left: i < overview.accreditations.length - 1 ? 10 : 0),
+                  width: 130,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (logo.isNotEmpty)
+                        Expanded(
+                          child: Image.network(
+                            logo,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.verified_outlined,
+                              color: AppColors.orange,
+                              size: 22,
+                            ),
+                          ),
+                        )
+                      else
+                        const Icon(Icons.verified_outlined, color: AppColors.orange, size: 22),
+                      const SizedBox(height: 4),
+                      Text(
+                        name,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+
         const SizedBox(height: 4),
 
         // ── Context card ──────────────────────────────────────────────────────
