@@ -22,6 +22,7 @@ const { expireDueDocuments } = require("../utils/documentExpiry");
 const { studentHome } = require("../utils/studentHome");
 const { applicationCard } = require("../utils/applicationCard");
 const AccommodationBooking = require("../models/AccommodationBooking");
+const Recognition = require("../models/Recognition");
 const { Booking: ConsultationBooking } = require("../models/Consultation");
 const { applicationStatusInfo, documentStatusInfo } = require("../constants/statusCatalog");
 const {
@@ -313,12 +314,13 @@ const getDashboardOverview = asyncHandler(async (req, res) => {
     Invoice.find({ student: req.user._id }).lean(),
     Notification.countDocuments({ user: req.user._id, isRead: false }),
   ]);
-  // Extra records for the home screen (travel, housing, consultations, support).
-  const [arrivals, bookings, consultations, openTickets] = await Promise.all([
+  // Extra records for the home screen (travel, housing, consultations, support, recognitions).
+  const [arrivals, bookings, consultations, openTickets, recognitions] = await Promise.all([
     ArrivalServiceRequest.find({ student: req.user._id }).select("arrivalDate status pickup.status createdAt").lean(),
     AccommodationBooking.find({ student: req.user._id }).select("moveInDate status createdAt").lean(),
     ConsultationBooking.find({ student: req.user._id, status: "booked", startsAt: { $gte: new Date() } }).select("startsAt").sort({ startsAt: 1 }).limit(3).lean(),
     SupportTicket.countDocuments({ user: req.user._id, status: { $in: ["open", "in-progress", "answered"] } }),
+    Recognition.find({ featured: true }).select("title image link").sort({ sortOrder: 1, createdAt: -1 }).lean(),
   ]);
   const nextAction = studentNextAction({ applications, documents, invoices });
   const journeys = studentJourneys({ applications, documents, invoices });
@@ -359,19 +361,7 @@ const getDashboardOverview = asyncHandler(async (req, res) => {
     latestNotification: notifications[0] || null,
     recentApplications: applications.slice(0, 5).map((application) => ({ ...application, statusInfo: applicationStatusInfo(application) })),
     recentDocuments: documents.slice(0, 6).map((document) => ({ ...document, statusInfo: documentStatusInfo(document) })),
-    accreditations: (() => {
-      const seen = new Set();
-      const result = [];
-      for (const app of applications) {
-        const uni = app.program?.university;
-        if (!uni) continue;
-        for (const acc of (uni.accreditations || [])) {
-          const key = acc.name;
-          if (!seen.has(key)) { seen.add(key); result.push({ name: acc.name, logo: acc.logo || '' }); }
-        }
-      }
-      return result;
-    })(),
+    recognitions: recognitions.map((r) => ({ _id: r._id, title: r.title, image: r.image || '', link: r.link || '' })),
   });
 });
 
