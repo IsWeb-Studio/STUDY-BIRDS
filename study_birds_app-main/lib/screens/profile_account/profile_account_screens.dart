@@ -1,8 +1,9 @@
+import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'notification_preferences_screen.dart';
 import 'package:flutter/services.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../applications_documents_payments/payments_screens.dart';
 import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
@@ -34,11 +35,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Uint8List? _avatarBytes;
   bool _avatarUploading = false;
 
+  static const _avatarPrefKey = 'profile_avatar_b64';
+
   @override
   void initState() {
     super.initState();
     AnalyticsService.instance.screenView('profile');
     _load();
+    _loadCachedAvatar();
+  }
+
+  Future<void> _loadCachedAvatar() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final b64 = prefs.getString(_avatarPrefKey);
+      if (b64 != null && b64.isNotEmpty && mounted) {
+        setState(() => _avatarBytes = base64Decode(b64));
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _cacheAvatar(Uint8List bytes) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_avatarPrefKey, base64Encode(bytes));
+    } catch (_) {}
   }
 
   Future<void> _load() async {
@@ -73,33 +94,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final choice = await showPickSourceSheet(context, title: 'الصورة الشخصية');
     if (choice == null || !mounted) return;
 
-    Uint8List? bytes;
-    String? fileName;
+    // كلا الخيارين عبر image_picker لتجنب مشاكل file_picker مع المعرض
+    final source = choice == PickSource.camera ? ImageSource.camera : ImageSource.gallery;
+    final img = await ImagePicker().pickImage(source: source, imageQuality: 70);
+    if (img == null || !mounted) return;
 
-    if (choice == PickSource.camera) {
-      final img = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 85);
-      if (img == null) return;
-      bytes = await img.readAsBytes();
-      fileName = img.name;
-    } else {
-      final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: true);
-      if (result == null || result.files.isEmpty) return;
-      final file = result.files.single;
-      if (file.bytes == null) return;
-      bytes = file.bytes!;
-      fileName = file.name;
-    }
-
+    final bytes = await img.readAsBytes();
     if (!mounted) return;
+
     setState(() {
       _avatarBytes = bytes;
       _avatarUploading = true;
     });
 
+    // احفظ الصورة محلياً فوراً حتى لو فشل الرفع
+    await _cacheAvatar(bytes);
+
     try {
       await StudentRepository.instance.uploadDocument(
         fileBytes: bytes,
-        fileName: fileName,
+        fileName: img.name,
         type: 'biometric-photo',
       );
       if (mounted) {
@@ -109,7 +123,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        setState(() => _avatarBytes = null);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('تعذر رفع الصورة: ${e.toString()}')),
         );
