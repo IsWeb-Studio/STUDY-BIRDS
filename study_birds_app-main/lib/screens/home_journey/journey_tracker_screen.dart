@@ -1,7 +1,7 @@
 import 'journey_requirements_view.dart';
 import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
-import '../../core/animations.dart';
+import 'journey_timeline_widgets.dart';
 import '../../core/student_repository.dart';
 import '../../core/analytics_service.dart';
 import 'calendar_screen.dart';
@@ -49,11 +49,14 @@ class JourneyTrackerScreen extends StatelessWidget {
   final bool useServer;
   final String? currentStageKey;
   final String journeyPathLabel;
+  /// When set, only the journey matching this application ID is shown.
+  final String? applicationId;
 
   const JourneyTrackerScreen(
       {super.key,
       this.currentStageKey,
       this.useServer = true,
+      this.applicationId,
       this.journeyPathLabel = 'رحلتك الدراسية'});
 
   List<JourneyStage> _buildStages() {
@@ -74,147 +77,56 @@ class JourneyTrackerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (useServer) return const LiveJourneyScreen();
+    if (useServer) return LiveJourneyScreen(applicationId: applicationId);
     final stages = _buildStages();
-    final completedCount =
-        stages.where((s) => s.status == StageStatus.completed).length;
-    final progress = completedCount / stages.length;
-
+    final completed =
+        stages.where((stage) => stage.status == StageStatus.completed).length;
     return AppScaffold(
       title: 'رحلتي',
-      showBackButton: false,
+      showBackButton: Navigator.of(context).canPop(),
       actions: [
-        IconButton(
-          icon: const Icon(Icons.event_note_rounded, color: Colors.white),
-          tooltip: 'المواعيد المهمة',
-          onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ImportantDatesScreen())),
-        ),
-        IconButton(
-          icon: const Icon(Icons.calendar_month_rounded, color: Colors.white),
-          tooltip: 'التقويم',
-          onPressed: () => Navigator.of(context)
-              .push(MaterialPageRoute(builder: (_) => const CalendarScreen())),
-        ),
-        IconButton(
-          icon: const Icon(Icons.flight_land_rounded, color: Colors.white),
-          tooltip: 'خدمات الوصول',
-          onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ArrivalServicesScreen())),
-        ),
+        PopupMenuButton<String>(
+          tooltip: 'خيارات الرحلة',
+          onSelected: (value) => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => value == 'dates'
+                  ? const ImportantDatesScreen()
+                  : value == 'calendar'
+                      ? const CalendarScreen()
+                      : const ArrivalServicesScreen())),
+          itemBuilder: (_) => const [
+            PopupMenuItem(value: 'dates', child: Text('المواعيد المهمة')),
+            PopupMenuItem(value: 'calendar', child: Text('التقويم')),
+            PopupMenuItem(value: 'arrival', child: Text('خدمات الوصول')),
+          ],
+        )
       ],
       body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          AppCard(
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(journeyPathLabel, style: AppTextStyles.cardTitle),
-                      const SizedBox(height: 4),
-                      Text(
-                          '${(progress * 100).round()}% مكتمل — $completedCount من ${stages.length} مرحلة',
-                          style: AppTextStyles.caption),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  width: 46,
-                  height: 46,
-                  child: AnimatedProgressRing(
-                    value: progress,
-                    size: 46,
-                    strokeWidth: 5,
-                    centerBuilder: (animatedPercent) => Text(
-                        '${(animatedPercent * 100).round()}%',
-                        style: const TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: AppColors.navy)),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 8),
-          ...List.generate(stages.length, (i) {
-            final stage = stages[i];
-            final isLast = i == stages.length - 1;
-            return IntrinsicHeight(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Column(
-                    children: [
-                      Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: stage.status == StageStatus.completed
-                              ? AppColors.success
-                              : Colors.white,
-                          shape: BoxShape.circle,
-                          border:
-                              Border.all(color: stage.status.color, width: 2),
-                        ),
-                        child: Center(
-                          child: stage.status == StageStatus.completed
-                              ? const Icon(Icons.check_rounded,
-                                  size: 16, color: Colors.white)
-                              : Text('${i + 1}',
-                                  style: TextStyle(
-                                      color: stage.status.color,
-                                      fontWeight: FontWeight.w800,
-                                      fontSize: 12)),
-                        ),
-                      ),
-                      if (!isLast)
-                        Expanded(
-                          child: AnimatedProgressLine(
-                            value:
-                                stage.status == StageStatus.completed ? 1 : 0,
-                            color: AppColors.success,
-                            backgroundColor: AppColors.border,
-                            thickness: 2,
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 22, top: 4),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(stage.title,
-                                style: stage.status == StageStatus.inProgress
-                                    ? AppTextStyles.cardTitle
-                                        .copyWith(color: AppColors.orange)
-                                    : AppTextStyles.cardTitle),
-                          ),
-                          StatusBadge(
-                              label: stage.status.label,
-                              color: stage.status.color),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+          padding: const EdgeInsets.all(16),
+          physics: const AlwaysScrollableScrollPhysics(),
+          children: [
+            JourneySummaryCard(
+                title: journeyPathLabel,
+                completed: completed,
+                total: stages.length),
+            const SizedBox(height: 22),
+            for (var i = 0; i < stages.length; i++)
+              JourneyTimelineTile(
+                number: i + 1,
+                title: stages[i].title,
+                statusLabel: stages[i].status.label,
+                completed: stages[i].status == StageStatus.completed,
+                current: stages[i].status == StageStatus.inProgress,
+                last: i == stages.length - 1,
               ),
-            );
-          }),
-        ],
-      ),
+          ]),
     );
   }
 }
 
 class LiveJourneyScreen extends StatefulWidget {
-  const LiveJourneyScreen({super.key});
+  /// When set, only the journey matching this application ID is shown.
+  final String? applicationId;
+  const LiveJourneyScreen({super.key, this.applicationId});
   @override
   State<LiveJourneyScreen> createState() => _LiveJourneyScreenState();
 }
@@ -235,46 +147,59 @@ class _LiveJourneyScreenState extends State<LiveJourneyScreen> {
   Widget build(BuildContext context) => FutureBuilder<DashboardOverview>(
         future: future,
         builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done)
+          if (snapshot.connectionState != ConnectionState.done) {
             return const AppScaffold(title: 'رحلتي', body: LoadingState());
-          if (snapshot.hasError)
+          }
+          if (snapshot.hasError) {
             return AppScaffold(
                 title: 'رحلتي',
                 body:
                     ErrorState(message: 'تعذر تحميل رحلتك', onRetry: refresh));
+          }
           final overview = snapshot.data!;
-          if (overview.journeys != null)
+          if (overview.journeys != null) {
+            var journeys = overview.journeys!;
+            final filterId = widget.applicationId;
+            if (filterId != null) {
+              final filtered = journeys
+                  .where((j) => j['applicationId']?.toString() == filterId)
+                  .toList();
+              if (filtered.isNotEmpty) journeys = filtered;
+            }
             return JourneyRequirementsView(
-                journeys: overview.journeys!,
+                journeys: journeys,
                 onRefresh: () async {
                   refresh();
                   await future;
                 });
+          }
           final stage = overview.journeyStage;
           if (stage == null || stage.isEmpty) {
-            return AppScaffold(
-                title: 'رحلتي',
-                actions: [
-                  IconButton(
-                      onPressed: refresh, icon: const Icon(Icons.refresh))
-                ],
-                body: RefreshIndicator(
-                    onRefresh: () async {
-                      refresh();
-                      await future;
-                    },
-                    color: AppColors.navy,
-                    child: ListView(children: [
-                      for (final item in overview.stages)
-                        ListTile(
-                            title: Text(item.titleAr),
-                            subtitle: Text(item.descriptionAr),
-                            leading: Icon(item.status == 'completed'
-                                ? Icons.check_circle
-                                : item.status == 'current'
-                                    ? Icons.radio_button_checked
-                                    : Icons.circle_outlined)),
-                    ])));
+            return JourneyRequirementsView(
+              onRefresh: () async {
+                refresh();
+                await future;
+              },
+              journeys: overview.stages.isEmpty
+                  ? []
+                  : [
+                      {
+                        'title': 'رحلتك الدراسية',
+                        'stages': [
+                          for (final item in overview.stages)
+                            {
+                              'titleAr': item.titleAr,
+                              'descriptionAr': item.descriptionAr,
+                              'status': item.status == 'current'
+                                  ? 'in-progress'
+                                  : item.status == 'upcoming'
+                                      ? 'not-started'
+                                      : item.status,
+                            }
+                        ],
+                      }
+                    ],
+            );
           }
           return RefreshIndicator(
               onRefresh: () async {
