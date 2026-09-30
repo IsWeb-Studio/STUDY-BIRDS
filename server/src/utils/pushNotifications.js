@@ -19,6 +19,9 @@ async function sendPushToUser(userId, { title, body, link, buttons = [] }) {
     headings: { en: title, ar: title },
     contents: { en: body, ar: body },
     data: { screen: link || '', link: link || '' },
+    ios_sound: 'default',
+    android_sound: 'default',
+    priority: 10,
   };
   if (Array.isArray(buttons) && buttons.length > 0) {
     payload.buttons = buttons.slice(0, 3).map(b => ({ id: String(b.id), text: String(b.text), ...(b.url ? { url: String(b.url) } : {}) }));
@@ -57,6 +60,9 @@ async function sendPushToUsers(userIds, notification) {
     headings: { en: title, ar: title },
     contents: { en: body, ar: body },
     data: { screen: link || '', link: link || '' },
+    ios_sound: 'default',
+    android_sound: 'default',
+    priority: 10,
   };
   if (Array.isArray(buttons) && buttons.length > 0) {
     payload.buttons = buttons.slice(0, 3).map(b => ({ id: String(b.id), text: String(b.text), ...(b.url ? { url: String(b.url) } : {}) }));
