@@ -124,7 +124,8 @@ app.get("/sitemap.xml", requireDatabaseConnection, async (req, res, next) => {
 
 app.get('/api/mobile/capabilities', (req, res) => {
   const { isMailerConfigured } = require('./utils/mailer');
-  res.set('Cache-Control', 'no-store').json({ security: true, email: isMailerConfigured(), messaging: true, push: false, assistant: require("./routes/assistantRoutes").ready() });
+  const { isPushEnabled } = require('./utils/pushNotifications');
+  res.set('Cache-Control', 'no-store').json({ security: true, email: isMailerConfigured(), messaging: true, push: isPushEnabled(), assistant: require("./routes/assistantRoutes").ready() });
 });
 app.use('/api/mobile-security', requireDatabaseConnection, require('./routes/mobileSecurityRoutes'));
 app.use('/api/mobile-workspace', requireDatabaseConnection, require('./routes/mobileMessagingRoutes'));
