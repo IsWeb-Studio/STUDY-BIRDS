@@ -46,8 +46,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   late final PageController _journeyPageController;
 
   // Quick-access items shown in the horizontal strip.
-  // "طلباتي" and explore items (universities, programs…) live in the menu.
   static const List<Map<String, dynamic>> _quickActions = [
+    {'label': 'طلباتي',   'icon': Icons.description_outlined},
+    {'label': 'الجامعات', 'icon': Icons.account_balance_outlined},
     {'label': 'مستنداتي', 'icon': Icons.folder_open_outlined},
     {'label': 'المدفوعات', 'icon': Icons.payments_outlined},
     {'label': 'Bird AI',   'icon': null},
@@ -55,11 +56,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     {'label': 'الدعم',    'icon': Icons.headset_mic_outlined},
     {'label': 'المجتمع',  'icon': Icons.forum_outlined},
   ];
-
-  // Destinations that belong in the menu, not the quick-access strip.
-  static const Set<String> _menuOnlyDests = {
-    'applications', 'programs', 'catalog', 'universities', 'countries',
-  };
 
   @override
   void initState() {
@@ -258,12 +254,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         },
       ];
     }
-    return actions
-        .where((q) => !_menuOnlyDests.contains(q['destination']))
-        .toList();
+    return actions;
   }
 
   static const Map<String, String> _legacyDestinations = {
+    'طلباتي':   'applications',
+    'الجامعات': 'universities',
     'مستنداتي': 'documents',
     'المدفوعات': 'payments',
     'Bird AI':   'bird-ai',
@@ -826,9 +822,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     );
   }
 
-  /// Compact card used in the multi-journey PageView.
-  /// index == 0 → current journey (shows progress + next step).
-  /// index  > 0 → other journeys (shows status badge + view button).
+  /// Unified journey card used in the multi-journey PageView.
+  /// Same layout for every journey — only the data values differ.
   Widget _buildCompactJourneyCard(
     BuildContext context,
     DashboardOverview overview,
@@ -840,6 +835,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   ) {
     final isCurrent = index == 0;
     final status = app['status'] as String? ?? 'submitted';
+    final ringValue = isCurrent ? progress : _statusToProgress(status);
+    final bottomText = isCurrent
+        ? (overview.nextAction?['descriptionAr'] as String? ?? 'تابع رحلتك الدراسية')
+        : _appStatusLabel(status);
 
     void openDetail() {
       Navigator.of(context).push(MaterialPageRoute(
@@ -867,30 +866,30 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                         style: AppTextStyles.sectionLabel),
                     const SizedBox(height: 4),
                     Text(label,
-                        style: AppTextStyles.body
-                            .copyWith(fontWeight: FontWeight.w600),
+                        style:
+                            AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis),
                   ],
                 ),
               ),
-              if (isCurrent) ...[
-                const SizedBox(width: 12),
-                SizedBox(
-                  width: 44,
-                  height: 44,
-                  child: AnimatedProgressRing(
-                    value: progress,
-                    size: 44,
-                    strokeWidth: 4,
-                    centerBuilder: (v) => Text('${(v * 100).round()}%',
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 10.5,
-                            color: AppColors.navy)),
+              const SizedBox(width: 12),
+              SizedBox(
+                width: 44,
+                height: 44,
+                child: AnimatedProgressRing(
+                  value: ringValue,
+                  size: 44,
+                  strokeWidth: 4,
+                  centerBuilder: (v) => Text(
+                    '${(v * 100).round()}%',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10.5,
+                        color: AppColors.navy),
                   ),
                 ),
-              ],
+              ),
             ],
           ),
           const SizedBox(height: 10),
@@ -898,34 +897,17 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           const SizedBox(height: 10),
           Row(
             children: [
-              if (isCurrent)
-                Expanded(
-                  child: Text(
-                    overview.nextAction?['descriptionAr'] as String? ?? '',
-                    style: AppTextStyles.caption,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                )
-              else
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.navy.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    _appStatusLabel(status),
-                    style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.navy,
-                        fontWeight: FontWeight.w600),
-                  ),
+              Expanded(
+                child: Text(
+                  bottomText,
+                  style: AppTextStyles.caption,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              const Spacer(),
+              ),
+              const SizedBox(width: 8),
               PrimaryButton(
-                label: isCurrent ? 'تفاصيل الرحلة' : 'عرض',
+                label: isCurrent ? 'تفاصيل الرحلة' : 'عرض التفاصيل',
                 expand: false,
                 onPressed: openDetail,
               ),
@@ -935,6 +917,15 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       ),
     );
   }
+
+  double _statusToProgress(String status) => switch (status) {
+        'submitted'                                   => 0.10,
+        'under_review' || 'in_review' || 'reviewing' => 0.40,
+        'accepted' || 'approved'                      => 1.00,
+        'rejected'                                    => 0.00,
+        'pending' || 'pending_docs'                   => 0.20,
+        _                                             => 0.05,
+      };
 
   String _labelFromApp(Map<String, dynamic> app) {
     final program = app['program'] as Map<String, dynamic>?;
