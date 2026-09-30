@@ -26,6 +26,7 @@ String? notificationActionLabel(String? link) {
     'support'                        => 'فتح الدعم',
     'journey' || 'visa'              => 'متابعة الرحلة',
     'travel' || 'accommodation'      => 'خدمات الوصول',
+    'services'                       => 'خدمات الوصول',
     'university-registration'        => 'التسجيل الجامعي',
     'insurance'                      => 'التأمين الصحي',
     'equivalency'                    => 'معادلة الشهادة',
