@@ -1,3 +1,4 @@
+import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/profile_account/notification_permission_sheet.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
@@ -106,14 +107,24 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
     DeepLinkService.instance.init(rootNavigatorKey);
     NotificationScheduler.instance.init();
     PushNotificationService.instance.setTapHandler(_onPushTap);
-    // Show custom rationale sheet once the first frame is rendered,
-    // then trigger the OS permission dialog if the user accepts.
+    // Show the notification rationale sheet only once, ever.
+    // We persist a flag in SharedPreferences so the sheet never re-appears
+    // after the user has interacted with it — even if OneSignal.permission
+    // returns false transiently on startup while the SDK is still loading.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!PushNotificationService.instance.supported ||
-          PushNotificationService.instance.permissionGranted) return;
+      if (!PushNotificationService.instance.supported) return;
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool('_notif_sheet_shown') == true) return;
+      // Already granted before we ever showed the sheet — just record it.
+      if (PushNotificationService.instance.permissionGranted) {
+        await prefs.setBool('_notif_sheet_shown', true);
+        return;
+      }
       if (!mounted) return;
       final navigatorContext = rootNavigatorKey.currentContext;
       if (navigatorContext == null) return;
+      // Mark shown regardless of the user's choice so we never show again.
+      await prefs.setBool('_notif_sheet_shown', true);
       final allow = await showModalBottomSheet<bool>(
         context: navigatorContext,
         useRootNavigator: true,
