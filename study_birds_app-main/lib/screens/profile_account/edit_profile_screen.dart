@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/app_theme.dart';
 import '../../core/feature_ui.dart';
@@ -103,6 +104,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String? _error;
 
   bool _passportUploading = false;
+  bool _passportVerifying = false;
   Map<String, dynamic>? _passportDoc;
 
   @override
@@ -271,18 +273,41 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  // Returns true if the image at [imagePath] contains a passport MRZ.
+  // Uses ML Kit text recognition to look for Machine Readable Zone patterns
+  // (P< prefix or <<<< separators unique to travel documents).
+  // Falls back to true on any error so a scan failure never blocks upload.
+  Future<bool> _looksLikePassport(String imagePath) async {
+    final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
+    try {
+      final result = await recognizer.processImage(
+        InputImage.fromFilePath(imagePath),
+      );
+      final text = result.text.toUpperCase();
+      return text.contains('P<') ||
+          RegExp(r'<{4,}').hasMatch(text) ||
+          text.contains('PASSPORT');
+    } catch (_) {
+      return true;
+    } finally {
+      recognizer.close();
+    }
+  }
+
   Future<void> _pickAndUploadPassport() async {
     final choice = await showPickSourceSheet(context, title: 'رفع جواز السفر');
     if (choice == null || !mounted) return;
 
     Uint8List? bytes;
     String? fileName;
+    String? imagePath;
 
     if (choice == PickSource.camera) {
       final img = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 85);
       if (img == null) return;
       bytes = await img.readAsBytes();
       fileName = img.name;
+      imagePath = img.path;
     } else {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -297,12 +322,52 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
       bytes = file.bytes!;
       fileName = file.name;
+      imagePath = file.path; // null for PDFs on some platforms
     }
 
     if (!mounted) return;
     if (bytes.length > 10 * 1024 * 1024) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('حجم الملف كبير جدًا (الحد 10 ميجابايت)')));
       return;
+    }
+
+    // Verify the image is a passport (skip for PDFs which can't be OCR'd as images)
+    final isPdf = fileName.toLowerCase().endsWith('.pdf');
+    if (!isPdf && imagePath != null) {
+      setState(() => _passportVerifying = true);
+      final valid = await _looksLikePassport(imagePath);
+      if (!mounted) return;
+      setState(() => _passportVerifying = false);
+
+      if (!valid) {
+        final proceed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            title: const Row(children: [
+              Icon(Icons.document_scanner_rounded, color: AppColors.orange),
+              SizedBox(width: 10),
+              Text('تحقق من الجواز', style: TextStyle(fontSize: 17)),
+            ]),
+            content: const Text(
+              'لم نتمكن من التعرف على جواز السفر في هذه الصورة.\n\nتأكد من أن:\n• الجواز مفتوح على الصفحة الأولى\n• الصورة واضحة وغير مائلة\n• النص السفلي (المنطقة المقروءة آلياً) ظاهر',
+              style: TextStyle(height: 1.6, fontSize: 14),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(false),
+                child: const Text('إعادة المحاولة', style: TextStyle(color: AppColors.navy)),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(ctx).pop(true),
+                style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange, foregroundColor: Colors.white),
+                child: const Text('رفع على أي حال'),
+              ),
+            ],
+          ),
+        );
+        if (proceed != true || !mounted) return;
+      }
     }
 
     setState(() => _passportUploading = true);
@@ -452,6 +517,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             const SizedBox(height: 12),
                             _PassportUploadTile(
                               doc: _passportDoc,
+                              verifying: _passportVerifying,
                               uploading: _passportUploading,
                               onUpload: _pickAndUploadPassport,
                             ),
@@ -500,20 +566,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
 class _PassportUploadTile extends StatelessWidget {
   final Map<String, dynamic>? doc;
+  final bool verifying;
   final bool uploading;
   final VoidCallback onUpload;
   const _PassportUploadTile({
     required this.doc,
+    required this.verifying,
     required this.uploading,
     required this.onUpload,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (verifying) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Column(children: [
+          CircularProgressIndicator(color: AppColors.orange),
+          SizedBox(height: 12),
+          Text('جارٍ المسح الضوئي والتحقق من الجواز...', textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary)),
+        ]),
+      );
+    }
     if (uploading) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 16),
-        child: Center(child: CircularProgressIndicator()),
+        child: Column(children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 12),
+          Text('جارٍ رفع الجواز...', textAlign: TextAlign.center),
+        ]),
       );
     }
     final hasDoc = doc != null;
@@ -541,7 +624,7 @@ class _PassportUploadTile extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: onUpload,
           icon: const Icon(Icons.upload_file_outlined, size: 18),
-          label: Text(hasDoc ? 'استبدال صورة الجواز' : 'رفع صورة الجواز'),
+          label: Text(hasDoc ? 'فحص ورفع جواز بديل' : 'مسح وفحص جواز السفر'),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size(double.infinity, 46),
             side: const BorderSide(color: AppColors.navy),
