@@ -25,25 +25,34 @@ class NotificationScheduler {
   bool _ready = false;
 
   Future<void> init() async {
-    if (_ready || kIsWeb || ![TargetPlatform.android, TargetPlatform.iOS].contains(defaultTargetPlatform)) return;
+    if (_ready ||
+        kIsWeb ||
+        ![TargetPlatform.android, TargetPlatform.iOS]
+            .contains(defaultTargetPlatform)) {
+      return;
+    }
     tz.initializeTimeZones();
 
     const android = AndroidInitializationSettings('@mipmap/ic_launcher');
     const ios = DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
+      requestAlertPermission: false,
+      requestBadgePermission: false,
+      requestSoundPermission: false,
     );
     await _plugin.initialize(
       const InitializationSettings(android: android, iOS: ios),
       onDidReceiveNotificationResponse: (response) {
-        if (response.payload != null) DeepLinkService.instance.open(response.payload!);
+        if (response.payload != null) {
+          DeepLinkService.instance.open(response.payload!);
+        }
       },
     );
     _ready = true;
     final launch = await _plugin.getNotificationAppLaunchDetails();
     final payload = launch?.notificationResponse?.payload;
-    if (launch?.didNotificationLaunchApp == true && payload != null) DeepLinkService.instance.open(payload);
+    if (launch?.didNotificationLaunchApp == true && payload != null) {
+      DeepLinkService.instance.open(payload);
+    }
   }
 
   // ── schedule helpers ──────────────────────────────────────────────────────
@@ -55,7 +64,8 @@ class NotificationScheduler {
     required DateTime at,
     String body = 'انقر للانضمام أو إلغاء الحجز.',
   }) =>
-      _schedule(_idFor('consultation:$id'), title, body, at.subtract(const Duration(hours: 1)), '/student/consultations');
+      _schedule(_idFor('consultation:$id'), title, body,
+          at.subtract(const Duration(hours: 1)), '/student/consultations');
 
   /// Schedules a payment due-date reminder.
   Future<void> schedulePaymentDue({
@@ -110,16 +120,19 @@ class NotificationScheduler {
     if (when.isBefore(tz.TZDateTime.now(tz.local))) return;
 
     const androidDetails = AndroidNotificationDetails(
-      'sb_reminders',
+      'sb_reminders_sound_v2',
       'Study Birds Reminders',
       channelDescription: 'تذكيرات المواعيد والمدفوعات والمستندات',
       importance: Importance.high,
       priority: Priority.high,
+      playSound: true,
+      enableVibration: true,
     );
     const iosDetails = DarwinNotificationDetails(
       presentAlert: true,
       presentBadge: true,
       presentSound: true,
+      sound: 'default',
     );
     await _plugin.zonedSchedule(
       notifId,
@@ -135,5 +148,6 @@ class NotificationScheduler {
   }
 
   /// Converts a string ID to a stable int for the notifications plugin.
-  int _idFor(String id) => id.codeUnits.fold<int>(2166136261, (hash, unit) => ((hash ^ unit) * 16777619) & 0x7fffffff);
+  int _idFor(String id) => id.codeUnits.fold<int>(
+      2166136261, (hash, unit) => ((hash ^ unit) * 16777619) & 0x7fffffff);
 }

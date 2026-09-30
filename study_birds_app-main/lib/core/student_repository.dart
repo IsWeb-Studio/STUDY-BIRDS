@@ -1,5 +1,6 @@
 import 'secure_data_cache.dart';
 import 'api_client.dart';
+import 'passport_scan.dart';
 import 'auth_session.dart';
 
 /// One stage in the backend's authoritative journey progress
@@ -229,7 +230,15 @@ class StudentRepository {
     String? translationOf,
     void Function(double)? onProgress,
     UploadCancellation? cancellation,
+    void Function()? onPassportValidated,
   }) async {
+    if (type == 'passport' && translationOf == null) {
+      await PassportScan.validate(fileBytes);
+      if (cancellation?.cancelled == true) {
+        throw const ApiException(499, 'Upload cancelled');
+      }
+      onPassportValidated?.call();
+    }
     final data = await ApiClient.instance.postMultipart(
       '/students/documents',
       fileBytes: fileBytes,

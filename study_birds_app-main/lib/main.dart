@@ -1,3 +1,4 @@
+import 'screens/profile_account/notification_permission_sheet.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'core/analytics_service.dart';
@@ -108,15 +109,30 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
     // Show custom rationale sheet once the first frame is rendered,
     // then trigger the OS permission dialog if the user accepts.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (PushNotificationService.instance.permissionGranted) return;
+      if (!PushNotificationService.instance.supported ||
+          PushNotificationService.instance.permissionGranted) return;
       if (!mounted) return;
+      final navigatorContext = rootNavigatorKey.currentContext;
+      if (navigatorContext == null) return;
       final allow = await showModalBottomSheet<bool>(
-        context: context,
+        context: navigatorContext,
+        useRootNavigator: true,
+        useSafeArea: true,
         backgroundColor: Colors.transparent,
         isScrollControlled: true,
-        builder: (_) => const _NotifPermissionSheet(),
+        builder: (_) => const NotificationPermissionSheet(),
       );
-      if (allow == true) PushNotificationService.instance.requestPermission();
+      if (allow == true) {
+        try {
+          await PushNotificationService.instance.requestPermission();
+        } catch (_) {
+          rootScaffoldMessengerKey.currentState?.showSnackBar(
+            const SnackBar(
+                content: Text(
+                    'تعذر تفعيل الإشعارات. حاول مجددًا من إعدادات الإشعارات.')),
+          );
+        }
+      }
     });
   }
 
@@ -143,8 +159,7 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
         GlobalCupertinoLocalizations.delegate,
       ],
       builder: (context, child) => DeviceLockGate(
-          child: OfflineBannerWrapper(
-              child: child ?? const SizedBox.shrink())),
+          child: OfflineBannerWrapper(child: child ?? const SizedBox.shrink())),
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light
@@ -286,7 +301,8 @@ class ConnectedPrototypeEntry extends StatelessWidget {
     final user = result.user;
     final token = result.token;
 
-    await AuthSession.instance.login(user, authToken: token, refreshToken: result.refreshToken);
+    await AuthSession.instance
+        .login(user, authToken: token, refreshToken: result.refreshToken);
 
     if (!context.mounted) return true;
     Navigator.of(context).pushAndRemoveUntil(
@@ -326,7 +342,8 @@ class ConnectedPrototypeEntry extends StatelessWidget {
       return false; // RegisterScreen shows its generic "couldn't create account" message.
     }
 
-    await AuthSession.instance.login(user, authToken: token, refreshToken: refreshToken);
+    await AuthSession.instance
+        .login(user, authToken: token, refreshToken: refreshToken);
     if (!context.mounted) return true;
     final navigator = Navigator.of(context);
     navigator.pushAndRemoveUntil(
@@ -581,91 +598,4 @@ class _GalleryEntry {
   final String title;
   final Widget Function() builder;
   const _GalleryEntry(this.title, this.builder);
-}
-
-class _NotifPermissionSheet extends StatelessWidget {
-  const _NotifPermissionSheet();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.fromLTRB(24, 16, 24, MediaQuery.of(context).padding.bottom + 24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 40, height: 4,
-            decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2)),
-          ),
-          const SizedBox(height: 28),
-          Container(
-            width: 76, height: 76,
-            decoration: const BoxDecoration(color: AppColors.orangeSoft, shape: BoxShape.circle),
-            child: const Icon(Icons.notifications_active_rounded, color: AppColors.orange, size: 38),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'ابقَ على اطلاع دائم',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.navy),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 10),
-          const Text(
-            'فعّل الإشعارات ليصلك كل تحديث عن قبولك، موعد استشارتك، ومستنداتك فور حدوثه — حتى وأنت خارج التطبيق.',
-            style: TextStyle(fontSize: 14, color: AppColors.textSecondary, height: 1.65),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 12),
-          _BulletRow(icon: Icons.check_circle_rounded, text: 'إشعارات قبول الطلبات'),
-          _BulletRow(icon: Icons.check_circle_rounded, text: 'تحديثات المستندات والمدفوعات'),
-          _BulletRow(icon: Icons.check_circle_rounded, text: 'مواعيد الاستشارات والتذكيرات'),
-          const SizedBox(height: 28),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.orange,
-                foregroundColor: Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                padding: const EdgeInsets.symmetric(vertical: 15),
-              ),
-              child: const Text('السماح بالإشعارات', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-            ),
-          ),
-          const SizedBox(height: 10),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('لاحقاً', style: TextStyle(color: AppColors.textSecondary, fontSize: 14)),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _BulletRow extends StatelessWidget {
-  final IconData icon;
-  final String text;
-  const _BulletRow({required this.icon, required this.text});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: AppColors.orange, size: 18),
-          const SizedBox(width: 8),
-          Text(text, style: const TextStyle(fontSize: 13, color: AppColors.textSecondary)),
-        ],
-      ),
-    );
-  }
 }

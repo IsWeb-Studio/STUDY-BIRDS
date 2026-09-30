@@ -367,6 +367,10 @@ class AuthSession extends ChangeNotifier {
       }
     }
 
+    final restoredUser = currentUser;
+    if (restoredUser != null) {
+      PushNotificationService.instance.setUser(restoredUser.id);
+    }
     _restored = true;
     notifyListeners();
   }

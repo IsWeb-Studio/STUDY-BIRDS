@@ -1,8 +1,10 @@
 import 'dart:typed_data';
+import 'package:camera/camera.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../core/passport_scan.dart';
+import 'passport_scanner_screen.dart';
 import '../../core/app_theme.dart';
 import '../../core/feature_ui.dart';
 import '../../core/student_repository.dart';
@@ -14,6 +16,8 @@ enum PickSource { camera, gallery }
 Future<PickSource?> showPickSourceSheet(
   BuildContext context, {
   required String title,
+  String cameraLabel = 'فتح الكاميرا',
+  IconData cameraIcon = Icons.camera_alt_outlined,
 }) {
   return showModalBottomSheet<PickSource>(
     context: context,
@@ -40,12 +44,12 @@ Future<PickSource?> showPickSourceSheet(
           ),
           const SizedBox(height: 8),
           ListTile(
-            leading: const CircleAvatar(
+            leading: CircleAvatar(
               radius: 18,
               backgroundColor: AppColors.navy,
-              child: Icon(Icons.camera_alt_outlined, color: Colors.white, size: 18),
+              child: Icon(cameraIcon, color: Colors.white, size: 18),
             ),
-            title: const Text('فتح الكاميرا'),
+            title: Text(cameraLabel),
             onTap: () => Navigator.pop(context, PickSource.camera),
           ),
           ListTile(
@@ -273,41 +277,25 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
-  // Returns true if the image at [imagePath] contains a passport MRZ.
-  // Uses ML Kit text recognition to look for Machine Readable Zone patterns
-  // (P< prefix or <<<< separators unique to travel documents).
-  // Falls back to true on any error so a scan failure never blocks upload.
-  Future<bool> _looksLikePassport(String imagePath) async {
-    final recognizer = TextRecognizer(script: TextRecognitionScript.latin);
-    try {
-      final result = await recognizer.processImage(
-        InputImage.fromFilePath(imagePath),
-      );
-      final text = result.text.toUpperCase();
-      return text.contains('P<') ||
-          RegExp(r'<{4,}').hasMatch(text) ||
-          text.contains('PASSPORT');
-    } catch (_) {
-      return true;
-    } finally {
-      recognizer.close();
-    }
-  }
-
   Future<void> _pickAndUploadPassport() async {
-    final choice = await showPickSourceSheet(context, title: 'رفع جواز السفر');
+    final choice = await showPickSourceSheet(
+      context,
+      title: 'رفع جواز السفر',
+      cameraLabel: 'مسح ضوئي للجواز',
+      cameraIcon: Icons.document_scanner_rounded,
+    );
     if (choice == null || !mounted) return;
 
     Uint8List? bytes;
     String? fileName;
-    String? imagePath;
 
     if (choice == PickSource.camera) {
-      final img = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 85);
-      if (img == null) return;
-      bytes = await img.readAsBytes();
-      fileName = img.name;
-      imagePath = img.path;
+      final xFile = await Navigator.of(context).push<XFile>(
+        MaterialPageRoute(builder: (_) => const PassportScannerScreen()),
+      );
+      if (xFile == null || !mounted) return;
+      bytes = await xFile.readAsBytes();
+      fileName = 'passport_${DateTime.now().millisecondsSinceEpoch}.jpg';
     } else {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -322,7 +310,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
       bytes = file.bytes!;
       fileName = file.name;
-      imagePath = file.path; // null for PDFs on some platforms
     }
 
     if (!mounted) return;
@@ -331,45 +318,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
-    // Verify the image is a passport (skip for PDFs which can't be OCR'd as images)
-    final isPdf = fileName.toLowerCase().endsWith('.pdf');
-    if (!isPdf && imagePath != null) {
-      setState(() => _passportVerifying = true);
-      final valid = await _looksLikePassport(imagePath);
+    // OCR verification via native Android/iOS ML Kit scanner.
+    setState(() => _passportVerifying = true);
+    try {
+      await PassportScan.validate(bytes);
+    } on PassportScanException catch (e) {
       if (!mounted) return;
       setState(() => _passportVerifying = false);
-
-      if (!valid) {
-        final proceed = await showDialog<bool>(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Row(children: [
-              Icon(Icons.document_scanner_rounded, color: AppColors.orange),
-              SizedBox(width: 10),
-              Text('تحقق من الجواز', style: TextStyle(fontSize: 17)),
-            ]),
-            content: const Text(
-              'لم نتمكن من التعرف على جواز السفر في هذه الصورة.\n\nتأكد من أن:\n• الجواز مفتوح على الصفحة الأولى\n• الصورة واضحة وغير مائلة\n• النص السفلي (المنطقة المقروءة آلياً) ظاهر',
-              style: TextStyle(height: 1.6, fontSize: 14),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(ctx).pop(false),
-                child: const Text('إعادة المحاولة', style: TextStyle(color: AppColors.navy)),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(ctx).pop(true),
-                style: ElevatedButton.styleFrom(backgroundColor: AppColors.orange, foregroundColor: Colors.white),
-                child: const Text('رفع على أي حال'),
-              ),
-            ],
-          ),
-        );
-        if (proceed != true || !mounted) return;
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), duration: const Duration(seconds: 5)),
+      );
+      return;
+    } catch (_) {
+      // Unexpected error — allow upload to proceed.
+    } finally {
+      if (mounted) setState(() => _passportVerifying = false);
     }
 
+    if (!mounted) return;
     setState(() => _passportUploading = true);
     try {
       final doc = await StudentRepository.instance.uploadDocument(
