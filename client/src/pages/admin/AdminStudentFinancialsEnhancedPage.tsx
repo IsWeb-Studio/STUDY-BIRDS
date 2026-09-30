@@ -32,7 +32,10 @@ export const AdminStudentFinancialsEnhancedPage = () => {
   } | null>(null);
   const [reviewLoading, setReviewLoading] = useState(false);
   const [updatingInvoiceId, setUpdatingInvoiceId] = useState<string | null>(null);
-  const [studentApplications, setStudentApplications] = useState<Application[]>([]);
+  const [deletingInvoiceId, setDeletingInvoiceId] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ id: string; invoiceNumber: string } | null>(null);
+  const [filterStudentId, setFilterStudentId] = useState("");
+  const [studentApplications, setStudentApplications] = useState<Array<Application & { program?: { title?: string; tuition?: number } }>>([]);
   const [studentServiceRequests, setStudentServiceRequests] = useState<Array<{ _id: string; service?: { title?: string }; status: string }>>([]);
   const [studentAccommodationBookings, setStudentAccommodationBookings] = useState<Array<{ _id: string; listing?: { title?: string }; status: string }>>([]);
   const { toasts, pushToast, dismissToast } = useToasts();
@@ -67,8 +70,10 @@ export const AdminStudentFinancialsEnhancedPage = () => {
 
   const filteredInvoices = useMemo(() => {
     const query = invoiceQuery.trim().toLowerCase();
-    if (!query) return invoices;
-    return invoices.filter((invoice) =>
+    let list = invoices;
+    if (filterStudentId) list = list.filter((inv) => inv.student?._id === filterStudentId);
+    if (!query) return list;
+    return list.filter((invoice) =>
       [
         invoice.student?.name,
         invoice.student?.email,
@@ -79,12 +84,14 @@ export const AdminStudentFinancialsEnhancedPage = () => {
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(query))
     );
-  }, [invoiceQuery, invoices]);
+  }, [invoiceQuery, invoices, filterStudentId]);
 
   const filteredProofs = useMemo(() => {
     const query = proofQuery.trim().toLowerCase();
-    if (!query) return paymentProofs;
-    return paymentProofs.filter((proof) =>
+    let list = paymentProofs;
+    if (filterStudentId) list = list.filter((p) => p.student?._id === filterStudentId);
+    if (!query) return list;
+    return list.filter((proof) =>
       [
         proof.student?.name,
         proof.student?.email,
@@ -95,15 +102,15 @@ export const AdminStudentFinancialsEnhancedPage = () => {
         .filter(Boolean)
         .some((value) => String(value).toLowerCase().includes(query))
     );
-  }, [paymentProofs, proofQuery]);
+  }, [paymentProofs, proofQuery, filterStudentId]);
 
   const invoiceTotalPages = Math.max(1, Math.ceil(filteredInvoices.length / PAGE_SIZE));
   const proofTotalPages = Math.max(1, Math.ceil(filteredProofs.length / PAGE_SIZE));
   const visibleInvoices = filteredInvoices.slice((invoicePage - 1) * PAGE_SIZE, invoicePage * PAGE_SIZE);
   const visibleProofs = filteredProofs.slice((proofPage - 1) * PAGE_SIZE, proofPage * PAGE_SIZE);
 
-  useEffect(() => setInvoicePage(1), [invoiceQuery]);
-  useEffect(() => setProofPage(1), [proofQuery]);
+  useEffect(() => setInvoicePage(1), [invoiceQuery, filterStudentId]);
+  useEffect(() => setProofPage(1), [proofQuery, filterStudentId]);
   useEffect(() => {
     if (invoicePage > invoiceTotalPages) setInvoicePage(invoiceTotalPages);
   }, [invoicePage, invoiceTotalPages]);
@@ -175,6 +182,31 @@ export const AdminStudentFinancialsEnhancedPage = () => {
     }
   };
 
+  const handleApplicationChange = (appId: string) => {
+    const selected = studentApplications.find((a) => a._id === appId);
+    const tuition = selected?.program?.tuition;
+    setForm((current) => ({
+      ...current,
+      applicationId: appId,
+      amount: tuition && ["application-fee", "tuition"].includes(current.category) ? String(tuition) : current.amount,
+    }));
+  };
+
+  const handleDeleteInvoice = async () => {
+    if (!pendingDelete) return;
+    setDeletingInvoiceId(pendingDelete.id);
+    try {
+      await adminService.deleteStudentInvoice(pendingDelete.id);
+      setInvoices((current) => current.filter((item) => item._id !== pendingDelete.id));
+      pushToast(isArabic ? "تم حذف الفاتورة." : "Invoice deleted.", "success");
+    } catch (issue) {
+      pushToast(getErrorMessage(issue, isArabic ? "تعذر حذف الفاتورة." : "Unable to delete invoice."), "error");
+    } finally {
+      setDeletingInvoiceId(null);
+      setPendingDelete(null);
+    }
+  };
+
   const handleInvoiceStatusChange = async (id: string, status: InvoiceItem["status"]) => {
     setUpdatingInvoiceId(id);
     try {
@@ -232,10 +264,27 @@ export const AdminStudentFinancialsEnhancedPage = () => {
       <ToastViewport items={toasts} onDismiss={dismissToast} />
 
       <section className="panel p-6">
-        <h1 className="text-3xl font-semibold text-slate-900">{isArabic ? "مالية الطلاب" : "Student Financials"}</h1>
-        <p className="mt-2 text-sm text-slate-500">
-          {isArabic ? "مراجعة الفواتير وإثباتات الدفع الخاصة بالطلاب." : "Review student invoices and uploaded payment proofs."}
-        </p>
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <h1 className="text-3xl font-semibold text-slate-900">{isArabic ? "مالية الطلاب" : "Student Financials"}</h1>
+            <p className="mt-2 text-sm text-slate-500">
+              {isArabic ? "مراجعة الفواتير وإثباتات الدفع الخاصة بالطلاب." : "Review student invoices and uploaded payment proofs."}
+            </p>
+          </div>
+          <label className="block w-full max-w-xs shrink-0">
+            <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "عرض طالب محدد" : "Filter by student"}</span>
+            <select
+              value={filterStudentId}
+              onChange={(e) => setFilterStudentId(e.target.value)}
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring"
+            >
+              <option value="">{isArabic ? "كل الطلاب" : "All students"}</option>
+              {students.map((s) => (
+                <option key={s._id} value={s._id}>{s.name} — {s.email}</option>
+              ))}
+            </select>
+          </label>
+        </div>
         {error ? <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div> : null}
       </section>
 
@@ -272,15 +321,30 @@ export const AdminStudentFinancialsEnhancedPage = () => {
           </label>
           {["application-fee", "tuition"].includes(form.category) && studentApplications.length > 0 && (
             <label>
-              <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "الطلب" : "Application"}</span>
-              <select value={form.applicationId} onChange={(event) => setForm((current) => ({ ...current, applicationId: event.target.value }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
+              <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "الطلب والبرنامج" : "Application / Program"}</span>
+              <select value={form.applicationId} onChange={(e) => handleApplicationChange(e.target.value)} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
                 <option value="">{isArabic ? "اختر الطلب" : "Select application"}</option>
                 {studentApplications.map((app) => (
                   <option key={app._id} value={app._id}>
-                    {(app as Application & { program?: { title?: string } }).program?.title || app._id} — {app.status}
+                    {app.program?.title || app._id}
+                    {app.program?.tuition ? ` — $${app.program.tuition.toLocaleString()}` : ""}
+                    {" — "}{app.status}
                   </option>
                 ))}
               </select>
+              {form.applicationId && (() => {
+                const sel = studentApplications.find((a) => a._id === form.applicationId);
+                const tuition = sel?.program?.tuition;
+                if (!tuition) return null;
+                const paid = invoices.filter((inv) => (inv as InvoiceItem & { application?: { _id?: string } }).application?._id === form.applicationId && inv.status !== "rejected").reduce((s, inv) => s + Number(inv.amount || 0), 0);
+                const remaining = tuition - paid;
+                return (
+                  <p className="mt-1 text-xs text-slate-500">
+                    {isArabic ? `إجمالي الرسوم: $${tuition.toLocaleString()} | مُصدَر: $${paid.toLocaleString()} | المتبقي: ` : `Tuition: $${tuition.toLocaleString()} | Billed: $${paid.toLocaleString()} | Remaining: `}
+                    <span className={remaining <= 0 ? "font-semibold text-emerald-600" : "font-semibold text-slate-700"}>${remaining.toLocaleString()}</span>
+                  </p>
+                );
+              })()}
             </label>
           )}
           {form.category === "service" && form.studentId && (
@@ -329,7 +393,7 @@ export const AdminStudentFinancialsEnhancedPage = () => {
           </label>
           <label>
             <span className="mb-2 block text-sm font-medium text-slate-700">{isArabic ? "الفئة" : "Category"}</span>
-            <select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value, applicationId: "", serviceRequestId: "", accommodationBookingId: "" }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
+            <select value={form.category} onChange={(event) => setForm((current) => ({ ...current, category: event.target.value, applicationId: "", serviceRequestId: "", accommodationBookingId: "", amount: "" }))} className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none focus:ring">
               <option value="application-fee">{isArabic ? "رسوم التقديم" : "Application Fee"}</option>
               <option value="tuition">{isArabic ? "رسوم دراسية" : "Tuition"}</option>
               <option value="service">{isArabic ? "خدمة" : "Service"}</option>
@@ -353,6 +417,7 @@ export const AdminStudentFinancialsEnhancedPage = () => {
                 <th className="px-4 py-3 font-medium">{isArabic ? "الحالة" : "Status"}</th>
                 <th className="px-4 py-3 font-medium">{isArabic ? "الاستحقاق" : "Due Date"}</th>
                 <th className="px-4 py-3 font-medium">{isArabic ? "تغيير الحالة" : "Change Status"}</th>
+                <th className="px-4 py-3 font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -383,6 +448,16 @@ export const AdminStudentFinancialsEnhancedPage = () => {
                       <option value="paid">{isArabic ? "مدفوعة ✓" : "Paid ✓"}</option>
                       <option value="rejected">{isArabic ? "مرفوضة" : "Rejected"}</option>
                     </select>
+                  </td>
+                  <td className="px-4 py-4">
+                    <button
+                      type="button"
+                      disabled={deletingInvoiceId === invoice._id}
+                      onClick={() => setPendingDelete({ id: invoice._id, invoiceNumber: invoice.invoiceNumber })}
+                      className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 disabled:opacity-40"
+                    >
+                      {isArabic ? "حذف" : "Delete"}
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -496,6 +571,24 @@ export const AdminStudentFinancialsEnhancedPage = () => {
           />
         </div>
       </section>
+
+      <ConfirmationModal
+        open={Boolean(pendingDelete)}
+        title={isArabic ? "حذف الفاتورة" : "Delete Invoice"}
+        description={
+          pendingDelete
+            ? isArabic
+              ? `سيتم حذف الفاتورة رقم ${pendingDelete.invoiceNumber} نهائياً. لا يمكن التراجع عن هذا الإجراء.`
+              : `Invoice ${pendingDelete.invoiceNumber} will be permanently deleted.`
+            : ""
+        }
+        confirmLabel={isArabic ? "تأكيد الحذف" : "Confirm Delete"}
+        cancelLabel={isArabic ? "إلغاء" : "Cancel"}
+        tone="danger"
+        loading={deletingInvoiceId !== null}
+        onConfirm={handleDeleteInvoice}
+        onClose={() => !deletingInvoiceId && setPendingDelete(null)}
+      />
 
       <ConfirmationModal
         open={Boolean(pendingReview)}
