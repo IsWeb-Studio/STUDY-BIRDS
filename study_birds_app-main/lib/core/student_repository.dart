@@ -257,6 +257,11 @@ class StudentRepository {
         .patch('/students/notifications/$id/read', token: _token);
   }
 
+  Future<void> markAllNotificationsRead() async {
+    await ApiClient.instance
+        .patch('/students/notifications/read-all', token: _token);
+  }
+
   /// Real endpoint covering flight + airport pickup + housing + visa/residence
   /// support in ONE consolidated request (see ArrivalServiceRequest.js).
   /// Returns null if the student hasn't submitted one yet.
