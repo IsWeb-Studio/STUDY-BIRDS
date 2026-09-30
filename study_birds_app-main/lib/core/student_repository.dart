@@ -299,6 +299,7 @@ class StudentRepository {
       };
 
   Future<Map<String, dynamic>> createArrivalService({
+    required String applicationId,
     String? arrivalDate,
     String? arrivalTime,
     String? flightNumber,
@@ -309,14 +310,15 @@ class StudentRepository {
     required bool residencePermitSupport,
     required bool visaSupport,
   }) async {
+    final body = _arrivalBody(
+      arrivalDate: arrivalDate, arrivalTime: arrivalTime,
+      flightNumber: flightNumber, airport: airport, notes: notes,
+      airportPickup: airportPickup, studentHousing: studentHousing,
+      residencePermitSupport: residencePermitSupport, visaSupport: visaSupport,
+    );
+    body['applicationId'] = applicationId;
     final data = await ApiClient.instance.post('/students/arrival-services',
-        token: _token,
-        body: _arrivalBody(
-          arrivalDate: arrivalDate, arrivalTime: arrivalTime,
-          flightNumber: flightNumber, airport: airport, notes: notes,
-          airportPickup: airportPickup, studentHousing: studentHousing,
-          residencePermitSupport: residencePermitSupport, visaSupport: visaSupport,
-        ));
+        token: _token, body: body);
     return data as Map<String, dynamic>;
   }
 
