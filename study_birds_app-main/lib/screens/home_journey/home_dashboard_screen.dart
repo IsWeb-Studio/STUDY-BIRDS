@@ -103,6 +103,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
       builder: (sheetContext) {
@@ -111,78 +112,106 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
         }
 
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Drag handle
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2)),
+        Widget row(IconData icon, String label, VoidCallback onTap,
+            {bool danger = false}) {
+          final color = danger ? AppColors.danger : AppColors.orange;
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.5), width: 0.8),
+            ),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(14),
+              child: InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 14, vertical: 12),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.12),
+                            shape: BoxShape.circle),
+                        child: Icon(icon, color: color, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(label,
+                          style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                              color: danger
+                                  ? AppColors.danger
+                                  : AppColors.textPrimary)),
+                      const Spacer(),
+                      Icon(Icons.arrow_back_ios_new_rounded,
+                          size: 13,
+                          color: Colors.grey.shade400),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                // Icon grid
-                Wrap(
-                  spacing: 0,
-                  runSpacing: 8,
-                  children: [
-                    _MenuTile(Icons.description_outlined,    'طلباتي',        () => go(const ApplicationsListScreen())),
-                    _MenuTile(Icons.account_balance_outlined,'الجامعات',      () => go(const UniversitiesExplorerScreen())),
-                    _MenuTile(Icons.menu_book_outlined,      'البرامج',       () => go(const ProgramsExplorerScreen())),
-                    _MenuTile(Icons.school_outlined,         'المنح',         () => go(const ScholarshipsScreen())),
-                    _MenuTile(Icons.person_outline_rounded,  'حسابي',         () => go(const ProfileScreen())),
-                    _MenuTile(Icons.notifications_outlined,  'الإشعارات',     () => go(const NotificationsScreen())),
-                    _MenuTile(Icons.headset_mic_outlined,    'مركز الدعم',    () => go(const SupportCenterScreen())),
-                    _MenuTile(Icons.forum_outlined,          'المجتمع',       () => go(const StudentCommunityScreen())),
-                  ],
+              ),
+            ),
+          );
+        }
+
+        return SafeArea(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.78,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Container(
+                  margin: const EdgeInsets.only(top: 12, bottom: 14),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2)),
                 ),
-                const Divider(height: 20),
-                // Logout — danger row
-                GestureDetector(
-                  onTap: () async {
-                    Navigator.pop(sheetContext);
-                    final confirmed = await showAppConfirmDialog(
-                      context,
-                      title: 'تسجيل الخروج',
-                      message: 'هل تريد تسجيل الخروج من حسابك؟',
-                      confirmLabel: 'تسجيل الخروج',
-                      danger: true,
-                    );
-                    if (!confirmed || !context.mounted) return;
-                    await AuthSession.instance.logout();
-                    if (context.mounted) {
-                      Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const RootChooserScreen()),
-                          (route) => false);
-                    }
-                  },
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
+                Flexible(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Column(
                       children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                              color: AppColors.danger.withValues(alpha: 0.10),
-                              shape: BoxShape.circle),
-                          child: const Icon(Icons.logout_rounded,
-                              color: AppColors.danger, size: 20),
-                        ),
-                        const SizedBox(width: 12),
-                        const Text('تسجيل الخروج',
-                            style: TextStyle(
-                                color: AppColors.danger,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 14)),
+                        row(Icons.description_outlined,     'طلباتي',     () => go(const ApplicationsListScreen())),
+                        row(Icons.account_balance_outlined, 'الجامعات',   () => go(const UniversitiesExplorerScreen())),
+                        row(Icons.menu_book_outlined,       'البرامج',    () => go(const ProgramsExplorerScreen())),
+                        row(Icons.school_outlined,          'المنح',      () => go(const ScholarshipsScreen())),
+                        row(Icons.person_outline_rounded,   'حسابي',      () => go(const ProfileScreen())),
+                        row(Icons.notifications_outlined,   'الإشعارات',  () => go(const NotificationsScreen())),
+                        row(Icons.headset_mic_outlined,     'مركز الدعم', () => go(const SupportCenterScreen())),
+                        row(Icons.forum_outlined,           'المجتمع',    () => go(const StudentCommunityScreen())),
+                        const Divider(height: 20),
+                        row(Icons.logout_rounded, 'تسجيل الخروج', () async {
+                          Navigator.pop(sheetContext);
+                          final confirmed = await showAppConfirmDialog(
+                            context,
+                            title: 'تسجيل الخروج',
+                            message: 'هل تريد تسجيل الخروج من حسابك؟',
+                            confirmLabel: 'تسجيل الخروج',
+                            danger: true,
+                          );
+                          if (!confirmed || !context.mounted) return;
+                          await AuthSession.instance.logout();
+                          if (context.mounted) {
+                            Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(
+                                    builder: (_) => const RootChooserScreen()),
+                                (route) => false);
+                          }
+                        }, danger: true),
+                        const SizedBox(height: 8),
                       ],
                     ),
                   ),
@@ -850,12 +879,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         : _appStatusLabel(status);
 
     void openDetail() {
+      final appId = app['_id'] as String?;
       Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => isCurrent
-            ? JourneyTrackerScreen(
-                currentStageKey: overview.journeyStage,
-                journeyPathLabel: label)
-            : ApplicationDetailScreen(application: app),
+        builder: (_) => JourneyTrackerScreen(applicationId: appId),
       ));
     }
 
@@ -1013,43 +1039,6 @@ class _HeroIconButton extends StatelessWidget {
   }
 }
 
-/// Orange icon + label tile used in the hamburger menu grid.
-class _MenuTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-  const _MenuTile(this.icon, this.label, this.onTap);
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: SizedBox(
-        width: 80,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 52,
-              height: 52,
-              decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.12),
-                  shape: BoxShape.circle),
-              child: Icon(icon, color: AppColors.orange, size: 24),
-            ),
-            const SizedBox(height: 6),
-            Text(label,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.textPrimary)),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 /// Calm inline stat — icon, value, label, no border/box around it.
 class _InlineStat extends StatelessWidget {
