@@ -324,15 +324,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
 
                         final link = n['link'] as String?;
                         final actionLabel = notificationActionLabel(link);
-                        final screen = notificationScreenForLink(link);
+                        final screen = notificationScreenForLink(link) ?? const JourneyTrackerScreen();
                         void navigate() async {
                           // Capture navigator before any await so it stays valid.
                           final navigator = Navigator.of(context);
                           await _markRead(n, i);
-                          if (screen != null) {
-                            await navigator.push(
-                                MaterialPageRoute(builder: (_) => screen));
-                          }
+                          await navigator.push(
+                              MaterialPageRoute(builder: (_) => screen));
                         }
 
                         return AppCard(
