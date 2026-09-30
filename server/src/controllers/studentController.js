@@ -834,6 +834,29 @@ const submitOrientationTest = asyncHandler(async (req, res) => {
   res.json(result);
 });
 
+const replyStudentSupportTicket = asyncHandler(async (req, res) => {
+  const ticket = await SupportTicket.findById(req.params.id);
+  if (!ticket) return res.status(404).json({ message: 'Support ticket not found' });
+
+  const isOwner =
+    String(ticket.user || '') === String(req.user._id) ||
+    String(ticket.agent || '') === String(req.user._id);
+  if (!isOwner) return res.status(403).json({ message: 'Forbidden' });
+
+  if (ticket.status === 'closed') {
+    return res.status(400).json({ message: 'Cannot reply to a closed ticket' });
+  }
+
+  const message = String(req.body.message || '').trim();
+  if (!message) return res.status(400).json({ message: 'Reply message is required' });
+
+  ticket.replies.push({ message, fromRole: 'student', user: req.user._id });
+  ticket.status = 'open';
+  await ticket.save();
+
+  res.json(ticket);
+});
+
 module.exports = {
   getProfile,
   updateProfile,
@@ -859,4 +882,5 @@ module.exports = {
   removeStudentFavorite,
   getOrientationTestResult,
   submitOrientationTest,
+  replyStudentSupportTicket,
 };

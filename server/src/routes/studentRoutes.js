@@ -13,6 +13,7 @@ const {
   markAllStudentNotificationsRead,
   getStudentSupportTickets,
   createStudentSupportTicket,
+  replyStudentSupportTicket,
   getStudentKnowledgeBase,
   getStudentFinancials,
   uploadPaymentProof,
@@ -48,6 +49,7 @@ router.patch("/notifications/read-all", markAllStudentNotificationsRead);
 router.patch("/notifications/:id/read", markStudentNotificationAsRead);
 router.get("/support-tickets", getStudentSupportTickets);
 router.post("/support-tickets", upload.single("file"), createStudentSupportTicket);
+router.patch("/support-tickets/:id/reply", replyStudentSupportTicket);
 router.get("/knowledge-base", getStudentKnowledgeBase);
 router.get("/financials", getStudentFinancials);
 router.post("/financials/invoices/:id/payment-proof", upload.single("file"), uploadPaymentProof);
