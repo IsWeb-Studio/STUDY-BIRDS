@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_theme.dart';
 import '../../core/animations.dart';
 import '../../core/student_repository.dart';
@@ -498,8 +499,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         _buildJourneySection(
             context, overview, currentStage, journeyPathLabel, progress, homeStatus),
 
-        // ── Accreditations slider ─────────────────────────────────────────────
-        if (overview.accreditations.isNotEmpty) ...[
+        // ── Recognitions slider ───────────────────────────────────────────────
+        if (overview.recognitions.isNotEmpty) ...[
           const SizedBox(height: 16),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16),
@@ -510,17 +511,18 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           ),
           const SizedBox(height: 10),
           SizedBox(
-            height: 76,
+            height: 80,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: overview.accreditations.length,
+              itemCount: overview.recognitions.length,
               itemBuilder: (context, i) {
-                final acc = overview.accreditations[i];
-                final logo = acc['logo'] as String? ?? '';
-                final name = acc['name'] as String? ?? '';
-                return Container(
-                  margin: EdgeInsets.only(left: i < overview.accreditations.length - 1 ? 10 : 0),
+                final rec = overview.recognitions[i];
+                final image = rec['image'] as String? ?? '';
+                final title = rec['title'] as String? ?? '';
+                final link = rec['link'] as String? ?? '';
+                final card = Container(
+                  margin: EdgeInsets.only(left: i < overview.recognitions.length - 1 ? 10 : 0),
                   width: 130,
                   decoration: BoxDecoration(
                     color: Colors.white,
@@ -531,23 +533,23 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      if (logo.isNotEmpty)
+                      if (image.isNotEmpty)
                         Expanded(
                           child: Image.network(
-                            logo,
+                            image,
                             fit: BoxFit.contain,
                             errorBuilder: (_, __, ___) => const Icon(
                               Icons.verified_outlined,
                               color: AppColors.orange,
-                              size: 22,
+                              size: 24,
                             ),
                           ),
                         )
                       else
-                        const Icon(Icons.verified_outlined, color: AppColors.orange, size: 22),
+                        const Icon(Icons.verified_outlined, color: AppColors.orange, size: 24),
                       const SizedBox(height: 4),
                       Text(
-                        name,
+                        title,
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -560,6 +562,14 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                       ),
                     ],
                   ),
+                );
+                if (link.isEmpty) return card;
+                return GestureDetector(
+                  onTap: () async {
+                    final uri = Uri.tryParse(link);
+                    if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  },
+                  child: card,
                 );
               },
             ),

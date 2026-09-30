@@ -70,15 +70,15 @@ class DashboardOverview {
   /// servers, in which case the home screen keeps its previous layout.
   final Map<String, dynamic>? home;
 
-  /// Accreditations from universities the student has applied to.
-  /// Each entry: { name: String, logo: String }
-  final List<Map<String, dynamic>> accreditations;
+  /// Study Birds recognitions / accreditations shown on the home slider.
+  /// Each entry: { _id, title, image, link }
+  final List<Map<String, dynamic>> recognitions;
 
   const DashboardOverview({
     this.home,
     this.nextAction,
     this.journeys,
-    this.accreditations = const [],
+    this.recognitions = const [],
     required this.profile,
     required this.currentStage,
     required this.stages,
@@ -113,7 +113,7 @@ class DashboardOverview {
       latestNotification: json['latestNotification'] as Map<String, dynamic>?,
       recentApplications: json['recentApplications'] as List<dynamic>? ?? [],
       recentDocuments: json['recentDocuments'] as List<dynamic>? ?? [],
-      accreditations: (json['accreditations'] as List<dynamic>? ?? [])
+      recognitions: (json['recognitions'] as List<dynamic>? ?? [])
           .whereType<Map>()
           .map((e) => Map<String, dynamic>.from(e))
           .toList(),
