@@ -616,7 +616,9 @@ const uploadPaymentProof = asyncHandler(async (req, res) => {
 });
 
 const getArrivalServiceRequest = asyncHandler(async (req, res) => {
-  const requests = await ArrivalServiceRequest.find({ student: req.user._id }).sort({ createdAt: -1 });
+  const requests = await ArrivalServiceRequest.find({ student: req.user._id })
+    .populate({ path: "application", populate: { path: "program", select: "title" } })
+    .sort({ createdAt: -1 });
   res.json(requests);
 });
 
@@ -636,13 +638,24 @@ const _buildArrivalPayload = (body) => ({
 });
 
 const createArrivalServiceRequest = asyncHandler(async (req, res) => {
-  const profile = await StudentProfile.findOne({ user: req.user._id }).lean();
-  const currentStage = profile?.applicationStage || "file-received";
-  if (!["final-accepted", "travel-and-settlement"].includes(currentStage)) {
+  const { applicationId } = req.body;
+  if (!applicationId) {
     res.status(400);
-    throw new Error("Arrival services become available after final acceptance");
+    throw new Error("applicationId مطلوب لربط الطلب برحلتك الدراسية");
   }
-  const request = await ArrivalServiceRequest.create({ student: req.user._id, ..._buildArrivalPayload(req.body) });
+  // Verify the application belongs to this student
+  const application = await Application.findOne({ _id: applicationId, student: req.user._id });
+  if (!application) {
+    res.status(404);
+    throw new Error("الطلب الدراسي غير موجود أو لا ينتمي لحسابك");
+  }
+  // Each application can only have one arrival service request
+  const existing = await ArrivalServiceRequest.findOne({ student: req.user._id, application: applicationId });
+  if (existing) {
+    res.status(409);
+    throw new Error("يوجد طلب وصول مرتبط بهذه الرحلة بالفعل");
+  }
+  const request = await ArrivalServiceRequest.create({ student: req.user._id, application: applicationId, ..._buildArrivalPayload(req.body) });
   await Notification.create({ user: req.user._id, title: "تم إرسال طلب خدمات الوصول", message: "تم استلام طلب خدمات الوصول الجديد وسيبدأ الفريق بالتنسيق قريباً.", type: "info", link: "/student/services" });
   res.status(201).json(request);
 });
