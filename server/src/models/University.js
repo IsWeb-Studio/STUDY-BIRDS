@@ -68,6 +68,16 @@ const universitySchema = new mongoose.Schema(
     },
     // #76: documents required before application to this university
     requiredDocuments: { type: [String], default: [] },
+    accreditations: {
+      type: [
+        {
+          _id: false,
+          name: { type: String, required: true },
+          logo: { type: String, default: '' },
+        },
+      ],
+      default: [],
+    },
   },
   { timestamps: true }
 );

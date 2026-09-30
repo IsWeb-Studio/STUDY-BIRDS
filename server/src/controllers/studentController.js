@@ -359,6 +359,19 @@ const getDashboardOverview = asyncHandler(async (req, res) => {
     latestNotification: notifications[0] || null,
     recentApplications: applications.slice(0, 5).map((application) => ({ ...application, statusInfo: applicationStatusInfo(application) })),
     recentDocuments: documents.slice(0, 6).map((document) => ({ ...document, statusInfo: documentStatusInfo(document) })),
+    accreditations: (() => {
+      const seen = new Set();
+      const result = [];
+      for (const app of applications) {
+        const uni = app.program?.university;
+        if (!uni) continue;
+        for (const acc of (uni.accreditations || [])) {
+          const key = acc.name;
+          if (!seen.has(key)) { seen.add(key); result.push({ name: acc.name, logo: acc.logo || '' }); }
+        }
+      }
+      return result;
+    })(),
   });
 });
 
