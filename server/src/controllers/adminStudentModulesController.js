@@ -215,9 +215,10 @@ const createStudentInvoiceAdmin = asyncHandler(async (req, res) => {
 
   await Notification.create({
     user: studentId,
-    title: "New invoice created",
-    message: `A new invoice (${invoiceNumber}) has been added to your account.`,
+    title: "فاتورة جديدة",
+    message: `تمت إضافة فاتورة جديدة (${invoiceNumber}) إلى حسابك. يرجى مراجعة تفاصيلها وسدادها في الوقت المحدد.`,
     type: "info",
+    link: "/student/payments",
   });
 
   res.status(201).json(await Invoice.findById(invoice._id).populate("student", "name email"));
@@ -248,11 +249,13 @@ const updateStudentInvoiceAdmin = asyncHandler(async (req, res) => {
     onPaymentApproved(invoice.student).catch(() => {});
   }
 
+  const invoiceStatusAr = { paid: "مدفوعة", unpaid: "غير مدفوعة", rejected: "مرفوضة", "pending-confirmation": "قيد المراجعة" }[invoice.status] || invoice.status;
   await Notification.create({
     user: invoice.student,
-    title: "Invoice updated",
-    message: `Invoice ${invoice.invoiceNumber} is now marked as ${invoice.status}.`,
+    title: "تحديث الفاتورة",
+    message: `تم تحديث حالة الفاتورة ${invoice.invoiceNumber} إلى: ${invoiceStatusAr}.`,
     type: invoice.status === "rejected" ? "warning" : "info",
+    link: "/student/payments",
   });
 
   res.json(await Invoice.findById(invoice._id).populate("student", "name email").populate("reviewedBy", "name email"));
@@ -302,11 +305,13 @@ const reviewPaymentProofAdmin = asyncHandler(async (req, res) => {
   }
 
   const paymentPushTitle = nextStatus === 'approved' ? 'تمت الموافقة على إثبات الدفع' : nextStatus === 'rejected' ? 'تم رفض إثبات الدفع' : 'تم تحديث حالة الدفع';
+  const paymentPushMsg = nextStatus === 'approved' ? 'تمت الموافقة على إثبات دفعتك. تحقق من حالة الفاتورة.' : nextStatus === 'rejected' ? 'تم رفض إثبات الدفع. يرجى رفع إثبات صحيح.' : 'تم تحديث حالة إثبات دفعتك.';
   await Notification.create({
     user: proof.student,
     title: paymentPushTitle,
-    message: `Your payment proof has been ${nextStatus}.`,
+    message: paymentPushMsg,
     type: nextStatus === "rejected" ? "warning" : "success",
+    link: "/student/payments",
   });
   sendPushToUser(proof.student, { title: paymentPushTitle, body: `تم ${nextStatus === 'approved' ? 'قبول' : nextStatus === 'rejected' ? 'رفض' : 'مراجعة'} إثبات الدفع.`, link: '/student/payments' }).catch(() => {});
 
@@ -421,11 +426,13 @@ const updateArrivalRequestAdmin = asyncHandler(async (req, res) => {
     }
   }
 
+  const arrivalStatusAr = { pending: "قيد المعالجة", "in-progress": "جارٍ التنسيق", completed: "مكتملة", cancelled: "ملغاة" }[item.status] || item.status;
   await Notification.create({
     user: item.student,
-    title: "Arrival request updated",
-    message: `Your arrival services request is now ${item.status}.`,
+    title: "تحديث طلب خدمات الوصول",
+    message: `تم تحديث طلب خدمات الوصول الخاص بك. الحالة الحالية: ${arrivalStatusAr}.`,
     type: "info",
+    link: "/student/services",
   });
 
   res.json(await ArrivalServiceRequest.findById(item._id).populate("student", "name email").populate("updatedBy", "name email"));
@@ -476,9 +483,10 @@ const updateOrientationResultAdmin = asyncHandler(async (req, res) => {
 
   await Notification.create({
     user: item.student,
-    title: "Orientation guidance updated",
-    message: "Your orientation test guidance has been updated by the admissions team.",
+    title: "تحديث توصيات التوجيه الدراسي",
+    message: "قام فريق القبول بتحديث توصياتك وتوجيهاتك الدراسية. راجع النتائج الجديدة.",
     type: "info",
+    link: "/student/journey",
   });
 
   res.json(await OrientationTestResult.findById(item._id).populate("student", "name email").populate("reviewedBy", "name email"));

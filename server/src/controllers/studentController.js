@@ -604,9 +604,10 @@ const uploadPaymentProof = asyncHandler(async (req, res) => {
 
   await Notification.create({
     user: req.user._id,
-    title: "Payment proof uploaded",
-    message: `Your payment proof for invoice ${invoice.invoiceNumber} is pending review.`,
+    title: "تم رفع إثبات الدفع",
+    message: `تم استلام إثبات دفعك للفاتورة ${invoice.invoiceNumber} وهو قيد المراجعة من قِبل الفريق المالي.`,
     type: "info",
+    link: "/student/payments",
   });
 
   const response = proof.toObject();
@@ -642,7 +643,7 @@ const createArrivalServiceRequest = asyncHandler(async (req, res) => {
     throw new Error("Arrival services become available after final acceptance");
   }
   const request = await ArrivalServiceRequest.create({ student: req.user._id, ..._buildArrivalPayload(req.body) });
-  await Notification.create({ user: req.user._id, title: "Arrival services submitted", message: "Your new arrival request has been submitted for coordination.", type: "info" });
+  await Notification.create({ user: req.user._id, title: "تم إرسال طلب خدمات الوصول", message: "تم استلام طلب خدمات الوصول الجديد وسيبدأ الفريق بالتنسيق قريباً.", type: "info", link: "/student/services" });
   res.status(201).json(request);
 });
 
@@ -663,7 +664,7 @@ const upsertArrivalServiceRequest = asyncHandler(async (req, res) => {
     return res.json(existing);
   }
   const request = await ArrivalServiceRequest.findOneAndUpdate({ student: req.user._id }, payload, { new: true, upsert: true });
-  await Notification.create({ user: req.user._id, title: "Arrival services updated", message: "Your arrival and services request has been submitted for coordination.", type: "info" });
+  await Notification.create({ user: req.user._id, title: "تم تحديث طلب خدمات الوصول", message: "تم تحديث طلب خدمات الوصول وإرساله للتنسيق.", type: "info", link: "/student/services" });
   res.json(request);
 });
 
@@ -811,9 +812,10 @@ const submitOrientationTest = asyncHandler(async (req, res) => {
 
   await Notification.create({
     user: req.user._id,
-    title: "Orientation test saved",
-    message: "Your orientation preferences have been recorded successfully.",
+    title: "تم حفظ اختبار التوجيه",
+    message: "تم تسجيل تفضيلاتك الدراسية بنجاح. ستصلك التوصيات المناسبة قريباً.",
     type: "success",
+    link: "/student/journey",
   });
 
   res.json(result);

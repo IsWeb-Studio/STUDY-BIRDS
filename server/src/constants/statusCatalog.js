@@ -167,6 +167,7 @@ function applicationStatusNotice(application, programTitle) {
     title: `تحديث طلبك: ${info.ar.label}`,
     message: `${programTitle ? `${programTitle} — ` : ""}${info.ar.meaning} ${info.ar.nextStep}`,
     type: info.tone === "success" ? "success" : info.tone === "danger" || info.tone === "action" ? "warning" : "info",
+    link: "/student/applications",
   };
 }
 

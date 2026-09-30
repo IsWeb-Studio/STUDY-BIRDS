@@ -71,8 +71,8 @@ const createApplication = asyncHandler(async (req, res) => {
 
   await Notification.create({
     user: req.user._id,
-    title: "Application submitted",
-    message: `Your application for ${program.title} has been submitted.`,
+    title: "تم إرسال طلبك",
+    message: `تم تقديم طلبك لبرنامج ${program.title} بنجاح. سيراجعه الفريق قريباً.`,
     type: "success",
     link: `/student/applications`,
   });
@@ -200,8 +200,8 @@ const deleteApplication = asyncHandler(async (req, res) => {
 
   await Notification.create({
     user: application.student,
-    title: "Application removed",
-    message: `Your application for ${application.program?.title || "the selected program"} has been removed by the admissions team.`,
+    title: "تم حذف طلبك",
+    message: `تم إزالة طلبك لبرنامج ${application.program?.title || "البرنامج المحدد"} من قِبل فريق القبول.`,
     type: "warning",
     link: "/student/applications",
   });
