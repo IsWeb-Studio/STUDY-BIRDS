@@ -104,85 +104,94 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (sheetContext) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            ListTile(
-              leading: const Icon(Icons.description_outlined, color: AppColors.navy),
-              title: const Text('طلباتي'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const ApplicationsListScreen()));
-              },
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (sheetContext) {
+        void go(Widget screen) {
+          Navigator.pop(sheetContext);
+          Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
+        }
+
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Drag handle
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2)),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Icon grid
+                Wrap(
+                  spacing: 0,
+                  runSpacing: 8,
+                  children: [
+                    _MenuTile(Icons.description_outlined,    'طلباتي',        () => go(const ApplicationsListScreen())),
+                    _MenuTile(Icons.account_balance_outlined,'الجامعات',      () => go(const UniversitiesExplorerScreen())),
+                    _MenuTile(Icons.menu_book_outlined,      'البرامج',       () => go(const ProgramsExplorerScreen())),
+                    _MenuTile(Icons.school_outlined,         'المنح',         () => go(const ScholarshipsScreen())),
+                    _MenuTile(Icons.person_outline_rounded,  'حسابي',         () => go(const ProfileScreen())),
+                    _MenuTile(Icons.notifications_outlined,  'الإشعارات',     () => go(const NotificationsScreen())),
+                    _MenuTile(Icons.headset_mic_outlined,    'مركز الدعم',    () => go(const SupportCenterScreen())),
+                    _MenuTile(Icons.forum_outlined,          'المجتمع',       () => go(const StudentCommunityScreen())),
+                  ],
+                ),
+                const Divider(height: 20),
+                // Logout — danger row
+                GestureDetector(
+                  onTap: () async {
+                    Navigator.pop(sheetContext);
+                    final confirmed = await showAppConfirmDialog(
+                      context,
+                      title: 'تسجيل الخروج',
+                      message: 'هل تريد تسجيل الخروج من حسابك؟',
+                      confirmLabel: 'تسجيل الخروج',
+                      danger: true,
+                    );
+                    if (!confirmed || !context.mounted) return;
+                    await AuthSession.instance.logout();
+                    if (context.mounted) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                          MaterialPageRoute(builder: (_) => const RootChooserScreen()),
+                          (route) => false);
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                              color: AppColors.danger.withValues(alpha: 0.10),
+                              shape: BoxShape.circle),
+                          child: const Icon(Icons.logout_rounded,
+                              color: AppColors.danger, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text('تسجيل الخروج',
+                            style: TextStyle(
+                                color: AppColors.danger,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14)),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
-            ListTile(
-              leading: const Icon(Icons.explore_outlined, color: AppColors.navy),
-              title: const Text('استكشف'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const ExploreHubScreen()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.person_outline_rounded, color: AppColors.navy),
-              title: const Text('حسابي'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ProfileScreen()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.notifications_outlined, color: AppColors.navy),
-              title: const Text('الإشعارات'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const NotificationsScreen()));
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.support_agent_outlined, color: AppColors.navy),
-              title: const Text('مركز الدعم'),
-              onTap: () {
-                Navigator.pop(sheetContext);
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const SupportCenterScreen()));
-              },
-            ),
-            const Divider(height: 1),
-            ListTile(
-              leading: const Icon(Icons.logout_rounded, color: AppColors.danger),
-              title: const Text('تسجيل الخروج',
-                  style: TextStyle(color: AppColors.danger)),
-              onTap: () async {
-                Navigator.pop(sheetContext);
-                final confirmed = await showAppConfirmDialog(
-                  context,
-                  title: 'تسجيل الخروج',
-                  message: 'هل تريد تسجيل الخروج من حسابك؟',
-                  confirmLabel: 'تسجيل الخروج',
-                  danger: true,
-                );
-                if (!confirmed || !context.mounted) return;
-                await AuthSession.instance.logout();
-                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                          builder: (_) => const RootChooserScreen()),
-                      (route) => false);
-                }
-              },
-            ),
-            const SizedBox(height: 8),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 
@@ -651,7 +660,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       child: Column(
         children: [
           SizedBox(
-            height: 175,
+            height: 248,
             child: PageView.builder(
               controller: _journeyPageController,
               itemCount: apps.length,
@@ -1000,6 +1009,44 @@ class _HeroIconButton extends StatelessWidget {
                         color: AppColors.orange, shape: BoxShape.circle)),
           ),
       ],
+    );
+  }
+}
+
+/// Orange icon + label tile used in the hamburger menu grid.
+class _MenuTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _MenuTile(this.icon, this.label, this.onTap);
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: 80,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                  color: AppColors.orange.withValues(alpha: 0.12),
+                  shape: BoxShape.circle),
+              child: Icon(icon, color: AppColors.orange, size: 24),
+            ),
+            const SizedBox(height: 6),
+            Text(label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary)),
+          ],
+        ),
+      ),
     );
   }
 }
