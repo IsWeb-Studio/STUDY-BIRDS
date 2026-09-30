@@ -514,11 +514,44 @@ const getStudentFinancials = asyncHandler(async (req, res) => {
   const [invoices, paymentProofs, applications] = await Promise.all([
     Invoice.find({ student: req.user._id }).populate("application", "status").sort({ createdAt: -1 }),
     PaymentProof.find({ student: req.user._id }).populate("invoice", "invoiceNumber description amount status").sort({ createdAt: -1 }),
-    Application.find({ student: req.user._id }).populate('program', 'tuition').lean(),
+    Application.find({ student: req.user._id }).populate('program', 'title tuition').sort({ createdAt: -1 }).lean(),
   ]);
 
+  const idStr = v => String(v?._id || v || '');
   const paidAmount = invoices.filter((item) => item.status === "paid").reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const totalProgramFees = applications.reduce((sum, app) => sum + Number(app.program?.tuition || 0), 0);
+
+  // Per-application groups for the payments screen
+  const applicationGroups = applications.map((app, appIndex) => {
+    const appInvoices = invoices.filter(inv =>
+      idStr(inv.application) === idStr(app) ||
+      (!inv.application && appIndex === applications.length - 1)
+    );
+    const tuition = Number(app.program?.tuition || 0);
+    const appPaid = appInvoices.filter(i => i.status === 'paid').reduce((s, i) => s + Number(i.amount || 0), 0);
+    const appPending = appInvoices.filter(i => i.status === 'pending-confirmation').reduce((s, i) => s + Number(i.amount || 0), 0);
+    const appUnpaid = appInvoices.filter(i => ['unpaid', 'rejected'].includes(i.status)).reduce((s, i) => s + Number(i.amount || 0), 0);
+    const noPending = !appInvoices.some(i => ['unpaid', 'rejected', 'pending-confirmation'].includes(i.status));
+    const fullyPaid = appInvoices.length > 0 && noPending && (tuition > 0 ? appPaid >= tuition : appPaid > 0);
+    const paymentStatus = appInvoices.some(i => ['unpaid', 'rejected'].includes(i.status) && i.dueDate && new Date(i.dueDate) < new Date()) ? 'overdue'
+      : appInvoices.some(i => ['unpaid', 'rejected'].includes(i.status)) ? 'action-required'
+      : appInvoices.some(i => i.status === 'pending-confirmation') ? 'waiting'
+      : fullyPaid ? 'completed'
+      : appPaid > 0 ? 'partial'
+      : appInvoices.length ? 'not-issued'
+      : 'not-issued';
+    return {
+      applicationId: idStr(app),
+      programTitle: app.program?.title || null,
+      tuition,
+      paidAmount: appPaid,
+      pendingAmount: appPending,
+      unpaidAmount: appUnpaid,
+      remainingAmount: tuition > 0 ? Math.max(0, tuition - appPaid) : null,
+      paymentStatus,
+      invoices: appInvoices,
+    };
+  });
 
   res.json({
     summary: {
@@ -529,6 +562,7 @@ const getStudentFinancials = asyncHandler(async (req, res) => {
       remainingFees: totalProgramFees > 0 ? Math.max(0, totalProgramFees - paidAmount) : null,
       invoiceCount: invoices.length,
     },
+    applicationGroups,
     invoices,
     paymentProofs,
   });
