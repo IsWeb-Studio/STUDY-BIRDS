@@ -225,7 +225,8 @@ class JourneyRequirementsView extends StatelessWidget {
         'action-required': 'مطلوب منك',
         'overdue': 'متأخرة',
         'rejected': 'غير مقبول',
-        'not-issued': 'لم تصدر فاتورة'
+        'not-issued': 'لم تصدر فاتورة',
+        'partial': 'مدفوع جزئياً',
       }[status] ??
       'قيد المتابعة';
   Color color(dynamic status) => status == 'completed'
@@ -234,5 +235,7 @@ class JourneyRequirementsView extends StatelessWidget {
           ? AppColors.danger
           : status == 'action-required'
               ? AppColors.orange
-              : AppColors.neutral;
+              : status == 'partial'
+                  ? AppColors.info
+                  : AppColors.neutral;
 }
