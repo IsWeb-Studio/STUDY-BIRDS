@@ -668,9 +668,25 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     double progress,
     Map<String, dynamic>? homeStatus,
   ) {
-    final apps = overview.recentApplications
+    var apps = overview.recentApplications
         .whereType<Map<String, dynamic>>()
         .toList();
+
+    // Reorder to match tracker screen (overview.journeys order)
+    if (overview.journeys?.isNotEmpty == true) {
+      final ordered = <Map<String, dynamic>>[];
+      for (final j in overview.journeys!) {
+        final jId = (j as Map)['applicationId']?.toString();
+        final match = apps.where((a) => a['_id']?.toString() == jId);
+        if (match.isNotEmpty) ordered.add(match.first);
+      }
+      for (final a in apps) {
+        if (!ordered.any((o) => o['_id']?.toString() == a['_id']?.toString())) {
+          ordered.add(a);
+        }
+      }
+      if (ordered.isNotEmpty) apps = ordered;
+    }
 
     if (apps.length <= 1) {
       return Transform.translate(
@@ -702,8 +718,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   overview,
                   i,
                   apps[i],
-                  i == 0 ? journeyPathLabel : _labelFromApp(apps[i]),
-                  progress,
+                  _labelFromApp(apps[i]),
+                  _realProgressFromJourneys(overview, apps[i]['_id'] as String?),
                   homeStatus,
                 ),
               ),
@@ -871,12 +887,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     double progress,
     Map<String, dynamic>? homeStatus,
   ) {
-    final isCurrent = index == 0;
     final status = app['status'] as String? ?? 'submitted';
-    final ringValue = isCurrent ? progress : _statusToProgress(status);
-    final bottomText = isCurrent
-        ? (overview.nextAction?['descriptionAr'] as String? ?? 'تابع رحلتك الدراسية')
-        : _appStatusLabel(status);
+    final ringValue = progress;
+    final bottomText = _appStatusLabel(status);
 
     void openDetail() {
       final appId = app['_id'] as String?;
@@ -897,7 +910,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(isCurrent ? 'رحلتك الحالية' : 'رحلة دراسية',
+                    Text('رحلة دراسية',
                         style: AppTextStyles.sectionLabel),
                     const SizedBox(height: 4),
                     Text(label,
@@ -942,7 +955,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               ),
               const SizedBox(width: 8),
               PrimaryButton(
-                label: isCurrent ? 'تفاصيل الرحلة' : 'عرض التفاصيل',
+                label: 'تفاصيل الرحلة',
                 expand: false,
                 onPressed: openDetail,
               ),
@@ -953,16 +966,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     );
   }
 
-  double _statusToProgress(String status) => switch (status) {
-        'submitted'                                   => 0.10,
-        'under_review' || 'in_review' || 'reviewing' => 0.40,
-        'accepted' || 'approved'                      => 1.00,
-        'rejected'                                    => 0.00,
-        'pending' || 'pending_docs'                   => 0.20,
-        _                                             => 0.05,
-      };
-
-  String _labelFromApp(Map<String, dynamic> app) {
+String _labelFromApp(Map<String, dynamic> app) {
     final program = app['program'] as Map<String, dynamic>?;
     final university = program?['university'] as Map<String, dynamic>?;
     final parts = <String>[
@@ -970,6 +974,21 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       if (program?['name'] is String) program!['name'] as String,
     ];
     return parts.isNotEmpty ? parts.join(' — ') : 'طلب دراسي';
+  }
+
+  double _realProgressFromJourneys(DashboardOverview overview, String? appId) {
+    if (appId == null || overview.journeys == null) return 0.0;
+    final matches = overview.journeys!
+        .whereType<Map<String, dynamic>>()
+        .where((j) => j['applicationId']?.toString() == appId)
+        .toList();
+    if (matches.isEmpty) return 0.0;
+    final journey = matches.first;
+    final stages = (journey['stages'] as List? ?? []).whereType<Map>().toList();
+    final active = stages.where((s) => s['status'] != 'not-required').toList();
+    if (active.isEmpty) return 0.0;
+    final done = active.where((s) => s['status'] == 'completed').length;
+    return done / active.length;
   }
 
   String _appStatusLabel(String status) => switch (status) {

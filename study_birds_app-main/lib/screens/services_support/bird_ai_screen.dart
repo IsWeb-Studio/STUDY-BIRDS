@@ -118,95 +118,101 @@ class _BirdAssistantScreenState extends State<BirdAssistantScreen> {
             onPressed: busy || loading ? null : _newThread,
             icon: const Icon(Icons.add_comment_outlined))
       ],
-      bottomBar: SafeArea(
-          child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
-              child: Row(children: [
-                Expanded(
-                    child: TextField(
-                        controller: input,
-                        enabled: !busy && !loading,
-                        maxLength: 2000,
-                        minLines: 1,
-                        maxLines: 4,
-                        textInputAction: TextInputAction.send,
-                        onSubmitted: (_) => send(),
-                        decoration: featureInput('رسالتك للمساعد...'))),
-                const SizedBox(width: 4),
-                IconButton(
-                    onPressed: busy || loading ? null : () => send(),
-                    icon: busy
-                        ? const SizedBox(width: 22, height: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2.5))
-                        : const Icon(Icons.send_rounded, color: AppColors.navy))
-              ]))),
       body: loading
           ? const LoadingState()
-          : ListView(
-              controller: _scrollCtrl,
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              children: [
-                const InlineNotice(
-                    'مساعد آلي للمعلومات العامة. رسائلك تُرسل لمزوّد الذكاء الاصطناعي وتُحفظ في حسابك. لا ترسل كلمات مرور أو مستندات هوية.'),
-                if (error != null) ...[const SizedBox(height: 8), InlineNotice(error!, error: true)],
+          : Column(children: [
+              Expanded(
+                child: ListView(
+                  controller: _scrollCtrl,
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                  children: [
+                    const InlineNotice(
+                        'مساعد آلي للمعلومات العامة. رسائلك تُرسل لمزوّد الذكاء الاصطناعي وتُحفظ في حسابك. لا ترسل كلمات مرور أو مستندات هوية.'),
+                    if (error != null) ...[const SizedBox(height: 8), InlineNotice(error!, error: true)],
 
-                // Empty state — show suggested questions + thread history
-                if (messages.isEmpty) ...[
-                  const SizedBox(height: 20),
-                  Row(children: [
-                    const Icon(Icons.auto_awesome_rounded, size: 18, color: AppColors.orange),
-                    const SizedBox(width: 8),
-                    Text('اقتراحات لك', style: AppTextStyles.sectionLabel),
-                  ]),
-                  const SizedBox(height: 10),
-                  if (suggestedQuestions.isNotEmpty)
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children: suggestedQuestions.map((q) => GestureDetector(
-                        onTap: busy ? null : () => send(q),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                          decoration: BoxDecoration(
-                            color: AppColors.navy.withValues(alpha: 0.06),
-                            borderRadius: BorderRadius.circular(AppRadius.chip),
-                            border: Border.all(color: AppColors.navy.withValues(alpha: 0.18)),
-                          ),
-                          child: Text(q, style: AppTextStyles.body.copyWith(fontSize: 13, color: AppColors.navy)),
+                    if (messages.isEmpty) ...[
+                      const SizedBox(height: 20),
+                      Row(children: [
+                        const Icon(Icons.auto_awesome_rounded, size: 18, color: AppColors.orange),
+                        const SizedBox(width: 8),
+                        Text('اقتراحات لك', style: AppTextStyles.sectionLabel),
+                      ]),
+                      const SizedBox(height: 10),
+                      if (suggestedQuestions.isNotEmpty)
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: suggestedQuestions.map((q) => GestureDetector(
+                            onTap: busy ? null : () => send(q),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                              decoration: BoxDecoration(
+                                color: AppColors.navy.withValues(alpha: 0.06),
+                                borderRadius: BorderRadius.circular(AppRadius.chip),
+                                border: Border.all(color: AppColors.navy.withValues(alpha: 0.18)),
+                              ),
+                              child: Text(q, style: AppTextStyles.body.copyWith(fontSize: 13, color: AppColors.navy)),
+                            ),
+                          )).toList(),
                         ),
-                      )).toList(),
-                    ),
-                  if (threads.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    const Text('محادثات سابقة', style: AppTextStyles.sectionLabel),
+                      if (threads.isNotEmpty) ...[
+                        const SizedBox(height: 20),
+                        const Text('محادثات سابقة', style: AppTextStyles.sectionLabel),
+                        const SizedBox(height: 8),
+                        for (final thread in threads)
+                          ListTile(
+                              dense: true,
+                              leading: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
+                              title: Text('${thread['title']}',
+                                  maxLines: 1, overflow: TextOverflow.ellipsis,
+                                  style: AppTextStyles.body.copyWith(fontSize: 14)),
+                              onTap: busy ? null : () => open('${thread['_id']}')),
+                      ],
+                    ],
+
+                    for (final row in messages) ...[
+                      const SizedBox(height: 12),
+                      _MessageBubble(
+                        role: row['role'] as String? ?? 'user',
+                        content: row['content'] as String? ?? '',
+                      ),
+                    ],
+
+                    if (busy && messages.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      const _TypingIndicator(),
+                    ],
                     const SizedBox(height: 8),
-                    for (final thread in threads)
-                      ListTile(
-                          dense: true,
-                          leading: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
-                          title: Text('${thread['title']}',
-                              maxLines: 1, overflow: TextOverflow.ellipsis,
-                              style: AppTextStyles.body.copyWith(fontSize: 14)),
-                          onTap: busy ? null : () => open('${thread['_id']}')),
                   ],
-                ],
-
-                // Messages
-                for (final row in messages) ...[
-                  const SizedBox(height: 12),
-                  _MessageBubble(
-                    role: row['role'] as String? ?? 'user',
-                    content: row['content'] as String? ?? '',
-                  ),
-                ],
-
-                // Typing indicator
-                if (busy && messages.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  const _TypingIndicator(),
-                ],
-                const SizedBox(height: 8),
-              ]));
+                ),
+              ),
+              // Input bar — inside body so keyboard pushes it up
+              SafeArea(
+                top: false,
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                  child: Row(children: [
+                    Expanded(
+                        child: TextField(
+                            controller: input,
+                            enabled: !busy && !loading,
+                            maxLength: 2000,
+                            minLines: 1,
+                            maxLines: 4,
+                            textInputAction: TextInputAction.send,
+                            onSubmitted: (_) => send(),
+                            decoration: featureInput('رسالتك للمساعد...'))),
+                    const SizedBox(width: 4),
+                    IconButton(
+                        onPressed: busy || loading ? null : () => send(),
+                        icon: busy
+                            ? const SizedBox(width: 22, height: 22,
+                                child: CircularProgressIndicator(strokeWidth: 2.5))
+                            : const Icon(Icons.send_rounded, color: AppColors.navy))
+                  ]),
+                ),
+              ),
+            ]));
 }
 
 class _MessageBubble extends StatelessWidget {

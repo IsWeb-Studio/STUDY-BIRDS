@@ -6,6 +6,8 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/app_theme.dart';
 import '../../core/analytics_service.dart';
+import '../../core/api_client.dart';
+import '../../core/feature_ui.dart';
 import '../../core/student_repository.dart';
 import 'faq_screen.dart';
 import 'knowledge_base_screen.dart';
@@ -363,68 +365,181 @@ class _SupportTicketsListScreenState extends State<SupportTicketsListScreen> {
   }
 }
 
-class SupportTicketDetailScreen extends StatelessWidget {
+class SupportTicketDetailScreen extends StatefulWidget {
   final Map<String, dynamic> ticket;
   const SupportTicketDetailScreen({super.key, required this.ticket});
+  @override
+  State<SupportTicketDetailScreen> createState() =>
+      _SupportTicketDetailScreenState();
+}
+
+class _SupportTicketDetailScreenState
+    extends State<SupportTicketDetailScreen> {
+  late Map<String, dynamic> _ticket;
+  final _replyCtrl = TextEditingController();
+  final _scrollCtrl = ScrollController();
+  bool _sending = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ticket = widget.ticket;
+  }
+
+  @override
+  void dispose() {
+    _replyCtrl.dispose();
+    _scrollCtrl.dispose();
+    super.dispose();
+  }
+
+  bool get _isClosed => _ticket['status'] == 'closed';
+
+  Future<void> _send() async {
+    final msg = _replyCtrl.text.trim();
+    if (msg.isEmpty || _sending) return;
+    setState(() => _sending = true);
+    try {
+      final updated = await StudentRepository.instance.replyToSupportTicket(
+        ticketId: _ticket['_id'] as String,
+        message: msg,
+      );
+      if (!mounted) return;
+      setState(() {
+        _ticket = updated;
+        _replyCtrl.clear();
+      });
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollCtrl.hasClients) {
+          _scrollCtrl.animateTo(
+            _scrollCtrl.position.maxScrollExtent,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e is ApiException ? e.message : 'تعذر إرسال الرد')));
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final attachment = ticket['attachment'] as Map<String, dynamic>?;
-    final replies = ticket['replies'] as List<dynamic>? ?? [];
-    final meta = ticketStatusMeta(ticket['status'] as String?);
+    final attachment = _ticket['attachment'] as Map<String, dynamic>?;
+    final replies = _ticket['replies'] as List<dynamic>? ?? [];
+    final meta = ticketStatusMeta(_ticket['status'] as String?);
 
     return AppScaffold(
-      title: ticket['subject'] as String? ?? 'تذكرة دعم',
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      title: _ticket['subject'] as String? ?? 'تذكرة دعم',
+      body: Column(
         children: [
-          Align(
-              alignment: Alignment.centerRight,
-              child: StatusBadge(label: meta.label, color: meta.color)),
-          const SizedBox(height: 16),
-          if (attachment?['filePath'] is String)
-            OutlinedButton.icon(
-              icon: const Icon(Icons.attach_file_rounded),
-              label: Text(attachment?['fileName'] as String? ?? 'فتح المرفق'),
-              onPressed: () async {
-                try {
-                  final uri = await resolveDocumentDownload(
-                      attachment!['filePath'] as String);
-                  if (!await launchUrl(uri,
-                      mode: LaunchMode.externalApplication))
-                    throw Exception('Cannot open attachment');
-                } catch (_) {
-                  if (context.mounted)
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                        content: Text(
-                            'تعذر فتح المرفق. تحقق من الجلسة والصلاحيات.')));
-                }
-              },
+          Expanded(
+            child: ListView(
+              controller: _scrollCtrl,
+              padding: const EdgeInsets.all(16),
+              children: [
+                Align(
+                    alignment: Alignment.centerRight,
+                    child: StatusBadge(label: meta.label, color: meta.color)),
+                const SizedBox(height: 16),
+                if (attachment?['filePath'] is String)
+                  OutlinedButton.icon(
+                    icon: const Icon(Icons.attach_file_rounded),
+                    label:
+                        Text(attachment?['fileName'] as String? ?? 'فتح المرفق'),
+                    onPressed: () async {
+                      try {
+                        final uri = await resolveDocumentDownload(
+                            attachment!['filePath'] as String);
+                        if (!await launchUrl(uri,
+                            mode: LaunchMode.externalApplication))
+                          throw Exception('Cannot open attachment');
+                      } catch (_) {
+                        if (context.mounted)
+                          ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content: Text(
+                                      'تعذر فتح المرفق. تحقق من الجلسة والصلاحيات.')));
+                      }
+                    },
+                  ),
+                ...replies.map((r) {
+                  final reply = r as Map<String, dynamic>;
+                  final isStudent = reply['fromRole'] == 'student';
+                  return Align(
+                    alignment:
+                        isStudent ? Alignment.centerLeft : Alignment.centerRight,
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 10),
+                      constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.75),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: isStudent ? AppColors.navy : Colors.white,
+                        borderRadius: BorderRadius.circular(14),
+                        border: isStudent
+                            ? null
+                            : Border.all(color: AppColors.border),
+                      ),
+                      child: Text(reply['message'] as String? ?? '',
+                          style: TextStyle(
+                              color: isStudent
+                                  ? Colors.white
+                                  : AppColors.textPrimary,
+                              fontSize: 13.5)),
+                    ),
+                  );
+                }),
+              ],
             ),
-          ...replies.map((r) {
-            final reply = r as Map<String, dynamic>;
-            final isStudent = reply['fromRole'] == 'student';
-            return Align(
-              alignment:
-                  isStudent ? Alignment.centerLeft : Alignment.centerRight,
+          ),
+          // Reply bar — hidden only when ticket is closed
+          if (!_isClosed)
+            SafeArea(
+              top: false,
               child: Container(
-                margin: const EdgeInsets.only(bottom: 10),
-                constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.75),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isStudent ? AppColors.navy : Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border:
-                      isStudent ? null : Border.all(color: AppColors.border),
+                color: Colors.white,
+                padding: EdgeInsets.only(
+                  left: 12,
+                  right: 12,
+                  top: 10,
+                  bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 10 : 10,
                 ),
-                child: Text(reply['message'] as String? ?? '',
-                    style: TextStyle(
-                        color: isStudent ? Colors.white : AppColors.textPrimary,
-                        fontSize: 13.5)),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _replyCtrl,
+                        enabled: !_sending,
+                        maxLines: 4,
+                        minLines: 1,
+                        maxLength: 4000,
+                        textAlign: TextAlign.right,
+                        decoration: featureInput('ردّك على التذكرة')
+                            .copyWith(counterText: ''),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton.filled(
+                      tooltip: 'إرسال',
+                      onPressed: _sending ? null : _send,
+                      icon: _sending
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                  strokeWidth: 2, color: Colors.white))
+                          : const Icon(Icons.send_rounded),
+                    ),
+                  ],
+                ),
               ),
-            );
-          }),
+            ),
         ],
       ),
     );

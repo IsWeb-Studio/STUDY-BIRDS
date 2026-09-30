@@ -366,6 +366,18 @@ class StudentRepository {
     {'key': 'other', 'label': 'أخرى'},
   ];
 
+  Future<Map<String, dynamic>> replyToSupportTicket({
+    required String ticketId,
+    required String message,
+  }) async {
+    final data = await ApiClient.instance.patch(
+      '/students/support-tickets/$ticketId/reply',
+      token: _token,
+      body: {'message': message},
+    );
+    return data as Map<String, dynamic>;
+  }
+
   Future<Map<String, dynamic>> createSupportTicket({
     required String subject,
     required String message,
