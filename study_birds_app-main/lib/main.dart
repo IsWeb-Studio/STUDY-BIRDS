@@ -255,15 +255,15 @@ class ConnectedPrototypeEntry extends StatelessWidget {
   static void _goAccountType(BuildContext context) {
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (ctx) => AccountTypeSelectionScreen(
-        onSelected: (_) {
+        onSelected: (type) {
           AnalyticsService.instance.onboardingCompleted();
-          _goLogin(ctx);
+          _goLogin(ctx, selectedRole: type);
         },
       ),
     ));
   }
 
-  static void _goLogin(BuildContext context) {
+  static void _goLogin(BuildContext context, {String? selectedRole}) {
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (ctx) => LoginScreen(
         onForgotPassword: () => Navigator.of(ctx).push(
@@ -273,7 +273,8 @@ class ConnectedPrototypeEntry extends StatelessWidget {
         onGoRegister: () => Navigator.of(ctx).push(MaterialPageRoute(
           builder: (ctx2) => RegisterScreen(
               onRegisterAttempt: (name, email, password) =>
-                  _attemptRegister(ctx2, name, email, password)),
+                  _attemptRegister(ctx2, name, email, password,
+                      role: selectedRole)),
         )),
         onGoogleSignInSuccess: () {
           if (!ctx.mounted) return;
@@ -331,21 +332,21 @@ class ConnectedPrototypeEntry extends StatelessWidget {
     return true;
   }
 
-  /// Public registration — always creates a Student account (enforced
-  /// server-side too), matching the spec rule that a public user can never
-  /// self-register as Parent/Agent/University/Employee/Admin.
+  /// Public registration. Only 'student' and 'parent' roles are accepted;
+  /// all other values are ignored by the server and default to 'student'.
   static Future<bool> _attemptRegister(
     BuildContext context,
     String name,
     String email,
-    String password,
-  ) async {
+    String password, {
+    String? role,
+  }) async {
     final AuthUser user;
     final String token;
     String? refreshToken;
     try {
       final result = await AuthService.instance
-          .register(name: name, email: email, password: password);
+          .register(name: name, email: email, password: password, role: role);
       user = result.user;
       token = result.token;
       refreshToken = result.refreshToken;
@@ -360,8 +361,11 @@ class ConnectedPrototypeEntry extends StatelessWidget {
     navigator.pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const RootChooserScreen()),
         (route) => false);
-    navigator.push(MaterialPageRoute(
-        builder: (_) => const StudentRegistrationWizardScreen()));
+    // Only students get the profile setup wizard after registration.
+    if (user.role == UserRole.student) {
+      navigator.push(MaterialPageRoute(
+          builder: (_) => const StudentRegistrationWizardScreen()));
+    }
     return true;
   }
 }

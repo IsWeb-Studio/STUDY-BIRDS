@@ -189,18 +189,20 @@ class AuthService {
     return (user: user, token: token, refreshToken: data['refreshToken'] as String?);
   }
 
-  /// Public registration — the backend always forces role="student" here,
-  /// matching the spec rule that nobody can self-register as
-  /// parent/agent/university/admin.
+  /// Public registration. Only 'student' and 'parent' are allowed as
+  /// self-register roles; the server ignores any other value and defaults to
+  /// 'student'.
   Future<({AuthUser user, String token, String? refreshToken})> register({
     required String name,
     required String email,
     required String password,
+    String? role,
   }) async {
     final data = await ApiClient.instance.post('/auth/register', body: {
       'name': name,
       'email': email.trim(),
       'password': password,
+      if (role != null) 'role': role,
     });
     final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
     final token = data['token'] as String;
