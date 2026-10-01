@@ -107,6 +107,7 @@ class AuthUser {
   final String? employeeRole; // e.g. 'admission', 'finance', 'super_admin'
   final Set<String> permissions;
   final String? linkedUniversityId;
+  final String? avatar;
 
   const AuthUser({
     required this.id,
@@ -116,6 +117,7 @@ class AuthUser {
     this.employeeRole,
     this.permissions = const {},
     this.linkedUniversityId,
+    this.avatar,
   });
 
   /// Parses the `user` object exactly as returned by the backend's
@@ -142,6 +144,7 @@ class AuthUser {
       linkedUniversityId: linked is String
           ? linked
           : (linked is Map ? linked['_id'] as String? : null),
+      avatar: json['avatar'] as String?,
     );
   }
 
@@ -153,6 +156,7 @@ class AuthUser {
         if (employeeRole != null) 'employeeRole': employeeRole,
         'permissions': permissions.toList(),
         if (linkedUniversityId != null) 'linkedUniversity': linkedUniversityId,
+        if (avatar != null) 'avatar': avatar,
       };
 }
 

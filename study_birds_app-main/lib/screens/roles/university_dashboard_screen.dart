@@ -1,6 +1,7 @@
 import '../services_support/messaging_and_emergency_screens.dart';
 import '../profile_account/security_settings_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/app_theme.dart';
 import '../../core/api_client.dart';
 import '../../core/auth_session.dart';
@@ -8,6 +9,7 @@ import '../../core/university_repository.dart';
 import '../applications_documents_payments/applications_screens.dart'
     show appStatusMeta;
 import 'university_application_review_screen.dart';
+import '../../main.dart' show RootChooserScreen;
 
 class UniversityDashboardScreen extends StatefulWidget {
   const UniversityDashboardScreen({super.key});
@@ -24,6 +26,8 @@ class _UniversityDashboardScreenState
   String? _error;
   String _statusFilter = 'all';
   int _favoritesCount = 0;
+  String? _avatarUrl;
+  bool _avatarUploading = false;
   final _searchCtrl = TextEditingController();
 
   static const _statusOptions = [
@@ -39,6 +43,7 @@ class _UniversityDashboardScreenState
   @override
   void initState() {
     super.initState();
+    _avatarUrl = AuthSession.instance.currentUser?.avatar;
     _load();
     _searchCtrl.addListener(_applyFilter);
   }
@@ -47,6 +52,45 @@ class _UniversityDashboardScreenState
   void dispose() {
     _searchCtrl.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickAvatar() async {
+    final img = await ImagePicker().pickImage(
+        source: ImageSource.gallery, imageQuality: 80, maxWidth: 512);
+    if (img == null || !mounted) return;
+    final bytes = await img.readAsBytes();
+    if (!mounted) return;
+    setState(() => _avatarUploading = true);
+    try {
+      final url = await UniversityRepository.instance
+          .uploadAvatar(fileBytes: bytes, fileName: img.name);
+      if (mounted) setState(() => _avatarUrl = url);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('تعذر رفع الصورة'),
+            backgroundColor: AppColors.danger));
+      }
+    } finally {
+      if (mounted) setState(() => _avatarUploading = false);
+    }
+  }
+
+  Future<void> _logout() async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'تسجيل الخروج',
+      message: 'هل تريد تسجيل الخروج من حسابك؟',
+      confirmLabel: 'تسجيل الخروج',
+      danger: true,
+    );
+    if (!confirmed || !mounted) return;
+    await AuthSession.instance.logout();
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const RootChooserScreen()),
+          (_) => false);
+    }
   }
 
   Future<void> _load() async {
@@ -118,11 +162,36 @@ class _UniversityDashboardScreenState
             icon: const Icon(Icons.forum_outlined),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const ConversationThreadScreen()))),
-        IconButton(
-            tooltip: 'أمان الحساب',
-            icon: const Icon(Icons.security_outlined),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const SecuritySettingsScreen()))),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert_rounded),
+          onSelected: (value) async {
+            if (value == 'security') {
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const SecuritySettingsScreen()));
+            } else if (value == 'logout') {
+              await _logout();
+            }
+          },
+          itemBuilder: (_) => const [
+            PopupMenuItem(
+              value: 'security',
+              child: Row(children: [
+                Icon(Icons.security_outlined, size: 18),
+                SizedBox(width: 10),
+                Text('أمان الحساب'),
+              ]),
+            ),
+            PopupMenuItem(
+              value: 'logout',
+              child: Row(children: [
+                Icon(Icons.logout_rounded, size: 18, color: AppColors.danger),
+                SizedBox(width: 10),
+                Text('تسجيل الخروج',
+                    style: TextStyle(color: AppColors.danger)),
+              ]),
+            ),
+          ],
+        ),
       ],
       title: 'بوابة الجامعة',
       body: RefreshIndicator(
@@ -143,7 +212,15 @@ class _UniversityDashboardScreenState
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        SliverToBoxAdapter(child: _HeroBanner(uniName: uniName, favoritesCount: favorites)),
+        SliverToBoxAdapter(
+          child: _HeroBanner(
+            uniName: uniName,
+            favoritesCount: favorites,
+            avatarUrl: _avatarUrl,
+            avatarUploading: _avatarUploading,
+            onPickAvatar: _pickAvatar,
+          ),
+        ),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -271,7 +348,16 @@ class _UniversityDashboardScreenState
 class _HeroBanner extends StatelessWidget {
   final String uniName;
   final int favoritesCount;
-  const _HeroBanner({required this.uniName, required this.favoritesCount});
+  final String? avatarUrl;
+  final bool avatarUploading;
+  final VoidCallback onPickAvatar;
+  const _HeroBanner({
+    required this.uniName,
+    required this.favoritesCount,
+    required this.onPickAvatar,
+    this.avatarUrl,
+    this.avatarUploading = false,
+  });
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -289,15 +375,53 @@ class _HeroBanner extends StatelessWidget {
         children: [
           Row(
             children: [
-              Container(
-                width: 54,
-                height: 54,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
+              GestureDetector(
+                onTap: avatarUploading ? null : onPickAvatar,
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 58,
+                      height: 58,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.4),
+                            width: 2),
+                      ),
+                      child: avatarUploading
+                          ? const Padding(
+                              padding: EdgeInsets.all(14),
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2))
+                          : avatarUrl != null
+                              ? ClipOval(
+                                  child: Image.network(avatarUrl!,
+                                      fit: BoxFit.cover,
+                                      width: 58,
+                                      height: 58,
+                                      errorBuilder: (_, __, ___) =>
+                                          const Icon(Icons.account_balance_rounded,
+                                              color: Colors.white, size: 28)))
+                              : const Icon(Icons.account_balance_rounded,
+                                  color: Colors.white, size: 28),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: const BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.edit_rounded,
+                            size: 12, color: AppColors.navy),
+                      ),
+                    ),
+                  ],
                 ),
-                child: const Icon(Icons.account_balance_rounded,
-                    color: Colors.white, size: 28),
               ),
               const SizedBox(width: 14),
               Expanded(

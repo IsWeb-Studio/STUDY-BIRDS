@@ -188,8 +188,9 @@ class _UniversityApplicationReviewScreenState
               const Divider(height: 1),
               ConstrainedBox(
                 constraints: BoxConstraints(
-                    maxHeight:
-                        MediaQuery.of(ctx).size.height * 0.35),
+                    maxHeight: (MediaQuery.of(ctx).size.height * 0.35 -
+                            MediaQuery.of(ctx).viewInsets.bottom)
+                        .clamp(80.0, double.infinity)),
                 child: ListView.separated(
                   shrinkWrap: true,
                   padding: const EdgeInsets.symmetric(vertical: 6),
