@@ -42,13 +42,23 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   bool _loading = true;
   String? _error;
   final _searchController = TextEditingController();
-  String? _statusFilter; // null = all
+  String? _statusFilter;
+  String? _stageFilter;
 
   static const _statusOptions = [
     (key: 'under-review', label: 'قيد المراجعة'),
     (key: 'preliminary-accepted', label: 'قبول مبدئي'),
     (key: 'final-accepted', label: 'قبول نهائي'),
     (key: 'rejected', label: 'مرفوض'),
+  ];
+
+  static const _stageOptions = [
+    (key: 'initial', label: 'استشارة مبدئية'),
+    (key: 'documents', label: 'جمع الوثائق'),
+    (key: 'submitted', label: 'تم التقديم'),
+    (key: 'admission', label: 'القبول'),
+    (key: 'visa', label: 'التأشيرة'),
+    (key: 'enrolled', label: 'مسجّل'),
   ];
 
   @override
@@ -97,12 +107,20 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
         final student = s as Map<String, dynamic>;
         final nameMatch = q.isEmpty ||
             (student['name'] as String? ?? '').toLowerCase().contains(q) ||
-            (student['desiredUniversity'] as String? ?? '').toLowerCase().contains(q);
-        final statusMatch = _statusFilter == null ||
-            student['applicationStatus'] == _statusFilter;
-        return nameMatch && statusMatch;
+            (student['desiredUniversity'] as String? ?? '').toLowerCase().contains(q) ||
+            (student['country'] as String? ?? '').toLowerCase().contains(q);
+        final statusMatch = _statusFilter == null || student['applicationStatus'] == _statusFilter;
+        final stageMatch = _stageFilter == null || student['applicationStage'] == _stageFilter;
+        return nameMatch && statusMatch && stageMatch;
       }).toList();
     });
+  }
+
+  String _stageLabel(String stage) {
+    for (final opt in _stageOptions) {
+      if (opt.key == stage) return opt.label;
+    }
+    return stage;
   }
 
   Future<void> _openAddStudent() async {
@@ -203,18 +221,37 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                           _FilterChip(
                             label: 'الكل',
                             selected: _statusFilter == null,
-                            onTap: () {
-                              setState(() => _statusFilter = null);
-                              _applyFilter();
-                            },
+                            onTap: () { setState(() => _statusFilter = null); _applyFilter(); },
                           ),
                           ..._statusOptions.map((opt) => _FilterChip(
                                 label: opt.label,
                                 selected: _statusFilter == opt.key,
                                 color: agentStudentStatusMeta(opt.key).color,
                                 onTap: () {
-                                  setState(() => _statusFilter =
-                                      _statusFilter == opt.key ? null : opt.key);
+                                  setState(() => _statusFilter = _statusFilter == opt.key ? null : opt.key);
+                                  _applyFilter();
+                                },
+                              )),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    SizedBox(
+                      height: 36,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _FilterChip(
+                            label: 'كل المراحل',
+                            selected: _stageFilter == null,
+                            onTap: () { setState(() => _stageFilter = null); _applyFilter(); },
+                          ),
+                          ..._stageOptions.map((opt) => _FilterChip(
+                                label: opt.label,
+                                selected: _stageFilter == opt.key,
+                                color: AppColors.info,
+                                onTap: () {
+                                  setState(() => _stageFilter = _stageFilter == opt.key ? null : opt.key);
                                   _applyFilter();
                                 },
                               )),
@@ -260,14 +297,28 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(student['name'] as String? ?? '—',
-                                        style: AppTextStyles.cardTitle),
+                                    Text(student['name'] as String? ?? '—', style: AppTextStyles.cardTitle),
                                     Text(
-                                        student['desiredUniversity']
-                                                as String? ??
-                                            student['email'] as String? ??
-                                            '',
-                                        style: AppTextStyles.caption),
+                                      [
+                                        if ((student['desiredUniversity'] as String?)?.isNotEmpty == true)
+                                          student['desiredUniversity'] as String,
+                                        if ((student['country'] as String?)?.isNotEmpty == true)
+                                          student['country'] as String,
+                                      ].join(' · ').isNotEmpty
+                                          ? [
+                                              if ((student['desiredUniversity'] as String?)?.isNotEmpty == true)
+                                                student['desiredUniversity'] as String,
+                                              if ((student['country'] as String?)?.isNotEmpty == true)
+                                                student['country'] as String,
+                                            ].join(' · ')
+                                          : student['email'] as String? ?? '',
+                                      style: AppTextStyles.caption,
+                                    ),
+                                    if ((student['applicationStage'] as String?) != null)
+                                      Text(
+                                        _stageLabel(student['applicationStage'] as String),
+                                        style: AppTextStyles.caption.copyWith(color: AppColors.info, fontSize: 11),
+                                      ),
                                   ],
                                 ),
                               ),
@@ -346,8 +397,19 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
   final _phone = TextEditingController();
   final _university = TextEditingController();
   final _program = TextEditingController();
+  final _country = TextEditingController();
+  String _stage = 'initial';
   bool _saving = false;
   String? _error;
+
+  static const _stageOptions = [
+    (key: 'initial', label: 'استشارة مبدئية'),
+    (key: 'documents', label: 'جمع الوثائق'),
+    (key: 'submitted', label: 'تم التقديم'),
+    (key: 'admission', label: 'القبول'),
+    (key: 'visa', label: 'التأشيرة'),
+    (key: 'enrolled', label: 'مسجّل'),
+  ];
 
   @override
   void dispose() {
@@ -356,20 +418,16 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
     _phone.dispose();
     _university.dispose();
     _program.dispose();
+    _country.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    if (_name.text.trim().isEmpty ||
-        _email.text.trim().isEmpty ||
-        _phone.text.trim().isEmpty) {
+    if (_name.text.trim().isEmpty || _email.text.trim().isEmpty || _phone.text.trim().isEmpty) {
       setState(() => _error = 'الاسم والبريد ورقم الهاتف مطلوبين');
       return;
     }
-    setState(() {
-      _saving = true;
-      _error = null;
-    });
+    setState(() { _saving = true; _error = null; });
     try {
       await AgentRepository.instance.createStudent(
         name: _name.text.trim(),
@@ -377,18 +435,18 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
         phone: _phone.text.trim(),
         desiredUniversity: _university.text.trim(),
         desiredProgram: _program.text.trim(),
+        country: _country.text.trim(),
+        applicationStage: _stage,
       );
       if (mounted) Navigator.of(context).pop(true);
     } catch (_) {
-      if (mounted)
-        setState(() =>
-            _error = 'تعذر إضافة الطالب، تأكد من البيانات وحاول مرة أخرى.');
+      if (mounted) setState(() => _error = 'تعذر إضافة الطالب، تأكد من البيانات وحاول مرة أخرى.');
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
-  Widget _field(String label, TextEditingController controller) {
+  Widget _field(String label, TextEditingController controller, {TextInputType? type}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -403,11 +461,11 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
                 border: Border.all(color: AppColors.border)),
             child: TextField(
                 controller: controller,
+                keyboardType: type,
                 textAlign: TextAlign.right,
                 decoration: const InputDecoration(
                     border: InputBorder.none,
-                    contentPadding:
-                        EdgeInsets.symmetric(vertical: 12, horizontal: 12))),
+                    contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12))),
           ),
         ],
       ),
@@ -424,14 +482,46 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _field('الاسم الكامل', _name),
-            _field('البريد الإلكتروني', _email),
-            _field('رقم الهاتف', _phone),
+            _field('البريد الإلكتروني', _email, type: TextInputType.emailAddress),
+            _field('رقم الهاتف', _phone, type: TextInputType.phone),
+            _field('بلد الدراسة (اختياري)', _country),
             _field('الجامعة المطلوبة (اختياري)', _university),
             _field('البرنامج المطلوب (اختياري)', _program),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('مرحلة التقديم', style: AppTextStyles.caption),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: _stageOptions.map((opt) {
+                      final selected = _stage == opt.key;
+                      return GestureDetector(
+                        onTap: () => setState(() => _stage = opt.key),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: selected ? AppColors.info : Colors.white,
+                            borderRadius: BorderRadius.circular(AppRadius.chip),
+                            border: Border.all(color: selected ? AppColors.info : AppColors.border),
+                          ),
+                          child: Text(opt.label, style: TextStyle(
+                            color: selected ? Colors.white : AppColors.textPrimary,
+                            fontSize: 12,
+                            fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
+                          )),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
             if (_error != null) ...[
-              Text(_error!,
-                  style:
-                      const TextStyle(color: AppColors.danger, fontSize: 12.5)),
+              Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12.5)),
               const SizedBox(height: 10),
             ],
             PrimaryButton(

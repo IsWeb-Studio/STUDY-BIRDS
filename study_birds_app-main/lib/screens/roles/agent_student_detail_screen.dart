@@ -23,6 +23,17 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
     _student = widget.initialData;
   }
 
+  static const _stageLabels = {
+    'initial': 'استشارة مبدئية',
+    'documents': 'جمع الوثائق',
+    'submitted': 'تم التقديم',
+    'admission': 'القبول',
+    'visa': 'التأشيرة',
+    'enrolled': 'مسجّل',
+  };
+
+  String _stageLabelOf(String stage) => _stageLabels[stage] ?? stage;
+
   Future<void> _uploadDocument() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'], withData: true);
     if (result == null || result.files.isEmpty) return;
@@ -85,9 +96,21 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
                 _MiniRow(label: 'البريد الإلكتروني', value: s['email'] as String? ?? '—'),
                 const Divider(height: 20),
                 _MiniRow(label: 'الهاتف', value: s['phone'] as String? ?? '—'),
+                if ((s['country'] as String?)?.isNotEmpty == true) ...[
+                  const Divider(height: 20),
+                  _MiniRow(label: 'بلد الدراسة', value: s['country'] as String),
+                ],
+                if ((s['desiredUniversity'] as String?)?.isNotEmpty == true) ...[
+                  const Divider(height: 20),
+                  _MiniRow(label: 'الجامعة المطلوبة', value: s['desiredUniversity'] as String),
+                ],
                 if ((s['desiredProgram'] as String?)?.isNotEmpty == true) ...[
                   const Divider(height: 20),
                   _MiniRow(label: 'البرنامج المطلوب', value: s['desiredProgram'] as String),
+                ],
+                if ((s['applicationStage'] as String?) != null) ...[
+                  const Divider(height: 20),
+                  _MiniRow(label: 'مرحلة التقديم', value: _stageLabelOf(s['applicationStage'] as String)),
                 ],
               ],
             ),
