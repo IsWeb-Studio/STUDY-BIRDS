@@ -90,12 +90,12 @@ void main() async {
       options.attachViewHierarchy = true;
     },
     appRunner: () async {
+      runApp(SentryWidget(child: const StudyBirdsApp()));
       await PushNotificationService.instance.init();
       await CurrencyService.instance.load();
       await AnalyticsService.instance.init();
       await GoogleSignInService.instance.init();
       RealtimeSyncService.instance.start();
-      runApp(SentryWidget(child: const StudyBirdsApp()));
     },
   );
 }
