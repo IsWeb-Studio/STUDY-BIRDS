@@ -304,36 +304,19 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   Widget _buildChildrenChips() {
-    return SizedBox(
-      height: 40,
-      child: ListView.separated(
-        scrollDirection: Axis.horizontal,
-        itemCount: _children.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, i) {
-          final child = _children[i] as Map<String, dynamic>;
-          final selected = i == _selectedIndex;
-          return GestureDetector(
-            onTap: () => _selectChild(i),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: selected ? AppColors.navy : Colors.white,
-                borderRadius: BorderRadius.circular(AppRadius.chip),
-                border: Border.all(
-                    color: selected ? AppColors.navy : AppColors.border),
-              ),
-              child: Text(child['name'] as String? ?? '—',
-                  style: TextStyle(
-                      color:
-                          selected ? Colors.white : AppColors.textPrimary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13)),
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          for (int i = 0; i < _children.length; i++) ...[
+            if (i > 0) const SizedBox(width: 8),
+            _ChildChip(
+              name: (_children[i] as Map<String, dynamic>)['name'] as String? ?? '—',
+              selected: i == _selectedIndex,
+              onTap: () => _selectChild(i),
             ),
-          );
-        },
+          ],
+        ],
       ),
     );
   }
@@ -757,6 +740,41 @@ class _MiniFact extends StatelessWidget {
           style:
               AppTextStyles.body.copyWith(fontWeight: FontWeight.w700)),
     ]);
+  }
+}
+
+class _ChildChip extends StatelessWidget {
+  final String name;
+  final bool selected;
+  final VoidCallback onTap;
+  const _ChildChip({required this.name, required this.selected, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? AppColors.navy : Colors.white,
+      borderRadius: BorderRadius.circular(AppRadius.chip),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppRadius.chip),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(AppRadius.chip),
+            border: Border.all(
+                color: selected ? AppColors.navy : AppColors.border),
+          ),
+          child: Text(
+            name,
+            style: TextStyle(
+              color: selected ? Colors.white : AppColors.textPrimary,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 
