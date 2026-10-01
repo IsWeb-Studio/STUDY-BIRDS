@@ -129,6 +129,19 @@ const router = express.Router();
 const { authorizeAdminSection } = require("../middleware/employeeAccess");
 
 router.use(protect, authorizeAdminSection);
+
+// Upload avatar for the logged-in employee/admin
+const { uploadFileToCloudinary } = require("../utils/uploadToCloudinary");
+const User = require("../models/User");
+const asyncHandler = require("../utils/asyncHandler");
+router.post("/me/avatar", upload.single("file"), asyncHandler(async (req, res) => {
+  if (!req.file) { res.status(400); throw new Error("No file uploaded"); }
+  const result = await uploadFileToCloudinary(req.file, "employee-avatars");
+  const url = result.secure_url || result.url;
+  await User.findByIdAndUpdate(req.user._id, { avatar: url });
+  res.json({ avatar: url });
+}));
+
 for (const kind of ['insurance', 'equivalency']) {
   const controller = require('../controllers/studentServicesController');
   router.get(`/students/:id/${kind}`, controller.staffRead(kind));
