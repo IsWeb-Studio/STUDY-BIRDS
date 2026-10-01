@@ -85,6 +85,8 @@ const getChildOverview = asyncHandler(async (req, res) => {
     throw new Error("You are not linked to this student");
   }
 
+  await link.populate("student", "name email avatar");
+
   const [profile, applications, notifications] = await Promise.all([
     StudentProfile.findOne({ user: req.params.studentId }).select(
       "journeyStage applicationStage targetCountries intake currentEducationLevel"
