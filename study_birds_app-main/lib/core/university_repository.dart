@@ -39,4 +39,9 @@ class UniversityRepository {
       if (reason != null) 'reason': reason,
     });
   }
+
+  Future<int> getFavoritesCount() async {
+    final data = await ApiClient.instance.get('/university-portal/favorites-count', token: _token);
+    return (data as Map<String, dynamic>)['count'] as int? ?? 0;
+  }
 }

@@ -48,7 +48,7 @@ class _UniversityApplicationReviewScreenState
     extends State<UniversityApplicationReviewScreen> {
   late Map<String, dynamic> _app;
   bool _updating = false;
-  bool _refreshing = false;
+  bool _firstLoad = true;
 
   @override
   void initState() {
@@ -58,14 +58,13 @@ class _UniversityApplicationReviewScreenState
   }
 
   Future<void> _refresh() async {
-    setState(() => _refreshing = true);
     try {
       final data = await UniversityRepository.instance
           .getApplicationById(widget.applicationId);
       if (mounted) setState(() => _app = data);
     } catch (_) {}
     finally {
-      if (mounted) setState(() => _refreshing = false);
+      if (mounted) setState(() => _firstLoad = false);
     }
   }
 
@@ -218,7 +217,7 @@ class _UniversityApplicationReviewScreenState
       body: RefreshIndicator(
         onRefresh: _refresh,
         color: AppColors.navy,
-        child: _refreshing && _app.isEmpty
+        child: _firstLoad
             ? const LoadingState(message: 'جاري التحميل...')
             : ListView(
                 padding: const EdgeInsets.all(16),

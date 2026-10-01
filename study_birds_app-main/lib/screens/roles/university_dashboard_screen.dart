@@ -23,6 +23,7 @@ class _UniversityDashboardScreenState
   bool _loading = true;
   String? _error;
   String _statusFilter = 'all';
+  int _favoritesCount = 0;
   final _searchCtrl = TextEditingController();
 
   static const _statusOptions = [
@@ -54,10 +55,14 @@ class _UniversityDashboardScreenState
       _error = null;
     });
     try {
-      final data = await UniversityRepository.instance.getApplications();
+      final results = await Future.wait([
+        UniversityRepository.instance.getApplications(),
+        UniversityRepository.instance.getFavoritesCount(),
+      ]);
       if (!mounted) return;
       setState(() {
-        _all = data;
+        _all = results[0] as List<dynamic>;
+        _favoritesCount = results[1] as int;
         _loading = false;
       });
       _applyFilter();
@@ -128,17 +133,17 @@ class _UniversityDashboardScreenState
             : _error != null
                 ? ErrorState(message: _error!, onRetry: _load)
                 : _buildContent(
-                    uniName, total, pending, accepted, rejected),
+                    uniName, total, pending, accepted, rejected, _favoritesCount),
       ),
     );
   }
 
   Widget _buildContent(
-      String uniName, int total, int pending, int accepted, int rejected) {
+      String uniName, int total, int pending, int accepted, int rejected, int favorites) {
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        SliverToBoxAdapter(child: _HeroBanner(uniName: uniName)),
+        SliverToBoxAdapter(child: _HeroBanner(uniName: uniName, favoritesCount: favorites)),
         SliverToBoxAdapter(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
@@ -265,7 +270,8 @@ class _UniversityDashboardScreenState
 // ─── Hero Banner ─────────────────────────────────────────────────────────────
 class _HeroBanner extends StatelessWidget {
   final String uniName;
-  const _HeroBanner({required this.uniName});
+  final int favoritesCount;
+  const _HeroBanner({required this.uniName, required this.favoritesCount});
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -278,34 +284,59 @@ class _HeroBanner extends StatelessWidget {
         ),
       ),
       padding: const EdgeInsets.fromLTRB(20, 22, 20, 22),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Icon(Icons.account_balance_rounded,
-                color: Colors.white, size: 28),
+          Row(
+            children: [
+              Container(
+                width: 54,
+                height: 54,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Icon(Icons.account_balance_rounded,
+                    color: Colors.white, size: 28),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(uniName,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w700),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
+                    const SizedBox(height: 3),
+                    const Text('بوابة استعراض وإدارة طلبات القبول',
+                        style: TextStyle(
+                            color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 14),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Text(uniName,
-                    style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 17,
-                        fontWeight: FontWeight.w700),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis),
-                const SizedBox(height: 3),
-                const Text('بوابة استعراض وإدارة طلبات القبول',
-                    style: TextStyle(
-                        color: Colors.white70, fontSize: 12)),
+                const Icon(Icons.favorite_rounded,
+                    color: Colors.pinkAccent, size: 16),
+                const SizedBox(width: 7),
+                Text(
+                  '$favoritesCount طالب أضاف جامعتك إلى المفضلة',
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                ),
               ],
             ),
           ),
