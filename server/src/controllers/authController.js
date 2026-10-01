@@ -42,6 +42,11 @@ const register = asyncHandler(async (req, res) => {
     throw new Error("Name, email, and password are required");
   }
 
+  // Only 'student' and 'parent' may self-register; all other roles are admin-created.
+  const allowedSelfRegisterRoles = ["student", "parent"];
+  const requestedRole = req.body.role;
+  const role = allowedSelfRegisterRoles.includes(requestedRole) ? requestedRole : "student";
+
   const existingUser = await User.findOne({ email: normalizedEmail });
   if (existingUser) {
     res.status(400);
@@ -52,11 +57,11 @@ const register = asyncHandler(async (req, res) => {
     name: String(name || "").trim(),
     email: normalizedEmail,
     password,
-    role: "student",
+    role,
     authProvider: "local",
   });
 
-  await ensureStudentProfile(user._id);
+  if (role === "student") await ensureStudentProfile(user._id);
   if (typeof req.body.referralCode === "string" && req.body.referralCode.trim()) {
     await recordReferralSignup(user._id, req.body.referralCode).catch((error) => console.error("Referral signup failed", error.message));
   }
