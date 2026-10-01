@@ -2,6 +2,8 @@ const asyncHandler = require("../utils/asyncHandler");
 const Application = require("../models/Application");
 const Notification = require("../models/Notification");
 const FavoriteItem = require("../models/FavoriteItem");
+const User = require("../models/User");
+const { uploadFileToCloudinary } = require("../utils/uploadToCloudinary");
 
 /**
  * CRITICAL AUTHORIZATION RULE: every query below filters by
@@ -97,10 +99,18 @@ const getFavoritesCount = asyncHandler(async (req, res) => {
   res.json({ count });
 });
 
+const uploadAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) { res.status(400); throw new Error("No file uploaded"); }
+  const result = await uploadFileToCloudinary(req.file, "university-avatars");
+  await User.findByIdAndUpdate(req.user._id, { avatar: result.secure_url || result.url });
+  res.json({ avatar: result.secure_url || result.url });
+});
+
 module.exports = {
   getApplications,
   getApplicationById,
   updateApplicationStatus,
   requestDocument,
   getFavoritesCount,
+  uploadAvatar,
 };
