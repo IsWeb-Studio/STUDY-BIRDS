@@ -1,6 +1,7 @@
 const asyncHandler = require("../utils/asyncHandler");
 const Application = require("../models/Application");
 const Notification = require("../models/Notification");
+const FavoriteItem = require("../models/FavoriteItem");
 
 /**
  * CRITICAL AUTHORIZATION RULE: every query below filters by
@@ -90,9 +91,16 @@ const requestDocument = asyncHandler(async (req, res) => {
   res.json({ message: "Document request sent to student" });
 });
 
+const getFavoritesCount = asyncHandler(async (req, res) => {
+  const universityId = requireLinkedUniversity(req, res);
+  const count = await FavoriteItem.countDocuments({ itemType: "university", university: universityId });
+  res.json({ count });
+});
+
 module.exports = {
   getApplications,
   getApplicationById,
   updateApplicationStatus,
   requestDocument,
+  getFavoritesCount,
 };
