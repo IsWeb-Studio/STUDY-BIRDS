@@ -107,6 +107,7 @@ class AuthUser {
   final Set<String> permissions;
   final String? linkedUniversityId;
   final String? avatar;
+  final String? verifiedPhone;
 
   const AuthUser({
     required this.id,
@@ -117,6 +118,7 @@ class AuthUser {
     this.permissions = const {},
     this.linkedUniversityId,
     this.avatar,
+    this.verifiedPhone,
   });
 
   /// Parses the `user` object exactly as returned by the backend's
@@ -144,6 +146,7 @@ class AuthUser {
           ? linked
           : (linked is Map ? linked['_id'] as String? : null),
       avatar: json['avatar'] as String?,
+      verifiedPhone: json['verifiedPhone'] as String?,
     );
   }
 
@@ -156,6 +159,7 @@ class AuthUser {
         'permissions': permissions.toList(),
         if (linkedUniversityId != null) 'linkedUniversity': linkedUniversityId,
         if (avatar != null) 'avatar': avatar,
+        if (verifiedPhone != null) 'verifiedPhone': verifiedPhone,
       };
 }
 
@@ -384,6 +388,21 @@ class AuthSession extends ChangeNotifier {
     }
     _restored = true;
     notifyListeners();
+  }
+
+  /// Fetches fresh user data from /auth/me and updates the session in-place.
+  /// Called after phone verification to pick up the new verifiedPhone value.
+  Future<void> refreshCurrentUser() async {
+    final t = token;
+    if (t == null) return;
+    try {
+      final user = await AuthService.instance.fetchCurrentUser(t);
+      if (user != null) {
+        currentUser = user;
+        await _cacheUser(user);
+        notifyListeners();
+      }
+    } catch (_) {}
   }
 
   Future<void> login(AuthUser user, {String? authToken, String? refreshToken}) async {

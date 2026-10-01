@@ -32,6 +32,7 @@ import 'screens/home_journey/important_dates_screen.dart';
 import 'screens/home_journey/global_search_screen.dart';
 
 import 'screens/auth/verify_contact_screen.dart';
+import 'screens/auth/phone_verification_screen.dart';
 import 'screens/profile_account/security_settings_screen.dart';
 
 import 'screens/universities_programs_countries/compare_list_screen.dart';
@@ -234,10 +235,36 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
         listenable: AuthSession.instance,
         builder: (context, _) {
           final user = AuthSession.instance.currentUser;
-          return user == null
-              ? const ConnectedPrototypeEntry()
-              : getHomeRouteForUser(user);
+          if (user == null) return const ConnectedPrototypeEntry();
+          if (user.verifiedPhone == null || user.verifiedPhone!.isEmpty) {
+            return _PhoneVerificationGate(user: user);
+          }
+          return getHomeRouteForUser(user);
         });
+  }
+}
+
+/// Shown when the logged-in user has no verified phone number.
+/// Blocks access to the app until a phone number is verified.
+/// Uses PhoneVerificationScreen directly (no nested Scaffold).
+class _PhoneVerificationGate extends StatelessWidget {
+  final AuthUser user;
+  const _PhoneVerificationGate({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      child: PhoneVerificationScreen(
+        onVerified: () => AuthSession.instance.refreshCurrentUser(),
+        actions: [
+          TextButton(
+            onPressed: () => AuthSession.instance.logout(),
+            child: const Text('خروج', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 }
 
