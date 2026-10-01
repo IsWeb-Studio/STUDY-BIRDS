@@ -263,19 +263,40 @@ class ConnectedPrototypeEntry extends StatelessWidget {
     ));
   }
 
+  // Roles that require admin to create — self-registration is disabled.
+  static const _adminCreatedRoles = {'university', 'employee'};
+
   static void _goLogin(BuildContext context, {String? selectedRole}) {
+    final adminOnly = _adminCreatedRoles.contains(selectedRole);
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (ctx) => LoginScreen(
         onForgotPassword: () => Navigator.of(ctx).push(
             MaterialPageRoute(builder: (_) => const PasswordReset2FAScreen())),
         onLoginAttempt: (email, password) =>
             _attemptLogin(ctx, email, password),
-        onGoRegister: () => Navigator.of(ctx).push(MaterialPageRoute(
-          builder: (ctx2) => RegisterScreen(
-              onRegisterAttempt: (name, email, password) =>
-                  _attemptRegister(ctx2, name, email, password,
-                      role: selectedRole)),
-        )),
+        onGoRegister: adminOnly
+            ? () => showDialog(
+                  context: ctx,
+                  builder: (_) => AlertDialog(
+                    title: const Text('إنشاء الحساب'),
+                    content: Text(
+                      selectedRole == 'university'
+                          ? 'حسابات الجامعات يتم إنشاؤها من قبل فريق Study Birds.\n\nإذا كان لديك حساب بالفعل، سجّل دخولك مباشرة.'
+                          : 'حسابات الموظفين يتم إنشاؤها من قبل الإدارة.\n\nإذا كان لديك حساب، سجّل دخولك مباشرة.',
+                    ),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('حسنًا')),
+                    ],
+                  ),
+                )
+            : () => Navigator.of(ctx).push(MaterialPageRoute(
+                  builder: (ctx2) => RegisterScreen(
+                      onRegisterAttempt: (name, email, password) =>
+                          _attemptRegister(ctx2, name, email, password,
+                              role: selectedRole)),
+                )),
         onGoogleSignInSuccess: () {
           if (!ctx.mounted) return;
           Navigator.of(ctx).pushAndRemoveUntil(
