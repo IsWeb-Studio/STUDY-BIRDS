@@ -305,12 +305,17 @@ const requestOtp = asyncHandler(async (req, res) => {
   const existing = await Challenge.findOne({ key });
   if (existing && Date.now() - existing.createdAt.getTime() < 60000) return res.status(429).json({ message: 'انتظر دقيقة قبل طلب رمز جديد' });
   await Challenge.deleteOne({ key });
-  await fetch(`https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/Verifications`, {
+  const twilioRes = await fetch(`https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/Verifications`, {
     method: 'POST',
     headers: { Authorization: 'Basic ' + Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({ To: phone, Channel: 'whatsapp' }),
     signal: AbortSignal.timeout(15000),
-  }).then(r => { if (!r.ok) throw new Error('SMS provider error'); });
+  });
+  if (!twilioRes.ok) {
+    const body = await twilioRes.json().catch(() => ({}));
+    console.error('[OTP] Twilio error:', twilioRes.status, JSON.stringify(body));
+    return res.status(502).json({ message: body.message || 'تعذر إرسال الرمز. حاول مجدداً.' });
+  }
   await Challenge.create({ key, value: phone, createdAt: new Date() });
   res.json({ sent: true });
 });
