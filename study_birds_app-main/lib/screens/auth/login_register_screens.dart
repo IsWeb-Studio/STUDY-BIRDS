@@ -103,7 +103,14 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       final ok = await GoogleSignInService.instance.signIn();
       if (!mounted) return;
-      if (ok) widget.onGoogleSignInSuccess?.call();
+      if (ok) {
+        widget.onGoogleSignInSuccess?.call();
+      } else {
+        // Native sign-in was dismissed or rejected (e.g. SHA1 not registered).
+        // Fall back to the PKCE browser flow so the user can still sign in.
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const BrowserSignInScreen()));
+      }
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
