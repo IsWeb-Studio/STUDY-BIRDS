@@ -5,7 +5,7 @@ import '../../core/api_client.dart';
 import '../../core/auth_session.dart';
 
 class PhoneVerificationScreen extends StatefulWidget {
-  final VoidCallback? onVerified;
+  final void Function(String verifiedPhone)? onVerified;
   final List<Widget>? actions;
   const PhoneVerificationScreen({super.key, this.onVerified, this.actions});
   @override
@@ -48,7 +48,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
           verified = sent;
           sent = true;
         });
-        if (verified) widget.onVerified?.call();
+        if (verified) widget.onVerified?.call(phone.text.trim());
       }
     } catch (e) {
       if (mounted)

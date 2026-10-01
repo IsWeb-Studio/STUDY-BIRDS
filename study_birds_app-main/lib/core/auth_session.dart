@@ -390,8 +390,28 @@ class AuthSession extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Instantly marks verifiedPhone on the current user without a network round-trip.
+  /// Call this immediately after a successful phone verification so the gate
+  /// disappears without waiting for /auth/me.
+  void patchVerifiedPhone(String phone) {
+    final u = currentUser;
+    if (u == null) return;
+    currentUser = AuthUser(
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      employeeRole: u.employeeRole,
+      permissions: u.permissions,
+      linkedUniversityId: u.linkedUniversityId,
+      avatar: u.avatar,
+      verifiedPhone: phone,
+    );
+    notifyListeners();
+    refreshCurrentUser();
+  }
+
   /// Fetches fresh user data from /auth/me and updates the session in-place.
-  /// Called after phone verification to pick up the new verifiedPhone value.
   Future<void> refreshCurrentUser() async {
     final t = token;
     if (t == null) return;

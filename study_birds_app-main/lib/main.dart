@@ -256,7 +256,7 @@ class _PhoneVerificationGate extends StatelessWidget {
     return PopScope(
       canPop: false,
       child: PhoneVerificationScreen(
-        onVerified: () => AuthSession.instance.refreshCurrentUser(),
+        onVerified: (phone) => AuthSession.instance.patchVerifiedPhone(phone),
         actions: [
           TextButton(
             onPressed: () => AuthSession.instance.logout(),
