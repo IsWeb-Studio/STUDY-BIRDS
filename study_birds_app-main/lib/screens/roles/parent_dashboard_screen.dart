@@ -416,6 +416,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
 
   Widget _buildOverviewCards(Map<String, dynamic> overview) {
     final applications = overview['applications'] as List<dynamic>? ?? [];
+    final notifications = overview['notifications'] as List<dynamic>? ?? [];
     final student = overview['student'] as Map<String, dynamic>?;
     final targetCountries =
         (overview['targetCountries'] as List<dynamic>? ?? []).join('، ');
@@ -423,6 +424,20 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     final stageName = (stageKey != null ? _stageLabels[stageKey] : null) ??
         stageKey ??
         '—';
+
+    // Ordered journey milestones to display as a mini-roadmap
+    const milestones = [
+      ('applying', 'التقديم', Icons.edit_document),
+      ('preliminary-accepted', 'القبول المبدئي', Icons.check_circle_outline_rounded),
+      ('first-payment', 'الدفعة الأولى', Icons.payments_outlined),
+      ('final-accepted', 'القبول النهائي', Icons.verified_rounded),
+      ('visa', 'التأشيرة', Icons.card_travel_rounded),
+      ('travel', 'السفر', Icons.flight_takeoff_rounded),
+      ('accommodation', 'السكن', Icons.home_work_outlined),
+    ];
+
+    final stageKeys = _stageLabels.keys.toList();
+    final currentIdx = stageKey != null ? stageKeys.indexOf(stageKey) : -1;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -471,30 +486,95 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           ),
         ),
         const SizedBox(height: 10),
-        // Journey stage card
+
+        // Journey stage card — current stage highlighted
         AppCard(
-          child: Row(children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10)),
-              child: const Icon(Icons.timeline_rounded,
-                  color: AppColors.orange, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                  const Text('مرحلة الرحلة الدراسية',
-                      style: AppTextStyles.caption),
-                  Text(stageName, style: AppTextStyles.cardTitle),
-                ])),
-          ]),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                      color: AppColors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(10)),
+                  child: const Icon(Icons.timeline_rounded,
+                      color: AppColors.orange, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                    child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                      const Text('المرحلة الحالية',
+                          style: AppTextStyles.caption),
+                      Text(stageName, style: AppTextStyles.cardTitle),
+                    ])),
+              ]),
+              if (stageKey != null) ...[
+                const SizedBox(height: 14),
+                // Mini roadmap for key milestones
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: milestones.map((m) {
+                    final mIdx = stageKeys.indexOf(m.$1);
+                    final isDone = mIdx != -1 && currentIdx >= mIdx;
+                    final isCurrent = m.$1 == stageKey;
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: isCurrent
+                            ? AppColors.orange.withValues(alpha: 0.12)
+                            : isDone
+                                ? AppColors.success.withValues(alpha: 0.08)
+                                : AppColors.border.withValues(alpha: 0.5),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isCurrent
+                              ? AppColors.orange
+                              : isDone
+                                  ? AppColors.success.withValues(alpha: 0.4)
+                                  : AppColors.border,
+                        ),
+                      ),
+                      child: Row(mainAxisSize: MainAxisSize.min, children: [
+                        Icon(
+                          isDone ? Icons.check_circle_rounded : m.$3,
+                          size: 13,
+                          color: isCurrent
+                              ? AppColors.orange
+                              : isDone
+                                  ? AppColors.success
+                                  : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          m.$2,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: isCurrent
+                                ? FontWeight.w700
+                                : FontWeight.normal,
+                            color: isCurrent
+                                ? AppColors.orange
+                                : isDone
+                                    ? AppColors.success
+                                    : AppColors.textSecondary,
+                          ),
+                        ),
+                      ]),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ],
+          ),
         ),
         const SizedBox(height: 16),
+
         // Applications
         const Text('الطلبات الجامعية', style: AppTextStyles.sectionLabel),
         const SizedBox(height: 10),
@@ -536,6 +616,73 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               ),
             );
           }),
+
+        // Important Notifications
+        if (notifications.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Text('الإشعارات المهمة', style: AppTextStyles.sectionLabel),
+          const SizedBox(height: 10),
+          ...notifications.map((n) {
+            final notif = n as Map<String, dynamic>;
+            final type = notif['type'] as String? ?? 'info';
+            final isRead = notif['isRead'] as bool? ?? true;
+            final notifColor = switch (type) {
+              'success' => AppColors.success,
+              'warning' => AppColors.warning,
+              _ => AppColors.info,
+            };
+            final notifIcon = switch (type) {
+              'success' => Icons.check_circle_outline_rounded,
+              'warning' => Icons.warning_amber_rounded,
+              _ => Icons.notifications_none_rounded,
+            };
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: AppCard(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                          color: notifColor.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(10)),
+                      child: Icon(notifIcon, color: notifColor, size: 18),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Expanded(
+                                child: Text(notif['title'] as String? ?? '',
+                                    style: AppTextStyles.cardTitle
+                                        .copyWith(fontSize: 13))),
+                            if (!isRead)
+                              Container(
+                                width: 7,
+                                height: 7,
+                                decoration: const BoxDecoration(
+                                    color: AppColors.orange,
+                                    shape: BoxShape.circle),
+                              ),
+                          ]),
+                          const SizedBox(height: 2),
+                          Text(notif['message'] as String? ?? '',
+                              style: AppTextStyles.caption,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
       ],
     );
   }
