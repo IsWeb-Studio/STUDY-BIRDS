@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../core/app_theme.dart';
 import '../../core/parent_repository.dart';
 import '../../core/auth_session.dart';
@@ -734,78 +735,122 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           _buildChildrenChips(),
           const SizedBox(height: 16),
         ],
-        const Text('سجل المدفوعات', style: AppTextStyles.sectionLabel),
+        const Text('فواتير الطالب', style: AppTextStyles.sectionLabel),
         const SizedBox(height: 10),
         if (_loadingPayments)
           const LoadingState()
         else if (_payments == null)
           const AppCard(
-              child: Text('تعذر تحميل المدفوعات.',
+              child: Text('تعذر تحميل الفواتير.',
                   style: AppTextStyles.caption))
         else if (_payments!.isEmpty)
           const AppCard(
               child: Text('لا توجد فواتير مسجّلة بعد لهذا الطالب.',
                   style: AppTextStyles.caption))
         else
-          ..._payments!.map(_buildPaymentRow),
+          ..._payments!.map(_buildInvoiceRow),
         const SizedBox(height: 24),
       ],
     );
   }
 
-  Widget _buildPaymentRow(dynamic p) {
-    final payment = p as Map<String, dynamic>;
-    final status = payment['status'] as String? ?? '';
-    final amount = payment['amount'] ?? payment['total'];
-    final desc = payment['description'] as String? ??
-        payment['invoiceNumber'] as String? ??
-        'فاتورة';
-    final dueDate = payment['dueDate'] as String?;
+  Widget _buildInvoiceRow(dynamic p) {
+    final inv = p as Map<String, dynamic>;
+    final status = inv['status'] as String? ?? 'unpaid';
+    final amount = inv['amount'];
+    final currency = inv['currency'] as String? ?? 'USD';
+    final desc = inv['description'] as String? ?? inv['invoiceNumber'] as String? ?? 'فاتورة';
+    final invNum = inv['invoiceNumber'] as String? ?? '';
+    final dueDate = inv['dueDate'] as String?;
+    final proofs = inv['proofs'] as List<dynamic>? ?? [];
+    final canPay = status == 'unpaid' || status == 'rejected';
+
     final (label, color) = switch (status) {
       'paid' => ('مدفوع', AppColors.success),
+      'pending-confirmation' => ('قيد المراجعة', AppColors.warning),
       'rejected' => ('مرفوض', AppColors.danger),
-      'pending-review' => ('قيد المراجعة', AppColors.warning),
       _ => ('غير مدفوع', AppColors.orange),
     };
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: 12),
       child: AppCard(
-        child: Row(children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10)),
-            child: Icon(
-                status == 'paid'
-                    ? Icons.check_circle_outline_rounded
-                    : Icons.payments_outlined,
-                color: color,
-                size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-            Text(desc, style: AppTextStyles.cardTitle),
-            if (dueDate != null)
-              Text(
-                  'الاستحقاق: ${_formatDate(dueDate)}',
-                  style: AppTextStyles.caption),
-          ])),
-          const SizedBox(width: 8),
-          Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-            if (amount != null)
-              Text('$amount \$',
-                  style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: AppColors.textPrimary)),
-            StatusBadge(label: label, color: color),
-          ]),
-        ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Container(
+                width: 42, height: 42,
+                decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10)),
+                child: Icon(
+                    status == 'paid' ? Icons.check_circle_outline_rounded : Icons.receipt_long_outlined,
+                    color: color, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Text(desc, style: AppTextStyles.cardTitle),
+                if (invNum.isNotEmpty) Text(invNum, style: AppTextStyles.caption),
+                if (dueDate != null) Text('الاستحقاق: ${_formatDate(dueDate)}', style: AppTextStyles.caption),
+              ])),
+              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                if (amount != null)
+                  Text('$amount $currency',
+                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary)),
+                const SizedBox(height: 4),
+                StatusBadge(label: label, color: color),
+              ]),
+            ]),
+
+            // Previous proofs
+            if (proofs.isNotEmpty) ...[
+              const Divider(height: 16),
+              ...proofs.map((pr) {
+                final proof = pr as Map<String, dynamic>;
+                final paidBy = proof['paidBy'] as Map<String, dynamic>?;
+                final paidByName = paidBy?['name'] as String?;
+                final paidByRole = paidBy?['role'] as String?;
+                final pStatus = proof['status'] as String? ?? 'pending';
+                final (pLabel, pColor) = switch (pStatus) {
+                  'approved' => ('مقبول', AppColors.success),
+                  'rejected' => ('مرفوض', AppColors.danger),
+                  _ => ('قيد المراجعة', AppColors.warning),
+                };
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: Row(children: [
+                    const Icon(Icons.attach_file_rounded, size: 14, color: AppColors.textSecondary),
+                    const SizedBox(width: 6),
+                    Expanded(child: Text(
+                      paidByName != null
+                          ? (paidByRole == 'parent' ? 'دفعها الوالد/الوالدة ($paidByName)' : 'دفعها الطالب')
+                          : 'إثبات دفع',
+                      style: AppTextStyles.caption)),
+                    StatusBadge(label: pLabel, color: pColor),
+                  ]),
+                );
+              }),
+            ],
+
+            // Pay button
+            if (canPay) ...[
+              const SizedBox(height: 10),
+              SizedBox(
+                width: double.infinity,
+                child: _PayInvoiceButton(
+                  studentId: (_children[_selectedIndex] as Map<String, dynamic>)['_id'] as String,
+                  invoiceId: inv['_id'] as String,
+                  invoiceDesc: desc,
+                  onPaid: () {
+                    _loadPayments(_selectedIndex);
+                  },
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -1041,6 +1086,78 @@ class _InputField extends StatelessWidget {
             border: InputBorder.none,
             contentPadding: const EdgeInsets.symmetric(
                 vertical: 12, horizontal: 12)),
+      ),
+    );
+  }
+}
+
+class _PayInvoiceButton extends StatefulWidget {
+  final String studentId;
+  final String invoiceId;
+  final String invoiceDesc;
+  final VoidCallback onPaid;
+  const _PayInvoiceButton({
+    required this.studentId,
+    required this.invoiceId,
+    required this.invoiceDesc,
+    required this.onPaid,
+  });
+
+  @override
+  State<_PayInvoiceButton> createState() => _PayInvoiceButtonState();
+}
+
+class _PayInvoiceButtonState extends State<_PayInvoiceButton> {
+  bool _uploading = false;
+
+  Future<void> _pay() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return;
+    final file = result.files.single;
+    if (file.bytes == null) return;
+
+    setState(() => _uploading = true);
+    try {
+      await ParentRepository.instance.uploadPaymentProof(
+        studentId: widget.studentId,
+        invoiceId: widget.invoiceId,
+        fileBytes: file.bytes!,
+        fileName: file.name,
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('تم إرسال إثبات الدفع، بانتظار مراجعة الفريق'),
+            backgroundColor: AppColors.success));
+        widget.onPaid();
+      }
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('تعذر رفع الملف، حاول مرة أخرى'),
+            backgroundColor: AppColors.danger));
+      }
+    } finally {
+      if (mounted) setState(() => _uploading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: _uploading ? null : _pay,
+      icon: _uploading
+          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+          : const Icon(Icons.upload_file_rounded, size: 16),
+      label: Text(_uploading ? 'جاري الرفع...' : 'رفع إثبات الدفع'),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.navy,
+        side: const BorderSide(color: AppColors.navy),
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        textStyle: const TextStyle(fontFamily: 'Tajawal', fontWeight: FontWeight.w600, fontSize: 13),
       ),
     );
   }

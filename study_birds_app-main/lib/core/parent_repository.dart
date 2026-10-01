@@ -40,4 +40,21 @@ class ParentRepository {
     final data = await ApiClient.instance.get('/parents/children/$studentId/payments', token: _token);
     return data as List<dynamic>;
   }
+
+  Future<Map<String, dynamic>> uploadPaymentProof({
+    required String studentId,
+    required String invoiceId,
+    required List<int> fileBytes,
+    required String fileName,
+    String? note,
+  }) async {
+    final data = await ApiClient.instance.postMultipart(
+      '/parents/children/$studentId/invoices/$invoiceId/pay',
+      token: _token,
+      fileBytes: fileBytes,
+      fileName: fileName,
+      fields: {if (note != null && note.isNotEmpty) 'note': note},
+    );
+    return data as Map<String, dynamic>;
+  }
 }
