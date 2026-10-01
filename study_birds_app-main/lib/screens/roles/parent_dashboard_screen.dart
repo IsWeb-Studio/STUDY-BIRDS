@@ -259,7 +259,6 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       return ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          // وضع مؤقت حتى الموافقة
           AppCard(
             child: Column(
               children: [
@@ -281,6 +280,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           const Text('طلبات الربط', style: AppTextStyles.sectionLabel),
           const SizedBox(height: 10),
           ..._linkRequests.map(_buildLinkRequestRow),
+          const SizedBox(height: 24),
+          _buildLinkRequestForm(),
           const SizedBox(height: 24),
         ],
       );
