@@ -430,13 +430,12 @@ class _ConnectedHomeShellState extends State<_ConnectedHomeShell> {
                                       if ((banner['imageUrl'] ?? '')
                                           .toString()
                                           .isNotEmpty)
-                                        Image.network(banner['imageUrl'],
+                                        AppNetworkImage(banner['imageUrl'],
                                             fit: BoxFit.cover,
-                                            errorBuilder: (_, __, ___) =>
-                                                Center(
-                                                    child: Icon(
-                                                        Icons.image_outlined,
-                                                        color: primary))),
+                                            errorWidget: Center(
+                                                child: Icon(
+                                                    Icons.image_outlined,
+                                                    color: primary))),
                                       if ((banner['title'] ?? '')
                                           .toString()
                                           .isNotEmpty)

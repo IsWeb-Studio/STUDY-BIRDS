@@ -417,6 +417,7 @@ class AuthSession extends ChangeNotifier {
     final owner = currentUser?.id ?? '';
     currentUser = null;
     token = null;
+    ApiClient.instance.clearCache();
     notifyListeners();
     const storage = FlutterSecureStorage();
     final refresh = await storage.read(key: 'refresh_token');

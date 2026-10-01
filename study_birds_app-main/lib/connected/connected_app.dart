@@ -1188,10 +1188,10 @@ Widget resourceCard(BuildContext context, Json item, VoidCallback open) {
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             if (image is String && image.startsWith('https://'))
-              Image.network(image,
+              AppNetworkImage(image,
                   height: 130,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                  errorWidget: const SizedBox.shrink()),
             ListTile(
                 title: Text(itemTitle(item),
                     style: const TextStyle(fontWeight: FontWeight.w700)),

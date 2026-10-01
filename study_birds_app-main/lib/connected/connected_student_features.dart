@@ -792,10 +792,10 @@ class _CatalogCard extends StatelessWidget {
           if (picture is String && picture.startsWith('https://')) ...[
             ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.network(picture,
+                child: AppNetworkImage(picture,
                     height: 130,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const SizedBox.shrink())),
+                    errorWidget: const SizedBox.shrink())),
             const SizedBox(height: 12)
           ],
           Row(children: [
@@ -936,10 +936,10 @@ class _DesignedDetails extends StatelessWidget {
       if (image is String && image.startsWith('https://')) ...[
         ClipRRect(
             borderRadius: BorderRadius.circular(18),
-            child: Image.network(image,
+            child: AppNetworkImage(image,
                 height: 200,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink())),
+                errorWidget: const SizedBox.shrink())),
         const SizedBox(height: 16)
       ],
       _WorkspaceHero(

@@ -78,15 +78,11 @@ class _BannerCarouselState extends State<BannerCarousel> {
                   onTap: () => widget.onBannerTap(banner.linkUrl),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(AppRadius.card),
-                    child: Image.network(
+                    child: AppNetworkImage(
                       banner.imageUrl,
                       fit: BoxFit.cover,
                       width: double.infinity,
-                      loadingBuilder: (context, child, progress) {
-                        if (progress == null) return child;
-                        return const LoadingState();
-                      },
-                      errorBuilder: (context, error, stackTrace) => Container(
+                      errorWidget: Container(
                         color: AppColors.navy.withValues(alpha: 0.06),
                         alignment: Alignment.center,
                         child: const Icon(Icons.image_not_supported_outlined, color: AppColors.textSecondary, size: 32),

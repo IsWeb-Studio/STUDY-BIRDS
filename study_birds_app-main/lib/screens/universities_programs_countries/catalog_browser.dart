@@ -701,9 +701,9 @@ class _CatalogCardState extends State<_CatalogCard> {
                             ? Icons.account_balance_outlined
                             : Icons.school_outlined,
                         color: AppColors.navy)
-                    : Image.network(logo,
+                    : AppNetworkImage(logo,
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorWidget: const Icon(
                             Icons.account_balance_outlined,
                             color: AppColors.navy))),
             const SizedBox(width: 12),

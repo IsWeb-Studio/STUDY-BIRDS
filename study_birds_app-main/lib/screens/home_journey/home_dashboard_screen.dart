@@ -535,10 +535,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     children: [
                       if (image.isNotEmpty)
                         Expanded(
-                          child: Image.network(
+                          child: AppNetworkImage(
                             image,
                             fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => const Icon(
+                            errorWidget: const Icon(
                               Icons.verified_outlined,
                               color: AppColors.orange,
                               size: 24,

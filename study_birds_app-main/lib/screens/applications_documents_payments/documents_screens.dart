@@ -247,11 +247,11 @@ class _DocThumb extends StatelessWidget {
     if (isImg && thumbUrl != null && thumbUrl.isNotEmpty) {
       return ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: Image.network(thumbUrl,
+          child: AppNetworkImage(thumbUrl,
               width: 40,
               height: 40,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorWidget: Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
@@ -571,11 +571,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   ? const Center(
                       child: CircularProgressIndicator(color: AppColors.navy))
                   : _previewUri != null
-                      ? Image.network(
+                      ? AppNetworkImage(
                           _previewUri.toString(),
                           fit: BoxFit.cover,
                           width: double.infinity,
-                          errorBuilder: (_, __, ___) => const Center(
+                          errorWidget: const Center(
                               child: Icon(Icons.description_outlined,
                                   size: 48, color: AppColors.textSecondary)),
                         )

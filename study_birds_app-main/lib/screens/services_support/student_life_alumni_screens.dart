@@ -188,11 +188,11 @@ class _UpcomingEventCard extends StatelessWidget {
         if (coverUrl != null && coverUrl.isNotEmpty)
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.network(coverUrl,
+            child: AppNetworkImage(coverUrl,
                 width: double.infinity,
                 height: 140,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                errorWidget: const SizedBox.shrink()),
           ),
         if (coverUrl != null && coverUrl.isNotEmpty) const SizedBox(height: 12),
         Container(
@@ -243,11 +243,11 @@ class _PastEventCard extends StatelessWidget {
         if (coverUrl != null && coverUrl.isNotEmpty)
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.network(coverUrl,
+            child: AppNetworkImage(coverUrl,
                 width: 56,
                 height: 56,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _iconBox()),
+                errorWidget: _iconBox()),
           )
         else
           _iconBox(),

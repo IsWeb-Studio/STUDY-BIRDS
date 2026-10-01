@@ -396,12 +396,11 @@ class _HeroBanner extends StatelessWidget {
                                   color: Colors.white, strokeWidth: 2))
                           : avatarUrl != null
                               ? ClipOval(
-                                  child: Image.network(avatarUrl!,
+                                  child: AppNetworkImage(avatarUrl!,
                                       fit: BoxFit.cover,
                                       width: 58,
                                       height: 58,
-                                      errorBuilder: (_, __, ___) =>
-                                          const Icon(Icons.account_balance_rounded,
+                                      errorWidget: const Icon(Icons.account_balance_rounded,
                                               color: Colors.white, size: 28)))
                               : const Icon(Icons.account_balance_rounded,
                                   color: Colors.white, size: 28),
