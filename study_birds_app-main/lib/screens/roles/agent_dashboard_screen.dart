@@ -167,11 +167,49 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
 
   // ── build ────────────────────────────────────────────────────────────────
 
+  void _openNotificationsSheet() {
+    final notifications = (_overview?['notifications'] as List<dynamic>?) ?? [];
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _NotificationsSheet(notifications: notifications),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final notifications = (_overview?['notifications'] as List<dynamic>?) ?? [];
+    final unreadCount = notifications.where((n) => (n as Map)['isRead'] != true).length;
+
     return AppScaffold(
       title: 'لوحة الوكيل',
       actions: [
+        Stack(
+          children: [
+            IconButton(
+              tooltip: 'الإشعارات',
+              icon: const Icon(Icons.notifications_outlined),
+              onPressed: _openNotificationsSheet,
+            ),
+            if (unreadCount > 0)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle),
+                  child: Center(
+                    child: Text(
+                      unreadCount > 9 ? '9+' : '$unreadCount',
+                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
         IconButton(tooltip: 'الرسائل', icon: const Icon(Icons.forum_outlined),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ConversationThreadScreen()))),
         IconButton(tooltip: 'أمان الحساب', icon: const Icon(Icons.security),
@@ -284,9 +322,6 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
             ],
           ),
         ),
-
-        // ── notifications ────────────────────────────────────────────────
-        _NotificationsSection(overview: _overview),
 
         // ── students section ─────────────────────────────────────────────
         Padding(
@@ -423,11 +458,11 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   }
 }
 
-// ─── notifications section ───────────────────────────────────────────────────
+// ─── notifications bottom sheet ──────────────────────────────────────────────
 
-class _NotificationsSection extends StatelessWidget {
-  final Map<String, dynamic>? overview;
-  const _NotificationsSection({required this.overview});
+class _NotificationsSheet extends StatelessWidget {
+  final List<dynamic> notifications;
+  const _NotificationsSheet({required this.notifications});
 
   static const _typeColors = {
     'warning': AppColors.danger,
@@ -443,99 +478,115 @@ class _NotificationsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final notifications = (overview?['notifications'] as List<dynamic>?) ?? [];
-    if (notifications.isEmpty) return const SizedBox.shrink();
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
+      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+          const SizedBox(height: 16),
           Row(
             children: [
-              const Icon(Icons.notifications_rounded, size: 16, color: AppColors.textSecondary),
-              const SizedBox(width: 6),
-              const Text('الإشعارات', style: AppTextStyles.sectionLabel),
+              const Icon(Icons.notifications_rounded, color: AppColors.navy, size: 20),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppColors.danger,
-                  borderRadius: BorderRadius.circular(10),
+              const Text('الإشعارات', style: AppTextStyles.cardTitle),
+              const SizedBox(width: 8),
+              if (notifications.isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(10)),
+                  child: Text(
+                    '${notifications.where((n) => (n as Map)['isRead'] != true).length} جديد',
+                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                  ),
                 ),
-                child: Text(
-                  '${notifications.where((n) => (n as Map)['isRead'] != true).length}',
-                  style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
-                ),
-              ),
             ],
           ),
-          const SizedBox(height: 10),
-          ...notifications.take(5).map((n) {
-            final notif = n as Map<String, dynamic>;
-            final type = notif['type'] as String? ?? 'info';
-            final color = _typeColors[type] ?? AppColors.info;
-            final icon = _typeIcons[type] ?? Icons.info_rounded;
-            final isRead = notif['isRead'] as bool? ?? false;
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: isRead ? Colors.white : color.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: isRead ? AppColors.border : color.withValues(alpha: 0.3),
-                  width: isRead ? 1 : 1.5,
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(height: 14),
+          if (notifications.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 32),
+              child: Column(
                 children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, size: 17, color: color),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          notif['title'] as String? ?? '',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: isRead ? FontWeight.w500 : FontWeight.w700,
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
-                        const SizedBox(height: 3),
-                        Text(
-                          notif['message'] as String? ?? '',
-                          style: AppTextStyles.caption.copyWith(fontSize: 12),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (!isRead)
-                    Container(
-                      width: 8,
-                      height: 8,
-                      margin: const EdgeInsets.only(top: 3, right: 2),
-                      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-                    ),
+                  Icon(Icons.notifications_none_rounded, size: 44, color: AppColors.border),
+                  SizedBox(height: 10),
+                  Text('لا توجد إشعارات', style: AppTextStyles.caption),
                 ],
               ),
-            );
-          }),
-          const SizedBox(height: 4),
+            )
+          else
+            Flexible(
+              child: ListView.separated(
+                shrinkWrap: true,
+                itemCount: notifications.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 8),
+                itemBuilder: (_, i) {
+                  final notif = notifications[i] as Map<String, dynamic>;
+                  final type = notif['type'] as String? ?? 'info';
+                  final color = _typeColors[type] ?? AppColors.info;
+                  final icon = _typeIcons[type] ?? Icons.info_rounded;
+                  final isRead = notif['isRead'] as bool? ?? false;
+
+                  return Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isRead ? AppColors.background : color.withValues(alpha: 0.05),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isRead ? AppColors.border : color.withValues(alpha: 0.3),
+                        width: isRead ? 1 : 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+                          child: Icon(icon, size: 18, color: color),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                notif['title'] as String? ?? '',
+                                style: TextStyle(
+                                  fontSize: 13.5,
+                                  fontWeight: isRead ? FontWeight.w500 : FontWeight.w700,
+                                  color: AppColors.textPrimary,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                notif['message'] as String? ?? '',
+                                style: AppTextStyles.caption,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (!isRead)
+                          Container(
+                            width: 9,
+                            height: 9,
+                            margin: const EdgeInsets.only(top: 4, right: 4),
+                            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                          ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
         ],
       ),
     );
