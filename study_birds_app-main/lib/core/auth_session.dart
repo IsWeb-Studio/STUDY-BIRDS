@@ -355,7 +355,9 @@ class AuthSession extends ChangeNotifier {
             final age = savedAt == null ? null : DateTime.now().difference(savedAt);
             final user = AuthUser.fromJson(Map<String, dynamic>.from(cached['user'] as Map));
             // Staff permissions must be verified online before opening tools.
-            if (user.role == UserRole.student && age != null && !age.isNegative && age < const Duration(days: 7)) {
+            // Parents (read-only view) are safe to restore offline like students.
+            final offlineSafe = user.role == UserRole.student || user.role == UserRole.parent;
+            if (offlineSafe && age != null && !age.isNegative && age < const Duration(days: 7)) {
               currentUser = user;
               token = storedToken;
             }
