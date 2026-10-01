@@ -4,6 +4,7 @@ const User = require("../models/User");
 const StudentProfile = require("../models/StudentProfile");
 const Application = require("../models/Application");
 const PaymentProof = require("../models/PaymentProof");
+const Notification = require("../models/Notification");
 
 /**
  * CRITICAL AUTHORIZATION RULE: every function below filters by
@@ -84,7 +85,7 @@ const getChildOverview = asyncHandler(async (req, res) => {
     throw new Error("You are not linked to this student");
   }
 
-  const [profile, applications] = await Promise.all([
+  const [profile, applications, notifications] = await Promise.all([
     StudentProfile.findOne({ user: req.params.studentId }).select(
       "journeyStage applicationStage targetCountries intake currentEducationLevel"
     ),
@@ -92,6 +93,11 @@ const getChildOverview = asyncHandler(async (req, res) => {
       .populate("university", "name city")
       .populate("program", "name")
       .select("status detailedStatus statusTimeline submittedAt university program"),
+    Notification.find({ user: req.params.studentId })
+      .sort({ createdAt: -1 })
+      .limit(10)
+      .select("title message type isRead createdAt")
+      .lean(),
   ]);
 
   // Deliberately excluded: internal notes, reviewer identity, employee
@@ -103,6 +109,14 @@ const getChildOverview = asyncHandler(async (req, res) => {
     applicationStage: profile?.applicationStage || null,
     targetCountries: profile?.targetCountries || [],
     intake: profile?.intake || null,
+    notifications: notifications.map((n) => ({
+      _id: n._id,
+      title: n.title,
+      message: n.message,
+      type: n.type,
+      isRead: n.isRead,
+      createdAt: n.createdAt,
+    })),
     applications: applications.map((a) => ({
       id: a._id,
       status: a.status,
