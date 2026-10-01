@@ -91,13 +91,16 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _googleSignIn() async {
-    if (!GoogleSignInService.instance.isAvailable) {
-      Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const BrowserSignInScreen()));
-      return;
-    }
     setState(() { _googleLoading = true; _error = null; });
     try {
+      // Wait for init to complete before deciding native vs browser path.
+      await GoogleSignInService.instance.init();
+      if (!mounted) return;
+      if (!GoogleSignInService.instance.isAvailable) {
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const BrowserSignInScreen()));
+        return;
+      }
       final ok = await GoogleSignInService.instance.signIn();
       if (!mounted) return;
       if (ok) widget.onGoogleSignInSuccess?.call();

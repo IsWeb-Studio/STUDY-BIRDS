@@ -12,10 +12,17 @@ class GoogleSignInService {
   static final GoogleSignInService instance = GoogleSignInService._();
 
   bool _initialized = false;
+  Future<void>? _initFuture;
 
   Future<void> init() async {
     if (_initialized) return;
     if (AppConfig.googleWebClientId.isEmpty) return;
+    // Deduplicate concurrent init calls — only one initialize() runs at a time.
+    _initFuture ??= _runInit().whenComplete(() => _initFuture = null);
+    await _initFuture!;
+  }
+
+  Future<void> _runInit() async {
     try {
       await GoogleSignIn.instance.initialize(
         serverClientId: AppConfig.googleWebClientId,
