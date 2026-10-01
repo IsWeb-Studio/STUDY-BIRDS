@@ -44,6 +44,8 @@ flutter_launcher_icons:
   ios: true
   image_path: "assets/images/logo_mark.png"
   min_sdk_android: 21
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/logo_mark.png"
 
 flutter:
   uses-material-design: true
