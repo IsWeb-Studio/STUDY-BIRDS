@@ -81,23 +81,28 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SentryFlutter.init(
-    (options) {
-      options.dsn = AppConfig.sentryDsn;
-      options.tracesSampleRate = 0.2;
-      options.profilesSampleRate = 0.1;
-      options.attachScreenshot = true;
-      options.attachViewHierarchy = true;
-    },
-    appRunner: () async {
-      runApp(SentryWidget(child: const StudyBirdsApp()));
-      await PushNotificationService.instance.init();
-      await CurrencyService.instance.load();
-      await AnalyticsService.instance.init();
-      await GoogleSignInService.instance.init();
-      RealtimeSyncService.instance.start();
-    },
-  );
+  // Render the splash on the first frame — no blocking before the user sees anything
+  runApp(SentryWidget(child: const StudyBirdsApp()));
+  _initServicesInBackground();
+}
+
+Future<void> _initServicesInBackground() async {
+  // Sentry first so it can capture errors in subsequent inits
+  await SentryFlutter.init((options) {
+    options.dsn = AppConfig.sentryDsn;
+    options.tracesSampleRate = 0.2;
+    options.profilesSampleRate = 0.1;
+    options.attachScreenshot = true;
+    options.attachViewHierarchy = true;
+  });
+  // All four services run in parallel instead of sequentially
+  await Future.wait([
+    PushNotificationService.instance.init(),
+    CurrencyService.instance.load(),
+    AnalyticsService.instance.init(),
+    GoogleSignInService.instance.init(),
+  ]);
+  RealtimeSyncService.instance.start();
 }
 
 class StudyBirdsApp extends StatefulWidget {
