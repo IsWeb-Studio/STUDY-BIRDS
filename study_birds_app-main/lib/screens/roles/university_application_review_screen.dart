@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_theme.dart';
+import '../../core/api_client.dart';
 import '../../core/university_repository.dart';
 import '../applications_documents_payments/applications_screens.dart'
     show appStatusMeta;
@@ -7,30 +9,43 @@ import '../applications_documents_payments/documents_screens.dart'
     show docStatusMeta, docTypeLabel;
 
 const List<Map<String, dynamic>> kApplicationDetailedStatuses = [
-  {'key': 'documents-missing', 'label': 'مستندات ناقصة', 'icon': Icons.folder_off_outlined, 'tone': 'warning'},
-  {'key': 'ready-to-apply', 'label': 'جاهز للتقديم', 'icon': Icons.check_circle_outline, 'tone': 'info'},
-  {'key': 'under-review', 'label': 'قيد المراجعة', 'icon': Icons.hourglass_top_rounded, 'tone': 'info'},
-  {'key': 'additional-documents-required', 'label': 'مطلوب مستندات إضافية', 'icon': Icons.upload_file_outlined, 'tone': 'warning'},
-  {'key': 'conditional-admission', 'label': 'قبول مبدئي', 'icon': Icons.verified_outlined, 'tone': 'success'},
-  {'key': 'payment-required', 'label': 'الدفع مطلوب', 'icon': Icons.payment_outlined, 'tone': 'warning'},
-  {'key': 'payment-verification', 'label': 'التحقق من الدفع', 'icon': Icons.receipt_long_outlined, 'tone': 'info'},
-  {'key': 'final-admission', 'label': 'قبول نهائي', 'icon': Icons.school_rounded, 'tone': 'success'},
-  {'key': 'visa-preparation', 'label': 'تجهيز التأشيرة', 'icon': Icons.flight_takeoff_rounded, 'tone': 'info'},
-  {'key': 'completed', 'label': 'مكتمل', 'icon': Icons.task_alt_rounded, 'tone': 'success'},
-  {'key': 'accepted', 'label': 'مقبول نهائيًا', 'icon': Icons.star_rounded, 'tone': 'success'},
-  {'key': 'rejected', 'label': 'مرفوض', 'icon': Icons.cancel_outlined, 'tone': 'danger'},
+  {'key': 'documents-missing',              'label': 'مستندات ناقصة',             'icon': Icons.folder_off_outlined,      'tone': 'warning', 'requireNote': true},
+  {'key': 'ready-to-apply',                 'label': 'جاهز للتقديم',              'icon': Icons.check_circle_outline,     'tone': 'info',    'requireNote': false},
+  {'key': 'under-review',                   'label': 'قيد المراجعة',              'icon': Icons.hourglass_top_rounded,    'tone': 'info',    'requireNote': false},
+  {'key': 'additional-documents-required',  'label': 'مطلوب مستندات إضافية',     'icon': Icons.upload_file_outlined,     'tone': 'warning', 'requireNote': false},
+  {'key': 'conditional-admission',          'label': 'قبول مبدئي',                'icon': Icons.verified_outlined,        'tone': 'success', 'requireNote': false},
+  {'key': 'payment-required',               'label': 'الدفع مطلوب',               'icon': Icons.payment_outlined,         'tone': 'warning', 'requireNote': false},
+  {'key': 'payment-verification',           'label': 'التحقق من الدفع',           'icon': Icons.receipt_long_outlined,    'tone': 'info',    'requireNote': false},
+  {'key': 'final-admission',                'label': 'قبول نهائي',                'icon': Icons.school_rounded,           'tone': 'success', 'requireNote': false},
+  {'key': 'visa-preparation',               'label': 'تجهيز التأشيرة',            'icon': Icons.flight_takeoff_rounded,   'tone': 'info',    'requireNote': false},
+  {'key': 'completed',                      'label': 'مكتمل',                     'icon': Icons.task_alt_rounded,         'tone': 'success', 'requireNote': false},
+  {'key': 'accepted',                       'label': 'مقبول نهائيًا',             'icon': Icons.star_rounded,             'tone': 'success', 'requireNote': false},
+  {'key': 'rejected',                       'label': 'مرفوض',                     'icon': Icons.cancel_outlined,          'tone': 'danger',  'requireNote': false},
+];
+
+// Common document types for "additional documents required" picker
+const List<String> kCommonDocTypes = [
+  'جواز السفر',
+  'كشف الدرجات / الشهادة الأكاديمية',
+  'شهادة اللغة (IELTS / TOEFL)',
+  'خطاب توصية',
+  'السيرة الذاتية (CV)',
+  'خطاب الدوافع',
+  'عقد العمل / إثبات الدخل',
+  'كشف حساب بنكي',
+  'وثيقة التأمين الصحي',
+  'صورة شخصية',
+  'شهادة الميلاد',
+  'شهادة الجنسية / الهوية',
+  'أخرى',
 ];
 
 Color _toneColor(String? tone) {
   switch (tone) {
-    case 'success':
-      return AppColors.success;
-    case 'warning':
-      return AppColors.warning;
-    case 'danger':
-      return AppColors.danger;
-    default:
-      return AppColors.info;
+    case 'success': return AppColors.success;
+    case 'warning': return AppColors.warning;
+    case 'danger':  return AppColors.danger;
+    default:        return AppColors.info;
   }
 }
 
@@ -90,7 +105,8 @@ class _UniversityApplicationReviewScreenState
   }
 
   void _showStatusSheet() {
-    final currentKey = _app['detailedStatus'] as String? ?? _app['status'] as String?;
+    final currentKey =
+        _app['detailedStatus'] as String? ?? _app['status'] as String?;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -99,12 +115,23 @@ class _UniversityApplicationReviewScreenState
         currentKey: currentKey,
         onSelect: (key) async {
           Navigator.pop(context);
-          // Ask for note if status requires one
+          final statusDef = kApplicationDetailedStatuses.firstWhere(
+              (s) => s['key'] == key,
+              orElse: () => {'requireNote': false});
+
+          if (key == 'additional-documents-required') {
+            // Special sheet: pick document type + write note
+            await _showAdditionalDocSheet();
+            return;
+          }
+
           String? note;
-          if (key == 'additional-documents-required' ||
+          final requireNote = statusDef['requireNote'] == true;
+          // Always show note dialog for statuses that require one, optional for others
+          if (requireNote ||
               key == 'conditional-admission' ||
               key == 'rejected') {
-            note = await _askForNote(key);
+            note = await _askForNote(key, required: requireNote);
             if (note == null) return; // cancelled
           }
           await _updateStatus(key, note: note?.isEmpty == true ? null : note);
@@ -113,7 +140,148 @@ class _UniversityApplicationReviewScreenState
     );
   }
 
-  Future<String?> _askForNote(String statusKey) async {
+  Future<void> _showAdditionalDocSheet() async {
+    String? selectedType;
+    final noteCtrl = TextEditingController();
+    final result = await showModalBottomSheet<Map<String, String>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setLocal) => Container(
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius:
+                BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: AppColors.border,
+                      borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 14),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Text('مستند إضافي مطلوب',
+                      style: AppTextStyles.screenTitle),
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Align(
+                  alignment: Alignment.centerRight,
+                  child: Text('حدّد نوع المستند المطلوب من الطالب',
+                      style: AppTextStyles.caption),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Divider(height: 1),
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                    maxHeight:
+                        MediaQuery.of(ctx).size.height * 0.35),
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  itemCount: kCommonDocTypes.length,
+                  separatorBuilder: (_, __) =>
+                      const Divider(height: 1, indent: 46),
+                  itemBuilder: (_, i) {
+                    final t = kCommonDocTypes[i];
+                    final sel = selectedType == t;
+                    return ListTile(
+                      dense: true,
+                      leading: Icon(
+                          sel
+                              ? Icons.radio_button_checked_rounded
+                              : Icons.radio_button_unchecked_rounded,
+                          color: sel ? AppColors.navy : AppColors.textSecondary,
+                          size: 20),
+                      title: Text(t,
+                          style: AppTextStyles.body.copyWith(
+                              fontWeight: sel
+                                  ? FontWeight.w700
+                                  : FontWeight.w500)),
+                      onTap: () => setLocal(() => selectedType = t),
+                    );
+                  },
+                ),
+              ),
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                child: TextField(
+                  controller: noteCtrl,
+                  textDirection: TextDirection.rtl,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    hintText: 'ملاحظة إضافية للطالب (اختياري)...',
+                    filled: true,
+                    fillColor: AppColors.background,
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            const BorderSide(color: AppColors.border)),
+                    enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(10),
+                        borderSide:
+                            const BorderSide(color: AppColors.border)),
+                  ),
+                ),
+              ),
+              Padding(
+                padding:
+                    const EdgeInsets.fromLTRB(16, 8, 16, 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        child: const Text('إلغاء'),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.navy),
+                        onPressed: selectedType == null
+                            ? null
+                            : () => Navigator.pop(ctx, {
+                                  'type': selectedType!,
+                                  'note': noteCtrl.text.trim(),
+                                }),
+                        child: const Text('إرسال',
+                            style: TextStyle(color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    if (result == null) return;
+    final note =
+        '${result['type']}${result['note']!.isNotEmpty ? " — ${result['note']}" : ""}';
+    await _updateStatus('additional-documents-required', note: note);
+  }
+
+  Future<String?> _askForNote(String statusKey,
+      {bool required = false}) async {
     final label = kApplicationDetailedStatuses
         .firstWhere((s) => s['key'] == statusKey,
             orElse: () => {'label': 'تحديث'})['label'] as String;
@@ -122,45 +290,35 @@ class _UniversityApplicationReviewScreenState
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text('ملاحظة — $label'),
-        content: TextField(
-          controller: ctrl,
-          textDirection: TextDirection.rtl,
-          maxLines: 3,
-          decoration: const InputDecoration(
-              hintText: 'أدخل ملاحظة للطالب (اختياري)...'),
-        ),
-        actions: [
-          TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('إلغاء')),
-          TextButton(
-              onPressed: () => Navigator.pop(ctx, ctrl.text),
-              child: const Text('تأكيد')),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _requestDocument() async {
-    final reasonCtrl = TextEditingController();
-    final reason = await showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('طلب مستند إضافي'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-                'اكتب وصفًا للمستند المطلوب من الطالب:',
-                style: AppTextStyles.caption),
-            const SizedBox(height: 10),
+            if (required)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_outline,
+                        size: 16, color: AppColors.warning),
+                    SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                          'يجب كتابة المستندات الناقصة حتى يعرف الطالب ما يحتاج رفعه.',
+                          style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary)),
+                    ),
+                  ],
+                ),
+              ),
             TextField(
-              controller: reasonCtrl,
+              controller: ctrl,
               textDirection: TextDirection.rtl,
               maxLines: 3,
-              decoration: const InputDecoration(
-                  hintText:
-                      'مثال: يرجى رفع كشف درجات مصدّق من الجهة الرسمية'),
+              decoration: InputDecoration(
+                  hintText: required
+                      ? 'مثال: يرجى رفع جواز السفر وكشف الدرجات...'
+                      : 'أدخل ملاحظة للطالب (اختياري)...'),
             ),
           ],
         ),
@@ -170,26 +328,36 @@ class _UniversityApplicationReviewScreenState
               child: const Text('إلغاء')),
           TextButton(
               onPressed: () {
-                if (reasonCtrl.text.trim().isEmpty) return;
-                Navigator.pop(ctx, reasonCtrl.text.trim());
+                if (required && ctrl.text.trim().isEmpty) return;
+                Navigator.pop(ctx, ctrl.text);
               },
-              child: const Text('إرسال')),
+              child: Text(required ? 'إرسال' : 'تأكيد')),
         ],
       ),
     );
-    if (reason == null) return;
+  }
+
+  Future<void> _viewDocument(String docId, String docName) async {
     try {
-      await UniversityRepository.instance
-          .requestDocument(widget.applicationId, reason: reason);
+      final url = await UniversityRepository.instance.getDocumentAccessUrl(docId);
+      final uri = Uri.parse(url);
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('تعذر فتح الملف: $docName'),
+              backgroundColor: AppColors.danger));
+        }
+      }
+    } on ApiException catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('تم إرسال الطلب للطالب'),
-            backgroundColor: AppColors.success));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(e.message),
+            backgroundColor: AppColors.danger));
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('تعذر إرسال الطلب'),
+            content: Text('تعذر تحميل رابط الملف'),
             backgroundColor: AppColors.danger));
       }
     }
@@ -200,16 +368,20 @@ class _UniversityApplicationReviewScreenState
     final student = _app['student'] as Map<String, dynamic>?;
     final program = _app['program'] as Map<String, dynamic>?;
     final documents = _app['documents'] as List<dynamic>? ?? [];
-    final timeline =
-        _app['statusTimeline'] as List<dynamic>? ?? [];
+    final timeline = _app['statusTimeline'] as List<dynamic>? ?? [];
     final meta = appStatusMeta(_app);
     final name = student?['name'] as String? ?? '—';
     final email = student?['email'] as String? ?? '';
-    final programName = program?['title'] as String? ??
-        program?['name'] as String? ??
-        '—';
+    final programName =
+        program?['title'] as String? ?? program?['name'] as String? ?? '—';
     final initials = name.isNotEmpty
-        ? name.trim().split(' ').map((w) => w.isNotEmpty ? w[0] : '').take(2).join().toUpperCase()
+        ? name
+            .trim()
+            .split(' ')
+            .map((w) => w.isNotEmpty ? w[0] : '')
+            .take(2)
+            .join()
+            .toUpperCase()
         : '?';
 
     return AppScaffold(
@@ -222,19 +394,13 @@ class _UniversityApplicationReviewScreenState
             : ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  // ── Student/Program Header ──────────────────────────────
-                  _buildHeader(
-                      initials, name, email, programName, meta),
+                  _buildHeader(initials, name, email, programName, meta),
                   const SizedBox(height: 16),
-
-                  // ── Documents ──────────────────────────────────────────
                   const Text('المستندات المقدمة',
                       style: AppTextStyles.sectionLabel),
                   const SizedBox(height: 10),
                   _buildDocuments(documents),
                   const SizedBox(height: 16),
-
-                  // ── Status Timeline ────────────────────────────────────
                   if (timeline.isNotEmpty) ...[
                     const Text('سجل التحديثات',
                         style: AppTextStyles.sectionLabel),
@@ -242,26 +408,12 @@ class _UniversityApplicationReviewScreenState
                     _buildTimeline(timeline),
                     const SizedBox(height: 16),
                   ],
-
-                  // ── Actions ────────────────────────────────────────────
                   const Text('الإجراءات', style: AppTextStyles.sectionLabel),
                   const SizedBox(height: 10),
                   PrimaryButton(
-                    label: _updating
-                        ? 'جاري التحديث...'
-                        : 'تحديث حالة الطلب',
-                    onPressed:
-                        _updating ? null : _showStatusSheet,
+                    label: _updating ? 'جاري التحديث...' : 'تحديث حالة الطلب',
+                    onPressed: _updating ? null : _showStatusSheet,
                     icon: Icons.update_rounded,
-                  ),
-                  const SizedBox(height: 10),
-                  OutlinedButton.icon(
-                    onPressed: _requestDocument,
-                    icon: const Icon(Icons.upload_file_outlined),
-                    label: const Text('طلب مستند إضافي من الطالب'),
-                    style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 48),
-                        side: const BorderSide(color: AppColors.border)),
                   ),
                   const SizedBox(height: 24),
                 ],
@@ -270,6 +422,7 @@ class _UniversityApplicationReviewScreenState
     );
   }
 
+  // ── Header ──────────────────────────────────────────────────────────────────
   Widget _buildHeader(String initials, String name, String email,
       String programName, dynamic meta) {
     return Container(
@@ -326,13 +479,11 @@ class _UniversityApplicationReviewScreenState
           const SizedBox(height: 12),
           Row(
             children: [
-              const Icon(Icons.school_outlined,
-                  color: Colors.white70, size: 16),
+              const Icon(Icons.school_outlined, color: Colors.white70, size: 16),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(programName,
-                    style: const TextStyle(
-                        color: Colors.white70, fontSize: 13)),
+                    style: const TextStyle(color: Colors.white70, fontSize: 13)),
               ),
             ],
           ),
@@ -341,13 +492,17 @@ class _UniversityApplicationReviewScreenState
     );
   }
 
+  // ── Documents list with view button ─────────────────────────────────────────
   Widget _buildDocuments(List<dynamic> documents) {
-    if (documents.isEmpty) {
+    // Filter out unpopulated refs (strings instead of maps)
+    final populated =
+        documents.where((d) => d is Map<String, dynamic>).toList();
+
+    if (populated.isEmpty) {
       return AppCard(
         child: Row(
           children: const [
-            Icon(Icons.inbox_outlined,
-                color: AppColors.textSecondary, size: 20),
+            Icon(Icons.inbox_outlined, color: AppColors.textSecondary, size: 20),
             SizedBox(width: 10),
             Text('لم يرفع الطالب أي مستندات بعد.',
                 style: AppTextStyles.caption),
@@ -355,39 +510,85 @@ class _UniversityApplicationReviewScreenState
         ),
       );
     }
+
     return AppCard(
+      padding: EdgeInsets.zero,
       child: Column(
-        children: documents.asMap().entries.map((e) {
+        children: populated.asMap().entries.map((e) {
           final idx = e.key;
           final doc = e.value as Map<String, dynamic>;
           final docMeta = docStatusMeta(doc);
+          final docId = doc['_id'] as String?;
+          final docName = docTypeLabel(doc['type'] as String?);
+          final fileName = doc['fileName'] as String? ?? docName;
+          final hasFile = docId != null;
+
           return Column(
             children: [
-              if (idx != 0) const Divider(height: 16),
-              Row(
-                children: [
-                  Container(
-                    width: 34,
-                    height: 34,
-                    decoration: BoxDecoration(
-                      color: AppColors.navy.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
+              if (idx != 0)
+                const Divider(height: 1, color: AppColors.border),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 14, vertical: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: AppColors.navy.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.insert_drive_file_outlined,
+                          size: 17, color: AppColors.navy),
                     ),
-                    child: const Icon(
-                        Icons.insert_drive_file_outlined,
-                        size: 17,
-                        color: AppColors.navy),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                        docTypeLabel(doc['type'] as String?),
-                        style: AppTextStyles.body),
-                  ),
-                  StatusBadge(
-                      label: docMeta.label,
-                      color: docMeta.color),
-                ],
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(docName, style: AppTextStyles.body),
+                          if (fileName != docName)
+                            Text(fileName,
+                                style: AppTextStyles.caption
+                                    .copyWith(fontSize: 11),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    StatusBadge(label: docMeta.label, color: docMeta.color),
+                    if (hasFile) ...[
+                      const SizedBox(width: 6),
+                      InkWell(
+                        onTap: () => _viewDocument(docId, docName),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: AppColors.navy.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.visibility_outlined,
+                                  size: 14, color: AppColors.navy),
+                              SizedBox(width: 4),
+                              Text('عرض',
+                                  style: TextStyle(
+                                      fontSize: 12,
+                                      color: AppColors.navy,
+                                      fontWeight: FontWeight.w600)),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ],
           );
@@ -396,6 +597,7 @@ class _UniversityApplicationReviewScreenState
     );
   }
 
+  // ── Timeline ─────────────────────────────────────────────────────────────────
   Widget _buildTimeline(List<dynamic> timeline) {
     final items = timeline.reversed.take(5).toList();
     return AppCard(
@@ -429,7 +631,7 @@ class _UniversityApplicationReviewScreenState
                   padding: const EdgeInsets.only(right: 16, top: 3),
                   child: Text(note,
                       style: AppTextStyles.caption,
-                      maxLines: 2,
+                      maxLines: 3,
                       overflow: TextOverflow.ellipsis),
                 ),
             ],
@@ -468,8 +670,8 @@ class _StatusSheet extends StatelessWidget {
             padding: EdgeInsets.symmetric(horizontal: 20),
             child: Align(
               alignment: Alignment.centerRight,
-              child: Text('اختر الحالة الجديدة',
-                  style: AppTextStyles.screenTitle),
+              child:
+                  Text('اختر الحالة الجديدة', style: AppTextStyles.screenTitle),
             ),
           ),
           const SizedBox(height: 8),
@@ -487,6 +689,7 @@ class _StatusSheet extends StatelessWidget {
                 final s = kApplicationDetailedStatuses[i];
                 final isCurrent = s['key'] == currentKey;
                 final color = _toneColor(s['tone'] as String?);
+                final requireNote = s['requireNote'] == true;
                 return ListTile(
                   leading: Container(
                     width: 36,
@@ -495,8 +698,8 @@ class _StatusSheet extends StatelessWidget {
                       color: color.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(s['icon'] as IconData,
-                        size: 18, color: color),
+                    child:
+                        Icon(s['icon'] as IconData, size: 18, color: color),
                   ),
                   title: Text(s['label'] as String,
                       style: AppTextStyles.body.copyWith(
@@ -506,6 +709,11 @@ class _StatusSheet extends StatelessWidget {
                           color: isCurrent
                               ? AppColors.navy
                               : AppColors.textPrimary)),
+                  subtitle: requireNote
+                      ? const Text('تتطلب كتابة المستندات الناقصة',
+                          style:
+                              TextStyle(fontSize: 11, color: AppColors.warning))
+                      : null,
                   trailing: isCurrent
                       ? const Icon(Icons.check_rounded,
                           color: AppColors.navy, size: 18)

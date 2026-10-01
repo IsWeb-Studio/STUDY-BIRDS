@@ -44,4 +44,10 @@ class UniversityRepository {
     final data = await ApiClient.instance.get('/university-portal/favorites-count', token: _token);
     return (data as Map<String, dynamic>)['count'] as int? ?? 0;
   }
+
+  /// Returns a short-lived signed URL to view/download the document file.
+  Future<String> getDocumentAccessUrl(String documentId) async {
+    final data = await ApiClient.instance.post('/documents/$documentId/access', token: _token, body: {});
+    return (data as Map<String, dynamic>)['url'] as String;
+  }
 }
