@@ -128,9 +128,10 @@ const upload = require("../middleware/uploadMiddleware");
 const router = express.Router();
 const { authorizeAdminSection } = require("../middleware/employeeAccess");
 
-router.use(protect, authorizeAdminSection);
+// protect all routes but split avatar from section-gated middleware
+router.use(protect);
 
-// Upload avatar for the logged-in employee/admin
+// Any authenticated employee/admin can update their own avatar — no section required
 const { uploadFileToCloudinary } = require("../utils/uploadToCloudinary");
 const User = require("../models/User");
 const asyncHandler = require("../utils/asyncHandler");
@@ -141,6 +142,9 @@ router.post("/me/avatar", upload.single("file"), asyncHandler(async (req, res) =
   await User.findByIdAndUpdate(req.user._id, { avatar: url });
   res.json({ avatar: url });
 }));
+
+// All remaining routes require section-level authorization
+router.use(authorizeAdminSection);
 
 for (const kind of ['insurance', 'equivalency']) {
   const controller = require('../controllers/studentServicesController');
