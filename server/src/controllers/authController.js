@@ -302,8 +302,9 @@ const requestOtp = asyncHandler(async (req, res) => {
   const phone = String(req.body.phone || '').trim();
   if (!/^\+[1-9]\d{7,14}$/.test(phone)) return res.status(400).json({ message: 'أدخل رقمًا دوليًا يبدأ بـ + ورمز الدولة' });
   const key = `otp-login:${phone}`;
-  const existing = await Challenge.findOne({ key });
-  if (existing && Date.now() - existing.createdAt.getTime() < 60000) return res.status(429).json({ message: 'انتظر دقيقة قبل طلب رمز جديد' });
+  // Rate limit: block if an unexpired challenge was created within the last minute
+  const existing = await Challenge.findOne({ key, purpose: 'otp-login', expiresAt: { $gt: new Date(Date.now() + 9 * 60 * 1000) } });
+  if (existing) return res.status(429).json({ message: 'انتظر دقيقة قبل طلب رمز جديد' });
   await Challenge.deleteOne({ key });
   const twilioRes = await fetch(`https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/Verifications`, {
     method: 'POST',
@@ -316,7 +317,7 @@ const requestOtp = asyncHandler(async (req, res) => {
     console.error('[OTP] Twilio error:', twilioRes.status, JSON.stringify(body));
     return res.status(502).json({ message: body.message || 'تعذر إرسال الرمز. حاول مجدداً.' });
   }
-  await Challenge.create({ key, value: phone, createdAt: new Date() });
+  await Challenge.create({ key, purpose: 'otp-login', value: phone, expiresAt: new Date(Date.now() + 10 * 60 * 1000) });
   res.json({ sent: true });
 });
 
@@ -334,7 +335,7 @@ const verifyOtp = asyncHandler(async (req, res) => {
     signal: AbortSignal.timeout(15000),
   }).then(r => r.json());
   if (result.status !== 'approved') return res.status(401).json({ message: 'رمز التحقق غير صحيح أو منتهي الصلاحية' });
-  await Challenge.deleteOne({ key: `otp-login:${phone}` });
+  await Challenge.deleteOne({ key: `otp-login:${phone}`, purpose: 'otp-login' });
   let user = await User.findOne({ verifiedPhone: phone });
   if (!user) {
     user = await User.create({ name: phone, email: `${phone.replace('+', '')}@phone.studybirds.net`, verifiedPhone: phone, authProvider: 'phone', role: 'student' });
