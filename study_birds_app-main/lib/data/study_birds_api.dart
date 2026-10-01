@@ -81,8 +81,17 @@ class StudyBirdsApi extends ChangeNotifier {
           'هذا الحساب إداري. استخدم لوحة التحكم في الموقع.');
     }
     if (accountRole != null && nextUser['role'] != accountRole) {
-      throw const ApiException(
-          'نوع الحساب المختار لا يطابق حسابك. اختر النوع الصحيح.');
+      const roleLabels = {
+        'student': 'طالب',
+        'parent': 'ولي أمر',
+        'partner': 'وكيل',
+        'university': 'جامعة',
+        'employee': 'موظف Study Birds',
+      };
+      final actualRole = nextUser['role']?.toString() ?? '';
+      final actualLabel = roleLabels[actualRole] ?? actualRole;
+      throw ApiException(
+          'حسابك هو حساب $actualLabel. ارجع واختر النوع الصحيح.');
     }
     await _storage.write(key: 'study_birds_token', value: response['token']);
     _token = response['token'];

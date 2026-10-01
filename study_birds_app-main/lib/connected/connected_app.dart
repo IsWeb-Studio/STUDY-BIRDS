@@ -147,13 +147,17 @@ class _ConnectedAppState extends State<ConnectedApp>
                                               selectedRole = type == 'agent'
                                                   ? 'partner'
                                                   : type))
-                                      : ConnectedLogin(
-                                          api: api,
-                                          accountRole: selectedRole,
-                                          onChangeRole: () => setState(
-                                              () => selectedRole = null),
-                                          title:
-                                              config?['title'] ?? 'Study Birds')
+                                      : PopScope(
+                                          canPop: false,
+                                          onPopInvokedWithResult: (didPop, _) {
+                                            if (!didPop) setState(() => selectedRole = null);
+                                          },
+                                          child: ConnectedLogin(
+                                              api: api,
+                                              accountRole: selectedRole,
+                                              onChangeRole: () => setState(
+                                                  () => selectedRole = null),
+                                              title: config?['title'] ?? 'Study Birds'))
                           : Navigator(
                               key: ValueKey(
                                   '${api.user?['_id']}-${config?['revision']}-${api.needsProfileSetup}'),
