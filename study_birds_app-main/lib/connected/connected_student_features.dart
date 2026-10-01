@@ -1,4 +1,4 @@
-part of 'connected_app.dart';
+﻿part of 'connected_app.dart';
 
 class StudentSetupWizard extends StatefulWidget {
   const StudentSetupWizard(
@@ -768,7 +768,7 @@ class _StudentFeaturePageState extends State<StudentFeaturePage> {
                   : RefreshIndicator(
                       onRefresh: load,
                       child: ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
+                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                           padding: const EdgeInsets.all(20),
                           children: content()))));
 }

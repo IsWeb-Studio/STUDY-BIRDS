@@ -1,4 +1,4 @@
-import 'arrival_services_screen.dart';
+﻿import 'arrival_services_screen.dart';
 import 'package:flutter/material.dart';
 import '../../core/document_access.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -843,7 +843,7 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                           message: 'سيقوم الفريق بإضافة تفاصيل وثيقة تأمينك الصحي هنا.')
                       : ListView(
                           padding: const EdgeInsets.all(16),
-                          physics: const AlwaysScrollableScrollPhysics(),
+                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                           children: [
                             _InsuranceStatusCard(data: _data!, statusLabel: _statusLabel(_data!['status'] as String?), statusColor: _statusColor(_data!['status'] as String?)),
                             const SizedBox(height: 16),
@@ -1029,7 +1029,7 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
                         message: 'سيقوم الفريق بإضافة تفاصيل إجراءات معادلة شهادتك هنا.')
                     : ListView(
                         padding: const EdgeInsets.all(16),
-                        physics: const AlwaysScrollableScrollPhysics(),
+                        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                         children: [
                           AppCard(
                             child: Row(children: [

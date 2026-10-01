@@ -69,7 +69,7 @@ class _ServicesCenterScreenState extends State<ServicesCenterScreen> {
                 onRefresh: refresh,
                 color: AppColors.navy,
                 child: GridView.builder(
-                  physics: const AlwaysScrollableScrollPhysics(),
+                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                   padding: const EdgeInsets.fromLTRB(12, 16, 12, 20),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,

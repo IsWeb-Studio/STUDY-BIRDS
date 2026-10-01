@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../core/analytics_service.dart';
 import '../../core/student_events.dart';
@@ -87,7 +87,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
               },
               color: AppColors.navy,
               child: ListView.builder(
-                physics: const AlwaysScrollableScrollPhysics(),
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 itemCount: events.length,
                 itemBuilder: (_, i) {

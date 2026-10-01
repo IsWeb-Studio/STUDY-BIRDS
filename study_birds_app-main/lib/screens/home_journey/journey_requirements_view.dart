@@ -1,4 +1,4 @@
-import 'journey_timeline_widgets.dart';
+﻿import 'journey_timeline_widgets.dart';
 import '../../core/student_repository.dart';
 import 'important_dates_screen.dart';
 import 'package:flutter/material.dart';
@@ -69,7 +69,7 @@ class JourneyRequirementsView extends StatelessWidget {
             onRefresh: onRefresh,
             color: AppColors.navy,
             child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
+              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
                 if (journeys.isEmpty)

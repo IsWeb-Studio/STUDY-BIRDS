@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_client.dart';
 import '../../core/app_theme.dart';
@@ -25,7 +25,7 @@ class _StudentListingsScreenState extends State<StudentListingsScreen> {
       if (!snapshot.hasData) return const LoadingState();
       final rows = snapshot.data as List;
       return RefreshIndicator(onRefresh: () async { setState(_reload); await _rows; },
-        child: ListView(physics: const AlwaysScrollableScrollPhysics(), padding: const EdgeInsets.all(16), children: [
+        child: ListView(physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()), padding: const EdgeInsets.all(16), children: [
           if (rows.isEmpty) const Padding(padding: EdgeInsets.all(24), child: Text('لا توجد إعلانات سارية حاليًا')),
           for (final row in rows) AppCard(margin: const EdgeInsets.only(bottom: 12), child: Column(
             crossAxisAlignment: CrossAxisAlignment.start, children: [

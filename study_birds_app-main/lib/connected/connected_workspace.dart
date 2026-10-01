@@ -1,4 +1,4 @@
-part of 'connected_app.dart';
+﻿part of 'connected_app.dart';
 
 String accountRoleLabel(String role) =>
     const {
@@ -634,7 +634,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
             : RefreshIndicator(
                 onRefresh: load,
                 child: ListView(
-                    physics: const AlwaysScrollableScrollPhysics(),
+                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                     padding: const EdgeInsets.all(20),
                     children: [
                       if (widget.route == 'messages')

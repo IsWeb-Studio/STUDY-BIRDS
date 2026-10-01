@@ -1,4 +1,4 @@
-import '../services_support/messaging_and_emergency_screens.dart';
+﻿import '../services_support/messaging_and_emergency_screens.dart';
 import '../profile_account/security_settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -210,7 +210,7 @@ class _UniversityDashboardScreenState
   Widget _buildContent(
       String uniName, int total, int pending, int accepted, int rejected, int favorites) {
     return CustomScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       slivers: [
         SliverToBoxAdapter(
           child: _HeroBanner(

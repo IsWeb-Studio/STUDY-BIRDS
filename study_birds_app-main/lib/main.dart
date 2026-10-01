@@ -63,6 +63,13 @@ import 'screens/roles/university_dashboard_screen.dart';
 import 'screens/roles/employee_dashboard_screen.dart';
 import 'screens/roles/admin_users_access_screen.dart';
 
+class _BouncingScrollBehavior extends ScrollBehavior {
+  const _BouncingScrollBehavior();
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+}
+
 /// Root messenger key — lets us show a SnackBar right after
 /// pushAndRemoveUntil, when the route that triggered the action has
 /// already been disposed and its own context is no longer valid.
@@ -173,6 +180,7 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
           child: OfflineBannerWrapper(child: child ?? const SizedBox.shrink())),
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const _BouncingScrollBehavior(),
       theme: AppTheme.light
           .copyWith(pageTransitionsTheme: appPageTransitionsTheme),
       home: const RootChooserScreen(),

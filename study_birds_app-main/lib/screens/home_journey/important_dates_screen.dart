@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../core/analytics_service.dart';
 import '../../core/student_events.dart';
@@ -77,7 +77,7 @@ class _ImportantDatesScreenState extends State<ImportantDatesScreen> {
             },
             color: AppColors.navy,
             child: ListView.builder(
-              physics: const AlwaysScrollableScrollPhysics(),
+              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
               padding: const EdgeInsets.all(16),
               itemCount: events.length,
               itemBuilder: (_, i) {

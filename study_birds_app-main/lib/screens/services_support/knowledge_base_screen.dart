@@ -190,7 +190,7 @@ class _ExhibitionsScreenState extends State<ExhibitionsScreen> {
                           message: 'ستظهر المقالات والمحتوى التعليمي هنا.')
                       : ListView.separated(
                           padding: const EdgeInsets.all(16),
-                          physics: const AlwaysScrollableScrollPhysics(),
+                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                           itemCount: _items.length,
                           separatorBuilder: (_, __) => const SizedBox(height: 10),
                           itemBuilder: (context, i) {

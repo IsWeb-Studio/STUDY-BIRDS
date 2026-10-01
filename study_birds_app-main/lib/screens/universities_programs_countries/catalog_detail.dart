@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import '../../core/auth_session.dart';
 import '../applications_documents_payments/program_application_screen.dart';
 import 'package:flutter/material.dart';
@@ -144,7 +144,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                       onRefresh: load,
                       color: AppColors.navy,
                       child: ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
+                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                           padding: const EdgeInsets.all(16),
                           children: [
                             if (error != null)

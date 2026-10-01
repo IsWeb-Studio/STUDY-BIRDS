@@ -1,4 +1,4 @@
-import 'package:url_launcher/url_launcher.dart';
+﻿import 'package:url_launcher/url_launcher.dart';
 import '../../core/document_access.dart';
 import 'bird_ai_screen.dart';
 import 'package:flutter/material.dart';
@@ -593,7 +593,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                 ? ErrorState(message: _error!, onRetry: _load)
                 : ListView(
                     padding: const EdgeInsets.all(16),
-                    physics: const AlwaysScrollableScrollPhysics(),
+                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                     children: [
                       const Text(
                           'هذا هو الفريق المخصص لك في Study Birds. يمكنك التواصل معهم مباشرة عبر المحادثة.',

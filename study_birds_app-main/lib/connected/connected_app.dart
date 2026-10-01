@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
@@ -1079,7 +1079,7 @@ class _ResourceScreenState extends State<ResourceScreen> {
                 : RefreshIndicator(
                     onRefresh: load,
                     child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
+                        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                         children: [
                           if (list != null) ...[

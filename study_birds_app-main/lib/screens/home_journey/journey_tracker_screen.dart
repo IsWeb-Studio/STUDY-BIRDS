@@ -1,4 +1,4 @@
-import 'journey_requirements_view.dart';
+﻿import 'journey_requirements_view.dart';
 import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import 'journey_timeline_widgets.dart';
@@ -102,7 +102,7 @@ class JourneyTrackerScreen extends StatelessWidget {
       ],
       body: ListView(
           padding: const EdgeInsets.all(16),
-          physics: const AlwaysScrollableScrollPhysics(),
+          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
           children: [
             JourneySummaryCard(
                 title: journeyPathLabel,

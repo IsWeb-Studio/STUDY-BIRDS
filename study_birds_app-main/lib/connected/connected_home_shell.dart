@@ -1,4 +1,4 @@
-part of 'connected_app.dart';
+﻿part of 'connected_app.dart';
 
 /// The original five-tab layout, backed by the website's data and CMS modules.
 class _ConnectedHomeShell extends StatefulWidget {
@@ -205,7 +205,7 @@ class _ConnectedHomeShellState extends State<_ConnectedHomeShell> {
                   onRefresh: refresh,
                   child: ListView(
                     key: ValueKey('home-tab-$tab'),
-                    physics: const AlwaysScrollableScrollPhysics(),
+                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                     padding: EdgeInsets.zero,
                     children: tab == 0
                         ? home()

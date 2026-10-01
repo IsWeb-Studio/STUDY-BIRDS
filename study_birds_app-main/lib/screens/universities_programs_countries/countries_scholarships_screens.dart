@@ -204,7 +204,7 @@ class _CountryDetailScreenState extends State<CountryDetailScreen> {
                     padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
             : ListView(
                 padding: const EdgeInsets.all(16),
-                physics: const AlwaysScrollableScrollPhysics(),
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                 children: [
                   Container(
                     height: 110,
