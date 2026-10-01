@@ -4,6 +4,7 @@ const {
   getApplicationById,
   updateApplicationStatus,
   requestDocument,
+  getFavoritesCount,
 } = require("../controllers/universityPortalController");
 const { protect, authorize } = require("../middleware/authMiddleware");
 
@@ -14,5 +15,6 @@ router.get("/applications", getApplications);
 router.get("/applications/:id", getApplicationById);
 router.patch("/applications/:id/status", updateApplicationStatus);
 router.post("/applications/:id/request-document", requestDocument);
+router.get("/favorites-count", getFavoritesCount);
 
 module.exports = router;
