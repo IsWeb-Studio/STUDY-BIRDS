@@ -521,7 +521,7 @@ const getStudentKnowledgeBase = asyncHandler(async (req, res) => {
 const getStudentFinancials = asyncHandler(async (req, res) => {
   const [invoices, paymentProofs, applications] = await Promise.all([
     Invoice.find({ student: req.user._id }).populate("application", "status").sort({ createdAt: -1 }),
-    PaymentProof.find({ student: req.user._id }).populate("invoice", "invoiceNumber description amount status").sort({ createdAt: -1 }),
+    PaymentProof.find({ student: req.user._id }).populate("invoice", "invoiceNumber description amount status").populate("paidBy", "name role").sort({ createdAt: -1 }),
     Application.find({ student: req.user._id }).populate('program', 'title tuition').sort({ createdAt: -1 }).lean(),
   ]);
 
