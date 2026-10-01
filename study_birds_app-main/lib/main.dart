@@ -332,8 +332,8 @@ class ConnectedPrototypeEntry extends StatelessWidget {
     return true;
   }
 
-  /// Public registration. Only 'student' and 'parent' roles are accepted;
-  /// all other values are ignored by the server and default to 'student'.
+  /// Public registration. Student, parent, and agent (partner) roles are accepted;
+  /// university and employee accounts must be created by an admin.
   static Future<bool> _attemptRegister(
     BuildContext context,
     String name,

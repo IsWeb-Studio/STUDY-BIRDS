@@ -189,20 +189,24 @@ class AuthService {
     return (user: user, token: token, refreshToken: data['refreshToken'] as String?);
   }
 
-  /// Public registration. Only 'student' and 'parent' are allowed as
-  /// self-register roles; the server ignores any other value and defaults to
-  /// 'student'.
+  /// Public registration. Converts the app-side role key (e.g. 'agent') to
+  /// the server wire value (e.g. 'partner') before posting.
   Future<({AuthUser user, String token, String? refreshToken})> register({
     required String name,
     required String email,
     required String password,
     String? role,
   }) async {
+    // The app uses enum names ('agent', 'employee') but the server stores wire
+    // values ('partner', 'admin'). Convert before posting.
+    final wireRole = role != null
+        ? (UserRoleX.fromKey(role)?.wireValue ?? role)
+        : null;
     final data = await ApiClient.instance.post('/auth/register', body: {
       'name': name,
       'email': email.trim(),
       'password': password,
-      if (role != null) 'role': role,
+      if (wireRole != null) 'role': wireRole,
     });
     final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
     final token = data['token'] as String;
