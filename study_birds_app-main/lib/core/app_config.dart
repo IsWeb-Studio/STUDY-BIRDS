@@ -15,5 +15,5 @@ class AppConfig {
   // Google Sign-In — Web Application client ID from Google Cloud Console.
   // Required on Android (no google-services.json).
   // Also add this value to GOOGLE_CLIENT_ID env var on Render.
-  static const googleWebClientId = '384879232095-rqr6ifgn90i7goftdqv7ldr0ntl82o6l.apps.googleusercontent.com';
+  static const googleWebClientId = '495236497658-q78f4513t3rj6neonktm49h2h3tlickf.apps.googleusercontent.com';
 }
