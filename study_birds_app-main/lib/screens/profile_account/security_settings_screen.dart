@@ -1,4 +1,3 @@
-import '../../core/device_lock.dart';
 import '../auth/phone_verification_screen.dart';
 import 'account_security_screen.dart';
 import '../auth/verify_contact_screen.dart';
@@ -14,7 +13,6 @@ class SecuritySettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) => AppScaffold(
       title: 'الأمان',
       body: FeatureBody(children: [
-        const FeaturePanel(child: DeviceLockSetting()),
         const FeatureIntro(
             title: 'حسابك تحت سيطرتك',
             subtitle: 'راجع وسائل حماية حسابك وحافظ على خصوصية بياناتك.',

@@ -7,7 +7,6 @@ import 'core/google_sign_in_service.dart';
 import 'core/app_config.dart';
 import 'core/realtime_sync_service.dart';
 import 'core/currency_service.dart';
-import 'core/device_lock.dart';
 import 'core/api_client.dart';
 import 'core/deep_link_service.dart';
 import 'core/notification_scheduler.dart';
@@ -181,8 +180,8 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      builder: (context, child) => DeviceLockGate(
-          child: OfflineBannerWrapper(child: child ?? const SizedBox.shrink())),
+      builder: (context, child) =>
+          OfflineBannerWrapper(child: child ?? const SizedBox.shrink()),
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       scrollBehavior: const _BouncingScrollBehavior(),

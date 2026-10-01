@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'analytics_service.dart';
-import 'device_lock.dart';
 import 'push_notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -434,7 +433,6 @@ class AuthSession extends ChangeNotifier {
     await storage.delete(key: 'active_session_token');
     await storage.delete(key: 'refresh_token');
     await storage.delete(key: 'cached_user');
-    await DeviceLock.instance.clear();
     PushNotificationService.instance.clearUser();
     AnalyticsService.instance.reset();
     notifyListeners();
