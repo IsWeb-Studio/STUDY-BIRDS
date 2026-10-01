@@ -76,6 +76,15 @@ const agentStudentSchema = new mongoose.Schema(
       enum: ["under-review", "preliminary-accepted", "final-accepted", "rejected"],
       default: "under-review",
     },
+    country: {
+      type: String,
+      trim: true,
+    },
+    applicationStage: {
+      type: String,
+      enum: ["initial", "documents", "submitted", "admission", "visa", "enrolled"],
+      default: "initial",
+    },
     documents: [agentStudentDocumentSchema],
   },
   { timestamps: true }

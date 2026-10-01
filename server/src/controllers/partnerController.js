@@ -180,7 +180,9 @@ const createAgentStudent = asyncHandler(async (req, res) => {
     desiredUniversity: String(payload.desiredUniversity || "").trim(),
     desiredProgram: String(payload.desiredProgram || "").trim(),
     notes: String(payload.notes || "").trim(),
+    country: String(payload.country || "").trim(),
     applicationStatus: payload.applicationStatus || "under-review",
+    applicationStage: payload.applicationStage || "initial",
   });
 
   await logActivity(req, req.user._id, "student.created", `Added student ${student.name}`, { studentId: student._id });
@@ -210,6 +212,9 @@ const updateAgentStudent = asyncHandler(async (req, res) => {
   student.desiredUniversity = String(payload.desiredUniversity || "").trim();
   student.desiredProgram = String(payload.desiredProgram || "").trim();
   student.notes = String(payload.notes || "").trim();
+  student.country = String(payload.country || "").trim();
+  if (payload.applicationStage) student.applicationStage = payload.applicationStage;
+  if (payload.applicationStatus) student.applicationStatus = payload.applicationStatus;
 
   await student.save();
 
