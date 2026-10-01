@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../core/animations.dart';
@@ -11,32 +11,63 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderStateMixin {
+class _SplashScreenState extends State<SplashScreen>
+    with TickerProviderStateMixin {
   Timer? _timer;
-  late final AnimationController _entranceController;
-  late final Animation<double> _entranceScale;
-  late final Animation<double> _entranceFade;
+  late final AnimationController _logoCtrl;
+  late final Animation<double> _logoScale;
+  late final Animation<double> _logoFade;
+
+  // Three dots — each offset by 180ms
+  late final List<AnimationController> _dotCtrls;
+  late final List<Animation<double>> _dotScales;
 
   @override
   void initState() {
     super.initState();
-    // Entrance: scale + fade in (0 -> 700ms), then the logo hands off to a
-    // gentle breathing pulse (BreathingPulse wrapper below) for as long as
-    // the splash stays on screen.
-    _entranceController = AnimationController(vsync: this, duration: const Duration(milliseconds: 700));
-    _entranceScale = Tween<double>(begin: 0.82, end: 1.0).animate(CurvedAnimation(parent: _entranceController, curve: Curves.easeOutBack));
-    _entranceFade = CurvedAnimation(parent: _entranceController, curve: Curves.easeOut);
-    _entranceController.forward();
+
+    _logoCtrl = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 650));
+    _logoScale = Tween<double>(begin: 0.78, end: 1.0)
+        .animate(CurvedAnimation(parent: _logoCtrl, curve: Curves.easeOutBack));
+    _logoFade =
+        CurvedAnimation(parent: _logoCtrl, curve: Curves.easeOut);
+    _logoCtrl.forward();
+
+    // Staggered bouncing dots
+    _dotCtrls = List.generate(
+      3,
+      (i) => AnimationController(
+          vsync: this, duration: const Duration(milliseconds: 500)),
+    );
+    _dotScales = _dotCtrls
+        .map((c) => Tween<double>(begin: 0.4, end: 1.0)
+            .animate(CurvedAnimation(parent: c, curve: Curves.easeInOut)))
+        .toList();
+
+    // Start dots after logo entrance, staggered
+    Future.delayed(const Duration(milliseconds: 700), () {
+      if (!mounted) return;
+      for (var i = 0; i < 3; i++) {
+        Future.delayed(Duration(milliseconds: i * 160), () {
+          if (!mounted) return;
+          _dotCtrls[i].repeat(reverse: true);
+        });
+      }
+    });
 
     if (widget.onFinished != null) {
-      _timer = Timer(const Duration(milliseconds: 1600), widget.onFinished!);
+      _timer = Timer(const Duration(milliseconds: 1800), widget.onFinished!);
     }
   }
 
   @override
   void dispose() {
     _timer?.cancel();
-    _entranceController.dispose();
+    _logoCtrl.dispose();
+    for (final c in _dotCtrls) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -50,13 +81,14 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
+              // Logo — circular with entrance animation
               FadeTransition(
-                opacity: _entranceFade,
+                opacity: _logoFade,
                 child: ScaleTransition(
-                  scale: _entranceScale,
+                  scale: _logoScale,
                   child: BreathingPulse(
-                    duration: const Duration(milliseconds: 1400),
-                    maxScale: 1.035,
+                    duration: const Duration(milliseconds: 1600),
+                    maxScale: 1.03,
                     child: Container(
                       width: 170,
                       height: 170,
@@ -64,12 +96,51 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
-                        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.18), blurRadius: 28, offset: const Offset(0, 10))],
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.22),
+                            blurRadius: 32,
+                            offset: const Offset(0, 12),
+                          ),
+                          BoxShadow(
+                            color: AppColors.orange.withValues(alpha: 0.18),
+                            blurRadius: 48,
+                            spreadRadius: -4,
+                          ),
+                        ],
                       ),
-                      child: Image.asset('assets/images/logo_full.png', fit: BoxFit.contain),
+                      child: Image.asset('assets/images/logo_full.png',
+                          fit: BoxFit.contain),
                     ),
                   ),
                 ),
+              ),
+
+              const SizedBox(height: 52),
+
+              // Staggered bouncing dots
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(3, (i) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 6),
+                    child: AnimatedBuilder(
+                      animation: _dotScales[i],
+                      builder: (_, __) => Transform.scale(
+                        scale: _dotScales[i].value,
+                        child: Container(
+                          width: 10,
+                          height: 10,
+                          decoration: BoxDecoration(
+                            color: AppColors.orange
+                                .withValues(alpha: 0.4 + _dotScales[i].value * 0.6),
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }),
               ),
             ],
           ),
