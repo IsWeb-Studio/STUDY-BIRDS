@@ -42,8 +42,8 @@ const register = asyncHandler(async (req, res) => {
     throw new Error("Name, email, and password are required");
   }
 
-  // Only 'student' and 'parent' may self-register; all other roles are admin-created.
-  const allowedSelfRegisterRoles = ["student", "parent"];
+  // Agents (partner) can self-register; universities and employees must be admin-created.
+  const allowedSelfRegisterRoles = ["student", "parent", "partner"];
   const requestedRole = req.body.role;
   const role = allowedSelfRegisterRoles.includes(requestedRole) ? requestedRole : "student";
 
