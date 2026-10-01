@@ -29,6 +29,7 @@ class GoogleSignInService {
   /// Returns true on success. Throws [ApiException] with a user-readable
   /// Arabic message on failure, or returns false if the user cancelled.
   Future<bool> signIn() async {
+    if (!_initialized) await init();
     if (!_initialized) {
       throw ApiException(503, 'تسجيل الدخول عبر Google غير مهيأ بعد');
     }
