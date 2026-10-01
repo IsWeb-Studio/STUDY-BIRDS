@@ -309,7 +309,7 @@ const requestOtp = asyncHandler(async (req, res) => {
   const twilioRes = await fetch(`https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/Verifications`, {
     method: 'POST',
     headers: { Authorization: 'Basic ' + Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ To: phone, Channel: 'sms' }),
+    body: new URLSearchParams({ To: phone, Channel: 'whatsapp' }),
     signal: AbortSignal.timeout(15000),
   });
   if (!twilioRes.ok) {
