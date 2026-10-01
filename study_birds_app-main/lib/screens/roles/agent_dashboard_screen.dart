@@ -2,7 +2,9 @@ import '../services_support/messaging_and_emergency_screens.dart';
 import '../profile_account/security_settings_screen.dart';
 import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
+import '../../core/auth_session.dart';
 import '../../core/agent_repository.dart';
+import '../../main.dart' show RootChooserScreen;
 import 'agent_student_detail_screen.dart';
 import 'agent_program_pricing_screen.dart';
 
@@ -212,8 +214,34 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
         ),
         IconButton(tooltip: 'الرسائل', icon: const Icon(Icons.forum_outlined),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ConversationThreadScreen()))),
-        IconButton(tooltip: 'أمان الحساب', icon: const Icon(Icons.security),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SecuritySettingsScreen()))),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
+          tooltip: 'المزيد',
+          onSelected: (value) async {
+            if (value == 'security') {
+              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SecuritySettingsScreen()));
+            } else if (value == 'logout') {
+              final confirmed = await showAppConfirmDialog(
+                context,
+                title: 'تسجيل الخروج',
+                message: 'هل تريد تسجيل الخروج من حسابك؟',
+                confirmLabel: 'تسجيل الخروج',
+                danger: true,
+              );
+              if (!confirmed || !context.mounted) return;
+              await AuthSession.instance.logout();
+              if (context.mounted) {
+                Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const RootChooserScreen()),
+                    (_) => false);
+              }
+            }
+          },
+          itemBuilder: (_) => [
+            const PopupMenuItem(value: 'security', child: Row(children: [Icon(Icons.security_outlined, size: 18), SizedBox(width: 10), Text('أمان الحساب')])),
+            const PopupMenuItem(value: 'logout', child: Row(children: [Icon(Icons.logout_rounded, size: 18, color: AppColors.danger), SizedBox(width: 10), Text('تسجيل الخروج', style: TextStyle(color: AppColors.danger))])),
+          ],
+        ),
       ],
       body: RefreshIndicator(
         onRefresh: _load,
