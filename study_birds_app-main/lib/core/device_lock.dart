@@ -111,7 +111,7 @@ class _DeviceLockGateState extends State<DeviceLockGate>
         final lock = DeviceLock.instance;
         return Stack(children: [
           widget.child,
-          if (!lock.ready || lock.locked || error != null)
+          if (lock.ready && (lock.locked || error != null))
             Positioned.fill(
                 child: Material(
                     color: const Color(0xfff8fafc),

@@ -70,18 +70,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                   ),
                 ),
               ),
-              const SizedBox(height: 36),
-              FadeTransition(
-                opacity: _entranceFade,
-                child: const SizedBox(
-                  width: 28,
-                  height: 28,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 3,
-                    valueColor: AlwaysStoppedAnimation(AppColors.orange),
-                  ),
-                ),
-              ),
             ],
           ),
         ),

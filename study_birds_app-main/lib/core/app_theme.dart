@@ -386,24 +386,27 @@ class PrimaryButton extends StatelessWidget {
   }
 }
 
-/// Standard centered loading indicator with an optional message.
+/// Skeleton loading screen — replaces circular spinners with shimmer cards.
 class LoadingState extends StatelessWidget {
   final String? message;
   const LoadingState({super.key, this.message});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(
-              color: AppColors.orange, strokeWidth: 3),
-          if (message != null) ...[
-            const SizedBox(height: 14),
-            Text(message!, style: AppTextStyles.caption),
-          ],
-        ],
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 6,
+      itemBuilder: (_, i) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: i == 0 && message != null
+            ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: SkeletonBox(height: 14, width: 140),
+                ),
+                const SkeletonCard(),
+              ])
+            : const SkeletonCard(),
       ),
     );
   }

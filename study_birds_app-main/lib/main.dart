@@ -223,7 +223,7 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_checking) return const Scaffold(body: LoadingState());
+    if (_checking) return const SplashScreen();
     if (_error != null)
       return Scaffold(body: ErrorState(message: _error!, onRetry: _restore));
     return ListenableBuilder(
