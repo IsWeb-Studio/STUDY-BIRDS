@@ -66,7 +66,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       body: FeatureBody(children: [
         const FeatureIntro(
             title: 'رقم هاتف موثوق',
-            subtitle: 'سيصلك رمز SMS للتحقق من ملكيتك للرقم.',
+            subtitle: 'سيصلك رمز عبر SMS للتحقق من ملكيتك للرقم.',
             icon: Icons.phone_android),
         if (error != null) InlineNotice(error!, error: true),
         if (verified)
