@@ -365,7 +365,7 @@ router.post(
     try {
       const result = await twilio("Verifications", {
         To: pending.phone,
-        Channel: "whatsapp",
+        Channel: "sms",
       });
       pending.value = result.sid;
       await pending.save();
