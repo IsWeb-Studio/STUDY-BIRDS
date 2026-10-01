@@ -69,6 +69,8 @@ class DeviceLockGate extends StatefulWidget {
 class _DeviceLockGateState extends State<DeviceLockGate>
     with WidgetsBindingObserver {
   String? error;
+  DateTime? _lastSessionCheck;
+
   @override
   void initState() {
     super.initState();
@@ -88,7 +90,29 @@ class _DeviceLockGateState extends State<DeviceLockGate>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused) DeviceLock.instance.lock();
+    // hidden covers iOS (app not visible in task switcher); paused covers Android.
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.hidden) {
+      DeviceLock.instance.lock();
+    } else if (state == AppLifecycleState.resumed) {
+      _checkSessionInBackground();
+    }
+  }
+
+  /// Silently validates the auth token when the app returns to foreground.
+  /// Rate-limited to once every 5 minutes to avoid unnecessary network calls.
+  /// A 401 from the server triggers the ApiClient refresh path, which will
+  /// either renew the token silently or call AuthSession.logout().
+  void _checkSessionInBackground() {
+    final session = AuthSession.instance;
+    if (!session.isRestored || session.currentUser == null) return;
+    final token = session.token;
+    if (token == null) return;
+    final now = DateTime.now();
+    if (_lastSessionCheck != null &&
+        now.difference(_lastSessionCheck!) < const Duration(minutes: 5)) return;
+    _lastSessionCheck = now;
+    AuthService.instance.fetchCurrentUser(token).catchError((_) {});
   }
 
   Future<void> open() async {

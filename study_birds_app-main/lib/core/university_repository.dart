@@ -50,4 +50,15 @@ class UniversityRepository {
     final data = await ApiClient.instance.post('/documents/$documentId/access', token: _token, body: {});
     return (data as Map<String, dynamic>)['url'] as String;
   }
+
+  Future<String> uploadAvatar({required List<int> fileBytes, required String fileName}) async {
+    final data = await ApiClient.instance.postMultipart(
+      '/university-portal/avatar',
+      fileBytes: fileBytes,
+      fileName: fileName,
+      fields: {},
+      token: _token,
+    );
+    return (data as Map<String, dynamic>)['avatar'] as String;
+  }
 }
