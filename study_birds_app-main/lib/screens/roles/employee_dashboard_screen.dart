@@ -3,6 +3,7 @@ import 'admin_scholarships_screen.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
 import '../profile_account/security_settings_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/app_theme.dart';
 import '../../core/api_client.dart';
 import '../../core/auth_session.dart';
@@ -22,6 +23,7 @@ import 'admin_singleton_hub_screens.dart';
 import 'employee_consultations_screen.dart';
 import 'admin_reward_rules_screen.dart';
 import '../services_support/student_listings_screen.dart';
+import '../../main.dart' show RootChooserScreen;
 
 /// Admin/Employee Home. HONESTY NOTE: the backend has no per-employee
 /// "tasks assigned to me" concept — role="admin" sees the whole platform
@@ -129,6 +131,9 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
   int _overdueReminders = 0;
   bool _remindersLoading = false;
 
+  String? _avatarUrl;
+  bool _avatarUploading = false;
+
   bool get _isFullAdmin => widget.user.role == UserRole.admin;
   bool get _hasApplications =>
       widget.user.permissions.contains('applications');
@@ -136,12 +141,58 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
   @override
   void initState() {
     super.initState();
+    _avatarUrl = widget.user.avatar;
     if (_isFullAdmin) {
       _load();
     } else if (_hasApplications) {
       _loadReminders();
     }
     _loadMyKpis();
+  }
+
+  Future<void> _pickAvatar() async {
+    final img = await ImagePicker().pickImage(
+        source: ImageSource.gallery, imageQuality: 80, maxWidth: 512);
+    if (img == null || !mounted) return;
+    final bytes = await img.readAsBytes();
+    if (!mounted) return;
+    setState(() => _avatarUploading = true);
+    try {
+      final data = await ApiClient.instance.postMultipart(
+        '/admin/me/avatar',
+        fileBytes: bytes,
+        fileName: img.name,
+        fields: {},
+        token: AuthSession.instance.token!,
+      );
+      final url = (data as Map<String, dynamic>)['avatar'] as String;
+      if (mounted) setState(() => _avatarUrl = url);
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('تعذر رفع الصورة'),
+            backgroundColor: AppColors.danger));
+      }
+    } finally {
+      if (mounted) setState(() => _avatarUploading = false);
+    }
+  }
+
+  Future<void> _logout() async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'تسجيل الخروج',
+      message: 'هل تريد تسجيل الخروج من حسابك؟',
+      confirmLabel: 'تسجيل الخروج',
+      danger: true,
+    );
+    if (!confirmed || !mounted) return;
+    await AuthSession.instance.logout();
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const RootChooserScreen()),
+          (_) => false);
+    }
   }
 
   Future<void> _load() async {
@@ -223,11 +274,46 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
             icon: const Icon(Icons.forum_outlined),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const ConversationThreadScreen()))),
-        IconButton(
-            tooltip: 'أمان الحساب',
-            icon: const Icon(Icons.security),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const SecuritySettingsScreen()))),
+        PopupMenuButton<String>(
+          icon: const Icon(Icons.more_vert_rounded),
+          onSelected: (value) async {
+            if (value == 'security') {
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const SecuritySettingsScreen()));
+            } else if (value == 'avatar') {
+              await _pickAvatar();
+            } else if (value == 'logout') {
+              await _logout();
+            }
+          },
+          itemBuilder: (_) => [
+            const PopupMenuItem(
+              value: 'security',
+              child: Row(children: [
+                Icon(Icons.security_outlined, size: 18),
+                SizedBox(width: 10),
+                Text('أمان الحساب'),
+              ]),
+            ),
+            const PopupMenuItem(
+              value: 'avatar',
+              child: Row(children: [
+                Icon(Icons.photo_camera_outlined, size: 18),
+                SizedBox(width: 10),
+                Text('تغيير الصورة'),
+              ]),
+            ),
+            const PopupMenuItem(
+              value: 'logout',
+              child: Row(children: [
+                Icon(Icons.logout_rounded, size: 18, color: AppColors.danger),
+                SizedBox(width: 10),
+                Text('تسجيل الخروج',
+                    style: TextStyle(color: AppColors.danger)),
+              ]),
+            ),
+          ],
+        ),
       ],
       title: _isFullAdmin ? 'لوحة الأدمن' : 'لوحة الموظف',
       body: RefreshIndicator(
@@ -236,31 +322,13 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-          AppCard(
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                      color: AppColors.navy.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(10)),
-                  child: const Icon(Icons.badge_rounded, color: AppColors.navy),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text('مرحباً ${widget.user.name}',
-                          style: AppTextStyles.cardTitle),
-                      Text(_isFullAdmin ? 'أدمن — صلاحية كاملة' : 'موظف',
-                          style: AppTextStyles.caption),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+          _EmployeeHero(
+            name: widget.user.name,
+            isAdmin: _isFullAdmin,
+            employeeRole: widget.user.employeeRole,
+            avatarUrl: _avatarUrl,
+            avatarUploading: _avatarUploading,
+            onPickAvatar: _pickAvatar,
           ),
           if (_myKpis != null) ...[
             const SizedBox(height: 8),
@@ -533,6 +601,142 @@ class _QuickLink extends StatelessWidget {
           Expanded(child: Text(label, style: AppTextStyles.cardTitle)),
           const Icon(Icons.arrow_back_ios_new_rounded,
               size: 14, color: AppColors.textSecondary),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Employee Hero Banner ─────────────────────────────────────────────────────
+class _EmployeeHero extends StatelessWidget {
+  final String name;
+  final bool isAdmin;
+  final String? employeeRole;
+  final String? avatarUrl;
+  final bool avatarUploading;
+  final VoidCallback onPickAvatar;
+
+  const _EmployeeHero({
+    required this.name,
+    required this.isAdmin,
+    required this.onPickAvatar,
+    this.employeeRole,
+    this.avatarUrl,
+    this.avatarUploading = false,
+  });
+
+  String get _roleLabel {
+    if (isAdmin) return 'أدمن — صلاحية كاملة';
+    if (employeeRole == null) return 'موظف';
+    const labels = {
+      'educational_consultant': 'مستشار تعليمي',
+      'sales': 'مبيعات',
+      'admission': 'مسؤول قبول',
+      'admission_manager': 'مدير قبول',
+      'visa_officer': 'مسؤول تأشيرات',
+      'travel_coordinator': 'منسق سفر',
+      'finance': 'مالية',
+      'marketing': 'تسويق',
+      'it': 'تقنية المعلومات',
+      'support': 'دعم',
+      'hr': 'موارد بشرية',
+      'super_admin': 'مدير النظام',
+    };
+    return labels[employeeRole] ?? employeeRole!;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [AppColors.navy, AppColors.navyLight],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      padding: const EdgeInsets.all(18),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: avatarUploading ? null : onPickAvatar,
+            child: Stack(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.4), width: 2),
+                  ),
+                  child: avatarUploading
+                      ? const Padding(
+                          padding: EdgeInsets.all(14),
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2))
+                      : avatarUrl != null
+                          ? ClipOval(
+                              child: Image.network(
+                                avatarUrl!,
+                                fit: BoxFit.cover,
+                                width: 56,
+                                height: 56,
+                                errorBuilder: (_, __, ___) => const Icon(
+                                    Icons.badge_rounded,
+                                    color: Colors.white,
+                                    size: 26),
+                              ),
+                            )
+                          : const Icon(Icons.badge_rounded,
+                              color: Colors.white, size: 26),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    width: 18,
+                    height: 18,
+                    decoration: const BoxDecoration(
+                        color: Colors.white, shape: BoxShape.circle),
+                    child: const Icon(Icons.edit_rounded,
+                        size: 11, color: AppColors.navy),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('مرحباً $name',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+                const SizedBox(height: 4),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    _roleLabel,
+                    style: const TextStyle(color: Colors.white70, fontSize: 12),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
