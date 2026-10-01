@@ -327,7 +327,7 @@ async function twilio(path, values) {
     },
   );
   if (!response.ok)
-    throw new Error("SMS provider unavailable. Please try again.");
+    throw new Error("WhatsApp verification provider unavailable. Please try again.");
   return response.json();
 }
 router.post(

@@ -448,7 +448,7 @@ class _PhoneOtpLoginScreenState extends State<PhoneOtpLoginScreen> {
   Future<void> _verifyOtp() async {
     final code = _code.text.trim();
     if (!RegExp(r'^\d{4,10}$').hasMatch(code)) {
-      setState(() => _error = 'أدخل رمز SMS الصحيح');
+      setState(() => _error = 'أدخل رمز واتساب الصحيح');
       return;
     }
     setState(() { _busy = true; _error = null; });
@@ -481,7 +481,7 @@ class _PhoneOtpLoginScreenState extends State<PhoneOtpLoginScreen> {
                 const SizedBox(height: 16),
                 const Text('أدخل رقمك الدولي', style: AppTextStyles.screenTitle),
                 const SizedBox(height: 6),
-                const Text('سنرسل رمز SMS للتحقق من هويتك', style: AppTextStyles.caption),
+                const Text('سنرسل رمز واتساب للتحقق من هويتك', style: AppTextStyles.caption),
                 const SizedBox(height: 28),
                 Container(
                   decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppRadius.button), border: Border.all(color: AppColors.border)),
@@ -504,7 +504,7 @@ class _PhoneOtpLoginScreenState extends State<PhoneOtpLoginScreen> {
                       textDirection: TextDirection.ltr,
                       keyboardType: TextInputType.number,
                       autofillHints: const [AutofillHints.oneTimeCode],
-                      decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12), hintText: 'رمز SMS', prefixIcon: Icon(Icons.lock_outline_rounded)),
+                      decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12), hintText: 'رمز واتساب', prefixIcon: Icon(Icons.lock_outline_rounded)),
                     ),
                   ),
                 ],
@@ -519,7 +519,7 @@ class _PhoneOtpLoginScreenState extends State<PhoneOtpLoginScreen> {
                   child: ElevatedButton(
                     onPressed: _busy ? null : (_sent ? _verifyOtp : _requestOtp),
                     style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))),
-                    child: Text(_busy ? 'جارٍ...' : (_sent ? 'تأكيد الرمز' : 'إرسال رمز SMS'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    child: Text(_busy ? 'جارٍ...' : (_sent ? 'تأكيد الرمز' : 'إرسال رمز واتساب'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
                   ),
                 ),
                 if (_sent) ...[
