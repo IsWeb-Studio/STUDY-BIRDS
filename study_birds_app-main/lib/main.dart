@@ -276,12 +276,12 @@ class ConnectedPrototypeEntry extends StatelessWidget {
 
   static void _goLogin(BuildContext context, {String? selectedRole}) {
     final adminOnly = _adminCreatedRoles.contains(selectedRole);
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
+    Navigator.of(context).push(MaterialPageRoute(
       builder: (ctx) => LoginScreen(
         onForgotPassword: () => Navigator.of(ctx).push(
             MaterialPageRoute(builder: (_) => const PasswordReset2FAScreen())),
         onLoginAttempt: (email, password) =>
-            _attemptLogin(ctx, email, password),
+            _attemptLogin(ctx, email, password, selectedRole: selectedRole),
         onGoRegister: adminOnly
             ? () => showDialog(
                   context: ctx,
@@ -315,15 +315,12 @@ class ConnectedPrototypeEntry extends StatelessWidget {
     ));
   }
 
-  /// Returns true/false to the LoginScreen (for its own error display), and
-  /// on success performs the ONE centralized redirect — by real role only.
-  /// There is no "claimed role" anymore (the account-type-selection step was
-  /// removed) — the person just logs in, and is told their real role here.
   static Future<bool> _attemptLogin(
     BuildContext context,
     String email,
-    String password,
-  ) async {
+    String password, {
+    String? selectedRole,
+  }) async {
     late ({AuthUser user, String token, String? refreshToken}) result;
     try {
       result = await AuthService.instance.loginOrThrow(email, password);
@@ -340,24 +337,37 @@ class ConnectedPrototypeEntry extends StatelessWidget {
       return false;
     }
     final user = result.user;
-    final token = result.token;
+
+    if (selectedRole != null && user.role.key != selectedRole) {
+      if (!context.mounted) return true;
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: const Text('نوع الحساب غير مطابق'),
+          content: Text(
+              'حسابك هو حساب ${user.role.label}، وليس النوع الذي اخترته.\n\nارجع واختر النوع الصحيح للمتابعة.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pop(context);
+              },
+              child: const Text('ارجع'),
+            ),
+          ],
+        ),
+      );
+      return true;
+    }
 
     await AuthSession.instance
-        .login(user, authToken: token, refreshToken: result.refreshToken);
+        .login(user, authToken: result.token, refreshToken: result.refreshToken);
 
     if (!context.mounted) return true;
     Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const RootChooserScreen()),
         (route) => false);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      rootScaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(
-          content: Text(
-              'تم تسجيل دخولك كـ "${user.role.label}". لتغيير نوع حسابك، تواصل مع الإدارة.'),
-          backgroundColor: AppColors.navy,
-        ),
-      );
-    });
     return true;
   }
 
