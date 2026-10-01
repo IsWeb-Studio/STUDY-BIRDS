@@ -363,8 +363,8 @@ const requestPayout = asyncHandler(async (req, res) => {
 
   await Notification.create({
     user: req.user._id,
-    title: "Payout request submitted",
-    message: `Your payout request for ${numericAmount} is pending review.`,
+    title: "تم إرسال طلب السحب",
+    message: `تم استلام طلب سحب رصيدك بقيمة $${numericAmount} وهو قيد المراجعة من الفريق المالي. سيتم إشعارك بعد اتخاذ القرار.`,
     type: "info",
   });
 

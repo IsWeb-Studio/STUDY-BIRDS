@@ -13,6 +13,15 @@ const advisors = { role: 'employee', isActive: true, permissions: 'consultations
 const fail = (code, message) => { const error = new Error(message); error.httpStatus = code; throw error; };
 const validId = value => typeof value === 'string' && mongoose.isValidObjectId(value);
 const validVersion = value => Number.isInteger(value) && value >= 0;
+const arabicDate = (d) => {
+  const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const h = d.getHours(), m = d.getMinutes();
+  const period = h < 12 ? 'ص' : 'م';
+  const h12 = h % 12 || 12;
+  const mm = String(m).padStart(2, '0');
+  return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} — ${h12}:${mm} ${period}`;
+};
 function url(value) {
   if (typeof value !== 'string' || value.length > 1000) return false;
   try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password; } catch { return false; }
@@ -53,7 +62,7 @@ async function reserve(id, reservation, session) {
 async function notify(booking, action, session) {
   const title = { booked: 'تم تأكيد الاستشارة', cancelled: 'أُلغيت الاستشارة', rescheduled: 'تم تغيير موعد الاستشارة' }[action];
   await Notification.create([booking.student, booking.advisor].map(user => ({ user, title,
-    message: `${title}: ${booking.startsAt.toISOString()}`, type: 'info', link: user.equals(booking.student) ? '/student/consultations' : '/admin/consultations' })), { session, ordered: true });
+    message: `${title} — ${arabicDate(booking.startsAt)}`, type: 'info', link: user.equals(booking.student) ? '/student/consultations' : '/admin/consultations' })), { session, ordered: true });
 }
 router.use(protect);
 router.get('/slots', authorize('student'), run(async (req, res) => {
@@ -110,7 +119,7 @@ router.post('/bookings/:id/reschedule', authorize('student'), run(async (req, re
     await Slot.updateOne({ _id: booking.slot, reservation: booking._id }, { $set: { reservation: null }, $inc: { __v: 1 } }, { session });
     if (!booking.advisor.equals(updated.advisor)) {
       await Notification.create([{ user: booking.advisor, title: 'تغيّر حجز الاستشارة',
-        message: `أصبح موعدك ${booking.startsAt.toISOString()} متاحًا بعد انتقال الطالب إلى موعد آخر.`, type: 'info', link: '/admin/consultations' }], { session });
+        message: `أصبح موعدك في ${arabicDate(booking.startsAt)} متاحًا بعد انتقال الطالب إلى موعد آخر.`, type: 'info', link: '/admin/consultations' }], { session });
     }
     await notify(updated, 'rescheduled', session); return updated;
   });
