@@ -241,35 +241,128 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   // ── Tab 0: Overview ──────────────────────────────────────────────────────
 
   Widget _buildOverviewTab() {
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildLinkRequestForm(),
-        if (_linkRequests.isNotEmpty) ...[
+    // ── حالة: لا أطفال ولا طلبات → شاشة ترحيب + فورم ──────────────────────
+    if (_children.isEmpty && _linkRequests.isEmpty) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          _buildEmptyState(),
+          const SizedBox(height: 24),
+          _buildLinkRequestForm(),
+          const SizedBox(height: 24),
+        ],
+      );
+    }
+
+    // ── حالة: طلبات معلقة فقط (لم يُوافق بعد) ─────────────────────────────
+    if (_children.isEmpty && _linkRequests.isNotEmpty) {
+      return ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // وضع مؤقت حتى الموافقة
+          AppCard(
+            child: Column(
+              children: [
+                const Icon(Icons.hourglass_top_rounded,
+                    color: AppColors.warning, size: 36),
+                const SizedBox(height: 10),
+                const Text('بانتظار موافقة الإدارة',
+                    style: AppTextStyles.cardTitle,
+                    textAlign: TextAlign.center),
+                const SizedBox(height: 6),
+                const Text(
+                    'سيظهر حساب ابنك/ابنتك بعد مراجعة طلب الربط وقبوله من قبل الفريق.',
+                    style: AppTextStyles.caption,
+                    textAlign: TextAlign.center),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
           const Text('طلبات الربط', style: AppTextStyles.sectionLabel),
           const SizedBox(height: 10),
           ..._linkRequests.map(_buildLinkRequestRow),
+          const SizedBox(height: 24),
         ],
-        if (_children.isNotEmpty) ...[
-          const SizedBox(height: 16),
-          const Text('ابني / ابنتي', style: AppTextStyles.sectionLabel),
+      );
+    }
+
+    // ── حالة: عنده أطفال مقبولين → الاختيار أول شيء ──────────────────────
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        // اختيار الطالب في أعلى الصفحة
+        if (_children.length == 1) ...[
+          _buildSingleChildHeader(),
+        ] else ...[
+          const Text('اختر الطالب', style: AppTextStyles.sectionLabel),
           const SizedBox(height: 10),
           _buildChildrenChips(),
-          const SizedBox(height: 16),
-          if (_loadingOverview)
-            const LoadingState()
-          else if (_overview != null)
-            _buildOverviewCards(_overview!)
-          else
-            const AppCard(
-                child: Text('تعذر تحميل تفاصيل هذا الطالب.',
-                    style: AppTextStyles.caption)),
         ],
-        if (_children.isEmpty && _linkRequests.isEmpty)
-          _buildEmptyState(),
+        const SizedBox(height: 16),
+
+        // بيانات الطالب المختار
+        if (_loadingOverview)
+          const LoadingState()
+        else if (_overview != null)
+          _buildOverviewCards(_overview!)
+        else
+          const AppCard(
+              child: Text('تعذر تحميل تفاصيل هذا الطالب.',
+                  style: AppTextStyles.caption)),
+
+        // طلبات الربط (مطوية في الأسفل)
+        if (_linkRequests.isNotEmpty) ...[
+          const SizedBox(height: 24),
+          const Text('طلبات الربط', style: AppTextStyles.sectionLabel),
+          const SizedBox(height: 10),
+          ..._linkRequests.map(_buildLinkRequestRow),
+        ],
+
+        // فورم إضافة طالب جديد في الأسفل
+        const SizedBox(height: 24),
+        _buildLinkRequestForm(),
         const SizedBox(height: 24),
       ],
+    );
+  }
+
+  Widget _buildSingleChildHeader() {
+    final child = _children[0] as Map<String, dynamic>;
+    return AppCard(
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundColor: AppColors.navy.withValues(alpha: 0.1),
+            child: const Icon(Icons.person_rounded,
+                color: AppColors.navy, size: 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('تتابع رحلة',
+                    style: AppTextStyles.caption),
+                Text(child['name'] as String? ?? '—',
+                    style: AppTextStyles.cardTitle),
+              ],
+            ),
+          ),
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+                color: AppColors.success.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(20)),
+            child: const Text('مرتبط',
+                style: TextStyle(
+                    color: AppColors.success,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700)),
+          ),
+        ],
+      ),
     );
   }
 
