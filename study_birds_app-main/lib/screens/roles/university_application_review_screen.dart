@@ -337,9 +337,18 @@ class _UniversityApplicationReviewScreenState
     );
   }
 
-  Future<void> _viewDocument(String docId, String docName) async {
+  Future<void> _viewDocument(String? docId, String? filePath, String docName) async {
     try {
-      final url = await UniversityRepository.instance.getDocumentAccessUrl(docId);
+      String url;
+      // Legacy docs already have a direct public URL in filePath.
+      // New private-storage docs need a signed URL from the access endpoint.
+      if (filePath != null && filePath.startsWith('https://')) {
+        url = filePath;
+      } else if (docId != null) {
+        url = await UniversityRepository.instance.getDocumentAccessUrl(docId);
+      } else {
+        throw Exception('no url');
+      }
       final uri = Uri.parse(url);
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         if (mounted) {
@@ -350,9 +359,11 @@ class _UniversityApplicationReviewScreenState
       }
     } on ApiException catch (e) {
       if (mounted) {
+        final msg = e.statusCode == 409
+            ? 'هذا المستند مخزّن بتنسيق قديم — تواصل مع فريق Study Birds للوصول إليه.'
+            : e.message;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text(e.message),
-            backgroundColor: AppColors.danger));
+            content: Text(msg), backgroundColor: AppColors.warning));
       }
     } catch (_) {
       if (mounted) {
@@ -521,6 +532,7 @@ class _UniversityApplicationReviewScreenState
           final docId = doc['_id'] as String?;
           final docName = docTypeLabel(doc['type'] as String?);
           final fileName = doc['fileName'] as String? ?? docName;
+          final filePath = doc['filePath'] as String?;
           final hasFile = docId != null;
 
           return Column(
@@ -562,7 +574,7 @@ class _UniversityApplicationReviewScreenState
                     if (hasFile) ...[
                       const SizedBox(width: 6),
                       InkWell(
-                        onTap: () => _viewDocument(docId, docName),
+                        onTap: () => _viewDocument(docId, filePath, docName),
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
