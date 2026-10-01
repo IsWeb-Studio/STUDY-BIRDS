@@ -85,4 +85,13 @@ class AgentRepository {
     final data = await ApiClient.instance.get('/partners/referral', token: _token);
     return data as Map<String, dynamic>;
   }
+
+  Future<List<dynamic>> getNotifications() async {
+    final data = await ApiClient.instance.get('/partners/notifications', token: _token);
+    return data as List<dynamic>;
+  }
+
+  Future<void> markNotificationRead(String notificationId) async {
+    await ApiClient.instance.patch('/partners/notifications/$notificationId/read', token: _token, body: {});
+  }
 }
