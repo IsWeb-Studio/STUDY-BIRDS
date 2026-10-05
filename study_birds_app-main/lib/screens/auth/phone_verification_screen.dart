@@ -30,7 +30,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       return;
     }
     if (sent && !RegExp(r'^\d{4,10}$').hasMatch(code.text.trim())) {
-      setState(() => error = 'أدخل رمز SMS الصحيح');
+      setState(() => error = 'أدخل رمز واتساب الصحيح');
       return;
     }
     setState(() {
@@ -66,7 +66,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       body: FeatureBody(children: [
         const FeatureIntro(
             title: 'رقم هاتف موثوق',
-            subtitle: 'سيصلك رمز عبر SMS للتحقق من ملكيتك للرقم.',
+            subtitle: 'سيصلك رمز عبر واتساب للتحقق من ملكيتك للرقم.',
             icon: Icons.phone_android),
         if (error != null) InlineNotice(error!, error: true),
         if (verified)
@@ -89,7 +89,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
                   textDirection: TextDirection.ltr,
                   keyboardType: TextInputType.number,
                   autofillHints: const [AutofillHints.oneTimeCode],
-                  decoration: featureInput('رمز SMS'))
+                  decoration: featureInput('رمز واتساب'))
             ],
             const SizedBox(height: 20),
             PrimaryButton(
