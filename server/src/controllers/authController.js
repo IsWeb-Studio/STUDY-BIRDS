@@ -7,6 +7,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const generateToken = require("../utils/generateToken");
 const { recordReferralSignup } = require("../utils/studentWallet");
 const { Challenge } = require('../models/IdentityCredential');
+const wa = require('../utils/whatsappOtp');
 
 const googleClient = new OAuth2Client();
 
@@ -295,47 +296,33 @@ const logout = asyncHandler(async (req, res) => {
   res.json({ ok: true });
 });
 
-// #6: Phone OTP login — step 1: request OTP via Twilio Verify
+// Phone OTP login — step 1: send code via WhatsApp
 const requestOtp = asyncHandler(async (req, res) => {
-  const twilioReady = () => process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_VERIFY_SERVICE_SID;
-  if (!twilioReady()) return res.status(503).json({ message: 'Phone login is not configured' });
+  if (!wa.ready()) return res.status(503).json({ message: 'Phone login is not configured' });
   const phone = String(req.body.phone || '').trim();
   if (!/^\+[1-9]\d{7,14}$/.test(phone)) return res.status(400).json({ message: 'أدخل رقمًا دوليًا يبدأ بـ + ورمز الدولة' });
   const key = `otp-login:${phone}`;
-  // Rate limit: block if an unexpired challenge was created within the last minute
   const existing = await Challenge.findOne({ key, purpose: 'otp-login', expiresAt: { $gt: new Date(Date.now() + 9 * 60 * 1000) } });
   if (existing) return res.status(429).json({ message: 'انتظر دقيقة قبل طلب رمز جديد' });
   await Challenge.deleteOne({ key });
-  const twilioRes = await fetch(`https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/Verifications`, {
-    method: 'POST',
-    headers: { Authorization: 'Basic ' + Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ To: phone, Channel: 'whatsapp' }),
-    signal: AbortSignal.timeout(15000),
-  });
-  if (!twilioRes.ok) {
-    const body = await twilioRes.json().catch(() => ({}));
-    console.error('[OTP] Twilio error:', twilioRes.status, JSON.stringify(body));
-    return res.status(502).json({ message: body.message || 'تعذر إرسال الرمز. حاول مجدداً.' });
+  const code = wa.generate();
+  try {
+    await wa.send(phone, code);
+  } catch (e) {
+    return res.status(502).json({ message: e.message || 'تعذر إرسال الرمز. حاول مجدداً.' });
   }
-  await Challenge.create({ key, purpose: 'otp-login', value: phone, expiresAt: new Date(Date.now() + 10 * 60 * 1000) });
+  await Challenge.create({ key, purpose: 'otp-login', value: wa.hash(phone, code), expiresAt: new Date(Date.now() + 10 * 60 * 1000) });
   res.json({ sent: true });
 });
 
-// #6: Phone OTP login — step 2: verify OTP + issue JWT
+// Phone OTP login — step 2: verify code + issue JWT
 const verifyOtp = asyncHandler(async (req, res) => {
-  const twilioReady = () => process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_VERIFY_SERVICE_SID;
-  if (!twilioReady()) return res.status(503).json({ message: 'Phone login is not configured' });
+  if (!wa.ready()) return res.status(503).json({ message: 'Phone login is not configured' });
   const phone = String(req.body.phone || '').trim();
-  const code = String(req.body.code || '').trim();
-  if (!/^\+[1-9]\d{7,14}$/.test(phone) || !/^\d{4,10}$/.test(code)) return res.status(400).json({ message: 'رقم أو رمز غير صالح' });
-  const result = await fetch(`https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/VerificationCheck`, {
-    method: 'POST',
-    headers: { Authorization: 'Basic ' + Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({ To: phone, Code: code }),
-    signal: AbortSignal.timeout(15000),
-  }).then(r => r.json());
-  if (result.status !== 'approved') return res.status(401).json({ message: 'رمز التحقق غير صحيح أو منتهي الصلاحية' });
-  await Challenge.deleteOne({ key: `otp-login:${phone}`, purpose: 'otp-login' });
+  const code  = String(req.body.code  || '').trim();
+  if (!/^\+[1-9]\d{7,14}$/.test(phone) || !/^\d{6}$/.test(code)) return res.status(400).json({ message: 'رقم أو رمز غير صالح' });
+  const pending = await Challenge.findOneAndDelete({ key: `otp-login:${phone}`, purpose: 'otp-login', expiresAt: { $gt: new Date() } });
+  if (!pending || pending.value !== wa.hash(phone, code)) return res.status(401).json({ message: 'رمز التحقق غير صحيح أو منتهي الصلاحية' });
   let user = await User.findOne({ verifiedPhone: phone });
   if (!user) {
     user = await User.create({ name: phone, email: `${phone.replace('+', '')}@phone.studybirds.net`, verifiedPhone: phone, authProvider: 'phone', role: 'student' });
