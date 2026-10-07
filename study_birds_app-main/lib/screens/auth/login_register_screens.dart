@@ -2,6 +2,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/app_theme.dart';
+import '../../core/country_data.dart';
 import '../../core/google_sign_in_service.dart';
 import '../../core/api_client.dart';
 import '../../core/auth_session.dart';
@@ -481,30 +482,45 @@ class PhoneOtpLoginScreen extends StatefulWidget {
 }
 
 class _PhoneOtpLoginScreenState extends State<PhoneOtpLoginScreen> {
-  final _phone = TextEditingController();
+  Country _country = kDefaultCountry;
+  final _localPhone = TextEditingController();
   final _code = TextEditingController();
   bool _sent = false, _busy = false;
-  String? _error;
+  String? _phoneError, _codeError;
 
   @override
   void dispose() {
-    _phone.dispose();
+    _localPhone.dispose();
     _code.dispose();
     super.dispose();
   }
 
+  String get _fullPhone {
+    final digits = _localPhone.text.replaceAll(RegExp(r'[^0-9]'), '');
+    return '+${_country.dialCode}$digits';
+  }
+
+  Future<void> _pickCountry() async {
+    final picked = await showCountryPicker(context);
+    if (picked != null && mounted) setState(() => _country = picked);
+  }
+
   Future<void> _requestOtp() async {
-    final phone = _phone.text.trim();
-    if (!RegExp(r'^\+[1-9]\d{7,14}$').hasMatch(phone)) {
-      setState(() => _error = 'أدخل رقمًا دوليًا يبدأ بـ + ورمز الدولة');
+    final digits = _localPhone.text.replaceAll(RegExp(r'[^0-9]'), '');
+    if (digits.length < 5) {
+      setState(() => _phoneError = 'أدخل رقم الهاتف بشكل صحيح');
       return;
     }
-    setState(() { _busy = true; _error = null; });
+    if (!RegExp(r'^\+[1-9]\d{7,14}$').hasMatch(_fullPhone)) {
+      setState(() => _phoneError = 'الرقم غير صالح — تحقق من رمز الدولة والرقم');
+      return;
+    }
+    setState(() { _busy = true; _phoneError = null; });
     try {
-      await ApiClient.instance.post('/auth/otp/request', body: {'phone': phone});
+      await ApiClient.instance.post('/auth/otp/request', body: {'phone': _fullPhone});
       if (mounted) setState(() => _sent = true);
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) setState(() => _phoneError = e.message);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -513,18 +529,21 @@ class _PhoneOtpLoginScreenState extends State<PhoneOtpLoginScreen> {
   Future<void> _verifyOtp() async {
     final code = _code.text.trim();
     if (!RegExp(r'^\d{4,10}$').hasMatch(code)) {
-      setState(() => _error = 'أدخل رمز واتساب الصحيح');
+      setState(() => _codeError = 'أدخل رمز واتساب الصحيح');
       return;
     }
-    setState(() { _busy = true; _error = null; });
+    setState(() { _busy = true; _codeError = null; });
     try {
-      final data = await ApiClient.instance.post('/auth/otp/verify', body: {'phone': _phone.text.trim(), 'code': code});
+      final data = await ApiClient.instance.post('/auth/otp/verify',
+          body: {'phone': _fullPhone, 'code': code});
       final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
-      await AuthSession.instance.login(user, authToken: data['token'] as String, refreshToken: data['refreshToken'] as String?);
+      await AuthSession.instance.login(user,
+          authToken: data['token'] as String,
+          refreshToken: data['refreshToken'] as String?);
       AnalyticsService.instance.loginCompleted(user.role.name);
       if (mounted) widget.onSuccess?.call();
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
+      if (mounted) setState(() => _codeError = e.message);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -535,7 +554,12 @@ class _PhoneOtpLoginScreenState extends State<PhoneOtpLoginScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        appBar: AppBar(title: const Text('تسجيل الدخول برقم الهاتف'), backgroundColor: Colors.white, foregroundColor: AppColors.navy, elevation: 0),
+        appBar: AppBar(
+          title: const Text('تسجيل الدخول برقم الهاتف'),
+          backgroundColor: Colors.white,
+          foregroundColor: AppColors.navy,
+          elevation: 0,
+        ),
         backgroundColor: Colors.white,
         body: SafeArea(
           child: SingleChildScrollView(
@@ -543,56 +567,205 @@ class _PhoneOtpLoginScreenState extends State<PhoneOtpLoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const SizedBox(height: 16),
-                const Text('أدخل رقمك الدولي', style: AppTextStyles.screenTitle),
+                const SizedBox(height: 8),
+                const Text('رقم هاتفك', style: AppTextStyles.screenTitle),
                 const SizedBox(height: 6),
-                const Text('سنرسل رمز واتساب للتحقق من هويتك', style: AppTextStyles.caption),
+                const Text('سنرسل رمز التحقق عبر واتساب',
+                    style: AppTextStyles.caption),
                 const SizedBox(height: 28),
-                Container(
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppRadius.button), border: Border.all(color: AppColors.border)),
-                  child: TextField(
-                    controller: _phone,
-                    readOnly: _sent,
-                    enabled: !_busy,
-                    textDirection: TextDirection.ltr,
-                    keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12), hintText: '+905...', prefixIcon: Icon(Icons.phone_android_rounded)),
-                  ),
+
+                // Phone row: country picker + local number field
+                const Text('رقم الهاتف', style: AppTextStyles.caption),
+                const SizedBox(height: 6),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Country code button
+                    GestureDetector(
+                      onTap: _sent ? null : _pickCountry,
+                      child: Container(
+                        height: 52,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.button),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(_country.flag,
+                                style: const TextStyle(fontSize: 22)),
+                            const SizedBox(width: 6),
+                            Text('+${_country.dialCode}',
+                                style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 14,
+                                    color: AppColors.navy)),
+                            const SizedBox(width: 2),
+                            if (!_sent)
+                              Icon(Icons.expand_more_rounded,
+                                  size: 16,
+                                  color: Colors.grey.shade400),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // Local number field
+                    Expanded(
+                      child: Container(
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.button),
+                          border: Border.all(
+                              color: _phoneError != null
+                                  ? AppColors.danger
+                                  : AppColors.border),
+                        ),
+                        child: TextField(
+                          controller: _localPhone,
+                          readOnly: _sent,
+                          enabled: !_busy,
+                          textDirection: TextDirection.ltr,
+                          keyboardType: TextInputType.phone,
+                          style: const TextStyle(
+                              fontSize: 15, letterSpacing: 1),
+                          onChanged: (_) {
+                            if (_phoneError != null) {
+                              setState(() => _phoneError = null);
+                            }
+                          },
+                          decoration: const InputDecoration(
+                            border: InputBorder.none,
+                            contentPadding: EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 12),
+                            hintText: '5xxxxxxxx',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                if (_phoneError != null) ...[
+                  const SizedBox(height: 6),
+                  Text(_phoneError!,
+                      style: const TextStyle(
+                          color: AppColors.danger, fontSize: 12.5)),
+                ],
+
+                // OTP code field — appears after sending
                 if (_sent) ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 20),
                   Container(
-                    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppRadius.button), border: Border.all(color: AppColors.border)),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.navy.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.chat_rounded,
+                            color: Color(0xFF25D366), size: 18),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'تم إرسال رمز التحقق إلى $_fullPhone عبر واتساب',
+                            style: AppTextStyles.caption,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text('رمز واتساب', style: AppTextStyles.caption),
+                  const SizedBox(height: 6),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius:
+                          BorderRadius.circular(AppRadius.button),
+                      border: Border.all(
+                          color: _codeError != null
+                              ? AppColors.danger
+                              : AppColors.border),
+                    ),
                     child: TextField(
                       controller: _code,
                       enabled: !_busy,
                       textDirection: TextDirection.ltr,
                       keyboardType: TextInputType.number,
                       autofillHints: const [AutofillHints.oneTimeCode],
-                      decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 14, horizontal: 12), hintText: 'رمز واتساب', prefixIcon: Icon(Icons.lock_outline_rounded)),
+                      style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 8),
+                      textAlign: TextAlign.center,
+                      onChanged: (_) {
+                        if (_codeError != null) {
+                          setState(() => _codeError = null);
+                        }
+                      },
+                      decoration: const InputDecoration(
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(
+                            vertical: 14, horizontal: 12),
+                        hintText: '------',
+                        hintStyle: TextStyle(letterSpacing: 8),
+                      ),
                     ),
                   ),
+                  if (_codeError != null) ...[
+                    const SizedBox(height: 6),
+                    Text(_codeError!,
+                        style: const TextStyle(
+                            color: AppColors.danger, fontSize: 12.5)),
+                  ],
                 ],
-                if (_error != null) ...[
-                  const SizedBox(height: 10),
-                  Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12.5)),
-                ],
+
                 const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 50,
                   child: ElevatedButton(
-                    onPressed: _busy ? null : (_sent ? _verifyOtp : _requestOtp),
-                    style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button))),
-                    child: Text(_busy ? 'جارٍ...' : (_sent ? 'تأكيد الرمز' : 'إرسال رمز واتساب'), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                    onPressed:
+                        _busy ? null : (_sent ? _verifyOtp : _requestOtp),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.navy,
+                      shape: RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.button)),
+                    ),
+                    child: Text(
+                      _busy
+                          ? 'جارٍ...'
+                          : (_sent ? 'تأكيد الرمز' : 'إرسال رمز واتساب'),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15),
+                    ),
                   ),
                 ),
+
                 if (_sent) ...[
-                  const SizedBox(height: 10),
-                  Center(child: TextButton(
-                    onPressed: _busy ? null : () => setState(() { _sent = false; _code.clear(); }),
-                    child: const Text('تغيير الرقم أو إعادة الإرسال', style: TextStyle(color: AppColors.orange)),
-                  )),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: TextButton(
+                      onPressed: _busy
+                          ? null
+                          : () => setState(() {
+                                _sent = false;
+                                _code.clear();
+                                _codeError = null;
+                              }),
+                      child: const Text('تغيير الرقم أو إعادة الإرسال',
+                          style: TextStyle(color: AppColors.orange)),
+                    ),
+                  ),
                 ],
               ],
             ),
