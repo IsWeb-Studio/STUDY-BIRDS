@@ -13,6 +13,7 @@ class _AppTextField extends StatelessWidget {
   final bool obscure;
   final TextInputType? keyboardType;
   final TextEditingController? controller;
+  final String? Function(String?)? validator;
 
   const _AppTextField({
     required this.label,
@@ -20,7 +21,10 @@ class _AppTextField extends StatelessWidget {
     this.obscure = false,
     this.keyboardType,
     this.controller,
+    this.validator,
   });
+
+  static final _borderRadius = BorderRadius.circular(AppRadius.button);
 
   @override
   Widget build(BuildContext context) {
@@ -29,23 +33,36 @@ class _AppTextField extends StatelessWidget {
       children: [
         Text(label, style: AppTextStyles.caption),
         const SizedBox(height: 6),
-        Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(AppRadius.button),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: TextField(
-            controller: controller,
-            obscureText: obscure,
-            keyboardType: keyboardType,
-            textAlign: TextAlign.right,
-            decoration: InputDecoration(
-              border: InputBorder.none,
-              contentPadding:
-                  const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-              prefixIcon: Icon(icon, color: AppColors.navy, size: 20),
-            ),
+        TextFormField(
+          controller: controller,
+          obscureText: obscure,
+          keyboardType: keyboardType,
+          textAlign: TextAlign.right,
+          validator: validator,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          decoration: InputDecoration(
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+            prefixIcon: Icon(icon, color: AppColors.navy, size: 20),
+            border: OutlineInputBorder(
+                borderRadius: _borderRadius,
+                borderSide: const BorderSide(color: AppColors.border)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: _borderRadius,
+                borderSide: const BorderSide(color: AppColors.border)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: _borderRadius,
+                borderSide:
+                    const BorderSide(color: AppColors.navy, width: 1.5)),
+            errorBorder: OutlineInputBorder(
+                borderRadius: _borderRadius,
+                borderSide: const BorderSide(color: AppColors.danger)),
+            focusedErrorBorder: OutlineInputBorder(
+                borderRadius: _borderRadius,
+                borderSide:
+                    const BorderSide(color: AppColors.danger, width: 1.5)),
           ),
         ),
       ],
@@ -77,6 +94,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
@@ -122,12 +140,13 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submit() async {
     if (widget.onLoginAttempt == null) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() {
       _loading = true;
       _error = null;
     });
     final ok = await widget.onLoginAttempt!(
-        _emailController.text, _passwordController.text);
+        _emailController.text.trim(), _passwordController.text);
     if (!mounted) return;
     setState(() {
       _loading = false;
@@ -144,7 +163,9 @@ class _LoginScreenState extends State<LoginScreen> {
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            child: Column(
+            child: Form(
+              key: _formKey,
+              child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 20),
@@ -169,6 +190,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   icon: Icons.person_outline_rounded,
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
+                  validator: (v) {
+                    if (v == null || v.trim().isEmpty) return 'أدخل بريدك الإلكتروني';
+                    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim())) {
+                      return 'صيغة البريد الإلكتروني غير صحيحة';
+                    }
+                    return null;
+                  },
                 )
                     .animate()
                     .fadeIn(delay: 80.ms, duration: 350.ms)
@@ -179,6 +207,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   icon: Icons.lock_outline_rounded,
                   obscure: true,
                   controller: _passwordController,
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? 'أدخل كلمة المرور' : null,
                 )
                     .animate()
                     .fadeIn(delay: 160.ms, duration: 350.ms)
@@ -281,6 +311,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ],
             ),
+            ),
           ),
         ),
       ),
@@ -302,11 +333,20 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String _passwordText = '';
   bool _loading = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(
+        () => setState(() => _passwordText = _passwordController.text));
+  }
 
   @override
   void dispose() {
@@ -318,12 +358,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Future<void> _submit() async {
     if (widget.onRegisterAttempt == null) return;
-    if (_nameController.text.trim().isEmpty ||
-        _emailController.text.trim().isEmpty ||
-        _passwordController.text.isEmpty) {
-      setState(() => _error = 'كل الحقول مطلوبة');
-      return;
-    }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
     setState(() {
       _loading = true;
       _error = null;
@@ -333,9 +368,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (!mounted) return;
     setState(() {
       _loading = false;
-      if (!ok)
+      if (!ok) {
         _error =
             'تعذر إنشاء الحساب — تأكد إن البريد الإلكتروني غير مستخدم من قبل';
+      }
     });
   }
 
@@ -345,7 +381,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
       title: 'إنشاء حساب',
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
-        child: Column(
+        child: Form(
+          key: _formKey,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('لنبدأ رحلتك 🎓', style: AppTextStyles.screenTitle),
@@ -357,7 +395,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
             _AppTextField(
                     label: 'الاسم الكامل',
                     icon: Icons.badge_outlined,
-                    controller: _nameController)
+                    controller: _nameController,
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'أدخل اسمك الكامل'
+                        : null)
                 .animate()
                 .fadeIn(delay: 60.ms, duration: 350.ms)
                 .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
@@ -367,6 +408,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
               icon: Icons.email_outlined,
               keyboardType: TextInputType.emailAddress,
               controller: _emailController,
+              validator: (v) {
+                if (v == null || v.trim().isEmpty) return 'أدخل بريدك الإلكتروني';
+                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim())) {
+                  return 'صيغة البريد الإلكتروني غير صحيحة';
+                }
+                return null;
+              },
             )
                 .animate()
                 .fadeIn(delay: 140.ms, duration: 350.ms)
@@ -376,10 +424,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     label: 'كلمة المرور',
                     icon: Icons.lock_outline_rounded,
                     obscure: true,
-                    controller: _passwordController)
+                    controller: _passwordController,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'أدخل كلمة المرور';
+                      if (v.length < 8) return 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
+                      return null;
+                    })
                 .animate()
                 .fadeIn(delay: 220.ms, duration: 350.ms)
                 .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
+            PasswordStrengthBar(password: _passwordText),
             if (_error != null) ...[
               const SizedBox(height: 10),
               Text(_error!,
@@ -411,6 +465,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

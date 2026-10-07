@@ -101,9 +101,11 @@ class _CreateUniversityAccountScreen extends StatefulWidget {
 }
 
 class _CreateUniversityAccountScreenState extends State<_CreateUniversityAccountScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _name = TextEditingController();
   final _email = TextEditingController();
   final _password = TextEditingController();
+  String _passwordText = '';
   List<dynamic> _universities = [];
   String? _selectedUniversityId;
   bool _loadingUniversities = true;
@@ -113,16 +115,22 @@ class _CreateUniversityAccountScreenState extends State<_CreateUniversityAccount
   @override
   void initState() {
     super.initState();
+    _password.addListener(
+        () => setState(() => _passwordText = _password.text));
     CatalogRepository.instance.getUniversities().then((data) {
-      if (mounted) setState(() {
-        _universities = data;
-        _loadingUniversities = false;
-      });
+      if (mounted) {
+        setState(() {
+          _universities = data;
+          _loadingUniversities = false;
+        });
+      }
     }).catchError((_) {
-      if (mounted) setState(() {
-        _error = 'تعذر تحميل قائمة الجامعات.';
-        _loadingUniversities = false;
-      });
+      if (mounted) {
+        setState(() {
+          _error = 'تعذر تحميل قائمة الجامعات.';
+          _loadingUniversities = false;
+        });
+      }
     });
   }
 
@@ -135,8 +143,9 @@ class _CreateUniversityAccountScreenState extends State<_CreateUniversityAccount
   }
 
   Future<void> _submit() async {
-    if (_name.text.trim().isEmpty || _email.text.trim().isEmpty || _password.text.isEmpty || _selectedUniversityId == null) {
-      setState(() => _error = 'كل الحقول مطلوبة، ولازم تختار جامعة.');
+    if (!(_formKey.currentState?.validate() ?? false)) return;
+    if (_selectedUniversityId == null) {
+      setState(() => _error = 'اختر جامعة من القائمة.');
       return;
     }
     setState(() {
@@ -158,7 +167,12 @@ class _CreateUniversityAccountScreenState extends State<_CreateUniversityAccount
     }
   }
 
-  Widget _field(String label, TextEditingController controller, {bool obscure = false}) {
+  static final _br = BorderRadius.circular(AppRadius.button);
+  static final _border =
+      OutlineInputBorder(borderRadius: _br, borderSide: const BorderSide(color: AppColors.border));
+
+  Widget _field(String label, TextEditingController controller,
+      {bool obscure = false, String? Function(String?)? validator}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -166,9 +180,28 @@ class _CreateUniversityAccountScreenState extends State<_CreateUniversityAccount
         children: [
           Text(label, style: AppTextStyles.caption),
           const SizedBox(height: 6),
-          Container(
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(AppRadius.button), border: Border.all(color: AppColors.border)),
-            child: TextField(controller: controller, obscureText: obscure, textAlign: TextAlign.right, decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12))),
+          TextFormField(
+            controller: controller,
+            obscureText: obscure,
+            textAlign: TextAlign.right,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
+            validator: validator,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+              border: _border,
+              enabledBorder: _border,
+              focusedBorder: OutlineInputBorder(
+                  borderRadius: _br,
+                  borderSide: const BorderSide(color: AppColors.navy, width: 1.5)),
+              errorBorder: OutlineInputBorder(
+                  borderRadius: _br,
+                  borderSide: const BorderSide(color: AppColors.danger)),
+              focusedErrorBorder: OutlineInputBorder(
+                  borderRadius: _br,
+                  borderSide: const BorderSide(color: AppColors.danger, width: 1.5)),
+            ),
           ),
         ],
       ),
@@ -181,12 +214,29 @@ class _CreateUniversityAccountScreenState extends State<_CreateUniversityAccount
       title: 'إنشاء حساب جامعة',
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: Form(
+          key: _formKey,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _field('اسم صاحب الحساب', _name),
-            _field('البريد الإلكتروني', _email),
-            _field('كلمة المرور', _password, obscure: true),
+            _field('اسم صاحب الحساب', _name,
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'أدخل الاسم الكامل'
+                    : null),
+            _field('البريد الإلكتروني', _email, validator: (v) {
+              if (v == null || v.trim().isEmpty) return 'أدخل البريد الإلكتروني';
+              if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim())) {
+                return 'صيغة البريد الإلكتروني غير صحيحة';
+              }
+              return null;
+            }),
+            _field('كلمة المرور', _password, obscure: true, validator: (v) {
+              if (v == null || v.isEmpty) return 'أدخل كلمة المرور';
+              if (v.length < 8) return 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
+              return null;
+            }),
+            PasswordStrengthBar(password: _passwordText),
+            const SizedBox(height: 6),
             const Text('الجامعة', style: AppTextStyles.caption),
             const SizedBox(height: 6),
             Container(
@@ -214,6 +264,7 @@ class _CreateUniversityAccountScreenState extends State<_CreateUniversityAccount
             const SizedBox(height: 20),
             PrimaryButton(label: _saving ? 'جاري الإنشاء...' : 'إنشاء الحساب', onPressed: _saving ? null : _submit),
           ],
+          ),
         ),
       ),
     );
