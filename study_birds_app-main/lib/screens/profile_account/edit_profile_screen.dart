@@ -795,26 +795,50 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               // Nationality — auto-filled but editable
                               _field('nationality'),
 
-                              // Residence country picker
-                              _tapField(
-                                'بلد الإقامة',
-                                _controllers['currentResidenceCountry']!.text,
-                                () async {
-                                  final picked =
-                                      await showCountryPicker(context);
-                                  if (picked != null && mounted) {
-                                    setState(() {
-                                      _controllers['currentResidenceCountry']!
-                                          .text = picked.nameAr;
-                                      _residenceIso2 = picked.iso2;
-                                      _controllers['residenceRegion']!.text =
-                                          '';
-                                    });
-                                  }
-                                },
+                              // Residence country — editable + picker icon
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 18),
+                                child: TextFormField(
+                                  controller: _controllers[
+                                      'currentResidenceCountry'],
+                                  enabled: !_saving,
+                                  decoration: featureInput(
+                                    'بلد الإقامة',
+                                    suffix: IconButton(
+                                      icon: Icon(
+                                          Icons.arrow_drop_down_rounded,
+                                          size: 24,
+                                          color: Colors.grey.shade500),
+                                      onPressed: _saving
+                                          ? null
+                                          : () async {
+                                              final picked =
+                                                  await showCountryPicker(
+                                                      context);
+                                              if (picked != null && mounted) {
+                                                setState(() {
+                                                  _controllers[
+                                                          'currentResidenceCountry']!
+                                                      .text = picked.nameAr;
+                                                  _residenceIso2 = picked.iso2;
+                                                  _controllers[
+                                                          'residenceRegion']!
+                                                      .text = '';
+                                                });
+                                              }
+                                            },
+                                    ),
+                                  ),
+                                  onChanged: (_) {
+                                    // Manual typing clears iso2 so regions hide
+                                    if (_residenceIso2.isNotEmpty) {
+                                      setState(() => _residenceIso2 = '');
+                                    }
+                                  },
+                                ),
                               ),
 
-                              // Region — only if country has regions
+                              // Region — picker if known regions exist, else free text
                               if (_residenceIso2.isNotEmpty &&
                                   (kRegionsByIso2[_residenceIso2]?.isNotEmpty ??
                                       false))
@@ -830,7 +854,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     }
                                   },
                                 )
-                              else if (_residenceIso2.isNotEmpty)
+                              else
                                 _field('residenceRegion'),
 
                               _field('address'),

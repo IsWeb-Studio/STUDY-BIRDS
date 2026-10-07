@@ -224,69 +224,89 @@ class _StringPickerSheetState extends State<_StringPickerSheet> {
   }
 
   @override
-  Widget build(BuildContext context) => DraggableScrollableSheet(
-        expand: false,
-        initialChildSize: 0.85,
-        minChildSize: 0.4,
-        maxChildSize: 0.95,
-        builder: (_, controller) => Column(
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                  color: AppColors.border,
-                  borderRadius: BorderRadius.circular(2)),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Text(widget.title, style: AppTextStyles.cardTitle),
-            ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: TextField(
-                controller: _search,
-                autofocus: true,
-                textDirection: TextDirection.rtl,
-                decoration: InputDecoration(
-                  hintText: widget.searchHint,
-                  prefixIcon: const Icon(Icons.search_rounded, size: 20),
-                  filled: true,
-                  fillColor: AppColors.background,
-                  contentPadding:
-                      const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.button),
-                    borderSide: BorderSide.none,
-                  ),
+  Widget build(BuildContext context) {
+    final query = _search.text.trim();
+    final showManual = query.isNotEmpty &&
+        !_filtered.any((s) => s.toLowerCase() == query.toLowerCase());
+    final totalCount = _filtered.length + (showManual ? 1 : 0);
+
+    return DraggableScrollableSheet(
+      expand: false,
+      initialChildSize: 0.85,
+      minChildSize: 0.4,
+      maxChildSize: 0.95,
+      builder: (_, controller) => Column(
+        children: [
+          const SizedBox(height: 8),
+          Container(
+            width: 36,
+            height: 4,
+            decoration: BoxDecoration(
+                color: AppColors.border,
+                borderRadius: BorderRadius.circular(2)),
+          ),
+          const SizedBox(height: 12),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(widget.title, style: AppTextStyles.cardTitle),
+          ),
+          const SizedBox(height: 10),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: TextField(
+              controller: _search,
+              autofocus: true,
+              textDirection: TextDirection.rtl,
+              decoration: InputDecoration(
+                hintText: widget.searchHint,
+                prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                filled: true,
+                fillColor: AppColors.background,
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.button),
+                  borderSide: BorderSide.none,
                 ),
               ),
             ),
-            const SizedBox(height: 6),
-            Expanded(
-              child: ListView.separated(
-                controller: controller,
-                itemCount: _filtered.length,
-                separatorBuilder: (_, __) =>
-                    const Divider(height: 1, indent: 16, endIndent: 16),
-                itemBuilder: (_, i) {
-                  final item = _filtered[i];
-                  final isSelected = item == widget.current;
+          ),
+          const SizedBox(height: 6),
+          Expanded(
+            child: ListView.separated(
+              controller: controller,
+              itemCount: totalCount,
+              separatorBuilder: (_, __) =>
+                  const Divider(height: 1, indent: 16, endIndent: 16),
+              itemBuilder: (_, i) {
+                // Manual-add row at top when query has no exact match
+                if (showManual && i == 0) {
                   return ListTile(
-                    title: Text(item, textDirection: TextDirection.rtl),
-                    trailing: isSelected
-                        ? const Icon(Icons.check_rounded,
-                            color: AppColors.navy)
-                        : null,
-                    onTap: () => Navigator.pop(context, item),
+                    leading: const Icon(Icons.add_circle_outline,
+                        color: AppColors.orange, size: 22),
+                    title: Text(
+                      'إضافة "$query" مباشرة',
+                      textDirection: TextDirection.rtl,
+                      style: const TextStyle(
+                          color: AppColors.orange, fontWeight: FontWeight.w600),
+                    ),
+                    onTap: () => Navigator.pop(context, query),
                   );
-                },
-              ),
+                }
+                final item = _filtered[showManual ? i - 1 : i];
+                final isSelected = item == widget.current;
+                return ListTile(
+                  title: Text(item, textDirection: TextDirection.rtl),
+                  trailing: isSelected
+                      ? const Icon(Icons.check_rounded, color: AppColors.navy)
+                      : null,
+                  onTap: () => Navigator.pop(context, item),
+                );
+              },
             ),
-          ],
-        ),
-      );
+          ),
+        ],
+      ),
+    );
+  }
 }
