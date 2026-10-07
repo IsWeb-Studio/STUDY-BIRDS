@@ -23,7 +23,10 @@
   Users,
   Users2,
   Video,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
+import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
 import { DashboardSidebar } from "../components/dashboard/DashboardSidebar";
@@ -35,6 +38,9 @@ import { dt } from "../utils/dashboardTranslations";
 import { employeeSections } from "../utils/employeeAccess";
 
 export const DashboardLayout = () => {
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    try { return localStorage.getItem("dashboard-sidebar") !== "closed"; } catch { return true; }
+  });
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const isPartner = user?.role === "partner";
@@ -225,14 +231,25 @@ export const DashboardLayout = () => {
     <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#d8e1f1_0%,_#f6f8fc_40%,_#f8fafc_100%)]">
       <Seo title={user?.role === "employee" ? seoText(language, "Employee Dashboard", "لوحة الموظف") : seoTitle} description={seoDescription} noIndex />
       <Navbar />
-      <main className="container-shell grid gap-6 py-8 lg:grid-cols-[320px_1fr]">
+      <main className="mx-auto w-full max-w-[1800px] px-4 py-6 sm:px-6 lg:px-8">
+        <button type="button" aria-expanded={sidebarOpen} aria-controls="dashboard-navigation" onClick={() => {
+          setSidebarOpen(!sidebarOpen);
+          try { localStorage.setItem("dashboard-sidebar", sidebarOpen ? "closed" : "open"); } catch { /* Storage may be unavailable. */ }
+        }} className="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500">
+          {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
+          {language === "ar" ? (sidebarOpen ? "إخفاء القائمة الجانبية" : "إظهار القائمة الجانبية") : (sidebarOpen ? "Hide sidebar" : "Show sidebar")}
+        </button>
+        <div className={`grid items-start gap-6 ${sidebarOpen ? "lg:grid-cols-[260px_minmax(0,1fr)]" : "grid-cols-1"}`}>
+        {sidebarOpen && <div id="dashboard-navigation" className="min-w-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
         <DashboardSidebar
           links={sidebarLinks}
           sectionLabel={user?.role === "employee" ? (language === "ar" ? "أقسام العمل" : "Your sections") : sidebarSectionLabel}
           title={user?.role === "employee" ? (language === "ar" ? "لوحة الموظف" : "Employee dashboard") : sidebarTitle}
           subtitle={user?.role === "employee" ? (language === "ar" ? "الأقسام المسموح لك بإدارتها." : "The sections you are allowed to manage.") : sidebarSubtitle}
         />
-        <Outlet />
+        </div>}
+        <div className="min-w-0"><Outlet /></div>
+        </div>
       </main>
     </div>
   );

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
-import { BookOpenText, ChevronDown, PencilLine, Plus, Search, Trash2 } from "lucide-react";
+import { BookOpenText, Check, ChevronDown, PencilLine, Plus, Search, Trash2, X } from "lucide-react";
 import { ArticleContentFields } from "../../components/admin/ArticleContentFields";
 import { useLanguage } from "../../hooks/useLanguage";
 import { getApiAssetUrl } from "../../lib/api";
@@ -23,6 +23,7 @@ const SearchableSelect = ({
   placeholder: string;
   required?: boolean;
 }) => {
+  const { language } = useLanguage();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const ref = useRef<HTMLDivElement>(null);
@@ -38,11 +39,13 @@ const SearchableSelect = ({
   }, []);
 
   return (
-    <div ref={ref} className="relative">
+    <div ref={ref} className="relative" onKeyDown={(event) => { if (event.key === "Escape") { event.stopPropagation(); setOpen(false); } }}>
       <button
         type="button"
+        aria-expanded={open}
+        aria-label={placeholder}
         onClick={() => { setOpen((o) => !o); setSearch(""); }}
-        className="flex w-full items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-left outline-none focus:ring"
+        className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl border border-slate-200 px-4 py-3 text-start outline-none focus:ring"
       >
         <span className={selected ? "text-slate-900" : "text-slate-400"}>{selected?.label || placeholder}</span>
         <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -56,7 +59,9 @@ const SearchableSelect = ({
                 autoFocus
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="بحث..."
+                aria-label={language === "ar" ? "البحث في الخيارات" : "Search options"}
+                onKeyDown={(event) => { if (event.key === "Enter") event.preventDefault(); }}
+                placeholder={language === "ar" ? "بحث..." : "Search..."}
                 className="w-full rounded-xl border border-slate-200 py-2 ps-9 pe-4 text-sm outline-none focus:ring"
               />
             </div>
@@ -64,19 +69,19 @@ const SearchableSelect = ({
           <div className="max-h-52 overflow-y-auto pb-2">
             {!required && (
               <button type="button" onClick={() => { onChange(""); setOpen(false); }}
-                className="w-full px-4 py-2 text-left text-sm text-slate-400 hover:bg-slate-50">
+                className="w-full px-4 py-2 text-start text-sm text-slate-400 hover:bg-slate-50">
                 {placeholder}
               </button>
             )}
             {filtered.map((o) => (
               <button key={o.value} type="button"
                 onClick={() => { onChange(o.value); setOpen(false); }}
-                className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 ${o.value === value ? "font-semibold text-slate-900 bg-slate-50" : "text-slate-700"}`}>
+                className={`w-full px-4 py-2 text-start text-sm hover:bg-slate-50 ${o.value === value ? "font-semibold text-slate-900 bg-slate-50" : "text-slate-700"}`}>
                 {o.label}
               </button>
             ))}
             {filtered.length === 0 && (
-              <p className="px-4 py-3 text-center text-sm text-slate-400">لا توجد نتائج</p>
+              <p className="px-4 py-3 text-center text-sm text-slate-400">{language === "ar" ? "لا توجد نتائج" : "No results"}</p>
             )}
           </div>
         </div>
@@ -132,6 +137,13 @@ export const AdminProgramsPage = () => {
   const [programSearch, setProgramSearch] = useState("");
   const [formError, setFormError] = useState("");
   const [uploadingCover, setUploadingCover] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const editorRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (editorOpen) editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [editorOpen, editingId]);
 
   const loadData = async () => {
     const [programsData, universitiesData, studyFieldsData] = await Promise.all([
@@ -159,6 +171,7 @@ export const AdminProgramsPage = () => {
     catch (issue) { setFormError(getErrorMessage(issue, "Unable to load program")); return; }
     const articleItemCount = Math.max(1, program.articleHeadings?.length || 0, program.articleBodies?.length || 0);
     setEditingId(program._id);
+    setEditorOpen(true);
     setForm({
       title: program.title || "",
       university: program.university?._id || "",
@@ -205,13 +218,18 @@ export const AdminProgramsPage = () => {
     event.preventDefault();
     setFormError("");
 
+    if (!form.university || !form.degreeLevel || !form.fieldOfStudy) {
+      setFormError(language === "ar" ? "اختر الجامعة والدرجة العلمية ومجال الدراسة الأساسي." : "Select a university, degree level and primary study field.");
+      return;
+    }
+    setSaving(true);
     const payload = {
       requiredDocumentTypes: form.requiredDocumentTypes,
       title: form.title,
       university: form.university,
       degreeLevel: form.degreeLevel,
       fieldOfStudy: form.fieldOfStudy || form.fieldsOfStudy[0] || "",
-      fieldsOfStudy: form.fieldsOfStudy.length ? form.fieldsOfStudy : form.fieldOfStudy ? [form.fieldOfStudy] : [],
+      fieldsOfStudy: Array.from(new Set([form.fieldOfStudy, ...form.fieldsOfStudy].filter(Boolean))),
       language: form.language || undefined,
       duration: form.duration || undefined,
       tuition: form.tuition ? Number(form.tuition) : undefined,
@@ -239,9 +257,12 @@ export const AdminProgramsPage = () => {
         await programService.create(payload);
       }
       resetForm();
+      setEditorOpen(false);
       await loadData();
     } catch (error) {
       setFormError(getErrorMessage(error, dt(language, "saveProgramFailed")));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -277,16 +298,25 @@ export const AdminProgramsPage = () => {
       : studyFields;
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.3fr_0.8fr] 2xl:grid-cols-[1.45fr_0.75fr]">
-      <section className="panel p-7">
+    <div className="min-w-0 space-y-6">
+      <header className="panel flex flex-wrap items-center justify-between gap-4 p-5 sm:p-6">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl bg-blue-50 p-3 text-blue-700"><BookOpenText className="h-6 w-6" /></div>
+          <div><h1 className="text-2xl font-bold text-slate-900">{dt(language, "programCatalogControl")}</h1><p className="mt-1 text-sm text-slate-500">{dt(language, "programCatalogHelp")}</p></div>
+        </div>
+        <button type="button" onClick={() => { resetForm(); setFormError(""); setEditorOpen(true); }} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"><Plus className="h-4 w-4" />{dt(language, "createProgram")}</button>
+      </header>
+      {!editorOpen && formError && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{formError}</div>}
+      {editorOpen && <section ref={editorRef} className="panel scroll-mt-6 p-5 sm:p-7">
         <div className="flex items-center gap-3">
           <div className="rounded-2xl bg-slate-100 p-3 text-slate-700">
             <BookOpenText className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-3xl font-semibold text-slate-900">{dt(language, "programCatalogControl")}</h1>
+            <h2 className="text-xl font-semibold text-slate-900">{editingId ? dt(language, "updateProgram") : dt(language, "createProgram")}</h2>
             <p className="mt-1 text-sm text-slate-500">{dt(language, "programCatalogHelp")}</p>
           </div>
+          <button type="button" disabled={saving} onClick={() => setEditorOpen(false)} aria-label={language === "ar" ? "إغلاق النموذج" : "Close editor"} className="ms-auto rounded-xl p-2 text-slate-500 hover:bg-slate-100"><X className="h-5 w-5" /></button>
         </div>
         {formError ? <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{formError}</div> : null}
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
@@ -324,7 +354,7 @@ export const AdminProgramsPage = () => {
               <span className="mb-2 block text-sm font-medium text-slate-700">{t("fieldOfStudy")}</span>
               <SearchableSelect
                 value={form.fieldOfStudy}
-                onChange={(v) => setForm((c) => ({ ...c, fieldOfStudy: v }))}
+                onChange={(v) => setForm((c) => ({ ...c, fieldOfStudy: v, fieldsOfStudy: Array.from(new Set([v, ...c.fieldsOfStudy.filter((field) => field !== c.fieldOfStudy)].filter(Boolean))) }))}
                 options={studyFieldOptions.map((sf) => ({ value: sf.name, label: sf.name }))}
                 placeholder={language === "ar" ? "اختر مجال الدراسة" : "Select field of study"}
                 required
@@ -345,34 +375,22 @@ export const AdminProgramsPage = () => {
                 ? "اختر مجالًا أساسيًا بالأعلى، ويمكنك هنا إضافة مجالات أخرى مرتبطة بنفس البرنامج."
                 : "Choose a primary field above, and add any other related study fields here."}
             </p>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {studyFieldOptions.map((studyField) => {
-                const isSelected = form.fieldsOfStudy.includes(studyField.name);
-                return (
-                  <button
-                    key={studyField._id}
-                    type="button"
-                    onClick={() =>
-                      setForm((current) => {
-                        const nextFields = current.fieldsOfStudy.includes(studyField.name)
-                          ? current.fieldsOfStudy.filter((item) => item !== studyField.name)
-                          : [...current.fieldsOfStudy, studyField.name];
-
-                        return {
-                          ...current,
-                          fieldsOfStudy: nextFields,
-                          fieldOfStudy: current.fieldOfStudy || studyField.name,
-                        };
-                      })
-                    }
-                    className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                      isSelected ? "bg-slate-950 text-white" : "border border-slate-200 text-slate-700"
-                    }`}
-                  >
-                    {studyField.name}
-                  </button>
-                );
-              })}
+            <div className="mt-4">
+              <SearchableSelect
+                value=""
+                onChange={(value) => { if (value) setForm((current) => ({ ...current, fieldsOfStudy: Array.from(new Set([...current.fieldsOfStudy, value])) })); }}
+                options={studyFieldOptions.filter((field) => field.name !== form.fieldOfStudy && !form.fieldsOfStudy.includes(field.name)).map((field) => ({ value: field.name, label: field.name }))}
+                placeholder={language === "ar" ? "ابحث لإضافة مجال دراسة آخر" : "Search to add another study field"}
+              />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {form.fieldOfStudy && <span className="inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-xs font-medium text-blue-800"><Check className="h-3.5 w-3.5" />{form.fieldOfStudy}<span className="text-blue-500">{language === "ar" ? "أساسي" : "Primary"}</span></span>}
+              {form.fieldsOfStudy.filter((field) => field !== form.fieldOfStudy).map((field) => (
+                <span key={field} className="inline-flex items-center gap-2 rounded-lg bg-slate-100 px-3 py-2 text-xs font-medium text-slate-700">
+                  {field}
+                  <button type="button" aria-label={`${language === "ar" ? "إزالة" : "Remove"} ${field}`} onClick={() => setForm((current) => ({ ...current, fieldsOfStudy: current.fieldsOfStudy.filter((item) => item !== field) }))} className="rounded p-1 hover:bg-slate-200"><X className="h-3 w-3" /></button>
+                </span>
+              ))}
             </div>
           </div>
 
@@ -508,20 +526,21 @@ export const AdminProgramsPage = () => {
           </label>
 
           <div className="flex flex-wrap gap-3">
-            <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-3 font-semibold text-white">
+            <button type="submit" disabled={saving || uploadingCover} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white disabled:cursor-wait disabled:opacity-50">
               <Plus className="h-4 w-4" />
-              {editingId ? dt(language, "updateProgram") : dt(language, "createProgram")}
+              {saving ? (language === "ar" ? "جارٍ الحفظ..." : "Saving...") : editingId ? dt(language, "updateProgram") : dt(language, "createProgram")}
             </button>
             <button type="button" onClick={resetForm} className="rounded-full border border-slate-200 px-5 py-3 font-semibold text-slate-700">
               {dt(language, "clearForm")}
             </button>
           </div>
         </form>
-      </section>
+      </section>}
 
-      <section className="space-y-4 xl:max-h-[calc(100vh-10rem)] xl:overflow-y-auto xl:pr-1">
-        <div className="panel px-4 py-3">
-          <div className="relative">
+      <section className="space-y-4">
+        <div className="panel flex flex-wrap items-center justify-between gap-4 px-5 py-4">
+          <div><h2 className="font-semibold text-slate-900">{language === "ar" ? "دليل البرامج" : "Program catalog"}</h2><p className="mt-1 text-xs text-slate-500">{filteredPrograms.length} / {programs.length} {language === "ar" ? "برنامج" : "programs"}</p></div>
+          <div className="relative w-full sm:w-80">
             <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
               value={programSearch}
@@ -536,13 +555,14 @@ export const AdminProgramsPage = () => {
             </p>
           ) : null}
         </div>
+        <div className="grid min-w-0 gap-4 md:grid-cols-2 2xl:grid-cols-3">
         {filteredPrograms.map((program) => (
-          <div key={program._id} className="panel p-5">
-            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+          <div key={program._id} className="panel min-w-0 p-5 transition-shadow hover:shadow-md">
+            <div className="flex h-full flex-col gap-4">
               <div>
-                {program.coverImage ? <img src={getApiAssetUrl(program.coverImage)} alt={program.title} className="mb-4 h-40 w-full rounded-3xl object-cover" /> : null}
+                {program.coverImage ? <img src={getApiAssetUrl(program.coverImage)} alt={program.title} className="mb-4 h-36 w-full rounded-xl object-cover" /> : null}
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-xl font-semibold text-slate-900">{program.title}</p>
+                  <p className="break-words text-lg font-semibold text-slate-900">{program.title}</p>
                   {program.featured ? <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">{dt(language, "featured")}</span> : null}
                 </div>
                 <p className="mt-2 text-sm text-slate-500">
@@ -560,7 +580,7 @@ export const AdminProgramsPage = () => {
                   <span className="rounded-full bg-slate-100 px-3 py-1">{dt(language, "deadline")}: {formatDate(program.applicationDeadline)}</span>
                   <span className="rounded-full bg-slate-100 px-3 py-1">{dt(language, "programIntake")}: {program.intake || dt(language, "flexible")}</span>
                 </div>
-                {program.summary ? <p className="mt-4 text-sm leading-6 text-slate-600">{program.summary}</p> : null}
+                {program.summary ? <p className="mt-4 line-clamp-2 text-sm leading-6 text-slate-600">{program.summary}</p> : null}
                 {program.requirements?.length ? (
                   <div className="mt-4 flex flex-wrap gap-2">
                     {program.requirements.map((requirement) => (
@@ -571,7 +591,7 @@ export const AdminProgramsPage = () => {
                   </div>
                 ) : null}
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="mt-auto flex flex-wrap gap-2 border-t border-slate-100 pt-4">
                 <button onClick={() => startEdit(program)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 font-medium text-slate-700">
                   <PencilLine className="h-4 w-4" />
                   {dt(language, "edit")}
@@ -584,6 +604,8 @@ export const AdminProgramsPage = () => {
             </div>
           </div>
         ))}
+        </div>
+        {filteredPrograms.length === 0 && <div className="panel p-10 text-center"><Search className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3 font-medium text-slate-600">{language === "ar" ? "لا توجد برامج لعرضها" : "No programs to display"}</p><p className="mt-1 text-sm text-slate-400">{language === "ar" ? "غيّر كلمات البحث أو أضف برنامجًا جديدًا." : "Try another search or add a new program."}</p></div>}
       </section>
     </div>
   );
