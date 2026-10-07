@@ -62,6 +62,71 @@ class PassportScan {
     return false;
   }
 
+  /// Extract passport number and DOB from MRZ. Never throws — returns nulls on failure.
+  static Future<({String? passportNumber, String? dateOfBirth})>
+      extractFromBytes(List<int> bytes) async {
+    if (bytes.isEmpty || bytes.length > 10 * 1024 * 1024) {
+      return (passportNumber: null, dateOfBirth: null);
+    }
+    try {
+      final pages = await channel.invokeListMethod<String>('recognize', {
+        'bytes': Uint8List.fromList(bytes),
+      });
+      if (pages == null) return (passportNumber: null, dateOfBirth: null);
+      for (final text in pages) {
+        final mrz = _findMrz(text);
+        if (mrz == null) continue;
+        final second = mrz.substring(44);
+        final rawPassport = second.substring(0, 9).replaceAll('<', '').trim();
+        final dobRaw = second.substring(13, 19); // YYMMDD
+        final dobYY = int.tryParse(dobRaw.substring(0, 2)) ?? 0;
+        final fullYear = dobYY > 30 ? 1900 + dobYY : 2000 + dobYY;
+        final dob =
+            '$fullYear-${dobRaw.substring(2, 4)}-${dobRaw.substring(4, 6)}';
+        return (
+          passportNumber: rawPassport.isEmpty ? null : rawPassport,
+          dateOfBirth: dob,
+        );
+      }
+    } catch (_) {}
+    return (passportNumber: null, dateOfBirth: null);
+  }
+
+  static String? _findMrz(String text) {
+    final lines = text
+        .toUpperCase()
+        .replaceAll('«', '<<')
+        .replaceAll('‹', '<')
+        .split(RegExp(r'[\r\n]+'))
+        .map((line) => line.replaceAll(RegExp(r'\s+'), ''))
+        .where((line) => RegExp(r'^[A-Z0-9<]+$').hasMatch(line))
+        .toList();
+    for (var i = 0; i < lines.length; i++) {
+      final candidates = <String>[lines[i]];
+      if (i + 1 < lines.length) candidates.add(lines[i] + lines[i + 1]);
+      for (final mrz in candidates) {
+        if (mrz.length != 88) continue;
+        final first = mrz.substring(0, 44);
+        final second = mrz.substring(44);
+        if (!RegExp(r'^P[A-Z<][A-Z<]{3}[A-Z<]{39}$').hasMatch(first)) continue;
+        if (!first.substring(5).contains('<<')) continue;
+        if (!RegExp(r'^[A-Z<]{2}').hasMatch(first.substring(5))) continue;
+        if (!RegExp(
+                r'^[A-Z0-9<]{9}[0-9][A-Z<]{3}[0-9]{6}[0-9][MF<][0-9]{6}[0-9][A-Z0-9<]{14}[0-9<][0-9]$')
+            .hasMatch(second)) continue;
+        if (_check(second.substring(0, 9), second[9]) &&
+            _check(second.substring(13, 19), second[19]) &&
+            _check(second.substring(21, 27), second[27]) &&
+            _check(
+                second.substring(0, 10) +
+                    second.substring(13, 20) +
+                    second.substring(21, 43),
+                second[43])) return mrz;
+      }
+    }
+    return null;
+  }
+
   static bool _check(String value, String digit) {
     const weights = [7, 3, 1];
     var total = 0;
