@@ -1,5 +1,5 @@
 import 'package:shared_preferences/shared_preferences.dart';
-import 'api_client.dart';
+import '../network/api_client.dart';
 import 'auth_session.dart';
 
 /// Favorites — local-first with API sync.

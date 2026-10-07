@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/admin_modules_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/repositories/admin_modules_repository.dart';
 import '../services_support/support_team_ai_screens.dart' show ticketStatusMeta;
 
 class AdminSupportTicketsScreen extends StatefulWidget {

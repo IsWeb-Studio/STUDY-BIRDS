@@ -1,10 +1,10 @@
-﻿import '../../core/api_client.dart';
+import '../../core/network/api_client.dart';
 import 'catalog_detail.dart' show catalogArticleSections, catalogAssetUrl;
-import '../../core/auth_session.dart';
+import '../../core/services/auth_session.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/catalog_repository.dart';
-import '../../core/analytics_service.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/catalog_repository.dart';
+import '../../core/services/analytics_service.dart';
 import 'universities_screens.dart' show UniversitiesExplorerScreen;
 
 class CountriesExplorerScreen extends StatefulWidget {

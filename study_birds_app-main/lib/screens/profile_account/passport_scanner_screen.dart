@@ -1,6 +1,6 @@
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
+import '../../core/config/app_theme.dart';
 
 /// Full-screen camera overlay that guides the user to align their passport
 /// inside a passport-shaped frame before capturing.

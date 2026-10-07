@@ -1,12 +1,12 @@
-﻿import 'dart:math' as math;
-import '../../core/auth_session.dart';
+import 'dart:math' as math;
+import '../../core/services/auth_session.dart';
 import '../applications_documents_payments/program_application_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/api_client.dart';
-import '../../core/app_theme.dart';
-import '../../core/catalog_repository.dart';
-import '../../core/student_repository.dart';
+import '../../core/network/api_client.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/catalog_repository.dart';
+import '../../core/repositories/student_repository.dart';
 import 'catalog_browser.dart';
 import 'compare_list_screen.dart';
 

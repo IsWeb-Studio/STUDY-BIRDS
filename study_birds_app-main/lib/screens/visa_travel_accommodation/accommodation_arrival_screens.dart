@@ -1,8 +1,8 @@
-﻿import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/student_repository.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
+import 'package:flutter/material.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/student_repository.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
 
 // ─── بند 40: السكن الطلابي ────────────────────────────────────────────────────
 

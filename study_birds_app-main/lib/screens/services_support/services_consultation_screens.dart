@@ -1,14 +1,14 @@
-﻿import 'live_consultation_screen.dart';
+import 'live_consultation_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/catalog_repository.dart';
-import '../../core/notification_scheduler.dart';
-import '../../core/analytics_service.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/repositories/catalog_repository.dart';
+import '../../core/services/notification_scheduler.dart';
+import '../../core/services/analytics_service.dart';
 
 class ServicesCenterScreen extends StatefulWidget {
   const ServicesCenterScreen({super.key});

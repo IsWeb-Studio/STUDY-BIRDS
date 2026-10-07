@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/community_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/repositories/community_repository.dart';
 
 /// Community moderation for employees with the 'community' section (and
 /// admins): open reports, hide/show posts and comments with a required reason,

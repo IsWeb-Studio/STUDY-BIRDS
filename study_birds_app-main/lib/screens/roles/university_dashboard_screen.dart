@@ -1,11 +1,11 @@
-﻿import '../services_support/messaging_and_emergency_screens.dart';
+import '../services_support/messaging_and_emergency_screens.dart';
 import '../profile_account/security_settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/university_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/repositories/university_repository.dart';
 import '../applications_documents_payments/applications_screens.dart'
     show appStatusMeta;
 import 'university_application_review_screen.dart';

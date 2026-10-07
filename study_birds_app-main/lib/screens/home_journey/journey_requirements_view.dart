@@ -1,8 +1,8 @@
-﻿import 'journey_timeline_widgets.dart';
-import '../../core/student_repository.dart';
+import 'journey_timeline_widgets.dart';
+import '../../core/repositories/student_repository.dart';
 import 'important_dates_screen.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
+import '../../core/config/app_theme.dart';
 import '../applications_documents_payments/applications_screens.dart';
 import '../applications_documents_payments/payments_screens.dart';
 import '../services_support/support_team_ai_screens.dart';

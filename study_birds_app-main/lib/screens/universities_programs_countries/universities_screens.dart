@@ -1,7 +1,7 @@
 import 'compare_list_screen.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/analytics_service.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/services/analytics_service.dart';
 import 'catalog_browser.dart';
 import 'catalog_detail.dart';
 

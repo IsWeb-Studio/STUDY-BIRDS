@@ -1,5 +1,5 @@
-import 'api_client.dart';
-import 'auth_session.dart';
+import '../network/api_client.dart';
+import '../services/auth_session.dart';
 
 /// Talks to the general admin endpoints in server/src/routes/adminRoutes.js.
 /// IMPORTANT: the real backend has no concept of "tasks assigned to me" or

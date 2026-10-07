@@ -1,9 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/employee_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/repositories/employee_repository.dart';
 import '../services_support/messaging_and_emergency_screens.dart' show ConversationThreadScreen;
 import 'admin_content_crud_screens.dart' show AdminServicesScreen;
 

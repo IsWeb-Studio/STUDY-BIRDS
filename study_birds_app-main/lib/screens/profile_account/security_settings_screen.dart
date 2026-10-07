@@ -2,10 +2,10 @@ import '../auth/phone_verification_screen.dart';
 import 'account_security_screen.dart';
 import '../auth/verify_contact_screen.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/feature_ui.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/widgets/feature_ui.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
 
 class SecuritySettingsScreen extends StatelessWidget {
   const SecuritySettingsScreen({super.key});

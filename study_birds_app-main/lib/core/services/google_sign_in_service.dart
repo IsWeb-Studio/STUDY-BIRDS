@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:google_sign_in/google_sign_in.dart';
-import 'api_client.dart';
+import '../network/api_client.dart';
 import 'auth_session.dart';
 import 'analytics_service.dart';
-import 'app_config.dart';
+import '../config/app_config.dart';
 
 /// Native Google Sign-In using google_sign_in v7.
 /// No Firebase — token is verified server-side via POST /auth/google.

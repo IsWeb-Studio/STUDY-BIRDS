@@ -1,7 +1,7 @@
-import 'student_repository.dart';
-import 'consultation_repository.dart';
-import 'auth_session.dart' show AuthSession;
-import 'api_client.dart';
+import '../repositories/student_repository.dart';
+import '../repositories/consultation_repository.dart';
+import '../services/auth_session.dart' show AuthSession;
+import '../network/api_client.dart';
 
 class StudentEvent {
   final DateTime date;

@@ -4,14 +4,14 @@ import 'analytics_service.dart';
 import 'push_notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'api_client.dart';
+import '../network/api_client.dart';
 import 'secure_data_cache.dart';
 import 'notification_scheduler.dart';
-import '../app_shell.dart';
-import '../screens/roles/parent_dashboard_screen.dart';
-import '../screens/roles/agent_dashboard_screen.dart';
-import '../screens/roles/university_dashboard_screen.dart';
-import '../screens/roles/employee_dashboard_screen.dart';
+import '../../app_shell.dart';
+import '../../screens/roles/parent_dashboard_screen.dart';
+import '../../screens/roles/agent_dashboard_screen.dart';
+import '../../screens/roles/university_dashboard_screen.dart';
+import '../../screens/roles/employee_dashboard_screen.dart';
 
 /// Central role enum — the single source of truth for role names across the
 /// app. Never compare against raw strings like 'Student'/'student' elsewhere;

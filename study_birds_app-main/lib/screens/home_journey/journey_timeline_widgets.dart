@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
+import '../../core/config/app_theme.dart';
 
 const journeyGreen = Color(0xFF22B86A);
 const journeyOrange = Color(0xFFF08A24);

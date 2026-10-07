@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/admin_modules_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/admin_modules_repository.dart';
 import 'generic_approval_list_screen.dart';
 
 class AdminAgencyRequestsScreen extends StatelessWidget {

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/app_theme.dart';
-import '../../core/feature_ui.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/widgets/feature_ui.dart';
 
 /// Permanent account deletion — requires the user to re-enter their password
 /// so a stolen unlocked phone cannot silently wipe an account.

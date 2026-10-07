@@ -1,5 +1,5 @@
-import 'api_client.dart';
-import 'auth_session.dart';
+import '../network/api_client.dart';
+import '../services/auth_session.dart';
 
 /// Covers server/src/controllers/adminStudentModulesController.js and
 /// adminAgentController.js — the "student modules" and "partner/agent

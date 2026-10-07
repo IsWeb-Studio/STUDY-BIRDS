@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:posthog_flutter/posthog_flutter.dart';
-import 'app_config.dart';
+import '../config/app_config.dart';
 import 'auth_session.dart';
 
 /// Analytics layer wired to PostHog.

@@ -1,6 +1,6 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
-import 'app_theme.dart';
+import '../config/app_theme.dart';
 
 /// A single banner slide. In production this comes from the admin panel/CMS
 /// (spec points 75/76: dynamic content, never hardcoded) — imageUrl and

@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/app_theme.dart';
-import '../../core/animations.dart';
-import '../../core/student_repository.dart';
-import '../../core/auth_session.dart';
-import '../../core/analytics_service.dart';
-import '../../core/realtime_sync_service.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/utils/animations.dart';
+import '../../core/repositories/student_repository.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/services/analytics_service.dart';
+import '../../core/services/realtime_sync_service.dart';
 import '../../main.dart' show RootChooserScreen;
 import '../profile_account/profile_account_screens.dart';
 import 'notifications_screen.dart';

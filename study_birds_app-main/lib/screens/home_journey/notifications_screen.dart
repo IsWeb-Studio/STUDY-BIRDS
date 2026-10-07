@@ -1,10 +1,10 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/student_repository.dart';
-import '../../core/analytics_service.dart';
-import '../../core/realtime_sync_service.dart';
-import '../../core/notification_links.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/student_repository.dart';
+import '../../core/services/analytics_service.dart';
+import '../../core/services/realtime_sync_service.dart';
+import '../../core/utils/notification_links.dart';
 import '../services_support/services_consultation_screens.dart';
 import '../services_support/support_team_ai_screens.dart';
 import '../services_support/community_screen.dart';

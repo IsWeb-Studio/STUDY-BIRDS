@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/admin_modules_repository.dart';
-import '../../core/catalog_repository.dart';
+import '../../core/repositories/admin_modules_repository.dart';
+import '../../core/repositories/catalog_repository.dart';
 import 'generic_crud_screen.dart';
 
 class AdminTestimonialsScreen extends StatelessWidget {

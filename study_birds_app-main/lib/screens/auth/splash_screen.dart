@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/animations.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/utils/animations.dart';
 
 class SplashScreen extends StatefulWidget {
   final VoidCallback? onFinished;

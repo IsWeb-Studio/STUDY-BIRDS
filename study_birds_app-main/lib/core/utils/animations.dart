@@ -1,6 +1,6 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'app_theme.dart';
+import '../config/app_theme.dart';
 
 /// Global page-transition theme: slides the incoming page in from the
 /// direction that matches the CURRENT text direction (RTL for Arabic — new

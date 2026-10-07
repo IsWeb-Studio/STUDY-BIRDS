@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'app_theme.dart';
+import '../config/app_theme.dart';
 
 /// Plain-language status copy sent by the server with applications and
 /// documents (`statusInfo`, built in server/src/constants/statusCatalog.js):

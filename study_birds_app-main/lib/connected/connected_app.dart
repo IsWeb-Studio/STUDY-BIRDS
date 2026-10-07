@@ -1,9 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
-import '../data/study_birds_api.dart';
-import '../core/app_theme.dart';
+import '../core/network/study_birds_api.dart';
+import '../core/config/app_theme.dart';
 import '../screens/auth/onboarding_and_account_type_screens.dart';
 import '../screens/auth/splash_screen.dart';
 

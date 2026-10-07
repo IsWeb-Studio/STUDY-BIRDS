@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/app_theme.dart';
-import '../../core/feature_ui.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/widgets/feature_ui.dart';
 import '../auth/email_challenge_screen.dart';
 
 class AccountSecurityScreen extends StatefulWidget {

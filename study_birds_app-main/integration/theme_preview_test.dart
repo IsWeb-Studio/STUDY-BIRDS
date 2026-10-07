@@ -1,4 +1,4 @@
-import 'package:study_birds/core/auth_session.dart';
+import 'package:study_birds/core/services/auth_session.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

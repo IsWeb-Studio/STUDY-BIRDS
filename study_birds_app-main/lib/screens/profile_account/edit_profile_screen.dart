@@ -3,13 +3,13 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../core/passport_scan.dart';
+import '../../core/utils/passport_scan.dart';
 import 'passport_scanner_screen.dart';
-import '../../core/app_theme.dart';
-import '../../core/feature_ui.dart';
-import '../../core/student_repository.dart';
-import '../../core/country_data.dart';
-import '../../core/profile_field_data.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/widgets/feature_ui.dart';
+import '../../core/repositories/student_repository.dart';
+import '../../core/utils/country_data.dart';
+import '../../core/utils/profile_field_data.dart';
 
 enum ProfileSection { personal, academic, passport, study }
 

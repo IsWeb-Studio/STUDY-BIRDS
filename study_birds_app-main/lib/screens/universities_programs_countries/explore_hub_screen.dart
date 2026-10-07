@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/favorites_service.dart';
-import '../../core/catalog_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/services/favorites_service.dart';
+import '../../core/repositories/catalog_repository.dart';
 import 'catalog_browser.dart' show catalogText, catalogMap, catalogTuition, catalogFacet;
 import 'catalog_detail.dart' show CatalogDetailPage;
 import 'universities_screens.dart';
