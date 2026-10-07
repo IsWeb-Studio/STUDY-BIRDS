@@ -80,7 +80,8 @@ const programSchema = new mongoose.Schema(
 programSchema.pre("validate", function setSlug(next) {
   if (!this.slug && this.title) {
     const universityPart = this.university ? String(this.university).slice(-6) : "program";
-    this.slug = slugify(`${this.title}-${this.degreeLevel}-${universityPart}`, {
+    const langPart = this.language ? `-${this.language.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 10)}` : "";
+    this.slug = slugify(`${this.title}-${this.degreeLevel}${langPart}-${universityPart}`, {
       lower: true,
       strict: true,
     });

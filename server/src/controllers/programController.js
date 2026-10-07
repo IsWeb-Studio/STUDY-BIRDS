@@ -125,7 +125,19 @@ const handleProgramWriteError = (res) => (error) => {
 };
 
 const createProgram = asyncHandler(async (req, res) => {
-  const program = await Program.create(req.body).catch(handleProgramWriteError(res));
+  let program;
+  try {
+    program = await Program.create(req.body);
+  } catch (error) {
+    if (error.code === 11000 && error.keyPattern?.slug) {
+      const suffix = Math.random().toString(36).slice(2, 6);
+      const base = req.body.slug || error.keyValue?.slug || "";
+      const body = { ...req.body, slug: `${base}-${suffix}` };
+      program = await Program.create(body).catch(handleProgramWriteError(res));
+    } else {
+      handleProgramWriteError(res)(error);
+    }
+  }
   clearResponseCache();
   res.status(201).json(program);
 });

@@ -267,6 +267,8 @@ const translations: Record<Language, Dictionary> = {
     uploadHintBiometric: "Use a clear portrait photo with a neutral background.",
     uploadHintQualification: "Upload your latest certificate, transcript, or graduation document.",
     saveAndApply: "Save profile and apply",
+    searchPrograms: "Search programs…",
+    programsFound: "programs",
   },
   ar: {
     controlCenter: "مركز التحكم",
@@ -528,6 +530,8 @@ const translations: Record<Language, Dictionary> = {
     uploadHintBiometric: "استخدم صورة شخصية واضحة بخلفية محايدة.",
     uploadHintQualification: "ارفع آخر شهادة أو كشف درجات أو مستند تخرج لديك.",
     saveAndApply: "احفظ الملف وقدّم",
+    searchPrograms: "ابحث في البرامج…",
+    programsFound: "برنامج",
   },
 };
 

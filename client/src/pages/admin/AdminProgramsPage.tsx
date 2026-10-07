@@ -1,5 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { BookOpenText, PencilLine, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { BookOpenText, PencilLine, Plus, Search, Trash2 } from "lucide-react";
 import { ArticleContentFields } from "../../components/admin/ArticleContentFields";
 import { useLanguage } from "../../hooks/useLanguage";
 import { getApiAssetUrl } from "../../lib/api";
@@ -51,6 +51,7 @@ export const AdminProgramsPage = () => {
   const [studyFields, setStudyFields] = useState<StudyField[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyProgramForm);
+  const [programSearch, setProgramSearch] = useState("");
   const [formError, setFormError] = useState("");
   const [uploadingCover, setUploadingCover] = useState(false);
 
@@ -178,6 +179,19 @@ export const AdminProgramsPage = () => {
       setFormError(getErrorMessage(error, dt(language, "deleteProgramFailed")));
     }
   };
+
+  const filteredPrograms = useMemo(() => {
+    const q = programSearch.trim().toLowerCase();
+    if (!q) return programs;
+    return programs.filter(
+      (p) =>
+        p.title.toLowerCase().includes(q) ||
+        (p.university?.name || "").toLowerCase().includes(q) ||
+        (p.fieldOfStudy || "").toLowerCase().includes(q) ||
+        (p.degreeLevel || "").toLowerCase().includes(q) ||
+        (p.language || "").toLowerCase().includes(q),
+    );
+  }, [programs, programSearch]);
 
   const studyFieldOptions =
     form.fieldOfStudy && !studyFields.some((studyField) => studyField.name === form.fieldOfStudy)
@@ -417,7 +431,23 @@ export const AdminProgramsPage = () => {
       </section>
 
       <section className="space-y-4 xl:max-h-[calc(100vh-10rem)] xl:overflow-y-auto xl:pr-1">
-        {programs.map((program) => (
+        <div className="panel px-4 py-3">
+          <div className="relative">
+            <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              value={programSearch}
+              onChange={(e) => setProgramSearch(e.target.value)}
+              placeholder={dt(language, "searchPrograms")}
+              className="w-full rounded-2xl border border-slate-200 py-2.5 ps-9 pe-4 text-sm outline-none focus:ring"
+            />
+          </div>
+          {programSearch ? (
+            <p className="mt-2 text-xs text-slate-500">
+              {filteredPrograms.length} {dt(language, "programsFound")}
+            </p>
+          ) : null}
+        </div>
+        {filteredPrograms.map((program) => (
           <div key={program._id} className="panel p-5">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div>
