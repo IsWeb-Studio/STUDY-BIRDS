@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
-import { BookOpenText, PencilLine, Plus, Search, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { BookOpenText, ChevronDown, PencilLine, Plus, Search, Trash2 } from "lucide-react";
 import { ArticleContentFields } from "../../components/admin/ArticleContentFields";
 import { useLanguage } from "../../hooks/useLanguage";
 import { getApiAssetUrl } from "../../lib/api";
@@ -13,6 +13,84 @@ import { getErrorMessage } from "../../utils/errors";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { dt } from "../../utils/dashboardTranslations";
 import { getPaginatedItems } from "../../utils/pagination";
+
+const SearchableSelect = ({
+  value, onChange, options, placeholder, required,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  placeholder: string;
+  required?: boolean;
+}) => {
+  const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
+  const ref = useRef<HTMLDivElement>(null);
+  const filtered = options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()));
+  const selected = options.find((o) => o.value === value);
+
+  useEffect(() => {
+    const close = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", close);
+    return () => document.removeEventListener("mousedown", close);
+  }, []);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        type="button"
+        onClick={() => { setOpen((o) => !o); setSearch(""); }}
+        className="flex w-full items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 text-left outline-none focus:ring"
+      >
+        <span className={selected ? "text-slate-900" : "text-slate-400"}>{selected?.label || placeholder}</span>
+        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform ${open ? "rotate-180" : ""}`} />
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+          <div className="p-2">
+            <div className="relative">
+              <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+              <input
+                autoFocus
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="بحث..."
+                className="w-full rounded-xl border border-slate-200 py-2 ps-9 pe-4 text-sm outline-none focus:ring"
+              />
+            </div>
+          </div>
+          <div className="max-h-52 overflow-y-auto pb-2">
+            {!required && (
+              <button type="button" onClick={() => { onChange(""); setOpen(false); }}
+                className="w-full px-4 py-2 text-left text-sm text-slate-400 hover:bg-slate-50">
+                {placeholder}
+              </button>
+            )}
+            {filtered.map((o) => (
+              <button key={o.value} type="button"
+                onClick={() => { onChange(o.value); setOpen(false); }}
+                className={`w-full px-4 py-2 text-left text-sm hover:bg-slate-50 ${o.value === value ? "font-semibold text-slate-900 bg-slate-50" : "text-slate-700"}`}>
+                {o.label}
+              </button>
+            ))}
+            {filtered.length === 0 && (
+              <p className="px-4 py-3 text-center text-sm text-slate-400">لا توجد نتائج</p>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SectionHeader = ({ title }: { title: string }) => (
+  <div className="flex items-center gap-3 pt-2">
+    <span className="text-xs font-semibold uppercase tracking-widest text-slate-400">{title}</span>
+    <div className="flex-1 border-t border-slate-100" />
+  </div>
+);
 
 const emptyProgramForm = {
   title: "",
@@ -212,6 +290,8 @@ export const AdminProgramsPage = () => {
         </div>
         {formError ? <div className="mt-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{formError}</div> : null}
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+          <SectionHeader title={language === "ar" ? "المعلومات الأساسية" : "Basic Information"} />
+
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "programTitle")}</span>
@@ -219,45 +299,44 @@ export const AdminProgramsPage = () => {
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{t("university")}</span>
-              <select value={form.university} onChange={(event) => setForm((current) => ({ ...current, university: event.target.value }))} required className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring">
-                <option value="">{dt(language, "selectUniversity")}</option>
-                {universities.map((university) => (
-                  <option key={university._id} value={university._id}>
-                    {university.name}
-                  </option>
-                ))}
-              </select>
+              <SearchableSelect
+                value={form.university}
+                onChange={(v) => setForm((c) => ({ ...c, university: v }))}
+                options={universities.map((u) => ({ value: u._id, label: u.name }))}
+                placeholder={dt(language, "selectUniversity")}
+                required
+              />
             </label>
           </div>
 
           <div className="grid gap-4 md:grid-cols-3">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "degreeLevel")}</span>
-              <select value={form.degreeLevel} onChange={(event) => setForm((current) => ({ ...current, degreeLevel: event.target.value }))} required className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring">
-                <option value="">{dt(language, "bachelorMasterDiploma")}</option>
-                {PROGRAM_DEGREE_LEVELS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(option.translationKey)}
-                  </option>
-                ))}
-              </select>
+              <SearchableSelect
+                value={form.degreeLevel}
+                onChange={(v) => setForm((c) => ({ ...c, degreeLevel: v }))}
+                options={PROGRAM_DEGREE_LEVELS.map((o) => ({ value: o.value, label: t(o.translationKey) }))}
+                placeholder={dt(language, "bachelorMasterDiploma")}
+                required
+              />
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{t("fieldOfStudy")}</span>
-              <select value={form.fieldOfStudy} onChange={(event) => setForm((current) => ({ ...current, fieldOfStudy: event.target.value }))} required className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring">
-                <option value="">{language === "ar" ? "اختر مجال الدراسة" : "Select field of study"}</option>
-                {studyFieldOptions.map((studyField) => (
-                  <option key={studyField._id} value={studyField.name}>
-                    {studyField.name}
-                  </option>
-                ))}
-              </select>
+              <SearchableSelect
+                value={form.fieldOfStudy}
+                onChange={(v) => setForm((c) => ({ ...c, fieldOfStudy: v }))}
+                options={studyFieldOptions.map((sf) => ({ value: sf.name, label: sf.name }))}
+                placeholder={language === "ar" ? "اختر مجال الدراسة" : "Select field of study"}
+                required
+              />
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "لغة البرنامج" : "Program language"}</span>
               <input value={form.language} onChange={(event) => setForm((current) => ({ ...current, language: event.target.value }))} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
             </label>
           </div>
+
+          <SectionHeader title={language === "ar" ? "مجالات الدراسة الإضافية" : "Additional Study Fields"} />
 
           <div className="rounded-2xl border border-slate-200 p-4">
             <p className="text-sm font-medium text-slate-700">{language === "ar" ? "مجالات الدراسة" : "Study fields"}</p>
@@ -297,6 +376,8 @@ export const AdminProgramsPage = () => {
             </div>
           </div>
 
+          <SectionHeader title={language === "ar" ? "تفاصيل البرنامج" : "Program Details"} />
+
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "duration")}</span>
@@ -315,6 +396,8 @@ export const AdminProgramsPage = () => {
             </label>
           </div>
 
+          <SectionHeader title={language === "ar" ? "التسعير والمواعيد" : "Pricing & Dates"} />
+
           <div className="grid gap-4 md:grid-cols-3">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{t("tuition")}</span>
@@ -329,6 +412,8 @@ export const AdminProgramsPage = () => {
               <input type="number" value={form.popularity} onChange={(event) => setForm((current) => ({ ...current, popularity: event.target.value }))} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
             </label>
           </div>
+
+          <SectionHeader title={language === "ar" ? "الوسيط والصورة" : "Partner & Media"} />
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
@@ -350,6 +435,8 @@ export const AdminProgramsPage = () => {
               </button>
             </div>
           ) : null}
+
+          <SectionHeader title={language === "ar" ? "المحتوى والمتطلبات" : "Content & Requirements"} />
 
           <label className="block">
             <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "summary")}</span>
@@ -395,6 +482,8 @@ export const AdminProgramsPage = () => {
             }
             language={language}
           />
+
+          <SectionHeader title={language === "ar" ? "المستندات والإعدادات" : "Documents & Settings"} />
 
           <fieldset className="rounded-2xl border border-slate-200 p-4">
             <legend className="px-2 font-semibold">{language === 'ar' ? 'المستندات المطلوبة للتقديم' : 'Required application documents'}</legend>
