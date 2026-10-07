@@ -1,5 +1,5 @@
-import 'api_client.dart';
-import 'auth_session.dart';
+import '../network/api_client.dart';
+import '../services/auth_session.dart';
 
 /// Talks to server/src/routes/partnerRoutes.js. Requires role === 'partner'
 /// (the app's UserRole.agent — see UserRoleWire in auth_session.dart).

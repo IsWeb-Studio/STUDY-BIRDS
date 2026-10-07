@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../core/app_theme.dart';
-import '../../core/parent_repository.dart';
-import '../../core/auth_session.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/parent_repository.dart';
+import '../../core/services/auth_session.dart';
 import '../applications_documents_payments/applications_screens.dart'
     show appStatusMeta;
 import '../services_support/messaging_and_emergency_screens.dart';

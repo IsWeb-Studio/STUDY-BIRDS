@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/catalog_repository.dart';
-import '../../core/favorites_service.dart';
+import 'package:flutter/material.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/catalog_repository.dart';
+import '../../core/services/favorites_service.dart';
 
 String catalogText(dynamic value) => value is String ? value.trim() : '';
 Map<String, dynamic> catalogMap(dynamic value) =>

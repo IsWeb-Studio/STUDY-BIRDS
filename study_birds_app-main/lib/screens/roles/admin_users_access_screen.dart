@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/employee_repository.dart';
-import '../../core/catalog_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/repositories/employee_repository.dart';
+import '../../core/repositories/catalog_repository.dart';
 import 'employee_sections_picker_screen.dart';
 
 const List<Map<String, String>> kAccountRoleOptions = [

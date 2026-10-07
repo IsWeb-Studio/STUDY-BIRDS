@@ -1,8 +1,8 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/analytics_service.dart';
-import '../../core/catalog_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/services/analytics_service.dart';
+import '../../core/repositories/catalog_repository.dart';
 import '../universities_programs_countries/universities_screens.dart';
 import '../universities_programs_countries/programs_screens.dart';
 import '../universities_programs_countries/countries_scholarships_screens.dart';

@@ -1,6 +1,6 @@
-import 'api_client.dart';
-import 'auth_session.dart';
-import 'notification_scheduler.dart';
+import '../network/api_client.dart';
+import '../services/auth_session.dart';
+import '../services/notification_scheduler.dart';
 
 class ConsultationRepository {
   ConsultationRepository._();

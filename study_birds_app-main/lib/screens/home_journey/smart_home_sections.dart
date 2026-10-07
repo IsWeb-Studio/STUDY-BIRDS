@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/status_info.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/utils/status_info.dart';
 
 /// Context-aware parts of the student home, rendered from the server's
 /// `home` payload (server/src/utils/studentHome.js): the context card

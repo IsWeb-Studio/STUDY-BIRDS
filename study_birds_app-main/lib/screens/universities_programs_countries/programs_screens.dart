@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
+import '../../core/config/app_theme.dart';
 import 'catalog_browser.dart';
 import 'catalog_detail.dart';
-import '../../core/student_repository.dart';
+import '../../core/repositories/student_repository.dart';
 
 class ProgramsExplorerScreen extends StatelessWidget {
   const ProgramsExplorerScreen({super.key});

@@ -1,14 +1,14 @@
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/document_access.dart';
+import '../../core/utils/document_access.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../core/app_theme.dart';
-import '../../core/student_repository.dart';
-import '../../core/notification_scheduler.dart';
-import '../../core/analytics_service.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/currency_service.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/student_repository.dart';
+import '../../core/services/notification_scheduler.dart';
+import '../../core/services/analytics_service.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/services/currency_service.dart';
 
 class InvoiceStatusMeta {
   final String label;

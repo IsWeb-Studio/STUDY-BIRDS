@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/config/app_theme.dart';
 import 'generic_crud_screen.dart';
 
 class AdminScholarshipsScreen extends StatelessWidget {

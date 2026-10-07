@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/api_client.dart';
-import '../../core/app_theme.dart';
-import '../../core/auth_session.dart';
-import '../../core/catalog_repository.dart';
+import '../../core/network/api_client.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/repositories/catalog_repository.dart';
 import 'applications_screens.dart';
 import 'documents_screens.dart';
 

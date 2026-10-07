@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../../core/app_theme.dart';
-import '../../core/feature_ui.dart';
-import '../../core/catalog_repository.dart';
-import '../../core/auth_session.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/widgets/feature_ui.dart';
+import '../../core/repositories/catalog_repository.dart';
+import '../../core/services/auth_session.dart';
 import 'comparison_grid.dart';
 
 class CompareListScreen extends StatefulWidget {

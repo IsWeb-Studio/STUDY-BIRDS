@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/api_client.dart';
-import '../../core/app_theme.dart';
-import '../../core/feature_ui.dart';
+import '../../core/network/api_client.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/widgets/feature_ui.dart';
 
 class AccountRecoveryScreen extends StatefulWidget {
   const AccountRecoveryScreen({super.key});

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
+import '../../core/config/app_theme.dart';
 
 class UniversityComparisonGrid extends StatefulWidget {
   final List<Map<String, dynamic>> universities;

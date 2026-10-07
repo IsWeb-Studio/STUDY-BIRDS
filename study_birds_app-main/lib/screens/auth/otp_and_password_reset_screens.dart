@@ -1,6 +1,6 @@
 import 'account_recovery_screen.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
+import '../../core/config/app_theme.dart';
 
 class OTPVerificationScreen extends StatelessWidget {
   final String destination;

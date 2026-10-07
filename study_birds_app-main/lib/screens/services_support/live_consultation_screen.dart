@@ -1,8 +1,8 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/consultation_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/repositories/consultation_repository.dart';
 import 'consultation_outcome.dart';
 
 const kConsultationModes = {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
 
 class StatusOption {
   final String value;

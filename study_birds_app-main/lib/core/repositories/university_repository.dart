@@ -1,5 +1,5 @@
-import 'api_client.dart';
-import 'auth_session.dart';
+import '../network/api_client.dart';
+import '../services/auth_session.dart';
 
 /// Talks to server/src/routes/universityPortalRoutes.js. Requires
 /// role === 'university'; every query is scoped server-side to the

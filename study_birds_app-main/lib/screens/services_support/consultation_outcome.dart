@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/api_client.dart';
-import '../../core/app_theme.dart';
-import '../../core/consultation_repository.dart';
+import '../../core/network/api_client.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/consultation_repository.dart';
 
 class ConsultationOutcomeView extends StatelessWidget {
   final Map<String, dynamic> outcome;

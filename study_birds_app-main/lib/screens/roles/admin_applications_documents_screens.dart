@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/admin_modules_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/admin_modules_repository.dart';
 import '../applications_documents_payments/applications_screens.dart'
     show appStatusMeta;
 import '../applications_documents_payments/documents_screens.dart'

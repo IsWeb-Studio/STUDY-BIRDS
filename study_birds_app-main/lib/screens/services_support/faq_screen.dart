@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/catalog_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/catalog_repository.dart';
 
 class FaqScreen extends StatefulWidget {
   const FaqScreen({super.key});

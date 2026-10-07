@@ -1,12 +1,12 @@
-﻿import 'browser_sign_in_screen.dart';
+import 'browser_sign_in_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../core/app_theme.dart';
-import '../../core/country_data.dart';
-import '../../core/google_sign_in_service.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/analytics_service.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/utils/country_data.dart';
+import '../../core/services/google_sign_in_service.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/services/analytics_service.dart';
 
 class _AppTextField extends StatelessWidget {
   final String label;

@@ -1,4 +1,4 @@
-import 'api_client.dart';
+import '../network/api_client.dart';
 
 /// Public catalog data — Universities, Programs, Countries. No token
 /// required (see server/src/routes/universityRoutes.js, programRoutes.js,

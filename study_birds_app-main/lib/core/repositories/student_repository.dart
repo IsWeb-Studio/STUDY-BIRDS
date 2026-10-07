@@ -1,7 +1,7 @@
-import 'secure_data_cache.dart';
-import 'api_client.dart';
-import 'passport_scan.dart';
-import 'auth_session.dart';
+import '../services/secure_data_cache.dart';
+import '../network/api_client.dart';
+import '../utils/passport_scan.dart';
+import '../services/auth_session.dart';
 
 /// One stage in the backend's authoritative journey progress
 /// (STUDENT_DASHBOARD_STAGES in server/src/controllers/studentController.js).

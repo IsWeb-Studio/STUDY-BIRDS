@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/feature_ui.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/widgets/feature_ui.dart';
 
 class EmailChallengeScreen extends StatefulWidget {
   final Future<void> Function(String) confirm;

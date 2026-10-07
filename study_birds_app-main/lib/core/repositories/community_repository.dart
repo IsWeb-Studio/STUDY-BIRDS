@@ -1,5 +1,5 @@
-import 'api_client.dart';
-import 'auth_session.dart';
+import '../network/api_client.dart';
+import '../services/auth_session.dart';
 
 /// Student community (PRD item 55). Students read, post, comment and report;
 /// moderation happens on the website's admin panel.

@@ -2,8 +2,8 @@ import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'auth_session.dart';
-import 'notification_links.dart';
-import '../screens/home_journey/notifications_screen.dart';
+import '../utils/notification_links.dart';
+import '../../screens/home_journey/notifications_screen.dart';
 
 class DeepLinkService {
   DeepLinkService._();

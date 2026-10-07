@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../core/app_theme.dart';
-import '../../core/agent_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/agent_repository.dart';
 import 'agent_dashboard_screen.dart' show agentStudentStatusMeta;
 
 // ─── document type catalogue ──────────────────────────────────────────────────
