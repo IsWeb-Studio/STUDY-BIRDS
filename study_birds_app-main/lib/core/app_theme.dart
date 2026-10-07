@@ -706,3 +706,54 @@ class _OfflineBannerWrapperState extends State<OfflineBannerWrapper> {
     );
   }
 }
+
+/// Password strength indicator bar. Shows nothing when [password] is empty.
+class PasswordStrengthBar extends StatelessWidget {
+  final String password;
+  const PasswordStrengthBar({super.key, required this.password});
+
+  static int _score(String p) {
+    if (p.isEmpty) return 0;
+    int s = 0;
+    if (p.length >= 8) s++;
+    if (p.length >= 12) s++;
+    if (RegExp(r'[A-Z]').hasMatch(p)) s++;
+    if (RegExp(r'[0-9]').hasMatch(p)) s++;
+    if (RegExp(r'[^A-Za-z0-9]').hasMatch(p)) s++;
+    return s;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (password.isEmpty) return const SizedBox.shrink();
+    final score = _score(password);
+    final color = score <= 1
+        ? AppColors.danger
+        : score <= 3
+            ? AppColors.warning
+            : AppColors.success;
+    final label = score <= 1 ? 'ضعيفة' : score <= 3 ? 'متوسطة' : 'قوية';
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: score / 5,
+              minHeight: 4,
+              backgroundColor: AppColors.border,
+              valueColor: AlwaysStoppedAnimation<Color>(color),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'قوة كلمة المرور: $label',
+            style: AppTextStyles.caption.copyWith(color: color),
+          ),
+        ],
+      ),
+    );
+  }
+}
