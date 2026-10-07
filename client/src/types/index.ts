@@ -337,6 +337,9 @@ export interface StudentProfile {
   currentEducation?: string;
   currentEducationLevel?: "high-school" | "bachelor" | "master" | "phd" | "";
   currentResidenceCountry?: string;
+  currentResidenceRegion?: string;
+  nativeLanguage?: string;
+  otherLanguages?: string[];
   gpa?: string;
   intake?: string;
   bio?: string;
@@ -345,6 +348,16 @@ export interface StudentProfile {
   englishTest?: {
     exam?: string;
     score?: string;
+  };
+  parentInfo?: {
+    name?: string;
+    phone?: string;
+    relationship?: string;
+  };
+  emergencyContact?: {
+    name?: string;
+    phone?: string;
+    relationship?: string;
   };
   companyName?: string;
   website?: string;
