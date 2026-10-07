@@ -23,7 +23,6 @@
   Users,
   Users2,
   Video,
-  PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -258,18 +257,21 @@ export const DashboardLayout = () => {
       <main className="mx-auto w-full max-w-[1800px] px-4 py-6 sm:px-6 lg:px-8">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2 text-xs text-slate-500"><LayoutDashboard className="h-4 w-4 shrink-0" /><span>{language === "ar" ? "لوحة التحكم" : "Dashboard"}</span>{activeSection && <><span aria-hidden="true">/</span><span className="font-semibold text-slate-800">{activeSection.label}</span></>}</div>
-        <button type="button" aria-expanded={sidebarOpen} aria-controls="dashboard-navigation" onClick={() => {
-          setSidebarOpen(!sidebarOpen);
-          try { localStorage.setItem("dashboard-sidebar", sidebarOpen ? "closed" : "open"); } catch { /* Storage may be unavailable. */ }
-        }} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500">
-          {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
-          {language === "ar" ? (sidebarOpen ? "إخفاء القائمة الجانبية" : "إظهار القائمة الجانبية") : (sidebarOpen ? "Hide sidebar" : "Show sidebar")}
-        </button>
+        {!sidebarOpen && <button type="button" aria-expanded={false} aria-controls="dashboard-navigation" aria-label={language === "ar" ? "إظهار القائمة الجانبية" : "Show sidebar"} title={language === "ar" ? "إظهار القائمة الجانبية" : "Show sidebar"} onClick={() => {
+          setSidebarOpen(true);
+          try { localStorage.setItem("dashboard-sidebar", "open"); } catch { /* Storage may be unavailable. */ }
+        }} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500">
+          <PanelLeftOpen className="h-4 w-4" aria-hidden="true" />
+        </button>}
         </div>
         <div className={`grid items-start gap-6 ${sidebarOpen ? "lg:grid-cols-[260px_minmax(0,1fr)]" : "grid-cols-1"}`}>
         <div id="dashboard-navigation" hidden={!sidebarOpen} className="dashboard-navigation max-h-[65vh] min-w-0 overflow-y-auto lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]">
         <DashboardSidebar
           links={navigationLinks}
+          onClose={() => {
+            setSidebarOpen(false);
+            try { localStorage.setItem("dashboard-sidebar", "closed"); } catch { /* Storage may be unavailable. */ }
+          }}
           onNavigate={() => { if (window.matchMedia("(max-width: 1023px)").matches) setSidebarOpen(false); }}
           sectionLabel={user?.role === "employee" ? (language === "ar" ? "أقسام العمل" : "Your sections") : sidebarSectionLabel}
           title={user?.role === "employee" ? (language === "ar" ? "لوحة الموظف" : "Employee dashboard") : sidebarTitle}

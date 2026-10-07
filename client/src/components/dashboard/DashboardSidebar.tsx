@@ -10,12 +10,14 @@ export const DashboardSidebar = ({
   title,
   subtitle,
   onNavigate,
+  onClose,
 }: {
   links: Array<{ label: string; href: string; icon?: LucideIcon; description?: string; group?: string }>;
   sectionLabel?: string;
   title: string;
   subtitle: string;
   onNavigate?: () => void;
+  onClose?: () => void;
 }) => {
   const location = useLocation();
   const { language } = useLanguage();
@@ -36,7 +38,10 @@ export const DashboardSidebar = ({
   return (
     <aside className="dashboard-sidebar panel overflow-hidden p-0">
       <div className="border-b border-slate-100 px-5 py-5">
-        <p className="text-xs font-medium text-blue-600">{sectionLabel || dt(language, "controlCenter")}</p>
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-medium text-blue-600">{sectionLabel || dt(language, "controlCenter")}</p>
+          {onClose && <button type="button" onClick={onClose} aria-label={language === "ar" ? "إغلاق القائمة الجانبية" : "Close sidebar"} title={language === "ar" ? "إغلاق القائمة الجانبية" : "Close sidebar"} className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition hover:bg-slate-100 hover:text-slate-900"><X className="h-4 w-4" aria-hidden="true" /></button>}
+        </div>
         <h2 className="mt-2 text-lg font-bold text-slate-900">{title}</h2>
         <p className="mt-2 text-xs leading-6 text-slate-500">{subtitle}</p>
       </div>
