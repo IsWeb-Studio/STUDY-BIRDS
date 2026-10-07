@@ -11,7 +11,7 @@ async function sendCode(user, purpose, res) {
   const row = await EmailCode.findOneAndUpdate({ user: user._id, purpose }, { $set: {
     email: user.email, digest: digest(`${user._id}:${purpose}:${code}`), attempts: 0, expiresAt: new Date(Date.now() + 10 * 60 * 1000),
   } }, { new: true, upsert: true });
-  const title = { reset: 'استعادة كلمة المرور', verify: 'تأكيد البريد', login: 'رمز تسجيل الدخول', security: 'تغيير إعدادات الأمان' }[purpose];
+  const title = { reset: 'استعادة كلمة المرور', verify: 'تأكيد البريد', login: 'رمز تسجيل الدخول', security: 'تغيير إعدادات الأمان', emaillogin: 'رمز الدخول عبر البريد' }[purpose];
   try { await sendContactEmail({ to: user.email, subject: `Study Birds — ${title}`, text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.` }); }
   catch (e) { await EmailCode.deleteOne({ _id: row._id, digest: row.digest }); throw e; }
 }

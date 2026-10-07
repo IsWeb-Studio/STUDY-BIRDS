@@ -336,6 +336,35 @@ const verifyOtp = asyncHandler(async (req, res) => {
   res.json({ ...tokens, user: serializeUser(user) });
 });
 
+// Email OTP login — step 1: send code via Brevo
+const requestEmailOtp = asyncHandler(async (req, res) => {
+  const { isMailerConfigured } = require('../utils/mailer');
+  if (!isMailerConfigured()) { res.status(503); throw new Error('إرسال البريد غير مهيأ على السيرفر'); }
+  const email = String(req.body.email || '').toLowerCase().trim();
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    res.status(400); throw new Error('أدخل بريدًا إلكترونيًا صحيحًا');
+  }
+  const user = await User.findOne({ email, isActive: true });
+  if (user) await sendCode(user, 'emaillogin', res);
+  res.json({ sent: true });
+});
+
+// Email OTP login — step 2: verify code + issue JWT
+const verifyEmailOtp = asyncHandler(async (req, res) => {
+  const email = String(req.body.email || '').toLowerCase().trim();
+  const code  = String(req.body.code  || '').trim();
+  if (!email || !/^\d{6}$/.test(code)) {
+    res.status(400); throw new Error('بريد إلكتروني أو رمز غير صحيح');
+  }
+  const user = await User.findOne({ email, isActive: true });
+  await consume(user, 'emaillogin', code, res);
+  if (user.role === 'student') await ensureStudentProfile(user._id);
+  user.lastLoginAt = new Date();
+  await user.save();
+  const tokens = await issueTokenPair(user);
+  res.json({ ...tokens, user: serializeUser(user) });
+});
+
 const deleteAccount = asyncHandler(async (req, res) => {
   const { password } = req.body;
 
@@ -374,6 +403,8 @@ module.exports = {
   googleLogin,
   requestOtp,
   verifyOtp,
+  requestEmailOtp,
+  verifyEmailOtp,
   me,
   changePassword,
   refresh,
