@@ -336,6 +336,35 @@ const verifyOtp = asyncHandler(async (req, res) => {
   res.json({ ...tokens, user: serializeUser(user) });
 });
 
+const deleteAccount = asyncHandler(async (req, res) => {
+  const { password } = req.body;
+
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  // Local-auth users must verify their password; Google/phone users have no password
+  if (user.password) {
+    if (!password) {
+      res.status(400);
+      throw new Error('كلمة المرور مطلوبة');
+    }
+    if (!(await user.comparePassword(password))) {
+      res.status(401);
+      throw new Error('كلمة المرور غير صحيحة');
+    }
+  }
+
+  // Remove associated data
+  await StudentProfile.deleteOne({ user: user._id });
+  await Challenge.deleteMany({ key: new RegExp(`:${user._id}`) });
+  await User.deleteOne({ _id: user._id });
+
+  res.json({ ok: true });
+});
+
 module.exports = {
   serializeUser,
   ensureStudentProfile,
@@ -349,4 +378,5 @@ module.exports = {
   changePassword,
   refresh,
   logout,
+  deleteAccount,
 };
