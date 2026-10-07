@@ -603,6 +603,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
 
   // Tappable read-only field (for pickers)
+  // ValueKey forces a new TextFormField when value changes so initialValue
+  // reflects the latest state after setState.
   Widget _tapField(
     String label,
     String value,
@@ -615,6 +617,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           onTap: _saving ? null : onTap,
           child: AbsorbPointer(
             child: TextFormField(
+              key: ValueKey('$label::$value'),
               readOnly: true,
               initialValue: value,
               decoration: featureInput(
@@ -641,7 +644,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 18),
             child: DropdownButtonFormField<String>(
-              value: isCustom ? 'أخرى' : _controllers[dropdownKey]!.text,
+              value: isCustom
+                  ? 'أخرى'
+                  : (_controllers[dropdownKey]!.text.isEmpty
+                      ? null
+                      : _controllers[dropdownKey]!.text),
+              hint: const Text('اختر صلة القرابة'),
               decoration: featureInput(_allLabels[dropdownKey]!),
               isExpanded: true,
               items: [
@@ -942,6 +950,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         title: 'المعلومات الأكاديمية',
                         child: Column(children: [
                           DropdownButtonFormField<String>(
+                            key: ValueKey('level:$_level'),
                             initialValue: _level,
                             decoration: featureInput('المستوى الدراسي'),
                             items: const [
