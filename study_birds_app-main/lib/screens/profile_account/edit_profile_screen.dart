@@ -795,7 +795,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               // Nationality — auto-filled but editable
                               _field('nationality'),
 
-                              // Residence country — editable + picker icon
+                              // Residence country — editable + flag prefix + picker icon
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 18),
                                 child: TextFormField(
@@ -828,9 +828,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                               }
                                             },
                                     ),
+                                  ).copyWith(
+                                    prefixIcon: _residenceIso2.isEmpty
+                                        ? null
+                                        : Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 12),
+                                            child: Text(
+                                              countryByIso2(_residenceIso2)
+                                                      ?.flag ??
+                                                  '',
+                                              style: const TextStyle(
+                                                  fontSize: 24),
+                                            ),
+                                          ),
                                   ),
                                   onChanged: (_) {
-                                    // Manual typing clears iso2 so regions hide
+                                    // Manual typing clears iso2 so flag + regions hide
                                     if (_residenceIso2.isNotEmpty) {
                                       setState(() => _residenceIso2 = '');
                                     }
