@@ -204,6 +204,7 @@ class StudentRepository {
       'currentEducation',
       'currentEducationLevel',
       'currentResidenceCountry',
+      'currentResidenceRegion',
       'gpa',
       'englishTest',
       'targetCountries',
@@ -219,6 +220,8 @@ class StudentRepository {
       for (final field in fields)
         if (profile.containsKey(field)) field: profile[field],
     });
+    // Invalidate cached GET so the next getProfile() fetches fresh data.
+    ApiClient.instance.clearCache();
   }
 
   Future<List<dynamic>> getApplications({bool forceRefresh = false}) async {
