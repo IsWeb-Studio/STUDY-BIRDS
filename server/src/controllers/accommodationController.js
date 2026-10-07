@@ -67,7 +67,9 @@ const deleteAccommodationListing = asyncHandler(async (req, res) => {
 // ---- Staff: booking review (mounted under /admin, 'housing' section) ----
 
 const getAccommodationBookingsAdmin = asyncHandler(async (req, res) => {
-  const bookings = await AccommodationBooking.find()
+  const filter = {};
+  if (req.query.student) filter.student = req.query.student;
+  const bookings = await AccommodationBooking.find(filter)
     .populate("student", "name")
     .populate({ path: "listing", select: "title type university price currency", populate: { path: "university", select: "name" } })
     .sort({ createdAt: -1 }).limit(500).lean();

@@ -90,8 +90,8 @@ export const IdentitySettings = () => {
         setSent(true);
         setNotice(
           text(
-            "أُرسل رمز SMS إلى الرقم الذي أدخلته.",
-            "An SMS code was sent to the number you entered.",
+            "أُرسل رمز واتساب إلى الرقم الذي أدخلته.",
+            "A WhatsApp code was sent to the number you entered.",
           ),
         );
       } else {
@@ -218,7 +218,7 @@ export const IdentitySettings = () => {
             {sent ? (
               <>
                 <FormInput
-                  label={text("رمز SMS", "SMS code")}
+                  label={text("رمز واتساب", "WhatsApp code")}
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                   inputMode="numeric"

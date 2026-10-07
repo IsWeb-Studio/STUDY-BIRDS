@@ -77,6 +77,9 @@ const {
   reviewVerificationDocumentAdmin,
   getSupportTicketsAdmin,
   replySupportTicketAdmin,
+  assignSupportTicketAdmin,
+  escalateSupportTicketAdmin,
+  markTicketEmergency,
   getKnowledgeBaseAdmin,
   createKnowledgeBaseItemAdmin,
   updateKnowledgeBaseItemAdmin,
@@ -90,9 +93,11 @@ const {
   getStudentFinancialsAdmin,
   createStudentInvoiceAdmin,
   updateStudentInvoiceAdmin,
+  deleteStudentInvoiceAdmin,
   reviewPaymentProofAdmin,
   getArrivalRequestsAdmin,
   updateArrivalRequestAdmin,
+  syncArrivalStagesAdmin,
   getStudentFavoritesAdmin,
   getOrientationResultsAdmin,
   updateOrientationResultAdmin,
@@ -116,13 +121,38 @@ const {
   listPostsAdmin, getPostAdmin, listReportsAdmin, listModerationLogAdmin, moderatePost, moderateComment,
   listSuspensionsAdmin, suspendUser, liftSuspension, getSettingsAdmin, updateSettingsAdmin,
 } = require("../controllers/communityController");
+const { unifiedSearch } = require("../controllers/unifiedSearchController");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
 const router = express.Router();
 const { authorizeAdminSection } = require("../middleware/employeeAccess");
 
-router.use(protect, authorizeAdminSection);
+// protect all routes but split avatar from section-gated middleware
+router.use(protect);
+
+// Any authenticated employee/admin can update their own avatar — no section required
+const { uploadFileToCloudinary } = require("../utils/uploadToCloudinary");
+const User = require("../models/User");
+const asyncHandler = require("../utils/asyncHandler");
+router.post("/me/avatar", upload.single("file"), asyncHandler(async (req, res) => {
+  if (!req.file) { res.status(400); throw new Error("No file uploaded"); }
+  const result = await uploadFileToCloudinary(req.file, "employee-avatars");
+  const url = result.secure_url || result.url;
+  await User.findByIdAndUpdate(req.user._id, { avatar: url });
+  res.json({ avatar: url });
+}));
+
+// All remaining routes require section-level authorization
+router.use(authorizeAdminSection);
+
+for (const kind of ['insurance', 'equivalency']) {
+  const controller = require('../controllers/studentServicesController');
+  router.get(`/students/:id/${kind}`, controller.staffRead(kind));
+  router.put(`/students/:id/${kind}`, controller.save(kind));
+}
+// #PRD-Admin: Unified global search across all entities
+router.get("/search", unifiedSearch);
 router.get("/my-kpis", getMyKpis);
 router.get("/overview", getOverview);
 router.get("/stats", getStats);
@@ -198,6 +228,9 @@ router.get("/verification-documents", getVerificationQueueAdmin);
 router.patch("/verification-documents/:id", reviewVerificationDocumentAdmin);
 router.get("/support-tickets", getSupportTicketsAdmin);
 router.patch("/support-tickets/:id/reply", replySupportTicketAdmin);
+router.patch("/support-tickets/:id/assign", assignSupportTicketAdmin);
+router.patch("/support-tickets/:id/escalate", escalateSupportTicketAdmin);
+router.patch("/support-tickets/:id/emergency", markTicketEmergency);
 router.get("/knowledge-base", getKnowledgeBaseAdmin);
 router.post("/knowledge-base", createKnowledgeBaseItemAdmin);
 router.put("/knowledge-base/:id", updateKnowledgeBaseItemAdmin);
@@ -209,8 +242,17 @@ router.patch("/student-documents/:id", reviewStudentDocumentAdmin);
 router.get("/student-notifications", getStudentNotificationsAdmin);
 router.post("/student-financials/invoices", createStudentInvoiceAdmin);
 router.patch("/student-financials/invoices/:id", updateStudentInvoiceAdmin);
+router.delete("/student-financials/invoices/:id", deleteStudentInvoiceAdmin);
 router.patch("/student-financials/payment-proofs/:id", reviewPaymentProofAdmin);
 router.get("/student-financials/wallet-entries", getWalletEntriesAdmin);
+const rewardRules = require('../controllers/studentRewardsController');
+router.get('/student-financials/reward-rules', rewardRules.listRules);
+const studentListings = require('../controllers/studentListingsController');
+router.get('/community-posts/listings', studentListings.list(true));
+router.post('/community-posts/listings', studentListings.save);
+router.put('/community-posts/listings/:id', studentListings.save);
+router.post('/student-financials/reward-rules', rewardRules.saveRule);
+router.put('/student-financials/reward-rules/:id', rewardRules.saveRule);
 router.post("/student-financials/wallet-entries", createWalletAdjustmentAdmin);
 router.get("/community-posts", listPostsAdmin);
 router.get("/community-posts/:id", getPostAdmin);
@@ -225,6 +267,7 @@ router.get("/community-settings", getSettingsAdmin);
 router.put("/community-settings", updateSettingsAdmin);
 router.get("/student-arrival-requests", getArrivalRequestsAdmin);
 router.patch("/student-arrival-requests/:id", updateArrivalRequestAdmin);
+router.post("/student-arrival-requests/sync-stages", syncArrivalStagesAdmin);
 router.get("/student-favorites", getStudentFavoritesAdmin);
 router.get("/student-orientation-results", getOrientationResultsAdmin);
 router.patch("/student-orientation-results/:id", updateOrientationResultAdmin);
@@ -243,5 +286,20 @@ router.post("/university-accounts", createUniversityAccountAdmin);
 router.patch("/university-accounts/:id", updateUniversityAccountAdmin);
 router.get("/employees", getEmployeesAdmin);
 router.patch("/employees/:id/role", updateEmployeeRoleAdmin);
+
+// #62/109/110: Employee productivity KPI
+const { getEmployeeStats, getEmployeeStatsById } = require('../controllers/employeeStatsController');
+router.get("/employee-stats", getEmployeeStats);
+router.get("/employee-stats/:id", getEmployeeStatsById);
+
+// one-time migration: rename "التقديم على الجامعات" → "التسجيل بالجامعة" and link to registration stage
+router.post('/migrate/service-registration-link', require('../utils/asyncHandler')(async (req, res) => {
+  const OurService = require('../models/OurService');
+  const result = await OurService.updateMany(
+    { title: { $regex: 'التقديم على الجامعات', $options: 'i' } },
+    { $set: { title: 'التسجيل بالجامعة', journeyStage: 'registration' } }
+  );
+  res.json({ matched: result.matchedCount, modified: result.modifiedCount });
+}));
 
 module.exports = router;

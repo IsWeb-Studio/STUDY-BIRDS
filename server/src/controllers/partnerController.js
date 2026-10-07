@@ -154,6 +154,15 @@ const getPartnerOverview = asyncHandler(async (req, res) => {
       latestPayoutRequest: payouts[0] || null,
       latestNotification: notifications[0] || null,
     },
+    notifications: notifications.map((n) => ({
+      _id: n._id,
+      title: n.title,
+      message: n.message,
+      type: n.type,
+      isRead: n.isRead,
+      createdAt: n.createdAt,
+      link: n.link,
+    })),
   });
 });
 
@@ -180,7 +189,9 @@ const createAgentStudent = asyncHandler(async (req, res) => {
     desiredUniversity: String(payload.desiredUniversity || "").trim(),
     desiredProgram: String(payload.desiredProgram || "").trim(),
     notes: String(payload.notes || "").trim(),
+    country: String(payload.country || "").trim(),
     applicationStatus: payload.applicationStatus || "under-review",
+    applicationStage: payload.applicationStage || "initial",
   });
 
   await logActivity(req, req.user._id, "student.created", `Added student ${student.name}`, { studentId: student._id });
@@ -202,6 +213,8 @@ const updateAgentStudent = asyncHandler(async (req, res) => {
     throw new Error("Name, email, and phone are required");
   }
 
+  const prevStatus = student.applicationStatus;
+
   student.name = String(payload.name || "").trim();
   student.email = String(payload.email || "").trim().toLowerCase();
   student.phone = String(payload.phone || "").trim();
@@ -210,8 +223,47 @@ const updateAgentStudent = asyncHandler(async (req, res) => {
   student.desiredUniversity = String(payload.desiredUniversity || "").trim();
   student.desiredProgram = String(payload.desiredProgram || "").trim();
   student.notes = String(payload.notes || "").trim();
+  student.country = String(payload.country || "").trim();
+  if (payload.applicationStage) student.applicationStage = payload.applicationStage;
+  if (payload.applicationStatus) student.applicationStatus = payload.applicationStatus;
 
   await student.save();
+
+  // Notify the agent whenever a student's application status changes
+  if (prevStatus !== student.applicationStatus) {
+    const statusNotifications = {
+      rejected: {
+        title: `❌ تم رفض طلب ${student.name}`,
+        message: `للأسف، تم رفض طلب تقديم الطالب ${student.name}. يرجى مراجعة التفاصيل والتواصل مع الطالب.`,
+        type: "warning",
+      },
+      "preliminary-accepted": {
+        title: `🎉 قبول مبدئي — ${student.name}`,
+        message: `تهانينا! حصل الطالب ${student.name} على قبول مبدئي. يمكنك الآن متابعة خطوات القبول النهائي.`,
+        type: "success",
+      },
+      "final-accepted": {
+        title: `✅ قبول نهائي — ${student.name}`,
+        message: `تهانينا! حصل الطالب ${student.name} على القبول النهائي. تمّت العملية بنجاح.`,
+        type: "success",
+      },
+      "under-review": {
+        title: `🔄 الطلب قيد المراجعة — ${student.name}`,
+        message: `تم تحديث حالة طلب الطالب ${student.name} إلى قيد المراجعة.`,
+        type: "info",
+      },
+    };
+    const notif = statusNotifications[student.applicationStatus];
+    if (notif) {
+      await Notification.create({
+        user: req.user._id,
+        title: notif.title,
+        message: notif.message,
+        type: notif.type,
+        link: `/agent/students/${student._id}`,
+      });
+    }
+  }
 
   await logActivity(req, req.user._id, "student.updated", `Updated student ${student.name}`, { studentId: student._id });
 
@@ -311,8 +363,8 @@ const requestPayout = asyncHandler(async (req, res) => {
 
   await Notification.create({
     user: req.user._id,
-    title: "Payout request submitted",
-    message: `Your payout request for ${numericAmount} is pending review.`,
+    title: "تم إرسال طلب السحب",
+    message: `تم استلام طلب سحب رصيدك بقيمة $${numericAmount} وهو قيد المراجعة من الفريق المالي. سيتم إشعارك بعد اتخاذ القرار.`,
     type: "info",
   });
 

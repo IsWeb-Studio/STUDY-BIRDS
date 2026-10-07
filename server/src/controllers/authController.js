@@ -1,10 +1,12 @@
 const { sendCode, consume } = require('../utils/mobileEmailCodes');
+const { randomBytes, createHash } = require('node:crypto');
 const User = require("../models/User");
 const StudentProfile = require("../models/StudentProfile");
 const { OAuth2Client } = require("google-auth-library");
 const asyncHandler = require("../utils/asyncHandler");
 const generateToken = require("../utils/generateToken");
 const { recordReferralSignup } = require("../utils/studentWallet");
+const { Challenge } = require('../models/IdentityCredential');
 
 const googleClient = new OAuth2Client();
 
@@ -40,6 +42,11 @@ const register = asyncHandler(async (req, res) => {
     throw new Error("Name, email, and password are required");
   }
 
+  // Agents (partner) can self-register; universities and employees must be admin-created.
+  const allowedSelfRegisterRoles = ["student", "parent", "partner"];
+  const requestedRole = req.body.role;
+  const role = allowedSelfRegisterRoles.includes(requestedRole) ? requestedRole : "student";
+
   const existingUser = await User.findOne({ email: normalizedEmail });
   if (existingUser) {
     res.status(400);
@@ -50,19 +57,17 @@ const register = asyncHandler(async (req, res) => {
     name: String(name || "").trim(),
     email: normalizedEmail,
     password,
-    role: "student",
+    role,
     authProvider: "local",
   });
 
-  await ensureStudentProfile(user._id);
+  if (role === "student") await ensureStudentProfile(user._id);
   if (typeof req.body.referralCode === "string" && req.body.referralCode.trim()) {
     await recordReferralSignup(user._id, req.body.referralCode).catch((error) => console.error("Referral signup failed", error.message));
   }
 
-  res.status(201).json({
-    token: generateToken(user._id, user.tokenVersion),
-    user: serializeUser(user),
-  });
+  const tokens = await issueTokenPair(user);
+  res.status(201).json({ ...tokens, user: serializeUser(user) });
 });
 
 const login = asyncHandler(async (req, res) => {
@@ -96,10 +101,8 @@ const login = asyncHandler(async (req, res) => {
   user.lastLoginAt = new Date();
   await user.save();
 
-  res.json({
-    token: generateToken(user._id, user.tokenVersion),
-    user: serializeUser(user),
-  });
+  const tokens = await issueTokenPair(user);
+  res.json({ ...tokens, user: serializeUser(user) });
 });
 
 const googleLogin = asyncHandler(async (req, res) => {
@@ -178,10 +181,8 @@ const googleLogin = asyncHandler(async (req, res) => {
     await ensureStudentProfile(user._id);
   }
 
-  res.json({
-    token: generateToken(user._id, user.tokenVersion),
-    user: serializeUser(user),
-  });
+  const tokens = await issueTokenPair(user);
+  res.json({ ...tokens, user: serializeUser(user) });
 });
 
 const me = asyncHandler(async (req, res) => {
@@ -252,12 +253,113 @@ const changePassword = asyncHandler(async (req, res) => {
   res.json({ message: "Password updated successfully" });
 });
 
+const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function makeRefreshToken() {
+  return randomBytes(32).toString('hex');
+}
+
+function hashToken(token) {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+async function issueTokenPair(user) {
+  const refresh = makeRefreshToken();
+  user.refreshTokenHash = hashToken(refresh);
+  user.refreshTokenExpiry = new Date(Date.now() + REFRESH_TTL_MS);
+  await user.save();
+  return { token: generateToken(user._id, user.tokenVersion), refreshToken: refresh };
+}
+
+const refresh = asyncHandler(async (req, res) => {
+  const raw = req.body.refreshToken;
+  if (typeof raw !== 'string' || !raw.trim()) {
+    res.status(400);
+    throw new Error('refreshToken required');
+  }
+  const hash = hashToken(raw.trim());
+  const user = await User.findOne({ refreshTokenHash: hash, refreshTokenExpiry: { $gt: new Date() } }).select('+refreshTokenHash');
+  if (!user || !user.isActive) {
+    res.status(401);
+    throw new Error('Invalid or expired refresh token');
+  }
+  const tokens = await issueTokenPair(user);
+  res.json({ ...tokens, user: serializeUser(user) });
+});
+
+const logout = asyncHandler(async (req, res) => {
+  const raw = req.body.refreshToken;
+  if (typeof raw === 'string' && raw.trim()) {
+    await User.updateOne({ refreshTokenHash: hashToken(raw.trim()) }, { $unset: { refreshTokenHash: 1, refreshTokenExpiry: 1 } });
+  }
+  res.json({ ok: true });
+});
+
+// #6: Phone OTP login — step 1: request OTP via Twilio Verify
+const requestOtp = asyncHandler(async (req, res) => {
+  const twilioReady = () => process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_VERIFY_SERVICE_SID;
+  if (!twilioReady()) return res.status(503).json({ message: 'Phone login is not configured' });
+  const phone = String(req.body.phone || '').trim();
+  if (!/^\+[1-9]\d{7,14}$/.test(phone)) return res.status(400).json({ message: 'أدخل رقمًا دوليًا يبدأ بـ + ورمز الدولة' });
+  const key = `otp-login:${phone}`;
+  // Rate limit: block if an unexpired challenge was created within the last minute
+  const existing = await Challenge.findOne({ key, purpose: 'otp-login', expiresAt: { $gt: new Date(Date.now() + 9 * 60 * 1000) } });
+  if (existing) return res.status(429).json({ message: 'انتظر دقيقة قبل طلب رمز جديد' });
+  await Challenge.deleteOne({ key });
+  const twilioRes = await fetch(`https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/Verifications`, {
+    method: 'POST',
+    headers: { Authorization: 'Basic ' + Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ To: phone, Channel: 'whatsapp' }),
+    signal: AbortSignal.timeout(15000),
+  });
+  if (!twilioRes.ok) {
+    const body = await twilioRes.json().catch(() => ({}));
+    console.error('[OTP] Twilio error:', twilioRes.status, JSON.stringify(body));
+    return res.status(502).json({ message: body.message || 'تعذر إرسال الرمز. حاول مجدداً.' });
+  }
+  await Challenge.create({ key, purpose: 'otp-login', value: phone, expiresAt: new Date(Date.now() + 10 * 60 * 1000) });
+  res.json({ sent: true });
+});
+
+// #6: Phone OTP login — step 2: verify OTP + issue JWT
+const verifyOtp = asyncHandler(async (req, res) => {
+  const twilioReady = () => process.env.TWILIO_ACCOUNT_SID && process.env.TWILIO_AUTH_TOKEN && process.env.TWILIO_VERIFY_SERVICE_SID;
+  if (!twilioReady()) return res.status(503).json({ message: 'Phone login is not configured' });
+  const phone = String(req.body.phone || '').trim();
+  const code = String(req.body.code || '').trim();
+  if (!/^\+[1-9]\d{7,14}$/.test(phone) || !/^\d{4,10}$/.test(code)) return res.status(400).json({ message: 'رقم أو رمز غير صالح' });
+  const result = await fetch(`https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/VerificationCheck`, {
+    method: 'POST',
+    headers: { Authorization: 'Basic ' + Buffer.from(`${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`).toString('base64'), 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ To: phone, Code: code }),
+    signal: AbortSignal.timeout(15000),
+  }).then(r => r.json());
+  if (result.status !== 'approved') return res.status(401).json({ message: 'رمز التحقق غير صحيح أو منتهي الصلاحية' });
+  await Challenge.deleteOne({ key: `otp-login:${phone}`, purpose: 'otp-login' });
+  let user = await User.findOne({ verifiedPhone: phone });
+  if (!user) {
+    user = await User.create({ name: phone, email: `${phone.replace('+', '')}@phone.studybirds.net`, verifiedPhone: phone, authProvider: 'phone', role: 'student' });
+    await ensureStudentProfile(user._id);
+  }
+  if (!user.isActive) return res.status(403).json({ message: 'الحساب موقوف' });
+  user.verifiedPhone = phone;
+  user.lastLoginAt = new Date();
+  await user.save();
+  const tokens = await issueTokenPair(user);
+  res.json({ ...tokens, user: serializeUser(user) });
+});
+
 module.exports = {
   serializeUser,
   ensureStudentProfile,
+  issueTokenPair,
   register,
   login,
   googleLogin,
+  requestOtp,
+  verifyOtp,
   me,
   changePassword,
+  refresh,
+  logout,
 };

@@ -22,6 +22,11 @@ const orientationTestResultSchema = new mongoose.Schema(
     recommendationSummary: String,
     suggestedFields: [String],
     suggestedCountries: [String],
+    // #23: ranked matched programs with score
+    matchedPrograms: [{
+      program: { type: mongoose.Schema.Types.ObjectId, ref: 'Program' },
+      score:   { type: Number },
+    }],
     adminNote: String,
     reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,

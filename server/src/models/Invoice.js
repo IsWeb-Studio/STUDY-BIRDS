@@ -42,12 +42,20 @@ const invoiceSchema = new mongoose.Schema(
       enum: ["application-fee", "tuition", "service", "housing", "other"],
       default: "other",
     },
+    serviceRequest: { type: mongoose.Schema.Types.ObjectId, ref: 'ServiceRequest', default: null },
+    accommodationBooking: { type: mongoose.Schema.Types.ObjectId, ref: 'AccommodationBooking', default: null },
     adminNote: String,
     reviewedAt: Date,
     reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    stripeSessionId: { type: String },
+    currency: { type: String, default: 'USD', uppercase: true },
+    stripeCheckoutExpiresAt: Date,
+    stripeExpectedAmount: Number,
+    stripeExpectedCurrency: String,
+    stripeCheckoutUrl: String,
   },
   { timestamps: true }
 );

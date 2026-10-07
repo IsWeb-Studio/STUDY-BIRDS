@@ -64,14 +64,17 @@ const payload = (body) =>
   );
 router.get(
   "/",
-  run(async (req, res) =>
-    res.json(
-      await Scholarship.find(available())
-        .sort({ createdAt: -1 })
-        .limit(200)
-        .lean(),
-    ),
-  ),
+  run(async (req, res) => {
+    const filter = available();
+    // #26: filter by country, degree level, field (partial match on title/eligibility)
+    if (req.query.country) filter.country = new RegExp(String(req.query.country).trim(), 'i');
+    if (req.query.degree) filter.degree = new RegExp(String(req.query.degree).trim(), 'i');
+    if (req.query.field) filter.$or = [
+      { title: new RegExp(String(req.query.field).trim(), 'i') },
+      { eligibility: new RegExp(String(req.query.field).trim(), 'i') },
+    ];
+    res.json(await Scholarship.find(filter).sort({ createdAt: -1 }).limit(200).lean());
+  }),
 );
 router.get(
   "/mine",

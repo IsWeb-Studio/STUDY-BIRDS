@@ -8,6 +8,8 @@ const { withLease } = require("../utils/leaseLock");
 
 // ---- Student: their own wallet ------------------------------------------
 
+const { getMyRewards } = require('./studentRewardsController');
+
 const getMyWallet = asyncHandler(async (req, res) => {
   const [referralCode, balance, referrals, transactions] = await Promise.all([
     ensureReferralCode(req.user._id),
@@ -33,6 +35,8 @@ const redeemWalletCredit = asyncHandler(async (req, res) => {
   const result = await withLease(`wallet:${req.user._id}`, async () => {
     const invoice = await Invoice.findOne({ _id: invoiceId, student: req.user._id });
     if (!invoice) return { status: 404, body: { message: "Invoice not found" } };
+    if (invoice.stripeCheckoutExpiresAt > new Date()) return { status: 409, body: { message: 'توجد عملية دفع بالبطاقة قيد الانتظار؛ انتظر انتهاءها قبل استخدام الرصيد.' } };
+    if ((invoice.currency || 'USD').toUpperCase() !== 'USD') return { status: 400, body: { message: 'رصيد المحفظة بالدولار ويستخدم لفواتير الدولار فقط.' } };
     if (invoice.status !== "unpaid") return { status: 409, body: { message: "This invoice can no longer accept credit" } };
     const remaining = invoice.amount - invoice.walletCreditApplied;
     if (amount > remaining) return { status: 400, body: { message: "Amount exceeds what is still owed on this invoice" } };
@@ -85,4 +89,4 @@ const createWalletAdjustmentAdmin = asyncHandler(async (req, res) => {
   res.status(201).json(entry);
 });
 
-module.exports = { getMyWallet, redeemWalletCredit, getWalletEntriesAdmin, createWalletAdjustmentAdmin };
+module.exports = { getMyRewards, getMyWallet, redeemWalletCredit, getWalletEntriesAdmin, createWalletAdjustmentAdmin };

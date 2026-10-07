@@ -180,13 +180,24 @@ export const adminService = {
     const { data } = await api.get<{ invoices: InvoiceItem[]; paymentProofs: PaymentProofItem[] }>("/admin/student-financials");
     return data;
   },
-  createStudentInvoice: async (payload: Partial<InvoiceItem> & { studentId: string }) => {
+  createStudentInvoice: async (payload: Partial<InvoiceItem> & { studentId: string; applicationId?: string; serviceRequestId?: string; accommodationBookingId?: string }) => {
     const { data } = await api.post<InvoiceItem>("/admin/student-financials/invoices", payload);
+    return data;
+  },
+  getStudentServiceRequests: async (studentId: string) => {
+    const { data } = await api.get<Array<{ _id: string; service?: { title?: string }; status: string }>>(`/service-requests?student=${studentId}`);
+    return data;
+  },
+  getStudentAccommodationBookings: async (studentId: string) => {
+    const { data } = await api.get<Array<{ _id: string; listing?: { title?: string }; status: string }>>(`/admin/accommodation-bookings?student=${studentId}`);
     return data;
   },
   updateStudentInvoice: async (id: string, payload: Partial<InvoiceItem>) => {
     const { data } = await api.patch<InvoiceItem>(`/admin/student-financials/invoices/${id}`, payload);
     return data;
+  },
+  deleteStudentInvoice: async (id: string) => {
+    await api.delete(`/admin/student-financials/invoices/${id}`);
   },
   reviewPaymentProof: async (id: string, payload: { status: PaymentProofItem["status"]; reviewNote?: string }) => {
     const { data } = await api.patch<PaymentProofItem>(`/admin/student-financials/payment-proofs/${id}`, payload);

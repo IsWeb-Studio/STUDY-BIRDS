@@ -28,6 +28,15 @@ const ourServiceSchema = new mongoose.Schema(
       default: "",
       trim: true,
     },
+    priceDescription: { type: String, trim: true, maxlength: 200, default: '' },
+    estimatedDuration: { type: String, trim: true, maxlength: 200, default: '' },
+    // #114: numeric price/duration for auto-invoice generation
+    price: { type: Number, min: 0, default: 0 },
+    durationDays: { type: Number, min: 0, default: 0 },
+    // #75/76: link to journey stage for rules engine
+    journeyStage: { type: String, trim: true, default: '' },
+    requirementsText: { type: String, trim: true, maxlength: 4000, default: '' },
+    documentsText: { type: String, trim: true, maxlength: 4000, default: '' },
     detailImage: {
       type: String,
       default: "",

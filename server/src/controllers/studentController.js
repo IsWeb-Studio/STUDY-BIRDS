@@ -22,6 +22,7 @@ const { expireDueDocuments } = require("../utils/documentExpiry");
 const { studentHome } = require("../utils/studentHome");
 const { applicationCard } = require("../utils/applicationCard");
 const AccommodationBooking = require("../models/AccommodationBooking");
+const Recognition = require("../models/Recognition");
 const { Booking: ConsultationBooking } = require("../models/Consultation");
 const { applicationStatusInfo, documentStatusInfo } = require("../constants/statusCatalog");
 const {
@@ -151,14 +152,32 @@ const updateProfile = asyncHandler(async (req, res) => {
     address,
   };
 
-  if (typeof applicationStage === "string" && applicationStage.trim()) {
-    profilePayload.applicationStage = applicationStage.trim();
+  // Journey state is controlled by staff workflows, never by self-service profile edits.
+  for (const field of ['parentInfo', 'emergencyContact']) {
+    if (req.body[field] !== undefined) {
+      const contact = req.body[field];
+      if (!contact || typeof contact !== 'object' || Array.isArray(contact) ||
+          ['name', 'phone', 'relationship'].some(key => contact[key] !== undefined &&
+            (typeof contact[key] !== 'string' || contact[key].length > 200))) {
+        return res.status(400).json({ message: 'Invalid contact information' });
+      }
+      profilePayload[field] = Object.fromEntries(['name', 'phone', 'relationship'].map(key => [key, (contact[key] || '').trim()]));
+    }
+  }
+  if (req.body.nativeLanguage !== undefined) {
+    if (typeof req.body.nativeLanguage !== 'string' || req.body.nativeLanguage.length > 100) return res.status(400).json({ message: 'Invalid language' });
+    profilePayload.nativeLanguage = req.body.nativeLanguage.trim();
+  }
+  if (req.body.otherLanguages !== undefined) {
+    if (!Array.isArray(req.body.otherLanguages) || req.body.otherLanguages.length > 30 ||
+        req.body.otherLanguages.some(value => typeof value !== 'string' || value.length > 100)) return res.status(400).json({ message: 'Invalid languages' });
+    profilePayload.otherLanguages = [...new Set(req.body.otherLanguages.map(value => value.trim()).filter(Boolean))];
   }
 
   const profile = await StudentProfile.findOneAndUpdate(
     { user: req.user._id },
     profilePayload,
-    { new: true, upsert: true }
+    { new: true, upsert: true, runValidators: true }
   ).populate("user", "-password");
 
   res.json(profile);
@@ -295,12 +314,13 @@ const getDashboardOverview = asyncHandler(async (req, res) => {
     Invoice.find({ student: req.user._id }).lean(),
     Notification.countDocuments({ user: req.user._id, isRead: false }),
   ]);
-  // Extra records for the home screen (travel, housing, consultations, support).
-  const [arrivals, bookings, consultations, openTickets] = await Promise.all([
+  // Extra records for the home screen (travel, housing, consultations, support, recognitions).
+  const [arrivals, bookings, consultations, openTickets, recognitions] = await Promise.all([
     ArrivalServiceRequest.find({ student: req.user._id }).select("arrivalDate status pickup.status createdAt").lean(),
     AccommodationBooking.find({ student: req.user._id }).select("moveInDate status createdAt").lean(),
     ConsultationBooking.find({ student: req.user._id, status: "booked", startsAt: { $gte: new Date() } }).select("startsAt").sort({ startsAt: 1 }).limit(3).lean(),
     SupportTicket.countDocuments({ user: req.user._id, status: { $in: ["open", "in-progress", "answered"] } }),
+    Recognition.find({ featured: true }).select("title image link").sort({ sortOrder: 1, createdAt: -1 }).lean(),
   ]);
   const nextAction = studentNextAction({ applications, documents, invoices });
   const journeys = studentJourneys({ applications, documents, invoices });
@@ -341,6 +361,7 @@ const getDashboardOverview = asyncHandler(async (req, res) => {
     latestNotification: notifications[0] || null,
     recentApplications: applications.slice(0, 5).map((application) => ({ ...application, statusInfo: applicationStatusInfo(application) })),
     recentDocuments: documents.slice(0, 6).map((document) => ({ ...document, statusInfo: documentStatusInfo(document) })),
+    recognitions: recognitions.map((r) => ({ _id: r._id, title: r.title, image: r.image || '', link: r.link || '' })),
   });
 });
 
@@ -419,6 +440,11 @@ const markStudentNotificationAsRead = asyncHandler(async (req, res) => {
   res.json(notification);
 });
 
+const markAllStudentNotificationsRead = asyncHandler(async (req, res) => {
+  await Notification.updateMany({ user: req.user._id, isRead: false }, { $set: { isRead: true } });
+  res.json({ ok: true });
+});
+
 const getStudentSupportTickets = asyncHandler(async (req, res) => {
   const tickets = await SupportTicket.find({
     $or: [{ user: req.user._id }, { agent: req.user._id }],
@@ -493,18 +519,58 @@ const getStudentKnowledgeBase = asyncHandler(async (req, res) => {
 });
 
 const getStudentFinancials = asyncHandler(async (req, res) => {
-  const [invoices, paymentProofs] = await Promise.all([
+  const [invoices, paymentProofs, applications] = await Promise.all([
     Invoice.find({ student: req.user._id }).populate("application", "status").sort({ createdAt: -1 }),
-    PaymentProof.find({ student: req.user._id }).populate("invoice", "invoiceNumber description amount status").sort({ createdAt: -1 }),
+    PaymentProof.find({ student: req.user._id }).populate("invoice", "invoiceNumber description amount status").populate("paidBy", "name role").sort({ createdAt: -1 }),
+    Application.find({ student: req.user._id }).populate('program', 'title tuition').sort({ createdAt: -1 }).lean(),
   ]);
+
+  const idStr = v => String(v?._id || v || '');
+  const paidAmount = invoices.filter((item) => item.status === "paid").reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const totalProgramFees = applications.reduce((sum, app) => sum + Number(app.program?.tuition || 0), 0);
+
+  // Per-application groups for the payments screen
+  const applicationGroups = applications.map((app, appIndex) => {
+    const appInvoices = invoices.filter(inv =>
+      idStr(inv.application) === idStr(app) ||
+      (!inv.application && appIndex === applications.length - 1)
+    );
+    const tuition = Number(app.program?.tuition || 0);
+    const appPaid = appInvoices.filter(i => i.status === 'paid').reduce((s, i) => s + Number(i.amount || 0), 0);
+    const appPending = appInvoices.filter(i => i.status === 'pending-confirmation').reduce((s, i) => s + Number(i.amount || 0), 0);
+    const appUnpaid = appInvoices.filter(i => ['unpaid', 'rejected'].includes(i.status)).reduce((s, i) => s + Number(i.amount || 0), 0);
+    const noPending = !appInvoices.some(i => ['unpaid', 'rejected', 'pending-confirmation'].includes(i.status));
+    const fullyPaid = appInvoices.length > 0 && noPending && (tuition > 0 ? appPaid >= tuition : appPaid > 0);
+    const paymentStatus = appInvoices.some(i => ['unpaid', 'rejected'].includes(i.status) && i.dueDate && new Date(i.dueDate) < new Date()) ? 'overdue'
+      : appInvoices.some(i => ['unpaid', 'rejected'].includes(i.status)) ? 'action-required'
+      : appInvoices.some(i => i.status === 'pending-confirmation') ? 'waiting'
+      : fullyPaid ? 'completed'
+      : appPaid > 0 ? 'partial'
+      : appInvoices.length ? 'not-issued'
+      : 'not-issued';
+    return {
+      applicationId: idStr(app),
+      programTitle: app.program?.title || null,
+      tuition,
+      paidAmount: appPaid,
+      pendingAmount: appPending,
+      unpaidAmount: appUnpaid,
+      remainingAmount: tuition > 0 ? Math.max(0, tuition - appPaid) : null,
+      paymentStatus,
+      invoices: appInvoices,
+    };
+  });
 
   res.json({
     summary: {
       outstandingAmount: invoices.filter((item) => item.status === "unpaid" || item.status === "rejected").reduce((sum, item) => sum + Number(item.amount || 0), 0),
       pendingConfirmationAmount: invoices.filter((item) => item.status === "pending-confirmation").reduce((sum, item) => sum + Number(item.amount || 0), 0),
-      paidAmount: invoices.filter((item) => item.status === "paid").reduce((sum, item) => sum + Number(item.amount || 0), 0),
+      paidAmount,
+      totalProgramFees,
+      remainingFees: totalProgramFees > 0 ? Math.max(0, totalProgramFees - paidAmount) : null,
       invoiceCount: invoices.length,
     },
+    applicationGroups,
     invoices,
     paymentProofs,
   });
@@ -541,9 +607,10 @@ const uploadPaymentProof = asyncHandler(async (req, res) => {
 
   await Notification.create({
     user: req.user._id,
-    title: "Payment proof uploaded",
-    message: `Your payment proof for invoice ${invoice.invoiceNumber} is pending review.`,
+    title: "تم رفع إثبات الدفع",
+    message: `تم استلام إثبات دفعك للفاتورة ${invoice.invoiceNumber} وهو قيد المراجعة من قِبل الفريق المالي.`,
     type: "info",
+    link: "/student/payments",
   });
 
   const response = proof.toObject();
@@ -552,46 +619,68 @@ const uploadPaymentProof = asyncHandler(async (req, res) => {
 });
 
 const getArrivalServiceRequest = asyncHandler(async (req, res) => {
-  const request = await ArrivalServiceRequest.findOne({ student: req.user._id });
-  res.json(request);
+  const requests = await ArrivalServiceRequest.find({ student: req.user._id })
+    .populate({ path: "application", populate: { path: "program", select: "title" } })
+    .sort({ createdAt: -1 });
+  res.json(requests);
+});
+
+const _buildArrivalPayload = (body) => ({
+  arrivalDate: body.arrivalDate || null,
+  arrivalTime: String(body.arrivalTime || "").trim(),
+  flightNumber: String(body.flightNumber || "").trim(),
+  airport: String(body.airport || "").trim(),
+  notes: String(body.notes || "").trim(),
+  services: {
+    airportPickup: Boolean(body.services?.airportPickup),
+    studentHousing: Boolean(body.services?.studentHousing),
+    residencePermitSupport: Boolean(body.services?.residencePermitSupport),
+    visaSupport: Boolean(body.services?.visaSupport),
+  },
+  status: "submitted",
+});
+
+const createArrivalServiceRequest = asyncHandler(async (req, res) => {
+  const { applicationId } = req.body;
+  if (!applicationId) {
+    res.status(400);
+    throw new Error("applicationId مطلوب لربط الطلب برحلتك الدراسية");
+  }
+  // Verify the application belongs to this student
+  const application = await Application.findOne({ _id: applicationId, student: req.user._id });
+  if (!application) {
+    res.status(404);
+    throw new Error("الطلب الدراسي غير موجود أو لا ينتمي لحسابك");
+  }
+  // Each application can only have one arrival service request
+  const existing = await ArrivalServiceRequest.findOne({ student: req.user._id, application: applicationId });
+  if (existing) {
+    res.status(409);
+    throw new Error("يوجد طلب وصول مرتبط بهذه الرحلة بالفعل");
+  }
+  const request = await ArrivalServiceRequest.create({ student: req.user._id, application: applicationId, ..._buildArrivalPayload(req.body) });
+  await Notification.create({ user: req.user._id, title: "تم إرسال طلب خدمات الوصول", message: "تم استلام طلب خدمات الوصول الجديد وسيبدأ الفريق بالتنسيق قريباً.", type: "info", link: "/student/services" });
+  res.status(201).json(request);
 });
 
 const upsertArrivalServiceRequest = asyncHandler(async (req, res) => {
   const profile = await StudentProfile.findOne({ user: req.user._id }).lean();
   const currentStage = profile?.applicationStage || "file-received";
-
   if (!["final-accepted", "travel-and-settlement"].includes(currentStage)) {
     res.status(400);
     throw new Error("Arrival services become available after final acceptance");
   }
-
-  const payload = {
-    arrivalDate: req.body.arrivalDate || null,
-    arrivalTime: String(req.body.arrivalTime || "").trim(),
-    flightNumber: String(req.body.flightNumber || "").trim(),
-    airport: String(req.body.airport || "").trim(),
-    notes: String(req.body.notes || "").trim(),
-    services: {
-      airportPickup: Boolean(req.body.services?.airportPickup),
-      studentHousing: Boolean(req.body.services?.studentHousing),
-      residencePermitSupport: Boolean(req.body.services?.residencePermitSupport),
-      visaSupport: Boolean(req.body.services?.visaSupport),
-    },
-    status: "submitted",
-  };
-
-  const request = await ArrivalServiceRequest.findOneAndUpdate({ student: req.user._id }, payload, {
-    new: true,
-    upsert: true,
-  });
-
-  await Notification.create({
-    user: req.user._id,
-    title: "Arrival services updated",
-    message: "Your arrival and services request has been submitted for coordination.",
-    type: "info",
-  });
-
+  const payload = _buildArrivalPayload(req.body);
+  // Update by ID if provided, otherwise fallback to upsert-first for backward compat
+  if (req.params.id) {
+    const existing = await ArrivalServiceRequest.findOne({ _id: req.params.id, student: req.user._id });
+    if (!existing) { res.status(404); throw new Error("Request not found"); }
+    Object.assign(existing, payload);
+    await existing.save();
+    return res.json(existing);
+  }
+  const request = await ArrivalServiceRequest.findOneAndUpdate({ student: req.user._id }, payload, { new: true, upsert: true });
+  await Notification.create({ user: req.user._id, title: "تم تحديث طلب خدمات الوصول", message: "تم تحديث طلب خدمات الوصول وإرساله للتنسيق.", type: "info", link: "/student/services" });
   res.json(request);
 });
 
@@ -615,27 +704,31 @@ const getStudentFavorites = asyncHandler(async (req, res) => {
 
 const toggleStudentFavorite = asyncHandler(async (req, res) => {
   const itemType = String(req.body.itemType || "").trim();
-  if (!["university", "program"].includes(itemType)) {
+  if (!["university", "program", "article"].includes(itemType)) {
     res.status(400);
     throw new Error("Invalid favorite item type");
   }
 
   const universityId = itemType === "university" ? String(req.body.universityId || "").trim() : "";
   const programId = itemType === "program" ? String(req.body.programId || "").trim() : "";
+  const articleSlug = itemType === "article" ? String(req.body.articleSlug || "").trim() : "";
+  const articleTitle = itemType === "article" ? String(req.body.articleTitle || "").trim() : "";
 
   if (itemType === "university" && !universityId) {
-    res.status(400);
-    throw new Error("University id is required");
+    res.status(400); throw new Error("University id is required");
   }
-
   if (itemType === "program" && !programId) {
-    res.status(400);
-    throw new Error("Program id is required");
+    res.status(400); throw new Error("Program id is required");
+  }
+  if (itemType === "article" && !articleSlug) {
+    res.status(400); throw new Error("Article slug is required");
   }
 
   const query = itemType === "university"
     ? { student: req.user._id, itemType, university: universityId }
-    : { student: req.user._id, itemType, program: programId };
+    : itemType === "program"
+    ? { student: req.user._id, itemType, program: programId }
+    : { student: req.user._id, itemType, articleSlug };
 
   const existing = await FavoriteItem.findOne(query);
   if (existing) {
@@ -646,18 +739,11 @@ const toggleStudentFavorite = asyncHandler(async (req, res) => {
 
   if (itemType === "university") {
     const university = await University.findById(universityId).select("_id");
-    if (!university) {
-      res.status(404);
-      throw new Error("University not found");
-    }
+    if (!university) { res.status(404); throw new Error("University not found"); }
   }
-
   if (itemType === "program") {
     const program = await Program.findById(programId).select("_id");
-    if (!program) {
-      res.status(404);
-      throw new Error("Program not found");
-    }
+    if (!program) { res.status(404); throw new Error("Program not found"); }
   }
 
   const favorite = await FavoriteItem.create({
@@ -665,6 +751,8 @@ const toggleStudentFavorite = asyncHandler(async (req, res) => {
     itemType,
     university: itemType === "university" ? universityId : undefined,
     program: itemType === "program" ? programId : undefined,
+    articleSlug: itemType === "article" ? articleSlug : undefined,
+    articleTitle: itemType === "article" ? articleTitle : undefined,
     notes: String(req.body.notes || "").trim(),
   });
 
@@ -683,7 +771,9 @@ const removeStudentFavorite = asyncHandler(async (req, res) => {
 });
 
 const getOrientationTestResult = asyncHandler(async (req, res) => {
-  const result = await OrientationTestResult.findOne({ student: req.user._id });
+  const result = await OrientationTestResult.findOne({ student: req.user._id })
+    .populate('matchedPrograms.program', 'title fieldOfStudy language degreeLevel tuition university')
+    .lean();
   res.json(result);
 });
 
@@ -703,7 +793,26 @@ const submitOrientationTest = asyncHandler(async (req, res) => {
     ? answers.interestedFields
     : answers.favoriteSubjects.slice(0, 3);
   const suggestedCountries = answers.preferredCountry ? [answers.preferredCountry] : [];
-  const recommendationSummary = `Focus on ${suggestedFields.join(", ") || "broad academic exploration"} with ${answers.preferredLanguage || "your preferred language"} and a ${answers.studyStyle || "balanced"} study style.`;
+  const recommendationSummary = suggestedFields.length
+    ? `توصيات مبنية على اهتمامك بـ ${suggestedFields.join('، ')} مع تفضيل ${answers.preferredLanguage || 'أي لغة'} ومستوى ${answers.desiredDegreeLevel || 'أي درجة'}`
+    : 'أجب على الأسئلة لتحصل على توصيات مخصصة';
+
+  // #23: Score and rank matching programs
+  const budgetNum = parseInt(String(answers.approximateBudget).replace(/[^\d]/g, ''), 10) || 0;
+  const allPrograms = await Program.find({})
+    .select('title fieldOfStudy language degreeLevel tuition university')
+    .populate('university', 'name country')
+    .lean();
+  const scored = allPrograms.map(p => {
+    let score = 0;
+    const field = (p.fieldOfStudy || '').toLowerCase();
+    for (const f of suggestedFields) if (field.includes(f.toLowerCase()) || f.toLowerCase().includes(field)) score += 30;
+    if (answers.preferredLanguage && p.language && p.language.toLowerCase().includes(answers.preferredLanguage.toLowerCase())) score += 20;
+    if (answers.desiredDegreeLevel && p.degreeLevel && p.degreeLevel.toLowerCase() === answers.desiredDegreeLevel.toLowerCase()) score += 20;
+    if (budgetNum > 0 && p.tuition && p.tuition <= budgetNum) score += 10;
+    for (const f of (answers.avoidFields || [])) if (field.includes(f.toLowerCase())) score -= 40;
+    return { ...p, matchScore: score };
+  }).filter(p => p.matchScore > 0).sort((a, b) => b.matchScore - a.matchScore).slice(0, 10);
 
   const result = await OrientationTestResult.findOneAndUpdate(
     { student: req.user._id },
@@ -712,18 +821,43 @@ const submitOrientationTest = asyncHandler(async (req, res) => {
       recommendationSummary,
       suggestedFields,
       suggestedCountries,
+      matchedPrograms: scored.map(p => ({ program: p._id, score: p.matchScore })),
     },
     { new: true, upsert: true }
   );
 
   await Notification.create({
     user: req.user._id,
-    title: "Orientation test saved",
-    message: "Your orientation preferences have been recorded successfully.",
+    title: "تم حفظ اختبار التوجيه",
+    message: "تم تسجيل تفضيلاتك الدراسية بنجاح. ستصلك التوصيات المناسبة قريباً.",
     type: "success",
+    link: "/student/journey",
   });
 
   res.json(result);
+});
+
+const replyStudentSupportTicket = asyncHandler(async (req, res) => {
+  const ticket = await SupportTicket.findById(req.params.id);
+  if (!ticket) return res.status(404).json({ message: 'Support ticket not found' });
+
+  const isOwner =
+    String(ticket.user || '') === String(req.user._id) ||
+    String(ticket.agent || '') === String(req.user._id);
+  if (!isOwner) return res.status(403).json({ message: 'Forbidden' });
+
+  if (ticket.status === 'closed') {
+    return res.status(400).json({ message: 'Cannot reply to a closed ticket' });
+  }
+
+  const message = String(req.body.message || '').trim();
+  if (!message) return res.status(400).json({ message: 'Reply message is required' });
+
+  ticket.replies.push({ message, fromRole: 'student', user: req.user._id });
+  ticket.status = 'open';
+  await ticket.save();
+
+  res.json(ticket);
 });
 
 module.exports = {
@@ -737,16 +871,19 @@ module.exports = {
   createAgencyRequest,
   getStudentNotifications,
   markStudentNotificationAsRead,
+  markAllStudentNotificationsRead,
   getStudentSupportTickets,
   createStudentSupportTicket,
   getStudentKnowledgeBase,
   getStudentFinancials,
   uploadPaymentProof,
   getArrivalServiceRequest,
+  createArrivalServiceRequest,
   upsertArrivalServiceRequest,
   getStudentFavorites,
   toggleStudentFavorite,
   removeStudentFavorite,
   getOrientationTestResult,
   submitOrientationTest,
+  replyStudentSupportTicket,
 };

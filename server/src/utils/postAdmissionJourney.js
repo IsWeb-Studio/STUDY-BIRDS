@@ -6,6 +6,8 @@ const STAGES = Object.freeze({
   registration: ['التسجيل في الجامعة', 'University registration'],
   residence: ['الإقامة والدعم المستمر', 'Residence and ongoing support'],
 });
+// travel auto-completes when all four sub-stages are done
+const TRAVEL_SUB_STAGES = ['housing', 'arrival', 'registration', 'residence'];
 const STATES = ['not-started', 'in-progress', 'action-required', 'waiting-team', 'waiting-university', 'completed', 'not-required'];
 function isPostAdmissionEligible(app) {
   if (['rejected', 'file-completed-rejected', 'file-completed-accepted'].includes(app.status)) return false;
@@ -16,13 +18,25 @@ function postAdmissionStages(app, now = new Date()) {
   if (!isPostAdmissionEligible(app) && !Object.values(app.postAdmission || {}).some(item => item?.updatedAt)) return [];
   return Object.entries(STAGES).map(([key, [titleAr, titleEn]]) => {
     const item = app.postAdmission?.[key] || {};
-    const state = item.status || 'not-started';
+    let state = item.status || 'not-started';
+    let extra = {};
+    if (key === 'travel') {
+      const subStatuses = TRAVEL_SUB_STAGES.map(k => (app.postAdmission?.[k] || {}).status || 'not-started');
+      const completedSubCount = subStatuses.filter(s => ['completed', 'not-required'].includes(s)).length;
+      const activeSubCount = subStatuses.filter(s => !['not-started'].includes(s)).length;
+      const totalSubCount = TRAVEL_SUB_STAGES.length;
+      // derive state from sub-stages; fallback to explicit travel status if nothing started yet
+      if (completedSubCount === totalSubCount) state = 'completed';
+      else if (activeSubCount > 0) state = 'in-progress';
+      // else keep the explicitly set travel status
+      extra = { completedSubCount, totalSubCount };
+    }
     const finished = ['completed', 'not-required'].includes(state);
     const overdue = !finished && Boolean(item.dueAt && new Date(item.dueAt) < now);
     return { key, titleAr, titleEn, status: overdue ? 'overdue' : state, recordedStatus: state,
       descriptionAr: item.note || 'لم يحدد الفريق إجراءات هذه المرحلة بعد. تواصل مع مسؤول متابعتك.',
       dueAt: item.dueAt || null, reference: item.reference || '',
-      destination: 'support', updatedAt: item.updatedAt || null };
+      destination: 'support', updatedAt: item.updatedAt || null, ...extra };
   });
 }
 function postAdmissionNextAction(app, now = new Date()) {

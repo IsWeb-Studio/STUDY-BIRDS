@@ -39,6 +39,11 @@ async function advanceTo(studentUserId, targetStage) {
   if (target > current) {
     profile.journeyStage = targetStage;
     await profile.save();
+    // #53: trigger reward reconciliation on every journey stage advance
+    try {
+      const { reconcileRewards } = require('../controllers/studentRewardsController');
+      reconcileRewards(studentUserId).catch(() => {});
+    } catch {}
   }
 }
 
@@ -66,4 +71,4 @@ async function onPaymentApproved(studentUserId) {
   await advanceTo(studentUserId, 'first-payment');
 }
 
-module.exports = { advanceTo, onApplicationStatusChange, onPaymentApproved };
+module.exports = { advanceTo, onApplicationStatusChange, onPaymentApproved, STAGE_ORDER };

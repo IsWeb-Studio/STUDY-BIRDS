@@ -25,6 +25,7 @@ export const AdminStudentArrivalRequestsEnhancedPage = () => {
     studentName: string;
   } | null>(null);
   const [saving, setSaving] = useState(false);
+  const [savingServiceKey, setSavingServiceKey] = useState<string | null>(null);
   const [driverDrafts, setDriverDrafts] = useState<Record<string, { driverName: string; driverPhone: string; travelAlert: string }>>({});
   const { toasts, pushToast, dismissToast } = useToasts();
 
@@ -35,6 +36,20 @@ export const AdminStudentArrivalRequestsEnhancedPage = () => {
   function draftFor(item: ArrivalServiceRequestItem) {
     return driverDrafts[item._id] || { driverName: item.pickup?.driverName || "", driverPhone: item.pickup?.driverPhone || "", travelAlert: item.travelAlert || "" };
   }
+  async function updateService(item: ArrivalServiceRequestItem, serviceKey: string, serviceStatus: "completed" | "in-progress" | "not-started") {
+    const compositeKey = `${item._id}:${serviceKey}`;
+    setSavingServiceKey(compositeKey);
+    try {
+      const updated = await adminService.updateArrivalRequest(item._id, { serviceKey, serviceStatus } as Parameters<typeof adminService.updateArrivalRequest>[1]);
+      setItems((current) => current.map((row) => (row._id === item._id ? updated : row)));
+      pushToast(isArabic ? "تم تحديث حالة الخدمة." : "Service status updated.", "success");
+    } catch (issue) {
+      pushToast(getErrorMessage(issue, isArabic ? "تعذر تحديث الخدمة." : "Unable to update service."), "error");
+    } finally {
+      setSavingServiceKey(null);
+    }
+  }
+
   async function savePickup(item: ArrivalServiceRequestItem, pickupStatus?: NonNullable<ArrivalServiceRequestItem["pickup"]>["status"]) {
     const draft = draftFor(item);
     setSaving(true);
@@ -176,12 +191,31 @@ export const AdminStudentArrivalRequestsEnhancedPage = () => {
 
               {item.notes ? <p className="mt-4 text-sm text-slate-600">{item.notes}</p> : null}
 
-              <div className="mt-5 flex flex-wrap gap-3">
+              <div className="mt-5 space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">{isArabic ? "إتمام الخدمات" : "Complete services"}</p>
+                {(
+                  [
+                    { flag: item.services.airportPickup, key: "airportPickup", labelAr: "استقبال المطار", labelEn: "Airport Pickup" },
+                    { flag: item.services.studentHousing, key: "studentHousing", labelAr: "السكن", labelEn: "Housing" },
+                    { flag: item.services.residencePermitSupport, key: "residencePermitSupport", labelAr: "الإقامة", labelEn: "Residence Permit" },
+                    { flag: item.services.visaSupport, key: "visaSupport", labelAr: "التأشيرة", labelEn: "Visa Support" },
+                  ] as Array<{ flag: boolean; key: string; labelAr: string; labelEn: string }>
+                ).filter((svc) => svc.flag).map((svc) => {
+                  const busy = savingServiceKey === `${item._id}:${svc.key}`;
+                  return (
+                    <div key={svc.key} className="flex flex-wrap items-center gap-2">
+                      <span className="min-w-[7rem] text-sm text-slate-700">{isArabic ? svc.labelAr : svc.labelEn}</span>
+                      <button type="button" disabled={busy} onClick={() => void updateService(item, svc.key, "in-progress")} className="rounded-full border border-amber-400 px-3 py-1.5 text-xs font-semibold text-amber-700 disabled:opacity-50">
+                        {isArabic ? "قيد التنفيذ" : "In Progress"}
+                      </button>
+                      <button type="button" disabled={busy} onClick={() => void updateService(item, svc.key, "completed")} className="rounded-full bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
+                        {isArabic ? "مكتمل" : "Completed"}
+                      </button>
+                    </div>
+                  );
+                })}
                 <button type="button" onClick={() => setPendingAction({ id: item._id, status: "in-progress", studentName: item.student?.name || "--" })} className="rounded-full bg-amber-500 px-4 py-2 text-sm font-semibold text-white">
-                  {isArabic ? "قيد التنفيذ" : "In Progress"}
-                </button>
-                <button type="button" onClick={() => setPendingAction({ id: item._id, status: "completed", studentName: item.student?.name || "--" })} className="rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white">
-                  {isArabic ? "مكتمل" : "Completed"}
+                  {isArabic ? "تعيين الحالة الكلية: قيد التنفيذ" : "Set overall: In Progress"}
                 </button>
               </div>
 

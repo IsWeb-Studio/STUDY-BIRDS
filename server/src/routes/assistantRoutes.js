@@ -1,7 +1,7 @@
 const express=require('express');
 const mongoose=require('mongoose');
 const {protect}=require('../middleware/authMiddleware');
-const {buildStudentContext,findRelevantKnowledge}=require('../utils/assistantContext');
+const {buildStudentContext,findRelevantKnowledge,buildSuggestedQuestions}=require('../utils/assistantContext');
 const run=require('../utils/asyncHandler');
 const {rateLimit}=require('express-rate-limit');
 const threadSchema=new mongoose.Schema({user:{type:mongoose.Schema.Types.ObjectId,required:true,index:true},title:String,lockedUntil:{type:Date,default:()=>new Date(0)},messages:[{role:{type:String,enum:['user','assistant']},content:String,createdAt:{type:Date,default:Date.now}}]},{timestamps:true});
@@ -11,6 +11,11 @@ const Quota=mongoose.model('AssistantQuota',new mongoose.Schema({key:{type:Strin
 const ready=()=>Boolean(process.env.AI_API_KEY&&process.env.AI_MODEL&&process.env.AI_BASE_URL);
 const router=express.Router();router.use(protect);
 router.get('/config',(req,res)=>res.json({enabled:ready()}));
+router.get('/suggested-questions',run(async(req,res)=>{
+  if(req.user.role!=='student')return res.json([]);
+  const questions=await buildSuggestedQuestions(req.user._id).catch(()=>[]);
+  res.json(questions);
+}));
 router.get('/threads',run(async(req,res)=>res.json(await Thread.find({user:req.user._id}).select('_id title updatedAt').sort({updatedAt:-1}).limit(50).lean())));
 router.get('/threads/:id',run(async(req,res)=>{if(!mongoose.isValidObjectId(req.params.id))return res.status(400).json({message:'Invalid thread'});const row=await Thread.findOne({_id:req.params.id,user:req.user._id}).select('-lockedUntil').lean();if(!row)return res.status(404).json({message:'Conversation not found'});res.json(row);}));
 router.post('/message',rateLimit({windowMs:60000,limit:5,keyGenerator:req=>String(req.user._id),standardHeaders:'draft-7',legacyHeaders:false}),run(async(req,res)=>{

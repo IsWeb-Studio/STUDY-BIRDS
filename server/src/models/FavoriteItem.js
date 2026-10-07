@@ -10,7 +10,7 @@ const favoriteItemSchema = new mongoose.Schema(
     },
     itemType: {
       type: String,
-      enum: ["university", "program"],
+      enum: ["university", "program", "article"],
       required: true,
       index: true,
     },
@@ -22,6 +22,10 @@ const favoriteItemSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Program",
     },
+    // Article favorites store slug + title inline (articles are public content,
+    // not a separate DB collection the server needs to populate).
+    articleSlug: String,
+    articleTitle: String,
     notes: String,
   },
   { timestamps: true }
@@ -29,5 +33,6 @@ const favoriteItemSchema = new mongoose.Schema(
 
 favoriteItemSchema.index({ student: 1, itemType: 1, university: 1 }, { unique: true, partialFilterExpression: { itemType: "university" } });
 favoriteItemSchema.index({ student: 1, itemType: 1, program: 1 }, { unique: true, partialFilterExpression: { itemType: "program" } });
+favoriteItemSchema.index({ student: 1, itemType: 1, articleSlug: 1 }, { unique: true, partialFilterExpression: { itemType: "article" } });
 
 module.exports = mongoose.model("FavoriteItem", favoriteItemSchema);

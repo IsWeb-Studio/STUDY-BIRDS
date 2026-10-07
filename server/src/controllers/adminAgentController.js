@@ -10,6 +10,8 @@ const AgentWalletEntry = require("../models/AgentWalletEntry");
 const Notification = require("../models/Notification");
 const asyncHandler = require("../utils/asyncHandler");
 const { uploadFileToCloudinary } = require("../utils/uploadToCloudinary");
+const { sendPushToUser } = require("../utils/pushNotifications");
+const { hasSection } = require("../middleware/employeeAccess");
 
 const getPartnersAdmin = asyncHandler(async (req, res) => {
   const partners = await User.find({ role: "partner" }).select("-password").sort({ createdAt: -1 }).lean();
@@ -56,11 +58,23 @@ const updatePartnerStudentStatusAdmin = asyncHandler(async (req, res) => {
   }
   await student.save();
 
+  const statusLabelsAr = {
+    "under-review": "قيد المراجعة",
+    "preliminary-accepted": "قبول مبدئي",
+    "final-accepted": "قبول نهائي",
+    "rejected": "مرفوض",
+  };
+  const statusMessages = {
+    "rejected": `للأسف، تم رفض ملف الطالب ${student.name}. يرجى التواصل معه لمراجعة الوضع والخطوات التالية.`,
+    "preliminary-accepted": `تهانينا! حصل الطالب ${student.name} على قبول مبدئي. تابع إتمام متطلبات القبول النهائي.`,
+    "final-accepted": `تهانينا! تم قبول الطالب ${student.name} قبولاً نهائياً. اكتملت العملية بنجاح.`,
+    "under-review": `تم تحديث حالة ملف الطالب ${student.name} إلى قيد المراجعة.`,
+  };
   await Notification.create({
     user: student.agent,
-    title: "Student file updated",
-    message: `${student.name}'s file status is now ${nextStatus}.`,
-    type: nextStatus === "rejected" ? "warning" : "info",
+    title: `تحديث ملف ${student.name}: ${statusLabelsAr[nextStatus] || nextStatus}`,
+    message: statusMessages[nextStatus] || `تم تحديث حالة الطالب ${student.name}.`,
+    type: nextStatus === "rejected" ? "warning" : nextStatus === "final-accepted" || nextStatus === "preliminary-accepted" ? "success" : "info",
   });
 
   res.json(student);
@@ -139,10 +153,16 @@ const updatePayoutRequestStatusAdmin = asyncHandler(async (req, res) => {
     });
   }
 
+  const payoutStatusMessages = {
+    approved: `تمت الموافقة على طلب سحب رصيدك بقيمة $${request.amount}. سيتم التحويل إلى طريقة الدفع المحددة قريباً.`,
+    paid: `تم صرف طلب السحب الخاص بك بقيمة $${request.amount} بنجاح. تحقق من حسابك المالي.`,
+    rejected: `للأسف، تم رفض طلب سحب رصيدك بقيمة $${request.amount}.${request.reviewNote ? ` السبب: ${request.reviewNote}` : ""} تواصل مع الدعم إذا احتجت مساعدة.`,
+    pending: `طلب سحب رصيدك بقيمة $${request.amount} قيد المراجعة من الفريق المالي.`,
+  };
   await Notification.create({
     user: request.agent,
-    title: "Payout request updated",
-    message: `Your payout request is now marked as ${request.status}.`,
+    title: request.status === "paid" ? "✅ تم صرف رصيدك" : request.status === "rejected" ? "❌ تم رفض طلب السحب" : "تحديث طلب السحب",
+    message: payoutStatusMessages[request.status] || `تم تحديث حالة طلب السحب إلى: ${request.status}.`,
     type: request.status === "rejected" ? "warning" : "success",
   });
 
@@ -237,10 +257,15 @@ const reviewVerificationDocumentAdmin = asyncHandler(async (req, res) => {
     await profile.save();
   }
 
+  const verifyMessages = {
+    approved: "تمت الموافقة على وثائق التحقق من هويتك. حسابك الآن موثّق بالكامل ويمكنك الاستفادة من جميع مزايا الوكيل.",
+    rejected: `تم رفض وثيقة التحقق الخاصة بك.${document.reviewNote ? ` السبب: ${document.reviewNote}` : ""} يرجى رفع وثيقة جديدة صحيحة.`,
+    pending: "وثيقة التحقق قيد المراجعة من فريق Study Birds. سيتم إشعارك بالنتيجة قريباً.",
+  };
   await Notification.create({
     user: document.agent,
-    title: "Verification status updated",
-    message: `Your verification document review status is now ${nextStatus}.`,
+    title: nextStatus === "approved" ? "✅ تم توثيق حسابك" : nextStatus === "rejected" ? "❌ تم رفض وثيقة التحقق" : "وثيقة التحقق قيد المراجعة",
+    message: verifyMessages[nextStatus] || `تم تحديث حالة وثيقة التحقق إلى: ${nextStatus}.`,
     type: nextStatus === "rejected" ? "warning" : "success",
   });
 
@@ -279,11 +304,71 @@ const replySupportTicketAdmin = asyncHandler(async (req, res) => {
 
   await Notification.create({
     user: ticket.user || ticket.agent,
-    title: "New support reply",
-    message: `Your support ticket "${ticket.subject}" has a new reply.`,
+    title: "رد جديد على تذكرة الدعم",
+    message: `وصل ردٌّ من فريق Study Birds على تذكرة الدعم الخاصة بك "${ticket.subject}". افتح التذكرة للاطلاع على الرد.`,
     type: "info",
   });
 
+  res.json(ticket);
+});
+
+// #44: Assign ticket to a support staff member
+const assignSupportTicketAdmin = asyncHandler(async (req, res) => {
+  const ticket = await SupportTicket.findById(req.params.id);
+  if (!ticket) return res.status(404).json({ message: 'Support ticket not found' });
+  const { assignedTo } = req.body;
+  if (assignedTo !== null && assignedTo !== undefined) {
+    const assignee = await User.findById(assignedTo).lean();
+    if (!assignee?.isActive || !hasSection(assignee, 'support')) {
+      return res.status(400).json({ message: 'اختر موظف دعم مخوّلًا ونشطًا' });
+    }
+    ticket.assignedTo = assignee._id;
+  } else {
+    ticket.assignedTo = null;
+  }
+  await ticket.save();
+  res.json(ticket);
+});
+
+// #45: Escalate / de-escalate a ticket
+const escalateSupportTicketAdmin = asyncHandler(async (req, res) => {
+  const ticket = await SupportTicket.findById(req.params.id);
+  if (!ticket) return res.status(404).json({ message: 'Support ticket not found' });
+  const escalated = Boolean(req.body.escalated);
+  const note = String(req.body.escalationNote || '').trim().slice(0, 1000);
+  ticket.escalated = escalated;
+  ticket.escalationNote = note;
+  ticket.status = escalated ? 'in-progress' : ticket.status;
+  await ticket.save();
+  // Notify the ticket owner
+  await Notification.create({
+    user: ticket.user || ticket.agent,
+    title: escalated ? 'تصعيد التذكرة' : 'إلغاء تصعيد التذكرة',
+    message: `تذكرتك "${ticket.subject}" ${escalated ? 'صُعِّدت للمدير.' : 'تم إلغاء تصعيدها.'}`,
+    type: 'info',
+  });
+  res.json(ticket);
+});
+
+// #51: Mark ticket as emergency and notify all support staff
+const markTicketEmergency = asyncHandler(async (req, res) => {
+  const ticket = await SupportTicket.findById(req.params.id);
+  if (!ticket) return res.status(404).json({ message: 'Support ticket not found' });
+  ticket.isEmergency = Boolean(req.body.isEmergency);
+  await ticket.save();
+  if (ticket.isEmergency) {
+    const staffUsers = await User.find({
+      isActive: { $ne: false },
+      $or: [{ role: 'admin' }, { role: 'employee', permissions: 'support' }],
+    }).select('_id').lean();
+    for (const staff of staffUsers) {
+      sendPushToUser(staff._id, {
+        title: '🚨 تذكرة طارئة',
+        body: `تذكرة "${ticket.subject}" بحاجة إلى استجابة فورية`,
+        link: '/admin/support',
+      }).catch(() => {});
+    }
+  }
   res.json(ticket);
 });
 
@@ -362,6 +447,9 @@ module.exports = {
   reviewVerificationDocumentAdmin,
   getSupportTicketsAdmin,
   replySupportTicketAdmin,
+  assignSupportTicketAdmin,
+  escalateSupportTicketAdmin,
+  markTicketEmergency,
   getKnowledgeBaseAdmin,
   createKnowledgeBaseItemAdmin,
   updateKnowledgeBaseItemAdmin,

@@ -91,6 +91,7 @@ const AdminExhibitionsPage = lazy(() => import("../pages/admin/AdminExhibitionsP
 const AdminEventsPage = lazy(() => import("../pages/admin/AdminEventsPage").then((module) => ({ default: module.AdminEventsPage })));
 const AdminOurStoryPage = lazy(() => import("../pages/admin/AdminOurStoryPage").then((module) => ({ default: module.AdminOurStoryPage })));
 // NEW — parent/university portals + admin role-management pages
+const AdminServiceRequestsPage = lazy(() => import("../pages/admin/AdminServiceRequestsPage").then(m => ({ default: m.AdminServiceRequestsPage })));
 const AdminParentLinksPage = lazy(() => import("../pages/admin/AdminParentLinksPage").then((module) => ({ default: module.AdminParentLinksPage })));
 const AdminUniversityAccountsPage = lazy(() => import("../pages/admin/AdminUniversityAccountsPage").then((module) => ({ default: module.AdminUniversityAccountsPage })));
 const AdminEmployeesPage = lazy(() => import("../pages/admin/AdminEmployeesPage").then((module) => ({ default: module.AdminEmployeesPage })));
@@ -216,6 +217,8 @@ export const AppRoutes = () => (
           <Route path="/admin/exhibitions" element={<AdminExhibitionsPage />} />
           <Route path="/admin/events" element={<AdminEventsPage />} />
           <Route path="/admin/our-story" element={<AdminOurStoryPage />} />
+          {/* #35-43: Service requests */}
+          <Route path="/admin/service-requests" element={<AdminServiceRequestsPage />} />
           {/* NEW */}
           <Route path="/admin/parent-links" element={<AdminParentLinksPage />} />
           <Route path="/admin/university-accounts" element={<AdminUniversityAccountsPage />} />

@@ -40,6 +40,19 @@ const countrySchema = new mongoose.Schema(
       default: [],
     },
     visaNotes: String,
+    visaRequirements: {
+      type: [{ docKey: String, label: String }],
+      default: [],
+    },
+    // #75: per-journey-stage document checklist for the rules engine
+    journeyStageRequirements: {
+      type: [{ stage: { type: String }, documents: { type: [String], default: [] } }],
+      default: [],
+    },
+    processingDays: { type: Number, default: 0, min: 0 },
+    visaFeeUsd: { type: Number, default: 0, min: 0 },
+    languageRequirements: { type: [String], default: [] },
+    visaNotesList: { type: [String], default: [] },
     heroImage: String,
     universityCount: {
       type: Number,

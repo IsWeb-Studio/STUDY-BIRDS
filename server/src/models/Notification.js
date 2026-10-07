@@ -42,9 +42,14 @@ notificationSchema.pre("save", function captureIsNew(next) {
 notificationSchema.post("save", function sendPush(doc) {
   if (!doc.$locals.wasNew) return;
   const { sendPushToUser, isPushEnabled } = require("../utils/pushNotifications");
-  if (!isPushEnabled()) return;
+  if (!isPushEnabled()) {
+    console.log(`[Push] skipped — env vars not set (notif: ${doc._id}, user: ${doc.user})`);
+    return;
+  }
+  console.log(`[Push] sending to user ${doc.user}: "${doc.title}"`);
   sendPushToUser(doc.user, { title: doc.title, body: doc.message, link: doc.link })
-    .catch((error) => console.error("Push notification send failed", error.message));
+    .then(r => console.log(`[Push] sent, recipients: ${r.sent}`))
+    .catch((error) => console.error("[Push] send failed:", error.message));
 });
 
 module.exports = mongoose.model("Notification", notificationSchema);

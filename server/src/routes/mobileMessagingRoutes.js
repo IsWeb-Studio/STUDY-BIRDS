@@ -7,6 +7,7 @@ const ParentLink = require('../models/ParentLink');
 const Application = require('../models/Application');
 const Notification = require('../models/Notification');
 const { Message } = require('../models/MobileWorkspace');
+const sse = require('../utils/sseClients');
 const router = express.Router();
 router.use(protect);
 
@@ -58,6 +59,9 @@ router.post('/messages', run(async (req, res) => {
   const recent = await Message.countDocuments({ sender: req.user._id, createdAt: { $gt: new Date(Date.now() - 60000) } });
   if (recent >= 30) { res.status(429); throw new Error('Too many messages. Please wait.'); }
   const message = await Message.create({ sender: req.user._id, recipient: contact._id, body: req.body.body.trim() });
+  // Push real-time event to recipient via SSE (non-blocking)
+  const messageData = { _id: message._id, sender: req.user._id, recipient: contact._id, body: message.body, createdAt: message.createdAt };
+  sse.push(contact._id, 'message', messageData);
   // Notification failure must never report a successfully saved message as unsent.
   try {
     await Notification.create({ user: contact._id, title: 'رسالة جديدة', message: `لديك رسالة من ${req.user.name}`, type: 'info' });
@@ -69,4 +73,28 @@ router.post('/messages/read', run(async (req, res) => {
   await Message.updateMany({ sender: req.body.sender, recipient: req.user._id, readAt: null }, { $set: { readAt: new Date() } });
   res.json({ read: true });
 }));
+// GET /api/messaging/events — SSE stream for real-time message delivery
+router.get('/events', (req, res) => {
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-store',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no',
+  });
+  res.flushHeaders();
+  res.write(': connected\n\n');
+
+  sse.register(req.user._id, res);
+
+  // Heartbeat every 25 seconds to keep proxies from closing idle connections
+  const heartbeat = setInterval(() => {
+    try { res.write(': ping\n\n'); } catch { clearInterval(heartbeat); }
+  }, 25000);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    sse.unregister(req.user._id, res);
+  });
+});
+
 module.exports = router;

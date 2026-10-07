@@ -39,6 +39,12 @@ const paymentProofSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    // Who uploaded this proof — may be the student themselves or a linked parent.
+    paidBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
   },
   { timestamps: true }
 );

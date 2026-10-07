@@ -62,7 +62,9 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json());
+app.use(express.json({ verify: (req, res, buffer) => {
+  if (req.originalUrl.split('?')[0] === '/api/payments/stripe/webhook') req.rawBody = Buffer.from(buffer);
+} }));
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan("dev"));
 app.use((req, res, next) => {
@@ -82,7 +84,16 @@ app.get("/ping", (req, res) => {
 });
 
 app.get("/api/health", (req, res) => {
-  res.json({ status: "ok", service: "study-birds-api" });
+  const mongoose = require('mongoose');
+  const dbState = mongoose.connection.readyState;
+  const dbStatus = { 0: 'disconnected', 1: 'connected', 2: 'connecting', 3: 'disconnecting' }[dbState] || 'unknown';
+  const healthy = dbState === 1;
+  res.status(healthy ? 200 : 503).json({
+    status: healthy ? 'ok' : 'degraded',
+    service: 'study-birds-api',
+    db: dbStatus,
+    uptime: Math.floor(process.uptime()),
+  });
 });
 
 const requireDatabaseConnection = (req, res, next) => {
@@ -113,7 +124,8 @@ app.get("/sitemap.xml", requireDatabaseConnection, async (req, res, next) => {
 
 app.get('/api/mobile/capabilities', (req, res) => {
   const { isMailerConfigured } = require('./utils/mailer');
-  res.set('Cache-Control', 'no-store').json({ security: true, email: isMailerConfigured(), messaging: true, push: false, assistant: require("./routes/assistantRoutes").ready() });
+  const { isPushEnabled } = require('./utils/pushNotifications');
+  res.set('Cache-Control', 'no-store').json({ security: true, email: isMailerConfigured(), messaging: true, push: isPushEnabled(), assistant: require("./routes/assistantRoutes").ready() });
 });
 app.use('/api/mobile-security', requireDatabaseConnection, require('./routes/mobileSecurityRoutes'));
 app.use('/api/mobile-workspace', requireDatabaseConnection, require('./routes/mobileMessagingRoutes'));
@@ -138,6 +150,28 @@ app.use("/api/content", requireDatabaseConnection, contentRoutes);
 // NEW paths — brand new prefixes, cannot shadow or be shadowed by anything above.
 app.use("/api/parents", requireDatabaseConnection, parentRoutes);
 app.use("/api/university-portal", requireDatabaseConnection, universityPortalRoutes);
+
+// #55-57: Alumni network
+app.use('/api/alumni', requireDatabaseConnection, require('./routes/alumniRoutes'));
+
+// #68: Android App Links verification + iOS Universal Links
+// Set ANDROID_SHA256_FINGERPRINT and IOS_BUNDLE_ID env vars on Render.
+app.get('/.well-known/assetlinks.json', (req, res) => {
+  const fingerprint = process.env.ANDROID_SHA256_FINGERPRINT || 'REPLACE_WITH_SHA256_FINGERPRINT';
+  res.setHeader('Content-Type', 'application/json');
+  res.json([{ relation: ['delegate_permission/common.handle_all_urls'], target: { namespace: 'android_app', package_name: 'com.studybirds.app', sha256_cert_fingerprints: [fingerprint] } }]);
+});
+app.get('/.well-known/apple-app-site-association', (req, res) => {
+  const bundleId = process.env.IOS_BUNDLE_ID || 'com.studybirds.app';
+  res.setHeader('Content-Type', 'application/json');
+  res.json({ applinks: { apps: [], details: [{ appID: bundleId, paths: ['/student/*', '/admin/*', '/partner/*'] }] }, webcredentials: { apps: [bundleId] } });
+});
+
+// #34: Stripe payment gateway (set STRIPE_SECRET_KEY + STRIPE_WEBHOOK_SECRET on Render)
+app.use('/api/payments/stripe', requireDatabaseConnection, require('./routes/stripeRoutes'));
+
+// #35-43: Independent service request lifecycle
+app.use('/api/service-requests', requireDatabaseConnection, require('./routes/serviceRequestRoutes'));
 
 app.use(notFound);
 app.use(errorHandler);

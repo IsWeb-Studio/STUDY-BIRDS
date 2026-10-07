@@ -6,12 +6,22 @@ const Notification = require('../models/Notification');
 const { protect, authorize } = require('../middleware/authMiddleware');
 const { requireSection, hasSection } = require('../middleware/employeeAccess');
 const run = require('../utils/asyncHandler');
+const { sendPushToUser } = require('../utils/pushNotifications');
 const router = express.Router();
 const HALF_HOUR = 1800000;
 const advisors = { role: 'employee', isActive: true, permissions: 'consultations' };
 const fail = (code, message) => { const error = new Error(message); error.httpStatus = code; throw error; };
 const validId = value => typeof value === 'string' && mongoose.isValidObjectId(value);
 const validVersion = value => Number.isInteger(value) && value >= 0;
+const arabicDate = (d) => {
+  const months = ['يناير','فبراير','مارس','أبريل','مايو','يونيو','يوليو','أغسطس','سبتمبر','أكتوبر','نوفمبر','ديسمبر'];
+  const days = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+  const h = d.getHours(), m = d.getMinutes();
+  const period = h < 12 ? 'ص' : 'م';
+  const h12 = h % 12 || 12;
+  const mm = String(m).padStart(2, '0');
+  return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]} ${d.getFullYear()} — ${h12}:${mm} ${period}`;
+};
 function url(value) {
   if (typeof value !== 'string' || value.length > 1000) return false;
   try { const u = new URL(value); return u.protocol === 'https:' && !u.username && !u.password; } catch { return false; }
@@ -52,7 +62,7 @@ async function reserve(id, reservation, session) {
 async function notify(booking, action, session) {
   const title = { booked: 'تم تأكيد الاستشارة', cancelled: 'أُلغيت الاستشارة', rescheduled: 'تم تغيير موعد الاستشارة' }[action];
   await Notification.create([booking.student, booking.advisor].map(user => ({ user, title,
-    message: `${title}: ${booking.startsAt.toISOString()}`, type: 'info', link: user.equals(booking.student) ? '/student/consultations' : '/admin/consultations' })), { session, ordered: true });
+    message: `${title} — ${arabicDate(booking.startsAt)}`, type: 'info', link: user.equals(booking.student) ? '/student/consultations' : '/admin/consultations' })), { session, ordered: true });
 }
 router.use(protect);
 router.get('/slots', authorize('student'), run(async (req, res) => {
@@ -74,6 +84,7 @@ router.post('/bookings', authorize('student'), run(async (req, res) => {
       history: [{ action: 'booked', slot: slot._id, startsAt: slot.startsAt, changedBy: req.user._id, changedAt: new Date() }] }], { session });
     await notify(booking, 'booked', session); return booking;
   });
+  sendPushToUser(result.student, { title: 'تم تأكيد موعد الاستشارة', body: 'تم حجز موعد استشارتك بنجاح.', link: '/student/consultations' }).catch(() => {});
   res.status(201).json(result);
 }));
 router.post('/bookings/:id/cancel', (req, res, next) => req.user.role === 'student' || hasSection(req.user, 'consultations') ? next() : res.status(403).json({ message: 'Access denied' }), run(async (req, res) => {
@@ -89,6 +100,7 @@ router.post('/bookings/:id/cancel', (req, res, next) => req.user.role === 'stude
     await Slot.updateOne({ _id: booking.slot, reservation: booking._id }, { $set: { reservation: null }, $inc: { __v: 1 } }, { session });
     await notify(cancelled, 'cancelled', session); return cancelled;
   });
+  sendPushToUser(result.student, { title: 'تم إلغاء موعد الاستشارة', body: 'تم إلغاء حجزك بنجاح.', link: '/student/consultations' }).catch(() => {});
   res.json(result);
 }));
 router.post('/bookings/:id/reschedule', authorize('student'), run(async (req, res) => {
@@ -107,10 +119,11 @@ router.post('/bookings/:id/reschedule', authorize('student'), run(async (req, re
     await Slot.updateOne({ _id: booking.slot, reservation: booking._id }, { $set: { reservation: null }, $inc: { __v: 1 } }, { session });
     if (!booking.advisor.equals(updated.advisor)) {
       await Notification.create([{ user: booking.advisor, title: 'تغيّر حجز الاستشارة',
-        message: `أصبح موعدك ${booking.startsAt.toISOString()} متاحًا بعد انتقال الطالب إلى موعد آخر.`, type: 'info', link: '/admin/consultations' }], { session });
+        message: `أصبح موعدك في ${arabicDate(booking.startsAt)} متاحًا بعد انتقال الطالب إلى موعد آخر.`, type: 'info', link: '/admin/consultations' }], { session });
     }
     await notify(updated, 'rescheduled', session); return updated;
   });
+  sendPushToUser(result.student, { title: 'تم تغيير موعد الاستشارة', body: 'تم تحديث موعد استشارتك بنجاح.', link: '/student/consultations' }).catch(() => {});
   res.json(result);
 }));
 router.use('/staff', requireSection('consultations'));
@@ -175,4 +188,50 @@ router.patch('/staff/slots/:id', run(async (req, res) => {
   if (!slot) return res.status(409).json({ message: 'الموعد تغيّر أو محجوز أو غير متاح لك. ألغِ الحجز أولًا عند الحاجة.' });
   res.json(slot);
 }));
+
+// #99: Calendar export — returns an .ics file for any booking the caller owns
+router.get('/bookings/:id/ics', run(async (req, res) => {
+  if (!validId(req.params.id)) return res.status(404).json({ message: 'Not found' });
+  const booking = await Booking.findOne({ _id: req.params.id, ...visibleBookingQuery(req.user) })
+    .populate('advisor', 'name').populate('slot', 'mode meetingUrl instructions').lean();
+  if (!booking) return res.status(404).json({ message: 'الحجز غير موجود' });
+
+  const start = new Date(booking.startsAt);
+  const end = new Date(start.getTime() + 30 * 60 * 1000);
+  const fmt = d => d.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+  const uid = `${booking._id}@studybirds.net`;
+  const advisorName = booking.advisor?.name || 'المستشار';
+  const meetingUrl = booking.slot?.meetingUrl || '';
+  const modeLabel = { online: 'عبر الإنترنت', phone: 'هاتفياً', office: 'في المكتب' }[booking.slot?.mode] || '';
+  const description = [
+    `استشارة Study Birds مع ${advisorName}`,
+    modeLabel && `النوع: ${modeLabel}`,
+    meetingUrl && `رابط الاجتماع: ${meetingUrl}`,
+    booking.slot?.instructions && `تعليمات: ${booking.slot.instructions}`,
+  ].filter(Boolean).join('\\n');
+
+  const ics = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//Study Birds//Consultation//AR',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${fmt(new Date())}`,
+    `DTSTART:${fmt(start)}`,
+    `DTEND:${fmt(end)}`,
+    `SUMMARY:استشارة Study Birds`,
+    `DESCRIPTION:${description}`,
+    meetingUrl ? `URL:${meetingUrl}` : '',
+    `STATUS:${booking.status === 'cancelled' ? 'CANCELLED' : 'CONFIRMED'}`,
+    'END:VEVENT',
+    'END:VCALENDAR',
+  ].filter(Boolean).join('\r\n');
+
+  res.setHeader('Content-Type', 'text/calendar; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="consultation-${booking._id}.ics"`);
+  res.send(ics);
+}));
+
 module.exports = router;

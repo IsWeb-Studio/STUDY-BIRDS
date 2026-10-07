@@ -142,7 +142,7 @@ const getCountries = asyncHandler(async (req, res) => {
     res,
     model: Country,
     query: {},
-    select: "name slug code description visaNotes heroImage universityCount specialtyCount averageTuition featured articleTitle articleTitleColor articleHeadingColor articleBodyColor articleHeadings articleBodies createdAt updatedAt",
+    select: "name slug code description visaNotes visaRequirements processingDays visaFeeUsd languageRequirements visaNotesList heroImage universityCount specialtyCount averageTuition featured articleTitle articleTitleColor articleHeadingColor articleBodyColor articleHeadings articleBodies createdAt updatedAt",
     sort: { featured: -1, name: 1 },
   });
 });

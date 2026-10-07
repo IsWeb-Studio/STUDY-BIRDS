@@ -8,9 +8,25 @@ const MONGODB_RETRY_DELAY_MS = Number(process.env.MONGODB_RETRY_DELAY_MS || 5000
 let stopReminders;
 let stopAutomaticAssignment;
 let stopConsultationReminders;
+async function runStartupMigrations() {
+  try {
+    const OurService = require('./models/OurService');
+    const result = await OurService.updateMany(
+      { title: { $regex: 'التقديم على الجامعات', $options: 'i' } },
+      { $set: { title: 'التسجيل بالجامعة', journeyStage: 'registration' } }
+    );
+    if (result.modifiedCount > 0) {
+      console.log(`[migration] Renamed ${result.modifiedCount} service(s) to "التسجيل بالجامعة" and linked to registration stage`);
+    }
+  } catch (err) {
+    console.error('[migration] service-registration-link failed:', err.message);
+  }
+}
+
 const startDatabaseConnection = async () => {
   try {
     await connectDatabase();
+    await runStartupMigrations();
     if (!stopConsultationReminders) {
       stopConsultationReminders = require('./utils/consultationReminders').startConsultationReminderScheduler();
     }

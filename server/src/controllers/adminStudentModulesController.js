@@ -1,4 +1,5 @@
-const { onPaymentApproved } = require("../utils/journeyAutomation");
+const { onPaymentApproved, advanceTo } = require("../utils/journeyAutomation");
+const { sendPushToUser } = require("../utils/pushNotifications");
 const User = require("../models/User");
 const StudentProfile = require("../models/StudentProfile");
 const Application = require("../models/Application");
@@ -81,6 +82,9 @@ const reviewStudentDocumentAdmin = asyncHandler(async (req, res) => {
   }
   const notice = documentStatusNotice(updated, documentLabel(updated.type));
   await Notification.create({ user: updated.student._id, ...notice, link: "/student/documents" });
+  sendPushToUser(updated.student._id, { title: notice.title, body: notice.message || 'تحقق من حالة مستنداتك.', link: '/student/documents' }).catch(() => {});
+  // بند 115: advance journeyStage to documents-review on first employee document review
+  advanceTo(updated.student._id, 'documents-review').catch(() => {});
   res.json({ ...updated, statusInfo: documentStatusInfo(updated) });
 });
 
@@ -170,15 +174,35 @@ const createStudentInvoiceAdmin = asyncHandler(async (req, res) => {
   const invoiceNumber = String(req.body.invoiceNumber || "").trim();
   const description = String(req.body.description || "").trim();
   const amount = Number(req.body.amount || 0);
+  const category = req.body.category || "other";
 
   if (!studentId || !invoiceNumber || !description || !amount) {
     res.status(400);
     throw new Error("Student, invoice number, description, and amount are required");
   }
 
+  // Cap total invoiced amount at program tuition for tuition/application-fee categories
+  if (req.body.applicationId && ['application-fee', 'tuition'].includes(category)) {
+    const app = await Application.findById(req.body.applicationId).populate('program', 'tuition').lean();
+    const tuition = app?.program?.tuition;
+    if (tuition) {
+      const [existing] = await Invoice.aggregate([
+        { $match: { application: app._id, status: { $ne: 'rejected' } } },
+        { $group: { _id: null, total: { $sum: '$amount' } } },
+      ]);
+      const existingTotal = existing?.total || 0;
+      if (existingTotal + amount > tuition) {
+        res.status(400);
+        throw new Error(`المبلغ الإجمالي (${existingTotal + amount}$) يتجاوز الرسوم الدراسية للبرنامج (${tuition}$). المتبقي: ${tuition - existingTotal}$`);
+      }
+    }
+  }
+
   const invoice = await Invoice.create({
     student: studentId,
     application: req.body.applicationId || undefined,
+    serviceRequest: req.body.serviceRequestId || undefined,
+    accommodationBooking: req.body.accommodationBookingId || undefined,
     invoiceNumber,
     description,
     amount,
@@ -191,9 +215,10 @@ const createStudentInvoiceAdmin = asyncHandler(async (req, res) => {
 
   await Notification.create({
     user: studentId,
-    title: "New invoice created",
-    message: `A new invoice (${invoiceNumber}) has been added to your account.`,
+    title: "فاتورة جديدة",
+    message: `تمت إضافة فاتورة جديدة (${invoiceNumber}) إلى حسابك. يرجى مراجعة تفاصيلها وسدادها في الوقت المحدد.`,
     type: "info",
+    link: "/student/payments",
   });
 
   res.status(201).json(await Invoice.findById(invoice._id).populate("student", "name email"));
@@ -210,6 +235,7 @@ const updateStudentInvoiceAdmin = asyncHandler(async (req, res) => {
   if (req.body.description !== undefined) invoice.description = String(req.body.description || "").trim();
   if (req.body.amount !== undefined) invoice.amount = Number(req.body.amount || 0);
   if (req.body.dueDate !== undefined) invoice.dueDate = req.body.dueDate || null;
+  const prevStatus = invoice.status;
   if (req.body.status !== undefined) invoice.status = req.body.status;
   if (req.body.invoiceUrl !== undefined) invoice.invoiceUrl = String(req.body.invoiceUrl || "").trim();
   if (req.body.category !== undefined) invoice.category = req.body.category;
@@ -218,14 +244,32 @@ const updateStudentInvoiceAdmin = asyncHandler(async (req, res) => {
   invoice.reviewedBy = req.user._id;
   await invoice.save();
 
+  // advance journey when admin marks invoice as paid directly (without payment proof)
+  if (invoice.status === "paid" && prevStatus !== "paid") {
+    onPaymentApproved(invoice.student).catch(() => {});
+  }
+
+  const invoiceStatusAr = { paid: "مدفوعة", unpaid: "غير مدفوعة", rejected: "مرفوضة", "pending-confirmation": "قيد المراجعة" }[invoice.status] || invoice.status;
   await Notification.create({
     user: invoice.student,
-    title: "Invoice updated",
-    message: `Invoice ${invoice.invoiceNumber} is now marked as ${invoice.status}.`,
+    title: "تحديث الفاتورة",
+    message: `تم تحديث حالة الفاتورة ${invoice.invoiceNumber} إلى: ${invoiceStatusAr}.`,
     type: invoice.status === "rejected" ? "warning" : "info",
+    link: "/student/payments",
   });
 
   res.json(await Invoice.findById(invoice._id).populate("student", "name email").populate("reviewedBy", "name email"));
+});
+
+const deleteStudentInvoiceAdmin = asyncHandler(async (req, res) => {
+  const invoice = await Invoice.findById(req.params.id);
+  if (!invoice) { res.status(404); throw new Error("Invoice not found"); }
+  if (invoice.status === 'paid') {
+    res.status(409);
+    throw new Error("لا يمكن حذف فاتورة مدفوعة. غيّر حالتها أولاً إذا لزم.");
+  }
+  await invoice.deleteOne();
+  res.json({ deleted: true, _id: req.params.id });
 });
 
 const reviewPaymentProofAdmin = asyncHandler(async (req, res) => {
@@ -260,12 +304,16 @@ const reviewPaymentProofAdmin = asyncHandler(async (req, res) => {
     onPaymentApproved(proof.student).catch(() => {});
   }
 
+  const paymentPushTitle = nextStatus === 'approved' ? 'تمت الموافقة على إثبات الدفع' : nextStatus === 'rejected' ? 'تم رفض إثبات الدفع' : 'تم تحديث حالة الدفع';
+  const paymentPushMsg = nextStatus === 'approved' ? 'تمت الموافقة على إثبات دفعتك. تحقق من حالة الفاتورة.' : nextStatus === 'rejected' ? 'تم رفض إثبات الدفع. يرجى رفع إثبات صحيح.' : 'تم تحديث حالة إثبات دفعتك.';
   await Notification.create({
     user: proof.student,
-    title: "Payment proof reviewed",
-    message: `Your payment proof has been ${nextStatus}.`,
+    title: paymentPushTitle,
+    message: paymentPushMsg,
     type: nextStatus === "rejected" ? "warning" : "success",
+    link: "/student/payments",
   });
+  sendPushToUser(proof.student, { title: paymentPushTitle, body: `تم ${nextStatus === 'approved' ? 'قبول' : nextStatus === 'rejected' ? 'رفض' : 'مراجعة'} إثبات الدفع.`, link: '/student/payments' }).catch(() => {});
 
   res.json(await PaymentProof.findById(proof._id).populate("student", "name email").populate("invoice", "invoiceNumber description amount status").populate("reviewedBy", "name email"));
 });
@@ -287,6 +335,37 @@ const updateArrivalRequestAdmin = asyncHandler(async (req, res) => {
     throw new Error("Arrival request not found");
   }
 
+  // Per-service stage update — updates only one service's postAdmission stage
+  const SERVICE_STAGE_MAP = { airportPickup: 'arrival', studentHousing: 'housing', residencePermitSupport: 'residence', visaSupport: 'visa' };
+  if (req.body.serviceKey !== undefined) {
+    const { serviceKey, serviceStatus } = req.body;
+    const stageName = SERVICE_STAGE_MAP[serviceKey];
+    if (!stageName || !item.services?.[serviceKey]) {
+      res.status(400); throw new Error("Service not selected or invalid serviceKey");
+    }
+    if (!['completed', 'in-progress', 'not-started'].includes(serviceStatus)) {
+      res.status(400); throw new Error("Invalid serviceStatus");
+    }
+    const now3 = new Date();
+    const eligibleApp3 = await Application.findOne({
+      student: item.student,
+      status: { $nin: ['rejected', 'file-completed-rejected', 'file-completed-accepted'] },
+      $or: [
+        { detailedStatus: { $in: ['accepted', 'final-admission', 'visa-preparation'] } },
+        { status: 'final-accepted' },
+      ],
+    }).sort({ createdAt: -1 });
+    if (eligibleApp3) {
+      await Application.updateOne({ _id: eligibleApp3._id }, {
+        $set: { [`postAdmission.${stageName}.status`]: serviceStatus, [`postAdmission.${stageName}.updatedAt`]: now3 }
+      });
+    }
+    item.updatedBy = req.user._id;
+    await item.save();
+    return res.json(await ArrivalServiceRequest.findById(item._id).populate("student", "name email").populate("updatedBy", "name email"));
+  }
+
+  const prevStatus = item.status;
   if (req.body.status !== undefined) item.status = req.body.status;
   if (req.body.adminNote !== undefined) item.adminNote = String(req.body.adminNote || "").trim();
   if (req.body.travelAlert !== undefined) item.travelAlert = String(req.body.travelAlert || "").trim();
@@ -306,11 +385,54 @@ const updateArrivalRequestAdmin = asyncHandler(async (req, res) => {
   item.updatedBy = req.user._id;
   await item.save();
 
+  // sync postAdmission stages so the mobile journey tracker reflects arrival status
+  if (item.status === 'completed' || item.status !== prevStatus) {
+    const now2 = new Date();
+    const postAdmissionStatus = item.status === 'completed' ? 'completed'
+      : item.status === 'in-progress' ? 'in-progress'
+      : 'not-started';
+    const eligibleApp = await Application.findOne({
+      student: item.student,
+      status: { $nin: ['rejected', 'file-completed-rejected', 'file-completed-accepted'] },
+      $or: [
+        { detailedStatus: { $in: ['accepted', 'final-admission', 'visa-preparation'] } },
+        { status: 'final-accepted' },
+      ],
+    }).sort({ createdAt: -1 });
+    if (eligibleApp) {
+      const stageUpdate = {
+        'postAdmission.travel.status': postAdmissionStatus,
+        'postAdmission.travel.updatedAt': now2,
+      };
+      // map each selected service to its journey stage
+      if (item.services?.airportPickup) {
+        stageUpdate['postAdmission.arrival.status'] = postAdmissionStatus;
+        stageUpdate['postAdmission.arrival.updatedAt'] = now2;
+      }
+      if (item.services?.studentHousing) {
+        stageUpdate['postAdmission.housing.status'] = postAdmissionStatus;
+        stageUpdate['postAdmission.housing.updatedAt'] = now2;
+      }
+      if (item.services?.residencePermitSupport) {
+        stageUpdate['postAdmission.residence.status'] = postAdmissionStatus;
+        stageUpdate['postAdmission.residence.updatedAt'] = now2;
+      }
+      await Application.updateOne({ _id: eligibleApp._id }, { $set: stageUpdate });
+      if (item.status === 'completed') {
+        advanceTo(item.student, 'travel').catch(() => {});
+        if (item.services?.airportPickup) advanceTo(item.student, 'reception').catch(() => {});
+        if (item.services?.studentHousing) advanceTo(item.student, 'accommodation').catch(() => {});
+      }
+    }
+  }
+
+  const arrivalStatusAr = { pending: "قيد المعالجة", "in-progress": "جارٍ التنسيق", completed: "مكتملة", cancelled: "ملغاة" }[item.status] || item.status;
   await Notification.create({
     user: item.student,
-    title: "Arrival request updated",
-    message: `Your arrival services request is now ${item.status}.`,
+    title: "تحديث طلب خدمات الوصول",
+    message: `تم تحديث طلب خدمات الوصول الخاص بك. الحالة الحالية: ${arrivalStatusAr}.`,
     type: "info",
+    link: "/student/services",
   });
 
   res.json(await ArrivalServiceRequest.findById(item._id).populate("student", "name email").populate("updatedBy", "name email"));
@@ -361,12 +483,52 @@ const updateOrientationResultAdmin = asyncHandler(async (req, res) => {
 
   await Notification.create({
     user: item.student,
-    title: "Orientation guidance updated",
-    message: "Your orientation test guidance has been updated by the admissions team.",
+    title: "تحديث توصيات التوجيه الدراسي",
+    message: "قام فريق القبول بتحديث توصياتك وتوجيهاتك الدراسية. راجع النتائج الجديدة.",
     type: "info",
+    link: "/student/journey",
   });
 
   res.json(await OrientationTestResult.findById(item._id).populate("student", "name email").populate("reviewedBy", "name email"));
+});
+
+const syncArrivalStagesAdmin = asyncHandler(async (req, res) => {
+  const completed = await ArrivalServiceRequest.find({ status: 'completed' });
+  let count = 0;
+  const now2 = new Date();
+  for (const item of completed) {
+    const eligibleApp = await Application.findOne({
+      student: item.student,
+      status: { $nin: ['rejected', 'file-completed-rejected', 'file-completed-accepted'] },
+      $or: [
+        { detailedStatus: { $in: ['accepted', 'final-admission', 'visa-preparation'] } },
+        { status: 'final-accepted' },
+      ],
+    }).sort({ createdAt: -1 });
+    if (!eligibleApp) continue;
+    const stageUpdate = {
+      'postAdmission.travel.status': 'completed',
+      'postAdmission.travel.updatedAt': now2,
+    };
+    if (item.services?.airportPickup) {
+      stageUpdate['postAdmission.arrival.status'] = 'completed';
+      stageUpdate['postAdmission.arrival.updatedAt'] = now2;
+    }
+    if (item.services?.studentHousing) {
+      stageUpdate['postAdmission.housing.status'] = 'completed';
+      stageUpdate['postAdmission.housing.updatedAt'] = now2;
+    }
+    if (item.services?.residencePermitSupport) {
+      stageUpdate['postAdmission.residence.status'] = 'completed';
+      stageUpdate['postAdmission.residence.updatedAt'] = now2;
+    }
+    await Application.updateOne({ _id: eligibleApp._id }, { $set: stageUpdate });
+    advanceTo(item.student, 'travel').catch(() => {});
+    if (item.services?.airportPickup) advanceTo(item.student, 'reception').catch(() => {});
+    if (item.services?.studentHousing) advanceTo(item.student, 'accommodation').catch(() => {});
+    count++;
+  }
+  res.json({ synced: count });
 });
 
 module.exports = {
@@ -377,9 +539,11 @@ module.exports = {
   getStudentFinancialsAdmin,
   createStudentInvoiceAdmin,
   updateStudentInvoiceAdmin,
+  deleteStudentInvoiceAdmin,
   reviewPaymentProofAdmin,
   getArrivalRequestsAdmin,
   updateArrivalRequestAdmin,
+  syncArrivalStagesAdmin,
   getStudentFavoritesAdmin,
   getOrientationResultsAdmin,
   updateOrientationResultAdmin,

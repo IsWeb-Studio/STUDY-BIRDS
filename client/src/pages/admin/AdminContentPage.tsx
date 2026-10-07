@@ -25,6 +25,11 @@ const emptyCountryForm = {
   articleHeadings: createEmptyArticleHeadings(),
   articleBodies: createEmptyArticleBodies(),
   featured: false,
+  processingDays: "0",
+  visaFeeUsd: "0",
+  languageRequirements: [] as string[],
+  visaNotesList: [] as string[],
+  visaRequirements: [] as { docKey: string; label: string }[],
 };
 
 const emptyStudyFieldForm = {
@@ -80,6 +85,11 @@ export const AdminContentPage = () => {
         universityCount: Number(countryForm.universityCount || 0),
         specialtyCount: Number(countryForm.specialtyCount || 0),
         averageTuition: Number(countryForm.averageTuition || 0),
+        processingDays: Number(countryForm.processingDays || 0),
+        visaFeeUsd: Number(countryForm.visaFeeUsd || 0),
+        languageRequirements: countryForm.languageRequirements.filter(Boolean),
+        visaNotesList: countryForm.visaNotesList.filter(Boolean),
+        visaRequirements: countryForm.visaRequirements.filter((r) => r.docKey && r.label),
         articleTitle: countryForm.articleTitle.trim(),
         articleTitleColor: countryForm.articleTitleColor || "#0f172a",
         articleHeadingColor: countryForm.articleHeadingColor || "#0f172a",
@@ -191,6 +201,47 @@ export const AdminContentPage = () => {
               <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "visaNotes")}</span>
               <textarea value={countryForm.visaNotes} onChange={(event) => setCountryForm((current) => ({ ...current, visaNotes: event.target.value }))} rows={3} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
             </label>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "مدة المعالجة (أيام)" : "Processing days"}</span>
+                <input type="number" min="0" value={countryForm.processingDays} onChange={(event) => setCountryForm((current) => ({ ...current, processingDays: event.target.value }))} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
+              </label>
+              <label className="block">
+                <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "رسوم التأشيرة (USD)" : "Visa fee (USD)"}</span>
+                <input type="number" min="0" value={countryForm.visaFeeUsd} onChange={(event) => setCountryForm((current) => ({ ...current, visaFeeUsd: event.target.value }))} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
+              </label>
+            </div>
+            <div className="rounded-2xl border border-slate-200 p-4 space-y-3">
+              <p className="text-sm font-medium text-slate-700">{language === "ar" ? "متطلبات اللغة" : "Language requirements"}</p>
+              {countryForm.languageRequirements.map((item, index) => (
+                <div key={index} className="flex gap-2">
+                  <input value={item} onChange={(event) => setCountryForm((current) => ({ ...current, languageRequirements: current.languageRequirements.map((v, i) => i === index ? event.target.value : v) }))} placeholder={language === "ar" ? "مثال: IELTS 6.5" : "e.g. IELTS 6.5"} className="flex-1 rounded-2xl border border-slate-200 px-4 py-2 text-sm outline-none focus:ring" />
+                  <button type="button" onClick={() => setCountryForm((current) => ({ ...current, languageRequirements: current.languageRequirements.filter((_, i) => i !== index) }))} className="rounded-full border border-rose-200 px-3 py-1 text-xs font-medium text-rose-700">✕</button>
+                </div>
+              ))}
+              <button type="button" onClick={() => setCountryForm((current) => ({ ...current, languageRequirements: [...current.languageRequirements, ""] }))} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700">+ {language === "ar" ? "إضافة لغة" : "Add language"}</button>
+            </div>
+            <div className="rounded-2xl border border-slate-200 p-4 space-y-3">
+              <p className="text-sm font-medium text-slate-700">{language === "ar" ? "ملاحظات التأشيرة" : "Visa notes list"}</p>
+              {countryForm.visaNotesList.map((item, index) => (
+                <div key={index} className="flex gap-2">
+                  <input value={item} onChange={(event) => setCountryForm((current) => ({ ...current, visaNotesList: current.visaNotesList.map((v, i) => i === index ? event.target.value : v) }))} placeholder={language === "ar" ? "ملاحظة..." : "Note..."} className="flex-1 rounded-2xl border border-slate-200 px-4 py-2 text-sm outline-none focus:ring" />
+                  <button type="button" onClick={() => setCountryForm((current) => ({ ...current, visaNotesList: current.visaNotesList.filter((_, i) => i !== index) }))} className="rounded-full border border-rose-200 px-3 py-1 text-xs font-medium text-rose-700">✕</button>
+                </div>
+              ))}
+              <button type="button" onClick={() => setCountryForm((current) => ({ ...current, visaNotesList: [...current.visaNotesList, ""] }))} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700">+ {language === "ar" ? "إضافة ملاحظة" : "Add note"}</button>
+            </div>
+            <div className="rounded-2xl border border-slate-200 p-4 space-y-3">
+              <p className="text-sm font-medium text-slate-700">{language === "ar" ? "متطلبات التأشيرة (وثائق)" : "Visa requirements (documents)"}</p>
+              {countryForm.visaRequirements.map((item, index) => (
+                <div key={index} className="flex gap-2">
+                  <input value={item.docKey} onChange={(event) => setCountryForm((current) => ({ ...current, visaRequirements: current.visaRequirements.map((v, i) => i === index ? { ...v, docKey: event.target.value } : v) }))} placeholder={language === "ar" ? "المفتاح (e.g. passport)" : "Key (e.g. passport)"} className="w-32 rounded-2xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring" />
+                  <input value={item.label} onChange={(event) => setCountryForm((current) => ({ ...current, visaRequirements: current.visaRequirements.map((v, i) => i === index ? { ...v, label: event.target.value } : v) }))} placeholder={language === "ar" ? "الوصف (e.g. جواز السفر)" : "Label (e.g. Passport)"} className="flex-1 rounded-2xl border border-slate-200 px-3 py-2 text-sm outline-none focus:ring" />
+                  <button type="button" onClick={() => setCountryForm((current) => ({ ...current, visaRequirements: current.visaRequirements.filter((_, i) => i !== index) }))} className="rounded-full border border-rose-200 px-3 py-1 text-xs font-medium text-rose-700">✕</button>
+                </div>
+              ))}
+              <button type="button" onClick={() => setCountryForm((current) => ({ ...current, visaRequirements: [...current.visaRequirements, { docKey: "", label: "" }] }))} className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700">+ {language === "ar" ? "إضافة وثيقة" : "Add document"}</button>
+            </div>
             <div className="grid gap-4 md:grid-cols-3">
               <label className="block">
                 <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "عدد الجامعات" : "Universities count"}</span>
@@ -442,6 +493,11 @@ export const AdminContentPage = () => {
                         articleHeadings: normalizeArticleHeadings(country.articleHeadings, articleItemCount),
                         articleBodies: normalizeArticleBodies(country.articleBodies, articleItemCount),
                         featured: Boolean(country.featured),
+                        processingDays: String(country.processingDays || 0),
+                        visaFeeUsd: String(country.visaFeeUsd || 0),
+                        languageRequirements: Array.isArray(country.languageRequirements) ? country.languageRequirements : [],
+                        visaNotesList: Array.isArray(country.visaNotesList) ? country.visaNotesList : [],
+                        visaRequirements: Array.isArray(country.visaRequirements) ? country.visaRequirements : [],
                       });
                     }}
                     className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 font-medium text-slate-700"

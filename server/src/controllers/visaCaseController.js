@@ -3,6 +3,7 @@ const Application = require('../models/Application');
 const asyncHandler = require('../utils/asyncHandler');
 const { hasSection } = require('../middleware/employeeAccess');
 const { VISA_STATES, isVisaCaseEligible, visaCaseView } = require('../utils/visaCase');
+const { advanceTo } = require('../utils/journeyAutomation');
 
 const listVisaCases = asyncHandler(async (req, res) => {
   const candidates = await Application.find({ status: { $nin: ['rejected', 'file-completed-rejected', 'file-completed-accepted'] } })
@@ -59,11 +60,19 @@ const updateVisaCase = asyncHandler(async (req, res) => {
     insurance: { provider: insuranceProvider.trim(), policyNumber: insurancePolicyNumber.trim(), expiresAt },
     notes: notes.trim(), updatedAt: now,
   };
+  // sync postAdmission.visa so the mobile journey tracker reflects the visa status
+  const postAdmissionVisaStatus = status === 'approved' ? 'completed'
+    : status === 'rejected' ? 'action-required'
+    : status === 'not-started' ? 'not-started'
+    : 'in-progress';
   const updated = await Application.findOneAndUpdate({ _id: app._id, __v: version, status: app.status, detailedStatus: app.detailedStatus }, {
-    $set: { visaCase: values }, $inc: { __v: 1 },
+    $set: { visaCase: values, 'postAdmission.visa.status': postAdmissionVisaStatus, 'postAdmission.visa.updatedAt': now },
+    $inc: { __v: 1 },
     $push: { visaCaseHistory: { fromStatus: app.visaCase?.status || 'not-started', status, changedBy: req.user._id, changedAt: now } },
   }, { new: true, runValidators: true }).lean();
   if (!updated) return res.status(409).json({ message: 'Application changed. Refresh and retry.' });
+  // بند 115: visa approved → advance journeyStage to 'visa'
+  if (status === 'approved') advanceTo(updated.student, 'visa').catch(() => {});
   res.json(visaCaseView(updated));
 });
 
