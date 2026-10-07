@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_client.dart';
 import '../../core/auth_session.dart';
@@ -106,7 +106,7 @@ class _StudentLifeOffersScreenState extends State<StudentLifeOffersScreen> {
                   ? ErrorState(message: _error!, onRetry: _load)
                   : ListView(
                       padding: const EdgeInsets.all(16),
-                      physics: const AlwaysScrollableScrollPhysics(),
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                       children: [
                         const Text(
                             'اكتشف الفعاليات الطلابية والأنشطة المتاحة لك.',
@@ -188,11 +188,11 @@ class _UpcomingEventCard extends StatelessWidget {
         if (coverUrl != null && coverUrl.isNotEmpty)
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.network(coverUrl,
+            child: AppNetworkImage(coverUrl,
                 width: double.infinity,
                 height: 140,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                errorWidget: const SizedBox.shrink()),
           ),
         if (coverUrl != null && coverUrl.isNotEmpty) const SizedBox(height: 12),
         Container(
@@ -243,11 +243,11 @@ class _PastEventCard extends StatelessWidget {
         if (coverUrl != null && coverUrl.isNotEmpty)
           ClipRRect(
             borderRadius: BorderRadius.circular(8),
-            child: Image.network(coverUrl,
+            child: AppNetworkImage(coverUrl,
                 width: 56,
                 height: 56,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _iconBox()),
+                errorWidget: _iconBox()),
           )
         else
           _iconBox(),
@@ -329,7 +329,7 @@ class _AlumniNetworkScreenState extends State<AlumniNetworkScreen> {
                   ? ErrorState(message: _error!, onRetry: _load)
                   : ListView(
                       padding: const EdgeInsets.all(16),
-                      physics: const AlwaysScrollableScrollPhysics(),
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                       children: [
                         AppCard(
                           child: Column(
@@ -663,7 +663,7 @@ class _AllScholarshipsTab extends StatelessWidget {
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      physics: const AlwaysScrollableScrollPhysics(),
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       itemCount: items.length,
       itemBuilder: (ctx, i) {
         final item = items[i] as Map;
@@ -837,7 +837,7 @@ class _MyScholarshipsTab extends StatelessWidget {
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      physics: const AlwaysScrollableScrollPhysics(),
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       itemCount: items.length,
       itemBuilder: (ctx, i) {
         final e = items[i] as Map;
@@ -962,7 +962,7 @@ class _JobPostsScreenState extends State<JobPostsScreen> {
                     ? const EmptyState(icon: Icons.work_outline_rounded, title: 'لا توجد وظائف منشورة بعد', message: 'كن أول من ينشر فرصة للطلاب!')
                     : ListView.separated(
                         padding: const EdgeInsets.all(16),
-                        physics: const AlwaysScrollableScrollPhysics(),
+                        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                         separatorBuilder: (_, __) => const SizedBox(height: 10),
                         itemCount: _posts.length,
                         itemBuilder: (_, i) {

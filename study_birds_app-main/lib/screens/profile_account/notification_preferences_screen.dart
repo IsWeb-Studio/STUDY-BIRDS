@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/app_theme.dart';
 import '../../core/feature_ui.dart';
+import '../../core/push_notification_service.dart';
 
 class NotificationPreferencesScreen extends StatefulWidget {
   const NotificationPreferencesScreen({super.key});
@@ -11,32 +12,88 @@ class NotificationPreferencesScreen extends StatefulWidget {
 }
 
 class _NotificationPreferencesScreenState
-    extends State<NotificationPreferencesScreen> {
+    extends State<NotificationPreferencesScreen> with WidgetsBindingObserver {
   static const _prefix = 'notif_pref_';
   final _prefs = <String, bool>{};
   bool _loading = true;
+  bool _requesting = false;
 
   static const _categories = [
-    ('payments', 'استحقاق الدفع', Icons.payment_rounded,
-        'تذكير بموعد السداد قبل 6 ساعات'),
-    ('admission', 'تحديثات القبول', Icons.school_rounded,
-        'صدور قبول، تغيير حالة الطلب'),
-    ('documents', 'طلبات المستندات', Icons.folder_rounded,
-        'طلب رفع مستند، قرار مراجعة'),
-    ('consultations', 'الاستشارات', Icons.calendar_today_rounded,
-        'تذكير بموعد الاستشارة القادمة'),
-    ('visa', 'التأشيرة والسفر', Icons.flight_takeoff_rounded,
-        'تحديثات تتعلق بالتأشيرة وموعد السفر'),
-    ('support', 'ردود الدعم', Icons.support_agent_rounded,
-        'رد فريق الدعم على تذاكرك'),
-    ('announcements', 'الإعلانات العامة', Icons.campaign_rounded,
-        'أخبار وتحديثات Study Birds'),
+    (
+      'payments',
+      'استحقاق الدفع',
+      Icons.payment_rounded,
+      'تذكير بموعد السداد قبل 6 ساعات'
+    ),
+    (
+      'admission',
+      'تحديثات القبول',
+      Icons.school_rounded,
+      'صدور قبول، تغيير حالة الطلب'
+    ),
+    (
+      'documents',
+      'طلبات المستندات',
+      Icons.folder_rounded,
+      'طلب رفع مستند، قرار مراجعة'
+    ),
+    (
+      'consultations',
+      'الاستشارات',
+      Icons.calendar_today_rounded,
+      'تذكير بموعد الاستشارة القادمة'
+    ),
+    (
+      'visa',
+      'التأشيرة والسفر',
+      Icons.flight_takeoff_rounded,
+      'تحديثات تتعلق بالتأشيرة وموعد السفر'
+    ),
+    (
+      'support',
+      'ردود الدعم',
+      Icons.support_agent_rounded,
+      'رد فريق الدعم على تذاكرك'
+    ),
+    (
+      'announcements',
+      'الإعلانات العامة',
+      Icons.campaign_rounded,
+      'أخبار وتحديثات Study Birds'
+    ),
   ];
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && mounted) setState(() {});
+  }
+
+  Future<void> _enableNotifications() async {
+    setState(() => _requesting = true);
+    try {
+      await PushNotificationService.instance.requestPermission();
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تعذر تفعيل الإشعارات. حاول مجددًا.')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _requesting = false);
+    }
   }
 
   Future<void> _load() async {
@@ -69,6 +126,29 @@ class _NotificationPreferencesScreenState
             : ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
+                  if (PushNotificationService.instance.supported)
+                    AppCard(
+                        child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('إشعارات الجهاز',
+                            style: AppTextStyles.cardTitle),
+                        const SizedBox(height: 8),
+                        Text(PushNotificationService.instance.permissionGranted
+                            ? 'الإشعارات مفعّلة. يتحكم جهازك بصوت التنبيه ووضع عدم الإزعاج.'
+                            : 'اسمح بالإشعارات لتصلك التحديثات خارج التطبيق.'),
+                        if (!PushNotificationService.instance.permissionGranted)
+                          FilledButton.icon(
+                            onPressed:
+                                _requesting ? null : _enableNotifications,
+                            icon:
+                                const Icon(Icons.notifications_active_rounded),
+                            label: Text(_requesting
+                                ? 'جارٍ التفعيل…'
+                                : 'تفعيل الإشعارات'),
+                          ),
+                      ],
+                    )),
                   const InlineNotice(
                       'التفضيلات تتحكم في الإشعارات المحلية. الإشعارات الفورية من الخادم تتبع إعدادات النظام.'),
                   const SizedBox(height: 12),

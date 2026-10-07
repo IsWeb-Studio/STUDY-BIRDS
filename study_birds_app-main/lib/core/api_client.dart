@@ -43,11 +43,18 @@ class ApiClient {
 
   static const String baseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'https://study-birds1.onrender.com/api');
 
+  /// Reused across all requests — avoids TCP+TLS setup per call.
+  final _http = http.Client();
+
+  /// In-memory GET cache: path → (timestamp, parsed body).
+  /// Cleared on logout. TTL = 3 minutes.
+  final _cache = <String, ({DateTime at, dynamic data})>{};
+  static const _cacheTtl = Duration(minutes: 3);
+
+  void clearCache() => _cache.clear();
+
   Future<String?> Function(String failedToken)? refreshSession;
 
-  /// Supplied by AuthSession at call time so ApiClient itself has no
-  /// circular dependency on the session — every authenticated call passes
-  /// its own token explicitly.
   Map<String, String> _headers(String? token) => {
         'Content-Type': 'application/json',
         'X-Study-Birds-Client': 'mobile',
@@ -69,14 +76,23 @@ class ApiClient {
       final request = http.Request(method, Uri.parse('$baseUrl$path'));
       request.headers.addAll(_headers(credential));
       if (body != null) request.body = jsonEncode(body);
-      final client = http.Client();
-      try { return await http.Response.fromStream(await client.send(request)); }
-      finally { client.close(); }
+      return await http.Response.fromStream(await _http.send(request));
     });
     return _decode(response);
   }
 
-  Future<dynamic> get(String path, {String? token}) => _request('GET', path, token: token);
+  Future<dynamic> get(String path, {String? token, bool cached = true}) async {
+    if (cached) {
+      final hit = _cache[path];
+      if (hit != null && DateTime.now().difference(hit.at) < _cacheTtl) {
+        return hit.data;
+      }
+    }
+    final data = await _request('GET', path, token: token);
+    if (cached) _cache[path] = (at: DateTime.now(), data: data);
+    return data;
+  }
+
   Future<dynamic> post(String path, {Map<String, dynamic>? body, String? token}) => _request('POST', path, body: body, token: token);
   Future<dynamic> put(String path, {Map<String, dynamic>? body, String? token}) => _request('PUT', path, body: body, token: token);
   Future<dynamic> patch(String path, {Map<String, dynamic>? body, String? token}) => _request('PATCH', path, body: body, token: token);

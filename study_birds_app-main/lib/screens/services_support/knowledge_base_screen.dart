@@ -190,7 +190,7 @@ class _ExhibitionsScreenState extends State<ExhibitionsScreen> {
                           message: 'ستظهر المقالات والمحتوى التعليمي هنا.')
                       : ListView.separated(
                           padding: const EdgeInsets.all(16),
-                          physics: const AlwaysScrollableScrollPhysics(),
+                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                           itemCount: _items.length,
                           separatorBuilder: (_, __) => const SizedBox(height: 10),
                           itemBuilder: (context, i) {
@@ -223,12 +223,12 @@ class _ExhibitionCard extends StatelessWidget {
         if (imageUrl != null && imageUrl.isNotEmpty)
           ClipRRect(
             borderRadius: BorderRadius.circular(10),
-            child: Image.network(
+            child: AppNetworkImage(
               imageUrl,
               width: double.infinity,
               height: 160,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              errorWidget: const SizedBox.shrink(),
             ),
           ),
         if (imageUrl != null && imageUrl.isNotEmpty) const SizedBox(height: 10),
@@ -345,12 +345,12 @@ class _ExhibitionArticleScreenState extends State<ExhibitionArticleScreen> {
           if (imageUrl != null && imageUrl.isNotEmpty)
             ClipRRect(
               borderRadius: BorderRadius.circular(14),
-              child: Image.network(
+              child: AppNetworkImage(
                 imageUrl,
                 width: double.infinity,
                 height: 200,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                errorWidget: const SizedBox.shrink(),
               ),
             ),
           if (imageUrl != null && imageUrl.isNotEmpty) const SizedBox(height: 16),

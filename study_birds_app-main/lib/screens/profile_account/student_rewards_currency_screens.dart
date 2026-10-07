@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/api_client.dart';
@@ -61,7 +61,7 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
                   ? ErrorState(message: _error!, onRetry: _load)
                   : ListView(
                       padding: const EdgeInsets.all(16),
-                      physics: const AlwaysScrollableScrollPhysics(),
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                       children: [
                         _PointsSummaryCard(totalPoints: _totalPoints),
                         const SizedBox(height: 20),
@@ -600,7 +600,7 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
 
     return ListView(
       padding: const EdgeInsets.all(16),
-      physics: const AlwaysScrollableScrollPhysics(),
+      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       children: [
         _WalletBalanceCard(balance: balance, referralCode: referralCode, onRedeem: balance > 0 ? _showRedeemSheet : null),
         const SizedBox(height: 20),

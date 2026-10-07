@@ -31,6 +31,8 @@ dependencies:
   posthog_flutter: ^5.49.0
   google_sign_in: ^7.2.0
   sentry_flutter: ^8.14.2
+  camera: ^0.11.0
+  cached_network_image: ^3.4.1
 
 dev_dependencies:
   flutter_test:
@@ -41,11 +43,10 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/app_icon.png"
+  image_path: "assets/images/logo_mark.png"
   min_sdk_android: 21
-  # After `flutter pub get`, run: flutter pub run flutter_launcher_icons
-  # This generates the real Study Birds app icon for Android + iOS from
-  # assets/images/app_icon.png (the bird mark on a white background).
+  adaptive_icon_background: "#FFFFFF"
+  adaptive_icon_foreground: "assets/images/logo_mark.png"
 
 flutter:
   uses-material-design: true

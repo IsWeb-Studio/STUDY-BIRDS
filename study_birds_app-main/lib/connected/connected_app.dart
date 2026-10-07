@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
@@ -147,13 +147,17 @@ class _ConnectedAppState extends State<ConnectedApp>
                                               selectedRole = type == 'agent'
                                                   ? 'partner'
                                                   : type))
-                                      : ConnectedLogin(
-                                          api: api,
-                                          accountRole: selectedRole,
-                                          onChangeRole: () => setState(
-                                              () => selectedRole = null),
-                                          title:
-                                              config?['title'] ?? 'Study Birds')
+                                      : PopScope(
+                                          canPop: false,
+                                          onPopInvokedWithResult: (didPop, _) {
+                                            if (!didPop) setState(() => selectedRole = null);
+                                          },
+                                          child: ConnectedLogin(
+                                              api: api,
+                                              accountRole: selectedRole,
+                                              onChangeRole: () => setState(
+                                                  () => selectedRole = null),
+                                              title: config?['title'] ?? 'Study Birds'))
                           : Navigator(
                               key: ValueKey(
                                   '${api.user?['_id']}-${config?['revision']}-${api.needsProfileSetup}'),
@@ -1075,7 +1079,7 @@ class _ResourceScreenState extends State<ResourceScreen> {
                 : RefreshIndicator(
                     onRefresh: load,
                     child: ListView(
-                        physics: const AlwaysScrollableScrollPhysics(),
+                        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                         padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
                         children: [
                           if (list != null) ...[
@@ -1188,10 +1192,10 @@ Widget resourceCard(BuildContext context, Json item, VoidCallback open) {
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
             if (image is String && image.startsWith('https://'))
-              Image.network(image,
+              AppNetworkImage(image,
                   height: 130,
                   fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                  errorWidget: const SizedBox.shrink()),
             ListTile(
                 title: Text(itemTitle(item),
                     style: const TextStyle(fontWeight: FontWeight.w700)),

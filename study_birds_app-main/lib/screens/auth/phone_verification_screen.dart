@@ -5,7 +5,9 @@ import '../../core/api_client.dart';
 import '../../core/auth_session.dart';
 
 class PhoneVerificationScreen extends StatefulWidget {
-  const PhoneVerificationScreen({super.key});
+  final void Function(String verifiedPhone)? onVerified;
+  final List<Widget>? actions;
+  const PhoneVerificationScreen({super.key, this.onVerified, this.actions});
   @override
   State<PhoneVerificationScreen> createState() =>
       _PhoneVerificationScreenState();
@@ -41,11 +43,13 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
           token: AuthSession.instance.token,
           body:
               sent ? {'code': code.text.trim()} : {'phone': phone.text.trim()});
-      if (mounted)
+      if (mounted) {
         setState(() {
           verified = sent;
           sent = true;
         });
+        if (verified) widget.onVerified?.call(phone.text.trim());
+      }
     } catch (e) {
       if (mounted)
         setState(() => error =
@@ -58,10 +62,11 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
   @override
   Widget build(BuildContext context) => AppScaffold(
       title: 'تأكيد الهاتف',
+      actions: widget.actions,
       body: FeatureBody(children: [
         const FeatureIntro(
             title: 'رقم هاتف موثوق',
-            subtitle: 'سيصلك رمز واتساب للتحقق من ملكيتك للرقم.',
+            subtitle: 'سيصلك رمز عبر واتساب للتحقق من ملكيتك للرقم.',
             icon: Icons.phone_android),
         if (error != null) InlineNotice(error!, error: true),
         if (verified)

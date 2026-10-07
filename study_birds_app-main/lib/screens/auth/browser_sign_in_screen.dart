@@ -62,7 +62,8 @@ class _BrowserSignInScreenState extends State<BrowserSignInScreen> {
       }
       await AuthSession.instance.login(
           AuthUser.fromJson(Map<String, dynamic>.from(data['user'] as Map)),
-          authToken: data['token'] as String);
+          authToken: data['token'] as String,
+          refreshToken: data['refreshToken'] as String?);
       verifier = null;
       if (mounted)
         Navigator.of(context).pushAndRemoveUntil(

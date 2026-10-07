@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/app_theme.dart';
 import '../../core/animations.dart';
 import '../../core/student_repository.dart';
@@ -497,6 +498,83 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         // ── Journey card(s) ───────────────────────────────────────────────────
         _buildJourneySection(
             context, overview, currentStage, journeyPathLabel, progress, homeStatus),
+
+        // ── Recognitions slider ───────────────────────────────────────────────
+        if (overview.recognitions.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Text('الشهادات والاعترافات', style: AppTextStyles.sectionLabel),
+            ),
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: 80,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              itemCount: overview.recognitions.length,
+              itemBuilder: (context, i) {
+                final rec = overview.recognitions[i];
+                final image = rec['image'] as String? ?? '';
+                final title = rec['title'] as String? ?? '';
+                final link = rec['link'] as String? ?? '';
+                final card = Container(
+                  margin: EdgeInsets.only(left: i < overview.recognitions.length - 1 ? 10 : 0),
+                  width: 130,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppColors.border),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      if (image.isNotEmpty)
+                        Expanded(
+                          child: AppNetworkImage(
+                            image,
+                            fit: BoxFit.contain,
+                            errorWidget: const Icon(
+                              Icons.verified_outlined,
+                              color: AppColors.orange,
+                              size: 24,
+                            ),
+                          ),
+                        )
+                      else
+                        const Icon(Icons.verified_outlined, color: AppColors.orange, size: 24),
+                      const SizedBox(height: 4),
+                      Text(
+                        title,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 10.5,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                if (link.isEmpty) return card;
+                return GestureDetector(
+                  onTap: () async {
+                    final uri = Uri.tryParse(link);
+                    if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  },
+                  child: card,
+                );
+              },
+            ),
+          ),
+        ],
 
         const SizedBox(height: 4),
 

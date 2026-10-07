@@ -39,4 +39,26 @@ class UniversityRepository {
       if (reason != null) 'reason': reason,
     });
   }
+
+  Future<int> getFavoritesCount() async {
+    final data = await ApiClient.instance.get('/university-portal/favorites-count', token: _token);
+    return (data as Map<String, dynamic>)['count'] as int? ?? 0;
+  }
+
+  /// Returns a short-lived signed URL to view/download the document file.
+  Future<String> getDocumentAccessUrl(String documentId) async {
+    final data = await ApiClient.instance.post('/documents/$documentId/access', token: _token, body: {});
+    return (data as Map<String, dynamic>)['url'] as String;
+  }
+
+  Future<String> uploadAvatar({required List<int> fileBytes, required String fileName}) async {
+    final data = await ApiClient.instance.postMultipart(
+      '/university-portal/avatar',
+      fileBytes: fileBytes,
+      fileName: fileName,
+      fields: {},
+      token: _token,
+    );
+    return (data as Map<String, dynamic>)['avatar'] as String;
+  }
 }

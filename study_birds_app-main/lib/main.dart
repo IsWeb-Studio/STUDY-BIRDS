@@ -1,3 +1,5 @@
+import 'package:shared_preferences/shared_preferences.dart';
+import 'screens/profile_account/notification_permission_sheet.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'core/analytics_service.dart';
@@ -5,7 +7,6 @@ import 'core/google_sign_in_service.dart';
 import 'core/app_config.dart';
 import 'core/realtime_sync_service.dart';
 import 'core/currency_service.dart';
-import 'core/device_lock.dart';
 import 'core/api_client.dart';
 import 'core/deep_link_service.dart';
 import 'core/notification_scheduler.dart';
@@ -31,6 +32,7 @@ import 'screens/home_journey/important_dates_screen.dart';
 import 'screens/home_journey/global_search_screen.dart';
 
 import 'screens/auth/verify_contact_screen.dart';
+import 'screens/auth/phone_verification_screen.dart';
 import 'screens/profile_account/security_settings_screen.dart';
 
 import 'screens/universities_programs_countries/compare_list_screen.dart';
@@ -61,6 +63,13 @@ import 'screens/roles/university_dashboard_screen.dart';
 import 'screens/roles/employee_dashboard_screen.dart';
 import 'screens/roles/admin_users_access_screen.dart';
 
+class _BouncingScrollBehavior extends ScrollBehavior {
+  const _BouncingScrollBehavior();
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) =>
+      const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics());
+}
+
 /// Root messenger key — lets us show a SnackBar right after
 /// pushAndRemoveUntil, when the route that triggered the action has
 /// already been disposed and its own context is no longer valid.
@@ -72,23 +81,28 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await SentryFlutter.init(
-    (options) {
-      options.dsn = AppConfig.sentryDsn;
-      options.tracesSampleRate = 0.2;
-      options.profilesSampleRate = 0.1;
-      options.attachScreenshot = true;
-      options.attachViewHierarchy = true;
-    },
-    appRunner: () async {
-      await PushNotificationService.instance.init();
-      await CurrencyService.instance.load();
-      await AnalyticsService.instance.init();
-      await GoogleSignInService.instance.init();
-      RealtimeSyncService.instance.start();
-      runApp(SentryWidget(child: const StudyBirdsApp()));
-    },
-  );
+  // Render the splash on the first frame — no blocking before the user sees anything
+  runApp(SentryWidget(child: const StudyBirdsApp()));
+  _initServicesInBackground();
+}
+
+Future<void> _initServicesInBackground() async {
+  // Sentry first so it can capture errors in subsequent inits
+  await SentryFlutter.init((options) {
+    options.dsn = AppConfig.sentryDsn;
+    options.tracesSampleRate = 0.2;
+    options.profilesSampleRate = 0.1;
+    options.attachScreenshot = true;
+    options.attachViewHierarchy = true;
+  });
+  // All four services run in parallel instead of sequentially
+  await Future.wait([
+    PushNotificationService.instance.init(),
+    CurrencyService.instance.load(),
+    AnalyticsService.instance.init(),
+    GoogleSignInService.instance.init(),
+  ]);
+  RealtimeSyncService.instance.start();
 }
 
 class StudyBirdsApp extends StatefulWidget {
@@ -105,6 +119,44 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
     DeepLinkService.instance.init(rootNavigatorKey);
     NotificationScheduler.instance.init();
     PushNotificationService.instance.setTapHandler(_onPushTap);
+    // Show the notification rationale sheet only once, ever.
+    // We persist a flag in SharedPreferences so the sheet never re-appears
+    // after the user has interacted with it — even if OneSignal.permission
+    // returns false transiently on startup while the SDK is still loading.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!PushNotificationService.instance.supported) return;
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.getBool('_notif_sheet_shown') == true) return;
+      // Already granted before we ever showed the sheet — just record it.
+      if (PushNotificationService.instance.permissionGranted) {
+        await prefs.setBool('_notif_sheet_shown', true);
+        return;
+      }
+      if (!mounted) return;
+      final navigatorContext = rootNavigatorKey.currentContext;
+      if (navigatorContext == null) return;
+      // Mark shown regardless of the user's choice so we never show again.
+      await prefs.setBool('_notif_sheet_shown', true);
+      final allow = await showModalBottomSheet<bool>(
+        context: navigatorContext,
+        useRootNavigator: true,
+        useSafeArea: true,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (_) => const NotificationPermissionSheet(),
+      );
+      if (allow == true) {
+        try {
+          await PushNotificationService.instance.requestPermission();
+        } catch (_) {
+          rootScaffoldMessengerKey.currentState?.showSnackBar(
+            const SnackBar(
+                content: Text(
+                    'تعذر تفعيل الإشعارات. حاول مجددًا من إعدادات الإشعارات.')),
+          );
+        }
+      }
+    });
   }
 
   void _onPushTap(String screen, Map<String, dynamic> data) {
@@ -129,11 +181,11 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      builder: (context, child) => DeviceLockGate(
-          child: OfflineBannerWrapper(
-              child: child ?? const SizedBox.shrink())),
+      builder: (context, child) =>
+          OfflineBannerWrapper(child: child ?? const SizedBox.shrink()),
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
+      scrollBehavior: const _BouncingScrollBehavior(),
       theme: AppTheme.light
           .copyWith(pageTransitionsTheme: appPageTransitionsTheme),
       home: const RootChooserScreen(),
@@ -176,17 +228,44 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_checking) return const Scaffold(body: LoadingState());
+    if (_checking) return const SplashScreen();
     if (_error != null)
       return Scaffold(body: ErrorState(message: _error!, onRetry: _restore));
     return ListenableBuilder(
         listenable: AuthSession.instance,
         builder: (context, _) {
           final user = AuthSession.instance.currentUser;
-          return user == null
-              ? const ConnectedPrototypeEntry()
-              : getHomeRouteForUser(user);
+          if (user == null) return const ConnectedPrototypeEntry();
+          // GATE DISABLED — re-enable when needed
+          // if (user.verifiedPhone == null || user.verifiedPhone!.isEmpty) {
+          //   return _PhoneVerificationGate(user: user);
+          // }
+          return getHomeRouteForUser(user);
         });
+  }
+}
+
+/// Shown when the logged-in user has no verified phone number.
+/// Blocks access to the app until a phone number is verified.
+/// Uses PhoneVerificationScreen directly (no nested Scaffold).
+class _PhoneVerificationGate extends StatelessWidget {
+  final AuthUser user;
+  const _PhoneVerificationGate({required this.user});
+
+  @override
+  Widget build(BuildContext context) {
+    return PopScope(
+      canPop: false,
+      child: PhoneVerificationScreen(
+        onVerified: (phone) => AuthSession.instance.patchVerifiedPhone(phone),
+        actions: [
+          TextButton(
+            onPressed: () => AuthSession.instance.logout(),
+            child: const Text('خروج', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -216,26 +295,48 @@ class ConnectedPrototypeEntry extends StatelessWidget {
   static void _goAccountType(BuildContext context) {
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (ctx) => AccountTypeSelectionScreen(
-        onSelected: (_) {
+        onSelected: (type) {
           AnalyticsService.instance.onboardingCompleted();
-          _goLogin(ctx);
+          _goLogin(ctx, selectedRole: type);
         },
       ),
     ));
   }
 
-  static void _goLogin(BuildContext context) {
-    Navigator.of(context).pushReplacement(MaterialPageRoute(
+  // Roles that require admin to create — self-registration is disabled.
+  static const _adminCreatedRoles = {'university', 'employee'};
+
+  static void _goLogin(BuildContext context, {String? selectedRole}) {
+    final adminOnly = _adminCreatedRoles.contains(selectedRole);
+    Navigator.of(context).push(MaterialPageRoute(
       builder: (ctx) => LoginScreen(
         onForgotPassword: () => Navigator.of(ctx).push(
             MaterialPageRoute(builder: (_) => const PasswordReset2FAScreen())),
         onLoginAttempt: (email, password) =>
-            _attemptLogin(ctx, email, password),
-        onGoRegister: () => Navigator.of(ctx).push(MaterialPageRoute(
-          builder: (ctx2) => RegisterScreen(
-              onRegisterAttempt: (name, email, password) =>
-                  _attemptRegister(ctx2, name, email, password)),
-        )),
+            _attemptLogin(ctx, email, password, selectedRole: selectedRole),
+        onGoRegister: adminOnly
+            ? () => showDialog(
+                  context: ctx,
+                  builder: (_) => AlertDialog(
+                    title: const Text('إنشاء الحساب'),
+                    content: Text(
+                      selectedRole == 'university'
+                          ? 'حسابات الجامعات يتم إنشاؤها من قبل فريق Study Birds.\n\nإذا كان لديك حساب بالفعل، سجّل دخولك مباشرة.'
+                          : 'حسابات الموظفين يتم إنشاؤها من قبل الإدارة.\n\nإذا كان لديك حساب، سجّل دخولك مباشرة.',
+                    ),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          child: const Text('حسنًا')),
+                    ],
+                  ),
+                )
+            : () => Navigator.of(ctx).push(MaterialPageRoute(
+                  builder: (ctx2) => RegisterScreen(
+                      onRegisterAttempt: (name, email, password) =>
+                          _attemptRegister(ctx2, name, email, password,
+                              role: selectedRole)),
+                )),
         onGoogleSignInSuccess: () {
           if (!ctx.mounted) return;
           Navigator.of(ctx).pushAndRemoveUntil(
@@ -246,15 +347,12 @@ class ConnectedPrototypeEntry extends StatelessWidget {
     ));
   }
 
-  /// Returns true/false to the LoginScreen (for its own error display), and
-  /// on success performs the ONE centralized redirect — by real role only.
-  /// There is no "claimed role" anymore (the account-type-selection step was
-  /// removed) — the person just logs in, and is told their real role here.
   static Future<bool> _attemptLogin(
     BuildContext context,
     String email,
-    String password,
-  ) async {
+    String password, {
+    String? selectedRole,
+  }) async {
     late ({AuthUser user, String token, String? refreshToken}) result;
     try {
       result = await AuthService.instance.loginOrThrow(email, password);
@@ -271,41 +369,55 @@ class ConnectedPrototypeEntry extends StatelessWidget {
       return false;
     }
     final user = result.user;
-    final token = result.token;
 
-    await AuthSession.instance.login(user, authToken: token, refreshToken: result.refreshToken);
+    if (selectedRole != null && user.role.key != selectedRole) {
+      if (!context.mounted) return true;
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: const Text('نوع الحساب غير مطابق'),
+          content: Text(
+              'حسابك هو حساب ${user.role.label}، وليس النوع الذي اخترته.\n\nارجع واختر النوع الصحيح للمتابعة.'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(ctx);
+                Navigator.pop(context);
+              },
+              child: const Text('ارجع'),
+            ),
+          ],
+        ),
+      );
+      return true;
+    }
+
+    await AuthSession.instance
+        .login(user, authToken: result.token, refreshToken: result.refreshToken);
 
     if (!context.mounted) return true;
     Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const RootChooserScreen()),
         (route) => false);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      rootScaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(
-          content: Text(
-              'تم تسجيل دخولك كـ "${user.role.label}". لتغيير نوع حسابك، تواصل مع الإدارة.'),
-          backgroundColor: AppColors.navy,
-        ),
-      );
-    });
     return true;
   }
 
-  /// Public registration — always creates a Student account (enforced
-  /// server-side too), matching the spec rule that a public user can never
-  /// self-register as Parent/Agent/University/Employee/Admin.
+  /// Public registration. Student, parent, and agent (partner) roles are accepted;
+  /// university and employee accounts must be created by an admin.
   static Future<bool> _attemptRegister(
     BuildContext context,
     String name,
     String email,
-    String password,
-  ) async {
+    String password, {
+    String? role,
+  }) async {
     final AuthUser user;
     final String token;
     String? refreshToken;
     try {
       final result = await AuthService.instance
-          .register(name: name, email: email, password: password);
+          .register(name: name, email: email, password: password, role: role);
       user = result.user;
       token = result.token;
       refreshToken = result.refreshToken;
@@ -313,14 +425,18 @@ class ConnectedPrototypeEntry extends StatelessWidget {
       return false; // RegisterScreen shows its generic "couldn't create account" message.
     }
 
-    await AuthSession.instance.login(user, authToken: token, refreshToken: refreshToken);
+    await AuthSession.instance
+        .login(user, authToken: token, refreshToken: refreshToken);
     if (!context.mounted) return true;
     final navigator = Navigator.of(context);
     navigator.pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const RootChooserScreen()),
         (route) => false);
-    navigator.push(MaterialPageRoute(
-        builder: (_) => const StudentRegistrationWizardScreen()));
+    // Only students get the profile setup wizard after registration.
+    if (user.role == UserRole.student) {
+      navigator.push(MaterialPageRoute(
+          builder: (_) => const StudentRegistrationWizardScreen()));
+    }
     return true;
   }
 }

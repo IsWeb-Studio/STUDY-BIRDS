@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/auth_session.dart';
 import '../../core/app_theme.dart';
@@ -166,7 +166,7 @@ class _ApplicationDocumentsScreenState
               ? const LoadingState(message: 'جاري تحميل المستندات...')
               : application == null
                   ? ErrorState(message: error ?? 'تعذر التحميل', onRetry: load)
-                  : ListView(padding: const EdgeInsets.all(16), physics: const AlwaysScrollableScrollPhysics(), children: [
+                  : ListView(padding: const EdgeInsets.all(16), physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()), children: [
                     const Text(
                         'ارفع ملفًا جديدًا أو اختر ملفًا صالحًا من مستنداتك، ثم أرفقه بهذا الطلب.',
                         style: AppTextStyles.body),

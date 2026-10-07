@@ -133,17 +133,10 @@ class _OnboardingIntroScreenState extends State<OnboardingIntroScreen> with Sing
                                           boxShadow: [BoxShadow(color: AppColors.navy.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, 10))],
                                         ),
                                         child: ClipOval(
-                                          child: Image.network(
+                                          child: AppNetworkImage(
                                             s.imageUrl,
                                             fit: BoxFit.cover,
-                                            loadingBuilder: (context, child, progress) {
-                                              if (progress == null) return child;
-                                              return Container(
-                                                color: AppColors.navy.withValues(alpha: 0.06),
-                                                child: const Center(child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.orange)),
-                                              );
-                                            },
-                                            errorBuilder: (context, error, stackTrace) => Container(
+                                            errorWidget: Container(
                                               color: AppColors.navy.withValues(alpha: 0.06),
                                               child: Icon(s.icon, size: 60, color: AppColors.navy),
                                             ),

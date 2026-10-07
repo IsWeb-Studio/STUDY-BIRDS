@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 
@@ -254,6 +255,49 @@ class AppCard extends StatelessWidget {
   }
 }
 
+/// Drop-in replacement for Image.network with persistent disk caching.
+/// Avoids re-downloading the same image on every widget rebuild.
+class AppNetworkImage extends StatelessWidget {
+  final String url;
+  final double? width;
+  final double? height;
+  final BoxFit fit;
+  final Widget? errorWidget;
+
+  const AppNetworkImage(
+    this.url, {
+    super.key,
+    this.width,
+    this.height,
+    this.fit = BoxFit.cover,
+    this.errorWidget,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CachedNetworkImage(
+      imageUrl: url,
+      width: width,
+      height: height,
+      fit: fit,
+      placeholder: (_, __) => Container(
+        color: AppColors.border,
+        width: width,
+        height: height,
+      ),
+      errorWidget: (_, __, ___) =>
+          errorWidget ??
+          Container(
+            color: AppColors.border,
+            width: width,
+            height: height,
+            child: const Icon(Icons.image_not_supported_rounded,
+                color: AppColors.textSecondary, size: 20),
+          ),
+    );
+  }
+}
+
 /// Small colored status/badge pill. Pass one of AppColors' status colors.
 class StatusBadge extends StatelessWidget {
   final String label;
@@ -342,24 +386,27 @@ class PrimaryButton extends StatelessWidget {
   }
 }
 
-/// Standard centered loading indicator with an optional message.
+/// Skeleton loading screen — replaces circular spinners with shimmer cards.
 class LoadingState extends StatelessWidget {
   final String? message;
   const LoadingState({super.key, this.message});
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const CircularProgressIndicator(
-              color: AppColors.orange, strokeWidth: 3),
-          if (message != null) ...[
-            const SizedBox(height: 14),
-            Text(message!, style: AppTextStyles.caption),
-          ],
-        ],
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: 6,
+      itemBuilder: (_, i) => Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: i == 0 && message != null
+            ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: SkeletonBox(height: 14, width: 140),
+                ),
+                const SkeletonCard(),
+              ])
+            : const SkeletonCard(),
       ),
     );
   }

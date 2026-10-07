@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../core/catalog_repository.dart';
 import '../../core/favorites_service.dart';
@@ -376,7 +376,7 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
                         onRefresh: load,
                         color: AppColors.navy,
                         child: ListView.builder(
-                            physics: const AlwaysScrollableScrollPhysics(),
+                            physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                             padding: const EdgeInsets.all(16),
                             itemCount: filtered.length,
                             itemBuilder: (_, i) => _CatalogCard(
@@ -701,9 +701,9 @@ class _CatalogCardState extends State<_CatalogCard> {
                             ? Icons.account_balance_outlined
                             : Icons.school_outlined,
                         color: AppColors.navy)
-                    : Image.network(logo,
+                    : AppNetworkImage(logo,
                         fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        errorWidget: const Icon(
                             Icons.account_balance_outlined,
                             color: AppColors.navy))),
             const SizedBox(width: 12),

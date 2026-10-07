@@ -1,4 +1,4 @@
-import 'dart:math' as math;
+﻿import 'dart:math' as math;
 import '../../core/auth_session.dart';
 import '../applications_documents_payments/program_application_screen.dart';
 import 'package:flutter/material.dart';
@@ -144,7 +144,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                       onRefresh: load,
                       color: AppColors.navy,
                       child: ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
+                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                           padding: const EdgeInsets.all(16),
                           children: [
                             if (error != null)
@@ -519,17 +519,11 @@ class _RemotePhoto extends StatelessWidget {
   final BoxFit fit;
   const _RemotePhoto({required this.url, this.fit = BoxFit.cover});
   @override
-  Widget build(BuildContext context) => Image.network(url,
+  Widget build(BuildContext context) => AppNetworkImage(
+      url,
       fit: fit,
       width: double.infinity,
-      loadingBuilder: (_, child, progress) => progress == null
-          ? child
-          : const Center(
-              child: SizedBox(
-                  width: 24,
-                  height: 24,
-                  child: CircularProgressIndicator(strokeWidth: 2))),
-      errorBuilder: (_, __, ___) => LayoutBuilder(
+      errorWidget: LayoutBuilder(
           builder: (_, constraints) => Center(
               child: constraints.maxHeight < 80
                   ? const Icon(Icons.broken_image_outlined,

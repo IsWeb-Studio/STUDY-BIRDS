@@ -91,16 +91,26 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _googleSignIn() async {
-    if (!GoogleSignInService.instance.isAvailable) {
-      Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const BrowserSignInScreen()));
-      return;
-    }
     setState(() { _googleLoading = true; _error = null; });
     try {
+      // Wait for init to complete before deciding native vs browser path.
+      await GoogleSignInService.instance.init();
+      if (!mounted) return;
+      if (!GoogleSignInService.instance.isAvailable) {
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const BrowserSignInScreen()));
+        return;
+      }
       final ok = await GoogleSignInService.instance.signIn();
       if (!mounted) return;
-      if (ok) widget.onGoogleSignInSuccess?.call();
+      if (ok) {
+        widget.onGoogleSignInSuccess?.call();
+      } else {
+        // Native sign-in was dismissed or rejected (e.g. SHA1 not registered).
+        // Fall back to the PKCE browser flow so the user can still sign in.
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const BrowserSignInScreen()));
+      }
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {

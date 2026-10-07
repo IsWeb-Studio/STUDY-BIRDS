@@ -1,7 +1,10 @@
 import 'dart:typed_data';
+import 'package:camera/camera.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../core/passport_scan.dart';
+import 'passport_scanner_screen.dart';
 import '../../core/app_theme.dart';
 import '../../core/feature_ui.dart';
 import '../../core/student_repository.dart';
@@ -13,6 +16,8 @@ enum PickSource { camera, gallery }
 Future<PickSource?> showPickSourceSheet(
   BuildContext context, {
   required String title,
+  String cameraLabel = 'فتح الكاميرا',
+  IconData cameraIcon = Icons.camera_alt_outlined,
 }) {
   return showModalBottomSheet<PickSource>(
     context: context,
@@ -39,12 +44,12 @@ Future<PickSource?> showPickSourceSheet(
           ),
           const SizedBox(height: 8),
           ListTile(
-            leading: const CircleAvatar(
+            leading: CircleAvatar(
               radius: 18,
               backgroundColor: AppColors.navy,
-              child: Icon(Icons.camera_alt_outlined, color: Colors.white, size: 18),
+              child: Icon(cameraIcon, color: Colors.white, size: 18),
             ),
-            title: const Text('فتح الكاميرا'),
+            title: Text(cameraLabel),
             onTap: () => Navigator.pop(context, PickSource.camera),
           ),
           ListTile(
@@ -103,6 +108,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   String? _error;
 
   bool _passportUploading = false;
+  bool _passportVerifying = false;
   Map<String, dynamic>? _passportDoc;
 
   @override
@@ -272,17 +278,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _pickAndUploadPassport() async {
-    final choice = await showPickSourceSheet(context, title: 'رفع جواز السفر');
+    final choice = await showPickSourceSheet(
+      context,
+      title: 'رفع جواز السفر',
+      cameraLabel: 'مسح ضوئي للجواز',
+      cameraIcon: Icons.document_scanner_rounded,
+    );
     if (choice == null || !mounted) return;
 
     Uint8List? bytes;
     String? fileName;
 
     if (choice == PickSource.camera) {
-      final img = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 85);
-      if (img == null) return;
-      bytes = await img.readAsBytes();
-      fileName = img.name;
+      final xFile = await Navigator.of(context).push<XFile>(
+        MaterialPageRoute(builder: (_) => const PassportScannerScreen()),
+      );
+      if (xFile == null || !mounted) return;
+      bytes = await xFile.readAsBytes();
+      fileName = 'passport_${DateTime.now().millisecondsSinceEpoch}.jpg';
     } else {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -305,6 +318,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
+    // OCR verification via native Android/iOS ML Kit scanner.
+    setState(() => _passportVerifying = true);
+    try {
+      await PassportScan.validate(bytes);
+    } on PassportScanException catch (e) {
+      if (!mounted) return;
+      setState(() => _passportVerifying = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.message), duration: const Duration(seconds: 5)),
+      );
+      return;
+    } catch (_) {
+      // Unexpected error — allow upload to proceed.
+    } finally {
+      if (mounted) setState(() => _passportVerifying = false);
+    }
+
+    if (!mounted) return;
     setState(() => _passportUploading = true);
     try {
       final doc = await StudentRepository.instance.uploadDocument(
@@ -452,6 +483,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             const SizedBox(height: 12),
                             _PassportUploadTile(
                               doc: _passportDoc,
+                              verifying: _passportVerifying,
                               uploading: _passportUploading,
                               onUpload: _pickAndUploadPassport,
                             ),
@@ -500,20 +532,37 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
 class _PassportUploadTile extends StatelessWidget {
   final Map<String, dynamic>? doc;
+  final bool verifying;
   final bool uploading;
   final VoidCallback onUpload;
   const _PassportUploadTile({
     required this.doc,
+    required this.verifying,
     required this.uploading,
     required this.onUpload,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (verifying) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 16),
+        child: Column(children: [
+          CircularProgressIndicator(color: AppColors.orange),
+          SizedBox(height: 12),
+          Text('جارٍ المسح الضوئي والتحقق من الجواز...', textAlign: TextAlign.center,
+              style: TextStyle(color: AppColors.textSecondary)),
+        ]),
+      );
+    }
     if (uploading) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 16),
-        child: Center(child: CircularProgressIndicator()),
+        child: Column(children: [
+          CircularProgressIndicator(),
+          SizedBox(height: 12),
+          Text('جارٍ رفع الجواز...', textAlign: TextAlign.center),
+        ]),
       );
     }
     final hasDoc = doc != null;
@@ -541,7 +590,7 @@ class _PassportUploadTile extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: onUpload,
           icon: const Icon(Icons.upload_file_outlined, size: 18),
-          label: Text(hasDoc ? 'استبدال صورة الجواز' : 'رفع صورة الجواز'),
+          label: Text(hasDoc ? 'فحص ورفع جواز بديل' : 'مسح وفحص جواز السفر'),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size(double.infinity, 46),
             side: const BorderSide(color: AppColors.navy),

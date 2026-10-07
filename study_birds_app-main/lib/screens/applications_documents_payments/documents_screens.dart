@@ -1,5 +1,6 @@
 ﻿import 'dart:async';
 import 'package:study_birds/core/api_client.dart';
+import '../../core/passport_scan.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/document_access.dart';
 import 'package:flutter/material.dart';
@@ -119,6 +120,9 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
   final sizeStr =
       sizeKb >= 1024 ? '${(sizeKb / 1024).toStringAsFixed(1)} MB' : '$sizeKb KB';
   final progressNotifier = ValueNotifier<double>(0.0);
+  final stageNotifier = ValueNotifier<String>(type == 'passport' && translationOf == null
+      ? 'جارٍ مسح الجواز والتحقق منه على جهازك...'
+      : 'جارٍ رفع المستند...');
   final cancellation = UploadCancellation();
 
   showDialog(
@@ -130,7 +134,8 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('جاري رفع المستند...', style: AppTextStyles.cardTitle),
+          ValueListenableBuilder<String>(valueListenable: stageNotifier,
+            builder: (_, stage, __) => Text(stage, style: AppTextStyles.cardTitle)),
           const SizedBox(height: 10),
           Text(file.name,
               style: AppTextStyles.caption, overflow: TextOverflow.ellipsis),
@@ -150,7 +155,7 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  value >= 1 ? 'جارٍ حفظ المستند...' : value > 0 ? '${(value * 100).round()}%' : 'جاري الاتصال...',
+                  value >= 1 ? 'جارٍ حفظ المستند...' : value > 0 ? '${(value * 100).round()}%' : 'يرجى الانتظار...',
                   style: AppTextStyles.caption,
                 ),
               ],
@@ -169,6 +174,7 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
         replaces: replaces,
         translationOf: translationOf,
         cancellation: cancellation,
+        onPassportValidated: () => stageNotifier.value = 'تم فحص الجواز، جارٍ الرفع...',
         onProgress: (p) => progressNotifier.value = p);
     if (context.mounted) {
       Navigator.of(context, rootNavigator: true).pop();
@@ -181,6 +187,14 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
     if (!context.mounted) return false;
     Navigator.of(context, rootNavigator: true).pop();
     if (error is ApiException && error.statusCode == 499) return false;
+    if (error is PassportScanException) {
+      await showDialog<void>(context: context, builder: (ctx) => AlertDialog(
+        title: const Text('اختر صورة واضحة لجواز السفر'),
+        content: Text(error.message),
+        actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('حسنًا'))],
+      ));
+      return false;
+    }
     final retry = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -208,7 +222,10 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
     return false;
   } finally {
     // The dialog may still be animating out, so dispose after the frame.
-    WidgetsBinding.instance.addPostFrameCallback((_) => progressNotifier.dispose());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      progressNotifier.dispose();
+      stageNotifier.dispose();
+    });
   }
 }
 
@@ -230,11 +247,11 @@ class _DocThumb extends StatelessWidget {
     if (isImg && thumbUrl != null && thumbUrl.isNotEmpty) {
       return ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: Image.network(thumbUrl,
+          child: AppNetworkImage(thumbUrl,
               width: 40,
               height: 40,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
+              errorWidget: Container(
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
@@ -554,11 +571,11 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   ? const Center(
                       child: CircularProgressIndicator(color: AppColors.navy))
                   : _previewUri != null
-                      ? Image.network(
+                      ? AppNetworkImage(
                           _previewUri.toString(),
                           fit: BoxFit.cover,
                           width: double.infinity,
-                          errorBuilder: (_, __, ___) => const Center(
+                          errorWidget: const Center(
                               child: Icon(Icons.description_outlined,
                                   size: 48, color: AppColors.textSecondary)),
                         )

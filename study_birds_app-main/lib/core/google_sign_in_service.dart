@@ -12,10 +12,17 @@ class GoogleSignInService {
   static final GoogleSignInService instance = GoogleSignInService._();
 
   bool _initialized = false;
+  Future<void>? _initFuture;
 
   Future<void> init() async {
     if (_initialized) return;
     if (AppConfig.googleWebClientId.isEmpty) return;
+    // Deduplicate concurrent init calls — only one initialize() runs at a time.
+    _initFuture ??= _runInit().whenComplete(() => _initFuture = null);
+    await _initFuture!;
+  }
+
+  Future<void> _runInit() async {
     try {
       await GoogleSignIn.instance.initialize(
         serverClientId: AppConfig.googleWebClientId,
@@ -29,6 +36,7 @@ class GoogleSignInService {
   /// Returns true on success. Throws [ApiException] with a user-readable
   /// Arabic message on failure, or returns false if the user cancelled.
   Future<bool> signIn() async {
+    if (!_initialized) await init();
     if (!_initialized) {
       throw ApiException(503, 'تسجيل الدخول عبر Google غير مهيأ بعد');
     }

@@ -104,13 +104,12 @@ class _CountriesExplorerScreenState extends State<CountriesExplorerScreen> {
                                               ?.isNotEmpty ==
                                           true
                                       ? ClipOval(
-                                          child: Image.network(
+                                          child: AppNetworkImage(
                                             c['heroImage'] as String,
                                             fit: BoxFit.cover,
                                             width: 52,
                                             height: 52,
-                                            errorBuilder: (_, __, ___) =>
-                                                const Icon(Icons.public_rounded,
+                                            errorWidget: const Icon(Icons.public_rounded,
                                                     color: AppColors.navy,
                                                     size: 24),
                                           ),
@@ -205,7 +204,7 @@ class _CountryDetailScreenState extends State<CountryDetailScreen> {
                     padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
             : ListView(
                 padding: const EdgeInsets.all(16),
-                physics: const AlwaysScrollableScrollPhysics(),
+                physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                 children: [
                   Container(
                     height: 110,
@@ -215,11 +214,11 @@ class _CountryDetailScreenState extends State<CountryDetailScreen> {
                     child: heroImage != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(AppRadius.card),
-                            child: Image.network(
+                            child: AppNetworkImage(
                               heroImage,
                               fit: BoxFit.cover,
                               width: double.infinity,
-                              errorBuilder: (_, __, ___) => const Center(
+                              errorWidget: const Center(
                                   child: Icon(Icons.flag_rounded,
                                       size: 40, color: AppColors.navy)),
                             ),

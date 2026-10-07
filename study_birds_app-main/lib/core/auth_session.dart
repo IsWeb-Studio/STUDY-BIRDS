@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'analytics_service.dart';
-import 'device_lock.dart';
 import 'push_notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -107,6 +106,8 @@ class AuthUser {
   final String? employeeRole; // e.g. 'admission', 'finance', 'super_admin'
   final Set<String> permissions;
   final String? linkedUniversityId;
+  final String? avatar;
+  final String? verifiedPhone;
 
   const AuthUser({
     required this.id,
@@ -116,6 +117,8 @@ class AuthUser {
     this.employeeRole,
     this.permissions = const {},
     this.linkedUniversityId,
+    this.avatar,
+    this.verifiedPhone,
   });
 
   /// Parses the `user` object exactly as returned by the backend's
@@ -142,6 +145,8 @@ class AuthUser {
       linkedUniversityId: linked is String
           ? linked
           : (linked is Map ? linked['_id'] as String? : null),
+      avatar: json['avatar'] as String?,
+      verifiedPhone: json['verifiedPhone'] as String?,
     );
   }
 
@@ -153,6 +158,8 @@ class AuthUser {
         if (employeeRole != null) 'employeeRole': employeeRole,
         'permissions': permissions.toList(),
         if (linkedUniversityId != null) 'linkedUniversity': linkedUniversityId,
+        if (avatar != null) 'avatar': avatar,
+        if (verifiedPhone != null) 'verifiedPhone': verifiedPhone,
       };
 }
 
@@ -189,18 +196,24 @@ class AuthService {
     return (user: user, token: token, refreshToken: data['refreshToken'] as String?);
   }
 
-  /// Public registration — the backend always forces role="student" here,
-  /// matching the spec rule that nobody can self-register as
-  /// parent/agent/university/admin.
+  /// Public registration. Converts the app-side role key (e.g. 'agent') to
+  /// the server wire value (e.g. 'partner') before posting.
   Future<({AuthUser user, String token, String? refreshToken})> register({
     required String name,
     required String email,
     required String password,
+    String? role,
   }) async {
+    // The app uses enum names ('agent', 'employee') but the server stores wire
+    // values ('partner', 'admin'). Convert before posting.
+    final wireRole = role != null
+        ? (UserRoleX.fromKey(role)?.wireValue ?? role)
+        : null;
     final data = await ApiClient.instance.post('/auth/register', body: {
       'name': name,
       'email': email.trim(),
       'password': password,
+      if (wireRole != null) 'role': wireRole,
     });
     final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
     final token = data['token'] as String;
@@ -355,7 +368,9 @@ class AuthSession extends ChangeNotifier {
             final age = savedAt == null ? null : DateTime.now().difference(savedAt);
             final user = AuthUser.fromJson(Map<String, dynamic>.from(cached['user'] as Map));
             // Staff permissions must be verified online before opening tools.
-            if (user.role == UserRole.student && age != null && !age.isNegative && age < const Duration(days: 7)) {
+            // Parents (read-only view) are safe to restore offline like students.
+            final offlineSafe = user.role == UserRole.student || user.role == UserRole.parent;
+            if (offlineSafe && age != null && !age.isNegative && age < const Duration(days: 7)) {
               currentUser = user;
               token = storedToken;
             }
@@ -367,8 +382,47 @@ class AuthSession extends ChangeNotifier {
       }
     }
 
+    final restoredUser = currentUser;
+    if (restoredUser != null) {
+      PushNotificationService.instance.setUser(restoredUser.id);
+    }
     _restored = true;
     notifyListeners();
+  }
+
+  /// Instantly marks verifiedPhone on the current user without a network round-trip.
+  /// Call this immediately after a successful phone verification so the gate
+  /// disappears without waiting for /auth/me.
+  void patchVerifiedPhone(String phone) {
+    final u = currentUser;
+    if (u == null) return;
+    currentUser = AuthUser(
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      employeeRole: u.employeeRole,
+      permissions: u.permissions,
+      linkedUniversityId: u.linkedUniversityId,
+      avatar: u.avatar,
+      verifiedPhone: phone,
+    );
+    notifyListeners();
+    refreshCurrentUser();
+  }
+
+  /// Fetches fresh user data from /auth/me and updates the session in-place.
+  Future<void> refreshCurrentUser() async {
+    final t = token;
+    if (t == null) return;
+    try {
+      final user = await AuthService.instance.fetchCurrentUser(t);
+      if (user != null) {
+        currentUser = user;
+        await _cacheUser(user);
+        notifyListeners();
+      }
+    } catch (_) {}
   }
 
   Future<void> login(AuthUser user, {String? authToken, String? refreshToken}) async {
@@ -401,6 +455,7 @@ class AuthSession extends ChangeNotifier {
     final owner = currentUser?.id ?? '';
     currentUser = null;
     token = null;
+    ApiClient.instance.clearCache();
     notifyListeners();
     const storage = FlutterSecureStorage();
     final refresh = await storage.read(key: 'refresh_token');
@@ -417,7 +472,6 @@ class AuthSession extends ChangeNotifier {
     await storage.delete(key: 'active_session_token');
     await storage.delete(key: 'refresh_token');
     await storage.delete(key: 'cached_user');
-    await DeviceLock.instance.clear();
     PushNotificationService.instance.clearUser();
     AnalyticsService.instance.reset();
     notifyListeners();

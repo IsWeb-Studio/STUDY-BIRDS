@@ -1,5 +1,6 @@
 import 'secure_data_cache.dart';
 import 'api_client.dart';
+import 'passport_scan.dart';
 import 'auth_session.dart';
 
 /// One stage in the backend's authoritative journey progress
@@ -69,10 +70,15 @@ class DashboardOverview {
   /// servers, in which case the home screen keeps its previous layout.
   final Map<String, dynamic>? home;
 
+  /// Study Birds recognitions / accreditations shown on the home slider.
+  /// Each entry: { _id, title, image, link }
+  final List<Map<String, dynamic>> recognitions;
+
   const DashboardOverview({
     this.home,
     this.nextAction,
     this.journeys,
+    this.recognitions = const [],
     required this.profile,
     required this.currentStage,
     required this.stages,
@@ -107,6 +113,10 @@ class DashboardOverview {
       latestNotification: json['latestNotification'] as Map<String, dynamic>?,
       recentApplications: json['recentApplications'] as List<dynamic>? ?? [],
       recentDocuments: json['recentDocuments'] as List<dynamic>? ?? [],
+      recognitions: (json['recognitions'] as List<dynamic>? ?? [])
+          .whereType<Map>()
+          .map((e) => Map<String, dynamic>.from(e))
+          .toList(),
     );
   }
 }
@@ -229,7 +239,15 @@ class StudentRepository {
     String? translationOf,
     void Function(double)? onProgress,
     UploadCancellation? cancellation,
+    void Function()? onPassportValidated,
   }) async {
+    if (type == 'passport' && translationOf == null) {
+      await PassportScan.validate(fileBytes);
+      if (cancellation?.cancelled == true) {
+        throw const ApiException(499, 'Upload cancelled');
+      }
+      onPassportValidated?.call();
+    }
     final data = await ApiClient.instance.postMultipart(
       '/students/documents',
       fileBytes: fileBytes,

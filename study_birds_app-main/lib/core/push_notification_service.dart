@@ -1,8 +1,10 @@
 import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:flutter/foundation.dart';
 
 /// Routes a notification tap to the correct screen name.
 /// The server sends `screen` in the notification data to tell us where to go.
-typedef PushTapHandler = void Function(String screen, Map<String, dynamic> data);
+typedef PushTapHandler = void Function(
+    String screen, Map<String, dynamic> data);
 
 class PushNotificationService {
   PushNotificationService._();
@@ -15,20 +17,23 @@ class PushNotificationService {
   Map<String, dynamic>? _pendingTap;
 
   /// Call once in main() before runApp.
+  /// Does NOT prompt for permission — call [requestPermission] from within
+  /// the app (after runApp) so the activity/window is already visible.
   Future<void> init() async {
+    if (_ready || !supported) return;
     OneSignal.initialize(_appId);
     _ready = true;
 
-    // Ask for permission (Android 13+ and iOS).
-    await OneSignal.Notifications.requestPermission(true);
-
     // Handle tap when app is in background / closed.
     OneSignal.Notifications.addClickListener((event) {
-      final data = Map<String, dynamic>.from(
-          event.notification.additionalData ?? {});
+      final data =
+          Map<String, dynamic>.from(event.notification.additionalData ?? {});
       final screen = data['screen']?.toString() ?? '';
-      if (_tapHandler == null) { _pendingTap = data; }
-      else { _tapHandler!(screen, data); }
+      if (_tapHandler == null) {
+        _pendingTap = data;
+      } else {
+        _tapHandler!(screen, data);
+      }
     });
 
     // Foreground: display the system banner so the user sees it even while
@@ -36,6 +41,22 @@ class PushNotificationService {
     OneSignal.Notifications.addForegroundWillDisplayListener((event) {
       event.notification.display();
     });
+  }
+
+  bool get supported =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS);
+
+  /// true if the OS has already granted push permission.
+  bool get permissionGranted => _ready && OneSignal.Notifications.permission;
+
+  /// Triggers the OS permission dialog.
+  /// Show your own rationale first, then call this on user acceptance.
+  Future<void> requestPermission() async {
+    if (!_ready) return;
+    final granted = await OneSignal.Notifications.requestPermission(true);
+    if (granted) await OneSignal.User.pushSubscription.optIn();
   }
 
   /// Link this device to the logged-in user.

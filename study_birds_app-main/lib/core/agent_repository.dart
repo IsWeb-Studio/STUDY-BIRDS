@@ -32,6 +32,8 @@ class AgentRepository {
     String? desiredUniversity,
     String? desiredProgram,
     String? notes,
+    String? country,
+    String? applicationStage,
   }) async {
     final data = await ApiClient.instance.post('/partners/students', token: _token, body: {
       'name': name,
@@ -42,6 +44,8 @@ class AgentRepository {
       if (desiredUniversity != null) 'desiredUniversity': desiredUniversity,
       if (desiredProgram != null) 'desiredProgram': desiredProgram,
       if (notes != null) 'notes': notes,
+      if (country != null && country.isNotEmpty) 'country': country,
+      if (applicationStage != null) 'applicationStage': applicationStage,
     });
     return data as Map<String, dynamic>;
   }
@@ -80,5 +84,14 @@ class AgentRepository {
   Future<Map<String, dynamic>> getReferralSummary() async {
     final data = await ApiClient.instance.get('/partners/referral', token: _token);
     return data as Map<String, dynamic>;
+  }
+
+  Future<List<dynamic>> getNotifications() async {
+    final data = await ApiClient.instance.get('/partners/notifications', token: _token);
+    return data as List<dynamic>;
+  }
+
+  Future<void> markNotificationRead(String notificationId) async {
+    await ApiClient.instance.patch('/partners/notifications/$notificationId/read', token: _token, body: {});
   }
 }

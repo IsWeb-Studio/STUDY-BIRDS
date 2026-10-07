@@ -137,8 +137,8 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
                               padding: const EdgeInsets.only(bottom: 8),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
-                                child: Image.network(controllers[f.key]!.text, height: 90, fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => const SizedBox(height: 90, child: Center(child: Icon(Icons.broken_image_outlined)))),
+                                child: AppNetworkImage(controllers[f.key]!.text, height: 90, fit: BoxFit.cover,
+                                    errorWidget: const SizedBox(height: 90, child: Center(child: Icon(Icons.broken_image_outlined)))),
                               ),
                             ),
                           OutlinedButton.icon(

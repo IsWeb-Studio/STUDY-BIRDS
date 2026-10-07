@@ -251,7 +251,7 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen> {
       onRefresh: load,
       color: AppColors.navy,
       child: ListView.separated(
-        physics: const AlwaysScrollableScrollPhysics(),
+        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         itemCount: posts.length,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -728,7 +728,7 @@ class _CommunityThreadScreenState extends State<CommunityThreadScreen> {
                         onRefresh: load,
                         color: AppColors.navy,
                         child: ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
+                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                           padding: const EdgeInsets.all(16),
                           children: [
                             Text('${post!['title'] ?? ''}',

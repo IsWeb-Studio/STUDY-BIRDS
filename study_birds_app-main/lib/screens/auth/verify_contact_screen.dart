@@ -77,9 +77,7 @@ class _VerifyContactScreenState extends State<VerifyContactScreen> {
                 icon: verified
                     ? Icons.mark_email_read_outlined
                     : Icons.mail_outline),
-            if (!widget.isEmail)
-              const InlineNotice('تأكيد الهاتف غير متاح حاليًا.')
-            else ...[
+            ...[
               if (error != null) InlineNotice(error!, error: true),
               if (!verified)
                 FeaturePanel(

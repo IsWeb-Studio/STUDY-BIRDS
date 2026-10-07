@@ -69,7 +69,7 @@ class JourneyRequirementsView extends StatelessWidget {
             onRefresh: onRefresh,
             color: AppColors.navy,
             child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
+              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
                 if (journeys.isEmpty)

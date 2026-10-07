@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../core/api_client.dart';
 import '../../core/auth_session.dart';
 import '../../core/app_theme.dart';
@@ -64,7 +64,7 @@ class _FollowUpRemindersState extends State<FollowUpRemindersScreen> {
                   onRefresh: load,
                   color: AppColors.navy,
                   child: ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
+                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                       padding: const EdgeInsets.all(16),
                       children: [
                         Text(
