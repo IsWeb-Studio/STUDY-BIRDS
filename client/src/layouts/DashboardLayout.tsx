@@ -26,8 +26,8 @@
   PanelLeftClose,
   PanelLeftOpen,
 } from "lucide-react";
-import { useState } from "react";
-import { Outlet } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Outlet, useLocation } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
 import { DashboardSidebar } from "../components/dashboard/DashboardSidebar";
 import { Seo } from "../components/seo/Seo";
@@ -39,10 +39,20 @@ import { employeeSections } from "../utils/employeeAccess";
 
 export const DashboardLayout = () => {
   const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (window.matchMedia("(max-width: 1023px)").matches) return false;
     try { return localStorage.getItem("dashboard-sidebar") !== "closed"; } catch { return true; }
   });
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const handleResize = () => {
+      if (!desktop.matches) setSidebarOpen(false);
+    };
+    desktop.addEventListener("change", handleResize);
+    return () => desktop.removeEventListener("change", handleResize);
+  }, []);
   const { user } = useAuth();
   const { t, language } = useLanguage();
+  const location = useLocation();
   const isPartner = user?.role === "partner";
   const isParent = user?.role === "parent";
   const isUniversity = user?.role === "university";
@@ -171,6 +181,20 @@ export const DashboardLayout = () => {
     return link ? [{ ...link, label: language === "ar" ? section.ar : section.en, description: "" }] : [];
   });
   const sidebarLinks = user?.role === "employee" ? employeeLinks : user?.role === "admin" ? adminLinks : isPartner ? partnerLinks : isParent ? parentLinks : isUniversity ? universityLinks : studentLinks;
+  const navigationGroups = [
+    { ar: "نظرة عامة", en: "Overview", pages: ["admin", "student", "dashboard", "parent", "university"] },
+    { ar: "الطلاب والقبول", en: "Students & admissions", pages: ["students", "applications", "student-documents", "student-financials", "student-arrivals", "student-orientation-results", "student-favorites", "student-notifications", "documents", "financials", "arrival-services", "favorites", "orientation-test", "partner-students"] },
+    { ar: "الجامعات والبرامج", en: "Universities & programs", pages: ["universities", "programs", "recognitions"] },
+    { ar: "الخدمات والتواصل", en: "Services & communication", pages: ["consultations", "visa", "accommodation", "wallet", "community", "support-tickets", "tickets", "support", "service-requests", "notifications"] },
+    { ar: "المحتوى والفعاليات", en: "Content & events", pages: ["content", "testimonials", "services", "faqs", "events", "our-story", "exhibitions", "knowledge-base", "resources"] },
+    { ar: "الوكلاء والشراكات", en: "Agents & partnerships", pages: ["agency-requests", "agents", "marketing-assets", "verification-queue", "payout-requests", "referral", "marketing-toolkit", "verification", "become-agent"] },
+    { ar: "الحسابات والإعدادات", en: "Accounts & settings", pages: ["users", "employees", "parent-links", "university-accounts", "site-settings", "settings", "profile", "activity-log"] },
+  ];
+  const groupedSidebarLinks = navigationGroups.flatMap((group) => sidebarLinks
+    .filter((link) => group.pages.includes(link.href.split("/").filter(Boolean).slice(-1)[0] || ""))
+    .map((link) => ({ ...link, group: language === "ar" ? group.ar : group.en })));
+  const navigationLinks = [...groupedSidebarLinks, ...sidebarLinks.filter((link) => !groupedSidebarLinks.some((item) => item.href === link.href))];
+  const activeSection = sidebarLinks.filter((link) => location.pathname === link.href || location.pathname.startsWith(`${link.href}/`)).sort((a, b) => b.href.length - a.href.length)[0];
 
   const sidebarSectionLabel =
     user?.role === "admin"
@@ -228,27 +252,31 @@ export const DashboardLayout = () => {
             : seoText(language, "Private student workspace for Study Birds.", "مساحة خاصة للطالب داخل Study Birds.");
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top,_#d8e1f1_0%,_#f6f8fc_40%,_#f8fafc_100%)]">
+    <div className="dashboard-workspace min-h-screen bg-slate-50">
       <Seo title={user?.role === "employee" ? seoText(language, "Employee Dashboard", "لوحة الموظف") : seoTitle} description={seoDescription} noIndex />
       <Navbar />
       <main className="mx-auto w-full max-w-[1800px] px-4 py-6 sm:px-6 lg:px-8">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2 text-xs text-slate-500"><LayoutDashboard className="h-4 w-4 shrink-0" /><span>{language === "ar" ? "لوحة التحكم" : "Dashboard"}</span>{activeSection && <><span aria-hidden="true">/</span><span className="font-semibold text-slate-800">{activeSection.label}</span></>}</div>
         <button type="button" aria-expanded={sidebarOpen} aria-controls="dashboard-navigation" onClick={() => {
           setSidebarOpen(!sidebarOpen);
           try { localStorage.setItem("dashboard-sidebar", sidebarOpen ? "closed" : "open"); } catch { /* Storage may be unavailable. */ }
-        }} className="mb-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500">
+        }} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500">
           {sidebarOpen ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
           {language === "ar" ? (sidebarOpen ? "إخفاء القائمة الجانبية" : "إظهار القائمة الجانبية") : (sidebarOpen ? "Hide sidebar" : "Show sidebar")}
         </button>
+        </div>
         <div className={`grid items-start gap-6 ${sidebarOpen ? "lg:grid-cols-[260px_minmax(0,1fr)]" : "grid-cols-1"}`}>
-        {sidebarOpen && <div id="dashboard-navigation" className="min-w-0 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
+        <div id="dashboard-navigation" hidden={!sidebarOpen} className="dashboard-navigation max-h-[65vh] min-w-0 overflow-y-auto lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]">
         <DashboardSidebar
-          links={sidebarLinks}
+          links={navigationLinks}
+          onNavigate={() => { if (window.matchMedia("(max-width: 1023px)").matches) setSidebarOpen(false); }}
           sectionLabel={user?.role === "employee" ? (language === "ar" ? "أقسام العمل" : "Your sections") : sidebarSectionLabel}
           title={user?.role === "employee" ? (language === "ar" ? "لوحة الموظف" : "Employee dashboard") : sidebarTitle}
           subtitle={user?.role === "employee" ? (language === "ar" ? "الأقسام المسموح لك بإدارتها." : "The sections you are allowed to manage.") : sidebarSubtitle}
         />
-        </div>}
-        <div className="min-w-0"><Outlet /></div>
+        </div>
+        <div className="dashboard-content min-w-0"><Outlet /></div>
         </div>
       </main>
     </div>

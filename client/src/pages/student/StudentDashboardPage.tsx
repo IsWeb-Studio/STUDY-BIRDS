@@ -70,7 +70,7 @@ export const StudentDashboardPage = () => {
   return (
     <div className="space-y-6">
       <section className="panel overflow-hidden p-0">
-        <div className="bg-slate-950 px-6 py-7 text-white sm:px-8">
+        <div className="dashboard-page-hero bg-white px-6 py-7 text-slate-900 sm:px-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="max-w-3xl">
               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
