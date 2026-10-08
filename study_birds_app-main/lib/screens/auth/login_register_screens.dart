@@ -1,5 +1,6 @@
 import 'dart:io' show Platform;
 import 'browser_sign_in_screen.dart';
+import 'email_challenge_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/config/app_theme.dart';
@@ -111,22 +112,25 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _googleSignIn() async {
     setState(() { _googleLoading = true; _error = null; });
     try {
-      await GoogleSignInService.instance.init();
-      if (!mounted) return;
-      if (!GoogleSignInService.instance.isAvailable) {
-        setState(() => _error = 'تسجيل الدخول عبر Google غير متاح على هذا الجهاز حالياً');
-        return;
-      }
       final ok = await GoogleSignInService.instance.signIn();
       if (!mounted) return;
-      if (ok) {
-        if (mounted) widget.onGoogleSignInSuccess?.call();
-      }
-      // ok == false means user canceled — stay on login screen silently
+      if (ok) widget.onGoogleSignInSuccess?.call();
+      // ok == false means user canceled — stay silently
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
-    } catch (_) {
-      if (mounted) setState(() => _error = 'حدث خطأ أثناء تسجيل الدخول عبر Google');
+      if (!mounted) return;
+      if (e.statusCode == 428) {
+        // 2FA required — ask for email code then complete sign-in
+        setState(() => _googleLoading = false);
+        final confirmed = await Navigator.of(context).push<bool>(MaterialPageRoute(
+            builder: (_) => EmailChallengeScreen(confirm: (code) async {
+              await GoogleSignInService.instance.confirmTwoFactor(code);
+            })));
+        if (confirmed == true && mounted) widget.onGoogleSignInSuccess?.call();
+        return;
+      }
+      setState(() => _error = e.message);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'حدث خطأ أثناء تسجيل الدخول عبر Google\n($e)');
     } finally {
       if (mounted) setState(() => _googleLoading = false);
     }
@@ -226,8 +230,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     label: _loading ? 'جاري الدخول...' : 'تسجيل الدخول',
                     onPressed: _loading ? null : _submit),
                 const SizedBox(height: 16),
-                Row(
-                  children: const [
+                const Row(
+                  children: [
                     Expanded(child: Divider()),
                     Padding(
                       padding: EdgeInsets.symmetric(horizontal: 10),
@@ -333,22 +337,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Future<void> _googleSignIn() async {
     setState(() { _googleLoading = true; _error = null; });
     try {
-      await GoogleSignInService.instance.init();
-      if (!mounted) return;
-      if (!GoogleSignInService.instance.isAvailable) {
-        setState(() => _error = 'تسجيل الدخول عبر Google غير متاح على هذا الجهاز حالياً');
-        return;
-      }
       final ok = await GoogleSignInService.instance.signIn();
       if (!mounted) return;
-      if (ok) {
-        if (mounted) widget.onGoogleSignInSuccess?.call();
-      }
-      // ok == false means user canceled — stay on screen silently
+      if (ok) widget.onGoogleSignInSuccess?.call();
+      // ok == false means user canceled — stay silently
     } on ApiException catch (e) {
-      if (mounted) setState(() => _error = e.message);
-    } catch (_) {
-      if (mounted) setState(() => _error = 'حدث خطأ أثناء تسجيل الدخول عبر Google');
+      if (!mounted) return;
+      if (e.statusCode == 428) {
+        setState(() => _googleLoading = false);
+        final confirmed = await Navigator.of(context).push<bool>(MaterialPageRoute(
+            builder: (_) => EmailChallengeScreen(confirm: (code) async {
+              await GoogleSignInService.instance.confirmTwoFactor(code);
+            })));
+        if (confirmed == true && mounted) widget.onGoogleSignInSuccess?.call();
+        return;
+      }
+      setState(() => _error = e.message);
+    } catch (e) {
+      if (mounted) setState(() => _error = 'حدث خطأ أثناء تسجيل الدخول عبر Google\n($e)');
     } finally {
       if (mounted) setState(() => _googleLoading = false);
     }
