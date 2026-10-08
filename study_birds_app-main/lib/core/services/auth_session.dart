@@ -109,6 +109,8 @@ class AuthUser {
   final String? avatar;
   final String? verifiedPhone;
   final bool emailVerified;
+  final String? authProvider;
+  final bool hasPassword;
 
   const AuthUser({
     required this.id,
@@ -121,6 +123,8 @@ class AuthUser {
     this.avatar,
     this.verifiedPhone,
     this.emailVerified = false,
+    this.authProvider,
+    this.hasPassword = true,
   });
 
   /// Parses the `user` object exactly as returned by the backend's
@@ -150,6 +154,8 @@ class AuthUser {
       avatar: json['avatar'] as String?,
       verifiedPhone: json['verifiedPhone'] as String?,
       emailVerified: json['emailVerified'] == true,
+      authProvider: json['authProvider'] as String?,
+      hasPassword: json['hasPassword'] != false,
     );
   }
 
@@ -164,6 +170,8 @@ class AuthUser {
         if (avatar != null) 'avatar': avatar,
         if (verifiedPhone != null) 'verifiedPhone': verifiedPhone,
         'emailVerified': emailVerified,
+        'hasPassword': hasPassword,
+        if (authProvider != null) 'authProvider': authProvider,
       };
 }
 
@@ -399,39 +407,41 @@ class AuthSession extends ChangeNotifier {
     final u = currentUser;
     if (u == null) return;
     currentUser = AuthUser(
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      role: u.role,
-      employeeRole: u.employeeRole,
-      permissions: u.permissions,
-      linkedUniversityId: u.linkedUniversityId,
-      avatar: u.avatar,
-      verifiedPhone: phone,
-      emailVerified: u.emailVerified,
+      id: u.id, name: u.name, email: u.email, role: u.role,
+      employeeRole: u.employeeRole, permissions: u.permissions,
+      linkedUniversityId: u.linkedUniversityId, avatar: u.avatar,
+      verifiedPhone: phone, emailVerified: u.emailVerified,
+      authProvider: u.authProvider, hasPassword: u.hasPassword,
     );
     notifyListeners();
     refreshCurrentUser();
   }
 
-  /// Instantly marks emailVerified=true on the current user without a network round-trip.
   void patchEmailVerified() {
     final u = currentUser;
     if (u == null) return;
     currentUser = AuthUser(
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      role: u.role,
-      employeeRole: u.employeeRole,
-      permissions: u.permissions,
-      linkedUniversityId: u.linkedUniversityId,
-      avatar: u.avatar,
-      verifiedPhone: u.verifiedPhone,
-      emailVerified: true,
+      id: u.id, name: u.name, email: u.email, role: u.role,
+      employeeRole: u.employeeRole, permissions: u.permissions,
+      linkedUniversityId: u.linkedUniversityId, avatar: u.avatar,
+      verifiedPhone: u.verifiedPhone, emailVerified: true,
+      authProvider: u.authProvider, hasPassword: u.hasPassword,
     );
     notifyListeners();
     refreshCurrentUser();
+  }
+
+  void patchHasPassword() {
+    final u = currentUser;
+    if (u == null) return;
+    currentUser = AuthUser(
+      id: u.id, name: u.name, email: u.email, role: u.role,
+      employeeRole: u.employeeRole, permissions: u.permissions,
+      linkedUniversityId: u.linkedUniversityId, avatar: u.avatar,
+      verifiedPhone: u.verifiedPhone, emailVerified: u.emailVerified,
+      authProvider: u.authProvider, hasPassword: true,
+    );
+    notifyListeners();
   }
 
   /// Fetches fresh user data from /auth/me and updates the session in-place.

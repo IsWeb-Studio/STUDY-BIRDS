@@ -111,7 +111,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _googleSignIn() async {
     setState(() { _googleLoading = true; _error = null; });
     try {
-      // Wait for init to complete before deciding native vs browser path.
       await GoogleSignInService.instance.init();
       if (!mounted) return;
       if (!GoogleSignInService.instance.isAvailable) {
@@ -122,10 +121,9 @@ class _LoginScreenState extends State<LoginScreen> {
       final ok = await GoogleSignInService.instance.signIn();
       if (!mounted) return;
       if (ok) {
-        widget.onGoogleSignInSuccess?.call();
+        await _maybeSetPassword();
+        if (mounted) widget.onGoogleSignInSuccess?.call();
       } else {
-        // Native sign-in was dismissed or rejected (e.g. SHA1 not registered).
-        // Fall back to the PKCE browser flow so the user can still sign in.
         Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const BrowserSignInScreen()));
       }
@@ -136,6 +134,18 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _googleLoading = false);
     }
+  }
+
+  Future<void> _maybeSetPassword() async {
+    final user = AuthSession.instance.currentUser;
+    if (user == null || user.hasPassword) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => const _SetPasswordSheet(),
+    );
   }
 
   Future<void> _submit() async {
@@ -709,6 +719,132 @@ class _EmailOtpLoginScreenState extends State<EmailOtpLoginScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _SetPasswordSheet extends StatefulWidget {
+  const _SetPasswordSheet();
+  @override
+  State<_SetPasswordSheet> createState() => _SetPasswordSheetState();
+}
+
+class _SetPasswordSheetState extends State<_SetPasswordSheet> {
+  final _pass = TextEditingController();
+  final _confirm = TextEditingController();
+  bool _busy = false, _obscure = true;
+  String? _error;
+
+  @override
+  void dispose() { _pass.dispose(); _confirm.dispose(); super.dispose(); }
+
+  Future<void> _save() async {
+    final p = _pass.text.trim();
+    if (p.length < 6) { setState(() => _error = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'); return; }
+    if (p != _confirm.text.trim()) { setState(() => _error = 'كلمتا المرور غير متطابقتين'); return; }
+    setState(() { _busy = true; _error = null; });
+    try {
+      await ApiClient.instance.post('/auth/change-password',
+          token: AuthSession.instance.token,
+          body: {'newPassword': p});
+      AuthSession.instance.patchHasPassword();
+      if (mounted) Navigator.of(context).pop();
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'تعذر حفظ كلمة المرور. حاول مجددًا.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: EdgeInsets.fromLTRB(24, 24, 24,
+          24 + MediaQuery.of(context).viewInsets.bottom),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('أضف كلمة مرور لحسابك', style: AppTextStyles.screenTitle),
+          const SizedBox(height: 6),
+          const Text(
+              'اختياري — يمكنك تخطي هذه الخطوة وإضافتها لاحقًا من الإعدادات.',
+              style: AppTextStyles.caption),
+          const SizedBox(height: 20),
+          if (_error != null) ...[
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                  color: AppColors.danger.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8)),
+              child: Text(_error!,
+                  style: const TextStyle(color: AppColors.danger, fontSize: 13)),
+            ),
+            const SizedBox(height: 12),
+          ],
+          TextField(
+            controller: _pass,
+            obscureText: _obscure,
+            enabled: !_busy,
+            textDirection: TextDirection.ltr,
+            decoration: InputDecoration(
+              labelText: 'كلمة المرور الجديدة',
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.button)),
+              suffixIcon: IconButton(
+                icon: Icon(
+                    _obscure
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                    size: 20),
+                onPressed: () => setState(() => _obscure = !_obscure),
+              ),
+            ),
+          ),
+          const SizedBox(height: 14),
+          TextField(
+            controller: _confirm,
+            obscureText: _obscure,
+            enabled: !_busy,
+            textDirection: TextDirection.ltr,
+            decoration: InputDecoration(
+              labelText: 'تأكيد كلمة المرور',
+              border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.button)),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Row(children: [
+            Expanded(
+              child: ElevatedButton(
+                onPressed: _busy ? null : _save,
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.navy,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppRadius.button))),
+                child: _busy
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                            strokeWidth: 2, color: Colors.white))
+                    : const Text('حفظ كلمة المرور',
+                        style: TextStyle(color: Colors.white)),
+              ),
+            ),
+            const SizedBox(width: 12),
+            TextButton(
+              onPressed: _busy ? null : () => Navigator.of(context).pop(),
+              child: const Text('تخطي',
+                  style: TextStyle(color: AppColors.textSecondary)),
+            ),
+          ]),
+        ],
       ),
     );
   }
