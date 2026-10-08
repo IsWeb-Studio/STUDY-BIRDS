@@ -35,6 +35,13 @@ export const LoginPage = () => {
   const [formError, setFormError] = useState("");
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
 
+  // Set-password modal after Google login
+  const [pendingRedirectUser, setPendingRedirectUser] = useState<import("../../types").User | null>(null);
+  const [newPass, setNewPass] = useState("");
+  const [newPassConfirm, setNewPassConfirm] = useState("");
+  const [passError, setPassError] = useState("");
+  const [passSaving, setPassSaving] = useState(false);
+
   // OTP state
   const [otpMode, setOtpMode] = useState(false);
   const [otpStep, setOtpStep] = useState<"email" | "code">("email");
@@ -79,13 +86,32 @@ export const LoginPage = () => {
     setGoogleSubmitting(true);
     try {
       const u = await googleLogin(credential);
-      redirectAfterLogin(u);
+      if (!u.hasPassword) {
+        setPendingRedirectUser(u);
+      } else {
+        redirectAfterLogin(u);
+      }
     } catch (error) {
       setFormError(
         getErrorMessage(error, ar ? "تعذر تسجيل الدخول عبر Google. حاول مرة أخرى." : "Unable to sign in with Google. Please try again.")
       );
     } finally {
       setGoogleSubmitting(false);
+    }
+  };
+
+  const handleSetPassword = async () => {
+    setPassError("");
+    if (newPass.length < 6) { setPassError(ar ? "كلمة المرور يجب أن تكون 6 أحرف على الأقل" : "Password must be at least 6 characters"); return; }
+    if (newPass !== newPassConfirm) { setPassError(ar ? "كلمتا المرور غير متطابقتين" : "Passwords do not match"); return; }
+    setPassSaving(true);
+    try {
+      await authService.changePassword({ newPassword: newPass });
+      redirectAfterLogin(pendingRedirectUser!);
+    } catch (error) {
+      setPassError(getErrorMessage(error, ar ? "تعذر حفظ كلمة المرور" : "Failed to save password"));
+    } finally {
+      setPassSaving(false);
     }
   };
 
@@ -122,6 +148,56 @@ export const LoginPage = () => {
       setOtpSubmitting(false);
     }
   };
+
+  if (pendingRedirectUser) {
+    return (
+      <div className="mx-auto max-w-xl panel p-8">
+        <h1 className="text-2xl font-semibold text-slate-900">
+          {ar ? "أضف كلمة مرور لحسابك" : "Set a password for your account"}
+        </h1>
+        <p className="mt-2 text-sm text-slate-500">
+          {ar
+            ? "اختياري — يمكنك تخطي هذه الخطوة وإضافتها لاحقًا من الإعدادات."
+            : "Optional — you can skip this and add it later from settings."}
+        </p>
+        <div className="mt-6 space-y-4">
+          {passError ? (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{passError}</div>
+          ) : null}
+          <FormInput
+            label={ar ? "كلمة المرور الجديدة" : "New password"}
+            type="password"
+            autoComplete="new-password"
+            value={newPass}
+            onChange={e => setNewPass(e.target.value)}
+          />
+          <FormInput
+            label={ar ? "تأكيد كلمة المرور" : "Confirm password"}
+            type="password"
+            autoComplete="new-password"
+            value={newPassConfirm}
+            onChange={e => setNewPassConfirm(e.target.value)}
+          />
+          <button
+            type="button"
+            disabled={passSaving}
+            onClick={() => void handleSetPassword()}
+            className="w-full rounded-full bg-brand-900 px-5 py-3 font-semibold text-white disabled:opacity-60"
+          >
+            {passSaving ? (ar ? "جارٍ الحفظ..." : "Saving...") : (ar ? "حفظ كلمة المرور" : "Save password")}
+          </button>
+          <button
+            type="button"
+            disabled={passSaving}
+            onClick={() => redirectAfterLogin(pendingRedirectUser)}
+            className="w-full text-center text-sm text-slate-500 underline"
+          >
+            {ar ? "تخطي الآن" : "Skip for now"}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-xl panel p-8">

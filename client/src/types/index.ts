@@ -37,6 +37,7 @@ export interface User {
   avatar?: string;
   authProvider?: "local" | "google";
   emailVerified?: boolean;
+  hasPassword?: boolean;
   isActive?: boolean;
   createdAt?: string;
   lastLoginAt?: string;

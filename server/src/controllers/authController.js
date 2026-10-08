@@ -20,8 +20,7 @@ const serializeUser = (user) => ({
   authProvider: user.authProvider,
   emailVerified: user.emailVerified,
   verifiedPhone: user.verifiedPhone || null,
-  // NEW — always present but null/empty for existing student/admin/partner
-  // accounts, so no existing consumer (website included) is affected.
+  hasPassword: Boolean(user.password),
   employeeRole: user.employeeRole || null,
   permissions: user.permissions || [],
   linkedUniversity: user.linkedUniversity || null,
