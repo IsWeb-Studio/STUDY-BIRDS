@@ -43,9 +43,14 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
       // Enabling — require email code
       await ApiClient.instance.post('/mobile-security/two-factor/request', token: token, body: {});
       if (!mounted) return;
-      final ok = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => EmailChallengeScreen(confirm: (code) async {
-        await ApiClient.instance.post('/mobile-security/two-factor/confirm', token: token, body: {'code': code, 'enabled': true});
-      })));
+      final ok = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => EmailChallengeScreen(
+        confirm: (code) async {
+          await ApiClient.instance.post('/mobile-security/two-factor/confirm', token: token, body: {'code': code, 'enabled': true});
+        },
+        resend: () async {
+          await ApiClient.instance.post('/mobile-security/two-factor/request', token: token, body: {});
+        },
+      )));
       if (ok == true && mounted) {
         setState(() => enabled = true);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

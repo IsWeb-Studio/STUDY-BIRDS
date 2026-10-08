@@ -515,6 +515,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 }
 
+enum _PwStrength { none, weak, medium, strong }
+
 /// Full-screen mandatory password setup for Google sign-in users.
 /// Shown by main.dart's ListenableBuilder when user.hasPassword == false.
 /// On save, calls patchHasPassword() → notifyListeners() → ListenableBuilder
@@ -528,15 +530,34 @@ class SetPasswordScreen extends StatefulWidget {
 class _SetPasswordScreenState extends State<SetPasswordScreen> {
   final _pass = TextEditingController();
   final _confirm = TextEditingController();
-  bool _busy = false, _obscure = true;
+  bool _busy = false, _obscure = true, _obscureConfirm = true;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _pass.addListener(() => setState(() {}));
+  }
 
   @override
   void dispose() { _pass.dispose(); _confirm.dispose(); super.dispose(); }
 
+  _PwStrength get _strength {
+    final p = _pass.text;
+    if (p.length < 8) return _PwStrength.none;
+    int score = 0;
+    if (p.contains(RegExp(r'[A-Z]'))) score++;
+    if (p.contains(RegExp(r'[a-z]'))) score++;
+    if (p.contains(RegExp(r'[0-9]'))) score++;
+    if (p.contains(RegExp(r'[^A-Za-z0-9]'))) score++;
+    if (score >= 3) return _PwStrength.strong;
+    if (score >= 2) return _PwStrength.medium;
+    return _PwStrength.weak;
+  }
+
   Future<void> _save() async {
     final p = _pass.text.trim();
-    if (p.length < 6) { setState(() => _error = 'كلمة المرور يجب أن تكون 6 أحرف على الأقل'); return; }
+    if (p.length < 8) { setState(() => _error = 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return; }
     if (p != _confirm.text.trim()) { setState(() => _error = 'كلمتا المرور غير متطابقتين'); return; }
     setState(() { _busy = true; _error = null; });
     try {
@@ -544,7 +565,6 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
           token: AuthSession.instance.token,
           body: {'newPassword': p});
       AuthSession.instance.patchHasPassword();
-      // notifyListeners() fires in patchHasPassword → ListenableBuilder rebuilds → home shown
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
@@ -556,6 +576,14 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final email = AuthSession.instance.currentUser?.email ?? '';
+    final strength = _strength;
+    final (strengthLabel, strengthColor, strengthFrac) = switch (strength) {
+      _PwStrength.none   => ('', Colors.transparent, 0.0),
+      _PwStrength.weak   => ('ضعيفة',  Colors.red,          1 / 3),
+      _PwStrength.medium => ('متوسطة', Colors.orange,       2 / 3),
+      _PwStrength.strong => ('قوية',   Colors.green.shade600, 1.0),
+    };
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
@@ -574,7 +602,23 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                 const Text(
                     'يجب إضافة كلمة مرور لتأمين حسابك قبل المتابعة. ستتمكن من تسجيل الدخول لاحقًا بكلمة المرور أو عبر Google.',
                     style: AppTextStyles.caption),
-                const SizedBox(height: 28),
+                if (email.isNotEmpty) ...[
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    initialValue: email,
+                    readOnly: true,
+                    textDirection: TextDirection.ltr,
+                    decoration: InputDecoration(
+                      labelText: 'البريد الإلكتروني',
+                      prefixIcon: const Icon(Icons.email_outlined, size: 20),
+                      border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.button)),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
                 if (_error != null) ...[
                   Container(
                     padding: const EdgeInsets.all(10),
@@ -605,16 +649,45 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                     ),
                   ),
                 ),
+                if (_pass.text.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: strengthFrac,
+                          minHeight: 5,
+                          backgroundColor: Colors.grey.shade200,
+                          valueColor: AlwaysStoppedAnimation(strengthColor),
+                        ),
+                      ),
+                    ),
+                    if (strengthLabel.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Text(strengthLabel,
+                          style: TextStyle(fontSize: 12, color: strengthColor, fontWeight: FontWeight.w600)),
+                    ],
+                  ]),
+                ],
                 const SizedBox(height: 14),
                 TextField(
                   controller: _confirm,
-                  obscureText: _obscure,
+                  obscureText: _obscureConfirm,
                   enabled: !_busy,
                   textDirection: TextDirection.ltr,
                   decoration: InputDecoration(
                     labelText: 'تأكيد كلمة المرور',
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.button)),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                          _obscureConfirm
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          size: 20),
+                      onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
