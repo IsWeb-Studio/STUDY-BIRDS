@@ -120,7 +120,6 @@ class _LoginScreenState extends State<LoginScreen> {
       final ok = await GoogleSignInService.instance.signIn();
       if (!mounted) return;
       if (ok) {
-        await _maybeSetPassword();
         if (mounted) widget.onGoogleSignInSuccess?.call();
       }
       // ok == false means user canceled — stay on login screen silently
@@ -131,18 +130,6 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _googleLoading = false);
     }
-  }
-
-  Future<void> _maybeSetPassword() async {
-    final user = AuthSession.instance.currentUser;
-    if (user == null || user.hasPassword) return;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => const _SetPasswordSheet(),
-    );
   }
 
   Future<void> _submit() async {
@@ -355,7 +342,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       final ok = await GoogleSignInService.instance.signIn();
       if (!mounted) return;
       if (ok) {
-        await _maybeSetPassword();
         if (mounted) widget.onGoogleSignInSuccess?.call();
       }
       // ok == false means user canceled — stay on screen silently
@@ -366,18 +352,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } finally {
       if (mounted) setState(() => _googleLoading = false);
     }
-  }
-
-  Future<void> _maybeSetPassword() async {
-    final user = AuthSession.instance.currentUser;
-    if (user == null || user.hasPassword) return;
-    await showModalBottomSheet<void>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => const _SetPasswordSheet(),
-    );
   }
 
   @override
@@ -535,13 +509,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 }
 
-class _SetPasswordSheet extends StatefulWidget {
-  const _SetPasswordSheet();
+/// Full-screen mandatory password setup for Google sign-in users.
+/// Shown by main.dart's ListenableBuilder when user.hasPassword == false.
+/// On save, calls patchHasPassword() → notifyListeners() → ListenableBuilder
+/// rebuilds and navigates to home automatically.
+class SetPasswordScreen extends StatefulWidget {
+  const SetPasswordScreen({super.key});
   @override
-  State<_SetPasswordSheet> createState() => _SetPasswordSheetState();
+  State<SetPasswordScreen> createState() => _SetPasswordScreenState();
 }
 
-class _SetPasswordSheetState extends State<_SetPasswordSheet> {
+class _SetPasswordScreenState extends State<SetPasswordScreen> {
   final _pass = TextEditingController();
   final _confirm = TextEditingController();
   bool _busy = false, _obscure = true;
@@ -560,7 +538,7 @@ class _SetPasswordSheetState extends State<_SetPasswordSheet> {
           token: AuthSession.instance.token,
           body: {'newPassword': p});
       AuthSession.instance.patchHasPassword();
-      if (mounted) Navigator.of(context).pop();
+      // notifyListeners() fires in patchHasPassword → ListenableBuilder rebuilds → home shown
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
@@ -572,90 +550,88 @@ class _SetPasswordSheetState extends State<_SetPasswordSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.fromLTRB(24, 24, 24,
-          24 + MediaQuery.of(context).viewInsets.bottom),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('أضف كلمة مرور لحسابك', style: AppTextStyles.screenTitle),
-          const SizedBox(height: 6),
-          const Text(
-              'اختياري — يمكنك تخطي هذه الخطوة وإضافتها لاحقًا من الإعدادات.',
-              style: AppTextStyles.caption),
-          const SizedBox(height: 20),
-          if (_error != null) ...[
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                  color: AppColors.danger.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8)),
-              child: Text(_error!,
-                  style: const TextStyle(color: AppColors.danger, fontSize: 13)),
-            ),
-            const SizedBox(height: 12),
-          ],
-          TextField(
-            controller: _pass,
-            obscureText: _obscure,
-            enabled: !_busy,
-            textDirection: TextDirection.ltr,
-            decoration: InputDecoration(
-              labelText: 'كلمة المرور الجديدة',
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.button)),
-              suffixIcon: IconButton(
-                icon: Icon(
-                    _obscure
-                        ? Icons.visibility_outlined
-                        : Icons.visibility_off_outlined,
-                    size: 20),
-                onPressed: () => setState(() => _obscure = !_obscure),
-              ),
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 32),
+                const Icon(Icons.lock_outline_rounded, size: 48, color: AppColors.navy),
+                const SizedBox(height: 20),
+                const Text('أضف كلمة مرور لحسابك', style: AppTextStyles.screenTitle),
+                const SizedBox(height: 6),
+                const Text(
+                    'يجب إضافة كلمة مرور لتأمين حسابك قبل المتابعة. ستتمكن من تسجيل الدخول لاحقًا بكلمة المرور أو عبر Google.',
+                    style: AppTextStyles.caption),
+                const SizedBox(height: 28),
+                if (_error != null) ...[
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                        color: AppColors.danger.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8)),
+                    child: Text(_error!,
+                        style: const TextStyle(color: AppColors.danger, fontSize: 13)),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+                TextField(
+                  controller: _pass,
+                  obscureText: _obscure,
+                  enabled: !_busy,
+                  textDirection: TextDirection.ltr,
+                  decoration: InputDecoration(
+                    labelText: 'كلمة المرور الجديدة',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.button)),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                          _obscure
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          size: 20),
+                      onPressed: () => setState(() => _obscure = !_obscure),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: _confirm,
+                  obscureText: _obscure,
+                  enabled: !_busy,
+                  textDirection: TextDirection.ltr,
+                  decoration: InputDecoration(
+                    labelText: 'تأكيد كلمة المرور',
+                    border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.button)),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                ElevatedButton(
+                  onPressed: _busy ? null : _save,
+                  style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.navy,
+                      minimumSize: const Size(double.infinity, 48),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(AppRadius.button))),
+                  child: _busy
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : const Text('حفظ كلمة المرور',
+                          style: TextStyle(color: Colors.white)),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 14),
-          TextField(
-            controller: _confirm,
-            obscureText: _obscure,
-            enabled: !_busy,
-            textDirection: TextDirection.ltr,
-            decoration: InputDecoration(
-              labelText: 'تأكيد كلمة المرور',
-              border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppRadius.button)),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(children: [
-            Expanded(
-              child: ElevatedButton(
-                onPressed: _busy ? null : _save,
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.navy,
-                    minimumSize: const Size(double.infinity, 48),
-                    shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.button))),
-                child: _busy
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 2, color: Colors.white))
-                    : const Text('حفظ كلمة المرور',
-                        style: TextStyle(color: Colors.white)),
-              ),
-            ),
-            const SizedBox(width: 12),
-            TextButton(
-              onPressed: _busy ? null : () => Navigator.of(context).pop(),
-              child: const Text('تخطي',
-                  style: TextStyle(color: AppColors.textSecondary)),
-            ),
-          ]),
-        ],
+        ),
       ),
     );
   }
