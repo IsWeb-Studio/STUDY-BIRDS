@@ -235,6 +235,7 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
         builder: (context, _) {
           final user = AuthSession.instance.currentUser;
           if (user == null) return const ConnectedPrototypeEntry();
+          if (!user.hasPassword) return const SetPasswordScreen();
           // GATE DISABLED — re-enable when needed
           // if (user.verifiedPhone == null || user.verifiedPhone!.isEmpty) {
           //   return _PhoneVerificationGate(user: user);
