@@ -51,7 +51,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
       }
     }
     if (_sent && !RegExp(r'^\d{4,10}$').hasMatch(_code.text.trim())) {
-      setState(() => _codeError = 'أدخل رمز واتساب الصحيح');
+      setState(() => _codeError = 'أدخل رمز SMS الصحيح');
       return;
     }
     setState(() {
@@ -90,7 +90,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
         body: FeatureBody(children: [
           const FeatureIntro(
               title: 'رقم هاتف موثوق',
-              subtitle: 'سيصلك رمز عبر واتساب للتحقق من ملكيتك للرقم.',
+              subtitle: 'سيصلك رمز SMS للتحقق من ملكيتك للرقم.',
               icon: Icons.phone_android),
           if (_verified)
             const InlineNotice('تم تأكيد رقم الهاتف بنجاح')
@@ -190,12 +190,12 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.chat_rounded,
-                              color: Color(0xFF25D366), size: 16),
+                          const Icon(Icons.sms_rounded,
+                              color: Color(0xFF1E88E5), size: 16),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              'تم إرسال الرمز إلى $_fullPhone عبر واتساب',
+                              'تم إرسال رمز SMS إلى $_fullPhone',
                               style: AppTextStyles.caption,
                             ),
                           ),
@@ -203,7 +203,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
                       ),
                     ),
                     const SizedBox(height: 14),
-                    const Text('رمز واتساب', style: AppTextStyles.caption),
+                    const Text('رمز SMS', style: AppTextStyles.caption),
                     const SizedBox(height: 6),
                     Container(
                       decoration: BoxDecoration(
@@ -254,7 +254,7 @@ class _PhoneVerificationScreenState extends State<PhoneVerificationScreen> {
                           ? 'جارٍ التحقق…'
                           : _sent
                               ? 'تأكيد الرقم'
-                              : 'إرسال الرمز عبر واتساب',
+                              : 'إرسال رمز SMS',
                       onPressed: _busy ? null : _submit),
                   if (_sent)
                     TextButton(
