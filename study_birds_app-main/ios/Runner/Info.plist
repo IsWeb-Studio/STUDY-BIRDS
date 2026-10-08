@@ -55,6 +55,18 @@
 			</array>
 		</dict>
 	</dict>
+	<!-- Google Sign-In: reversed web client ID as URL scheme for OAuth redirect -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.495236497658-q78f4513t3rj6neonktm49h2h3tlickf</string>
+			</array>
+		</dict>
+	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>
