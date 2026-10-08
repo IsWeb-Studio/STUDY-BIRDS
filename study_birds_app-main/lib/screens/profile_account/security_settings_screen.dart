@@ -1,4 +1,3 @@
-import '../auth/phone_verification_screen.dart';
 import 'account_security_screen.dart';
 import '../auth/verify_contact_screen.dart';
 import 'package:flutter/material.dart';
@@ -47,13 +46,6 @@ class SecuritySettingsScreen extends StatelessWidget {
                 trailing: const Icon(Icons.chevron_left),
                 onTap: () => Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const VerifyContactScreen())))),
-        FeaturePanel(
-            child: ListTile(
-                title: const Text('تأكيد رقم الهاتف'),
-                leading: const Icon(Icons.phone_android),
-                trailing: const Icon(Icons.chevron_left),
-                onTap: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const PhoneVerificationScreen())))),
         FeaturePanel(
             child: ListTile(
                 contentPadding: EdgeInsets.zero,

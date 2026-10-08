@@ -32,7 +32,6 @@ import 'screens/home_journey/important_dates_screen.dart';
 import 'screens/home_journey/global_search_screen.dart';
 
 import 'screens/auth/verify_contact_screen.dart';
-import 'screens/auth/phone_verification_screen.dart';
 import 'screens/profile_account/security_settings_screen.dart';
 
 import 'screens/universities_programs_countries/compare_list_screen.dart';
@@ -245,29 +244,6 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
   }
 }
 
-/// Shown when the logged-in user has no verified phone number.
-/// Blocks access to the app until a phone number is verified.
-/// Uses PhoneVerificationScreen directly (no nested Scaffold).
-class _PhoneVerificationGate extends StatelessWidget {
-  final AuthUser user;
-  const _PhoneVerificationGate({required this.user});
-
-  @override
-  Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      child: PhoneVerificationScreen(
-        onVerified: (phone) => AuthSession.instance.patchVerifiedPhone(phone),
-        actions: [
-          TextButton(
-            onPressed: () => AuthSession.instance.logout(),
-            child: const Text('خروج', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 /// Opens onboarding and login. The authenticated server role decides the home.
 class ConnectedPrototypeEntry extends StatelessWidget {
