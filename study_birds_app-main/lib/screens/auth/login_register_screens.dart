@@ -1,3 +1,4 @@
+import 'dart:io' show Platform;
 import 'browser_sign_in_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -267,20 +268,22 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                OutlinedButton.icon(
-                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => const BrowserSignInScreen())),
-                  icon: const Icon(Icons.apple_rounded, size: 20),
-                  label: const Text('المتابعة عبر Apple'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 48),
-                    side: const BorderSide(color: AppColors.border),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.button),
+                if (Platform.isIOS) ...[
+                  const SizedBox(height: 10),
+                  OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const BrowserSignInScreen())),
+                    icon: const Icon(Icons.apple_rounded, size: 20),
+                    label: const Text('المتابعة عبر Apple'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 48),
+                      side: const BorderSide(color: AppColors.border),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(AppRadius.button),
+                      ),
                     ),
                   ),
-                ),
+                ],
                 const SizedBox(height: 24),
                 Center(
                   child: TextButton(
