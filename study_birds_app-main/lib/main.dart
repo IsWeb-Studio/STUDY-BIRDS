@@ -345,10 +345,19 @@ class ConnectedPrototypeEntry extends StatelessWidget {
       if (e.statusCode != 428 || !context.mounted) return false;
       final confirmed =
           await Navigator.of(context).push<bool>(MaterialPageRoute(
-              builder: (_) => EmailChallengeScreen(confirm: (code) async {
-                    result = await AuthService.instance
-                        .loginOrThrow(email, password, twoFactorCode: code);
-                  })));
+              builder: (_) => EmailChallengeScreen(
+                    confirm: (code) async {
+                      result = await AuthService.instance
+                          .loginOrThrow(email, password, twoFactorCode: code);
+                    },
+                    resend: () async {
+                      try {
+                        await AuthService.instance.loginOrThrow(email, password);
+                      } on ApiException catch (e) {
+                        if (e.statusCode != 428) rethrow;
+                      }
+                    },
+                  )));
       if (confirmed != true) return false;
     } catch (_) {
       return false;
