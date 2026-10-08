@@ -228,9 +228,9 @@ const changePassword = asyncHandler(async (req, res) => {
     throw new Error("New password is required");
   }
 
-  if (String(newPassword).length < 6) {
+  if (String(newPassword).length < 8) {
     res.status(400);
-    throw new Error("New password must be at least 6 characters");
+    throw new Error("كلمة المرور يجب أن تكون 8 أحرف على الأقل");
   }
 
   const user = await User.findById(req.user._id);
