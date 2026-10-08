@@ -7,7 +7,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const generateToken = require("../utils/generateToken");
 const { recordReferralSignup } = require("../utils/studentWallet");
 const { Challenge } = require('../models/IdentityCredential');
-const wa = require('../utils/whatsappOtp');
+const sms = require('../utils/cashMisrSms');
 
 const googleClient = new OAuth2Client();
 
@@ -296,33 +296,33 @@ const logout = asyncHandler(async (req, res) => {
   res.json({ ok: true });
 });
 
-// Phone OTP login — step 1: send code via WhatsApp
+// Phone OTP login — step 1: send code via SMS (CashMisr)
 const requestOtp = asyncHandler(async (req, res) => {
-  if (!wa.ready()) return res.status(503).json({ message: 'Phone login is not configured' });
+  if (!sms.ready()) return res.status(503).json({ message: 'Phone login is not configured' });
   const phone = String(req.body.phone || '').trim();
   if (!/^\+[1-9]\d{7,14}$/.test(phone)) return res.status(400).json({ message: 'أدخل رقمًا دوليًا يبدأ بـ + ورمز الدولة' });
   const key = `otp-login:${phone}`;
   const existing = await Challenge.findOne({ key, purpose: 'otp-login', expiresAt: { $gt: new Date(Date.now() + 9 * 60 * 1000) } });
   if (existing) return res.status(429).json({ message: 'انتظر دقيقة قبل طلب رمز جديد' });
   await Challenge.deleteOne({ key });
-  const code = wa.generate();
+  const code = sms.generate();
   try {
-    await wa.send(phone, code);
+    await sms.send(phone, code);
   } catch (e) {
     return res.status(502).json({ message: e.message || 'تعذر إرسال الرمز. حاول مجدداً.' });
   }
-  await Challenge.create({ key, purpose: 'otp-login', value: wa.hash(phone, code), expiresAt: new Date(Date.now() + 10 * 60 * 1000) });
+  await Challenge.create({ key, purpose: 'otp-login', value: sms.hash(phone, code), expiresAt: new Date(Date.now() + 10 * 60 * 1000) });
   res.json({ sent: true });
 });
 
 // Phone OTP login — step 2: verify code + issue JWT
 const verifyOtp = asyncHandler(async (req, res) => {
-  if (!wa.ready()) return res.status(503).json({ message: 'Phone login is not configured' });
+  if (!sms.ready()) return res.status(503).json({ message: 'Phone login is not configured' });
   const phone = String(req.body.phone || '').trim();
   const code  = String(req.body.code  || '').trim();
   if (!/^\+[1-9]\d{7,14}$/.test(phone) || !/^\d{6}$/.test(code)) return res.status(400).json({ message: 'رقم أو رمز غير صالح' });
   const pending = await Challenge.findOneAndDelete({ key: `otp-login:${phone}`, purpose: 'otp-login', expiresAt: { $gt: new Date() } });
-  if (!pending || pending.value !== wa.hash(phone, code)) return res.status(401).json({ message: 'رمز التحقق غير صحيح أو منتهي الصلاحية' });
+  if (!pending || pending.value !== sms.hash(phone, code)) return res.status(401).json({ message: 'رمز التحقق غير صحيح أو منتهي الصلاحية' });
   let user = await User.findOne({ verifiedPhone: phone });
   if (!user) {
     user = await User.create({ name: phone, email: `${phone.replace('+', '')}@phone.studybirds.net`, verifiedPhone: phone, authProvider: 'phone', role: 'student' });
