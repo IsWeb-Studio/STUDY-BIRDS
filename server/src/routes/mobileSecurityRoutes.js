@@ -1,11 +1,12 @@
 const express = require('express');
 const crypto = require('node:crypto');
 const User = require('../models/User');
-const { Session } = require('../models/MobileWorkspace');
+const { Session, EmailCode } = require('../models/MobileWorkspace');
 const { protect } = require('../middleware/authMiddleware');
-const { isMailerConfigured } = require('../utils/mailer');
+const { isMailerConfigured, sendContactEmail } = require('../utils/mailer');
 const run = require('../utils/asyncHandler');
 const router = express.Router();
+const digest = (value) => crypto.createHmac('sha256', process.env.JWT_SECRET || 'dev').update(value).digest('hex');
 const fail = (res, message, status = 400) => { res.status(status); throw new Error(message); };
 const buckets = new Map();
 function throttle(req, res, next) {
@@ -47,11 +48,47 @@ router.post('/two-factor/confirm', run(async (req, res) => {
   res.json({ enabled: req.body.enabled });
 }));
 router.post('/email/request', run(async (req, res) => {
+  if (req.user.emailVerified) return res.json({ emailVerified: true, alreadyVerified: true });
   await sendCode(req.user, 'verify', res); res.json({ message: 'تم إرسال رمز التحقق إلى بريدك.' });
 }));
 router.post('/email/confirm', run(async (req, res) => {
   await consume(req.user, 'verify', req.body.code, res);
   await User.updateOne({ _id: req.user._id }, { $set: { emailVerified: true } }); res.json({ emailVerified: true });
+}));
+router.post('/email/change/request', run(async (req, res) => {
+  if (!isMailerConfigured()) fail(res, 'إرسال البريد غير مهيأ على السيرفر.', 503);
+  const newEmail = String(req.body.email || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) fail(res, 'بريد إلكتروني غير صالح');
+  if (newEmail === req.user.email) fail(res, 'البريد الجديد هو نفس البريد الحالي');
+  if (await User.exists({ email: newEmail, _id: { $ne: req.user._id } })) fail(res, 'هذا البريد مستخدم من قِبل حساب آخر');
+  const existing = await EmailCode.findOne({ user: req.user._id, purpose: 'email-change' });
+  if (existing && Date.now() - existing.updatedAt.getTime() < 60000) fail(res, 'انتظر دقيقة قبل طلب رمز جديد', 429);
+  const code = crypto.randomInt(100000, 1000000).toString();
+  await EmailCode.findOneAndUpdate({ user: req.user._id, purpose: 'email-change' }, { $set: {
+    email: newEmail, digest: digest(`${req.user._id}:email-change:${code}`),
+    attempts: 0, expiresAt: new Date(Date.now() + 10 * 60 * 1000),
+  }}, { new: true, upsert: true });
+  await sendContactEmail({ to: newEmail, subject: 'Study Birds — تأكيد البريد الإلكتروني الجديد', text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.` });
+  res.json({ sent: true });
+}));
+router.post('/email/change/confirm', run(async (req, res) => {
+  const code = String(req.body.code || '').trim();
+  if (!/^\d{6}$/.test(code)) fail(res, 'أدخل الرمز المكون من 6 أرقام');
+  const row = await EmailCode.findOneAndUpdate(
+    { user: req.user._id, purpose: 'email-change', attempts: { $lt: 5 }, expiresAt: { $gt: new Date() } },
+    { $inc: { attempts: 1 } }, { new: true });
+  const wanted = digest(`${req.user._id}:email-change:${code}`);
+  if (!row || row.digest !== wanted) fail(res, 'رمز غير صحيح أو منتهي الصلاحية');
+  const newEmail = row.email;
+  if (await User.exists({ email: newEmail, _id: { $ne: req.user._id } })) {
+    await EmailCode.deleteOne({ _id: row._id }); fail(res, 'هذا البريد مستخدم من قِبل حساب آخر');
+  }
+  const consumed = await EmailCode.deleteOne({ _id: row._id, digest: wanted });
+  if (!consumed.deletedCount) fail(res, 'تم استخدام الرمز بالفعل');
+  const oldEmail = req.user.email;
+  await User.updateOne({ _id: req.user._id }, { $set: { email: newEmail, emailVerified: true } });
+  sendContactEmail({ to: oldEmail, subject: 'Study Birds — إشعار أمني: تغيير البريد الإلكتروني', text: `تم تغيير البريد الإلكتروني لحسابك إلى ${newEmail}.\nإذا لم تكن أنت من أجرى هذا التغيير، تواصل مع الدعم فوراً.` }).catch(() => {});
+  res.json({ email: newEmail, emailVerified: true });
 }));
 router.get('/sessions', run(async (req, res) => {
   const current = crypto.createHash('sha256').update(req.headers.authorization.slice(7)).digest('hex');

@@ -358,6 +358,7 @@ const verifyEmailOtp = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email, isActive: true });
   await consume(user, 'emaillogin', code, res);
   if (user.role === 'student') await ensureStudentProfile(user._id);
+  user.emailVerified = true;
   user.lastLoginAt = new Date();
   await user.save();
   const tokens = await issueTokenPair(user);

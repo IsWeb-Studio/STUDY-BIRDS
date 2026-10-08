@@ -26,6 +26,13 @@ export const AccountSecurityPage = () => {
   const [code, setCode] = useState("");
   const [revoke, setRevoke] = useState<Session | null>(null);
   const [password, setPassword] = useState({ currentPassword: "", newPassword: "", confirm: "" });
+
+  // Email change state
+  const [emailChangeStep, setEmailChangeStep] = useState<"idle" | "input" | "code">("idle");
+  const [newEmail, setNewEmail] = useState("");
+  const [emailChangeCode, setEmailChangeCode] = useState("");
+  const [emailChangeBusy, setEmailChangeBusy] = useState(false);
+  const [emailChangeError, setEmailChangeError] = useState("");
   const load = async () => {
     const [security, devices] = await Promise.all([api.get<{ enabled: boolean }>("/mobile-security/two-factor"), api.get<Session[]>("/mobile-security/sessions")]);
     setEnabled(security.data.enabled); setSessions(devices.data);
@@ -43,7 +50,9 @@ export const AccountSecurityPage = () => {
     finally { setBusy(false); }
   };
   const request = (kind: "email" | "two-factor") => perform(async () => {
-    await api.post(`/mobile-security/${kind}/request`); setChallenge(kind); setCode("");
+    const res = await api.post<{ alreadyVerified?: boolean }>(`/mobile-security/${kind}/request`);
+    if (res.data.alreadyVerified) { setVerified(true); setNotice(text("بريدك الإلكتروني موثّق بالفعل.", "Your email is already verified.")); return; }
+    setChallenge(kind); setCode("");
     setNotice(text("تم إرسال الرمز إلى بريدك. صلاحيته 10 دقائق.", "A code was sent to your email. It expires in 10 minutes."));
   });
   const confirm = (event: FormEvent) => { event.preventDefault(); void perform(async () => {
@@ -54,6 +63,25 @@ export const AccountSecurityPage = () => {
     setNotice(text("تم حفظ إعدادات الأمان.", "Security settings saved."));
     await refreshSession();
   }); };
+
+  const requestEmailChange = async (e: FormEvent) => {
+    e.preventDefault(); setEmailChangeError(""); setEmailChangeBusy(true);
+    try {
+      await api.post("/mobile-security/email/change/request", { email: newEmail });
+      setEmailChangeStep("code"); setEmailChangeCode("");
+    } catch (err) { setEmailChangeError(getErrorMessage(err, text("تعذر إرسال الرمز", "Failed to send code"))); }
+    finally { setEmailChangeBusy(false); }
+  };
+  const confirmEmailChange = async (e: FormEvent) => {
+    e.preventDefault(); setEmailChangeError(""); setEmailChangeBusy(true);
+    try {
+      await api.post("/mobile-security/email/change/confirm", { code: emailChangeCode });
+      setEmailChangeStep("idle"); setNewEmail(""); setEmailChangeCode(""); setVerified(true);
+      setNotice(text("تم تغيير بريدك الإلكتروني بنجاح.", "Your email has been changed successfully."));
+      await refreshSession();
+    } catch (err) { setEmailChangeError(getErrorMessage(err, text("رمز خاطئ أو منتهي الصلاحية", "Invalid or expired code"))); }
+    finally { setEmailChangeBusy(false); }
+  };
   const changePassword = (event: FormEvent) => { event.preventDefault();
     if (password.newPassword !== password.confirm) { setError(text("كلمتا المرور غير متطابقتين", "Passwords do not match")); return; }
     void perform(async () => {
@@ -69,8 +97,47 @@ export const AccountSecurityPage = () => {
     {error ? <p role="alert" className="rounded-2xl bg-rose-50 p-4 text-rose-700">{error}</p> : null}
     {notice ? <p role="status" className="rounded-2xl bg-emerald-50 p-4 text-emerald-800">{notice}</p> : null}
     {loading ? <p role="status">{text("جارٍ تحميل إعدادات الأمان…", "Loading security settings…")}</p> : null}
-    <section className="panel space-y-4 p-6"><Mail className="text-brand-700" aria-hidden="true" /><h2 className="text-xl font-semibold">{text("البريد الإلكتروني", "Email verification")}</h2><p className="break-all text-slate-600">{user?.email}</p><p>{verified ? text("البريد مؤكد", "Email verified") : text("لم يتم تأكيد البريد بعد", "Email not yet verified")}</p>
-      {!verified ? <button className={button} disabled={busy || !!challenge} onClick={() => void request("email")}>{text("تأكيد البريد", "Verify email")}</button> : null}
+    <section className="panel space-y-4 p-6">
+      <Mail className="text-brand-700" aria-hidden="true" />
+      <h2 className="text-xl font-semibold">{text("البريد الإلكتروني", "Email address")}</h2>
+      <div className="flex flex-wrap items-center gap-3">
+        <p className="break-all text-slate-700 font-medium">{user?.email}</p>
+        {verified
+          ? <span className="flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-sm font-medium text-emerald-700">
+              <svg className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" /></svg>
+              {text("موثّق", "Verified")}
+            </span>
+          : <span className="rounded-full bg-amber-50 px-3 py-1 text-sm font-medium text-amber-700">{text("غير موثّق", "Not verified")}</span>}
+      </div>
+      {!verified
+        ? <button className={button} disabled={busy || !!challenge} onClick={() => void request("email")}>{text("توثيق البريد", "Verify email")}</button>
+        : null}
+      {emailChangeStep === "idle"
+        ? <button className="text-sm text-brand-700 underline" disabled={busy} onClick={() => { setEmailChangeStep("input"); setEmailChangeError(""); setNewEmail(""); }}>{text("تغيير البريد الإلكتروني", "Change email")}</button>
+        : null}
+      {emailChangeStep !== "idle"
+        ? <div className="rounded-xl border border-slate-200 p-4 space-y-3">
+            <h3 className="font-semibold text-slate-800">{text("تغيير البريد الإلكتروني", "Change email")}</h3>
+            {emailChangeError ? <p className="text-sm text-rose-600">{emailChangeError}</p> : null}
+            {emailChangeStep === "input"
+              ? <form onSubmit={e => void requestEmailChange(e)} className="space-y-3">
+                  <FormInput label={text("البريد الجديد", "New email")} type="email" value={newEmail} onChange={e => setNewEmail(e.target.value)} required disabled={emailChangeBusy} />
+                  <div className="flex gap-3">
+                    <button className={button} disabled={emailChangeBusy}>{emailChangeBusy ? text("جارٍ الإرسال…", "Sending…") : text("إرسال رمز التحقق", "Send code")}</button>
+                    <button type="button" className="text-sm text-slate-500" onClick={() => setEmailChangeStep("idle")}>{text("إلغاء", "Cancel")}</button>
+                  </div>
+                </form>
+              : <form onSubmit={e => void confirmEmailChange(e)} className="space-y-3">
+                  <p className="text-sm text-slate-600">{text(`تم إرسال رمز إلى ${newEmail}`, `A code was sent to ${newEmail}`)}</p>
+                  <FormInput label={text("رمز التحقق", "Verification code")} inputMode="numeric" autoComplete="one-time-code" maxLength={6} pattern="[0-9]{6}" value={emailChangeCode} onChange={e => setEmailChangeCode(e.target.value.replace(/\D/g, ""))} required disabled={emailChangeBusy} />
+                  <div className="flex gap-3">
+                    <button className={button} disabled={emailChangeBusy}>{emailChangeBusy ? text("جارٍ التحقق…", "Verifying…") : text("تأكيد", "Confirm")}</button>
+                    <button type="button" className="text-sm text-slate-500" onClick={() => setEmailChangeStep("input")}>{text("تغيير البريد", "Change email")}</button>
+                    <button type="button" className="text-sm text-slate-500" onClick={() => { setEmailChangeStep("idle"); setEmailChangeError(""); }}>{text("إلغاء", "Cancel")}</button>
+                  </div>
+                </form>}
+          </div>
+        : null}
     </section>
     <section className="panel space-y-4 p-6"><ShieldCheck className="text-brand-700" aria-hidden="true" /><h2 className="text-xl font-semibold">{text("التحقق بخطوتين", "Two-step verification")}</h2><p className="text-slate-600">{text("عند التفعيل، يتطلب الدخول كلمة المرور ورمزًا يصل إلى بريدك.", "When enabled, sign-in requires your password and an email code.")}</p><p>{enabled === null ? text("الحالة غير متاحة", "Status unavailable") : enabled ? text("مفعّل", "Enabled") : text("غير مفعّل", "Disabled")}</p><button className={button} disabled={busy || enabled === null || !!challenge} onClick={() => void request("two-factor")}>{enabled ? text("إيقاف التحقق بخطوتين", "Disable two-step verification") : text("تفعيل التحقق بخطوتين", "Enable two-step verification")}</button></section>
     {challenge ? <form onSubmit={confirm} className="panel space-y-4 border-brand-200 p-6"><h2 className="text-xl font-semibold">{text("تأكيد التغيير", "Confirm this change")}</h2><FormInput label={text("رمز التحقق من البريد", "Email verification code")} value={code} onChange={e => setCode(e.target.value)} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required disabled={busy} /><div className="flex gap-4"><button className={button} disabled={busy}>{text("تأكيد", "Confirm")}</button><button type="button" disabled={busy} onClick={() => { setChallenge(null); setCode(""); setNotice(""); }}>{text("إلغاء", "Cancel")}</button></div></form> : null}
