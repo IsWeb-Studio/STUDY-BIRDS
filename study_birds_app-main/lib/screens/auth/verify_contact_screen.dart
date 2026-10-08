@@ -1,4 +1,3 @@
-import 'phone_verification_screen.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/widgets/feature_ui.dart';
@@ -64,9 +63,7 @@ class _VerifyContactScreenState extends State<VerifyContactScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => !widget.isEmail
-      ? const PhoneVerificationScreen()
-      : AppScaffold(
+  Widget build(BuildContext context) => AppScaffold(
           title: 'تأكيد التواصل',
           body: FeatureBody(children: [
             FeatureIntro(
