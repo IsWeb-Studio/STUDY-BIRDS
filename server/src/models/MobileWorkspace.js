@@ -34,7 +34,7 @@ const Credit = mongoose.model('MobileCredit', new mongoose.Schema({
 }, { timestamps: true }));
 const emailCodeSchema = new mongoose.Schema({
   user: { ...id('User'), required: true }, email: { type: String, required: true },
-  purpose: { type: String, enum: ['verify', 'reset', 'login', 'security'], required: true },
+  purpose: { type: String, enum: ['verify', 'reset', 'login', 'security', 'email-change', 'emaillogin'], required: true },
   digest: String, attempts: { type: Number, default: 0 }, expiresAt: { type: Date, expires: 0 },
 }, { timestamps: true });
 emailCodeSchema.index({ user: 1, purpose: 1 }, { unique: true });
