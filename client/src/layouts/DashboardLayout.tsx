@@ -8,6 +8,7 @@
   CircleDollarSign,
   Compass,
   FileText,
+  Globe,
   GraduationCap,
   HelpCircle,
   IdCard,
@@ -15,6 +16,7 @@
   LayoutDashboard,
   MessageSquare,
   NotebookText,
+  Route,
   School,
   ScrollText,
   Settings2,
@@ -74,6 +76,9 @@ export const DashboardLayout = () => {
     { label: language === "ar" ? "الملف الشخصي" : "Profile", href: "/student/profile", icon: Settings2, description: language === "ar" ? "بياناتك الشخصية والأكاديمية الأساسية." : "Your personal and academic profile details." },
     { label: language === "ar" ? "الإعدادات" : "Settings", href: "/student/settings", icon: Settings2, description: language === "ar" ? "أمان الحساب وكلمة المرور." : "Account security and password settings." },
     { label: dt(language, "becomeAgentNav"), href: "/student/become-agent", icon: BriefcaseBusiness, description: dt(language, "becomeAgentNavDesc") },
+    { label: language === "ar" ? "رحلتي" : "My Journey", href: "/student/journey", icon: Route, description: language === "ar" ? "تتبع مراحل رحلتك الدراسية من البداية حتى الوصول." : "Track your study journey stages from start to arrival." },
+    { label: language === "ar" ? "مركز التأشيرة" : "Visa Center", href: "/student/visa", icon: Globe, description: language === "ar" ? "متطلبات التأشيرة والتأمين الصحي ومعادلة الشهادة." : "Visa requirements, health insurance, and certificate equivalency." },
+    { label: language === "ar" ? "المكافآت والنقاط" : "Rewards & Points", href: "/student/rewards", icon: Award, description: language === "ar" ? "نقاطك المكتسبة وطرق كسب المزيد." : "Your earned points and ways to earn more." },
   ];
 
   const partnerLinks = [
@@ -184,7 +189,8 @@ export const DashboardLayout = () => {
     { ar: "نظرة عامة", en: "Overview", pages: ["admin", "student", "dashboard", "parent", "university"] },
     { ar: "الطلاب والقبول", en: "Students & admissions", pages: ["students", "applications", "student-documents", "student-financials", "student-arrivals", "student-orientation-results", "student-favorites", "student-notifications", "documents", "financials", "arrival-services", "favorites", "orientation-test", "partner-students"] },
     { ar: "الجامعات والبرامج", en: "Universities & programs", pages: ["universities", "programs", "recognitions"] },
-    { ar: "الخدمات والتواصل", en: "Services & communication", pages: ["consultations", "visa", "accommodation", "wallet", "community", "support-tickets", "tickets", "support", "service-requests", "notifications"] },
+    { ar: "الخدمات والتواصل", en: "Services & communication", pages: ["consultations", "visa", "accommodation", "wallet", "community", "support-tickets", "tickets", "support", "service-requests", "notifications", "rewards"] },
+    { ar: "رحلتي الدراسية", en: "My journey", pages: ["journey"] },
     { ar: "المحتوى والفعاليات", en: "Content & events", pages: ["content", "testimonials", "services", "faqs", "events", "our-story", "exhibitions", "knowledge-base", "resources"] },
     { ar: "الوكلاء والشراكات", en: "Agents & partnerships", pages: ["agency-requests", "agents", "marketing-assets", "verification-queue", "payout-requests", "referral", "marketing-toolkit", "verification", "become-agent"] },
     { ar: "الحسابات والإعدادات", en: "Accounts & settings", pages: ["users", "employees", "parent-links", "university-accounts", "site-settings", "settings", "profile", "activity-log"] },
