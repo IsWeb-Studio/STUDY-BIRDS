@@ -49,7 +49,10 @@ class _VerifyContactScreenState extends State<VerifyContactScreen> {
         sent = true;
         verified = confirm;
       });
-      if (confirm) widget.onVerify?.call();
+      if (confirm) {
+        AuthSession.instance.patchEmailVerified();
+        widget.onVerify?.call();
+      }
     } on ApiException catch (e) {
       if (mounted)
         setState(() => error = e.statusCode == 404

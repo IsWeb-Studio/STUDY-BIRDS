@@ -33,7 +33,13 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
       final ok = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => EmailChallengeScreen(confirm: (code) async {
         await ApiClient.instance.post('/mobile-security/two-factor/confirm', token: token, body: {'code':code,'enabled':value});
       })));
-      if (ok == true && mounted) setState(() => enabled = value);
+      if (ok == true && mounted) {
+        setState(() => enabled = value);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(value ? 'تم تفعيل التحقق بخطوتين ✓' : 'تم إيقاف التحقق بخطوتين'),
+          backgroundColor: value ? Colors.green.shade700 : AppColors.navy,
+        ));
+      }
     } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر إرسال رمز التحقق'))); }
     finally { if (mounted) setState(() => busy = false); }
   }
