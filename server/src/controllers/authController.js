@@ -140,8 +140,11 @@ const googleLogin = asyncHandler(async (req, res) => {
   });
 
   if (user?.twoFactorEnabled) {
-    res.status(403);
-    throw new Error('استخدم البريد وكلمة المرور ورمز التحقق لتسجيل الدخول إلى هذا الحساب.');
+    if (!req.body.twoFactorCode) {
+      await sendCode(user, 'login', res);
+      return res.status(428).json({ message: 'أدخل رمز التحقق المرسل إلى بريدك.', requiresTwoFactor: true });
+    }
+    await consume(user, 'login', req.body.twoFactorCode, res);
   }
 
   if (!user) {

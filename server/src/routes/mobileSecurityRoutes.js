@@ -38,7 +38,6 @@ router.use(protect);
 router.get('/two-factor', run(async (req, res) => res.json({ enabled: req.user.twoFactorEnabled === true })));
 router.post('/two-factor/request', run(async (req, res) => {
   const user = await User.findById(req.user._id);
-  if (!user.password) fail(res, 'عيّن كلمة مرور للحساب أولاً');
   await sendCode(user, 'security', res); res.json({ message: 'تم إرسال رمز تأكيد تغيير إعدادات الأمان.' });
 }));
 router.post('/two-factor/confirm', run(async (req, res) => {
