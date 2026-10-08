@@ -108,6 +108,7 @@ class AuthUser {
   final String? linkedUniversityId;
   final String? avatar;
   final String? verifiedPhone;
+  final bool emailVerified;
 
   const AuthUser({
     required this.id,
@@ -119,6 +120,7 @@ class AuthUser {
     this.linkedUniversityId,
     this.avatar,
     this.verifiedPhone,
+    this.emailVerified = false,
   });
 
   /// Parses the `user` object exactly as returned by the backend's
@@ -147,6 +149,7 @@ class AuthUser {
           : (linked is Map ? linked['_id'] as String? : null),
       avatar: json['avatar'] as String?,
       verifiedPhone: json['verifiedPhone'] as String?,
+      emailVerified: json['emailVerified'] == true,
     );
   }
 
@@ -160,6 +163,7 @@ class AuthUser {
         if (linkedUniversityId != null) 'linkedUniversity': linkedUniversityId,
         if (avatar != null) 'avatar': avatar,
         if (verifiedPhone != null) 'verifiedPhone': verifiedPhone,
+        'emailVerified': emailVerified,
       };
 }
 
@@ -391,8 +395,6 @@ class AuthSession extends ChangeNotifier {
   }
 
   /// Instantly marks verifiedPhone on the current user without a network round-trip.
-  /// Call this immediately after a successful phone verification so the gate
-  /// disappears without waiting for /auth/me.
   void patchVerifiedPhone(String phone) {
     final u = currentUser;
     if (u == null) return;
@@ -406,6 +408,27 @@ class AuthSession extends ChangeNotifier {
       linkedUniversityId: u.linkedUniversityId,
       avatar: u.avatar,
       verifiedPhone: phone,
+      emailVerified: u.emailVerified,
+    );
+    notifyListeners();
+    refreshCurrentUser();
+  }
+
+  /// Instantly marks emailVerified=true on the current user without a network round-trip.
+  void patchEmailVerified() {
+    final u = currentUser;
+    if (u == null) return;
+    currentUser = AuthUser(
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      employeeRole: u.employeeRole,
+      permissions: u.permissions,
+      linkedUniversityId: u.linkedUniversityId,
+      avatar: u.avatar,
+      verifiedPhone: u.verifiedPhone,
+      emailVerified: true,
     );
     notifyListeners();
     refreshCurrentUser();
