@@ -311,7 +311,15 @@ class ConnectedPrototypeEntry extends StatelessWidget {
                   builder: (ctx2) => RegisterScreen(
                       onRegisterAttempt: (name, email, password) =>
                           _attemptRegister(ctx2, name, email, password,
-                              role: selectedRole)),
+                              role: selectedRole),
+                      onGoLogin: () => Navigator.of(ctx2).pop(),
+                      onGoogleSignInSuccess: () {
+                        if (!ctx2.mounted) return;
+                        Navigator.of(ctx2).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                                builder: (_) => const RootChooserScreen()),
+                            (route) => false);
+                      }),
                 )),
         onGoogleSignInSuccess: () {
           if (!ctx.mounted) return;
