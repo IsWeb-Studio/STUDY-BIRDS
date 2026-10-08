@@ -49,16 +49,26 @@ export const AccountSecurityPage = () => {
     try { await work(); } catch (e) { setError(getErrorMessage(e, text("تعذر إكمال الطلب. حاول مجددًا.", "Unable to complete the request. Try again."))); }
     finally { setBusy(false); }
   };
-  const request = (kind: "email" | "two-factor") => perform(async () => {
+  const request = (kind: "email") => perform(async () => {
     const res = await api.post<{ alreadyVerified?: boolean }>(`/mobile-security/${kind}/request`);
     if (res.data.alreadyVerified) { setVerified(true); setNotice(text("بريدك الإلكتروني موثّق بالفعل.", "Your email is already verified.")); return; }
     setChallenge(kind); setCode("");
     setNotice(text("تم إرسال الرمز إلى بريدك. صلاحيته 10 دقائق.", "A code was sent to your email. It expires in 10 minutes."));
   });
+  const enableTwoFactor = () => perform(async () => {
+    await api.post("/mobile-security/two-factor/request");
+    setChallenge("two-factor"); setCode("");
+    setNotice(text("تم إرسال الرمز إلى بريدك. أدخله لتفعيل التحقق بخطوتين.", "A code was sent to your email. Enter it to enable two-step verification."));
+  });
+  const disableTwoFactor = () => perform(async () => {
+    await api.post("/mobile-security/two-factor/disable");
+    setEnabled(false); setChallenge(null); setCode("");
+    setNotice(text("تم إيقاف التحقق بخطوتين.", "Two-step verification disabled."));
+  });
   const confirm = (event: FormEvent) => { event.preventDefault(); void perform(async () => {
     if (!challenge) return;
-    await api.post(`/mobile-security/${challenge}/confirm`, { code, ...(challenge === "two-factor" ? { enabled: !enabled } : {}) });
-    if (challenge === "two-factor") setEnabled(!enabled);
+    await api.post(`/mobile-security/${challenge}/confirm`, { code, ...(challenge === "two-factor" ? { enabled: true } : {}) });
+    if (challenge === "two-factor") setEnabled(true);
     setVerified(true); setChallenge(null); setCode("");
     setNotice(text("تم حفظ إعدادات الأمان.", "Security settings saved."));
     await refreshSession();
@@ -139,7 +149,7 @@ export const AccountSecurityPage = () => {
           </div>
         : null}
     </section>
-    <section className="panel space-y-4 p-6"><ShieldCheck className="text-brand-700" aria-hidden="true" /><h2 className="text-xl font-semibold">{text("التحقق بخطوتين", "Two-step verification")}</h2><p className="text-slate-600">{text("عند التفعيل، يتطلب الدخول كلمة المرور ورمزًا يصل إلى بريدك.", "When enabled, sign-in requires your password and an email code.")}</p><p>{enabled === null ? text("الحالة غير متاحة", "Status unavailable") : enabled ? text("مفعّل", "Enabled") : text("غير مفعّل", "Disabled")}</p><button className={button} disabled={busy || enabled === null || !!challenge} onClick={() => void request("two-factor")}>{enabled ? text("إيقاف التحقق بخطوتين", "Disable two-step verification") : text("تفعيل التحقق بخطوتين", "Enable two-step verification")}</button></section>
+    <section className="panel space-y-4 p-6"><ShieldCheck className="text-brand-700" aria-hidden="true" /><h2 className="text-xl font-semibold">{text("التحقق بخطوتين", "Two-step verification")}</h2><p className="text-slate-600">{text("عند التفعيل، يتطلب الدخول كلمة المرور ورمزًا يصل إلى بريدك.", "When enabled, sign-in requires your password and an email code.")}</p><p>{enabled === null ? text("الحالة غير متاحة", "Status unavailable") : enabled ? text("مفعّل", "Enabled") : text("غير مفعّل", "Disabled")}</p><button className={button} disabled={busy || enabled === null || !!challenge} onClick={() => enabled ? void disableTwoFactor() : void enableTwoFactor()}>{enabled ? text("إيقاف التحقق بخطوتين", "Disable two-step verification") : text("تفعيل التحقق بخطوتين", "Enable two-step verification")}</button></section>
     {challenge ? <form onSubmit={confirm} className="panel space-y-4 border-brand-200 p-6"><h2 className="text-xl font-semibold">{text("تأكيد التغيير", "Confirm this change")}</h2><FormInput label={text("رمز التحقق من البريد", "Email verification code")} value={code} onChange={e => setCode(e.target.value)} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} required disabled={busy} /><div className="flex gap-4"><button className={button} disabled={busy}>{text("تأكيد", "Confirm")}</button><button type="button" disabled={busy} onClick={() => { setChallenge(null); setCode(""); setNotice(""); }}>{text("إلغاء", "Cancel")}</button></div></form> : null}
     <section className="panel space-y-4 p-6"><Monitor className="text-brand-700" aria-hidden="true" /><h2 className="text-xl font-semibold">{text("الجلسات والأجهزة", "Sessions and devices")}</h2><p className="text-sm text-slate-600">{text("تظهر الجلسات عند استخدام النسخة المحدثة من الموقع أو التطبيق.", "Sessions appear when using the updated website or app.")}</p>
       <button className="text-brand-700 underline" disabled={busy} onClick={() => void perform(load)}>{text("تحديث القائمة", "Refresh list")}</button>

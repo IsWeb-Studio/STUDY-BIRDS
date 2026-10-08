@@ -47,6 +47,10 @@ router.post('/two-factor/confirm', run(async (req, res) => {
   await User.updateOne({ _id: req.user._id }, { $set: { twoFactorEnabled: req.body.enabled, emailVerified: true } });
   res.json({ enabled: req.body.enabled });
 }));
+router.post('/two-factor/disable', run(async (req, res) => {
+  await User.updateOne({ _id: req.user._id }, { $set: { twoFactorEnabled: false } });
+  res.json({ enabled: false });
+}));
 router.post('/email/request', run(async (req, res) => {
   if (req.user.emailVerified) return res.json({ emailVerified: true, alreadyVerified: true });
   await sendCode(req.user, 'verify', res); res.json({ message: 'تم إرسال رمز التحقق إلى بريدك.' });
