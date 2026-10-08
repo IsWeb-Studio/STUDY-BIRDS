@@ -320,8 +320,14 @@ class RegisterScreen extends StatefulWidget {
   final Future<bool> Function(String name, String email, String password)?
       onRegisterAttempt;
   final VoidCallback? onGoLogin;
+  final VoidCallback? onGoogleSignInSuccess;
 
-  const RegisterScreen({super.key, this.onRegisterAttempt, this.onGoLogin});
+  const RegisterScreen({
+    super.key,
+    this.onRegisterAttempt,
+    this.onGoLogin,
+    this.onGoogleSignInSuccess,
+  });
 
   @override
   State<RegisterScreen> createState() => _RegisterScreenState();
@@ -334,7 +340,48 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   String _passwordText = '';
   bool _loading = false;
+  bool _googleLoading = false;
   String? _error;
+
+  Future<void> _googleSignIn() async {
+    setState(() { _googleLoading = true; _error = null; });
+    try {
+      await GoogleSignInService.instance.init();
+      if (!mounted) return;
+      if (!GoogleSignInService.instance.isAvailable) {
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const BrowserSignInScreen()));
+        return;
+      }
+      final ok = await GoogleSignInService.instance.signIn();
+      if (!mounted) return;
+      if (ok) {
+        await _maybeSetPassword();
+        if (mounted) widget.onGoogleSignInSuccess?.call();
+      } else {
+        Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const BrowserSignInScreen()));
+      }
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'حدث خطأ أثناء تسجيل الدخول عبر Google');
+    } finally {
+      if (mounted) setState(() => _googleLoading = false);
+    }
+  }
+
+  Future<void> _maybeSetPassword() async {
+    final user = AuthSession.instance.currentUser;
+    if (user == null || user.hasPassword) return;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (_) => const _SetPasswordSheet(),
+    );
+  }
 
   @override
   void initState() {
@@ -438,7 +485,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
             const SizedBox(height: 20),
             PrimaryButton(
                 label: _loading ? 'جاري الإنشاء...' : 'إنشاء الحساب',
-                onPressed: _loading ? null : _submit),
+                onPressed: (_loading || _googleLoading) ? null : _submit),
+            const SizedBox(height: 12),
+            const Row(children: [
+              Expanded(child: Divider()),
+              Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Text('أو', style: AppTextStyles.caption)),
+              Expanded(child: Divider()),
+            ]),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: (_loading || _googleLoading) ? null : _googleSignIn,
+              icon: _googleLoading
+                  ? const SizedBox(
+                      width: 18, height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2))
+                  : const Icon(Icons.g_mobiledata_rounded, size: 22),
+              label: Text(_googleLoading ? 'جارٍ...' : 'المتابعة عبر Google'),
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+                side: const BorderSide(color: AppColors.border),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.button)),
+              ),
+            ),
             const SizedBox(height: 16),
             Center(
               child: TextButton(
