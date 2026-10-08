@@ -28,19 +28,32 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
   Future<void> change(bool value) async {
     setState(() => busy = true);
     try {
+      if (!value) {
+        // Disabling — no code required
+        await ApiClient.instance.post('/mobile-security/two-factor/disable', token: token, body: {});
+        if (mounted) {
+          setState(() => enabled = false);
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: const Text('تم إيقاف التحقق بخطوتين'),
+            backgroundColor: AppColors.navy,
+          ));
+        }
+        return;
+      }
+      // Enabling — require email code
       await ApiClient.instance.post('/mobile-security/two-factor/request', token: token, body: {});
       if (!mounted) return;
       final ok = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => EmailChallengeScreen(confirm: (code) async {
-        await ApiClient.instance.post('/mobile-security/two-factor/confirm', token: token, body: {'code':code,'enabled':value});
+        await ApiClient.instance.post('/mobile-security/two-factor/confirm', token: token, body: {'code': code, 'enabled': true});
       })));
       if (ok == true && mounted) {
-        setState(() => enabled = value);
+        setState(() => enabled = true);
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(value ? 'تم تفعيل التحقق بخطوتين ✓' : 'تم إيقاف التحقق بخطوتين'),
-          backgroundColor: value ? Colors.green.shade700 : AppColors.navy,
+          content: const Text('تم تفعيل التحقق بخطوتين ✓'),
+          backgroundColor: Colors.green.shade700,
         ));
       }
-    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر إرسال رمز التحقق'))); }
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر تغيير إعداد التحقق بخطوتين'))); }
     finally { if (mounted) setState(() => busy = false); }
   }
   Future<void> revoke(Map row) async {
