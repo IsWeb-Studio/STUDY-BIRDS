@@ -67,7 +67,12 @@ export const LoginPage = () => {
     );
 
   useEffect(() => {
-    if (user) redirectAfterLogin(user);
+    if (!user) return;
+    if (!user.hasPassword) {
+      setPendingRedirectUser(user);
+    } else {
+      redirectAfterLogin(user);
+    }
   }, [navigate, user]);
 
   const onSubmit = async (values: LoginValues) => {
@@ -157,8 +162,8 @@ export const LoginPage = () => {
         </h1>
         <p className="mt-2 text-sm text-slate-500">
           {ar
-            ? "اختياري — يمكنك تخطي هذه الخطوة وإضافتها لاحقًا من الإعدادات."
-            : "Optional — you can skip this and add it later from settings."}
+            ? "يجب إضافة كلمة مرور لتأمين حسابك قبل المتابعة. ستتمكن لاحقًا من الدخول بكلمة المرور أو عبر Google."
+            : "You must set a password to secure your account before continuing. You can later sign in with your password or Google."}
         </p>
         <div className="mt-6 space-y-4">
           {passError ? (
@@ -185,14 +190,6 @@ export const LoginPage = () => {
             className="w-full rounded-full bg-brand-900 px-5 py-3 font-semibold text-white disabled:opacity-60"
           >
             {passSaving ? (ar ? "جارٍ الحفظ..." : "Saving...") : (ar ? "حفظ كلمة المرور" : "Save password")}
-          </button>
-          <button
-            type="button"
-            disabled={passSaving}
-            onClick={() => redirectAfterLogin(pendingRedirectUser)}
-            className="w-full text-center text-sm text-slate-500 underline"
-          >
-            {ar ? "تخطي الآن" : "Skip for now"}
           </button>
         </div>
       </div>
