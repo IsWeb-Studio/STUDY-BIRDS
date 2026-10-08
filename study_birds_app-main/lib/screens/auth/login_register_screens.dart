@@ -113,8 +113,7 @@ class _LoginScreenState extends State<LoginScreen> {
       await GoogleSignInService.instance.init();
       if (!mounted) return;
       if (!GoogleSignInService.instance.isAvailable) {
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const BrowserSignInScreen()));
+        setState(() => _error = 'تسجيل الدخول عبر Google غير متاح على هذا الجهاز حالياً');
         return;
       }
       final ok = await GoogleSignInService.instance.signIn();
@@ -122,10 +121,8 @@ class _LoginScreenState extends State<LoginScreen> {
       if (ok) {
         await _maybeSetPassword();
         if (mounted) widget.onGoogleSignInSuccess?.call();
-      } else {
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const BrowserSignInScreen()));
       }
+      // ok == false means user canceled — stay on login screen silently
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
@@ -349,8 +346,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       await GoogleSignInService.instance.init();
       if (!mounted) return;
       if (!GoogleSignInService.instance.isAvailable) {
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const BrowserSignInScreen()));
+        setState(() => _error = 'تسجيل الدخول عبر Google غير متاح على هذا الجهاز حالياً');
         return;
       }
       final ok = await GoogleSignInService.instance.signIn();
@@ -358,10 +354,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (ok) {
         await _maybeSetPassword();
         if (mounted) widget.onGoogleSignInSuccess?.call();
-      } else {
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const BrowserSignInScreen()));
       }
+      // ok == false means user canceled — stay on screen silently
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
