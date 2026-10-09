@@ -1,6 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/services/auth_session.dart';
+<<<<<<< HEAD
+=======
+import '../../core/network/api_client.dart';
+>>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
 import 'application_documents_screen.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/utils/status_info.dart';
@@ -78,15 +82,18 @@ class ApplicationsListScreen extends StatefulWidget {
   State<ApplicationsListScreen> createState() => _ApplicationsListScreenState();
 }
 
-class _ApplicationsListScreenState extends State<ApplicationsListScreen> {
+class _ApplicationsListScreenState extends State<ApplicationsListScreen>
+    with SingleTickerProviderStateMixin {
   List<dynamic> _apps = [];
   bool _loading = true;
   String? _error;
   StreamSubscription<DateTime>? _syncSub;
+  late final TabController _tabs;
 
   @override
   void initState() {
     super.initState();
+    _tabs = TabController(length: 2, vsync: this);
     AnalyticsService.instance.screenView('applications');
     _load();
     _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
@@ -100,6 +107,7 @@ class _ApplicationsListScreenState extends State<ApplicationsListScreen> {
   @override
   void dispose() {
     _syncSub?.cancel();
+    _tabs.dispose();
     super.dispose();
   }
 
@@ -128,74 +136,277 @@ class _ApplicationsListScreenState extends State<ApplicationsListScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'طلباتي',
-      body: _loading
-          ? ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: 4,
-              itemBuilder: (_, __) => const Padding(
-                  padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
-          : _error != null
-              ? ErrorState(message: _error!, onRetry: _load)
-              : _apps.isEmpty
-                  ? EmptyState(
-                      icon: Icons.description_outlined,
-                      title: 'لا توجد طلبات بعد',
-                      message: 'ابدأ رحلتك بتقديم طلبك الأول لجامعة تناسبك.',
-                      ctaLabel: 'استكشف الجامعات',
-                      onCta: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => const ExploreHubScreen())),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _load,
-                      color: AppColors.navy,
-                      child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _apps.length,
-                      itemBuilder: (context, i) {
-                        final a = _apps[i] as Map<String, dynamic>;
-                        final program = a['program'] as Map<String, dynamic>?;
-                        final university =
-                            program?['university'] as Map<String, dynamic>?;
-                        final country =
-                            university?['country'] as Map<String, dynamic>?;
-                        final meta = appStatusMeta(a);
-
-                        return AppCard(
-                          onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (_) =>
-                                      ApplicationDetailScreen(application: a))),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Expanded(
-                                      child: Text(
-                                          university?['name'] as String? ??
-                                              'جامعة غير معروفة',
-                                          style: AppTextStyles.cardTitle)),
-                                  StatusBadge(
-                                      label: meta.label, color: meta.color),
-                                ],
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                '${program?['title'] ?? '—'} — ${country?['name'] ?? ''}',
-                                style: AppTextStyles.caption,
-                              ),
-                              if (ApplicationCardFacts.of(a) case final card?)
-                                ApplicationCardFacts(card: card, compact: true),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  ),
+      body: Column(
+        children: [
+          ColoredBox(
+            color: AppColors.navy,
+            child: TabBar(
+              controller: _tabs,
+              indicatorColor: AppColors.orange,
+              labelColor: Colors.white,
+              unselectedLabelColor: Colors.white70,
+              tabs: const [
+                Tab(text: 'طلبات الجامعات'),
+                Tab(text: 'طلبات الخدمات'),
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabs,
+              children: [
+                _UniversityApplicationsTab(
+                  loading: _loading,
+                  error: _error,
+                  apps: _apps,
+                  onRetry: _load,
+                ),
+                const _ServiceRequestsTab(),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
+
+class _UniversityApplicationsTab extends StatelessWidget {
+  final bool loading;
+  final String? error;
+  final List<dynamic> apps;
+  final VoidCallback onRetry;
+  const _UniversityApplicationsTab({
+    required this.loading,
+    required this.error,
+    required this.apps,
+    required this.onRetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (loading) {
+      return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: 4,
+          itemBuilder: (_, __) => const Padding(
+              padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()));
+    }
+    if (error != null) return ErrorState(message: error!, onRetry: onRetry);
+    if (apps.isEmpty) {
+      return EmptyState(
+        icon: Icons.description_outlined,
+        title: 'لا توجد طلبات بعد',
+        message: 'ابدأ رحلتك بتقديم طلبك الأول لجامعة تناسبك.',
+        ctaLabel: 'استكشف الجامعات',
+        onCta: () => Navigator.of(context).push(
+            MaterialPageRoute(builder: (_) => const ExploreHubScreen())),
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: () async {},
+      color: AppColors.navy,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: apps.length,
+        itemBuilder: (context, i) {
+          final a = apps[i] as Map<String, dynamic>;
+          final program = a['program'] as Map<String, dynamic>?;
+          final university = program?['university'] as Map<String, dynamic>?;
+          final country = university?['country'] as Map<String, dynamic>?;
+          final meta = appStatusMeta(a);
+
+          return AppCard(
+            onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (_) => ApplicationDetailScreen(application: a))),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                        child: Text(
+                            university?['name'] as String? ?? 'جامعة غير معروفة',
+                            style: AppTextStyles.cardTitle)),
+                    StatusBadge(label: meta.label, color: meta.color),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  '${program?['title'] ?? '—'} — ${country?['name'] ?? ''}',
+                  style: AppTextStyles.caption,
+                ),
+                if (ApplicationCardFacts.of(a) case final card?)
+                  ApplicationCardFacts(card: card, compact: true),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ── Service requests tab ─────────────────────────────────────────────────────
+
+class _ServiceRequestsTab extends StatefulWidget {
+  const _ServiceRequestsTab();
+  @override
+  State<_ServiceRequestsTab> createState() => _ServiceRequestsTabState();
+}
+
+class _ServiceRequestsTabState extends State<_ServiceRequestsTab> {
+  late Future<List<dynamic>> _future;
+
+  @override
+  void initState() {
+    super.initState();
+    _reload();
+  }
+
+  void _reload() {
+    setState(() {
+      _future = ApiClient.instance
+          .get('/service-requests/mine', token: AuthSession.instance.token)
+          .then((d) => d is List ? d : <dynamic>[]);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<List<dynamic>>(
+      future: _future,
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snap.hasError) {
+          return ErrorState(message: 'تعذر تحميل طلبات الخدمات', onRetry: _reload);
+        }
+        final rows = (snap.data ?? []).whereType<Map>().toList();
+        if (rows.isEmpty) {
+          return const EmptyState(
+            icon: Icons.design_services_outlined,
+            title: 'لا توجد طلبات خدمات',
+            message: 'اطلب خدمة من مركز الخدمات وستظهر هنا.',
+          );
+        }
+        return RefreshIndicator(
+          onRefresh: () async => _reload(),
+          color: AppColors.navy,
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            separatorBuilder: (_, __) => const SizedBox(height: 10),
+            itemCount: rows.length,
+            itemBuilder: (_, i) {
+              final r = Map<String, dynamic>.from(rows[i]);
+              final title = (r['serviceTitle'] as String?) ??
+                  (r['service'] is Map ? r['service']['title'] : '') ?? '';
+              final status = r['status'] as String? ?? 'pending';
+              final assignedTo = r['assignedTo'] is Map
+                  ? r['assignedTo']['name'] as String?
+                  : null;
+              final staffNote = r['staffNote'] as String? ?? '';
+              final driver = r['driverDetails'] is Map
+                  ? Map<String, dynamic>.from(r['driverDetails'] as Map)
+                  : null;
+              final showDriver = status == 'en-route' &&
+                  driver != null &&
+                  (driver['name'] as String? ?? '').isNotEmpty;
+              final (statusLabel, statusColor) = switch (status) {
+                'pending' => ('في الانتظار', Colors.orange),
+                'assigned' => ('تم التعيين', Colors.blue),
+                'in-progress' => ('قيد التنفيذ', AppColors.navy),
+                'en-route' => ('السائق في الطريق', AppColors.orange),
+                'completed' => ('مكتمل', AppColors.success),
+                'cancelled' => ('ملغى', AppColors.danger),
+                _ => ('في الانتظار', Colors.orange),
+              };
+              return AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                            child: Text(title,
+                                style: AppTextStyles.body
+                                    .copyWith(fontWeight: FontWeight.w700))),
+                        StatusBadge(label: statusLabel, color: statusColor),
+                      ],
+                    ),
+                    if (assignedTo != null) ...[
+                      const SizedBox(height: 6),
+                      Text('الموظف: $assignedTo', style: AppTextStyles.caption),
+                    ],
+                    if (showDriver) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.navy.withValues(alpha: 0.06),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                              color: AppColors.navy.withValues(alpha: 0.2)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(children: [
+                              const Icon(Icons.directions_car_rounded,
+                                  size: 16, color: AppColors.navy),
+                              const SizedBox(width: 6),
+                              Text('السائق في الطريق إليك',
+                                  style: AppTextStyles.caption.copyWith(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.navy)),
+                            ]),
+                            const SizedBox(height: 4),
+                            if ((driver['name'] as String? ?? '').isNotEmpty)
+                              Text('الاسم: ${driver['name']}',
+                                  style: AppTextStyles.caption),
+                            if ((driver['phone'] as String? ?? '').isNotEmpty)
+                              Text('الهاتف: ${driver['phone']}',
+                                  style: AppTextStyles.caption),
+                            if (driver['etaMinutes'] != null)
+                              Text('الوصول: ${driver['etaMinutes']} دقيقة',
+                                  style: AppTextStyles.caption.copyWith(
+                                      color: AppColors.orange,
+                                      fontWeight: FontWeight.w600)),
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (staffNote.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text('ملاحظة: $staffNote',
+                          style: AppTextStyles.caption
+                              .copyWith(color: AppColors.navy)),
+                    ],
+                    const SizedBox(height: 4),
+                    Text(
+                      _fmtDate(r['createdAt']),
+                      style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  String _fmtDate(dynamic raw) {
+    final d = DateTime.tryParse('$raw')?.toLocal();
+    if (d == null) return '';
+    return '${d.year}/${d.month.toString().padLeft(2, '0')}/${d.day.toString().padLeft(2, '0')}';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 class ApplicationDetailScreen extends StatefulWidget {
   final Map<String, dynamic> application;

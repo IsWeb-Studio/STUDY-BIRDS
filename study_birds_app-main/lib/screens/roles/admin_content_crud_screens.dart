@@ -240,6 +240,34 @@ class AdminPastEventsScreen extends StatelessWidget {
   }
 }
 
+class AdminBannersScreen extends StatelessWidget {
+  const AdminBannersScreen({super.key});
+  @override
+  Widget build(BuildContext context) {
+    final repo = AdminModulesRepository.instance;
+    return GenericCrudScreen(
+      title: 'البنرات',
+      fields: const [
+        CrudField('title', 'العنوان', required: true),
+        CrudField('tag', 'التاج (وسم صغير)'),
+        CrudField('subtitle', 'العنوان الفرعي'),
+        CrudField('actionLabel', 'نص الزر'),
+        CrudField('destination', 'الوجهة (universities / programs / apply / services)'),
+        CrudField('imageUrl', 'الصورة', type: CrudFieldType.image),
+        CrudField('order', 'الترتيب', type: CrudFieldType.number),
+        CrudField('active', 'نشط؟', type: CrudFieldType.boolean),
+      ],
+      imageUploadPaths: const {'imageUrl': '/admin/banners/upload-image'},
+      fetchItems: repo.getBanners,
+      createItem: repo.createBanner,
+      updateItem: repo.updateBanner,
+      deleteItem: repo.deleteBanner,
+      itemTitle: (i) => i['title'] as String? ?? '—',
+      itemSubtitle: (i) => i['subtitle'] as String? ?? '',
+    );
+  }
+}
+
 class AdminExhibitionsScreen extends StatelessWidget {
   const AdminExhibitionsScreen({super.key});
   @override

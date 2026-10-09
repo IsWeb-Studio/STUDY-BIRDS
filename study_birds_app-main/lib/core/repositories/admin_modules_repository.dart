@@ -315,6 +315,20 @@ class AdminModulesRepository {
     await ApiClient.instance.delete('/admin/exhibitions/$id', token: _token);
   }
 
+  // ---- banners ----------------------------------------------------------------
+  Future<List<dynamic>> getBanners() async =>
+      await ApiClient.instance.get('/admin/banners', token: _token) as List<dynamic>;
+
+  Future<Map<String, dynamic>> createBanner(Map<String, dynamic> payload) async =>
+      await ApiClient.instance.post('/admin/banners', token: _token, body: payload) as Map<String, dynamic>;
+
+  Future<Map<String, dynamic>> updateBanner(String id, Map<String, dynamic> payload) async =>
+      await ApiClient.instance.put('/admin/banners/$id', token: _token, body: payload) as Map<String, dynamic>;
+
+  Future<void> deleteBanner(String id) async {
+    await ApiClient.instance.delete('/admin/banners/$id', token: _token);
+  }
+
   // ---- generic image upload (Cloudinary via the backend's multer routes) --
   /// Returns the uploaded file's URL. Handles both response shapes used
   /// across the backend: `{url}` for single-file endpoints and

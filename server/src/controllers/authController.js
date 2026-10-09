@@ -186,6 +186,7 @@ const googleLogin = asyncHandler(async (req, res) => {
     if (!user.emailVerified) {
       user.emailVerified = true;
     }
+<<<<<<< HEAD
   }
 
   // Persist Google linkage before any challenge check.
@@ -212,20 +213,24 @@ const googleLogin = asyncHandler(async (req, res) => {
       });
     }
     await consume(user, 'login', emailCode, res);
+=======
+>>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
   }
 
-  // Persist Google linkage before requesting the code. No session token is
-  // issued until the email challenge has been completed successfully.
+  // Persist Google linkage. Email verification is required only once —
+  // returning users who already have emailVerified=true skip the code step.
   await user.save();
-  if (!emailCode) {
-    await sendCode(user, 'login', res);
-    return res.status(428).json({
-      message: 'أدخل رمز التأكيد المرسل إلى بريد حسابك في Google.',
-      requiresEmailVerification: true,
-    });
+  if (!user.emailVerified) {
+    if (!emailCode) {
+      await sendCode(user, 'login', res);
+      return res.status(428).json({
+        message: 'أدخل رمز التأكيد المرسل إلى بريد حسابك في Google.',
+        requiresEmailVerification: true,
+      });
+    }
+    await consume(user, 'login', emailCode, res);
+    user.emailVerified = true;
   }
-  await consume(user, 'login', emailCode, res);
-  user.emailVerified = true;
   user.lastLoginAt = new Date();
   await user.save();
 
