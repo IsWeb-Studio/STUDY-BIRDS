@@ -224,15 +224,19 @@ class _LoginScreenState extends State<LoginScreen>
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 428) {
+        final isTwoFactor = e.data['requiresTwoFactor'] == true;
         final confirmed = await Navigator.of(context).push<bool>(
           MaterialPageRoute(
               builder: (_) => EmailChallengeScreen(
                     confirm: GoogleSignInService.instance.confirmEmail,
                     resend: GoogleSignInService.instance.resendEmailCode,
                     title: 'تأكيد بريد Google',
-                    introTitle: 'أكد بريدك قبل إنشاء كلمة المرور',
-                    subtitle:
-                        'أدخل الرمز المرسل إلى بريد حسابك في Google، ثم أنشئ كلمة مرور لهذا الحساب.',
+                    introTitle: isTwoFactor
+                        ? 'أدخل رمز التحقق الثنائي'
+                        : 'أكد بريدك قبل إنشاء كلمة المرور',
+                    subtitle: isTwoFactor
+                        ? 'أدخل الرمز المرسل إلى بريدك للتحقق من هويتك.'
+                        : 'أدخل الرمز المرسل إلى بريد حسابك في Google، ثم أنشئ كلمة مرور لهذا الحساب.',
                   )),
         );
         if (confirmed == true && mounted) {
@@ -577,15 +581,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 428) {
+        final isTwoFactor = e.data['requiresTwoFactor'] == true;
         final confirmed = await Navigator.of(context).push<bool>(
           MaterialPageRoute(
               builder: (_) => EmailChallengeScreen(
                     confirm: GoogleSignInService.instance.confirmEmail,
                     resend: GoogleSignInService.instance.resendEmailCode,
                     title: 'تأكيد بريد Google',
-                    introTitle: 'أكد بريدك قبل إنشاء كلمة المرور',
-                    subtitle:
-                        'أدخل الرمز المرسل إلى بريد حسابك في Google، ثم أنشئ كلمة مرور لهذا الحساب.',
+                    introTitle: isTwoFactor
+                        ? 'أدخل رمز التحقق الثنائي'
+                        : 'أكد بريدك قبل إنشاء كلمة المرور',
+                    subtitle: isTwoFactor
+                        ? 'أدخل الرمز المرسل إلى بريدك للتحقق من هويتك.'
+                        : 'أدخل الرمز المرسل إلى بريد حسابك في Google، ثم أنشئ كلمة مرور لهذا الحساب.',
                   )),
         );
         if (confirmed == true && mounted) {
