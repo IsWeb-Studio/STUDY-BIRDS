@@ -40,6 +40,16 @@ textarea {
   @apply rounded-3xl border border-slate-200 bg-white shadow-soft;
 }
 
+.program-search-filter > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.program-search-filter :where(input:not([type="range"]), select) {
+  width: 100%;
+  min-width: 0;
+}
+
 .price-range-input {
   position: absolute;
   inset: 0;
