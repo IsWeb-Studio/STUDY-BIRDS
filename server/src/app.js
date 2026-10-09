@@ -78,6 +78,9 @@ app.use((req, res, next) => {
   next();
 });
 app.use("/uploads", express.static(path.resolve(process.cwd(), process.env.UPLOAD_DIR || "src/uploads")));
+app.use('/email-assets', express.static(path.join(__dirname, '../assets/email'), {
+  maxAge: '1d', index: false,
+}));
 
 app.get("/ping", (req, res) => {
   res.status(200).type("text/plain").send("OK");
