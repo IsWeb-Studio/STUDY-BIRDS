@@ -13,7 +13,7 @@ import '../services_support/messaging_and_emergency_screens.dart'
     show ConversationThreadScreen;
 import 'documents_screens.dart'
     show docStatusMeta, docTypeLabel, DocumentDetailScreen;
-import '../universities_programs_countries/explore_hub_screen.dart';
+import '../../app_shell.dart';
 
 /// Maps the backend's application status (legacy 5-value `status`, or the
 /// richer 14-value `detailedStatus` when present) to Arabic label + color.
@@ -196,8 +196,10 @@ class _UniversityApplicationsTab extends StatelessWidget {
         title: 'لا توجد طلبات بعد',
         message: 'ابدأ رحلتك بتقديم طلبك الأول لجامعة تناسبك.',
         ctaLabel: 'استكشف الجامعات',
-        onCta: () => Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const ExploreHubScreen())),
+        onCta: () {
+          Navigator.of(context).popUntil((r) => r.isFirst);
+          switchToMainTab(kTabExplore);
+        },
       );
     }
     return RefreshIndicator(

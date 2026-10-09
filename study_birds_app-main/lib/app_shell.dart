@@ -8,6 +8,16 @@ import 'screens/universities_programs_countries/explore_hub_screen.dart';
 import 'screens/services_support/services_consultation_screens.dart';
 import 'screens/profile_account/profile_account_screens.dart';
 
+/// Tab indexes for the main bottom navigation.
+const int kTabHome = 0;
+const int kTabJourney = 1;
+const int kTabExplore = 2;
+const int kTabServices = 3;
+const int kTabProfile = 4;
+
+/// Switch the main bottom nav to [index] from anywhere in the app.
+void switchToMainTab(int index) => _StudentAppShellState.switchTab(index);
+
 /// The connected student experience: one shared bottom nav, real navigation
 /// between screens (tap a card → see the actual next screen), instead of
 /// the flat screens-gallery list. This is what a client demo should run.
@@ -19,6 +29,11 @@ class StudentAppShell extends StatefulWidget {
 }
 
 class _StudentAppShellState extends State<StudentAppShell> {
+  static _StudentAppShellState? _instance;
+
+  static void switchTab(int index) =>
+      _instance?.setState(() => _instance!._index = index);
+
   int _index = 0;
   bool _offline = false;
 
@@ -33,8 +48,15 @@ class _StudentAppShellState extends State<StudentAppShell> {
   @override
   void initState() {
     super.initState();
+    _instance = this;
     _checkConnectivity();
     Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
+  }
+
+  @override
+  void dispose() {
+    if (_instance == this) _instance = null;
+    super.dispose();
   }
 
   Future<void> _checkConnectivity() async {

@@ -17,7 +17,7 @@ class ExploreHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'استكشاف',
-      showBackButton: Navigator.canPop(context),
+      showBackButton: false,
       body: GridView(
         padding: const EdgeInsets.all(16),
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
