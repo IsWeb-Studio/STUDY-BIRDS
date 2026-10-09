@@ -250,6 +250,7 @@ class AuthService {
     required String email,
     required String password,
     String? role,
+    String? referralCode,
   }) async {
     // The app uses enum names ('agent', 'employee') but the server stores wire
     // values ('partner', 'admin'). Convert before posting.
@@ -261,10 +262,23 @@ class AuthService {
       'email': email.trim(),
       'password': password,
       if (wireRole != null) 'role': wireRole,
+      if (referralCode != null && referralCode.trim().isNotEmpty)
+        'referralCode': referralCode.trim(),
     });
     final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
     final token = data['token'] as String;
     return (user: user, token: token, refreshToken: data['refreshToken'] as String?);
+  }
+
+  Future<void> requestEmailOtp(String email) async {
+    await ApiClient.instance.post('/auth/email-otp/request', body: {'email': email.trim()});
+  }
+
+  Future<({AuthUser user, String token, String? refreshToken})> verifyEmailOtp(String email, String code) async {
+    final data = await ApiClient.instance.post('/auth/email-otp/verify',
+        body: {'email': email.trim(), 'code': code.trim()});
+    final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
+    return (user: user, token: data['token'] as String, refreshToken: data['refreshToken'] as String?);
   }
 
   /// Tries to get a fresh access token using the stored refresh token.

@@ -337,9 +337,11 @@ class ConnectedPrototypeEntry extends StatelessWidget {
                 )
             : () => Navigator.of(ctx).push(MaterialPageRoute(
                   builder: (ctx2) => RegisterScreen(
-                      onRegisterAttempt: (name, email, password) =>
+                      onRegisterAttempt: (name, email, password,
+                              [referralCode]) =>
                           _attemptRegister(ctx2, name, email, password,
-                              role: selectedRole),
+                              role: selectedRole,
+                              referralCode: referralCode),
                       onGoLogin: () => Navigator.of(ctx2).pop(),
                       onGoogleSignInSuccess: () {
                         if (!ctx2.mounted) return;
@@ -432,13 +434,18 @@ class ConnectedPrototypeEntry extends StatelessWidget {
     String email,
     String password, {
     String? role,
+    String? referralCode,
   }) async {
     final AuthUser user;
     final String token;
     String? refreshToken;
     try {
-      final result = await AuthService.instance
-          .register(name: name, email: email, password: password, role: role);
+      final result = await AuthService.instance.register(
+          name: name,
+          email: email,
+          password: password,
+          role: role,
+          referralCode: referralCode);
       user = result.user;
       token = result.token;
       refreshToken = result.refreshToken;
