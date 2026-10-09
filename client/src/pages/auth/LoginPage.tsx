@@ -43,6 +43,11 @@ export const LoginPage = () => {
   const [passError, setPassError] = useState("");
   const [passSaving, setPassSaving] = useState(false);
 
+  // Google email verification state (428 flow)
+  const [pendingGoogleCredential, setPendingGoogleCredential] = useState<string | null>(null);
+  const [googleEmailCode, setGoogleEmailCode] = useState("");
+  const [googleCodeError, setGoogleCodeError] = useState("");
+
   // OTP state
   const [otpMode, setOtpMode] = useState(false);
   const [otpStep, setOtpStep] = useState<"email" | "code">("email");
@@ -98,9 +103,37 @@ export const LoginPage = () => {
         redirectAfterLogin(u);
       }
     } catch (error) {
+      if (isAxiosError(error) && error.response?.status === 428) {
+        setPendingGoogleCredential(credential);
+        setGoogleCodeError("");
+        setGoogleEmailCode("");
+        return;
+      }
       setFormError(
         getErrorMessage(error, ar ? "تعذر تسجيل الدخول عبر Google. حاول مرة أخرى." : "Unable to sign in with Google. Please try again.")
       );
+    } finally {
+      setGoogleSubmitting(false);
+    }
+  };
+
+  const handleGoogleCodeSubmit = async () => {
+    setGoogleCodeError("");
+    if (googleEmailCode.length !== 6) {
+      setGoogleCodeError(ar ? "الرمز مكون من 6 أرقام" : "Code must be 6 digits");
+      return;
+    }
+    setGoogleSubmitting(true);
+    try {
+      const u = await googleLogin(pendingGoogleCredential!, googleEmailCode.trim());
+      setPendingGoogleCredential(null);
+      if (!u.hasPassword) {
+        setPendingRedirectUser(u);
+      } else {
+        redirectAfterLogin(u);
+      }
+    } catch (error) {
+      setGoogleCodeError(getErrorMessage(error, ar ? "الرمز غير صحيح أو منتهي الصلاحية." : "Invalid or expired code."));
     } finally {
       setGoogleSubmitting(false);
     }
@@ -154,6 +187,52 @@ export const LoginPage = () => {
       setOtpSubmitting(false);
     }
   };
+
+  if (pendingGoogleCredential) {
+    return (
+      <div className="mx-auto max-w-xl panel p-8">
+        <h1 className="text-2xl font-semibold text-slate-900">
+          {ar ? "تحقق من بريدك الإلكتروني" : "Verify your email"}
+        </h1>
+        <p className="mt-2 text-sm text-slate-500">
+          {ar
+            ? "أُرسل رمز تحقق مكون من 6 أرقام إلى بريد حساب Google. أدخله أدناه لإتمام تسجيل الدخول."
+            : "A 6-digit verification code was sent to your Google account email. Enter it below to complete sign-in."}
+        </p>
+        <div className="mt-6 space-y-4">
+          {googleCodeError ? (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{googleCodeError}</div>
+          ) : null}
+          <FormInput
+            label={ar ? "رمز التحقق" : "Verification Code"}
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            pattern="[0-9]{6}"
+            value={googleEmailCode}
+            onChange={e => setGoogleEmailCode(e.target.value.replace(/\D/g, ""))}
+            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void handleGoogleCodeSubmit(); } }}
+          />
+          <button
+            type="button"
+            disabled={googleSubmitting}
+            onClick={() => void handleGoogleCodeSubmit()}
+            className="w-full rounded-full bg-brand-900 px-5 py-3 font-semibold text-white disabled:opacity-60"
+          >
+            {googleSubmitting ? (ar ? "جارٍ التحقق..." : "Verifying...") : (ar ? "تحقق وسجّل الدخول" : "Verify & Sign In")}
+          </button>
+          <button
+            type="button"
+            className="text-sm text-brand-700 underline"
+            onClick={() => { setPendingGoogleCredential(null); setGoogleEmailCode(""); setGoogleCodeError(""); }}
+          >
+            {ar ? "إلغاء" : "Cancel"}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (pendingRedirectUser) {
     return (
