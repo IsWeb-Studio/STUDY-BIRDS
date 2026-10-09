@@ -28,6 +28,7 @@ router.post('/reset/request', run(async (req, res) => {
 }));
 router.post('/reset/confirm', run(async (req, res) => {
   if (typeof req.body.password !== 'string' || req.body.password.length < 8 || req.body.password.length > 200) fail(res, 'كلمة المرور يجب ألا تقل عن 8 أحرف');
+  if (Buffer.byteLength(req.body.password, 'utf8') > 72) fail(res, 'كلمة المرور طويلة جدًا. استخدم كلمة مرور أقصر.');
   const user = await User.findOne({ email: String(req.body.email || '').trim().toLowerCase(), isActive: true });
   await consume(user, 'reset', req.body.code, res);
   user.password = req.body.password; user.passwordChangedAt = new Date(); user.tokenVersion = (user.tokenVersion || 0) + 1; await user.save();
