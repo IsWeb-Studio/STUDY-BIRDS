@@ -149,7 +149,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return AppScaffold(
       title: 'الملف الشخصي',
-      showBackButton: false,
+      showBackButton: Navigator.canPop(context),
       actions: [
         IconButton(
           icon: const Icon(Icons.settings_outlined, color: Colors.white),

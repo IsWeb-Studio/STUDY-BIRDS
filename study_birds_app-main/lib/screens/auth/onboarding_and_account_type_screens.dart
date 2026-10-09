@@ -251,7 +251,7 @@ class OnboardingServicesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'خدماتنا',
-      showBackButton: false,
+      showBackButton: Navigator.canPop(context),
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
