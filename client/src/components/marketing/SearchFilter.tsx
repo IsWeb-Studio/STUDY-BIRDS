@@ -4,6 +4,7 @@ import type { Country, StudyField, University } from "../../types";
 import { useLanguage } from "../../hooks/useLanguage";
 import {
   PROGRAM_DEGREE_LEVELS,
+  LEGACY_PROGRAM_DEGREE_LEVELS,
   PROGRAM_INTAKES,
 } from "../../constants/programOptions";
 
@@ -153,7 +154,7 @@ export const SearchFilter = ({
         className="rounded-2xl border border-slate-200 px-4 py-3"
       >
         <option value="">{t("allDegreeLevels")}</option>
-        {PROGRAM_DEGREE_LEVELS.map((option) => (
+        {[...PROGRAM_DEGREE_LEVELS, ...LEGACY_PROGRAM_DEGREE_LEVELS].map((option) => (
           <option key={option.value} value={option.value}>
             {t(option.translationKey)}
           </option>
