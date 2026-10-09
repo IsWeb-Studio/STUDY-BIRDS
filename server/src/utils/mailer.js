@@ -1,5 +1,6 @@
 const https     = require("https");
 const nodemailer = require("nodemailer");
+const { renderBrandedEmail } = require('./brandedEmail');
 
 // ─── Brevo REST API (primary) ────────────────────────────────────────────────
 const BREVO_API_KEY      = String(process.env.BREVO_API_KEY      || "").trim();
@@ -54,6 +55,7 @@ function _sendWithBrevo({ to, replyTo, subject, text, html }) {
       }
     );
     req.on("error", reject);
+    req.setTimeout(15000, () => req.destroy(new Error('Email provider timed out')));
     req.write(payload);
     req.end();
   });
@@ -68,21 +70,25 @@ function _getSmtpTransporter() {
       port:   SMTP_PORT,
       secure: SMTP_PORT === 465,
       auth:   { user: SMTP_USER, pass: SMTP_PASS },
+      connectionTimeout: 15000,
+      socketTimeout: 20000,
     });
   }
   return _smtpTransporter;
 }
 
 // ─── Public API ───────────────────────────────────────────────────────────────
-const sendContactEmail = async ({ to, replyTo, subject, text, html }) => {
+const sendContactEmail = async ({ to, replyTo, subject, text, html, emailContent }) => {
   if (!isMailerConfigured()) {
     throw new Error("Email delivery is not configured on the server");
   }
+  html = renderBrandedEmail({ subject, text, html, emailContent });
   if (isBrevoConfigured()) {
     return _sendWithBrevo({ to, replyTo, subject, text, html });
   }
   return _getSmtpTransporter().sendMail({
-    from: SMTP_FROM, to, replyTo, subject, text, html,
+    from: SMTP_FROM.includes('<') ? SMTP_FROM : { name: 'Study Birds', address: SMTP_FROM },
+    to, replyTo, subject, text, html,
   });
 };
 

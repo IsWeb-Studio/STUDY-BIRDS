@@ -71,7 +71,7 @@ router.post('/email/change/request', run(async (req, res) => {
     email: newEmail, digest: digest(`${req.user._id}:email-change:${code}`),
     attempts: 0, expiresAt: new Date(Date.now() + 10 * 60 * 1000),
   }}, { new: true, upsert: true });
-  await sendContactEmail({ to: newEmail, subject: 'Study Birds — تأكيد البريد الإلكتروني الجديد', text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.` });
+  await sendContactEmail({ to: newEmail, subject: 'Study Birds — تأكيد البريد الإلكتروني الجديد', text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.`, emailContent: { title: 'تأكيد البريد الإلكتروني الجديد', code, bodyText: 'أدخل الرمز التالي لتأكيد بريدك الجديد. صالح لمدة 10 دقائق. لا تشاركه مع أحد.' } });
   res.json({ sent: true });
 }));
 router.post('/email/change/confirm', run(async (req, res) => {
