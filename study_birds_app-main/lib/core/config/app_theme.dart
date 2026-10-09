@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import '../../screens/ai/birds_ai_screen.dart';
 
 /// Study Birds shared design system.
 /// Navy primary, orange accents, white surfaces and consistent spacing.
@@ -175,6 +176,7 @@ class AppScaffold extends StatelessWidget {
   final Widget? floatingActionButton;
   final Widget? bottomBar;
   final bool showBackButton;
+  final bool hideAiButton;
 
   const AppScaffold({
     super.key,
@@ -184,6 +186,7 @@ class AppScaffold extends StatelessWidget {
     this.floatingActionButton,
     this.bottomBar,
     this.showBackButton = true,
+    this.hideAiButton = false,
   });
 
   @override
@@ -209,9 +212,50 @@ class AppScaffold extends StatelessWidget {
           ),
           actions: actions,
         ),
-        body: SafeArea(child: OfflineBannerWrapper(child: body)),
+        body: SafeArea(
+          child: Stack(
+            children: [
+              OfflineBannerWrapper(child: body),
+              if (!hideAiButton)
+                Positioned(
+                  bottom: 16,
+                  right: 16,
+                  child: _AiFloatingButton(),
+                ),
+            ],
+          ),
+        ),
         floatingActionButton: floatingActionButton,
         bottomNavigationBar: bottomBar,
+      ),
+    );
+  }
+}
+
+class _AiFloatingButton extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+              builder: (_) => const BirdsAiScreen(),
+              fullscreenDialog: true)),
+      child: Container(
+        width: 52,
+        height: 52,
+        decoration: BoxDecoration(
+          color: AppColors.navy,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+                color: AppColors.navy.withValues(alpha: 0.35),
+                blurRadius: 14,
+                offset: const Offset(0, 5))
+          ],
+        ),
+        child: const Icon(Icons.auto_awesome_rounded,
+            color: AppColors.orange, size: 24),
       ),
     );
   }
