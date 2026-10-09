@@ -1,4 +1,5 @@
 const { sendCode, consume } = require('../utils/mobileEmailCodes');
+const { passwordError } = require('../utils/passwordPolicy');
 const { randomBytes, createHash } = require('node:crypto');
 const User = require("../models/User");
 const StudentProfile = require("../models/StudentProfile");
@@ -49,6 +50,8 @@ const register = asyncHandler(async (req, res) => {
   }
 
   // Agents (partner) can self-register; universities and employees must be admin-created.
+  const weakPassword = passwordError(password);
+  if (weakPassword) { res.status(400); throw new Error(weakPassword); }
   const allowedSelfRegisterRoles = ["student", "parent", "partner"];
   const requestedRole = req.body.role;
   const role = allowedSelfRegisterRoles.includes(requestedRole) ? requestedRole : "student";
@@ -254,12 +257,8 @@ const changePassword = asyncHandler(async (req, res) => {
     res.status(400); throw new Error('راجع كلمة المرور الحالية وحاول مجددًا.');
   }
 
-  const passwordKinds = [/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9\s]/]
-    .filter(pattern => pattern.test(newPassword)).length;
-  if (passwordKinds < 2) {
-    res.status(400);
-    throw new Error('كلمة المرور ضعيفة. اخلط بين الأحرف الكبيرة والصغيرة أو الأرقام أو الرموز.');
-  }
+  const weakPassword = passwordError(newPassword);
+  if (weakPassword) { res.status(400); throw new Error(weakPassword); }
 
   const user = await User.findById(req.user._id);
 
