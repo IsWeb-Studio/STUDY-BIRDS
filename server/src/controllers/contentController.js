@@ -1,3 +1,4 @@
+const { escapeHtml } = require('../utils/brandedEmail');
 const Country = require("../models/Country");
 const ExhibitionArticle = require("../models/ExhibitionArticle");
 const University = require("../models/University");
@@ -360,12 +361,12 @@ const createContactMessage = asyncHandler(async (req, res) => {
   const htmlBody = `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #0f172a;">
       <h2>New contact form message</h2>
-      <p><strong>Name:</strong> ${name}</p>
-      <p><strong>Email:</strong> ${email}</p>
-      ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ""}
-      <p><strong>Subject:</strong> ${subject}</p>
+      <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+      <p><strong>Email:</strong> ${escapeHtml(email)}</p>
+      ${phone ? `<p><strong>Phone:</strong> ${escapeHtml(phone)}</p>` : ""}
+      <p><strong>Subject:</strong> ${escapeHtml(subject)}</p>
       <p><strong>Message:</strong></p>
-      <div style="white-space: pre-wrap;">${message}</div>
+      <div style="white-space: pre-wrap;">${escapeHtml(message)}</div>
     </div>
   `;
 

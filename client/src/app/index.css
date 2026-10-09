@@ -39,3 +39,306 @@ textarea {
 .panel {
   @apply rounded-3xl border border-slate-200 bg-white shadow-soft;
 }
+
+.program-search-filter > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.program-search-filter :where(input:not([type="range"]), select) {
+  width: 100%;
+  min-width: 0;
+}
+
+.price-range-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  pointer-events: none;
+}
+
+.price-range-input::-webkit-slider-runnable-track {
+  height: 6px;
+  background: transparent;
+}
+
+.price-range-input::-moz-range-track {
+  height: 6px;
+  background: transparent;
+}
+
+.price-range-input::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -5px;
+  border-radius: 50%;
+  border: 3px solid #1a3a7a;
+  background: #fff;
+  box-shadow: 0 2px 5px rgb(15 23 42 / 0.12);
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.price-range-input::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 3px solid #1a3a7a;
+  background: #fff;
+  box-shadow: 0 2px 5px rgb(15 23 42 / 0.12);
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.price-range-input:focus-visible {
+  outline: none;
+}
+
+.price-range-input:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 4px #d8e1f1;
+}
+
+.price-range-input:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 4px #d8e1f1;
+}
+
+.program-list-card {
+  container: program-card / inline-size;
+}
+
+.program-list-card-content {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.program-list-card-pricing {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 1rem;
+}
+
+@container program-card (min-width: 36rem) {
+  .program-list-card-content {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .program-list-card-pricing {
+    border-top: 0;
+    border-inline-start: 1px solid #e2e8f0;
+    padding-top: 0;
+    padding-inline-start: 1.5rem;
+    min-width: 15rem;
+  }
+}
+
+/* Shared dashboard design; public pages retain their own visual styles. */
+.dashboard-workspace {
+  --dashboard-radius: 1rem;
+  --dashboard-shadow: 0 2px 8px rgb(15 23 42 / 0.035);
+}
+
+.dashboard-workspace .panel {
+  border-radius: var(--dashboard-radius);
+  box-shadow: var(--dashboard-shadow);
+}
+
+.dashboard-content {
+  container: dashboard / inline-size;
+}
+
+.dashboard-content :where(h1) {
+  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+  line-height: 1.4;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-content :where(h2) {
+  font-size: 1.125rem;
+  line-height: 1.5;
+  font-weight: 650;
+}
+
+.dashboard-content :where(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]), select, textarea) {
+  min-width: 0;
+  max-width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid #e2e8f0;
+  background-color: #fff;
+  color: #0f172a;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  transition: border-color 150ms, box-shadow 150ms;
+}
+
+.dashboard-content :where(input, select, textarea):focus-visible {
+  outline: none;
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px #dbeafe;
+}
+
+.dashboard-content :where(input[type="checkbox"], input[type="radio"]) {
+  accent-color: #2563eb;
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+.dashboard-content :where(input, textarea)::placeholder {
+  color: #94a3b8;
+}
+
+.dashboard-content :where(input.border-none, select.border-none) {
+  border: 0;
+  background: transparent;
+}
+
+.dashboard-content :where(button:not([role="switch"])) {
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  transition: background-color 150ms, border-color 150ms, box-shadow 150ms;
+}
+
+.dashboard-workspace :where(button, a):focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 3px;
+}
+
+.dashboard-content :where(button:disabled) {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.dashboard-content :where(table) {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 0.875rem;
+}
+
+.dashboard-content :where(thead) {
+  background: #f8fafc;
+  color: #64748b;
+}
+
+.dashboard-content :where(th) {
+  padding: 0.875rem 1rem;
+  text-align: start;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.dashboard-content :where(td) {
+  padding: 1rem;
+  vertical-align: middle;
+  text-align: start;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.dashboard-content :where(tbody tr):hover {
+  background-color: #f8fafc;
+}
+
+.dashboard-content :where(tbody tr:last-child td) {
+  border-bottom: 0;
+}
+
+.dashboard-content :where(.overflow-x-auto) {
+  max-width: 100%;
+  border-radius: 0.75rem;
+}
+
+.dashboard-content :where(fieldset, details) {
+  border-radius: 0.75rem;
+}
+
+.dashboard-navigation {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-gutter: stable;
+}
+
+.dashboard-content .dashboard-page-hero :where(.text-slate-200, .text-slate-300, .text-slate-400) {
+  color: #64748b;
+}
+
+.dashboard-content .dashboard-page-hero :where(.text-white) {
+  color: #0f172a;
+}
+
+.dashboard-content .dashboard-page-hero :where(.text-brand-300, .text-orange-300, .text-emerald-300) {
+  color: #2563eb;
+}
+
+.dashboard-content .dashboard-page-hero :where([class*="bg-white/"], [class*="bg-brand-300/"], [class*="bg-emerald-400/"]) {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  border-radius: 0.75rem;
+}
+
+.dashboard-workspace .dashboard-stat {
+  border-top-width: 1px;
+  border-top-color: #e2e8f0;
+  background: white;
+}
+
+.dashboard-workspace .dashboard-stat-decoration {
+  display: none;
+}
+
+.dashboard-workspace .dashboard-stat-label {
+  color: #64748b;
+  text-transform: none;
+  letter-spacing: normal;
+  font-size: 0.875rem;
+}
+
+.dashboard-workspace .dashboard-stat-value {
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-workspace .dashboard-stat-icon {
+  border-color: #dbeafe;
+  background: #eff6ff;
+  color: #2563eb;
+  border-radius: 0.75rem;
+  box-shadow: none;
+}
+
+/* Respond to available workspace width, including when the sidebar is open. */
+@container dashboard (max-width: 48rem) {
+  .dashboard-content :where(.grid[class*="grid-cols-"]) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-content :where([class*="col-span-"]) {
+    grid-column: auto;
+  }
+
+  .dashboard-content :where(.panel) {
+    padding: 1.25rem;
+  }
+
+  .dashboard-content :where(.panel.p-0) {
+    padding: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-workspace *, .dashboard-workspace *::before, .dashboard-workspace *::after {
+    scroll-behavior: auto;
+    transition: none;
+    animation: none;
+  }
+}

@@ -11,6 +11,7 @@ const {
 } = require("../controllers/authController");
 const generateToken = require("../utils/generateToken");
 const { sendCode, consume } = require("../utils/mobileEmailCodes");
+const sms = require("../utils/cashMisrSms");
 const router = express.Router();
 const fail = (res, status, message) => {
   res.status(status);
@@ -31,12 +32,7 @@ const origins = () =>
     .split(",")
     .map((v) => v.trim())
     .filter(Boolean);
-const phoneReady = () =>
-  Boolean(
-    process.env.TWILIO_ACCOUNT_SID &&
-    process.env.TWILIO_AUTH_TOKEN &&
-    process.env.TWILIO_VERIFY_SERVICE_SID,
-  );
+const phoneReady = () => sms.ready();
 router.get("/config", (req, res) =>
   res.json({
     passkeys: Boolean(rpID() && origins().length),
@@ -309,27 +305,6 @@ router.post(
     await signIn(user, req, res);
   }),
 );
-async function twilio(path, values) {
-  const response = await fetch(
-    `https://verify.twilio.com/v2/Services/${process.env.TWILIO_VERIFY_SERVICE_SID}/${path}`,
-    {
-      method: "POST",
-      headers: {
-        Authorization:
-          "Basic " +
-          Buffer.from(
-            `${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`,
-          ).toString("base64"),
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams(values),
-      signal: AbortSignal.timeout(15000),
-    },
-  );
-  if (!response.ok)
-    throw new Error("WhatsApp verification provider unavailable. Please try again.");
-  return response.json();
-}
 router.post(
   "/phone/request",
   protect,
@@ -346,33 +321,29 @@ router.post(
       typeof req.body.phone !== "string" ||
       !/^\+[1-9]\d{7,14}$/.test(req.body.phone)
     )
-      fail(res, 400, "Use an international phone number, for example +905...");
+      fail(res, 400, "أدخل رقمًا دوليًا يبدأ بـ + ورمز الدولة");
     const key = `phone:${req.user._id}`;
-    const existing = await Challenge.findOne({ key });
-    if (existing && Date.now() - existing.createdAt.getTime() < 60000)
-      fail(res, 429, "Wait a minute before requesting another code");
-    await Challenge.deleteOne({
+    const existing = await Challenge.findOne({
       key,
-      expiresAt: { $lt: new Date(Date.now() + 9 * 60 * 1000) },
+      purpose: "phone",
+      expiresAt: { $gt: new Date(Date.now() + 9 * 60 * 1000) },
     });
-    const pending = await Challenge.create({
+    if (existing) fail(res, 429, "انتظر دقيقة قبل طلب رمز جديد");
+    await Challenge.deleteOne({ key });
+    const code = sms.generate();
+    try {
+      await sms.send(req.body.phone, code);
+    } catch (e) {
+      fail(res, 503, e.message || "تعذر إرسال رمز التحقق");
+    }
+    await Challenge.create({
       key,
       user: req.user._id,
       purpose: "phone",
       phone: req.body.phone,
+      value: sms.hash(req.body.phone, code),
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
-    try {
-      const result = await twilio("Verifications", {
-        To: pending.phone,
-        Channel: "whatsapp",
-      });
-      pending.value = result.sid;
-      await pending.save();
-    } catch {
-      await Challenge.deleteOne({ _id: pending._id });
-      fail(res, 503, "Unable to send the verification message");
-    }
     res.json({ sent: true });
   }),
 );
@@ -381,32 +352,23 @@ router.post(
   protect,
   run(async (req, res) => {
     if (!phoneReady()) fail(res, 503, "Phone verification is not configured");
-    if (typeof req.body.code !== "string" || !/^\d{4,10}$/.test(req.body.code))
-      fail(res, 400, "Invalid code");
-    const pending = await Challenge.findOne({
+    if (typeof req.body.code !== "string" || !/^\d{6}$/.test(req.body.code))
+      fail(res, 400, "أدخل الرمز المكون من 6 أرقام");
+    const row = await Challenge.findOne({
       key: `phone:${req.user._id}`,
       purpose: "phone",
       expiresAt: { $gt: new Date() },
     });
-    if (!pending?.value) fail(res, 400, "Request a new code");
-    let result;
-    try {
-      result = await twilio("VerificationCheck", {
-        VerificationSid: pending.value,
-        Code: req.body.code,
-      });
-    } catch {
-      fail(res, 400, "Unable to verify this code");
-    }
-    if (result.status !== "approved")
-      fail(res, 400, "Invalid verification code");
-    const consumed = await Challenge.deleteOne({ _id: pending._id });
-    if (!consumed.deletedCount) fail(res, 400, "Code already used");
+    if (!row) fail(res, 400, "اطلب رمزًا جديدًا");
+    if (row.value !== sms.hash(row.phone, req.body.code))
+      fail(res, 400, "رمز التحقق غير صحيح");
+    const consumed = await Challenge.deleteOne({ _id: row._id });
+    if (!consumed.deletedCount) fail(res, 400, "تم استخدام الرمز بالفعل");
     await User.updateOne(
       { _id: req.user._id },
-      { $set: { verifiedPhone: pending.phone } },
+      { $set: { verifiedPhone: row.phone } },
     );
-    res.json({ verifiedPhone: pending.phone });
+    res.json({ verifiedPhone: row.phone });
   }),
 );
 // Browser-to-app authorization: a one-time grant bound to a secret held by the app.

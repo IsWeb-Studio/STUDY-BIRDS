@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import type { Country, StudyField, University } from "../../types";
 import { useLanguage } from "../../hooks/useLanguage";
+import { PriceRangeFilter } from "./PriceRangeFilter";
 import {
   PROGRAM_DEGREE_LEVELS,
-  PROGRAM_INTAKES,
+  LEGACY_PROGRAM_DEGREE_LEVELS,
 } from "../../constants/programOptions";
 
 interface SearchFilterProps {
@@ -49,7 +50,7 @@ export const SearchFilter = ({
   }, [filters.country, universities, universityQuery]);
 
   return (
-    <div className="panel grid gap-4 p-5 lg:grid-cols-4">
+    <div className="program-search-filter panel grid w-full min-w-0 grid-cols-1 items-start gap-4 p-4 sm:p-5 lg:grid-cols-4">
       <input
         value={keyword}
         onChange={(event) => onKeywordChange(event.target.value)}
@@ -68,8 +69,8 @@ export const SearchFilter = ({
           </option>
         ))}
       </select>
-      <div className="relative">
-        <Search className="pointer-events-none absolute inset-y-0 left-4 my-auto h-4 w-4 text-slate-400" />
+      <div className="relative min-w-0">
+        <Search className="pointer-events-none absolute inset-y-0 start-4 my-auto h-4 w-4 text-slate-400" />
         <input
           value={universityQuery}
           onChange={(event) => {
@@ -91,7 +92,7 @@ export const SearchFilter = ({
             }, 150);
           }}
           placeholder={t("allUniversities")}
-          className="w-full rounded-2xl border border-slate-200 py-3 pl-11 pr-12 outline-none ring-brand-300 focus:ring"
+          className="w-full min-w-0 rounded-2xl border border-slate-200 py-3 pe-12 ps-11 outline-none ring-brand-300 focus:ring"
         />
         {universityQuery ? (
           <button
@@ -102,7 +103,7 @@ export const SearchFilter = ({
               setIsUniversityMenuOpen(false);
               onUniversitySelect("");
             }}
-            className="absolute inset-y-0 right-4 my-auto inline-flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
+            className="absolute inset-y-0 end-4 my-auto inline-flex h-6 w-6 items-center justify-center rounded-full text-slate-400 transition hover:bg-slate-100 hover:text-slate-600"
             aria-label={language === "ar" ? "مسح البحث" : "Clear search"}
           >
             <X className="h-4 w-4" />
@@ -133,9 +134,9 @@ export const SearchFilter = ({
                     setIsUniversityMenuOpen(false);
                     onUniversitySelect(university._id);
                   }}
-                  className="flex w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-right text-sm text-slate-700 transition hover:bg-slate-100"
+                  className="flex w-full min-w-0 items-center justify-between gap-3 rounded-2xl px-4 py-3 text-start text-sm text-slate-700 transition hover:bg-slate-100"
                 >
-                  <span className="truncate font-medium">{university.name}</span>
+                  <span className="min-w-0 truncate font-medium">{university.name}</span>
                   {university.country?.name ? (
                     <span className="shrink-0 text-xs text-slate-400">{tv(university.country.name)}</span>
                   ) : null}
@@ -153,7 +154,7 @@ export const SearchFilter = ({
         className="rounded-2xl border border-slate-200 px-4 py-3"
       >
         <option value="">{t("allDegreeLevels")}</option>
-        {PROGRAM_DEGREE_LEVELS.map((option) => (
+        {[...PROGRAM_DEGREE_LEVELS, ...LEGACY_PROGRAM_DEGREE_LEVELS].map((option) => (
           <option key={option.value} value={option.value}>
             {t(option.translationKey)}
           </option>
@@ -171,30 +172,10 @@ export const SearchFilter = ({
           </option>
         ))}
       </select>
-      <input
-        value={filters.tuitionMin}
-        onChange={(event) => onFilterChange("tuitionMin", event.target.value)}
-        placeholder={t("minTuition")}
-        className="rounded-2xl border border-slate-200 px-4 py-3"
-      />
-      <input
-        value={filters.tuitionMax}
-        onChange={(event) => onFilterChange("tuitionMax", event.target.value)}
-        placeholder={t("maxTuition")}
-        className="rounded-2xl border border-slate-200 px-4 py-3"
-      />
-      <select
-        value={filters.intake}
-        onChange={(event) => onFilterChange("intake", event.target.value)}
-        className="rounded-2xl border border-slate-200 px-4 py-3"
-      >
-        <option value="">{t("allIntakes")}</option>
-        {PROGRAM_INTAKES.map((option) => (
-          <option key={option.value} value={option.value}>
-            {t(option.translationKey)}
-          </option>
-        ))}
-      </select>
+      <PriceRangeFilter minimum={filters.tuitionMin || ""} maximum={filters.tuitionMax || ""} onChange={(minimum, maximum) => {
+        onFilterChange("tuitionMin", minimum);
+        onFilterChange("tuitionMax", maximum);
+      }} />
       <select
         value={filters.sortBy}
         onChange={(event) => onFilterChange("sortBy", event.target.value)}
@@ -202,7 +183,6 @@ export const SearchFilter = ({
       >
         <option value="">{t("sortByFeatured")}</option>
         <option value="tuition">{t("tuition")}</option>
-        <option value="deadline">{t("deadline")}</option>
         <option value="popularity">{t("popularity")}</option>
       </select>
     </div>

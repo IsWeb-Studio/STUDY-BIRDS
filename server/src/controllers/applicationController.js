@@ -12,6 +12,7 @@ const {
   hydrateApplicationsWithStudentProfiles,
 } = require("../utils/hydrateApplications");
 const { qualifyReferral } = require("../utils/studentWallet");
+const { enqueueApplicationEmail } = require('../utils/applicationEmails');
 
 const createApplication = asyncHandler(async (req, res) => {
   const { programId, documentIds = [], notes, applicantProfile } = req.body;
@@ -90,6 +91,7 @@ const createApplication = asyncHandler(async (req, res) => {
     .populate("documents")
     .populate("statusTimeline.changedBy", "name role");
 
+  await enqueueApplicationEmail(populated, 'submitted');
   res.status(201).json(await hydrateApplicationsWithStudentProfiles(populated));
 });
 
@@ -185,6 +187,7 @@ const updateApplicationStatus = asyncHandler(async (req, res) => {
     .populate("documents")
     .populate("statusTimeline.changedBy", "name role");
 
+  await enqueueApplicationEmail(populated, 'status');
   res.json(await hydrateApplicationsWithStudentProfiles(populated));
 });
 

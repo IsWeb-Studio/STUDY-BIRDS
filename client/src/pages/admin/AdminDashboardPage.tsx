@@ -38,7 +38,7 @@ export const AdminDashboardPage = () => {
 
   return (
     <div className="space-y-6">
-      <section className="overflow-hidden rounded-[2rem] border border-slate-200 bg-slate-950 text-white shadow-2xl shadow-slate-900/10">
+      <section className="dashboard-page-hero panel overflow-hidden bg-white text-slate-900">
         <div className="grid gap-8 px-8 py-9 lg:grid-cols-[1.35fr_0.85fr]">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-brand-300">{dt(language, "adminMissionControl")}</p>

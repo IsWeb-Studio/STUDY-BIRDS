@@ -27,7 +27,7 @@ export const PhoneNumberField = ({
       >
         {phoneCountryOptions.map((option) => (
           <option key={`${option.country}-${option.dialCode}`} value={option.dialCode}>
-            {option.dialCode} - {option.country}
+            {option.flag} {option.dialCode} {option.country}
           </option>
         ))}
       </select>
