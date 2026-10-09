@@ -16,6 +16,11 @@ const {
 const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
+const { rateLimit } = require('express-rate-limit');
+const authAttempts = rateLimit({ windowMs: 15 * 60 * 1000, limit: 60,
+  standardHeaders: 'draft-7', legacyHeaders: false,
+  message: { message: 'محاولات كثيرة خلال وقت قصير. انتظر قليلًا ثم حاول مجددًا.' } });
+router.use(['/register', '/login', '/google', '/otp/request', '/otp/verify', '/email-otp/request', '/email-otp/verify', '/change-password', '/account'], authAttempts);
 
 router.post("/register", register);
 router.post("/login", login);

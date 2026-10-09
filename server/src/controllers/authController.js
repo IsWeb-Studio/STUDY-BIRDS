@@ -35,6 +35,12 @@ const ensureStudentProfile = async (userId) => {
 
 const register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
+  if (typeof name !== 'string' || name.trim().length > 120 || typeof email !== 'string' ||
+      email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
+      typeof password !== 'string' || password.length < 8 || Buffer.byteLength(password, 'utf8') > 72) {
+    res.status(400);
+    throw new Error('أدخل اسمًا وبريدًا صحيحين وكلمة مرور من 8 أحرف على الأقل. إذا كانت كلمة المرور طويلة جدًا، استخدم واحدة أقصر.');
+  }
   const normalizedEmail = String(email || "").toLowerCase().trim();
 
   if (!String(name || "").trim() || !normalizedEmail || !password) {
@@ -72,6 +78,9 @@ const register = asyncHandler(async (req, res) => {
 
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  if (typeof email !== 'string' || email.length > 254 || typeof password !== 'string' || password.length > 200) {
+    res.status(400); throw new Error('Email and password are required');
+  }
   const normalizedEmail = String(email || "").toLowerCase().trim();
 
   if (!normalizedEmail || !password) {
@@ -237,6 +246,12 @@ const changePassword = asyncHandler(async (req, res) => {
   if (typeof newPassword !== "string" || newPassword.length < 8) {
     res.status(400);
     throw new Error("New password must be at least 8 characters");
+  }
+  if (Buffer.byteLength(newPassword, 'utf8') > 72) {
+    res.status(400); throw new Error('كلمة المرور طويلة جدًا. استخدم كلمة مرور أقصر.');
+  }
+  if (currentPassword != null && (typeof currentPassword !== 'string' || currentPassword.length > 200)) {
+    res.status(400); throw new Error('راجع كلمة المرور الحالية وحاول مجددًا.');
   }
 
   const passwordKinds = [/[A-Z]/, /[a-z]/, /[0-9]/, /[^A-Za-z0-9\s]/]

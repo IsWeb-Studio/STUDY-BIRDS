@@ -24,6 +24,9 @@ const {
 const ExhibitionArticle = require("./models/ExhibitionArticle");
 
 const app = express();
+const { requestSafety, safeResponses } = require('./middleware/requestSafety');
+app.disable('x-powered-by');
+app.use(safeResponses);
 // Render is the only public ingress; trust the nearest forwarding proxy.
 if (process.env.RENDER === "true") app.set("trust proxy", 1);
 
@@ -62,10 +65,11 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json({ verify: (req, res, buffer) => {
+app.use(express.json({ limit: '100kb', verify: (req, res, buffer) => {
   if (req.originalUrl.split('?')[0] === '/api/payments/stripe/webhook') req.rawBody = Buffer.from(buffer);
 } }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: '100kb', parameterLimit: 1000, depth: 16 }));
+app.use('/api', requestSafety);
 app.use(morgan("dev"));
 app.use((req, res, next) => {
   const startedAt = process.hrtime.bigint();

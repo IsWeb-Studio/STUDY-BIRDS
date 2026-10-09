@@ -1,3 +1,4 @@
+const { escapeSearch } = require('../middleware/requestSafety');
 const express = require("express");
 const mongoose = require("mongoose");
 const { protect, authorize } = require("../middleware/authMiddleware");
@@ -67,11 +68,11 @@ router.get(
   run(async (req, res) => {
     const filter = available();
     // #26: filter by country, degree level, field (partial match on title/eligibility)
-    if (req.query.country) filter.country = new RegExp(String(req.query.country).trim(), 'i');
-    if (req.query.degree) filter.degree = new RegExp(String(req.query.degree).trim(), 'i');
+    if (req.query.country) filter.country = new RegExp(escapeSearch(req.query.country), 'i');
+    if (req.query.degree) filter.degree = new RegExp(escapeSearch(req.query.degree), 'i');
     if (req.query.field) filter.$or = [
-      { title: new RegExp(String(req.query.field).trim(), 'i') },
-      { eligibility: new RegExp(String(req.query.field).trim(), 'i') },
+      { title: new RegExp(escapeSearch(req.query.field), 'i') },
+      { eligibility: new RegExp(escapeSearch(req.query.field), 'i') },
     ];
     res.json(await Scholarship.find(filter).sort({ createdAt: -1 }).limit(200).lean());
   }),
