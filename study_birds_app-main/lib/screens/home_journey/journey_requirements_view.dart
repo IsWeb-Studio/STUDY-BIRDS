@@ -9,7 +9,7 @@ import '../applications_documents_payments/payments_screens.dart';
 import '../services_support/support_team_ai_screens.dart';
 import 'calendar_screen.dart';
 import '../visa_travel_accommodation/arrival_services_screen.dart';
-import '../universities_programs_countries/explore_hub_screen.dart';
+import '../../app_shell.dart';
 
 class JourneyRequirementsView extends StatelessWidget {
   final List<Map<String, dynamic>> journeys;
@@ -28,8 +28,10 @@ class JourneyRequirementsView extends StatelessWidget {
           title: 'لم تبدأ رحلة تقديم بعد',
           message: 'اختر برنامجك الدراسي وقدّم طلبك لتظهر متطلباته هنا.',
           ctaLabel: 'استكشف الجامعات',
-          onCta: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const ExploreHubScreen())),
+          onCta: () {
+            Navigator.of(context).popUntil((r) => r.isFirst);
+            switchToMainTab(kTabExplore);
+          },
         ),
       );
     }
