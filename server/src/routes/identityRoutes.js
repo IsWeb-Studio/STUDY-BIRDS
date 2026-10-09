@@ -11,7 +11,7 @@ const {
 } = require("../controllers/authController");
 const generateToken = require("../utils/generateToken");
 const { sendCode, consume } = require("../utils/mobileEmailCodes");
-const wa = require("../utils/whatsappOtp");
+const sms = require("../utils/cashMisrSms");
 const router = express.Router();
 const fail = (res, status, message) => {
   res.status(status);
@@ -32,7 +32,7 @@ const origins = () =>
     .split(",")
     .map((v) => v.trim())
     .filter(Boolean);
-const phoneReady = () => wa.ready();
+const phoneReady = () => sms.ready();
 router.get("/config", (req, res) =>
   res.json({
     passkeys: Boolean(rpID() && origins().length),
@@ -330,9 +330,9 @@ router.post(
     });
     if (existing) fail(res, 429, "انتظر دقيقة قبل طلب رمز جديد");
     await Challenge.deleteOne({ key });
-    const code = wa.generate();
+    const code = sms.generate();
     try {
-      await wa.send(req.body.phone, code);
+      await sms.send(req.body.phone, code);
     } catch (e) {
       fail(res, 503, e.message || "تعذر إرسال رمز التحقق");
     }
@@ -341,7 +341,7 @@ router.post(
       user: req.user._id,
       purpose: "phone",
       phone: req.body.phone,
-      value: wa.hash(req.body.phone, code),
+      value: sms.hash(req.body.phone, code),
       expiresAt: new Date(Date.now() + 10 * 60 * 1000),
     });
     res.json({ sent: true });
@@ -360,7 +360,7 @@ router.post(
       expiresAt: { $gt: new Date() },
     });
     if (!row) fail(res, 400, "اطلب رمزًا جديدًا");
-    if (row.value !== wa.hash(row.phone, req.body.code))
+    if (row.value !== sms.hash(row.phone, req.body.code))
       fail(res, 400, "رمز التحقق غير صحيح");
     const consumed = await Challenge.deleteOne({ _id: row._id });
     if (!consumed.deletedCount) fail(res, 400, "تم استخدام الرمز بالفعل");

@@ -20,6 +20,7 @@ const studentProfileSchema = new mongoose.Schema(
       default: "",
     },
     currentResidenceCountry: String,
+    currentResidenceRegion: String,
     gpa: String,
     englishTest: {
       exam: String,

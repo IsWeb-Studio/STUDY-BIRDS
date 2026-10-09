@@ -50,6 +50,9 @@ const StudentArrivalServicesPage = lazy(() => import("../pages/student/StudentAr
 const StudentFavoritesPage = lazy(() => import("../pages/student/StudentFavoritesEnhancedPage").then((module) => ({ default: module.StudentFavoritesEnhancedPage })));
 const StudentOrientationTestPage = lazy(() => import("../pages/student/StudentOrientationTestEnhancedPage").then((module) => ({ default: module.StudentOrientationTestEnhancedPage })));
 const StudentBecomeAgentPage = lazy(() => import("../pages/student/StudentBecomeAgentPage").then((module) => ({ default: module.StudentBecomeAgentPage })));
+const StudentJourneyPage = lazy(() => import("../pages/student/StudentJourneyPage").then((module) => ({ default: module.StudentJourneyPage })));
+const StudentVisaCenterPage = lazy(() => import("../pages/student/StudentVisaCenterPage").then((module) => ({ default: module.StudentVisaCenterPage })));
+const StudentRewardsPage = lazy(() => import("../pages/student/StudentRewardsPage").then((module) => ({ default: module.StudentRewardsPage })));
 const PartnerDashboardPage = lazy(() => import("../pages/partner/PartnerDashboardPage").then((module) => ({ default: module.PartnerDashboardPage })));
 const PartnerStudentsPage = lazy(() => import("../pages/partner/PartnerStudentsManagePage").then((module) => ({ default: module.PartnerStudentsManagePage })));
 const PartnerWalletPage = lazy(() => import("../pages/partner/PartnerWalletPage").then((module) => ({ default: module.PartnerWalletPage })));
@@ -158,6 +161,9 @@ export const AppRoutes = () => (
           <Route path="/student/orientation-test" element={<StudentOrientationTestPage />} />
           <Route path="/student/settings" element={<StudentProfilePage />} />
           <Route path="/student/become-agent" element={<StudentBecomeAgentPage />} />
+          <Route path="/student/journey" element={<StudentJourneyPage />} />
+          <Route path="/student/visa" element={<StudentVisaCenterPage />} />
+          <Route path="/student/rewards" element={<StudentRewardsPage />} />
         </Route>
       </Route>
 
