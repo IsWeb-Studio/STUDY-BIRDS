@@ -5,7 +5,6 @@ import { useLanguage } from "../../hooks/useLanguage";
 import {
   PROGRAM_DEGREE_LEVELS,
   LEGACY_PROGRAM_DEGREE_LEVELS,
-  PROGRAM_INTAKES,
 } from "../../constants/programOptions";
 
 interface SearchFilterProps {
@@ -185,25 +184,12 @@ export const SearchFilter = ({
         className="rounded-2xl border border-slate-200 px-4 py-3"
       />
       <select
-        value={filters.intake}
-        onChange={(event) => onFilterChange("intake", event.target.value)}
-        className="rounded-2xl border border-slate-200 px-4 py-3"
-      >
-        <option value="">{t("allIntakes")}</option>
-        {PROGRAM_INTAKES.map((option) => (
-          <option key={option.value} value={option.value}>
-            {t(option.translationKey)}
-          </option>
-        ))}
-      </select>
-      <select
         value={filters.sortBy}
         onChange={(event) => onFilterChange("sortBy", event.target.value)}
         className="rounded-2xl border border-slate-200 px-4 py-3 lg:col-span-4"
       >
         <option value="">{t("sortByFeatured")}</option>
         <option value="tuition">{t("tuition")}</option>
-        <option value="deadline">{t("deadline")}</option>
         <option value="popularity">{t("popularity")}</option>
       </select>
     </div>

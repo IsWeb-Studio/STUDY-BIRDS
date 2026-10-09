@@ -1,6 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { Link, useParams } from "react-router-dom";
-import { ArticleContentSection } from "../components/content/ArticleContentSection";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { FormInput } from "../components/forms/FormInput";
 import { PhoneNumberField } from "../components/forms/PhoneNumberField";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -8,7 +7,6 @@ import { Seo } from "../components/seo/Seo";
 import { DOCUMENT_UPLOAD_ACCEPT } from "../constants/upload";
 import { useAuth } from "../hooks/useAuth";
 import { useLanguage } from "../hooks/useLanguage";
-import { getApiAssetUrl } from "../lib/api";
 import { SITE_NAME, seoText } from "../seo/site";
 import { applicationService } from "../services/applicationService";
 import { programService } from "../services/programService";
@@ -16,7 +14,7 @@ import { studentService } from "../services/studentService";
 import type { Program } from "../types";
 import { dt } from "../utils/dashboardTranslations";
 import { getErrorMessage } from "../utils/errors";
-import { formatCurrency, formatDate } from "../utils/format";
+import { formatCurrency } from "../utils/format";
 import { buildPhoneNumber, DEFAULT_PHONE_DIAL_CODE, splitPhoneNumber } from "../utils/phoneCountryOptions";
 
 type ApplicationFormState = {
@@ -48,6 +46,7 @@ const emptyForm: ApplicationFormState = {
 export const ProgramDetailsPage = () => {
   const { t, tv, language } = useLanguage();
   const { id = "" } = useParams();
+  const { hash } = useLocation();
   const { profile, refreshSession, user } = useAuth();
   const [program, setProgram] = useState<Program | null>(null);
   const [loading, setLoading] = useState(true);
@@ -64,6 +63,12 @@ export const ProgramDetailsPage = () => {
   const [favoriteMessage, setFavoriteMessage] = useState("");
   const requiredTypes = program?.requiredDocumentTypes ?? ['passport', 'biometric-photo', 'latest-qualification'];
   const documentLabels: Record<string, string[]> = { passport: ['جواز السفر', 'Passport'], 'biometric-photo': ['صورة شخصية', 'Photo'], 'latest-qualification': ['آخر مؤهل دراسي', 'Latest qualification'], transcript: ['كشف الدرجات', 'Transcript'], 'language-certificate': ['شهادة اللغة', 'Language certificate'], other: ['مستند إضافي', 'Additional document'] };
+
+  useEffect(() => {
+    if (!loading && program?._id === id && hash === "#program-application") {
+      document.getElementById("program-application")?.scrollIntoView({ block: "start" });
+    }
+  }, [loading, program?._id, id, hash]);
 
   useEffect(() => {
     const loadProgram = async () => {
@@ -228,15 +233,14 @@ export const ProgramDetailsPage = () => {
     );
   }
 
-  const coverImage = program.coverImage || program.university?.campusImages?.[0] || program.university?.logo;
   const isPartnerUser = user?.role === "partner";
   const visibleTuition = isPartnerUser ? program.partnerTuition ?? program.tuition : program.tuition;
   const seoDescription =
     program.summary ||
     seoText(
       language,
-      `Explore ${program.title} at ${program.university?.name || SITE_NAME} and review tuition, intake, and admission requirements.`,
-      `استكشف برنامج ${program.title} في ${program.university?.name || SITE_NAME} وتعرّف على الرسوم وموعد الدراسة ومتطلبات القبول.`
+      `Explore ${program.title} at ${program.university?.name || SITE_NAME} and review tuition and admission requirements.`,
+      `استكشف برنامج ${program.title} في ${program.university?.name || SITE_NAME} وتعرّف على الرسوم ومتطلبات القبول.`
     );
   const structuredData = {
     "@context": "https://schema.org",
@@ -277,9 +281,6 @@ export const ProgramDetailsPage = () => {
         structuredData={structuredData}
       />
       <section className="panel overflow-hidden p-0">
-        {coverImage ? (
-          <img src={getApiAssetUrl(coverImage)} alt={program.university?.name || program.title} className="h-72 w-full object-cover" />
-        ) : null}
         <div className="p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-700">{tv(program.degreeLevel)}</p>
           <h1 className="mt-3 text-4xl font-semibold text-slate-900">{program.title}</h1>
@@ -316,10 +317,6 @@ export const ProgramDetailsPage = () => {
               {isPartnerUser && typeof program.partnerTuition === "number" && typeof program.tuition === "number" ? (
                 <p className="mt-2 text-sm text-slate-500">{t("tuition")}: {formatCurrency(program.tuition)}</p>
               ) : null}
-            </div>
-            <div className="rounded-3xl bg-slate-50 p-5">
-              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{t("deadline")}</div>
-              <p className="mt-2 font-semibold text-slate-900">{formatDate(program.applicationDeadline)}</p>
             </div>
           </div>
 
@@ -386,9 +383,8 @@ export const ProgramDetailsPage = () => {
         </section>
       ) : null}
 
-      <ArticleContentSection article={program} language={language} />
 
-      <section className="panel p-8">
+      <section id="program-application" className="panel scroll-mt-32 p-8">
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-700">{dt(language, "submitUniversityApplication")}</p>
         <h2 className="mt-3 text-3xl font-semibold text-slate-900">{dt(language, "applicationFormTitle")}</h2>
         <p className="mt-3 text-sm leading-6 text-slate-500">{dt(language, "applicationFormSubtitle")}</p>
