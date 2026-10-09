@@ -24,6 +24,8 @@ const buildUniversityPayload = (body) => ({
   isPartnerInstitution: Boolean(body.isPartnerInstitution),
   logo: body.logo || "",
   campusImages: Array.isArray(body.campusImages) ? body.campusImages : [],
+  ...(body.requiredDocuments !== undefined ? { requiredDocuments: body.requiredDocuments } : {}),
+  ...(body.accreditations !== undefined ? { accreditations: body.accreditations } : {}),
   tuitionRange: {
     min: Number.isFinite(Number(body.tuitionRange?.min)) ? Number(body.tuitionRange.min) : undefined,
     max: Number.isFinite(Number(body.tuitionRange?.max)) ? Number(body.tuitionRange.max) : undefined,
@@ -93,6 +95,7 @@ const createUniversity = asyncHandler(async (req, res) => {
 const updateUniversity = asyncHandler(async (req, res) => {
   const university = await University.findByIdAndUpdate(req.params.id, buildUniversityPayload(req.body), {
     new: true,
+    runValidators: true,
   });
 
   if (!university) {
