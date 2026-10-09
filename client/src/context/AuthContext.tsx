@@ -10,7 +10,7 @@ interface AuthContextValue {
   loading: boolean;
   login: (email: string, password: string, twoFactorCode?: string) => Promise<User>;
   acceptIdentity: (response: { token: string; user: User }) => Promise<User>;
-  googleLogin: (credential: string) => Promise<User>;
+  googleLogin: (credential: string, emailCode?: string) => Promise<User>;
   emailOtpLogin: (email: string, code: string) => Promise<User>;
   register: (payload: { name: string; email: string; password: string; referralCode?: string }) => Promise<User>;
   logout: () => void;
@@ -72,8 +72,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return response.user;
   };
 
-  const googleLogin = async (credential: string) => {
-    const data = await authService.googleLogin({ credential });
+  const googleLogin = async (credential: string, emailCode?: string) => {
+    const data = await authService.googleLogin({ credential, emailCode });
     persistAuth(data.token, data.user);
     const session = await authService.me();
     setProfile(session.profile ?? null);
