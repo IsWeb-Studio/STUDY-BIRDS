@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'core/widgets/app_notice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/profile_account/notification_permission_sheet.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -80,6 +82,10 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (kReleaseMode) {
+    ErrorWidget.builder = (_) => const Directionality(textDirection: TextDirection.rtl,
+      child: Material(color: AppColors.background, child: ErrorState()));
+  }
   // Render the splash on the first frame — no blocking before the user sees anything
   runApp(SentryWidget(child: const StudyBirdsApp()));
   _initServicesInBackground();
@@ -87,21 +93,30 @@ void main() async {
 
 Future<void> _initServicesInBackground() async {
   // Sentry first so it can capture errors in subsequent inits
-  await SentryFlutter.init((options) {
+  await _safeInit(() => SentryFlutter.init((options) {
     options.dsn = AppConfig.sentryDsn;
     options.tracesSampleRate = 0.2;
     options.profilesSampleRate = 0.1;
-    options.attachScreenshot = true;
-    options.attachViewHierarchy = true;
-  });
+    options.attachScreenshot = false;
+    options.sendDefaultPii = false;
+    options.attachViewHierarchy = false;
+  }));
   // All four services run in parallel instead of sequentially
   await Future.wait([
-    PushNotificationService.instance.init(),
-    CurrencyService.instance.load(),
-    AnalyticsService.instance.init(),
-    GoogleSignInService.instance.init(),
+    _safeInit(PushNotificationService.instance.init),
+    _safeInit(CurrencyService.instance.load),
+    _safeInit(AnalyticsService.instance.init),
+    _safeInit(GoogleSignInService.instance.init),
   ]);
   RealtimeSyncService.instance.start();
+}
+
+Future<void> _safeInit(Future<void> Function() initialize) async {
+  try { await initialize(); } catch (error, stack) {
+    try { await Sentry.captureException(error, stackTrace: stack); } catch (_) {
+      // Optional services and diagnostic delivery must not block startup.
+    }
+  }
 }
 
 class StudyBirdsApp extends StatefulWidget {
@@ -149,7 +164,7 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
           await PushNotificationService.instance.requestPermission();
         } catch (_) {
           rootScaffoldMessengerKey.currentState?.showSnackBar(
-            const SnackBar(
+            AppSnackBar(
                 content: Text(
                     'تعذر تفعيل الإشعارات. حاول مجددًا من إعدادات الإشعارات.')),
           );
@@ -203,6 +218,7 @@ class RootChooserScreen extends StatefulWidget {
 class _RootChooserScreenState extends State<RootChooserScreen> {
   bool _checking = true;
   String? _error;
+  bool _onboardingDone = false;
 
   @override
   void initState() {
@@ -217,6 +233,8 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
     });
     try {
       await AuthSession.instance.restore();
+      final prefs = await SharedPreferences.getInstance();
+      _onboardingDone = prefs.getBool('_onboarding_done') ?? false;
     } catch (_) {
       if (mounted)
         _error = 'تعذر استعادة الحساب. تحقق من الاتصال وحاول مجددًا.';
@@ -234,8 +252,14 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
         listenable: AuthSession.instance,
         builder: (context, _) {
           final user = AuthSession.instance.currentUser;
-          if (user == null) return const ConnectedPrototypeEntry();
-          if (!user.hasPassword) return const SetPasswordScreen();
+          if (user == null) {
+            // Onboarding (splash + intro) shows only once ever.
+            // Returning logged-out users go directly to login.
+            return _onboardingDone
+                ? const _DirectLoginEntry()
+                : const ConnectedPrototypeEntry();
+          }
+          if (AuthSession.instance.requiresGooglePasswordSetup || !user.hasPassword) return const SetPasswordScreen();
           // GATE DISABLED — re-enable when needed
           // if (user.verifiedPhone == null || user.verifiedPhone!.isEmpty) {
           //   return _PhoneVerificationGate(user: user);
@@ -272,8 +296,11 @@ class ConnectedPrototypeEntry extends StatelessWidget {
   static void _goAccountType(BuildContext context) {
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (ctx) => AccountTypeSelectionScreen(
-        onSelected: (type) {
+        onSelected: (type) async {
           AnalyticsService.instance.onboardingCompleted();
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('_onboarding_done', true);
+          if (!ctx.mounted) return;
           _goLogin(ctx, selectedRole: type);
         },
       ),
@@ -432,6 +459,31 @@ class ConnectedPrototypeEntry extends StatelessWidget {
           builder: (_) => const StudentRegistrationWizardScreen()));
     }
     return true;
+  }
+}
+
+/// Shown to returning users (onboarding already seen) who are not logged in.
+/// Navigates directly to the login screen on the first frame — no splash, no onboarding.
+class _DirectLoginEntry extends StatefulWidget {
+  const _DirectLoginEntry();
+
+  @override
+  State<_DirectLoginEntry> createState() => _DirectLoginEntryState();
+}
+
+class _DirectLoginEntryState extends State<_DirectLoginEntry> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ConnectedPrototypeEntry._goLogin(context);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(backgroundColor: AppColors.background);
   }
 }
 
