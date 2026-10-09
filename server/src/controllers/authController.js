@@ -188,10 +188,11 @@ const googleLogin = asyncHandler(async (req, res) => {
     }
   }
 
-  // Persist Google linkage. Email verification is required only once —
-  // returning users who already have emailVerified=true skip the code step.
+  // Persist Google linkage before any challenge check.
   await user.save();
+
   if (!user.emailVerified) {
+    // NEW user: one-time email verification before they can set a password.
     if (!emailCode) {
       await sendCode(user, 'login', res);
       return res.status(428).json({
@@ -201,7 +202,18 @@ const googleLogin = asyncHandler(async (req, res) => {
     }
     await consume(user, 'login', emailCode, res);
     user.emailVerified = true;
+  } else if (user.twoFactorEnabled) {
+    // RETURNING user with 2FA: require code on every login.
+    if (!emailCode) {
+      await sendCode(user, 'login', res);
+      return res.status(428).json({
+        message: 'أدخل رمز التحقق المرسل إلى بريدك.',
+        requiresTwoFactor: true,
+      });
+    }
+    await consume(user, 'login', emailCode, res);
   }
+
   user.lastLoginAt = new Date();
   await user.save();
 
