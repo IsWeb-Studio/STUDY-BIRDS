@@ -1,16 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { BookOpenText, Check, ChevronDown, PencilLine, Plus, Search, Trash2, X } from "lucide-react";
-import { ArticleContentFields } from "../../components/admin/ArticleContentFields";
 import { useLanguage } from "../../hooks/useLanguage";
-import { getApiAssetUrl } from "../../lib/api";
 import { adminService } from "../../services/adminService";
 import { programService } from "../../services/programService";
 import { universityService } from "../../services/universityService";
 import type { Program, StudyField, University } from "../../types";
-import { createEmptyArticleBodies, createEmptyArticleHeadings, normalizeArticleBodies, normalizeArticleHeadings } from "../../constants/articleContent";
-import { findProgramLanguage, PROGRAM_DEGREE_LEVELS, PROGRAM_INTAKES, PROGRAM_LANGUAGES } from "../../constants/programOptions";
+import { findProgramLanguage, PROGRAM_DEGREE_LEVELS, PROGRAM_LANGUAGES } from "../../constants/programOptions";
 import { getErrorMessage } from "../../utils/errors";
-import { formatCurrency, formatDate } from "../../utils/format";
+import { formatCurrency } from "../../utils/format";
 import { dt } from "../../utils/dashboardTranslations";
 import { getPaginatedItems } from "../../utils/pagination";
 
@@ -107,25 +104,14 @@ const emptyProgramForm = {
   duration: "",
   tuition: "",
   partnerTuition: "",
-  intake: "",
-  applicationDeadline: "",
   popularity: "",
   summary: "",
   requirements: "",
   careerOpportunities: "",
   requiredDocumentTypes: ["passport", "biometric-photo", "latest-qualification"],
-  articleTitle: "",
-  articleTitleColor: "#0f172a",
-  articleHeadingColor: "#0f172a",
-  articleBodyColor: "#475569",
-  articleHeadings: createEmptyArticleHeadings(),
-  articleBodies: createEmptyArticleBodies(),
   featured: false,
-  coverImage: "",
 };
 
-const appendArticleItem = (items: string[]) => [...items, ""];
-const removeArticleItem = (items: string[], index: number) => (items.length > 1 ? items.filter((_, itemIndex) => itemIndex !== index) : items);
 
 export const AdminProgramsPage = () => {
   const { language, t } = useLanguage();
@@ -136,7 +122,6 @@ export const AdminProgramsPage = () => {
   const [form, setForm] = useState(emptyProgramForm);
   const [programSearch, setProgramSearch] = useState("");
   const [formError, setFormError] = useState("");
-  const [uploadingCover, setUploadingCover] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [customLanguage, setCustomLanguage] = useState(false);
@@ -171,7 +156,6 @@ export const AdminProgramsPage = () => {
     let program: Program;
     try { program = await programService.getById(item._id); }
     catch (issue) { setFormError(getErrorMessage(issue, "Unable to load program")); return; }
-    const articleItemCount = Math.max(1, program.articleHeadings?.length || 0, program.articleBodies?.length || 0);
     setEditingId(program._id);
     setCustomLanguage(Boolean(program.language) && !findProgramLanguage(program.language || ""));
     setEditorOpen(true);
@@ -185,36 +169,13 @@ export const AdminProgramsPage = () => {
       duration: program.duration || "",
       tuition: typeof program.tuition === "number" ? String(program.tuition) : "",
       partnerTuition: typeof program.partnerTuition === "number" ? String(program.partnerTuition) : "",
-      intake: program.intake || "",
-      applicationDeadline: program.applicationDeadline ? new Date(program.applicationDeadline).toISOString().slice(0, 10) : "",
       popularity: typeof program.popularity === "number" ? String(program.popularity) : "",
       summary: program.summary || "",
       requirements: program.requirements?.join("\n") || "",
       careerOpportunities: program.careerOpportunities?.join("\n") || "",
       requiredDocumentTypes: program.requiredDocumentTypes ?? ["passport", "biometric-photo", "latest-qualification"],
-      articleTitle: program.articleTitle || "",
-      articleTitleColor: program.articleTitleColor || "#0f172a",
-      articleHeadingColor: program.articleHeadingColor || "#0f172a",
-      articleBodyColor: program.articleBodyColor || "#475569",
-      articleHeadings: normalizeArticleHeadings(program.articleHeadings, articleItemCount),
-      articleBodies: normalizeArticleBodies(program.articleBodies, articleItemCount),
       featured: Boolean(program.featured),
-      coverImage: program.coverImage || "",
     });
-  };
-
-  const handleCoverUpload = async (fileList: FileList | null) => {
-    if (!fileList?.length) return;
-    setFormError("");
-    setUploadingCover(true);
-    try {
-      const coverImage = await programService.uploadCoverImage(fileList[0]);
-      setForm((current) => ({ ...current, coverImage }));
-    } catch (error) {
-      setFormError(getErrorMessage(error, dt(language, "imageUploadFailed")));
-    } finally {
-      setUploadingCover(false);
-    }
   };
 
   const handleSubmit = async (event: FormEvent) => {
@@ -237,20 +198,11 @@ export const AdminProgramsPage = () => {
       duration: form.duration || undefined,
       tuition: form.tuition ? Number(form.tuition) : undefined,
       partnerTuition: form.partnerTuition ? Number(form.partnerTuition) : undefined,
-      intake: form.intake || undefined,
-      applicationDeadline: form.applicationDeadline || undefined,
       popularity: form.popularity ? Number(form.popularity) : undefined,
       summary: form.summary || undefined,
-      articleTitle: form.articleTitle.trim() || undefined,
-      articleTitleColor: form.articleTitleColor || "#0f172a",
-      articleHeadingColor: form.articleHeadingColor || "#0f172a",
-      articleBodyColor: form.articleBodyColor || "#475569",
-      articleHeadings: form.articleHeadings.map((item) => item.trim()).filter(Boolean),
-      articleBodies: form.articleBodies.map((item) => item.trim()).filter(Boolean),
       requirements: form.requirements.split("\n").map((item) => item.trim()).filter(Boolean),
       careerOpportunities: form.careerOpportunities.split("\n").map((item) => item.trim()).filter(Boolean),
       featured: form.featured,
-      coverImage: form.coverImage || undefined,
     };
 
     try {
@@ -414,34 +366,19 @@ export const AdminProgramsPage = () => {
 
           <SectionHeader title={language === "ar" ? "تفاصيل البرنامج" : "Program Details"} />
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "duration")}</span>
               <input value={form.duration} onChange={(event) => setForm((current) => ({ ...current, duration: event.target.value }))} placeholder={dt(language, "fourYears")} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
             </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">{t("intake")}</span>
-              <select value={form.intake} onChange={(event) => setForm((current) => ({ ...current, intake: event.target.value }))} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring">
-                <option value="">{dt(language, "fall2026")}</option>
-                {PROGRAM_INTAKES.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {t(option.translationKey)}
-                  </option>
-                ))}
-              </select>
-            </label>
           </div>
 
-          <SectionHeader title={language === "ar" ? "التسعير والمواعيد" : "Pricing & Dates"} />
+          <SectionHeader title={language === "ar" ? "التسعير" : "Pricing"} />
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{t("tuition")}</span>
               <input type="number" value={form.tuition} onChange={(event) => setForm((current) => ({ ...current, tuition: event.target.value }))} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
-            </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "deadline")}</span>
-              <input type="date" value={form.applicationDeadline} onChange={(event) => setForm((current) => ({ ...current, applicationDeadline: event.target.value }))} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "popularity")}</span>
@@ -449,28 +386,15 @@ export const AdminProgramsPage = () => {
             </label>
           </div>
 
-          <SectionHeader title={language === "ar" ? "الوسيط والصورة" : "Partner & Media"} />
+          <SectionHeader title={language === "ar" ? "رسوم الوكيل" : "Partner pricing"} />
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "partnerTuition")}</span>
               <input type="number" value={form.partnerTuition} onChange={(event) => setForm((current) => ({ ...current, partnerTuition: event.target.value }))} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
             </label>
-            <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "programCoverImage")}</span>
-              <input type="file" accept="image/*" onChange={(event) => handleCoverUpload(event.target.files)} className="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none focus:ring" />
-              <p className="mt-2 text-xs text-slate-500">{uploadingCover ? `${dt(language, "uploadImages")}...` : dt(language, "coverPreview")}</p>
-            </label>
-          </div>
 
-          {form.coverImage ? (
-            <div className="rounded-2xl border border-slate-200 p-4">
-              <img src={getApiAssetUrl(form.coverImage)} alt="Program cover" className="h-44 w-full rounded-2xl object-cover" />
-              <button type="button" onClick={() => setForm((current) => ({ ...current, coverImage: "" }))} className="mt-3 rounded-full border border-rose-200 px-3 py-1 text-xs font-medium text-rose-700">
-                {dt(language, "removeImage")}
-              </button>
-            </div>
-          ) : null}
+          </div>
 
           <SectionHeader title={language === "ar" ? "المحتوى والمتطلبات" : "Content & Requirements"} />
 
@@ -478,46 +402,6 @@ export const AdminProgramsPage = () => {
             <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "summary")}</span>
             <textarea value={form.summary} onChange={(event) => setForm((current) => ({ ...current, summary: event.target.value }))} rows={4} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
           </label>
-
-          <ArticleContentFields
-            articleTitle={form.articleTitle}
-            articleTitleColor={form.articleTitleColor}
-            articleHeadingColor={form.articleHeadingColor}
-            articleBodyColor={form.articleBodyColor}
-            articleHeadings={form.articleHeadings}
-            articleBodies={form.articleBodies}
-            onArticleTitleChange={(value) => setForm((current) => ({ ...current, articleTitle: value }))}
-            onArticleTitleColorChange={(value) => setForm((current) => ({ ...current, articleTitleColor: value }))}
-            onArticleHeadingColorChange={(value) => setForm((current) => ({ ...current, articleHeadingColor: value }))}
-            onArticleBodyColorChange={(value) => setForm((current) => ({ ...current, articleBodyColor: value }))}
-            onArticleHeadingChange={(index, value) =>
-              setForm((current) => ({
-                ...current,
-                articleHeadings: current.articleHeadings.map((item, itemIndex) => (itemIndex === index ? value : item)),
-              }))
-            }
-            onArticleBodyChange={(index, value) =>
-              setForm((current) => ({
-                ...current,
-                articleBodies: current.articleBodies.map((item, itemIndex) => (itemIndex === index ? value : item)),
-              }))
-            }
-            onAddArticleItem={() =>
-              setForm((current) => ({
-                ...current,
-                articleHeadings: appendArticleItem(current.articleHeadings),
-                articleBodies: appendArticleItem(current.articleBodies),
-              }))
-            }
-            onRemoveArticleItem={(index) =>
-              setForm((current) => ({
-                ...current,
-                articleHeadings: removeArticleItem(current.articleHeadings, index),
-                articleBodies: removeArticleItem(current.articleBodies, index),
-              }))
-            }
-            language={language}
-          />
 
           <SectionHeader title={language === "ar" ? "المستندات والإعدادات" : "Documents & Settings"} />
 
@@ -544,7 +428,7 @@ export const AdminProgramsPage = () => {
           </label>
 
           <div className="flex flex-wrap gap-3">
-            <button type="submit" disabled={saving || uploadingCover} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white disabled:cursor-wait disabled:opacity-50">
+            <button type="submit" disabled={saving} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 font-semibold text-white disabled:cursor-wait disabled:opacity-50">
               <Plus className="h-4 w-4" />
               {saving ? (language === "ar" ? "جارٍ الحفظ..." : "Saving...") : editingId ? dt(language, "updateProgram") : dt(language, "createProgram")}
             </button>
@@ -573,12 +457,11 @@ export const AdminProgramsPage = () => {
             </p>
           ) : null}
         </div>
-        <div className="grid min-w-0 gap-4 md:grid-cols-2 2xl:grid-cols-3">
+        <div className="grid min-w-0 gap-3">
         {filteredPrograms.map((program) => (
           <div key={program._id} className="panel min-w-0 p-5 transition-shadow hover:shadow-md">
-            <div className="flex h-full flex-col gap-4">
+            <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
               <div>
-                {program.coverImage ? <img src={getApiAssetUrl(program.coverImage)} alt={program.title} className="mb-4 h-36 w-full rounded-xl object-cover" /> : null}
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="break-words text-lg font-semibold text-slate-900">{program.title}</p>
                   {program.featured ? <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">{dt(language, "featured")}</span> : null}
@@ -595,8 +478,6 @@ export const AdminProgramsPage = () => {
                   ) : null}
                   <span className="rounded-full bg-slate-100 px-3 py-1">{dt(language, "tuitionLabel")}: {formatCurrency(program.tuition)}</span>
                   {typeof program.partnerTuition === "number" ? <span className="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">{dt(language, "partnerTuition")}: {formatCurrency(program.partnerTuition)}</span> : null}
-                  <span className="rounded-full bg-slate-100 px-3 py-1">{dt(language, "deadline")}: {formatDate(program.applicationDeadline)}</span>
-                  <span className="rounded-full bg-slate-100 px-3 py-1">{dt(language, "programIntake")}: {program.intake || dt(language, "flexible")}</span>
                 </div>
                 {program.summary ? <p className="mt-4 line-clamp-2 text-sm leading-6 text-slate-600">{program.summary}</p> : null}
                 {program.requirements?.length ? (
@@ -609,7 +490,7 @@ export const AdminProgramsPage = () => {
                   </div>
                 ) : null}
               </div>
-              <div className="mt-auto flex flex-wrap gap-2 border-t border-slate-100 pt-4">
+              <div className="flex shrink-0 flex-wrap gap-2 border-t border-slate-100 pt-4 xl:border-t-0 xl:border-s xl:ps-5 xl:pt-0">
                 <button onClick={() => startEdit(program)} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 font-medium text-slate-700">
                   <PencilLine className="h-4 w-4" />
                   {dt(language, "edit")}

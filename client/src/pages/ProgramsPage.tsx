@@ -33,7 +33,6 @@ export const ProgramsPage = () => {
     fieldOfStudy: searchParams.get("fieldOfStudy") || "",
     tuitionMin: searchParams.get("tuitionMin") || "",
     tuitionMax: searchParams.get("tuitionMax") || "",
-    intake: searchParams.get("intake") || "",
     sortBy: searchParams.get("sortBy") || "",
   }));
   const selectedStudyField = useMemo(
@@ -158,7 +157,7 @@ export const ProgramsPage = () => {
       {loading ? (
         <div className="panel p-8 text-sm text-slate-500">{language === "ar" ? "جاري تحميل البرامج..." : "Loading programs..."}</div>
       ) : programs.length ? (
-        <div className="grid gap-5 lg:grid-cols-3">
+        <div className="space-y-3">
           {programs.map((program) => (
             <ProgramCard key={program._id} program={program} />
           ))}

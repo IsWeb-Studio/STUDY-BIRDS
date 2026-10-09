@@ -40,6 +40,35 @@ textarea {
   @apply rounded-3xl border border-slate-200 bg-white shadow-soft;
 }
 
+.program-list-card {
+  container: program-card / inline-size;
+}
+
+.program-list-card-content {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.program-list-card-pricing {
+  border-top: 1px solid #f1f5f9;
+  padding-top: 1rem;
+}
+
+@container program-card (min-width: 36rem) {
+  .program-list-card-content {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .program-list-card-pricing {
+    border-top: 0;
+    border-inline-start: 1px solid #e2e8f0;
+    padding-top: 0;
+    padding-inline-start: 1.5rem;
+    min-width: 15rem;
+  }
+}
+
 /* Shared dashboard design; public pages retain their own visual styles. */
 .dashboard-workspace {
   --dashboard-radius: 1rem;
