@@ -310,9 +310,10 @@ class ConnectedPrototypeEntry extends StatelessWidget {
   // Roles that require admin to create — self-registration is disabled.
   static const _adminCreatedRoles = {'university', 'employee'};
 
-  static void _goLogin(BuildContext context, {String? selectedRole}) {
+  static void _goLogin(BuildContext context,
+      {String? selectedRole, bool replaceAll = false}) {
     final adminOnly = _adminCreatedRoles.contains(selectedRole);
-    Navigator.of(context).push(MaterialPageRoute(
+    final route = MaterialPageRoute(
       builder: (ctx) => LoginScreen(
         onForgotPassword: () => Navigator.of(ctx).push(
             MaterialPageRoute(builder: (_) => const PasswordReset2FAScreen())),
@@ -358,7 +359,12 @@ class ConnectedPrototypeEntry extends StatelessWidget {
               (route) => false);
         },
       ),
-    ));
+    );
+    if (replaceAll) {
+      Navigator.of(context).pushAndRemoveUntil(route, (r) => false);
+    } else {
+      Navigator.of(context).push(route);
+    }
   }
 
   static Future<bool> _attemptLogin(
@@ -484,7 +490,8 @@ class _DirectLoginEntryState extends State<_DirectLoginEntry> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ConnectedPrototypeEntry._goLogin(context);
+      // replaceAll clears any stale routes left over after logout.
+      ConnectedPrototypeEntry._goLogin(context, replaceAll: true);
     });
   }
 
