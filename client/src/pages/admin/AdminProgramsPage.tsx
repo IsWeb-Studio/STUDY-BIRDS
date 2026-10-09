@@ -312,7 +312,12 @@ export const AdminProgramsPage = () => {
               <span className="mb-2 block text-sm font-medium text-slate-700">{t("fieldOfStudy")}</span>
               <SearchableSelect
                 value={form.fieldOfStudy}
-                onChange={(v) => setForm((c) => ({ ...c, fieldOfStudy: v, fieldsOfStudy: Array.from(new Set([v, ...c.fieldsOfStudy.filter((field) => field !== c.fieldOfStudy)].filter(Boolean))) }))}
+                onChange={(v) => setForm((current) => ({
+                  ...current,
+                  title: !editingId && (!current.title.trim() || current.title === current.fieldOfStudy) ? v : current.title,
+                  fieldOfStudy: v,
+                  fieldsOfStudy: Array.from(new Set([v, ...current.fieldsOfStudy.filter((field) => field !== current.fieldOfStudy)].filter(Boolean))),
+                }))}
                 options={studyFieldOptions.map((sf) => ({ value: sf.name, label: sf.name }))}
                 placeholder={language === "ar" ? "اختر مجال الدراسة" : "Select field of study"}
                 required
