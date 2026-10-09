@@ -158,6 +158,8 @@ const updateApplicationStatus = asyncHandler(async (req, res) => {
     throw new Error("Application not found");
   }
 
+  if(req.body.version !== undefined && req.body.version !== application.__v){res.status(409);throw new Error('Application changed. Refresh and retry.');}
+  application.$where={__v:application.__v};application.increment();
   if (useDetailed) application.detailedStatus = detailedStatus;
   else application.status = status;
   application.reviewedBy = req.user._id;
@@ -167,7 +169,7 @@ const updateApplicationStatus = asyncHandler(async (req, res) => {
     changedBy: req.user._id,
   });
 
-  await application.save();
+  try{await application.save();}catch(error){if(['VersionError','DocumentNotFoundError'].includes(error.name)){res.status(409);throw new Error('Application changed. Refresh and retry.');}throw error;}
 
   // بند 115: auto-advance journeyStage based on new application status
   onApplicationStatusChange(application.student, useDetailed ? detailedStatus : status).catch(() => {});
@@ -199,6 +201,7 @@ const deleteApplication = asyncHandler(async (req, res) => {
     throw new Error("Application not found");
   }
 
+  if(await require('../models/Invoice').exists({application:application._id})) {res.status(409);throw new Error('Application has financial history and cannot be deleted.');}
   await Application.deleteOne({ _id: application._id });
 
   await Notification.create({

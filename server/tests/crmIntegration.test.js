@@ -16,7 +16,12 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
     const Profile=require('../src/models/StudentProfile');
     const Invoice=require('../src/models/Invoice');
     const owner=await User.create({name:'Admin',email:'admin@crm.test',role:'admin',password:'AdminUnique!42'});
-    const app=express();app.use(express.json());app.use('/api/crm',require('../src/routes/crmRoutes'));app.use(require('../src/middleware/errorMiddleware').errorHandler);
+    const app=express();app.use(express.json());
+    const protect=require('../src/middleware/authMiddleware').protect;
+    const financeController=require('../src/controllers/adminStudentModulesController');
+    app.patch('/api/crm/guarded-invoices/:id',protect,financeController.updateStudentInvoiceAdmin);
+    app.delete('/api/crm/guarded-invoices/:id',protect,financeController.deleteStudentInvoiceAdmin);
+    app.use('/api/crm',require('../src/routes/crmRoutes'));app.use(require('../src/middleware/errorMiddleware').errorHandler);
     server=app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));
     const base=`http://127.0.0.1:${server.address().port}/api/crm`;
     const token=user=>jwt.sign({userId:String(user._id)},process.env.JWT_SECRET);
@@ -27,12 +32,19 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
     assert.equal(await User.countDocuments({email:payload.email}),1);
     const student=await User.findById(created.body._id);assert.equal(await student.comparePassword(payload.password),true);
     const changed=await request(`/accounts/${student._id}`,'PATCH',{password:'AnotherUnique!43',profile:{nationality:'Egypt'}});assert.equal(changed.status,200);assert.equal((await User.findById(student._id)).tokenVersion,1);assert.equal((await Profile.findOne({user:student._id})).phone,'123');
+    const profileUpdated=await request(`/accounts/${student._id}`,'PATCH',{profile:{otherLanguages:['English','Turkish'],parentInfo:{name:'Parent',phone:'456',relationship:'Father'},englishTest:{exam:'IELTS',score:'7'}}});assert.equal(profileUpdated.status,200);assert.deepEqual((await Profile.findOne({user:student._id})).otherLanguages.toObject(),['English','Turkish']);
+    assert.equal((await request(`/accounts/${student._id}`,'PATCH',{profile:{parentInfo:{role:'admin'}}})).status,400);
     assert.equal((await request('/accounts','POST',{...payload,recordId:'other'})).status,409);
     assert.equal((await request('/accounts','POST',{...payload,email:'injected@crm.test',role:'admin'})).status,400);
     const unlinked=await User.create({name:'Existing',email:'existing@crm.test',role:'student',password:'OriginalUnique!42'});
     const linked=await request('/accounts/link','POST',{accountId:String(unlinked._id),companyId:'company-default',recordId:'existing',kind:'student',email:unlinked.email});assert.equal(linked.status,200);assert.equal(await (await User.findById(unlinked._id)).comparePassword('OriginalUnique!42'),true);
     const employee=await User.create({name:'Limited',email:'limited@crm.test',role:'employee',permissions:['applications']});
     assert.equal((await request('/accounts','POST',{...payload,email:'forbidden@crm.test'},employee)).status,403);
+    const partner=await User.create({name:'Partner',email:'partner@crm.test',role:'partner'});
+    const editedPartner=await request(`/partners/${partner._id}`,'PATCH',{version:partner.__v,name:'Updated Partner',profile:{companyName:'Agency',taxId:'123',phone:'456'}});assert.equal(editedPartner.status,200);assert.equal(editedPartner.body.profile.companyName,'Agency');
+    assert.equal((await request(`/partners/${partner._id}`,'PATCH',{version:partner.__v,name:'Stale'})).status,409);
+    assert.equal((await request(`/partners/${partner._id}`,'PATCH',{profile:{verificationStatus:'verified'}})).status,400);
+    assert.equal((await request(`/partners/${partner._id}`,'PATCH',{name:'Forbidden'},employee)).status,403);
     const university=await require('../src/models/University').create({name:'Website University',country:new mongoose.Types.ObjectId()});
     const program=await require('../src/models/Program').create({university:university._id,title:'Engineering',degreeLevel:'Bachelor',fieldOfStudy:'Engineering',requiredDocumentTypes:[]});
     const application=await request('/applications','POST',{studentId:String(student._id),programId:String(program._id),notes:'CRM application'});assert.equal(application.status,201);
@@ -43,18 +55,43 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
     const concurrent=await Promise.all(Array.from({length:3},()=>request('/applications','POST',{studentId:String(student._id),programId:String(variant._id)})));
     assert.ok(concurrent.every(result=>[200,201].includes(result.status)));assert.equal(new Set(concurrent.map(result=>result.body._id)).size,1);
     const updateApplication=await request(`/applications/${application.body._id}`,'PATCH',{notes:'Updated',intake:'Autumn 2026',crmDetails:{applicationRefNo:'CRM-APP-1'}});assert.equal(updateApplication.status,200);assert.equal(updateApplication.body.crmDetails.applicationRefNo,'CRM-APP-1');
+    const Application=require('../src/models/Application');
+    for(const detailedStatus of ['payment-required','payment-verification','visa-preparation','completed']){
+      await Application.updateOne({_id:application.body._id},{$set:{detailedStatus}});
+      const current=await Application.findById(application.body._id);
+      const saved=await request(`/applications/${current._id}`,'PATCH',{version:current.__v,notes:`Keep ${detailedStatus}`});
+      assert.equal(saved.status,200);assert.equal(saved.body.detailedStatus,detailedStatus);assert.equal(saved.body.__v,current.__v+1);
+      assert.equal((await request(`/applications/${current._id}`,'PATCH',{version:current.__v,notes:'stale'})).status,409);
+    }
+    await Application.updateOne({_id:application.body._id},{$set:{detailedStatus:'under-review',status:'under-review'}});
+    const assigned=await Application.findById(application.body._id);
+    const assignment=await request(`/applications/${assigned._id}`,'PATCH',{version:assigned.__v,advisorId:String(employee._id),notes:'Assigned from native CRM'});
+    assert.equal(assignment.status,200);assert.equal(assignment.body.assignedAdvisor,String(employee._id));assert.equal(assignment.body.assignmentHistory.length,1);
+    const parallelVersion=assignment.body.__v;
+    const raced=await Promise.all([request(`/applications/${assigned._id}`,'PATCH',{version:parallelVersion,notes:'Staff one'}),request(`/applications/${assigned._id}`,'PATCH',{version:parallelVersion,notes:'Staff two'})]);
+    assert.deepEqual(raced.map(result=>result.status).sort(),[200,409]);
     const storage=require('../src/utils/privateDocumentStorage'),originalUpload=storage.uploadPrivateDocument;storage.uploadPrivateDocument=async()=>({publicId:'isolated-document',resourceType:'raw',deliveryType:'authenticated'});
     try{
       const form=new FormData();form.set('type','passport');form.set('file',new Blob(['%PDF-1.4\nIsolated document\n'],{type:'application/pdf'}),'passport.pdf');
       const upload=await fetch(`${base}/applications/${application.body._id}/documents`,{method:'POST',headers:{Authorization:`Bearer ${token(owner)}`},body:form});assert.equal(upload.status,201);const document=await upload.json();
       const saved=await require('../src/models/Document').findById(document._id);assert.equal(String(saved.student),String(student._id));assert.equal(document.storage,undefined);
       const detached=await request(`/applications/${application.body._id}/documents/${document._id}`,'DELETE');assert.equal(detached.status,200);assert.ok(await require('../src/models/Document').exists({_id:document._id}));
+      const service=await require('../src/models/ServiceRequest').create({student:student._id,service:new mongoose.Types.ObjectId(),serviceTitle:'Translation'});
+      const serviceForm=new FormData();serviceForm.set('file',new Blob(['%PDF-1.4\nService file\n'],{type:'application/pdf'}),'service.pdf');
+      const serviceUpload=await fetch(`${base}/service-requests/${service._id}/documents`,{method:'POST',headers:{Authorization:`Bearer ${token(owner)}`},body:serviceForm});assert.equal(serviceUpload.status,201);
+      const serviceDocument=await serviceUpload.json();assert.equal(serviceDocument.storage,undefined);assert.ok(await require('../src/models/ServiceRequest').exists({_id:service._id,'documents._id':serviceDocument._id}));
+      assert.equal((await request(`/service-requests/${service._id}/documents/${new mongoose.Types.ObjectId()}/access`,'POST')).status,404);
     }finally{storage.uploadPrivateDocument=originalUpload;}
     const invoice=await request('/invoices','POST',{studentId:String(student._id),companyId:'company-default',recordId:'INV-100',invoiceNumber:'INV-100',description:'Education',amount:1000,currency:'USD'});assert.equal(invoice.status,201);
     const same=await request('/invoices','POST',{studentId:String(student._id),companyId:'company-default',recordId:'INV-100',invoiceNumber:'INV-100',description:'Education',amount:1000,currency:'USD'});assert.equal(same.body._id,invoice.body._id);
     const partial=await request(`/invoices/${invoice.body._id}/payments`,'PATCH',{paidAmount:300,version:invoice.body.__v});assert.equal(partial.status,200);assert.equal(partial.body.crmPaidAmount,300);assert.equal(partial.body.status,'unpaid');
     assert.equal((await request(`/invoices/${invoice.body._id}/payments`,'PATCH',{paidAmount:400,version:invoice.body.__v})).status,409);
     assert.equal((await request(`/invoices/${invoice.body._id}`,'DELETE')).status,409);
+    assert.equal((await request(`/guarded-invoices/${invoice.body._id}`,'PATCH',{amount:200,version:partial.body.__v})).status,409);
+    assert.equal((await request(`/guarded-invoices/${invoice.body._id}`,'PATCH',{status:'rejected',version:partial.body.__v})).status,409);
+    assert.equal((await request(`/guarded-invoices/${invoice.body._id}`,'DELETE')).status,409);
+    const financialNotes=await request(`/guarded-invoices/${invoice.body._id}`,'PATCH',{adminNote:'Preserve partial payment',version:partial.body.__v});assert.equal(financialNotes.status,200);assert.equal(financialNotes.body.crmPaidAmount,300);
+    assert.equal((await request(`/guarded-invoices/${invoice.body._id}`,'PATCH',{adminNote:'Stale',version:partial.body.__v})).status,409);
     const anotherOwner=await User.create({name:'Other',email:'other@crm.test',role:'admin'});assert.equal((await request(`/invoices/${invoice.body._id}`,'GET',undefined,anotherOwner)).status,404);
     assert.equal(await Invoice.countDocuments(),1);
     const websiteInvoice=await Invoice.create({student:student._id,invoiceNumber:'WEB-ORIGINAL',description:'Original website invoice',amount:500});
@@ -66,5 +103,7 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
     const proofInvoice=await Invoice.create({student:student._id,invoiceNumber:'WEB-PROOF',description:'Under review',amount:500});
     await require('../src/models/PaymentProof').create({student:student._id,invoice:proofInvoice._id,amount:100,filePath:'https://example.test/proof.pdf',fileName:'proof.pdf'});
     assert.equal((await request(`/invoices/${proofInvoice._id}/payments`,'PATCH',{paidAmount:100,version:proofInvoice.__v})).status,409);
+    const reconciliation=await request(`/invoices/${proofInvoice._id}/reconciliation`);assert.equal(reconciliation.status,200);assert.equal(reconciliation.body.proofs.length,1);assert.equal(reconciliation.body.proofs[0].filePath,undefined);
+    assert.equal((await request(`/invoices/${invoice.body._id}/reconciliation`,'GET',undefined,anotherOwner)).status,404);
   }finally{if(server)await new Promise(resolve=>server.close(resolve));await mongoose.disconnect();await mongo.stop();}
 });

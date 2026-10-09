@@ -28,6 +28,14 @@ router.post('/',run(async(req,res)=>{
   res.status(201).json(row);
 }));
 router.get('/:id',run(async(req,res)=>res.json(await owned(req))));
+router.get('/:id/reconciliation',run(async(req,res)=>{
+  const invoice=await owned(req);
+  const [proofs,wallet]=await Promise.all([
+    require('../models/PaymentProof').find({invoice:invoice._id}).select('_id student invoice amount status reviewedAt createdAt reviewNote').lean(),
+    require('../models/StudentWalletEntry').find({relatedInvoice:invoice._id}).select('_id direction amount kind createdAt notes').lean(),
+  ]);
+  res.set('Cache-Control','no-store');res.json({invoice,proofs,wallet});
+}));
 router.patch('/:id/payments',run(async(req,res)=>{
   const row=await owned(req),body=paymentPayload(req.body,row.amount);
   if(row.__v!==body.version)fail(409,'Invoice changed; refresh before recording payment');
@@ -41,7 +49,8 @@ router.patch('/:id/payments',run(async(req,res)=>{
 }));
 router.delete('/:id',run(async(req,res)=>{
   const row=await owned(req);
-  if(row.status==='paid' || row.crmPaidAmount>0 || row.crmPaymentHistory.length || await require('../models/PaymentProof').exists({invoice:row._id}))fail(409,'Invoice has payment history; preserve it and reconcile payments first');
-  await row.deleteOne();res.json({deleted:true});
+  if(row.status==='paid' || row.crmPaidAmount>0 || row.walletCreditApplied>0 || row.crmPaymentHistory.length || row.stripeCheckoutExpiresAt>new Date() || await require('../models/PaymentProof').exists({invoice:row._id}))fail(409,'Invoice has payment history; preserve it and reconcile payments first');
+  const deleted=await Invoice.deleteOne({_id:row._id,__v:row.__v,status:row.status,crmPaidAmount:row.crmPaidAmount,walletCreditApplied:row.walletCreditApplied});
+  if(!deleted.deletedCount)fail(409,'Invoice changed; refresh before deleting');res.json({deleted:true});
 }));
 module.exports=router;

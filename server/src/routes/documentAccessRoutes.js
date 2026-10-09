@@ -14,6 +14,7 @@ router.post('/:id/access', protect, asyncHandler(async (req, res) => {
   const document = await Document.findById(req.params.id).select('+storage').lean();
   if (!document) return res.status(404).json({ message: 'Document not found' });
   let allowed = String(document.student) === String(req.user._id) || hasSection(req.user, 'applications') || hasSection(req.user, 'student-documents');
+  if(!allowed && hasSection(req.user,'services'))allowed=Boolean(await require('../models/ServiceRequest').exists({'documents._id':document._id}));
   if (!allowed && req.user.role === 'parent') allowed = Boolean(await ParentLink.exists({ parent: req.user._id, student: document.student, status: 'approved' }));
   if (!allowed && req.user.role === 'university' && req.user.linkedUniversity) {
     allowed = Boolean(await Application.exists({ university: req.user.linkedUniversity, student: document.student, documents: document._id }));

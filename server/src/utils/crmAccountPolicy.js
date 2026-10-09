@@ -1,6 +1,6 @@
 const { passwordError } = require('./passwordPolicy');
 const { validPermissions } = require('../middleware/employeeAccess');
-const PROFILE_FIELDS = ['phone', 'englishFullName', 'passportNumber', 'dateOfBirth', 'nationality', 'currentEducation', 'currentEducationLevel', 'currentResidenceCountry', 'currentResidenceRegion', 'gpa', 'intake', 'bio', 'address', 'nativeLanguage', 'otherLanguages', 'targetCountries', 'parentInfo', 'emergencyContact'];
+const PROFILE_FIELDS = ['phone', 'englishFullName', 'passportNumber', 'dateOfBirth', 'nationality', 'currentEducation', 'currentEducationLevel', 'currentResidenceCountry', 'currentResidenceRegion', 'gpa', 'intake', 'bio', 'address', 'nativeLanguage', 'otherLanguages', 'targetCountries', 'parentInfo', 'emergencyContact','englishTest'];
 const fail = message => { throw Object.assign(new Error(message), { status:400 }); };
 function accountPayload(body, { create = false, employee = false } = {}) {
   const allowed = ['name','email','password','isActive','profile', ...(employee ? ['employeeRole','permissions'] : []), ...(create ? ['companyId','recordId','kind'] : [])];
@@ -20,7 +20,17 @@ function accountPayload(body, { create = false, employee = false } = {}) {
   }
   if (body.isActive !== undefined) { if (typeof body.isActive !== 'boolean') fail('Invalid account status'); result.isActive = body.isActive; }
   if (body.profile !== undefined) {
-    if (employee || !body.profile || Array.isArray(body.profile) || Object.keys(body.profile).some(key => !PROFILE_FIELDS.includes(key))) fail('Invalid student profile fields');
+    if (employee || !body.profile || typeof body.profile!=='object' || Array.isArray(body.profile) || Object.keys(body.profile).some(key => !PROFILE_FIELDS.includes(key))) fail('Invalid student profile fields');
+    for(const [key,value] of Object.entries(body.profile)) {
+      if(['otherLanguages','targetCountries'].includes(key)) {
+        if(!Array.isArray(value) || value.length>50 || value.some(item=>typeof item!=='string' || item.length>150))fail('Invalid student profile list');
+      } else if(['parentInfo','emergencyContact','englishTest'].includes(key)) {
+        const keys=key==='englishTest'?['exam','score']:['name','phone','relationship'];
+        if(!value || typeof value!=='object' || Array.isArray(value) || Object.entries(value).some(([field,text])=>!keys.includes(field) || typeof text!=='string' || text.length>160))fail('Invalid student contact or test details');
+      } else if(key==='dateOfBirth' && value===null) {
+        // Allow staff to explicitly clear an optional date.
+      } else if(typeof value!=='string' || value.length>10000)fail('Invalid student profile text');
+    }
     result.profile = body.profile;
   }
   if (employee) {

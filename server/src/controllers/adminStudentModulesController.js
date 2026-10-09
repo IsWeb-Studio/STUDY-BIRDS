@@ -231,6 +231,13 @@ const updateStudentInvoiceAdmin = asyncHandler(async (req, res) => {
     throw new Error("Invoice not found");
   }
 
+  if(req.body.version !== undefined && req.body.version !== invoice.__v){res.status(409);throw new Error('Invoice changed. Refresh and retry.');}
+  const credited=Number(invoice.crmPaidAmount || 0)+Number(invoice.walletCreditApplied || 0);
+  const nextAmount=req.body.amount === undefined ? invoice.amount : Number(req.body.amount);
+  if(!Number.isFinite(nextAmount) || nextAmount < credited || (invoice.status==='paid' && nextAmount !== invoice.amount)) {res.status(409);throw new Error('Cannot change the amount below collected payments or resize a paid invoice.');}
+  if(req.body.status !== undefined && req.body.status !== invoice.status && (credited>0 || invoice.status==='paid' || invoice.crmPaymentHistory?.length)){res.status(409);throw new Error('Use the payment workflow to change an invoice with payment history.');}
+  invoice.$where={__v:invoice.__v};invoice.increment();
+
   if (req.body.invoiceNumber !== undefined) invoice.invoiceNumber = String(req.body.invoiceNumber || "").trim();
   if (req.body.description !== undefined) invoice.description = String(req.body.description || "").trim();
   if (req.body.amount !== undefined) invoice.amount = Number(req.body.amount || 0);
@@ -242,7 +249,7 @@ const updateStudentInvoiceAdmin = asyncHandler(async (req, res) => {
   if (req.body.adminNote !== undefined) invoice.adminNote = String(req.body.adminNote || "").trim();
   invoice.reviewedAt = new Date();
   invoice.reviewedBy = req.user._id;
-  await invoice.save();
+  try{await invoice.save();}catch(error){if(['VersionError','DocumentNotFoundError'].includes(error.name)){res.status(409);throw new Error('Invoice changed. Refresh and retry.');}throw error;}
 
   // advance journey when admin marks invoice as paid directly (without payment proof)
   if (invoice.status === "paid" && prevStatus !== "paid") {
@@ -264,11 +271,12 @@ const updateStudentInvoiceAdmin = asyncHandler(async (req, res) => {
 const deleteStudentInvoiceAdmin = asyncHandler(async (req, res) => {
   const invoice = await Invoice.findById(req.params.id);
   if (!invoice) { res.status(404); throw new Error("Invoice not found"); }
-  if (invoice.status === 'paid') {
+  if (invoice.status === 'paid' || invoice.crmPaidAmount>0 || invoice.walletCreditApplied>0 || invoice.crmPaymentHistory?.length || await PaymentProof.exists({invoice:invoice._id}) || invoice.stripeSessionId && invoice.stripeCheckoutExpiresAt>new Date()) {
     res.status(409);
-    throw new Error("لا يمكن حذف فاتورة مدفوعة. غيّر حالتها أولاً إذا لزم.");
+    throw new Error("لا يمكن حذف فاتورة لها دفعات أو إثباتات دفع أو عملية دفع جارية.");
   }
-  await invoice.deleteOne();
+  const deleted=await Invoice.deleteOne({_id:invoice._id,__v:invoice.__v,status:invoice.status,crmPaidAmount:invoice.crmPaidAmount,walletCreditApplied:invoice.walletCreditApplied});
+  if(!deleted.deletedCount){res.status(409);throw new Error('Invoice changed. Refresh before deleting.');}
   res.json({ deleted: true, _id: req.params.id });
 });
 

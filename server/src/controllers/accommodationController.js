@@ -52,6 +52,7 @@ const updateAccommodationListing = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Listing not found" });
   const payload = validListingPayload(req.body);
   if (!payload) return res.status(400).json({ message: "Invalid listing" });
+  if(payload.capacity < await AccommodationBooking.countDocuments({listing:req.params.id,status:'confirmed'}))return res.status(409).json({message:'Capacity cannot be lower than confirmed bookings.'});
   const listing = await AccommodationListing.findByIdAndUpdate(req.params.id, payload, { new: true, runValidators: true }).populate("university", "name").lean();
   if (!listing) return res.status(404).json({ message: "Listing not found" });
   res.json(normalizeListing(listing));
@@ -59,6 +60,7 @@ const updateAccommodationListing = asyncHandler(async (req, res) => {
 
 const deleteAccommodationListing = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: "Listing not found" });
+  if(await AccommodationBooking.exists({listing:req.params.id}))return res.status(409).json({message:'This listing has booking history. Deactivate it instead.'});
   const listing = await AccommodationListing.findByIdAndDelete(req.params.id);
   if (!listing) return res.status(404).json({ message: "Listing not found" });
   res.json({ message: "Listing deleted" });

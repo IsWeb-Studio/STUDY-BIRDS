@@ -73,6 +73,41 @@ router.post('/accounts', run(async (req,res) => {
   res.status(201).json({...safeAccount(user), ...(savedProfile ? {profile:savedProfile.toObject()} : {})});
 }));
 router.param('id',(req,res,next,id) => mongoose.isValidObjectId(id) ? next() : res.status(400).json({message:'Invalid account ID'}));
+router.patch('/partners/:id',requireSection('agents'),run(async(req,res)=>{
+  const body=req.body || {},keys=['name','email','isActive','profile','version'];
+  if(Object.keys(body).some(key=>!keys.includes(key)))fail(400,'Unsupported partner fields');
+  const profileKeys=['phone','companyName','website','location','taxId','bio','address'];
+  if(body.profile !== undefined && (!body.profile || typeof body.profile!=='object' || Array.isArray(body.profile) || Object.entries(body.profile).some(([key,value])=>!profileKeys.includes(key) || typeof value!=='string' || value.length>2000)))fail(400,'Invalid partner profile');
+  const values=accountPayload(Object.fromEntries(['name','email','isActive'].filter(key=>Object.hasOwn(body,key)).map(key=>[key,body[key]])));
+  const partner=await User.findOne({_id:req.params.id,role:'partner'});if(!partner)fail(404,'Partner not found');
+  if(body.version !== undefined && body.version !== partner.__v)fail(409,'Partner changed. Refresh and retry.');
+  if(values.email && values.email!==partner.email && await User.exists({email:values.email}))fail(409,'Email already exists');
+  if(values.isActive !== undefined && values.isActive!==partner.isActive)partner.tokenVersion=(partner.tokenVersion || 0)+1;
+  partner.$where={__v:partner.__v};partner.increment();Object.assign(partner,values);
+  try{await partner.save();}catch(error){if(['VersionError','DocumentNotFoundError'].includes(error.name))fail(409,'Partner changed. Refresh and retry.');throw error;}
+  const profile=await profileSave(partner._id,body.profile);res.json({...safeAccount(partner),__v:partner.__v,profile:profile.toObject()});
+}));
+router.post('/service-requests/:id/documents',requireSection('services'),require('../middleware/uploadMiddleware').single('file'),run(async(req,res)=>{
+  const ServiceRequest=require('../models/ServiceRequest'),Document=require('../models/Document');
+  const row=await ServiceRequest.findById(req.params.id);if(!row)fail(404,'Service request not found');
+  if(!req.file)fail(400,'File is required');
+  if(row.documents.length >= 20)fail(409,'Document limit reached');
+  const storage=await require('../utils/privateDocumentStorage').uploadPrivateDocument(req.file);
+  const id=new mongoose.Types.ObjectId();
+  const document=await Document.create({_id:id,student:row.student,type:'other',fileName:req.file.originalname,filePath:`/api/documents/${id}/access`,mimeType:req.file.mimetype,size:req.file.size,storage});
+  const item={_id:document._id,fileName:document.fileName,filePath:document.filePath,mimeType:document.mimeType,size:document.size};
+  // Preserve other attachments and enforce the limit even when uploads race.
+  const updated=await ServiceRequest.findOneAndUpdate({_id:row._id,'documents.19':{$exists:false}},{$push:{documents:item},$inc:{__v:1}},{new:true});
+  if(!updated)fail(409,'Document limit reached. Refresh the request.');
+  res.status(201).json(item);
+}));
+router.post('/service-requests/:id/documents/:documentId/access',requireSection('services'),run(async(req,res)=>{
+  if(!mongoose.isValidObjectId(req.params.documentId))fail(400,'Invalid document ID');
+  if(!await require('../models/ServiceRequest').exists({_id:req.params.id,'documents._id':req.params.documentId}))fail(404,'Document not found');
+  const doc=await require('../models/Document').findById(req.params.documentId).select('+storage');
+  if(!doc?.storage?.publicId)fail(404,'Private document not found');
+  res.set('Cache-Control','no-store');res.json(require('../utils/privateDocumentStorage').documentDownloadLink(doc.storage));
+}));
 router.post('/applications/:id/documents',requireSection('applications'),require('../middleware/uploadMiddleware').single('file'),run(async(req,res)=>{
   const Application=require('../models/Application'),Document=require('../models/Document');
   const row=await Application.findById(req.params.id);if(!row)fail(404,'Application not found');
@@ -82,17 +117,17 @@ router.post('/applications/:id/documents',requireSection('applications'),require
   const id=new mongoose.Types.ObjectId();
   const document=await Document.create({_id:id,student:row.student,type:req.body.type.trim(),fileName:req.file.originalname,filePath:`/api/documents/${id}/access`,mimeType:req.file.mimetype,size:req.file.size,storage});
   row.documents.push(document._id);await row.save();
-  res.status(201).json({_id:document._id,__v:document.__v,fileName:document.fileName,filePath:document.filePath,type:document.type,size:document.size,detailedStatus:document.detailedStatus});
+  res.status(201).json({_id:document._id,__v:document.__v,applicationVersion:row.__v,fileName:document.fileName,filePath:document.filePath,type:document.type,size:document.size,detailedStatus:document.detailedStatus});
 }));
 router.delete('/applications/:id/documents/:documentId',requireSection('applications'),run(async(req,res)=>{
   if(!mongoose.isValidObjectId(req.params.documentId))fail(400,'Invalid document ID');
   const Application=require('../models/Application');
   const row=await Application.findById(req.params.id);if(!row)fail(404,'Application not found');
   // Detach from this application; preserve the student's private file and review history.
-  row.documents=row.documents.filter(id=>String(id)!==req.params.documentId);await row.save();res.json({detached:true});
+  row.documents=row.documents.filter(id=>String(id)!==req.params.documentId);await row.save();res.json({detached:true,applicationVersion:row.__v});
 }));
 router.patch('/applications/:id',requireSection('applications'),run(async(req,res)=>{
-  const body=req.body || {},keys=['programId','notes','intake','detailedStatus','crmDetails'];
+  const body=req.body || {},keys=['programId','notes','intake','detailedStatus','crmDetails','version','advisorId'];
   if (Object.keys(body).some(key=>!keys.includes(key))) fail(400,'Unsupported application fields');
   for (const key of ['notes','intake']) if (body[key] !== undefined && (typeof body[key] !== 'string' || body[key].length > 2000)) fail(400,'Invalid application text');
   if (body.detailedStatus && !require('../constants/roles').ALL_APPLICATION_DETAILED_STATUSES.includes(body.detailedStatus)) fail(400,'Invalid application status');
@@ -100,13 +135,25 @@ router.patch('/applications/:id',requireSection('applications'),run(async(req,re
   if (body.crmDetails && (Array.isArray(body.crmDetails) || Object.entries(body.crmDetails).some(([key,value])=>!fields.includes(key) || typeof value !== 'string' || value.length > 2000))) fail(400,'Invalid CRM application details');
   const Application=require('../models/Application');
   const row=await Application.findById(req.params.id);if(!row)fail(404,'Application not found');
+  if(body.version !== undefined && (!Number.isInteger(body.version) || body.version < 0)) fail(400,'Invalid application version');
+  if(body.version !== undefined && body.version !== row.__v) fail(409,'Application changed. Refresh and retry.');
+  // Guard the complete edit, including assignment, with the same source version.
+  row.$where={__v:row.__v};row.increment();
+  if(Object.hasOwn(body,'advisorId') && String(row.assignedAdvisor || '') !== String(body.advisorId || '')) {
+    if(body.advisorId !== null && !mongoose.isValidObjectId(body.advisorId))fail(400,'Invalid advisor');
+    if(['rejected','completed'].includes(row.detailedStatus) || ['rejected','file-completed-rejected','file-completed-accepted'].includes(row.status))fail(409,'Closed application cannot be reassigned');
+    if(body.advisorId && !await User.exists({_id:body.advisorId,isActive:{$ne:false},$or:[{role:'admin'},{role:'employee',permissions:'applications'}]}))fail(400,'Choose an active admissions staff member');
+    row.assignedAdvisor=body.advisorId;row.autoAssignmentEligible=false;
+    if(!body.advisorId)row.followUpDueAt=null;
+    row.assignmentHistory.push({advisor:body.advisorId,dueAt:row.followUpDueAt,changedBy:req.user._id,changedAt:new Date(),source:'manual'});
+  }
   const oldStatus=row.detailedStatus;
   if(body.programId !== undefined){if(!mongoose.isValidObjectId(body.programId))fail(400,'Invalid program');const program=await require('../models/Program').findById(body.programId);if(!program)fail(404,'Program not found');row.program=program._id;row.university=program.university;}
   if(body.notes !== undefined) row.notes=body.notes;
   if(body.intake !== undefined) {row.applicantProfile ||= {};row.applicantProfile.intake=body.intake;}
   if(body.crmDetails) {row.crmDetails ||= {};Object.assign(row.crmDetails,body.crmDetails);}
   if(body.detailedStatus && body.detailedStatus !== oldStatus){row.detailedStatus=body.detailedStatus;row.reviewedBy=req.user._id;row.statusTimeline.push({status:body.detailedStatus,note:body.notes || '',changedBy:req.user._id});}
-  await row.save();
+  try {await row.save();} catch(error) {if(['VersionError','DocumentNotFoundError'].includes(error.name))fail(409,'Application changed. Refresh and retry.');throw error;}
   if(row.detailedStatus !== oldStatus){
     await require('../utils/journeyAutomation').onApplicationStatusChange(row.student,row.detailedStatus);
     await require('../models/Notification').create({user:row.student,...require('../constants/statusCatalog').applicationStatusNotice(row),link:'/student/applications'});
