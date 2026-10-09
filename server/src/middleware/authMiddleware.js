@@ -50,6 +50,7 @@ const protect = asyncHandler(async (req, res, next) => {
   }
 
   req.user = user;
+  req.googlePasswordVerifiedAt = decoded.googlePasswordVerifiedAt;
   next();
 });
 
