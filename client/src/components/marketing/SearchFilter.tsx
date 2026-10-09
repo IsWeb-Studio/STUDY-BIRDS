@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import type { Country, StudyField, University } from "../../types";
 import { useLanguage } from "../../hooks/useLanguage";
+import { PriceRangeFilter } from "./PriceRangeFilter";
 import {
   PROGRAM_DEGREE_LEVELS,
   LEGACY_PROGRAM_DEGREE_LEVELS,
@@ -49,7 +50,7 @@ export const SearchFilter = ({
   }, [filters.country, universities, universityQuery]);
 
   return (
-    <div className="panel grid gap-4 p-5 lg:grid-cols-4">
+    <div className="panel grid items-start gap-4 p-5 lg:grid-cols-4">
       <input
         value={keyword}
         onChange={(event) => onKeywordChange(event.target.value)}
@@ -171,18 +172,10 @@ export const SearchFilter = ({
           </option>
         ))}
       </select>
-      <input
-        value={filters.tuitionMin}
-        onChange={(event) => onFilterChange("tuitionMin", event.target.value)}
-        placeholder={t("minTuition")}
-        className="rounded-2xl border border-slate-200 px-4 py-3"
-      />
-      <input
-        value={filters.tuitionMax}
-        onChange={(event) => onFilterChange("tuitionMax", event.target.value)}
-        placeholder={t("maxTuition")}
-        className="rounded-2xl border border-slate-200 px-4 py-3"
-      />
+      <PriceRangeFilter minimum={filters.tuitionMin || ""} maximum={filters.tuitionMax || ""} onChange={(minimum, maximum) => {
+        onFilterChange("tuitionMin", minimum);
+        onFilterChange("tuitionMax", maximum);
+      }} />
       <select
         value={filters.sortBy}
         onChange={(event) => onFilterChange("sortBy", event.target.value)}
