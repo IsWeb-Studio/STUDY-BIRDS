@@ -29,7 +29,9 @@ class _ProgressUpload extends http.MultipartRequest {
 class ApiException implements Exception, UserFacingFailure {
   final int statusCode;
   final String _rawMessage;
-  const ApiException(this.statusCode, this._rawMessage);
+  /// Extra fields from the error response body (e.g. requiresTwoFactor).
+  final Map<String, dynamic> data;
+  const ApiException(this.statusCode, this._rawMessage, [this.data = const {}]);
   @override
   String get message => AppError.response(statusCode, _rawMessage);
 
@@ -200,6 +202,7 @@ class ApiClient {
     final message = (decoded is Map && decoded['message'] is String)
         ? decoded['message'] as String
         : '';
-    throw ApiException(response.statusCode, message);
+    final data = decoded is Map<String, dynamic> ? decoded : const <String, dynamic>{};
+    throw ApiException(response.statusCode, message, data);
   }
 }
