@@ -15,6 +15,7 @@ import { getErrorMessage } from "../../utils/errors";
 import { getHomeRouteForRole } from "../../utils/roleHome";
 import { SITE_NAME, seoText } from "../../seo/site";
 import { authService } from "../../services/authService";
+import type { User } from "../../types";
 
 const schema = z.object({
   email: z.string().email(),
@@ -58,7 +59,7 @@ export const LoginPage = () => {
   } = useForm<LoginValues>({ resolver: zodResolver(schema) });
 
   const mobileRequest = sessionStorage.getItem("mobileSignInRequest");
-  const redirectAfterLogin = (u: { role: string; permissions?: unknown }) =>
+  const redirectAfterLogin = (u: Pick<User, "role" | "permissions">) =>
     navigate(
       mobileRequest
         ? `/mobile-sign-in?request=${encodeURIComponent(mobileRequest)}`

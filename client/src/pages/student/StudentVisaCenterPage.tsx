@@ -257,13 +257,13 @@ export const StudentVisaCenterPage = () => {
 
                   <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
                     {[
-                      [t("مزود التأمين", "Insurance Provider"), insurance.provider],
-                      [t("رقم الوثيقة", "Policy Number"), insurance.policyNumber],
-                      [t("نطاق التغطية", "Coverage"), insurance.coverage],
-                      [t("تاريخ البداية", "Start Date"), fmtDate(insurance.startDate)],
-                      [t("تاريخ الانتهاء", "End Date"), fmtDate(insurance.endDate)],
-                    ].map(([label, value]) => (
-                      <div key={String(label)} className="flex items-center justify-between gap-4 px-5 py-3.5">
+                      { label: t("مزود التأمين", "Insurance Provider"), value: insurance.provider },
+                      { label: t("رقم الوثيقة", "Policy Number"), value: insurance.policyNumber },
+                      { label: t("نطاق التغطية", "Coverage"), value: insurance.coverage },
+                      { label: t("تاريخ البداية", "Start Date"), value: fmtDate(insurance.startDate) },
+                      { label: t("تاريخ الانتهاء", "End Date"), value: fmtDate(insurance.endDate) },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex items-center justify-between gap-4 px-5 py-3.5">
                         <span className="text-sm text-slate-500">{label}</span>
                         <span className="text-sm font-semibold text-slate-800">{String(value ?? "—")}</span>
                       </div>
@@ -310,13 +310,13 @@ export const StudentVisaCenterPage = () => {
 
                   <div className="divide-y divide-slate-100 rounded-xl border border-slate-200 bg-white">
                     {[
-                      [t("الجهة المختصة", "Authority"), equivalency.authority],
-                      [t("رقم الطلب", "Application Number"), equivalency.applicationNumber],
-                      [t("تاريخ التقديم", "Submission Date"), fmtDate(equivalency.submittedAt)],
-                      [t("الموعد المتوقع للانتهاء", "Expected Completion"), fmtDate(equivalency.expectedCompletionDate)],
-                      [t("الرسوم", "Fees"), equivalency.fees],
-                    ].map(([label, value]) => (
-                      <div key={String(label)} className="flex items-center justify-between gap-4 px-5 py-3.5">
+                      { label: t("الجهة المختصة", "Authority"), value: equivalency.authority },
+                      { label: t("رقم الطلب", "Application Number"), value: equivalency.applicationNumber },
+                      { label: t("تاريخ التقديم", "Submission Date"), value: fmtDate(equivalency.submittedAt) },
+                      { label: t("الموعد المتوقع للانتهاء", "Expected Completion"), value: fmtDate(equivalency.expectedCompletionDate) },
+                      { label: t("الرسوم", "Fees"), value: equivalency.fees },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex items-center justify-between gap-4 px-5 py-3.5">
                         <span className="text-sm text-slate-500">{label}</span>
                         <span className="text-sm font-semibold text-slate-800">{String(value ?? "—")}</span>
                       </div>
