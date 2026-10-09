@@ -180,6 +180,12 @@ const googleLogin = asyncHandler(async (req, res) => {
     if (!user.authProvider) {
       user.authProvider = user.password ? "local" : "google";
     }
+
+    // Returning Google users are implicitly verified — Google itself confirmed
+    // email_verified. Auto-set so they are never asked for a code again.
+    if (!user.emailVerified) {
+      user.emailVerified = true;
+    }
   }
 
   // Persist Google linkage. Email verification is required only once —
