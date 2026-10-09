@@ -83,7 +83,7 @@ class GoogleSignInService {
     final user = AuthUser.fromGoogleJson(data['user'] as Map<String, dynamic>);
     final token = data['token'] as String;
     await AuthSession.instance.login(user,
-        requireGooglePasswordSetup: true,
+        requireGooglePasswordSetup: !user.hasPassword,
         authToken: token, refreshToken: data['refreshToken'] as String?);
     AnalyticsService.instance.loginCompleted(user.role.name);
     _pendingIdToken = null;
