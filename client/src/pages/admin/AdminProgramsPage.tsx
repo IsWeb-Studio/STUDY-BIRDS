@@ -8,7 +8,7 @@ import { programService } from "../../services/programService";
 import { universityService } from "../../services/universityService";
 import type { Program, StudyField, University } from "../../types";
 import { createEmptyArticleBodies, createEmptyArticleHeadings, normalizeArticleBodies, normalizeArticleHeadings } from "../../constants/articleContent";
-import { PROGRAM_DEGREE_LEVELS, PROGRAM_INTAKES } from "../../constants/programOptions";
+import { findProgramLanguage, PROGRAM_DEGREE_LEVELS, PROGRAM_INTAKES, PROGRAM_LANGUAGES } from "../../constants/programOptions";
 import { getErrorMessage } from "../../utils/errors";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { dt } from "../../utils/dashboardTranslations";
@@ -139,6 +139,7 @@ export const AdminProgramsPage = () => {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [customLanguage, setCustomLanguage] = useState(false);
   const editorRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -161,6 +162,7 @@ export const AdminProgramsPage = () => {
   }, [language]);
 
   const resetForm = () => {
+    setCustomLanguage(false);
     setEditingId(null);
     setForm(emptyProgramForm);
   };
@@ -171,6 +173,7 @@ export const AdminProgramsPage = () => {
     catch (issue) { setFormError(getErrorMessage(issue, "Unable to load program")); return; }
     const articleItemCount = Math.max(1, program.articleHeadings?.length || 0, program.articleBodies?.length || 0);
     setEditingId(program._id);
+    setCustomLanguage(Boolean(program.language) && !findProgramLanguage(program.language || ""));
     setEditorOpen(true);
     setForm({
       title: program.title || "",
@@ -230,7 +233,7 @@ export const AdminProgramsPage = () => {
       degreeLevel: form.degreeLevel,
       fieldOfStudy: form.fieldOfStudy || form.fieldsOfStudy[0] || "",
       fieldsOfStudy: Array.from(new Set([form.fieldOfStudy, ...form.fieldsOfStudy].filter(Boolean))),
-      language: form.language || undefined,
+      language: form.language.trim() || undefined,
       duration: form.duration || undefined,
       tuition: form.tuition ? Number(form.tuition) : undefined,
       partnerTuition: form.partnerTuition ? Number(form.partnerTuition) : undefined,
@@ -345,8 +348,11 @@ export const AdminProgramsPage = () => {
               <SearchableSelect
                 value={form.degreeLevel}
                 onChange={(v) => setForm((c) => ({ ...c, degreeLevel: v }))}
-                options={PROGRAM_DEGREE_LEVELS.map((o) => ({ value: o.value, label: t(o.translationKey) }))}
-                placeholder={dt(language, "bachelorMasterDiploma")}
+                options={[
+                  ...PROGRAM_DEGREE_LEVELS.map((o) => ({ value: o.value, label: t(o.translationKey) })),
+                  ...(editingId && form.degreeLevel && !PROGRAM_DEGREE_LEVELS.some((option) => option.value === form.degreeLevel) ? [{ value: form.degreeLevel, label: form.degreeLevel }] : []),
+                ]}
+                placeholder={language === "ar" ? "اختر الدرجة العلمية" : "Select degree level"}
                 required
               />
             </label>
@@ -360,10 +366,22 @@ export const AdminProgramsPage = () => {
                 required
               />
             </label>
-            <label className="block">
+            <div className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "لغة البرنامج" : "Program language"}</span>
-              <input value={form.language} onChange={(event) => setForm((current) => ({ ...current, language: event.target.value }))} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
-            </label>
+              <SearchableSelect
+                value={customLanguage ? "__other__" : findProgramLanguage(form.language)?.value || ""}
+                onChange={(value) => {
+                  setCustomLanguage(value === "__other__");
+                  setForm((current) => ({ ...current, language: value === "__other__" ? "" : value }));
+                }}
+                options={[...PROGRAM_LANGUAGES.map((option) => ({ value: option.value, label: language === "ar" ? option.ar : option.en })), { value: "__other__", label: language === "ar" ? "أخرى" : "Other" }]}
+                placeholder={language === "ar" ? "اختر لغة البرنامج" : "Select program language"}
+              />
+              {customLanguage && <label className="mt-3 block">
+                <span className="mb-2 block text-xs font-medium text-slate-600">{language === "ar" ? "اكتب لغة البرنامج" : "Enter program language"}</span>
+                <input required pattern=".*\S.*" value={form.language} onChange={(event) => setForm((current) => ({ ...current, language: event.target.value }))} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
+              </label>}
+            </div>
           </div>
 
           <SectionHeader title={language === "ar" ? "مجالات الدراسة الإضافية" : "Additional Study Fields"} />

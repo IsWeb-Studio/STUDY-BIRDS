@@ -29,6 +29,13 @@ type TranslationKey =
   | "degreeBachelor"
   | "degreeDiploma"
   | "degreeMaster"
+  | "degreeTechnicalInstitute"
+  | "degreePostgraduateDiploma"
+  | "degreeNonThesisMaster"
+  | "degreeThesisMaster"
+  | "degreeProfessionalDoctorate"
+  | "degreePhD"
+  | "degreePostdoctoral"
   | "destinations"
   | "documents"
   | "email"
@@ -208,6 +215,13 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     degreeBachelor: "Bachelor",
     degreeDiploma: "Diploma",
     degreeMaster: "Master",
+    degreeTechnicalInstitute: "Technical institute",
+    degreePostgraduateDiploma: "Postgraduate diploma",
+    degreeNonThesisMaster: "Master without thesis",
+    degreeThesisMaster: "Master with thesis",
+    degreeProfessionalDoctorate: "Professional doctorate",
+    degreePhD: "Academic doctorate (PhD)",
+    degreePostdoctoral: "Postdoctoral studies",
     destinations: "Destinations",
     documents: "Documents",
     email: "Email",
@@ -393,9 +407,16 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     currentEducation: "المؤهل الحالي",
     dashboard: "لوحة التحكم",
     deadline: "آخر موعد",
-    degreeBachelor: "بكالوريوس",
+    degreeBachelor: "بكالوريوس / ليسانس",
     degreeDiploma: "دبلوم",
     degreeMaster: "ماجستير",
+    degreeTechnicalInstitute: "معهد فني",
+    degreePostgraduateDiploma: "دبلوم عالي بعد البكالوريوس",
+    degreeNonThesisMaster: "ماجستير بدون رسالة",
+    degreeThesisMaster: "ماجستير برسالة",
+    degreeProfessionalDoctorate: "دكتوراه مهنية",
+    degreePhD: "دكتوراه أكاديمية (PhD)",
+    degreePostdoctoral: "ما بعد الدكتوراه",
     destinations: "وجهات الدراسة",
     documents: "المستندات",
     email: "البريد الإلكتروني",
