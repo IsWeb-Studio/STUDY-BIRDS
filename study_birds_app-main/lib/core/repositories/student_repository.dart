@@ -320,7 +320,7 @@ class StudentRepository {
       };
 
   Future<Map<String, dynamic>> createArrivalService({
-    required String applicationId,
+    String? applicationId,
     String? arrivalDate,
     String? arrivalTime,
     String? flightNumber,
@@ -337,7 +337,7 @@ class StudentRepository {
       airportPickup: airportPickup, studentHousing: studentHousing,
       residencePermitSupport: residencePermitSupport, visaSupport: visaSupport,
     );
-    body['applicationId'] = applicationId;
+    if (applicationId != null) body['applicationId'] = applicationId;
     final data = await ApiClient.instance.post('/students/arrival-services',
         token: _token, body: body);
     return data as Map<String, dynamic>;

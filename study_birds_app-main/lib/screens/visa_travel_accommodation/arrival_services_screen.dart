@@ -64,40 +64,30 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
 
     if (!mounted) return;
 
-    if (available.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-        content: Text('جميع رحلاتك الدراسية لديها طلبات وصول مرتبطة بها بالفعل.'),
-        backgroundColor: AppColors.orange,
-      ));
-      return;
-    }
-
-    // If only one available, go directly to form.
-    if (available.length == 1) {
-      final result = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(
-          builder: (_) => _ArrivalFormScreen(application: available.first),
-        ),
-      );
-      if (result == true) _load();
-      return;
-    }
-
-    // Multiple available — show picker.
-    final picked = await showModalBottomSheet<Map<String, dynamic>>(
+    // Show picker — always includes "standalone airport pickup" option.
+    final picked = await showModalBottomSheet<Map<String, dynamic>?>(
       context: context,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => _ApplicationPickerSheet(applications: available),
     );
-    if (picked == null || !mounted) return;
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => _ArrivalFormScreen(application: picked),
-      ),
-    );
-    if (result == true) _load();
+    // null means modal dismissed; _noApp sentinel means standalone
+    if (!mounted) return;
+    if (picked == _noApp || picked != null) {
+      final result = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(
+          builder: (_) => _ArrivalFormScreen(
+            application: picked == _noApp ? null : picked,
+          ),
+        ),
+      );
+      if (result == true) _load();
+    }
   }
+
+  // Sentinel used to signal "no application" selection from the picker.
+  static final _noApp = <String, dynamic>{'__noApp': true};
 
   Future<void> _openEdit(Map<String, dynamic> req) async {
     final result = await Navigator.of(context).push<bool>(
@@ -265,30 +255,47 @@ class _ApplicationPickerSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('اختر الرحلة الدراسية', style: AppTextStyles.sectionLabel),
+            const Text('نوع الطلب', style: AppTextStyles.sectionLabel),
             const SizedBox(height: 4),
-            const Text('اختر الرحلة التي تريد ربط طلب الوصول بها',
+            const Text('اختر الرحلة الدراسية لربط طلب الوصول بها، أو أضف طلب استقبال مستقل.',
                 style: AppTextStyles.caption),
             const SizedBox(height: 16),
-            ...applications.map((app) => ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: AppColors.navy.withValues(alpha: 0.08),
-                      shape: BoxShape.circle,
+            // Standalone (airport pickup without university application)
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Container(
+                width: 42, height: 42,
+                decoration: BoxDecoration(
+                  color: AppColors.orange.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.flight_land_rounded, size: 20, color: AppColors.orange),
+              ),
+              title: const Text('استقبال من المطار (بدون رحلة دراسية)', style: AppTextStyles.body),
+              subtitle: const Text('للطلاب القادمين دون تقديم جامعي حالي', style: AppTextStyles.caption),
+              trailing: const Icon(Icons.chevron_left_rounded, color: AppColors.orange),
+              onTap: () => Navigator.of(context).pop(_ArrivalServicesScreenState._noApp),
+            ),
+            if (applications.isNotEmpty) ...[
+              const Divider(height: 24),
+              const Text('ربط برحلة دراسية موجودة', style: AppTextStyles.caption),
+              const SizedBox(height: 8),
+              ...applications.map((app) => ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Container(
+                      width: 42, height: 42,
+                      decoration: BoxDecoration(
+                        color: AppColors.navy.withValues(alpha: 0.08),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.school_outlined, size: 20, color: AppColors.navy),
                     ),
-                    child: const Icon(Icons.school_outlined, size: 20, color: AppColors.navy),
-                  ),
-                  title: Text(_label(app), style: AppTextStyles.body),
-                  subtitle: Text(
-                    _statusAr(app['status'] as String?),
-                    style: AppTextStyles.caption,
-                  ),
-                  trailing: const Icon(Icons.chevron_left_rounded, color: AppColors.navy),
-                  onTap: () => Navigator.of(context).pop(app),
-                )),
+                    title: Text(_label(app), style: AppTextStyles.body),
+                    subtitle: Text(_statusAr(app['status'] as String?), style: AppTextStyles.caption),
+                    trailing: const Icon(Icons.chevron_left_rounded, color: AppColors.navy),
+                    onTap: () => Navigator.of(context).pop(app),
+                  )),
+            ],
           ],
         ),
       ),
@@ -332,6 +339,13 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
 
   bool get _isEditing => widget.existing != null;
 
+  bool get _isStandalone {
+    if (widget.existing != null) {
+      return widget.existing!['application'] == null;
+    }
+    return widget.application == null;
+  }
+
   String get _programLabel {
     if (widget.application != null) {
       final prog = widget.application!['program'];
@@ -344,7 +358,7 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
         return (prog is Map ? prog['title'] : null) as String? ?? 'البرنامج الدراسي';
       }
     }
-    return 'البرنامج الدراسي';
+    return _isStandalone ? 'استقبال من المطار' : 'البرنامج الدراسي';
   }
 
   @override
@@ -402,7 +416,7 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
           visaSupport: _visaSupport,
         );
       } else {
-        final appId = widget.application!['_id'] as String;
+        final appId = widget.application?['_id'] as String?;
         await StudentRepository.instance.createArrivalService(
           applicationId: appId,
           arrivalDate: _arrivalDate?.toIso8601String(),
@@ -445,18 +459,21 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: AppColors.navy.withValues(alpha: 0.07),
+                color: (_isStandalone ? AppColors.orange : AppColors.navy).withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(AppRadius.button),
-                border: Border.all(color: AppColors.navy.withValues(alpha: 0.18)),
+                border: Border.all(color: (_isStandalone ? AppColors.orange : AppColors.navy).withValues(alpha: 0.18)),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.school_outlined, size: 18, color: AppColors.navy),
+                  Icon(_isStandalone ? Icons.flight_land_rounded : Icons.school_outlined,
+                      size: 18, color: _isStandalone ? AppColors.orange : AppColors.navy),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       _programLabel,
-                      style: AppTextStyles.body.copyWith(color: AppColors.navy, fontWeight: FontWeight.w700),
+                      style: AppTextStyles.body.copyWith(
+                          color: _isStandalone ? AppColors.orange : AppColors.navy,
+                          fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
