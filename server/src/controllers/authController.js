@@ -1,4 +1,5 @@
 const { sendCode, consume } = require('../utils/mobileEmailCodes');
+const { passwordError } = require('../utils/passwordPolicy');
 const { randomBytes, createHash } = require('node:crypto');
 const User = require("../models/User");
 const StudentProfile = require("../models/StudentProfile");
@@ -35,6 +36,12 @@ const ensureStudentProfile = async (userId) => {
 
 const register = asyncHandler(async (req, res) => {
   const { name, email, password } = req.body;
+  if (typeof name !== 'string' || name.trim().length > 120 || typeof email !== 'string' ||
+      email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim()) ||
+      typeof password !== 'string' || password.length < 8 || Buffer.byteLength(password, 'utf8') > 72) {
+    res.status(400);
+    throw new Error('أدخل اسمًا وبريدًا صحيحين وكلمة مرور من 8 أحرف على الأقل. إذا كانت كلمة المرور طويلة جدًا، استخدم واحدة أقصر.');
+  }
   const normalizedEmail = String(email || "").toLowerCase().trim();
 
   if (!String(name || "").trim() || !normalizedEmail || !password) {
@@ -43,6 +50,8 @@ const register = asyncHandler(async (req, res) => {
   }
 
   // Agents (partner) can self-register; universities and employees must be admin-created.
+  const weakPassword = passwordError(password);
+  if (weakPassword) { res.status(400); throw new Error(weakPassword); }
   const allowedSelfRegisterRoles = ["student", "parent", "partner"];
   const requestedRole = req.body.role;
   const role = allowedSelfRegisterRoles.includes(requestedRole) ? requestedRole : "student";
@@ -72,6 +81,9 @@ const register = asyncHandler(async (req, res) => {
 
 const login = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
+  if (typeof email !== 'string' || email.length > 254 || typeof password !== 'string' || password.length > 200) {
+    res.status(400); throw new Error('Email and password are required');
+  }
   const normalizedEmail = String(email || "").toLowerCase().trim();
 
   if (!normalizedEmail || !password) {
@@ -107,6 +119,8 @@ const login = asyncHandler(async (req, res) => {
 
 const googleLogin = asyncHandler(async (req, res) => {
   const { credential } = req.body;
+  // Accept the original mobile challenge field during rolling app updates.
+  const emailCode = req.body.emailCode ?? req.body.twoFactorCode;
   const googleClientIds = String(process.env.GOOGLE_CLIENT_ID || "")
     .split(",")
     .map((value) => value.trim())
@@ -139,21 +153,13 @@ const googleLogin = asyncHandler(async (req, res) => {
     $or: [{ googleId: payload.sub }, { email: normalizedEmail }],
   });
 
-  if (user?.twoFactorEnabled) {
-    if (!req.body.twoFactorCode) {
-      await sendCode(user, 'login', res);
-      return res.status(428).json({ message: 'أدخل رمز التحقق المرسل إلى بريدك.', requiresTwoFactor: true });
-    }
-    await consume(user, 'login', req.body.twoFactorCode, res);
-  }
-
   if (!user) {
     user = await User.create({
       name: payload.name || normalizedEmail.split("@")[0],
       email: normalizedEmail,
       googleId: payload.sub,
       authProvider: "google",
-      emailVerified: true,
+      emailVerified: false,
       avatar: payload.picture,
       role: "student",
     });
@@ -166,7 +172,6 @@ const googleLogin = asyncHandler(async (req, res) => {
     }
 
     user.googleId = user.googleId || payload.sub;
-    user.emailVerified = true;
 
     if (!user.avatar && payload.picture) {
       user.avatar = payload.picture;
@@ -177,6 +182,18 @@ const googleLogin = asyncHandler(async (req, res) => {
     }
   }
 
+  // Persist Google linkage before requesting the code. No session token is
+  // issued until the email challenge has been completed successfully.
+  await user.save();
+  if (!emailCode) {
+    await sendCode(user, 'login', res);
+    return res.status(428).json({
+      message: 'أدخل رمز التأكيد المرسل إلى بريد حسابك في Google.',
+      requiresEmailVerification: true,
+    });
+  }
+  await consume(user, 'login', emailCode, res);
+  user.emailVerified = true;
   user.lastLoginAt = new Date();
   await user.save();
 
@@ -184,11 +201,12 @@ const googleLogin = asyncHandler(async (req, res) => {
     await ensureStudentProfile(user._id);
   }
 
-  const tokens = await issueTokenPair(user);
+  const tokens = await issueTokenPair(user, { googlePasswordVerifiedAt: Date.now() });
   res.json({ ...tokens, user: serializeUser(user) });
 });
 
 const me = asyncHandler(async (req, res) => {
+  const account = await User.findById(req.user._id).select("password");
   const profile =
     req.user.role === "student" || req.user.role === "partner"
       ? await StudentProfile.findOne({ user: req.user._id })
@@ -213,7 +231,7 @@ const me = asyncHandler(async (req, res) => {
   }
 
   res.json({
-    user: req.user,
+    user: { ...req.user.toObject(), hasPassword: Boolean(account?.password) },
     profile,
     parentLinkedChildrenCount,
     university,
@@ -228,10 +246,19 @@ const changePassword = asyncHandler(async (req, res) => {
     throw new Error("New password is required");
   }
 
-  if (String(newPassword).length < 8) {
+  if (typeof newPassword !== "string" || newPassword.length < 8) {
     res.status(400);
-    throw new Error("كلمة المرور يجب أن تكون 8 أحرف على الأقل");
+    throw new Error("New password must be at least 8 characters");
   }
+  if (Buffer.byteLength(newPassword, 'utf8') > 72) {
+    res.status(400); throw new Error('كلمة المرور طويلة جدًا. استخدم كلمة مرور أقصر.');
+  }
+  if (currentPassword != null && (typeof currentPassword !== 'string' || currentPassword.length > 200)) {
+    res.status(400); throw new Error('راجع كلمة المرور الحالية وحاول مجددًا.');
+  }
+
+  const weakPassword = passwordError(newPassword);
+  if (weakPassword) { res.status(400); throw new Error(weakPassword); }
 
   const user = await User.findById(req.user._id);
 
@@ -240,12 +267,19 @@ const changePassword = asyncHandler(async (req, res) => {
     throw new Error("User not found");
   }
 
-  if (user.password && !currentPassword) {
+  const verifiedAt = req.googlePasswordVerifiedAt;
+  const googleVerified = typeof verifiedAt === 'number' &&
+    verifiedAt <= Date.now() && Date.now() - verifiedAt < 10 * 60 * 1000;
+  if (req.body.passwordSetup === true && !googleVerified) {
+    res.status(400);
+    throw new Error('انتهى تأكيد حساب Google أو لم يصل إلى السيرفر. أعد الدخول بجوجل وأكد الكود، ثم احفظ كلمة المرور.');
+  }
+  if (user.password && !currentPassword && !googleVerified) {
     res.status(400);
     throw new Error("Current password is required");
   }
 
-  if (user.password && !(await user.comparePassword(currentPassword))) {
+  if (user.password && !googleVerified && !(await user.comparePassword(currentPassword))) {
     res.status(400);
     throw new Error("Current password is incorrect");
   }
@@ -266,12 +300,12 @@ function hashToken(token) {
   return createHash('sha256').update(token).digest('hex');
 }
 
-async function issueTokenPair(user) {
+async function issueTokenPair(user, claims = {}) {
   const refresh = makeRefreshToken();
   user.refreshTokenHash = hashToken(refresh);
   user.refreshTokenExpiry = new Date(Date.now() + REFRESH_TTL_MS);
   await user.save();
-  return { token: generateToken(user._id, user.tokenVersion), refreshToken: refresh };
+  return { token: generateToken(user._id, user.tokenVersion, claims), refreshToken: refresh };
 }
 
 const refresh = asyncHandler(async (req, res) => {

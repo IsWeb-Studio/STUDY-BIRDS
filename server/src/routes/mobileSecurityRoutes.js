@@ -1,4 +1,5 @@
 const express = require('express');
+const { passwordError } = require('../utils/passwordPolicy');
 const crypto = require('node:crypto');
 const User = require('../models/User');
 const { Session, EmailCode } = require('../models/MobileWorkspace');
@@ -28,6 +29,9 @@ router.post('/reset/request', run(async (req, res) => {
 }));
 router.post('/reset/confirm', run(async (req, res) => {
   if (typeof req.body.password !== 'string' || req.body.password.length < 8 || req.body.password.length > 200) fail(res, 'كلمة المرور يجب ألا تقل عن 8 أحرف');
+  if (Buffer.byteLength(req.body.password, 'utf8') > 72) fail(res, 'كلمة المرور طويلة جدًا. استخدم كلمة مرور أقصر.');
+  const weakPassword = passwordError(req.body.password);
+  if (weakPassword) fail(res, weakPassword);
   const user = await User.findOne({ email: String(req.body.email || '').trim().toLowerCase(), isActive: true });
   await consume(user, 'reset', req.body.code, res);
   user.password = req.body.password; user.passwordChangedAt = new Date(); user.tokenVersion = (user.tokenVersion || 0) + 1; await user.save();
@@ -71,7 +75,7 @@ router.post('/email/change/request', run(async (req, res) => {
     email: newEmail, digest: digest(`${req.user._id}:email-change:${code}`),
     attempts: 0, expiresAt: new Date(Date.now() + 10 * 60 * 1000),
   }}, { new: true, upsert: true });
-  await sendContactEmail({ to: newEmail, subject: 'Study Birds — تأكيد البريد الإلكتروني الجديد', text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.` });
+  await sendContactEmail({ to: newEmail, subject: 'Study Birds — تأكيد البريد الإلكتروني الجديد', text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.`, emailContent: { title: 'تأكيد البريد الإلكتروني الجديد', code, bodyText: 'أدخل الرمز التالي لتأكيد بريدك الجديد. صالح لمدة 10 دقائق. لا تشاركه مع أحد.' } });
   res.json({ sent: true });
 }));
 router.post('/email/change/confirm', run(async (req, res) => {
