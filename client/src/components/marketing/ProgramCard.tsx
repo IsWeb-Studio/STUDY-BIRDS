@@ -37,7 +37,7 @@ export const ProgramCard = ({ program }: { program: Program }) => {
           </h3>
           <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
             {universityLogo && failedLogo !== universityLogo ? (
-              <img src={universityLogo} alt="" loading="lazy" width={28} height={28} onError={() => setFailedLogo(universityLogo)} className="h-7 w-7 shrink-0 rounded-full border border-slate-100 bg-white object-contain p-0.5" />
+              <img src={universityLogo} alt="" loading="lazy" width={48} height={48} onError={() => setFailedLogo(universityLogo)} className="h-12 w-12 shrink-0 rounded-md object-contain" />
             ) : <School className="h-4 w-4 shrink-0 text-brand-500" />}
             <span>{program.university?.name}</span>
             {program.university?.country?.name && <><span aria-hidden="true" className="h-1 w-1 rounded-full bg-slate-300" /><span>{tv(program.university.country.name)}</span></>}
