@@ -1,14 +1,18 @@
 ﻿import { ArrowUpRight, GraduationCap, Languages, School } from "lucide-react";
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import type { Program } from "../../types";
 import { useAuth } from "../../hooks/useAuth";
 import { formatCurrency } from "../../utils/format";
 import { useLanguage } from "../../hooks/useLanguage";
 import { findProgramLanguage, PROGRAM_DEGREE_LEVELS } from "../../constants/programOptions";
+import { getApiAssetUrl } from "../../lib/api";
 
 export const ProgramCard = ({ program }: { program: Program }) => {
   const { t, tv, language } = useLanguage();
   const { user } = useAuth();
+  const [failedLogo, setFailedLogo] = useState<string | null>(null);
+  const universityLogo = getApiAssetUrl(program.university?.logo);
   const isPartnerUser = user?.role === "partner";
   const visibleTuition = isPartnerUser ? program.partnerTuition ?? program.tuition : program.tuition;
   const hasPartnerDiscount = isPartnerUser && typeof program.partnerTuition === "number" && typeof program.tuition === "number" && program.partnerTuition < program.tuition;
@@ -32,7 +36,9 @@ export const ProgramCard = ({ program }: { program: Program }) => {
             <Link to={`/programs/${program._id}`} className="transition hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300">{program.title}</Link>
           </h3>
           <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-            <School className="h-4 w-4 shrink-0 text-brand-500" />
+            {universityLogo && failedLogo !== universityLogo ? (
+              <img src={universityLogo} alt="" loading="lazy" width={28} height={28} onError={() => setFailedLogo(universityLogo)} className="h-7 w-7 shrink-0 rounded-full border border-slate-100 bg-white object-contain p-0.5" />
+            ) : <School className="h-4 w-4 shrink-0 text-brand-500" />}
             <span>{program.university?.name}</span>
             {program.university?.country?.name && <><span aria-hidden="true" className="h-1 w-1 rounded-full bg-slate-300" /><span>{tv(program.university.country.name)}</span></>}
           </p>
