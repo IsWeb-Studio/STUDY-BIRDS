@@ -79,12 +79,13 @@ const programSchema = new mongoose.Schema(
 
 programSchema.pre("validate", function setSlug(next) {
   if (!this.slug && this.title) {
-    const universityPart = this.university ? String(this.university).slice(-6) : "program";
-    const langPart = this.language ? `-${this.language.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "").slice(0, 10)}` : "";
-    this.slug = slugify(`${this.title}-${this.degreeLevel}${langPart}-${universityPart}`, {
+    const base = slugify([this.title, this.degreeLevel, this.language].filter(Boolean).join("-"), {
       lower: true,
       strict: true,
     });
+    // Each language offering is a separate program. Its id keeps the slug
+    // unique even when slugify removes or normalizes characters in its name.
+    this.slug = `${base || "program"}-${this._id}`;
   }
   next();
 });
