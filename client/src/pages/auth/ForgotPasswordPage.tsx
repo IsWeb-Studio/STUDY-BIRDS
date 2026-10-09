@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { FormInput } from "../../components/forms/FormInput";
+import { PasswordStrengthBar, validatePassword } from "../../components/forms/PasswordStrengthBar";
 import { useLanguage } from "../../hooks/useLanguage";
 import { api } from "../../lib/api";
 import { getErrorMessage } from "../../utils/errors";
@@ -20,6 +21,7 @@ export const ForgotPasswordPage = () => {
   const submit = async (event: FormEvent) => {
     event.preventDefault(); setError("");
     if (step === "code" && password !== repeat) { setError(text("كلمتا المرور غير متطابقتين", "Passwords do not match")); return; }
+    if (step === "code") { const pwErr = validatePassword(password); if (pwErr) { setError(pwErr); return; } }
     setBusy(true);
     try {
       if (step === "email") {
@@ -42,7 +44,7 @@ export const ForgotPasswordPage = () => {
         <FormInput label={text("البريد الإلكتروني", "Email")} type="email" autoComplete="email" value={email} readOnly={step === "code"} onChange={e => setEmail(e.target.value)} required />
         {step === "code" ? <>
           <FormInput label={text("رمز التحقق", "Verification code")} inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e => setCode(e.target.value)} required />
-          <FormInput label={text("كلمة المرور الجديدة", "New password")} type={visible ? "text" : "password"} autoComplete="new-password" minLength={8} maxLength={200} value={password} onChange={e => setPassword(e.target.value)} required />
+          <div><FormInput label={text("كلمة المرور الجديدة", "New password")} type={visible ? "text" : "password"} autoComplete="new-password" minLength={8} maxLength={200} value={password} onChange={e => setPassword(e.target.value)} required /><PasswordStrengthBar value={password} language={language} /></div>
           <FormInput label={text("تأكيد كلمة المرور", "Confirm password")} type={visible ? "text" : "password"} autoComplete="new-password" minLength={8} value={repeat} onChange={e => setRepeat(e.target.value)} required />
           <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={visible} onChange={e => setVisible(e.target.checked)} />{text("إظهار كلمة المرور", "Show password")}</label>
           <button type="button" className="text-sm text-brand-700 underline" onClick={() => { setStep("email"); setCode(""); setError(""); }}>{text("تغيير البريد أو طلب رمز آخر", "Change email or request another code")}</button>

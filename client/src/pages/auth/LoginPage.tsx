@@ -5,9 +5,10 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GoogleSignInButton } from "../../components/auth/GoogleSignInButton";
 import { FormInput } from "../../components/forms/FormInput";
+import { PasswordStrengthBar, validatePassword } from "../../components/forms/PasswordStrengthBar";
 import { Seo } from "../../components/seo/Seo";
 import { useAuth } from "../../hooks/useAuth";
 import { useLanguage } from "../../hooks/useLanguage";
@@ -47,6 +48,15 @@ export const LoginPage = () => {
   const [pendingGoogleCredential, setPendingGoogleCredential] = useState<string | null>(null);
   const [googleEmailCode, setGoogleEmailCode] = useState("");
   const [googleCodeError, setGoogleCodeError] = useState("");
+  const [googleCodeCountdown, setGoogleCodeCountdown] = useState(0);
+  const googleCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startGoogleCountdown = () => {
+    setGoogleCodeCountdown(60);
+    if (googleCountdownRef.current) clearInterval(googleCountdownRef.current);
+    googleCountdownRef.current = setInterval(() => {
+      setGoogleCodeCountdown(s => { if (s <= 1) { clearInterval(googleCountdownRef.current!); return 0; } return s - 1; });
+    }, 1000);
+  };
 
   // OTP state
   const [otpMode, setOtpMode] = useState(false);
@@ -107,6 +117,7 @@ export const LoginPage = () => {
         setPendingGoogleCredential(credential);
         setGoogleCodeError("");
         setGoogleEmailCode("");
+        startGoogleCountdown();
         return;
       }
       setFormError(
@@ -141,7 +152,8 @@ export const LoginPage = () => {
 
   const handleSetPassword = async () => {
     setPassError("");
-    if (newPass.length < 6) { setPassError(ar ? "كلمة المرور يجب أن تكون 6 أحرف على الأقل" : "Password must be at least 6 characters"); return; }
+    const pwErr = validatePassword(newPass);
+    if (pwErr) { setPassError(pwErr); return; }
     if (newPass !== newPassConfirm) { setPassError(ar ? "كلمتا المرور غير متطابقتين" : "Passwords do not match"); return; }
     setPassSaving(true);
     try {
@@ -222,13 +234,21 @@ export const LoginPage = () => {
           >
             {googleSubmitting ? (ar ? "جارٍ التحقق..." : "Verifying...") : (ar ? "تحقق وسجّل الدخول" : "Verify & Sign In")}
           </button>
-          <button
-            type="button"
-            className="text-sm text-brand-700 underline"
-            onClick={() => { setPendingGoogleCredential(null); setGoogleEmailCode(""); setGoogleCodeError(""); }}
-          >
-            {ar ? "إلغاء" : "Cancel"}
-          </button>
+          <div className="flex items-center gap-4 text-sm">
+            {googleCodeCountdown > 0
+              ? <span className="text-slate-400">{ar ? `إعادة الإرسال بعد ${googleCodeCountdown}ث` : `Resend in ${googleCodeCountdown}s`}</span>
+              : <button type="button" disabled={googleSubmitting} className="text-brand-700 underline"
+                  onClick={() => { void handleGoogleCredential(pendingGoogleCredential!); }}>
+                  {ar ? "أعد إرسال الرمز" : "Resend code"}
+                </button>}
+            <button
+              type="button"
+              className="text-slate-500 underline"
+              onClick={() => { setPendingGoogleCredential(null); setGoogleEmailCode(""); setGoogleCodeError(""); if (googleCountdownRef.current) clearInterval(googleCountdownRef.current); }}
+            >
+              {ar ? "إلغاء" : "Cancel"}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -249,13 +269,16 @@ export const LoginPage = () => {
           {passError ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{passError}</div>
           ) : null}
-          <FormInput
-            label={ar ? "كلمة المرور الجديدة" : "New password"}
-            type="password"
-            autoComplete="new-password"
-            value={newPass}
-            onChange={e => setNewPass(e.target.value)}
-          />
+          <div>
+            <FormInput
+              label={ar ? "كلمة المرور الجديدة" : "New password"}
+              type="password"
+              autoComplete="new-password"
+              value={newPass}
+              onChange={e => setNewPass(e.target.value)}
+            />
+            <PasswordStrengthBar value={newPass} language={language} />
+          </div>
           <FormInput
             label={ar ? "تأكيد كلمة المرور" : "Confirm password"}
             type="password"
