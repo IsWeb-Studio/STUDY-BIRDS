@@ -1,3 +1,5 @@
+import 'dart:async';
+import '../utils/app_error.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
@@ -23,16 +25,16 @@ class _ProgressUpload extends http.MultipartRequest {
   }
 }
 
-/// Thrown by [ApiClient] for any non-2xx response. [message] is the
-/// backend's own `{ message: "..." }` string when present, since the
-/// Express error middleware always returns that shape.
-class ApiException implements Exception {
+/// Status remains available for auth/control flow; messages are safe for UI.
+class ApiException implements Exception, UserFacingFailure {
   final int statusCode;
-  final String message;
-  const ApiException(this.statusCode, this.message);
+  final String _rawMessage;
+  const ApiException(this.statusCode, this._rawMessage);
+  @override
+  String get message => AppError.response(statusCode, _rawMessage);
 
   @override
-  String toString() => 'ApiException($statusCode): $message';
+  String toString() => message;
 }
 
 /// Single place that knows the backend's base URL. When the Render URL
@@ -46,7 +48,7 @@ class ApiClient {
   /// Reused across all requests — avoids TCP+TLS setup per call.
   final _http = http.Client();
 
-  /// In-memory GET cache: path → (timestamp, parsed body).
+  /// In-memory GET cache, isolated by session and path.
   /// Cleared on logout. TTL = 3 minutes.
   final _cache = <String, ({DateTime at, dynamic data})>{};
   static const _cacheTtl = Duration(minutes: 3);
@@ -62,13 +64,20 @@ class ApiClient {
       };
 
   Future<http.Response> _authorized(
-      String? token, Future<http.Response> Function(String?) send) async {
-    var response = await send(token).timeout(const Duration(seconds: 30));
-    if (response.statusCode == 401 && token != null && refreshSession != null) {
-      final replacement = await refreshSession!(token);
-      if (replacement != null) response = await send(replacement).timeout(const Duration(seconds: 30));
+      String? token, Future<http.Response> Function(String?) send,
+      {bool mayChangeData = false}) async {
+    try {
+      var response = await send(token).timeout(const Duration(seconds: 30));
+      if (response.statusCode == 401 && token != null && refreshSession != null) {
+        final replacement = await refreshSession!(token);
+        if (replacement != null) response = await send(replacement).timeout(const Duration(seconds: 30));
+      }
+      return response;
+    } on TimeoutException {
+      throw ApiException(408, mayChangeData ? AppError.uncertain : AppError.timeout);
+    } on http.ClientException {
+      throw const ApiException(0, AppError.connection);
     }
-    return response;
   }
 
   Future<dynamic> _request(String method, String path, {String? token, Map<String, dynamic>? body}) async {
@@ -77,19 +86,19 @@ class ApiClient {
       request.headers.addAll(_headers(credential));
       if (body != null) request.body = jsonEncode(body);
       return await http.Response.fromStream(await _http.send(request));
-    });
+    }, mayChangeData: method != 'GET' && !path.startsWith('/auth/'));
     return _decode(response);
   }
 
   Future<dynamic> get(String path, {String? token, bool cached = true}) async {
     if (cached) {
-      final hit = _cache[path];
+      final hit = _cache['${token ?? ''}:$path'];
       if (hit != null && DateTime.now().difference(hit.at) < _cacheTtl) {
         return hit.data;
       }
     }
     final data = await _request('GET', path, token: token);
-    if (cached) _cache[path] = (at: DateTime.now(), data: data);
+    if (cached) _cache['${token ?? ''}:$path'] = (at: DateTime.now(), data: data);
     return data;
   }
 
@@ -100,7 +109,7 @@ class ApiClient {
   Future<dynamic> deleteWithBody(String path, {required Map<String, dynamic> body, String? token}) => _request('DELETE', path, body: body, token: token);
 
   Future<List<int>> download(String path, {String? token}) async {
-    final response = await _authorized(token, (credential) => http.get(Uri.parse('$baseUrl$path'), headers: _headers(credential)));
+    final response = await _authorized(token, (credential) => _http.get(Uri.parse('$baseUrl$path'), headers: _headers(credential)));
     if (response.statusCode < 200 || response.statusCode >= 300) _decode(response);
     return response.bodyBytes;
   }
@@ -146,6 +155,9 @@ class ApiClient {
     void Function(double)? onProgress,
     UploadCancellation? cancellation,
   }) async {
+    if (fileBytes.isEmpty) throw const ApiException(400, 'الملف فارغ. اختر ملفًا آخر.');
+    if (fileBytes.length > 5 * 1024 * 1024) throw const ApiException(413, 'اختر ملفًا لا يتجاوز 5 ميجابايت.');
+    if (_mimeTypeFor(fileName).mimeType == 'application/octet-stream') throw const ApiException(415, 'نوع الملف غير مدعوم.');
     final response = await _authorized(token, (credential) async {
       if (cancellation?.cancelled == true) throw const ApiException(499, 'تم إلغاء الرفع');
       final request = _ProgressUpload('POST', Uri.parse('$baseUrl$path'), onProgress);
@@ -165,7 +177,7 @@ class ApiClient {
         if (cancellation != null) cancellation._abort = null;
         client.close();
       }
-    });
+    }, mayChangeData: true);
     return _decode(response);
   }
 
@@ -175,7 +187,10 @@ class ApiClient {
     try {
       decoded = jsonDecode(bodyText);
     } catch (_) {
-      decoded = {'message': bodyText};
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+        throw const ApiException(502, AppError.unavailable);
+      }
+      decoded = const <String, dynamic>{};
     }
 
     if (response.statusCode >= 200 && response.statusCode < 300) {
@@ -184,7 +199,7 @@ class ApiClient {
 
     final message = (decoded is Map && decoded['message'] is String)
         ? decoded['message'] as String
-        : 'Request failed (${response.statusCode})';
+        : '';
     throw ApiException(response.statusCode, message);
   }
 }

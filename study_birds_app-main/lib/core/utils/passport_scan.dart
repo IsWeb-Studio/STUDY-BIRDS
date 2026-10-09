@@ -1,7 +1,8 @@
+import 'app_error.dart';
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
 
-class PassportScanException implements Exception {
+class PassportScanException implements Exception, UserFacingFailure {
   final String message;
   const PassportScanException(this.message);
   @override

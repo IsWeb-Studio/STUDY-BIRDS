@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/network/api_client.dart';
@@ -79,7 +80,7 @@ class _EmployeeCommunityScreenState extends State<EmployeeCommunityScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(_moderationError(e, 'تعذر رفع الإيقاف.'))));
+            AppSnackBar(content: Text(_moderationError(e, 'تعذر رفع الإيقاف.'))));
       }
     } finally {
       if (mounted) setState(() => busy = false);
@@ -228,7 +229,7 @@ class _EmployeeCommunityPostScreenState
   // Replace, don't queue: the newest outcome is the one the moderator needs.
   void toast(String text) => ScaffoldMessenger.of(context)
     ..hideCurrentSnackBar()
-    ..showSnackBar(SnackBar(content: Text(text)));
+    ..showSnackBar(AppSnackBar(content: Text(text)));
 
   Future<void> run(
       Future<void> Function() action, String done, String failed) async {

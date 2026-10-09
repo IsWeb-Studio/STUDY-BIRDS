@@ -1,8 +1,11 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/services/push_notification_service.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
 
 class NotificationPreferencesScreen extends StatefulWidget {
   const NotificationPreferencesScreen({super.key});
@@ -78,7 +81,7 @@ class _NotificationPreferencesScreenState
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed && mounted) setState(() {});
+    if (state == AppLifecycleState.resumed && mounted) _load();
   }
 
   Future<void> _enableNotifications() async {
@@ -88,7 +91,7 @@ class _NotificationPreferencesScreenState
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر تفعيل الإشعارات. حاول مجددًا.')),
+          AppSnackBar(content: Text('تعذر تفعيل الإشعارات. حاول مجددًا.')),
         );
       }
     } finally {
@@ -102,20 +105,45 @@ class _NotificationPreferencesScreenState
       for (final (key, _, _, _) in _categories) {
         _prefs[key] = p.getBool('$_prefix$key') ?? true;
       }
+      final remote = await ApiClient.instance.get(
+        '/mobile-security/notification-preferences',
+        token: AuthSession.instance.token,
+      );
+      if (remote is Map) {
+        for (final (key, _, _, _) in _categories) {
+          if (remote[key] is bool) {
+            _prefs[key] = remote[key] as bool;
+            await p.setBool('$_prefix$key', _prefs[key]!);
+          }
+        }
+      }
     } catch (_) {
       for (final (key, _, _, _) in _categories) {
-        _prefs[key] = true;
+        _prefs.putIfAbsent(key, () => true);
       }
     }
     if (mounted) setState(() => _loading = false);
   }
 
   Future<void> _toggle(String key, bool value) async {
+    final previous = _prefs[key] ?? true;
     setState(() => _prefs[key] = value);
     try {
+      await ApiClient.instance.put(
+        '/mobile-security/notification-preferences',
+        token: AuthSession.instance.token,
+        body: {key: value},
+      );
       final p = await SharedPreferences.getInstance();
       await p.setBool('$_prefix$key', value);
-    } catch (_) {}
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => _prefs[key] = previous);
+      ScaffoldMessenger.of(context).showSnackBar(
+        AppSnackBar(
+            content: const Text('تعذر حفظ تفضيلات الإشعارات. حاول مجددًا.')),
+      );
+    }
   }
 
   @override

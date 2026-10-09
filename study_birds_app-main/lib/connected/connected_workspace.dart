@@ -155,7 +155,7 @@ class _WorkspaceHomeState extends State<WorkspaceHome> {
                                     builder: (context, snapshot) {
                                       if (snapshot.hasError) {
                                         return ErrorPanel(
-                                            message: snapshot.error.toString(),
+                                            message: AppError.message(snapshot.error),
                                             retry: () async {
                                               setState(reload);
                                               await overview;
@@ -342,7 +342,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
       }
       if (mounted) setState(() => data = result);
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted) setState(() => error = AppError.message(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -369,7 +369,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
           await widget.api.request('GET', '/mobile-workspace/contacts') as List;
       if (!mounted) return;
       if (raw.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text('لم يتم تعيين فريق لهذا الحساب بعد.')));
         return;
       }
@@ -385,7 +385,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
+            .showSnackBar(AppSnackBar(content: Text(AppError.message(e))));
       }
     }
   }
@@ -492,7 +492,7 @@ class _WorkspacePageState extends State<WorkspacePage> {
                 await widget.api.request('PATCH', '$path/${row['_id']}/read');
                 await load();
               } catch (e) {
-                if (mounted) setState(() => error = e.toString());
+                if (mounted) setState(() => error = AppError.message(e));
               }
             })
           else

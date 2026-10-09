@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/network/api_client.dart';
@@ -79,11 +80,11 @@ class _StudentLifeOffersScreenState extends State<StudentLifeOffersScreen> {
           body: {'name': userName, 'email': userEmail});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تم تسجيل حضورك بنجاح ✓')));
+            AppSnackBar(content: Text('تم تسجيل حضورك بنجاح ✓')));
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text(
                 e is ApiException ? e.message : 'تعذر التسجيل. حاول مجددًا.')));
       }
@@ -704,19 +705,19 @@ class _ScholarshipCardState extends State<_ScholarshipCard> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم تقديم طلب المنحة بنجاح')),
+          AppSnackBar(content: Text('تم تقديم طلب المنحة بنجاح')),
         );
         widget.onApplied();
       }
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+            .showSnackBar(AppSnackBar(content: Text(e.message)));
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('حدث خطأ. أعد المحاولة.')),
+          AppSnackBar(content: Text('حدث خطأ. أعد المحاولة.')),
         );
       }
     } finally {
@@ -934,7 +935,7 @@ class _JobPostsScreenState extends State<JobPostsScreen> {
       await ApiClient.instance.delete('/alumni/jobs/$id', token: AuthSession.instance.token);
       await _load();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر الحذف')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر الحذف')));
     }
   }
 
@@ -1063,7 +1064,7 @@ class _PostJobScreenState extends State<_PostJobScreen> {
 
   Future<void> _submit() async {
     if (_title.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('أدخل عنوان الوظيفة')));
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('أدخل عنوان الوظيفة')));
       return;
     }
     setState(() => _submitting = true);
@@ -1080,7 +1081,7 @@ class _PostJobScreenState extends State<_PostJobScreen> {
       });
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر النشر. تأكد من وجود ملف خريج عام.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر النشر. تأكد من وجود ملف خريج عام.')));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

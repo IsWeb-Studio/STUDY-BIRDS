@@ -1,3 +1,4 @@
+import '../../core/widgets/security_fields.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
@@ -20,7 +21,6 @@ class DeleteAccountScreen extends StatefulWidget {
 class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   final _formKey = GlobalKey<FormState>();
   final _passwordCtrl = TextEditingController();
-  bool _obscure = true;
   bool _busy = false;
   String? _error;
 
@@ -119,18 +119,13 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  TextFormField(
+                  SecureTextField(
                     controller: _passwordCtrl,
-                    obscureText: _obscure,
+                    obscureText: true,
                     decoration: InputDecoration(
                       labelText: 'كلمة المرور',
                       prefixIcon: const Icon(Icons.lock_outline_rounded),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscure ? Icons.visibility_outlined : Icons.visibility_off_outlined,
-                        ),
-                        onPressed: () => setState(() => _obscure = !_obscure),
-                      ),
+                      
                     ),
                     validator: (v) =>
                         (v == null || v.isEmpty) ? 'كلمة المرور مطلوبة' : null,

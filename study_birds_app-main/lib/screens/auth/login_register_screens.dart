@@ -1,6 +1,10 @@
+import '../../core/utils/password_policy.dart';
+import '../../core/widgets/feature_ui.dart';
+import '../../core/utils/app_error.dart';
+import '../../core/widgets/security_fields.dart';
+import 'email_challenge_screen.dart';
 import 'dart:io' show Platform;
 import 'browser_sign_in_screen.dart';
-import 'email_challenge_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/config/app_theme.dart';
@@ -12,6 +16,8 @@ class _AppTextField extends StatelessWidget {
   final String label;
   final IconData icon;
   final bool obscure;
+  final bool requireStrong;
+  final bool compactStrength;
   final TextInputType? keyboardType;
   final TextEditingController? controller;
   final String? Function(String?)? validator;
@@ -20,6 +26,8 @@ class _AppTextField extends StatelessWidget {
     required this.label,
     required this.icon,
     this.obscure = false,
+    this.requireStrong = false,
+    this.compactStrength = true,
     this.keyboardType,
     this.controller,
     this.validator,
@@ -34,11 +42,19 @@ class _AppTextField extends StatelessWidget {
       children: [
         Text(label, style: AppTextStyles.caption),
         const SizedBox(height: 6),
-        TextFormField(
+        SecureTextField(
           controller: controller,
           obscureText: obscure,
+          showStrength: obscure,
+          requireStrong: requireStrong,
+          compactStrength: compactStrength,
           keyboardType: keyboardType,
-          textAlign: TextAlign.right,
+          textDirection: keyboardType == TextInputType.emailAddress
+              ? TextDirection.ltr
+              : null,
+          textAlign: obscure || keyboardType == TextInputType.emailAddress
+              ? TextAlign.left
+              : TextAlign.right,
           validator: validator,
           autovalidateMode: AutovalidateMode.onUserInteraction,
           decoration: InputDecoration(
@@ -79,6 +95,7 @@ class LoginScreen extends StatefulWidget {
   final VoidCallback? onGoRegister;
   final VoidCallback? onForgotPassword;
   final String? prefillHint;
+
   /// Called after a successful Google Sign-In to navigate to the home screen.
   final VoidCallback? onGoogleSignInSuccess;
 
@@ -110,7 +127,10 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _googleSignIn() async {
-    setState(() { _googleLoading = true; _error = null; });
+    setState(() {
+      _googleLoading = true;
+      _error = null;
+    });
     try {
       final ok = await GoogleSignInService.instance.signIn();
       if (!mounted) return;
@@ -119,18 +139,25 @@ class _LoginScreenState extends State<LoginScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 428) {
-        // 2FA required — ask for email code then complete sign-in
-        setState(() => _googleLoading = false);
-        final confirmed = await Navigator.of(context).push<bool>(MaterialPageRoute(
-            builder: (_) => EmailChallengeScreen(confirm: (code) async {
-              await GoogleSignInService.instance.confirmTwoFactor(code);
-            })));
-        if (confirmed == true && mounted) widget.onGoogleSignInSuccess?.call();
+        final confirmed = await Navigator.of(context).push<bool>(
+          MaterialPageRoute(
+              builder: (_) => EmailChallengeScreen(
+                    confirm: GoogleSignInService.instance.confirmEmail,
+                    resend: GoogleSignInService.instance.resendEmailCode,
+                    title: 'تأكيد بريد Google',
+                    introTitle: 'أكد بريدك قبل إنشاء كلمة المرور',
+                    subtitle:
+                        'أدخل الرمز المرسل إلى بريد حسابك في Google، ثم أنشئ كلمة مرور لهذا الحساب.',
+                  )),
+        );
+        if (confirmed == true && mounted) {
+          widget.onGoogleSignInSuccess?.call();
+        }
         return;
       }
       setState(() => _error = e.message);
     } catch (e) {
-      if (mounted) setState(() => _error = 'حدث خطأ أثناء تسجيل الدخول عبر Google\n($e)');
+      if (mounted) setState(() => _error = AppError.message(e));
     } finally {
       if (mounted) setState(() => _googleLoading = false);
     }
@@ -159,146 +186,184 @@ class _LoginScreenState extends State<LoginScreen> {
       child: Scaffold(
         backgroundColor: Colors.white,
         body: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Form(
-              key: _formKey,
-              child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                const Text('أهلاً بعودتك 👋', style: AppTextStyles.screenTitle),
-                const SizedBox(height: 6),
-                const Text('سجّل دخولك لمتابعة رحلتك الدراسية',
-                    style: AppTextStyles.caption),
-                if (widget.prefillHint != null) ...[
-                  const SizedBox(height: 10),
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                        color: AppColors.navy.withValues(alpha: 0.05),
-                        borderRadius: BorderRadius.circular(8)),
-                    child:
-                        Text(widget.prefillHint!, style: AppTextStyles.caption),
-                  ),
-                ],
-                const SizedBox(height: 28),
-                _AppTextField(
-                  label: 'البريد الإلكتروني',
-                  icon: Icons.person_outline_rounded,
-                  controller: _emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (v) {
-                    if (v == null || v.trim().isEmpty) return 'أدخل بريدك الإلكتروني';
-                    if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim())) {
-                      return 'صيغة البريد الإلكتروني غير صحيحة';
-                    }
-                    return null;
-                  },
-                )
-                    .animate()
-                    .fadeIn(delay: 80.ms, duration: 350.ms)
-                    .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
-                const SizedBox(height: 14),
-                _AppTextField(
-                  label: 'كلمة المرور',
-                  icon: Icons.lock_outline_rounded,
-                  obscure: true,
-                  controller: _passwordController,
-                  validator: (v) =>
-                      (v == null || v.isEmpty) ? 'أدخل كلمة المرور' : null,
-                )
-                    .animate()
-                    .fadeIn(delay: 160.ms, duration: 350.ms)
-                    .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
-                if (_error != null) ...[
-                  const SizedBox(height: 10),
-                  Text(_error!,
-                      style: const TextStyle(
-                          color: AppColors.danger, fontSize: 12.5)),
-                ],
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: TextButton(
-                    onPressed: widget.onForgotPassword,
-                    child: const Text('نسيت كلمة المرور؟',
-                        style: TextStyle(color: AppColors.orange)),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                PrimaryButton(
-                    label: _loading ? 'جاري الدخول...' : 'تسجيل الدخول',
-                    onPressed: _loading ? null : _submit),
-                const SizedBox(height: 16),
-                const Row(
-                  children: [
-                    Expanded(child: Divider()),
-                    Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 10),
-                      child: Text('أو', style: AppTextStyles.caption),
-                    ),
-                    Expanded(child: Divider()),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                OutlinedButton.icon(
-                  onPressed: (_loading || _googleLoading) ? null : _googleSignIn,
-                  icon: _googleLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.g_mobiledata_rounded, size: 24),
-                  label: Text(_googleLoading ? 'جارٍ الدخول...' : 'المتابعة عبر Google'),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 48),
-                    side: const BorderSide(color: AppColors.border),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(AppRadius.button),
-                    ),
-                  ),
-                ),
-                if (Platform.isIOS) ...[
-                  const SizedBox(height: 10),
-                  OutlinedButton.icon(
-                    onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => const BrowserSignInScreen())),
-                    icon: const Icon(Icons.apple_rounded, size: 20),
-                    label: const Text('المتابعة عبر Apple'),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 48),
-                      side: const BorderSide(color: AppColors.border),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(AppRadius.button),
+          child: Center(
+              child: SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+            child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 380),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                          child: Image.asset('assets/images/logo_mark.png',
+                              height: 60, width: 60, fit: BoxFit.contain)),
+                      const SizedBox(height: 12),
+                      const Center(
+                          child: Text('STUDY BIRDS',
+                              style: TextStyle(
+                                  color: AppColors.navy,
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 2))),
+                      const SizedBox(height: 22),
+                      const Text('أهلاً بعودتك',
+                          style: TextStyle(
+                              color: AppColors.navy,
+                              fontSize: 27,
+                              fontWeight: FontWeight.w700,
+                              height: 1.3)),
+                      const SizedBox(height: 8),
+                      const Text('رحلتك الدراسية تنتظرك. خلّينا نكملها معًا.',
+                          style: TextStyle(
+                              color: AppColors.textSecondary,
+                              fontSize: 14,
+                              height: 1.7)),
+                      if (widget.prefillHint != null) ...[
+                        const SizedBox(height: 10),
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                              color: AppColors.navy.withValues(alpha: 0.05),
+                              borderRadius: BorderRadius.circular(8)),
+                          child: Text(widget.prefillHint!,
+                              style: AppTextStyles.caption),
+                        ),
+                      ],
+                      const SizedBox(height: 20),
+                      _AppTextField(
+                        label: 'البريد الإلكتروني',
+                        icon: Icons.person_outline_rounded,
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        validator: (v) {
+                          if (v == null || v.trim().isEmpty)
+                            return 'أدخل بريدك الإلكتروني';
+                          if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                              .hasMatch(v.trim())) {
+                            return 'صيغة البريد الإلكتروني غير صحيحة';
+                          }
+                          return null;
+                        },
+                      )
+                          .animate()
+                          .fadeIn(delay: 80.ms, duration: 350.ms)
+                          .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
+                      const SizedBox(height: 14),
+                      _AppTextField(
+                        label: 'كلمة المرور',
+                        icon: Icons.lock_outline_rounded,
+                        obscure: true,
+                        compactStrength: true,
+                        controller: _passwordController,
+                        validator: (v) => (v == null || v.isEmpty)
+                            ? 'أدخل كلمة المرور'
+                            : null,
+                      )
+                          .animate()
+                          .fadeIn(delay: 160.ms, duration: 350.ms)
+                          .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
+                      if (_error != null) ...[
+                        const SizedBox(height: 10),
+                        InlineNotice(_error!, error: true),
+                      ],
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: TextButton(
+                          onPressed: widget.onForgotPassword,
+                          child: const Text('نسيت كلمة المرور؟',
+                              style: TextStyle(color: AppColors.orange)),
+                        ),
                       ),
-                    ),
-                  ),
-                ],
-                const SizedBox(height: 24),
-                Center(
-                  child: TextButton(
-                    onPressed: widget.onGoRegister,
-                    child: RichText(
-                      text: const TextSpan(
-                        style: AppTextStyles.body,
+                      const SizedBox(height: 8),
+                      PrimaryButton(
+                          label: _loading ? 'جاري الدخول...' : 'تسجيل الدخول',
+                          icon: Icons.arrow_forward_rounded,
+                          onPressed:
+                              (_loading || _googleLoading) ? null : _submit),
+                      const SizedBox(height: 16),
+                      const Row(
                         children: [
-                          TextSpan(text: 'ليس لديك حساب؟ '),
-                          TextSpan(
-                            text: 'إنشاء حساب جديد',
-                            style: TextStyle(
-                                color: AppColors.orange,
-                                fontWeight: FontWeight.w700),
-                          ),
+                          Expanded(child: Divider()),
+                          Expanded(
+                              flex: 4,
+                              child: Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 10),
+                                child: Text('أو تابع باستخدام',
+                                    textAlign: TextAlign.center,
+                                    style: AppTextStyles.caption),
+                              )),
+                          Expanded(child: Divider()),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed:
+                            (_loading || _googleLoading) ? null : _googleSignIn,
+                        icon: _googleLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child:
+                                    CircularProgressIndicator(strokeWidth: 2),
+                              )
+                            : const Icon(Icons.g_mobiledata_rounded, size: 24),
+                        label: Text(_googleLoading
+                            ? 'جارٍ الدخول...'
+                            : 'المتابعة عبر Google'),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size(double.infinity, 48),
+                          side: const BorderSide(color: AppColors.border),
+                          shape: RoundedRectangleBorder(
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.button),
+                          ),
+                        ),
+                      ),
+                      if (Platform.isIOS) ...[
+                        const SizedBox(height: 10),
+                        OutlinedButton.icon(
+                          onPressed: () => Navigator.of(context).push(
+                              MaterialPageRoute(
+                                  builder: (_) => const BrowserSignInScreen())),
+                          icon: const Icon(Icons.apple_rounded, size: 20),
+                          label: const Text('المتابعة عبر Apple'),
+                          style: OutlinedButton.styleFrom(
+                            minimumSize: const Size(double.infinity, 48),
+                            side: const BorderSide(color: AppColors.border),
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.button),
+                            ),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 16),
+                      Center(
+                        child: TextButton(
+                          onPressed: widget.onGoRegister,
+                          child: Text.rich(
+                            const TextSpan(
+                              style: AppTextStyles.body,
+                              children: [
+                                TextSpan(text: 'ليس لديك حساب؟ '),
+                                TextSpan(
+                                  text: 'إنشاء حساب جديد',
+                                  style: TextStyle(
+                                      color: AppColors.orange,
+                                      fontWeight: FontWeight.w700),
+                                ),
+                              ],
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
-            ),
-            ),
-          ),
+                )),
+          )),
         ),
       ),
     );
@@ -329,13 +394,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  String _passwordText = '';
   bool _loading = false;
   bool _googleLoading = false;
   String? _error;
 
   Future<void> _googleSignIn() async {
-    setState(() { _googleLoading = true; _error = null; });
+    setState(() {
+      _googleLoading = true;
+      _error = null;
+    });
     try {
       final ok = await GoogleSignInService.instance.signIn();
       if (!mounted) return;
@@ -344,27 +411,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
     } on ApiException catch (e) {
       if (!mounted) return;
       if (e.statusCode == 428) {
-        setState(() => _googleLoading = false);
-        final confirmed = await Navigator.of(context).push<bool>(MaterialPageRoute(
-            builder: (_) => EmailChallengeScreen(confirm: (code) async {
-              await GoogleSignInService.instance.confirmTwoFactor(code);
-            })));
-        if (confirmed == true && mounted) widget.onGoogleSignInSuccess?.call();
+        final confirmed = await Navigator.of(context).push<bool>(
+          MaterialPageRoute(
+              builder: (_) => EmailChallengeScreen(
+                    confirm: GoogleSignInService.instance.confirmEmail,
+                    resend: GoogleSignInService.instance.resendEmailCode,
+                    title: 'تأكيد بريد Google',
+                    introTitle: 'أكد بريدك قبل إنشاء كلمة المرور',
+                    subtitle:
+                        'أدخل الرمز المرسل إلى بريد حسابك في Google، ثم أنشئ كلمة مرور لهذا الحساب.',
+                  )),
+        );
+        if (confirmed == true && mounted) {
+          widget.onGoogleSignInSuccess?.call();
+        }
         return;
       }
       setState(() => _error = e.message);
     } catch (e) {
-      if (mounted) setState(() => _error = 'حدث خطأ أثناء تسجيل الدخول عبر Google\n($e)');
+      if (mounted) setState(() => _error = AppError.message(e));
     } finally {
       if (mounted) setState(() => _googleLoading = false);
     }
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _passwordController.addListener(
-        () => setState(() => _passwordText = _passwordController.text));
   }
 
   @override
@@ -403,119 +471,119 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Form(
           key: _formKey,
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text('لنبدأ رحلتك 🎓', style: AppTextStyles.screenTitle),
-            const SizedBox(height: 6),
-            const Text(
-                'التسجيل بسيط، وتقدر تكمل باقي بياناتك لاحقًا من ملفك الشخصي',
-                style: AppTextStyles.caption),
-            const SizedBox(height: 24),
-            _AppTextField(
-                    label: 'الاسم الكامل',
-                    icon: Icons.badge_outlined,
-                    controller: _nameController,
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'أدخل اسمك الكامل'
-                        : null)
-                .animate()
-                .fadeIn(delay: 60.ms, duration: 350.ms)
-                .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
-            const SizedBox(height: 14),
-            _AppTextField(
-              label: 'البريد الإلكتروني',
-              icon: Icons.email_outlined,
-              keyboardType: TextInputType.emailAddress,
-              controller: _emailController,
-              validator: (v) {
-                if (v == null || v.trim().isEmpty) return 'أدخل بريدك الإلكتروني';
-                if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim())) {
-                  return 'صيغة البريد الإلكتروني غير صحيحة';
-                }
-                return null;
-              },
-            )
-                .animate()
-                .fadeIn(delay: 140.ms, duration: 350.ms)
-                .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
-            const SizedBox(height: 14),
-            _AppTextField(
-                    label: 'كلمة المرور',
-                    icon: Icons.lock_outline_rounded,
-                    obscure: true,
-                    controller: _passwordController,
-                    validator: (v) {
-                      if (v == null || v.isEmpty) return 'أدخل كلمة المرور';
-                      if (v.length < 8) return 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
-                      return null;
-                    })
-                .animate()
-                .fadeIn(delay: 220.ms, duration: 350.ms)
-                .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
-            PasswordStrengthBar(password: _passwordText),
-            if (_error != null) ...[
-              const SizedBox(height: 10),
-              Text(_error!,
-                  style:
-                      const TextStyle(color: AppColors.danger, fontSize: 12.5)),
-            ],
-            const SizedBox(height: 20),
-            PrimaryButton(
-                label: _loading ? 'جاري الإنشاء...' : 'إنشاء الحساب',
-                onPressed: (_loading || _googleLoading) ? null : _submit),
-            const SizedBox(height: 12),
-            const Row(children: [
-              Expanded(child: Divider()),
-              Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12),
-                  child: Text('أو', style: AppTextStyles.caption)),
-              Expanded(child: Divider()),
-            ]),
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: (_loading || _googleLoading) ? null : _googleSignIn,
-              icon: _googleLoading
-                  ? const SizedBox(
-                      width: 18, height: 18,
-                      child: CircularProgressIndicator(strokeWidth: 2))
-                  : const Icon(Icons.g_mobiledata_rounded, size: 22),
-              label: Text(_googleLoading ? 'جارٍ...' : 'المتابعة عبر Google'),
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-                side: const BorderSide(color: AppColors.border),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppRadius.button)),
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('لنبدأ رحلتك 🎓', style: AppTextStyles.screenTitle),
+              const SizedBox(height: 6),
+              const Text(
+                  'التسجيل بسيط، وتقدر تكمل باقي بياناتك لاحقًا من ملفك الشخصي',
+                  style: AppTextStyles.caption),
+              const SizedBox(height: 24),
+              _AppTextField(
+                      label: 'الاسم الكامل',
+                      icon: Icons.badge_outlined,
+                      controller: _nameController,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'أدخل اسمك الكامل'
+                          : null)
+                  .animate()
+                  .fadeIn(delay: 60.ms, duration: 350.ms)
+                  .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
+              const SizedBox(height: 14),
+              _AppTextField(
+                label: 'البريد الإلكتروني',
+                icon: Icons.email_outlined,
+                keyboardType: TextInputType.emailAddress,
+                controller: _emailController,
+                validator: (v) {
+                  if (v == null || v.trim().isEmpty)
+                    return 'أدخل بريدك الإلكتروني';
+                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
+                      .hasMatch(v.trim())) {
+                    return 'صيغة البريد الإلكتروني غير صحيحة';
+                  }
+                  return null;
+                },
+              )
+                  .animate()
+                  .fadeIn(delay: 140.ms, duration: 350.ms)
+                  .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
+              const SizedBox(height: 14),
+              _AppTextField(
+                      label: 'كلمة المرور',
+                      icon: Icons.lock_outline_rounded,
+                      obscure: true,
+                      requireStrong: true,
+                      controller: _passwordController,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'أدخل كلمة المرور';
+                        if (v.length < 8)
+                          return 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
+                        return null;
+                      })
+                  .animate()
+                  .fadeIn(delay: 220.ms, duration: 350.ms)
+                  .slideY(begin: 0.2, end: 0, curve: Curves.easeOut),
+              if (_error != null) ...[
+                const SizedBox(height: 10),
+                InlineNotice(_error!, error: true),
+              ],
+              const SizedBox(height: 20),
+              PrimaryButton(
+                  label: _loading ? 'جاري الإنشاء...' : 'إنشاء الحساب',
+                  onPressed: (_loading || _googleLoading) ? null : _submit),
+              const SizedBox(height: 12),
+              const Row(children: [
+                Expanded(child: Divider()),
+                Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12),
+                    child: Text('أو', style: AppTextStyles.caption)),
+                Expanded(child: Divider()),
+              ]),
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: (_loading || _googleLoading) ? null : _googleSignIn,
+                icon: _googleLoading
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.g_mobiledata_rounded, size: 22),
+                label: Text(_googleLoading ? 'جارٍ...' : 'المتابعة عبر Google'),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 48),
+                  side: const BorderSide(color: AppColors.border),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(AppRadius.button)),
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: TextButton(
-                onPressed: widget.onGoLogin,
-                child: RichText(
-                  text: const TextSpan(
-                    style: AppTextStyles.body,
-                    children: [
-                      TextSpan(text: 'لديك حساب بالفعل؟ '),
-                      TextSpan(
-                        text: 'تسجيل الدخول',
-                        style: TextStyle(
-                            color: AppColors.orange,
-                            fontWeight: FontWeight.w700),
-                      ),
-                    ],
+              const SizedBox(height: 16),
+              Center(
+                child: TextButton(
+                  onPressed: widget.onGoLogin,
+                  child: RichText(
+                    text: const TextSpan(
+                      style: AppTextStyles.body,
+                      children: [
+                        TextSpan(text: 'لديك حساب بالفعل؟ '),
+                        TextSpan(
+                          text: 'تسجيل الدخول',
+                          style: TextStyle(
+                              color: AppColors.orange,
+                              fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
           ),
         ),
       ),
     );
   }
 }
-
-enum _PwStrength { none, weak, medium, strong }
 
 /// Full-screen mandatory password setup for Google sign-in users.
 /// Shown by main.dart's ListenableBuilder when user.hasPassword == false.
@@ -530,8 +598,24 @@ class SetPasswordScreen extends StatefulWidget {
 class _SetPasswordScreenState extends State<SetPasswordScreen> {
   final _pass = TextEditingController();
   final _confirm = TextEditingController();
-  bool _busy = false, _obscure = true, _obscureConfirm = true;
+  bool _busy = false;
   String? _error;
+
+  Future<void> _restartLogin() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await AuthSession.instance.logout(revoke: false);
+    } catch (_) {
+      if (mounted)
+        setState(() => _error = 'تعذر العودة لتسجيل الدخول. حاول مجددًا.');
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
 
   @override
   void initState() {
@@ -540,35 +624,41 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
   }
 
   @override
-  void dispose() { _pass.dispose(); _confirm.dispose(); super.dispose(); }
-
-  _PwStrength get _strength {
-    final p = _pass.text;
-    if (p.length < 8) return _PwStrength.none;
-    int score = 0;
-    if (p.contains(RegExp(r'[A-Z]'))) score++;
-    if (p.contains(RegExp(r'[a-z]'))) score++;
-    if (p.contains(RegExp(r'[0-9]'))) score++;
-    if (p.contains(RegExp(r'[^A-Za-z0-9]'))) score++;
-    if (score >= 3) return _PwStrength.strong;
-    if (score >= 2) return _PwStrength.medium;
-    return _PwStrength.weak;
+  void dispose() {
+    _pass.dispose();
+    _confirm.dispose();
+    super.dispose();
   }
 
   Future<void> _save() async {
-    final p = _pass.text.trim();
-    if (p.length < 8) { setState(() => _error = 'كلمة المرور يجب أن تكون 8 أحرف على الأقل'); return; }
-    if (p != _confirm.text.trim()) { setState(() => _error = 'كلمتا المرور غير متطابقتين'); return; }
-    setState(() { _busy = true; _error = null; });
+    if (_busy) return;
+    final p = _pass.text;
+    final passwordError = PasswordPolicy.validate(p);
+    if (passwordError != null) {
+      setState(() => _error = passwordError);
+      return;
+    }
+    if (p != _confirm.text) {
+      setState(() => _error = 'كلمتا المرور غير متطابقتين');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
     try {
       await ApiClient.instance.post('/auth/change-password',
           token: AuthSession.instance.token,
-          body: {'newPassword': p});
-      AuthSession.instance.patchHasPassword();
+          body: {
+            'newPassword': p,
+            'passwordSetup': AuthSession.instance.requiresGooglePasswordSetup,
+          });
+      await AuthSession.instance.patchHasPassword();
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
-      if (mounted) setState(() => _error = 'تعذر حفظ كلمة المرور. حاول مجددًا.');
+      if (mounted)
+        setState(() => _error = 'تعذر حفظ كلمة المرور. حاول مجددًا.');
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -577,17 +667,10 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     final email = AuthSession.instance.currentUser?.email ?? '';
-    final strength = _strength;
-    final (strengthLabel, strengthColor, strengthFrac) = switch (strength) {
-      _PwStrength.none   => ('', Colors.transparent, 0.0),
-      _PwStrength.weak   => ('ضعيفة',  Colors.red,          1 / 3),
-      _PwStrength.medium => ('متوسطة', Colors.orange,       2 / 3),
-      _PwStrength.strong => ('قوية',   Colors.green.shade600, 1.0),
-    };
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFF3F6FB),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -595,13 +678,11 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const SizedBox(height: 32),
-                const Icon(Icons.lock_outline_rounded, size: 48, color: AppColors.navy),
-                const SizedBox(height: 20),
-                const Text('أضف كلمة مرور لحسابك', style: AppTextStyles.screenTitle),
-                const SizedBox(height: 6),
-                const Text(
-                    'يجب إضافة كلمة مرور لتأمين حسابك قبل المتابعة. ستتمكن من تسجيل الدخول لاحقًا بكلمة المرور أو عبر Google.',
-                    style: AppTextStyles.caption),
+                const SecurityIntro(
+                    title: 'أضف كلمة مرور لحسابك',
+                    subtitle:
+                        'خطوتك الأخيرة لحماية حسابك. اختر كلمة مرور قوية لتبدأ رحلتك مع Study Birds.',
+                    icon: Icons.lock_outline_rounded),
                 if (email.isNotEmpty) ...[
                   const SizedBox(height: 20),
                   TextFormField(
@@ -612,7 +693,8 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                       labelText: 'البريد الإلكتروني',
                       prefixIcon: const Icon(Icons.email_outlined, size: 20),
                       border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.button)),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.button)),
                       filled: true,
                       fillColor: Colors.grey.shade100,
                     ),
@@ -625,69 +707,32 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                     decoration: BoxDecoration(
                         color: AppColors.danger.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8)),
-                    child: Text(_error!,
-                        style: const TextStyle(color: AppColors.danger, fontSize: 13)),
+                    child: InlineNotice(_error!, error: true),
                   ),
                   const SizedBox(height: 12),
                 ],
-                TextField(
+                SecureTextField(
                   controller: _pass,
-                  obscureText: _obscure,
+                  requireStrong: true,
+                  obscureText: true,
                   enabled: !_busy,
                   textDirection: TextDirection.ltr,
                   decoration: InputDecoration(
                     labelText: 'كلمة المرور الجديدة',
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.button)),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                          _obscure
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          size: 20),
-                      onPressed: () => setState(() => _obscure = !_obscure),
-                    ),
                   ),
                 ),
-                if (_pass.text.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Row(children: [
-                    Expanded(
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: LinearProgressIndicator(
-                          value: strengthFrac,
-                          minHeight: 5,
-                          backgroundColor: Colors.grey.shade200,
-                          valueColor: AlwaysStoppedAnimation(strengthColor),
-                        ),
-                      ),
-                    ),
-                    if (strengthLabel.isNotEmpty) ...[
-                      const SizedBox(width: 8),
-                      Text(strengthLabel,
-                          style: TextStyle(fontSize: 12, color: strengthColor, fontWeight: FontWeight.w600)),
-                    ],
-                  ]),
-                ],
                 const SizedBox(height: 14),
-                TextField(
+                SecureTextField(
                   controller: _confirm,
-                  obscureText: _obscureConfirm,
+                  obscureText: true,
                   enabled: !_busy,
                   textDirection: TextDirection.ltr,
                   decoration: InputDecoration(
                     labelText: 'تأكيد كلمة المرور',
                     border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(AppRadius.button)),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                          _obscureConfirm
-                              ? Icons.visibility_outlined
-                              : Icons.visibility_off_outlined,
-                          size: 20),
-                      onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -697,7 +742,8 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                       backgroundColor: AppColors.navy,
                       minimumSize: const Size(double.infinity, 48),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.button))),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.button))),
                   child: _busy
                       ? const SizedBox(
                           width: 20,
@@ -707,6 +753,12 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                       : const Text('حفظ كلمة المرور',
                           style: TextStyle(color: Colors.white)),
                 ),
+                const SizedBox(height: 12),
+                Center(
+                    child: TextButton(
+                  onPressed: _busy ? null : _restartLogin,
+                  child: const Text('العودة لتسجيل الدخول'),
+                )),
               ],
             ),
           ),

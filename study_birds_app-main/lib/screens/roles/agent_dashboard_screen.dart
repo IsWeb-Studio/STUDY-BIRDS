@@ -1,3 +1,4 @@
+import '../../core/widgets/feature_ui.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
 import '../profile_account/security_settings_screen.dart';
 import 'package:flutter/material.dart';
@@ -1015,7 +1016,7 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
                   children: [
                     const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 16),
                     const SizedBox(width: 8),
-                    Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12.5)),
+                    InlineNotice(_error!, error: true),
                   ],
                 ),
               ),

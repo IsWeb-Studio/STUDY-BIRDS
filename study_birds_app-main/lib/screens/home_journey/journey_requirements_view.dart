@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import 'journey_timeline_widgets.dart';
 import '../../core/repositories/student_repository.dart';
 import 'important_dates_screen.dart';
@@ -170,7 +171,7 @@ class _JourneyDetailScreen extends StatelessWidget {
             application: Map<String, dynamic>.from(matches.first as Map));
       } catch (_) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
               content: Text(
                   'تعذر تحميل الطلب. اسحب لتحديث الرحلة ثم أعد المحاولة.')));
         }

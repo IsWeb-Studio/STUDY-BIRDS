@@ -1,3 +1,5 @@
+import '../../core/widgets/app_notice.dart';
+import '../../core/widgets/security_fields.dart';
 import 'account_security_screen.dart';
 import '../auth/verify_contact_screen.dart';
 import 'package:flutter/material.dart';
@@ -21,7 +23,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     return AppScaffold(
         title: 'الأمان',
         body: FeatureBody(children: [
-          const FeatureIntro(
+          const SecurityIntro(
               title: 'حسابك تحت سيطرتك',
               subtitle: 'راجع وسائل حماية حسابك وحافظ على خصوصية بياناتك.',
               icon: Icons.shield_outlined),
@@ -125,7 +127,6 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
       confirmation = TextEditingController();
   final form = GlobalKey<FormState>();
   bool saving = false;
-  final visible = <TextEditingController>{};
   String? error;
   @override
   void dispose() {
@@ -149,7 +150,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           body: {'currentPassword': current.text, 'newPassword': next.text});
       if (!mounted) return;
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('تم تغيير كلمة المرور')));
+          .showSnackBar(AppSnackBar(content: Text('تم تغيير كلمة المرور')));
       Navigator.of(context).pop();
     } catch (e) {
       if (mounted)
@@ -176,7 +177,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
         body: Form(
             key: form,
             child: FeatureBody(children: [
-              const FeatureIntro(
+              const SecurityIntro(
                   title: 'كلمة مرور جديدة',
                   subtitle:
                       'اختر كلمة يصعب تخمينها ولا تستخدمها في حسابات أخرى.',
@@ -191,9 +192,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                 ])
                   Padding(
                       padding: const EdgeInsets.only(bottom: 20),
-                      child: TextFormField(
+                      child: SecureTextField(
                         controller: entry.$1,
-                        obscureText: !visible.contains(entry.$1),
+                        requireStrong: entry.$1 == next,
+                        obscureText: true,
                         enabled: !saving,
                         enableSuggestions: false,
                         autocorrect: false,
@@ -204,24 +206,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                               : AutofillHints.newPassword
                         ],
                         decoration: featureInput(entry.$2,
-                            suffix: IconButton(
-                                tooltip: visible.contains(entry.$1)
-                                    ? 'إخفاء كلمة المرور'
-                                    : 'إظهار كلمة المرور',
-                                onPressed: () => setState(() {
-                                      if (!visible.add(entry.$1))
-                                        visible.remove(entry.$1);
-                                    }),
-                                icon: Icon(
-                                    visible.contains(entry.$1)
-                                        ? Icons.visibility_off_outlined
-                                        : Icons.visibility_outlined,
-                                    size: 20))),
+                            ),
                         validator: (value) {
                           if (value == null || value.isEmpty)
                             return 'هذا الحقل مطلوب';
-                          if (entry.$1 == next && value.length < 6)
-                            return 'استخدم 6 أحرف على الأقل';
                           if (entry.$1 == confirmation && value != next.text)
                             return 'كلمتا المرور غير متطابقتين';
                           return null;
@@ -233,7 +221,7 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                   SizedBox(width: 8),
                   Expanded(
                       child: Text(
-                          '6 أحرف على الأقل، ويفضل مزج الأحرف والأرقام.',
+                          'اختر كلمة قوية من 8 أحرف و3 أنواع على الأقل.',
                           style: AppTextStyles.caption))
                 ]),
               ])),
@@ -296,7 +284,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
           token: token, body: {'code': code});
       await AuthSession.instance.refreshCurrentUser();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: Text('تم تغيير البريد الإلكتروني بنجاح ✓'),
           backgroundColor: Color(0xFF065F46)));
       Navigator.of(context).pop();
@@ -322,7 +310,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                     icon: codeSent ? Icons.check_rounded : Icons.send_rounded,
                     onPressed: busy ? null : (codeSent ? confirmCode : requestCode)))),
         body: FeatureBody(children: [
-          FeatureIntro(
+          SecurityIntro(
               title: codeSent ? 'أدخل رمز التحقق' : 'البريد الجديد',
               subtitle: codeSent
                   ? 'أرسلنا رمزًا مؤقتًا إلى $sentTo. صالح 10 دقائق.'
@@ -342,15 +330,7 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        TextFormField(
-                          controller: codeCtrl,
-                          keyboardType: TextInputType.number,
-                          maxLength: 6,
-                          enabled: !busy,
-                          textDirection: TextDirection.ltr,
-                          decoration: featureInput('رمز التحقق (6 أرقام)'),
-                          autofillHints: const [AutofillHints.oneTimeCode],
-                        ),
+                        VerificationCodeField(controller: codeCtrl, enabled: !busy),
                         TextButton(
                             onPressed: busy ? null : () => setState(() { codeSent = false; codeCtrl.clear(); error = null; }),
                             child: const Text('تغيير البريد المدخل')),

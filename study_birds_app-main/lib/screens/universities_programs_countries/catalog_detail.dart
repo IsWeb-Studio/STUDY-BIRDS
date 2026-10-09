@@ -1,3 +1,5 @@
+import '../../core/widgets/feature_ui.dart';
+import '../../core/widgets/app_notice.dart';
 import 'dart:math' as math;
 import '../../core/services/auth_session.dart';
 import '../applications_documents_payments/program_application_screen.dart';
@@ -89,7 +91,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تعذر تحديث المفضلة. حاول مجددًا.')));
+            AppSnackBar(content: Text('تعذر تحديث المفضلة. حاول مجددًا.')));
       }
     } finally {
       if (mounted) setState(() => savingFavorite = false);
@@ -150,9 +152,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                             if (error != null)
                               AppCard(
                                   child: Column(children: [
-                                Text(error!,
-                                    style: const TextStyle(
-                                        color: AppColors.danger)),
+                                InlineNotice(error!, error: true),
                                 TextButton(
                                     onPressed: load,
                                     child: const Text('إعادة المحاولة'))
@@ -499,7 +499,7 @@ class _ArticleText extends StatelessWidget {
             } catch (_) {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('تعذر فتح الرابط.')));
+                    AppSnackBar(content: Text('تعذر فتح الرابط.')));
               }
             }
           }));

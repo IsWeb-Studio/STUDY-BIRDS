@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
 import '../profile_account/security_settings_screen.dart';
 import 'package:flutter/material.dart';
@@ -67,7 +68,7 @@ class _UniversityDashboardScreenState
       if (mounted) setState(() => _avatarUrl = url);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text('تعذر رفع الصورة'),
             backgroundColor: AppColors.danger));
       }

@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/config/app_theme.dart';
@@ -292,7 +293,7 @@ class _ExhibitionArticleScreenState extends State<ExhibitionArticleScreen> {
     if (uri == null) return;
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر فتح الرابط.')));
+          AppSnackBar(content: Text('تعذر فتح الرابط.')));
     }
   }
 
@@ -307,7 +308,7 @@ class _ExhibitionArticleScreenState extends State<ExhibitionArticleScreen> {
       if (mounted) setState(() => _favorited = res['removed'] != true);
     } catch (_) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر تحديث المفضلة.')));
+          AppSnackBar(content: Text('تعذر تحديث المفضلة.')));
     } finally {
       if (mounted) setState(() => _toggling = false);
     }

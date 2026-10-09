@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
@@ -33,7 +34,7 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
         await ApiClient.instance.post('/mobile-security/two-factor/disable', token: token, body: {});
         if (mounted) {
           setState(() => enabled = false);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: const Text('تم إيقاف التحقق بخطوتين'),
             backgroundColor: AppColors.navy,
           ));
@@ -53,12 +54,12 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
       )));
       if (ok == true && mounted) {
         setState(() => enabled = true);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: const Text('تم تفعيل التحقق بخطوتين ✓'),
           backgroundColor: Colors.green.shade700,
         ));
       }
-    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر تغيير إعداد التحقق بخطوتين'))); }
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر تغيير إعداد التحقق بخطوتين'))); }
     finally { if (mounted) setState(() => busy = false); }
   }
   Future<void> revoke(Map row) async {
@@ -70,7 +71,7 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
         await AuthSession.instance.logout();
         if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
       } else { await load(); }
-    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر إنهاء الجلسة'))); }
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر إنهاء الجلسة'))); }
     finally { if (mounted) setState(() => busy = false); }
   }
 
@@ -82,7 +83,7 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
       await AuthSession.instance.logout();
       if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر إنهاء الجلسات')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر إنهاء الجلسات')));
     } finally {
       if (mounted) setState(() => busy = false);
     }

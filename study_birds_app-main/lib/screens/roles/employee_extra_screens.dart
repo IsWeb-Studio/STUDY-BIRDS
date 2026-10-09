@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/config/app_theme.dart';
@@ -339,7 +340,7 @@ class _EmployeeServiceRequestsScreenState extends State<EmployeeServiceRequestsS
       await _load();
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e is ApiException ? e.message : 'تعذر التحديث')));
+        AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر التحديث')));
     }
   }
 

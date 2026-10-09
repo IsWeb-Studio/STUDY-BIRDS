@@ -1,3 +1,4 @@
+import '../../core/widgets/feature_ui.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/config/app_theme.dart';
@@ -290,8 +291,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
                     if (error != null)
                       Padding(
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          child: Text(error!,
-                              style: const TextStyle(color: AppColors.danger))),
+                          child: InlineNotice(error!, error: true)),
                     if (busy)
                       const Center(child: CircularProgressIndicator())
                     else

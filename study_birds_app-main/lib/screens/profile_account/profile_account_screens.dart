@@ -1,3 +1,5 @@
+import '../../core/widgets/app_notice.dart';
+import '../../core/utils/app_error.dart';
 import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'notification_preferences_screen.dart';
@@ -118,13 +120,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم رفع الصورة الشخصية بنجاح ✓')),
+          AppSnackBar(content: Text('تم رفع الصورة الشخصية بنجاح ✓')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('تعذر رفع الصورة: ${e.toString()}')),
+          AppSnackBar(content: Text('تعذر رفع الصورة: ${AppError.message(e)}')),
         );
       }
     } finally {
@@ -641,7 +643,7 @@ class _ReferralProgramScreenState extends State<ReferralProgramScreen> {
                         await Clipboard.setData(ClipboardData(text: code));
                         if (context.mounted)
                           ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('تم نسخ الرمز')));
+                              AppSnackBar(content: Text('تم نسخ الرمز')));
                       }),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
@@ -655,7 +657,7 @@ class _ReferralProgramScreenState extends State<ReferralProgramScreen> {
                           mode: LaunchMode.externalApplication)) {
                         if (context.mounted)
                           ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
+                              AppSnackBar(
                                   content: Text('تعذر فتح واتساب')));
                       }
                     },
@@ -725,7 +727,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     } catch (_) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تعذر إزالة العنصر من المفضلة')));
+            AppSnackBar(content: Text('تعذر إزالة العنصر من المفضلة')));
     }
   }
 

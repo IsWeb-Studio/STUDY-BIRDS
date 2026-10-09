@@ -1,3 +1,4 @@
+import '../../core/widgets/feature_ui.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
@@ -246,8 +247,7 @@ class _ApplicationDocumentsScreenState
                             ]));
                       }),
                     if (error != null)
-                      Text(error!,
-                          style: const TextStyle(color: AppColors.danger)),
+                      InlineNotice(error!, error: true),
                     if (busy) const Center(child: CircularProgressIndicator()),
                     TextButton(
                         onPressed: busy ? null : load,
