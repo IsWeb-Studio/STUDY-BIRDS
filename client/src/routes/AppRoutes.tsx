@@ -66,6 +66,7 @@ const PartnerActivityLogPage = lazy(() => import("../pages/partner/PartnerActivi
 const PartnerKnowledgeBasePage = lazy(() => import("../pages/partner/PartnerKnowledgeBasePage").then((module) => ({ default: module.PartnerKnowledgeBasePage })));
 const PartnerSettingsPage = lazy(() => import("../pages/partner/PartnerSettingsPage").then((module) => ({ default: module.PartnerSettingsPage })));
 const AdminDashboardPage = lazy(() => import("../pages/admin/AdminDashboardPage").then((module) => ({ default: module.AdminDashboardPage })));
+const AdminCrmWorkspacePage=lazy(()=>import('../pages/admin/AdminCrmWorkspacePage').then(module=>({default:module.AdminCrmWorkspacePage})));
 const AdminUsersPage = lazy(() => import("../pages/admin/AdminUsersPage").then((module) => ({ default: module.AdminUsersPage })));
 const AdminStudentsPage = lazy(() => import("../pages/admin/AdminStudentsResponsivePage").then((module) => ({ default: module.AdminStudentsResponsivePage })));
 const AdminStudentDocumentsPage = lazy(() => import("../pages/admin/AdminStudentDocumentsPage").then((module) => ({ default: module.AdminStudentDocumentsPage })));
@@ -189,6 +190,7 @@ export const AppRoutes = () => (
       <Route element={<ProtectedRoute roles={["admin", "employee"]} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/admin" element={<AdminDashboardPage />} />
+          <Route path="/admin/crm-workspace" element={<AdminCrmWorkspacePage />} />
           <Route path="/employee" element={<Navigate replace to="/admin" />} />
           <Route path="/admin/users" element={<AdminUsersPage />} />
           <Route path="/admin/students" element={<AdminStudentsPage />} />

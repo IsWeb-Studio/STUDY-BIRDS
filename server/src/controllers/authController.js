@@ -23,6 +23,7 @@ const serializeUser = (user) => ({
   verifiedPhone: user.verifiedPhone || null,
   hasPassword: Boolean(user.password),
   employeeRole: user.employeeRole || null,
+  crmLinked: Boolean(user.crmIdentity?.companyId),
   permissions: user.permissions || [],
   linkedUniversity: user.linkedUniversity || null,
 });
@@ -186,7 +187,6 @@ const googleLogin = asyncHandler(async (req, res) => {
     if (!user.emailVerified) {
       user.emailVerified = true;
     }
-<<<<<<< HEAD
   }
 
   // Persist Google linkage before any challenge check.
@@ -213,23 +213,6 @@ const googleLogin = asyncHandler(async (req, res) => {
       });
     }
     await consume(user, 'login', emailCode, res);
-=======
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
-  }
-
-  // Persist Google linkage. Email verification is required only once —
-  // returning users who already have emailVerified=true skip the code step.
-  await user.save();
-  if (!user.emailVerified) {
-    if (!emailCode) {
-      await sendCode(user, 'login', res);
-      return res.status(428).json({
-        message: 'أدخل رمز التأكيد المرسل إلى بريد حسابك في Google.',
-        requiresEmailVerification: true,
-      });
-    }
-    await consume(user, 'login', emailCode, res);
-    user.emailVerified = true;
   }
   user.lastLoginAt = new Date();
   await user.save();

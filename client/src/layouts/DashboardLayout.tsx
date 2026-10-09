@@ -186,7 +186,8 @@ export const DashboardLayout = () => {
     const link = adminLinks.find((item) => item.href === `/admin/${section.pages[0]}`);
     return link ? [{ ...link, label: language === "ar" ? section.ar : section.en, description: "" }] : [];
   });
-  const sidebarLinks = user?.role === "employee" ? employeeLinks : user?.role === "admin" ? adminLinks : isPartner ? partnerLinks : isParent ? parentLinks : isUniversity ? universityLinks : studentLinks;
+  const crmLink={label:language === 'ar' ? 'مساحة CRM' : 'CRM workspace',href:'/admin/crm-workspace',icon:BriefcaseBusiness,description:language === 'ar' ? 'المهام والمبيعات والموارد البشرية حسب صلاحيات CRM.' : 'Tasks, sales and HR with CRM permissions.'};
+  const sidebarLinks = user?.role === "employee" ? [...employeeLinks,crmLink] : user?.role === "admin" ? [...adminLinks,crmLink] : isPartner ? partnerLinks : isParent ? parentLinks : isUniversity ? universityLinks : studentLinks;
   const navigationGroups = [
     { ar: "نظرة عامة", en: "Overview", pages: ["admin", "student", "dashboard", "parent", "university"] },
     { ar: "الطلاب والقبول", en: "Students & admissions", pages: ["students", "applications", "student-documents", "student-financials", "student-arrivals", "student-orientation-results", "student-favorites", "student-notifications", "documents", "financials", "arrival-services", "favorites", "orientation-test", "partner-students"] },

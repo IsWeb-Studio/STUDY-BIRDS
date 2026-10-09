@@ -196,7 +196,8 @@ export const StudentFinancialsEnhancedPage = () => {
                     <p className="mt-2 text-xs text-slate-500">{isArabic ? "تاريخ الاستحقاق:" : "Due Date:"} {formatDate(invoice.dueDate)}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-lg font-semibold text-slate-900">{formatCurrency(invoice.amount)}</p>
+                    <p className="text-lg font-semibold text-slate-900">{formatCurrency(invoice.amount, invoice.currency)}</p>
+                    {(invoice.crmPaidAmount || 0)>0 && <p className="mt-1 text-sm text-slate-500">{isArabic ? 'المدفوع: ' : 'Paid: '}{formatCurrency(invoice.crmPaidAmount,invoice.currency)} · {isArabic ? 'المتبقي: ' : 'Remaining: '}{formatCurrency(invoice.status==='paid'?0:Math.max(0,invoice.amount-(invoice.crmPaidAmount || 0)-(invoice.walletCreditApplied || 0)),invoice.currency)}</p>}
                     <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-semibold ${invoice.status === "paid" ? "bg-emerald-100 text-emerald-700" : invoice.status === "rejected" ? "bg-rose-100 text-rose-700" : invoice.status === "pending-confirmation" ? "bg-amber-100 text-amber-700" : "bg-slate-200 text-slate-700"}`}>
                       {invoice.status}
                     </span>

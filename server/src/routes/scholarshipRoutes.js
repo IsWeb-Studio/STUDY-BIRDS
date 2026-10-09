@@ -158,6 +158,12 @@ router.post(
     res.json(row);
   }),
 );
+router.delete('/:id',protect,authorize('admin'),run(async(req,res)=>{
+  if (await Entry.exists({scholarship:req.params.id})) return fail(res,409,'Scholarship has applications; deactivate it instead');
+  const row = await Scholarship.findByIdAndDelete(req.params.id);
+  if (!row) fail(res,404,'Scholarship not found');
+  res.json({deleted:true});
+}));
 router.patch(
   "/:id/status",
   protect,

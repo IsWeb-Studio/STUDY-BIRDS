@@ -58,7 +58,7 @@ router.post('/checkout', protect, run(async (req, res) => {
   const currency = (invoice.currency || 'USD').toLowerCase();
   const decimals = { usd: 2, eur: 2, gbp: 2, try: 2, aed: 2, egp: 2, sar: 2, jod: 3, jpy: 0 }[currency];
   if (decimals === undefined) return res.status(400).json({ message: 'Unsupported invoice currency' });
-  const amount = Math.round((invoice.amount - (invoice.walletCreditApplied || 0)) * 10 ** decimals);
+  const amount = Math.round((invoice.amount - (invoice.walletCreditApplied || 0) - (invoice.crmPaidAmount || 0)) * 10 ** decimals);
   if (!Number.isSafeInteger(amount) || amount <= 0) return res.status(400).json({ message: 'No outstanding amount' });
   const expiresAt = Math.floor(Date.now() / 1000) + 31 * 60;
   const origin = process.env.CLIENT_URL || 'https://studybirds.net';

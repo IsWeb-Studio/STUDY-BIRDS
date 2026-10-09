@@ -89,6 +89,7 @@ const applicationSchema = new mongoose.Schema(
       required: true,
     },
     assignedAdvisor: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    crmDetails: { applicationRefNo:String, portalUrl:String, portalUsername:String, offerType:String, offerConditions:String, rejectionReason:String },
     postAdmission: { type: new mongoose.Schema(Object.fromEntries(Object.keys(STAGES).map(key => [key, postAdmissionStageSchema])), { _id: false }), default: () => ({}) },
     postAdmissionHistory: [{
       stage: { type: String, enum: Object.keys(STAGES) },
@@ -138,6 +139,7 @@ const applicationSchema = new mongoose.Schema(
     requiredDocumentTypes: { type: [String], default: undefined },
     applicantProfile: applicantProfileSchema,
     notes: String,
+    crmCreationKey: String,
     status: {
       type: String,
       enum: ALL_APPLICATION_STATUSES,
@@ -179,6 +181,7 @@ const applicationSchema = new mongoose.Schema(
 );
 
 applicationSchema.index({ student: 1, createdAt: -1 });
+applicationSchema.index({crmCreationKey:1},{unique:true,partialFilterExpression:{crmCreationKey:{$type:'string'}}});
 applicationSchema.index({ status: 1, createdAt: -1 });
 applicationSchema.index({ detailedStatus: 1, createdAt: -1 });
 applicationSchema.index({ reviewedBy: 1, updatedAt: -1 });

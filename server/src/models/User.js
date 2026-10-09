@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    crmIdentity: { owner: mongoose.Schema.Types.ObjectId, companyId: String, recordId: String },
     email: {
       type: String,
       required: true,
@@ -94,6 +95,8 @@ const userSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+userSchema.index({'crmIdentity.owner':1,'crmIdentity.companyId':1,'crmIdentity.recordId':1}, {unique:true,partialFilterExpression:{'crmIdentity.recordId':{$type:'string'}}});
 
 userSchema.pre("save", async function preSave(next) {
   if (!this.isModified("password") || !this.password) {

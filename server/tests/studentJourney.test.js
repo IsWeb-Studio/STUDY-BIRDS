@@ -6,7 +6,7 @@ const doc = { _id: 'd', type: 'passport', status: 'pending', detailedStatus: 'un
 test('attached documents await review; no invoice is not paid; paid invoice does not grant admission', () => {
  const [j] = studentJourneys({ applications: [app], documents: [doc] });
  assert.equal(j.stages[0].status, 'waiting'); assert.equal(j.stages[1].status, 'waiting'); assert.equal(j.stages[2].status, 'not-issued');
- const [paid] = studentJourneys({ applications: [app], documents: [{...doc,status:'verified',detailedStatus:'approved'}], invoices:[{application:'a',status:'paid'}] });
+ const [paid] = studentJourneys({ applications: [app], documents: [{...doc,status:'verified',detailedStatus:'approved'}], invoices:[{application:'a',status:'paid',amount:100}] });
  assert.equal(paid.stages[0].status,'completed'); assert.equal(paid.stages[2].status,'completed'); assert.equal(paid.stages[1].status,'waiting');
 });
 test('files and invoices cannot complete or delay another application', () => {

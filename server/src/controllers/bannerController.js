@@ -1,4 +1,4 @@
-const asyncHandler = require("express-async-handler");
+const asyncHandler = require("../utils/asyncHandler");
 const Banner = require("../models/Banner");
 const { uploadFileToCloudinary } = require("../utils/uploadToCloudinary");
 

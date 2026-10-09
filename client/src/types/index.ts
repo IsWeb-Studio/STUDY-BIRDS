@@ -43,6 +43,7 @@ export interface User {
   lastLoginAt?: string;
   // NEW — optional, only populated for the relevant role.
   employeeRole?: EmployeeRole | null;
+  crmLinked?: boolean;
   permissions?: string[];
   linkedUniversity?: (University & { _id: string }) | string | null;
 }
@@ -824,6 +825,8 @@ export interface InvoiceItem {
   invoiceUrl?: string;
   category?: "application-fee" | "tuition" | "service" | "housing" | "other";
   walletCreditApplied?: number;
+  crmPaidAmount?: number;
+  currency?: string;
   adminNote?: string;
   reviewedAt?: string;
   reviewedBy?: Pick<User, "_id" | "name" | "email">;

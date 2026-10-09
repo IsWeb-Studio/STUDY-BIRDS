@@ -98,6 +98,7 @@ app.get("/api/health", (req, res) => {
   res.status(healthy ? 200 : 503).json({
     status: healthy ? 'ok' : 'degraded',
     service: 'study-birds-api',
+    crmIntegration: 1,
     db: dbStatus,
     uptime: Math.floor(process.uptime()),
   });
@@ -153,6 +154,7 @@ app.use('/api/accommodation', requireDatabaseConnection, require('./routes/accom
 app.use('/api/push-tokens', requireDatabaseConnection, require('./routes/pushRoutes'));
 app.use('/api/community', requireDatabaseConnection, require('./routes/communityRoutes'));
 app.use("/api/admin", requireDatabaseConnection, adminRoutes);
+app.use('/api/crm', requireDatabaseConnection, require('./routes/crmRoutes'));
 app.use("/api/content", requireDatabaseConnection, contentRoutes);
 // NEW paths — brand new prefixes, cannot shadow or be shadowed by anything above.
 app.use("/api/parents", requireDatabaseConnection, parentRoutes);

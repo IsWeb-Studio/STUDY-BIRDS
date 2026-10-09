@@ -38,7 +38,7 @@ const redeemWalletCredit = asyncHandler(async (req, res) => {
     if (invoice.stripeCheckoutExpiresAt > new Date()) return { status: 409, body: { message: 'توجد عملية دفع بالبطاقة قيد الانتظار؛ انتظر انتهاءها قبل استخدام الرصيد.' } };
     if ((invoice.currency || 'USD').toUpperCase() !== 'USD') return { status: 400, body: { message: 'رصيد المحفظة بالدولار ويستخدم لفواتير الدولار فقط.' } };
     if (invoice.status !== "unpaid") return { status: 409, body: { message: "This invoice can no longer accept credit" } };
-    const remaining = invoice.amount - invoice.walletCreditApplied;
+    const remaining = invoice.amount - invoice.walletCreditApplied - (invoice.crmPaidAmount || 0);
     if (amount > remaining) return { status: 400, body: { message: "Amount exceeds what is still owed on this invoice" } };
     const balance = await getWalletBalance(req.user._id);
     if (amount > balance) return { status: 409, body: { message: "Insufficient wallet balance" } };

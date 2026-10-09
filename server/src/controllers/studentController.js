@@ -10,6 +10,7 @@ const Notification = require("../models/Notification");
 const SupportTicket = require("../models/SupportTicket");
 const KnowledgeBaseItem = require("../models/KnowledgeBaseItem");
 const Invoice = require("../models/Invoice");
+const {invoicePaid,invoiceRemaining}=require('../utils/invoiceBalance');
 const PaymentProof = require("../models/PaymentProof");
 const ArrivalServiceRequest = require("../models/ArrivalServiceRequest");
 const FavoriteItem = require("../models/FavoriteItem");
@@ -528,7 +529,7 @@ const getStudentFinancials = asyncHandler(async (req, res) => {
   ]);
 
   const idStr = v => String(v?._id || v || '');
-  const paidAmount = invoices.filter((item) => item.status === "paid").reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const paidAmount = invoices.filter(item=>(item.currency || 'USD')==='USD').reduce((sum,item)=>sum+invoicePaid(item),0);
   const totalProgramFees = applications.reduce((sum, app) => sum + Number(app.program?.tuition || 0), 0);
 
   // Per-application groups for the payments screen
@@ -538,9 +539,9 @@ const getStudentFinancials = asyncHandler(async (req, res) => {
       (!inv.application && appIndex === applications.length - 1)
     );
     const tuition = Number(app.program?.tuition || 0);
-    const appPaid = appInvoices.filter(i => i.status === 'paid').reduce((s, i) => s + Number(i.amount || 0), 0);
-    const appPending = appInvoices.filter(i => i.status === 'pending-confirmation').reduce((s, i) => s + Number(i.amount || 0), 0);
-    const appUnpaid = appInvoices.filter(i => ['unpaid', 'rejected'].includes(i.status)).reduce((s, i) => s + Number(i.amount || 0), 0);
+    const appPaid = appInvoices.filter(i=>(i.currency || 'USD')==='USD').reduce((s,i)=>s+invoicePaid(i),0);
+    const appPending = appInvoices.filter(i=>(i.currency || 'USD')==='USD' && i.status==='pending-confirmation').reduce((s,i)=>s+invoiceRemaining(i),0);
+    const appUnpaid = appInvoices.filter(i=>(i.currency || 'USD')==='USD' && ['unpaid','rejected'].includes(i.status)).reduce((s,i)=>s+invoiceRemaining(i),0);
     const noPending = !appInvoices.some(i => ['unpaid', 'rejected', 'pending-confirmation'].includes(i.status));
     const fullyPaid = appInvoices.length > 0 && noPending && (tuition > 0 ? appPaid >= tuition : appPaid > 0);
     const paymentStatus = appInvoices.some(i => ['unpaid', 'rejected'].includes(i.status) && i.dueDate && new Date(i.dueDate) < new Date()) ? 'overdue'
@@ -565,8 +566,8 @@ const getStudentFinancials = asyncHandler(async (req, res) => {
 
   res.json({
     summary: {
-      outstandingAmount: invoices.filter((item) => item.status === "unpaid" || item.status === "rejected").reduce((sum, item) => sum + Number(item.amount || 0), 0),
-      pendingConfirmationAmount: invoices.filter((item) => item.status === "pending-confirmation").reduce((sum, item) => sum + Number(item.amount || 0), 0),
+      outstandingAmount: invoices.filter(item=>(item.currency || 'USD')==='USD' && ['unpaid','rejected'].includes(item.status)).reduce((sum,item)=>sum+invoiceRemaining(item),0),
+      pendingConfirmationAmount: invoices.filter(item=>(item.currency || 'USD')==='USD' && item.status==='pending-confirmation').reduce((sum,item)=>sum+invoiceRemaining(item),0),
       paidAmount,
       totalProgramFees,
       remainingFees: totalProgramFees > 0 ? Math.max(0, totalProgramFees - paidAmount) : null,
@@ -600,7 +601,7 @@ const uploadPaymentProof = asyncHandler(async (req, res) => {
     filePath: `/api/payment-proofs/${proofId}/access`,
     mimeType: req.file.mimetype,
     size: uploadResult.bytes || req.file.size,
-    amount: Number(req.body.amount || invoice.amount || 0),
+    amount: Number(req.body.amount || invoiceRemaining(invoice) || 0),
     note: String(req.body.note || "").trim(),
   });
 

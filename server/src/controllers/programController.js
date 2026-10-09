@@ -159,6 +159,9 @@ const updateProgram = asyncHandler(async (req, res) => {
 });
 
 const deleteProgram = asyncHandler(async (req, res) => {
+  if (await require('../models/Application').exists({program:req.params.id})) {
+    res.status(409); throw new Error('Program has applications and cannot be deleted');
+  }
   const program = await Program.findByIdAndDelete(req.params.id);
 
   if (!program) {

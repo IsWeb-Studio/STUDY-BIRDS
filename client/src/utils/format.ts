@@ -1,8 +1,8 @@
-export const formatCurrency = (value?: number) =>
+export const formatCurrency = (value?: number, currency = "USD") =>
   typeof value === "number"
     ? new Intl.NumberFormat("en-US", {
         style: "currency",
-        currency: "USD",
+        currency,
         maximumFractionDigits: 0,
       }).format(value)
     : "Contact advisor";

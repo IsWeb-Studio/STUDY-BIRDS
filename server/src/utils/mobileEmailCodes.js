@@ -12,12 +12,8 @@ async function sendCode(user, purpose, res) {
     email: user.email, digest: digest(`${user._id}:${purpose}:${code}`), attempts: 0, expiresAt: new Date(Date.now() + 10 * 60 * 1000),
   } }, { new: true, upsert: true });
   const title = { reset: 'استعادة كلمة المرور', verify: 'تأكيد البريد', login: 'رمز تسجيل الدخول', security: 'تغيير إعدادات الأمان', emaillogin: 'رمز الدخول عبر البريد' }[purpose];
-<<<<<<< HEAD
-  try { await sendContactEmail({ to: user.email, subject: `Study Birds — ${title}`, text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.`, emailContent: { title, code, bodyText: 'استخدم رمز التحقق التالي لإكمال طلبك. صالح لمدة 10 دقائق. لا تشاركه مع أحد.' } }); }
-=======
   const firstName = (user.name || '').split(' ')[0] || null;
   try { await sendContactEmail({ to: user.email, subject: `Study Birds — ${title}`, text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.`, emailContent: { title, code, recipientName: firstName, bodyText: 'استخدم رمز التحقق التالي لإكمال طلبك. صالح لمدة 10 دقائق. لا تشاركه مع أحد.' } }); }
->>>>>>> ca38f8bcb181b23c22878a1c5e0ffadca5f022e7
   catch (e) { await EmailCode.deleteOne({ _id: row._id, digest: row.digest }); throw e; }
 }
 async function consume(user, purpose, code, res) {

@@ -105,6 +105,9 @@ const updateUniversity = asyncHandler(async (req, res) => {
 });
 
 const deleteUniversity = asyncHandler(async (req, res) => {
+  if (await require('../models/Program').exists({university:req.params.id}) || await require('../models/Application').exists({university:req.params.id})) {
+    res.status(409); throw new Error('University has programs or applications and cannot be deleted');
+  }
   const university = await University.findByIdAndDelete(req.params.id);
 
   if (!university) {
