@@ -75,7 +75,7 @@ export const DeleteAccountPage = () => {
           <p className="text-sm text-slate-600">
             {text("أدخل كلمة مرور حسابك لتأكيد الحذف النهائي.", "Enter your account password to confirm permanent deletion.")}
           </p>
-          {user?.authProvider !== "google" && user?.authProvider !== "phone" ? (
+          {user?.authProvider !== "google" ? (
             <FormInput
               label={text("كلمة المرور", "Password")}
               type="password"
