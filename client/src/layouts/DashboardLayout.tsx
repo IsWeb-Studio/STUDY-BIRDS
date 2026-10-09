@@ -26,6 +26,7 @@
   Users2,
   Video,
   PanelLeftOpen,
+  Image,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
@@ -129,6 +130,7 @@ export const DashboardLayout = () => {
     { label: t("programs"), href: "/admin/programs", icon: GraduationCap, description: dt(language, "programsDesc") },
     { label: dt(language, "content"), href: "/admin/content", icon: Layers3, description: dt(language, "contentDesc") },
     { label: dt(language, "testimonialsContent"), href: "/admin/testimonials", icon: MessageSquare, description: dt(language, "testimonialsHelp") },
+    { label: language === "ar" ? "البنرات" : "Banners", href: "/admin/banners", icon: Image, description: language === "ar" ? "إدارة بنرات تطبيق الموبايل." : "Manage mobile app banners." },
     { label: dt(language, "contactLinksNav"), href: "/admin/site-settings", icon: Settings2, description: dt(language, "contactLinksNavDesc") },
     { label: dt(language, "recognitionsNav"), href: "/admin/recognitions", icon: Award, description: dt(language, "recognitionsNavDesc") },
     { label: dt(language, "servicesNav"), href: "/admin/services", icon: Award, description: dt(language, "servicesNavDesc") },
@@ -191,7 +193,7 @@ export const DashboardLayout = () => {
     { ar: "الجامعات والبرامج", en: "Universities & programs", pages: ["universities", "programs", "recognitions"] },
     { ar: "الخدمات والتواصل", en: "Services & communication", pages: ["consultations", "visa", "accommodation", "wallet", "community", "support-tickets", "tickets", "support", "service-requests", "notifications", "rewards"] },
     { ar: "رحلتي الدراسية", en: "My journey", pages: ["journey"] },
-    { ar: "المحتوى والفعاليات", en: "Content & events", pages: ["content", "testimonials", "services", "faqs", "events", "our-story", "exhibitions", "knowledge-base", "resources"] },
+    { ar: "المحتوى والفعاليات", en: "Content & events", pages: ["content", "testimonials", "banners", "services", "faqs", "events", "our-story", "exhibitions", "knowledge-base", "resources"] },
     { ar: "الوكلاء والشراكات", en: "Agents & partnerships", pages: ["agency-requests", "agents", "marketing-assets", "verification-queue", "payout-requests", "referral", "marketing-toolkit", "verification", "become-agent"] },
     { ar: "الحسابات والإعدادات", en: "Accounts & settings", pages: ["users", "employees", "parent-links", "university-accounts", "site-settings", "settings", "profile", "activity-log"] },
   ];

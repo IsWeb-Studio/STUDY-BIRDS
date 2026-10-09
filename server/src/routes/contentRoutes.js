@@ -23,6 +23,7 @@ const {
   getRobotsTxt,
   getSitemapXml,
 } = require("../controllers/contentController");
+const { getBannersPublic } = require("../controllers/bannerController");
 const { protect } = require("../middleware/authMiddleware");
 const { cacheRoute } = require("../utils/responseCache");
 
@@ -57,6 +58,7 @@ router.get("/notifications", protect, getNotifications);
 router.get("/file-open", openCloudinaryDocument);
 router.get("/seo/sitemap.xml", cacheRoute(120_000), getSitemapXml);
 router.get("/seo/robots.txt", cacheRoute(300_000), getRobotsTxt);
+router.get("/banners", cacheRoute(60_000), getBannersPublic);
 
 // #36+74: Dynamic currency conversion — cached for 1 hour, no API key needed.
 let _ratesCache = null;

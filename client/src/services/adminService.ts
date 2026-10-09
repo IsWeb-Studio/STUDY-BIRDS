@@ -36,6 +36,7 @@ import type {
   // NEW
   ParentLinkItem,
   EmployeeRole,
+  Banner,
 } from "../types";
 
 export const adminService = {
@@ -483,5 +484,30 @@ export const adminService = {
   updateEmployeeRole: async (id: string, payload: { employeeRole?: EmployeeRole; permissions?: string[] }) => {
     const { data } = await api.patch<User>(`/admin/employees/${id}/role`, payload);
     return data;
+  },
+  // Banners
+  getBanners: async () => {
+    const { data } = await api.get<Banner[]>("/admin/banners");
+    return data;
+  },
+  createBanner: async (payload: Partial<Banner>) => {
+    const { data } = await api.post<Banner>("/admin/banners", payload);
+    return data;
+  },
+  updateBanner: async (id: string, payload: Partial<Banner>) => {
+    const { data } = await api.put<Banner>(`/admin/banners/${id}`, payload);
+    return data;
+  },
+  removeBanner: async (id: string) => {
+    const { data } = await api.delete(`/admin/banners/${id}`);
+    return data;
+  },
+  uploadBannerImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    const { data } = await api.post<{ url: string }>("/admin/banners/upload-image", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return data.url;
   },
 };

@@ -644,23 +644,23 @@ const _buildArrivalPayload = (body) => ({
 
 const createArrivalServiceRequest = asyncHandler(async (req, res) => {
   const { applicationId } = req.body;
-  if (!applicationId) {
-    res.status(400);
-    throw new Error("applicationId مطلوب لربط الطلب برحلتك الدراسية");
+  let application = null;
+  if (applicationId) {
+    application = await Application.findOne({ _id: applicationId, student: req.user._id });
+    if (!application) {
+      res.status(404);
+      throw new Error("الطلب الدراسي غير موجود أو لا ينتمي لحسابك");
+    }
+    // Each application can only have one arrival service request
+    const existing = await ArrivalServiceRequest.findOne({ student: req.user._id, application: applicationId });
+    if (existing) {
+      res.status(409);
+      throw new Error("يوجد طلب وصول مرتبط بهذه الرحلة بالفعل");
+    }
   }
-  // Verify the application belongs to this student
-  const application = await Application.findOne({ _id: applicationId, student: req.user._id });
-  if (!application) {
-    res.status(404);
-    throw new Error("الطلب الدراسي غير موجود أو لا ينتمي لحسابك");
-  }
-  // Each application can only have one arrival service request
-  const existing = await ArrivalServiceRequest.findOne({ student: req.user._id, application: applicationId });
-  if (existing) {
-    res.status(409);
-    throw new Error("يوجد طلب وصول مرتبط بهذه الرحلة بالفعل");
-  }
-  const request = await ArrivalServiceRequest.create({ student: req.user._id, application: applicationId, ..._buildArrivalPayload(req.body) });
+  const doc = { student: req.user._id, ..._buildArrivalPayload(req.body) };
+  if (application) doc.application = application._id;
+  const request = await ArrivalServiceRequest.create(doc);
   await Notification.create({ user: req.user._id, title: "تم إرسال طلب خدمات الوصول", message: "تم استلام طلب خدمات الوصول الجديد وسيبدأ الفريق بالتنسيق قريباً.", type: "info", link: "/student/services" });
   res.status(201).json(request);
 });

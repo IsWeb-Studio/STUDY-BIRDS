@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/app_theme.dart';
+import 'package:flutter/material.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/config/app_theme.dart';
 import 'admin_applications_documents_screens.dart';
 
 class FollowUpRemindersScreen extends StatefulWidget {

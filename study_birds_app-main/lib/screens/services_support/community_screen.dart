@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/analytics_service.dart';
-import '../../core/community_repository.dart';
+import '../../core/widgets/feature_ui.dart';
+import '../../core/widgets/app_notice.dart';
+import 'package:flutter/material.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/services/analytics_service.dart';
+import '../../core/repositories/community_repository.dart';
 
 /// Arabic message for a failed community call; server messages are English.
 String communityError(Object error, String fallback) {
@@ -139,7 +141,7 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen> {
     if (created == true) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('تم نشر موضوعك')));
+          .showSnackBar(AppSnackBar(content: Text('تم نشر موضوعك')));
       load();
     } else {
       loadStatus();
@@ -569,8 +571,7 @@ class _CommunityComposeScreenState extends State<CommunityComposeScreen> {
             if (error != null)
               Padding(
                   padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(error!,
-                      style: const TextStyle(color: AppColors.danger))),
+                  child: InlineNotice(error!, error: true)),
             FilledButton(
                 onPressed: busy || !ready ? null : submit,
                 child: Text(busy ? 'جارٍ النشر...' : 'نشر')),
@@ -632,7 +633,7 @@ class _CommunityThreadScreenState extends State<CommunityThreadScreen> {
   }
 
   void toast(String text) =>
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(text)));
 
   Future<void> run(Future<void> Function() action, String done, String failed,
       {bool reload = true}) async {

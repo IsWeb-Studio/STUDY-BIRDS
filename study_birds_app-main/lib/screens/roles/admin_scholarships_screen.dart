@@ -1,7 +1,8 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/config/app_theme.dart';
 import 'generic_crud_screen.dart';
 
 class AdminScholarshipsScreen extends StatelessWidget {
@@ -60,7 +61,7 @@ class _ScholarshipApplicationsScreenState
       if (mounted) setState(() => future = fetch());
     } catch (e) {
       if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text(e is ApiException ? e.message : 'تعذر تحديث الطلب')));
     } finally {
       if (mounted) setState(() => saving = null);

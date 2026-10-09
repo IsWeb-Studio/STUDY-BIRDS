@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
-import '../../core/app_theme.dart';
-import '../../core/animations.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/utils/animations.dart';
 
 class OnboardingSlide {
   final IconData icon;
@@ -251,7 +251,7 @@ class OnboardingServicesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'خدماتنا',
-      showBackButton: true,
+      showBackButton: false,
       body: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(

@@ -1,9 +1,9 @@
-﻿import 'journey_requirements_view.dart';
+import 'journey_requirements_view.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
+import '../../core/config/app_theme.dart';
 import 'journey_timeline_widgets.dart';
-import '../../core/student_repository.dart';
-import '../../core/analytics_service.dart';
+import '../../core/repositories/student_repository.dart';
+import '../../core/services/analytics_service.dart';
 import 'calendar_screen.dart';
 import 'important_dates_screen.dart';
 import '../visa_travel_accommodation/arrival_services_screen.dart';

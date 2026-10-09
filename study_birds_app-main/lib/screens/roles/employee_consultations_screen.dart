@@ -1,9 +1,11 @@
-﻿import 'package:flutter/material.dart';
+import '../../core/widgets/feature_ui.dart';
+import '../../core/widgets/app_notice.dart';
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/consultation_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/repositories/consultation_repository.dart';
 import '../services_support/consultation_outcome.dart';
 
 const _kModes = {'online': 'أونلاين', 'phone': 'هاتف', 'office': 'مكتب'};
@@ -145,7 +147,7 @@ class _EmployeeConsultationsScreenState
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تعذر فتح رابط الاجتماع.')));
+            AppSnackBar(content: Text('تعذر فتح رابط الاجتماع.')));
       }
     }
   }
@@ -194,8 +196,7 @@ class _EmployeeConsultationsScreenState
                   if (error != null)
                     Padding(
                         padding: const EdgeInsets.symmetric(vertical: 12),
-                        child: Text(error!,
-                            style: const TextStyle(color: AppColors.danger))),
+                        child: InlineNotice(error!, error: true)),
                   const SizedBox(height: 16),
                   const Text('حجوزات الطلاب القادمة',
                       style: AppTextStyles.cardTitle),
@@ -608,9 +609,7 @@ class _PublishConsultationSlotScreenState
             ],
             if (error != null) ...[
               const SizedBox(height: 10),
-              Text(error!,
-                  style:
-                      const TextStyle(color: AppColors.danger, fontSize: 12.5)),
+              InlineNotice(error!, error: true),
             ],
             const SizedBox(height: 20),
             PrimaryButton(

@@ -1,8 +1,9 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/api_client.dart';
-import '../../core/app_theme.dart';
-import '../../core/auth_session.dart';
+import '../../core/network/api_client.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/services/auth_session.dart';
 
 class AlumniDirectoryScreen extends StatefulWidget {
   const AlumniDirectoryScreen({super.key});
@@ -49,7 +50,7 @@ class _AlumniDirectoryScreenState extends State<AlumniDirectoryScreen> {
             final uri = Uri.tryParse('${row['linkedinUrl']}');
             if (uri == null || uri.scheme != 'https' || !['linkedin.com', 'www.linkedin.com'].contains(uri.host) || uri.userInfo.isNotEmpty) return;
             try { await launchUrl(uri, mode: LaunchMode.externalApplication); }
-            catch (_) { if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر فتح الرابط'))); }
+            catch (_) { if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر فتح الرابط'))); }
           }, child: const Text('التواصل عبر LinkedIn')),
         ])),
       ]);
@@ -89,7 +90,7 @@ class _AlumniProfileEditorState extends State<_AlumniProfileEditor> {
     final yearText = _fields['graduationYear']!.text.trim();
     final year = int.tryParse(yearText);
     if (yearText.isNotEmpty && (year == null || year < 1900 || year > DateTime.now().year)) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('أدخل سنة تخرج صحيحة'))); return;
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('أدخل سنة تخرج صحيحة'))); return;
     }
     setState(() => _saving = true);
     try {
@@ -99,7 +100,7 @@ class _AlumniProfileEditorState extends State<_AlumniProfileEditor> {
       });
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر الحفظ')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر الحفظ')));
     } finally { if (mounted) setState(() => _saving = false); }
   }
   @override

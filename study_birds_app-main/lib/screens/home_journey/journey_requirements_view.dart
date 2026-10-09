@@ -1,8 +1,9 @@
+import '../../core/widgets/app_notice.dart';
 import 'journey_timeline_widgets.dart';
-import '../../core/student_repository.dart';
+import '../../core/repositories/student_repository.dart';
 import 'important_dates_screen.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
+import '../../core/config/app_theme.dart';
 import '../applications_documents_payments/applications_screens.dart';
 import '../applications_documents_payments/payments_screens.dart';
 import '../services_support/support_team_ai_screens.dart';
@@ -15,6 +16,143 @@ class JourneyRequirementsView extends StatelessWidget {
   final Future<void> Function() onRefresh;
   const JourneyRequirementsView(
       {super.key, required this.journeys, required this.onRefresh});
+
+  @override
+  Widget build(BuildContext context) {
+    if (journeys.isEmpty) {
+      return AppScaffold(
+        title: 'رحلتي',
+        showBackButton: Navigator.of(context).canPop(),
+        body: EmptyState(
+          icon: Icons.route_rounded,
+          title: 'لم تبدأ رحلة تقديم بعد',
+          message: 'اختر برنامجك الدراسي وقدّم طلبك لتظهر متطلباته هنا.',
+          ctaLabel: 'استكشف الجامعات',
+          onCta: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const ExploreHubScreen())),
+        ),
+      );
+    }
+
+    if (journeys.length == 1) {
+      return _JourneyDetailScreen(
+          journey: journeys.first, onRefresh: onRefresh);
+    }
+
+    // Multiple journeys: show selector screen
+    return AppScaffold(
+      title: 'رحلاتي',
+      showBackButton: Navigator.of(context).canPop(),
+      body: RefreshIndicator(
+        onRefresh: onRefresh,
+        color: AppColors.navy,
+        child: ListView(
+          physics: const BouncingScrollPhysics(
+              parent: AlwaysScrollableScrollPhysics()),
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+          children: [
+            for (final journey in journeys)
+              _JourneyCard(
+                journey: journey,
+                onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => _JourneyDetailScreen(
+                        journey: journey, onRefresh: onRefresh))),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _JourneyCard extends StatelessWidget {
+  final Map<String, dynamic> journey;
+  final VoidCallback onTap;
+  const _JourneyCard({required this.journey, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final stages =
+        (journey['stages'] as List? ?? []).whereType<Map>().toList();
+    final required =
+        stages.where((s) => s['status'] != 'not-required').toList();
+    final completed =
+        required.where((s) => s['status'] == 'completed').length;
+    final total = required.length;
+    final progress = total > 0 ? completed / total : 0.0;
+    final closed = journey['closed'] == true;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          border: Border.all(color: AppColors.border),
+          boxShadow: [
+            BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 8,
+                offset: const Offset(0, 2))
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(children: [
+              Expanded(
+                child: Text(
+                  journey['title'] as String? ?? 'رحلتك الدراسية',
+                  style: AppTextStyles.cardTitle,
+                ),
+              ),
+              if (closed)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: AppColors.neutral.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: const Text('منتهية',
+                      style: TextStyle(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                          fontWeight: FontWeight.w600)),
+                ),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppColors.textSecondary),
+            ]),
+            const SizedBox(height: 12),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 6,
+                backgroundColor: AppColors.border,
+                color: closed ? AppColors.neutral : AppColors.navy,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '$completed من $total مرحلة مكتملة',
+              style: AppTextStyles.caption,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _JourneyDetailScreen extends StatelessWidget {
+  final Map<String, dynamic> journey;
+  final Future<void> Function() onRefresh;
+  const _JourneyDetailScreen(
+      {required this.journey, required this.onRefresh});
 
   Future<void> open(BuildContext context, String? destination,
       [String? applicationId]) async {
@@ -33,7 +171,7 @@ class JourneyRequirementsView extends StatelessWidget {
             application: Map<String, dynamic>.from(matches.first as Map));
       } catch (_) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
               content: Text(
                   'تعذر تحميل الطلب. اسحب لتحديث الرحلة ثم أعد المحاولة.')));
         }
@@ -47,7 +185,7 @@ class JourneyRequirementsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => AppScaffold(
-        title: 'رحلتي',
+        title: journey['title'] as String? ?? 'رحلتي',
         showBackButton: Navigator.of(context).canPop(),
         actions: [
           PopupMenuButton<String>(
@@ -69,24 +207,17 @@ class JourneyRequirementsView extends StatelessWidget {
             onRefresh: onRefresh,
             color: AppColors.navy,
             child: ListView(
-              physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+              physics: const BouncingScrollPhysics(
+                  parent: AlwaysScrollableScrollPhysics()),
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               children: [
-                if (journeys.isEmpty)
-                  EmptyState(
-                      icon: Icons.route_rounded,
-                      title: 'لم تبدأ رحلة تقديم بعد',
-                      message:
-                          'اختر برنامجك الدراسي وقدّم طلبك لتظهر متطلباته هنا.',
-                      ctaLabel: 'استكشف الجامعات',
-                      onCta: () => Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const ExploreHubScreen()))),
-                for (final journey in journeys) ..._journey(context, journey),
+                ..._journeyWidgets(context, journey),
               ],
             )),
       );
 
-  List<Widget> _journey(BuildContext context, Map<String, dynamic> journey) {
+  List<Widget> _journeyWidgets(
+      BuildContext context, Map<String, dynamic> journey) {
     final stages = (journey['stages'] as List? ?? []).whereType<Map>().toList();
     final required =
         stages.where((stage) => stage['status'] != 'not-required').toList();

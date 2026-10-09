@@ -122,6 +122,7 @@ const {
   listSuspensionsAdmin, suspendUser, liftSuspension, getSettingsAdmin, updateSettingsAdmin,
 } = require("../controllers/communityController");
 const { unifiedSearch } = require("../controllers/unifiedSearchController");
+const { getBannersAdmin, createBanner, updateBanner, deleteBanner, uploadBannerImage } = require("../controllers/bannerController");
 const { protect, authorize } = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
@@ -301,5 +302,12 @@ router.post('/migrate/service-registration-link', require('../utils/asyncHandler
   );
   res.json({ matched: result.matchedCount, modified: result.modifiedCount });
 }));
+
+// Banners — admin CRUD
+router.get("/banners", getBannersAdmin);
+router.post("/banners/upload-image", upload.single("file"), uploadBannerImage);
+router.post("/banners", createBanner);
+router.put("/banners/:id", updateBanner);
+router.delete("/banners/:id", deleteBanner);
 
 module.exports = router;

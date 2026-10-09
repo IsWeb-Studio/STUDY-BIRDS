@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import '../../core/widgets/app_notice.dart';
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/api_client.dart';
-import '../../core/app_theme.dart';
-import '../../core/auth_session.dart';
+import '../../core/network/api_client.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/services/auth_session.dart';
 import '../roles/generic_crud_screen.dart';
 
 class StudentListingsScreen extends StatefulWidget {
@@ -42,7 +43,7 @@ class _StudentListingsScreenState extends State<StudentListingsScreen> {
                 try {
                   if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) throw Exception();
                 } catch (_) {
-                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر فتح الرابط')));
+                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر فتح الرابط')));
                 }
               }, child: Text(widget.kind == 'offer' ? 'الاستفادة من العرض' : 'تفاصيل التقديم')),
             ],

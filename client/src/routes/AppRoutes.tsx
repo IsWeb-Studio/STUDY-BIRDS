@@ -13,6 +13,7 @@ const AdminWalletPage = lazy(() => import("../pages/admin/AdminWalletPage").then
 const StudentCommunityPage = lazy(() => import("../pages/student/StudentCommunityPage").then(m => ({ default: m.StudentCommunityPage })));
 const AdminCommunityPage = lazy(() => import("../pages/admin/AdminCommunityPage").then(m => ({ default: m.AdminCommunityPage })));
 const AccountSecurityPage = lazy(() => import("../pages/auth/AccountSecurityPage").then(module => ({ default: module.AccountSecurityPage })));
+const DeleteAccountPage = lazy(() => import("../pages/auth/DeleteAccountPage").then(module => ({ default: module.DeleteAccountPage })));
 const HomePage = lazy(() => import("../pages/HomePage").then((module) => ({ default: module.HomePage })));
 const ProgramsPage = lazy(() => import("../pages/ProgramsPage").then((module) => ({ default: module.ProgramsPage })));
 const ProgramDetailsPage = lazy(() => import("../pages/ProgramDetailsPage").then((module) => ({ default: module.ProgramDetailsPage })));
@@ -77,6 +78,7 @@ const AdminRecognitionsPage = lazy(() => import("../pages/admin/AdminRecognition
 const AdminServicesPage = lazy(() => import("../pages/admin/AdminServicesPage").then((module) => ({ default: module.AdminServicesPage })));
 const AdminFaqsPage = lazy(() => import("../pages/admin/AdminFaqsPage").then((module) => ({ default: module.AdminFaqsPage })));
 const AdminTestimonialsPage = lazy(() => import("../pages/admin/AdminTestimonialsPage").then((module) => ({ default: module.AdminTestimonialsPage })));
+const AdminBannersPage = lazy(() => import("../pages/admin/AdminBannersPage").then((module) => ({ default: module.AdminBannersPage })));
 const AdminSiteSettingsPage = lazy(() => import("../pages/admin/AdminSiteSettingsPage").then((module) => ({ default: module.AdminSiteSettingsPage })));
 const AdminAgencyRequestsPage = lazy(() => import("../pages/admin/AdminAgencyRequestsPage").then((module) => ({ default: module.AdminAgencyRequestsPage })));
 const AdminAgentsPage = lazy(() => import("../pages/admin/AdminAgentsResponsivePage").then((module) => ({ default: module.AdminAgentsResponsivePage })));
@@ -140,7 +142,7 @@ export const AppRoutes = () => (
         <Route path="/become-agent" element={<BecomeAgentPage />} />
       </Route>
 
-      <Route element={<ProtectedRoute />}><Route element={<MainLayout />}><Route path="/account/security" element={<AccountSecurityPage />} /></Route></Route>
+      <Route element={<ProtectedRoute />}><Route element={<MainLayout />}><Route path="/account/security" element={<AccountSecurityPage />} /><Route path="/account/delete" element={<DeleteAccountPage />} /></Route></Route>
       <Route element={<ProtectedRoute roles={["student"]} />}>
         <Route element={<DashboardLayout />}>
           <Route path="/student" element={<StudentDashboardPage />} />
@@ -201,6 +203,7 @@ export const AppRoutes = () => (
           <Route path="/admin/services" element={<AdminServicesPage />} />
           <Route path="/admin/faqs" element={<AdminFaqsPage />} />
           <Route path="/admin/testimonials" element={<AdminTestimonialsPage />} />
+          <Route path="/admin/banners" element={<AdminBannersPage />} />
           <Route path="/admin/site-settings" element={<AdminSiteSettingsPage />} />
           <Route path="/admin/agency-requests" element={<AdminAgencyRequestsPage />} />
           <Route path="/admin/agents" element={<AdminAgentsPage />} />

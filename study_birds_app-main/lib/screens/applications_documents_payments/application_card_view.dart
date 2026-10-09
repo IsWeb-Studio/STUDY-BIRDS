@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
+import '../../core/config/app_theme.dart';
 
 /// Per-application summary sent by GET /students/applications as `card`
 /// (server utils/applicationCard.js): intake, admission, payment and visa

@@ -1,8 +1,10 @@
+import '../../core/widgets/feature_ui.dart';
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/employee_repository.dart';
-import '../../core/catalog_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/repositories/employee_repository.dart';
+import '../../core/repositories/catalog_repository.dart';
 import 'employee_sections_picker_screen.dart';
 
 const List<Map<String, String>> kAccountRoleOptions = [
@@ -92,7 +94,7 @@ class _AdminUsersAccessScreenState extends State<AdminUsersAccessScreen> {
       _replaceUser(updated);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر تحديث الحساب')));
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر تحديث الحساب')));
       }
     }
   }
@@ -157,7 +159,7 @@ class _AdminUsersAccessScreenState extends State<AdminUsersAccessScreen> {
                 if (loading)
                   const Padding(padding: EdgeInsets.all(20), child: Center(child: CircularProgressIndicator()))
                 else if (error != null)
-                  Text(error!, style: const TextStyle(color: AppColors.danger))
+                  InlineNotice(error!, error: true)
                 else if (universities.isEmpty)
                   const Text('لا توجد جامعات. أضف جامعة أولًا.', style: AppTextStyles.caption)
                 else

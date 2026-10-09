@@ -1,8 +1,9 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/university_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/repositories/university_repository.dart';
 import '../applications_documents_payments/applications_screens.dart'
     show appStatusMeta;
 import '../applications_documents_payments/documents_screens.dart'
@@ -91,12 +92,12 @@ class _UniversityApplicationReviewScreenState
               detailedStatus: detailedStatus, note: note);
       if (!mounted) return;
       setState(() => _app = updated);
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: Text('تم تحديث حالة الطلب'),
           backgroundColor: AppColors.success));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: Text('تعذر تحديث الحالة'),
           backgroundColor: AppColors.danger));
     } finally {
@@ -353,7 +354,7 @@ class _UniversityApplicationReviewScreenState
       final uri = Uri.parse(url);
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
               content: Text('تعذر فتح الملف: $docName'),
               backgroundColor: AppColors.danger));
         }
@@ -363,12 +364,12 @@ class _UniversityApplicationReviewScreenState
         final msg = e.statusCode == 409
             ? 'هذا المستند مخزّن بتنسيق قديم — تواصل مع فريق Study Birds للوصول إليه.'
             : e.message;
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text(msg), backgroundColor: AppColors.warning));
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text('تعذر تحميل رابط الملف'),
             backgroundColor: AppColors.danger));
       }

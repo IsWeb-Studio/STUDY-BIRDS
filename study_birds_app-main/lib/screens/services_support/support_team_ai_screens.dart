@@ -1,14 +1,15 @@
-﻿import 'package:url_launcher/url_launcher.dart';
-import '../../core/document_access.dart';
+import '../../core/widgets/app_notice.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../core/utils/document_access.dart';
 import 'bird_ai_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../core/app_theme.dart';
-import '../../core/analytics_service.dart';
-import '../../core/api_client.dart';
-import '../../core/feature_ui.dart';
-import '../../core/student_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/services/analytics_service.dart';
+import '../../core/network/api_client.dart';
+import '../../core/widgets/feature_ui.dart';
+import '../../core/repositories/student_repository.dart';
 import 'faq_screen.dart';
 import 'knowledge_base_screen.dart';
 import 'messaging_and_emergency_screens.dart';
@@ -247,9 +248,7 @@ class _NewSupportTicketScreenState extends State<NewSupportTicketScreen> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 10),
-              Text(_error!,
-                  style:
-                      const TextStyle(color: AppColors.danger, fontSize: 12.5)),
+              InlineNotice(_error!, error: true),
             ],
             const SizedBox(height: 20),
             PrimaryButton(
@@ -420,7 +419,7 @@ class _SupportTicketDetailScreenState
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: Text(e is ApiException ? e.message : 'تعذر إرسال الرد')));
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -461,7 +460,7 @@ class _SupportTicketDetailScreenState
                       } catch (_) {
                         if (context.mounted)
                           ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
+                              AppSnackBar(
                                   content: Text(
                                       'تعذر فتح المرفق. تحقق من الجلسة والصلاحيات.')));
                       }

@@ -180,6 +180,38 @@ const googleLogin = asyncHandler(async (req, res) => {
     if (!user.authProvider) {
       user.authProvider = user.password ? "local" : "google";
     }
+
+    // Returning Google users are implicitly verified — Google itself confirmed
+    // email_verified. Auto-set so they are never asked for a code again.
+    if (!user.emailVerified) {
+      user.emailVerified = true;
+    }
+  }
+
+  // Persist Google linkage before any challenge check.
+  await user.save();
+
+  if (!user.emailVerified) {
+    // NEW user: one-time email verification before they can set a password.
+    if (!emailCode) {
+      await sendCode(user, 'login', res);
+      return res.status(428).json({
+        message: 'أدخل رمز التأكيد المرسل إلى بريد حسابك في Google.',
+        requiresEmailVerification: true,
+      });
+    }
+    await consume(user, 'login', emailCode, res);
+    user.emailVerified = true;
+  } else if (user.twoFactorEnabled) {
+    // RETURNING user with 2FA: require code on every login.
+    if (!emailCode) {
+      await sendCode(user, 'login', res);
+      return res.status(428).json({
+        message: 'أدخل رمز التحقق المرسل إلى بريدك.',
+        requiresTwoFactor: true,
+      });
+    }
+    await consume(user, 'login', emailCode, res);
   }
 
   // Persist Google linkage before requesting the code. No session token is

@@ -1,9 +1,13 @@
-﻿import 'package:flutter/material.dart';
+import '../core/widgets/feature_ui.dart';
+import '../core/widgets/app_notice.dart';
+import '../core/utils/app_error.dart';
+import '../core/widgets/security_fields.dart';
+import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/services.dart';
-import '../data/study_birds_api.dart';
-import '../core/app_theme.dart';
+import '../core/network/study_birds_api.dart';
+import '../core/config/app_theme.dart';
 import '../screens/auth/onboarding_and_account_type_screens.dart';
 import '../screens/auth/splash_screen.dart';
 
@@ -59,7 +63,7 @@ class _ConnectedAppState extends State<ConnectedApp>
       if (seenIntro || api.authenticated) introStep = 2;
       if (mounted) setState(() => config = Json.from(value));
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted) setState(() => error = AppError.message(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -76,7 +80,7 @@ class _ConnectedAppState extends State<ConnectedApp>
       refreshConfig().catchError((Object e) {
         if (mounted) {
           ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(e.toString())));
+              .showSnackBar(AppSnackBar(content: Text(AppError.message(e))));
         }
       });
     }
@@ -175,27 +179,11 @@ class ErrorPanel extends StatelessWidget {
   final String message;
   final Future<void> Function() retry;
   @override
-  Widget build(BuildContext context) => Center(
-      child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.cloud_off_rounded, size: 44),
-            const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton(
-                onPressed: () async {
-                  try {
-                    await retry();
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text(e.toString())));
-                    }
-                  }
-                },
-                child: const Text('إعادة المحاولة')),
-          ])));
+  Widget build(BuildContext context) => ErrorState(message: message, onRetry: () async {
+    try { await retry(); } catch (e) {
+      if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(AppError.message(e))));
+    }
+  });
 }
 
 class ConnectedLogin extends StatefulWidget {
@@ -244,7 +232,7 @@ class _ConnectedLoginState extends State<ConnectedLogin> {
           twoFactorCode: twoFactor ? twoFactorCode.text.trim() : null);
     } catch (e) {
       if (e is ApiException && e.status == 428) twoFactor = true;
-      if (mounted) setState(() => error = e.toString());
+      if (mounted) setState(() => error = AppError.message(e));
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -304,8 +292,10 @@ class _ConnectedLoginState extends State<ConnectedLogin> {
                                             ? 'أدخل بريداً صحيحاً'
                                             : null),
                                 const SizedBox(height: 12),
-                                TextFormField(
+                                SecureTextField(
                                     controller: password,
+                                    showStrength: true,
+                                    requireStrong: register,
                                     obscureText: true,
                                     autofillHints: [
                                       register
@@ -322,16 +312,7 @@ class _ConnectedLoginState extends State<ConnectedLogin> {
                                       if (!busy) submit();
                                     }),
                                 if (twoFactor && !register) ...[
-                                  TextFormField(
-                                      controller: twoFactorCode,
-                                      keyboardType: TextInputType.number,
-                                      maxLength: 6,
-                                      autofillHints: const [
-                                        AutofillHints.oneTimeCode
-                                      ],
-                                      decoration: const InputDecoration(
-                                          labelText: 'رمز التحقق من البريد'),
-                                      validator: (v) => v == null ||
+                                  VerificationCodeField(controller: twoFactorCode, enabled: !busy, validator: (v) => v == null ||
                                               !RegExp(r'^\d{6}$').hasMatch(v)
                                           ? 'أدخل الرمز المكون من 6 أرقام'
                                           : null),
@@ -349,11 +330,7 @@ class _ConnectedLoginState extends State<ConnectedLogin> {
                                   Padding(
                                       padding: const EdgeInsets.symmetric(
                                           vertical: 12),
-                                      child: Text(error!,
-                                          style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .colorScheme
-                                                  .error))),
+                                      child: InlineNotice(error!, error: true)),
                                 const SizedBox(height: 24),
                                 FilledButton(
                                     onPressed: busy ? null : submit,
@@ -536,7 +513,7 @@ Future<void> openLink(BuildContext context, String value) async {
   } catch (e) {
     if (context.mounted) {
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(e.toString())));
+          .showSnackBar(AppSnackBar(content: Text(AppError.message(e))));
     }
   }
 }
@@ -650,11 +627,11 @@ class _ApiEditorState extends State<ApiEditor> {
       }
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(const SnackBar(content: Text('تم الحفظ بنجاح')));
+            .showSnackBar(AppSnackBar(content: Text('تم الحفظ بنجاح')));
         Navigator.of(context).pop(true);
       }
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted) setState(() => error = AppError.message(e));
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -691,10 +668,11 @@ class _ApiEditorState extends State<ApiEditor> {
                               onChanged: busy
                                   ? null
                                   : (v) => setState(() => values[f.key] = v))
-                          : TextFormField(
+                          : SecureTextField(
                               enabled: !busy,
                               controller: controllers[f.key],
                               obscureText: f.secret,
+                              requireStrong: f.key == 'newPassword',
                               maxLines: f.multiline ? 5 : 1,
                               decoration: InputDecoration(
                                   labelText: f.label,
@@ -736,9 +714,7 @@ class _ApiEditorState extends State<ApiEditor> {
             if (error != null)
               Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Text(error!,
-                      style: TextStyle(
-                          color: Theme.of(context).colorScheme.error))),
+                  child: InlineNotice(error!, error: true)),
             FilledButton(
                 onPressed: busy ? null : save,
                 child: Text(busy ? 'جارٍ الحفظ…' : 'حفظ وإرسال')),
@@ -778,7 +754,7 @@ class _ResourceScreenState extends State<ResourceScreen> {
       final result = await widget.api.request('GET', widget.path);
       if (mounted) setState(() => data = result);
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted) setState(() => error = AppError.message(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -793,7 +769,7 @@ class _ResourceScreenState extends State<ResourceScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
+            .showSnackBar(AppSnackBar(content: Text(AppError.message(e))));
       }
     } finally {
       if (mounted) setState(() => busy = false);
@@ -1242,7 +1218,7 @@ class _ResourceDetailState extends State<ResourceDetail> {
       final result = await widget.api.request('GET', widget.detailPath!);
       if (mounted) setState(() => item = Json.from(result));
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted) setState(() => error = AppError.message(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -1256,7 +1232,7 @@ class _ResourceDetailState extends State<ResourceDetail> {
     try {
       await work();
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted) setState(() => error = AppError.message(e));
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -1295,9 +1271,7 @@ class _ResourceDetailState extends State<ResourceDetail> {
                       item: item, kind: widget.kind, api: widget.api),
                   const SizedBox(height: 24),
                   if (error != null)
-                    Text(error!,
-                        style: TextStyle(
-                            color: Theme.of(context).colorScheme.error)),
+                    InlineNotice(error!, error: true),
                   if (widget.kind == 'support-tickets' &&
                       item['status'] != 'closed')
                     FilledButton(
@@ -1339,7 +1313,7 @@ class _ResourceDetailState extends State<ResourceDetail> {
                                       });
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(
+                                        AppSnackBar(
                                             content: Text('تم تحديث المفضلة')));
                                   }
                                 }),

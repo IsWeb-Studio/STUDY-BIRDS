@@ -1,13 +1,14 @@
+import '../../core/widgets/app_notice.dart';
 import 'follow_up_reminders_screen.dart';
 import 'admin_scholarships_screen.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
 import '../profile_account/security_settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/employee_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/repositories/employee_repository.dart';
 import 'employee_extra_screens.dart';
 import 'admin_users_access_screen.dart';
 import 'admin_parent_links_screen.dart';
@@ -292,7 +293,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
       if (mounted) setState(() => _avatarUrl = url);
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text('تعذر رفع الصورة'),
             backgroundColor: AppColors.danger));
       }

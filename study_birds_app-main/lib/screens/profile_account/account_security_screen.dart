@@ -1,8 +1,9 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/app_theme.dart';
-import '../../core/feature_ui.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/widgets/feature_ui.dart';
 import '../auth/email_challenge_screen.dart';
 
 class AccountSecurityScreen extends StatefulWidget {
@@ -28,13 +29,37 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
   Future<void> change(bool value) async {
     setState(() => busy = true);
     try {
+      if (!value) {
+        // Disabling — no code required
+        await ApiClient.instance.post('/mobile-security/two-factor/disable', token: token, body: {});
+        if (mounted) {
+          setState(() => enabled = false);
+          ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+            content: const Text('تم إيقاف التحقق بخطوتين'),
+            backgroundColor: AppColors.navy,
+          ));
+        }
+        return;
+      }
+      // Enabling — require email code
       await ApiClient.instance.post('/mobile-security/two-factor/request', token: token, body: {});
       if (!mounted) return;
-      final ok = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => EmailChallengeScreen(confirm: (code) async {
-        await ApiClient.instance.post('/mobile-security/two-factor/confirm', token: token, body: {'code':code,'enabled':value});
-      })));
-      if (ok == true && mounted) setState(() => enabled = value);
-    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر إرسال رمز التحقق'))); }
+      final ok = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => EmailChallengeScreen(
+        confirm: (code) async {
+          await ApiClient.instance.post('/mobile-security/two-factor/confirm', token: token, body: {'code': code, 'enabled': true});
+        },
+        resend: () async {
+          await ApiClient.instance.post('/mobile-security/two-factor/request', token: token, body: {});
+        },
+      )));
+      if (ok == true && mounted) {
+        setState(() => enabled = true);
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+          content: const Text('تم تفعيل التحقق بخطوتين ✓'),
+          backgroundColor: Colors.green.shade700,
+        ));
+      }
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر تغيير إعداد التحقق بخطوتين'))); }
     finally { if (mounted) setState(() => busy = false); }
   }
   Future<void> revoke(Map row) async {
@@ -46,7 +71,7 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
         await AuthSession.instance.logout();
         if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
       } else { await load(); }
-    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر إنهاء الجلسة'))); }
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر إنهاء الجلسة'))); }
     finally { if (mounted) setState(() => busy = false); }
   }
 
@@ -58,14 +83,14 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
       await AuthSession.instance.logout();
       if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر إنهاء الجلسات')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر إنهاء الجلسات')));
     } finally {
       if (mounted) setState(() => busy = false);
     }
   }
 
   @override
-  Widget build(BuildContext context) => AppScaffold(title: 'حماية الحساب والأجهزة', actions: [IconButton(onPressed: busy ? null : load, tooltip: 'تحديث', icon: const Icon(Icons.refresh))], body: RefreshIndicator(onRefresh: load, color: AppColors.navy, child: loading ? const LoadingState() : error != null ? ErrorState(message: error!, onRetry: load) : FeatureBody(children: [
+  Widget build(BuildContext context) => AppScaffold(title: 'حماية الحساب والأجهزة', body: RefreshIndicator(onRefresh: load, color: AppColors.navy, child: loading ? const LoadingState() : error != null ? ErrorState(message: error!, onRetry: load) : FeatureBody(children: [
     const FeatureIntro(title: 'طبقة حماية إضافية', subtitle: 'تحكم في التحقق بخطوتين والأجهزة التي تستخدم حسابك.', icon: Icons.verified_user_outlined),
     FeaturePanel(child: SwitchListTile(contentPadding: EdgeInsets.zero, title: const Text('التحقق بخطوتين', style: AppTextStyles.cardTitle), subtitle: const Text('رمز بالبريد بعد كلمة المرور'), value: enabled, onChanged: busy ? null : change)),
     const Padding(padding: EdgeInsets.symmetric(vertical: 12), child: Text('الجلسات النشطة', style: AppTextStyles.cardTitle)),

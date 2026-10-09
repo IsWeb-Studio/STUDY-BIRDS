@@ -1,6 +1,7 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
+import '../../core/config/app_theme.dart';
 
 /// Full-screen camera overlay that guides the user to align their passport
 /// inside a passport-shaped frame before capturing.
@@ -75,7 +76,7 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
       if (mounted) {
         setState(() => _capturing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر التقاط الصورة، حاول مجدداً')),
+          AppSnackBar(content: Text('تعذر التقاط الصورة، حاول مجدداً')),
         );
       }
     }

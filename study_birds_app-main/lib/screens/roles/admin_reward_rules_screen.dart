@@ -1,7 +1,8 @@
+import '../../core/widgets/feature_ui.dart';
 import 'package:flutter/material.dart';
-import '../../core/api_client.dart';
-import '../../core/app_theme.dart';
-import '../../core/auth_session.dart';
+import '../../core/network/api_client.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/services/auth_session.dart';
 
 class AdminRewardRulesScreen extends StatefulWidget {
   const AdminRewardRulesScreen({super.key});
@@ -42,7 +43,7 @@ class _AdminRewardRulesScreenState extends State<AdminRewardRulesScreen> {
           SwitchListTile(title: const Text('تفعيل المنح'), value: enabled,
             onChanged: saving ? null : (value) => update(() => enabled = value)),
           const Text('التفعيل يشمل الطلبات والإحالات المؤهلة السابقة أيضًا. تمنح النقاط مرة واحدة لكل طلب أو إحالة، ولا تتغير النقاط الممنوحة عند تعديل القاعدة.'),
-          if (error != null) Text(error!, style: const TextStyle(color: Colors.red)),
+          if (error != null) InlineNotice(error!, error: true),
         ])),
         actions: [
           TextButton(onPressed: saving ? null : () => Navigator.pop(dialog, false), child: const Text('إلغاء')),

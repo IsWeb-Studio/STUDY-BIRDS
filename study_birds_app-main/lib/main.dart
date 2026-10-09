@@ -1,21 +1,23 @@
+import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'core/widgets/app_notice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'screens/profile_account/notification_permission_sheet.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-import 'core/analytics_service.dart';
-import 'core/google_sign_in_service.dart';
-import 'core/app_config.dart';
-import 'core/realtime_sync_service.dart';
-import 'core/currency_service.dart';
-import 'core/api_client.dart';
-import 'core/deep_link_service.dart';
-import 'core/notification_scheduler.dart';
-import 'core/push_notification_service.dart';
+import 'core/services/analytics_service.dart';
+import 'core/services/google_sign_in_service.dart';
+import 'core/config/app_config.dart';
+import 'core/services/realtime_sync_service.dart';
+import 'core/services/currency_service.dart';
+import 'core/network/api_client.dart';
+import 'core/services/deep_link_service.dart';
+import 'core/services/notification_scheduler.dart';
+import 'core/services/push_notification_service.dart';
 import 'screens/auth/email_challenge_screen.dart';
 import 'package:flutter/material.dart';
-import 'core/app_theme.dart';
-import 'core/auth_session.dart';
-import 'core/animations.dart';
+import 'core/config/app_theme.dart';
+import 'core/services/auth_session.dart';
+import 'core/utils/animations.dart';
 
 import 'screens/auth/splash_screen.dart';
 import 'screens/auth/onboarding_and_account_type_screens.dart';
@@ -32,7 +34,6 @@ import 'screens/home_journey/important_dates_screen.dart';
 import 'screens/home_journey/global_search_screen.dart';
 
 import 'screens/auth/verify_contact_screen.dart';
-import 'screens/auth/phone_verification_screen.dart';
 import 'screens/profile_account/security_settings_screen.dart';
 
 import 'screens/universities_programs_countries/compare_list_screen.dart';
@@ -81,6 +82,10 @@ final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (kReleaseMode) {
+    ErrorWidget.builder = (_) => const Directionality(textDirection: TextDirection.rtl,
+      child: Material(color: AppColors.background, child: ErrorState()));
+  }
   // Render the splash on the first frame — no blocking before the user sees anything
   runApp(SentryWidget(child: const StudyBirdsApp()));
   _initServicesInBackground();
@@ -88,21 +93,30 @@ void main() async {
 
 Future<void> _initServicesInBackground() async {
   // Sentry first so it can capture errors in subsequent inits
-  await SentryFlutter.init((options) {
+  await _safeInit(() => SentryFlutter.init((options) {
     options.dsn = AppConfig.sentryDsn;
     options.tracesSampleRate = 0.2;
     options.profilesSampleRate = 0.1;
-    options.attachScreenshot = true;
-    options.attachViewHierarchy = true;
-  });
+    options.attachScreenshot = false;
+    options.sendDefaultPii = false;
+    options.attachViewHierarchy = false;
+  }));
   // All four services run in parallel instead of sequentially
   await Future.wait([
-    PushNotificationService.instance.init(),
-    CurrencyService.instance.load(),
-    AnalyticsService.instance.init(),
-    GoogleSignInService.instance.init(),
+    _safeInit(PushNotificationService.instance.init),
+    _safeInit(CurrencyService.instance.load),
+    _safeInit(AnalyticsService.instance.init),
+    _safeInit(GoogleSignInService.instance.init),
   ]);
   RealtimeSyncService.instance.start();
+}
+
+Future<void> _safeInit(Future<void> Function() initialize) async {
+  try { await initialize(); } catch (error, stack) {
+    try { await Sentry.captureException(error, stackTrace: stack); } catch (_) {
+      // Optional services and diagnostic delivery must not block startup.
+    }
+  }
 }
 
 class StudyBirdsApp extends StatefulWidget {
@@ -150,7 +164,7 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
           await PushNotificationService.instance.requestPermission();
         } catch (_) {
           rootScaffoldMessengerKey.currentState?.showSnackBar(
-            const SnackBar(
+            AppSnackBar(
                 content: Text(
                     'تعذر تفعيل الإشعارات. حاول مجددًا من إعدادات الإشعارات.')),
           );
@@ -204,6 +218,7 @@ class RootChooserScreen extends StatefulWidget {
 class _RootChooserScreenState extends State<RootChooserScreen> {
   bool _checking = true;
   String? _error;
+  bool _onboardingDone = false;
 
   @override
   void initState() {
@@ -218,6 +233,8 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
     });
     try {
       await AuthSession.instance.restore();
+      final prefs = await SharedPreferences.getInstance();
+      _onboardingDone = prefs.getBool('_onboarding_done') ?? false;
     } catch (_) {
       if (mounted)
         _error = 'تعذر استعادة الحساب. تحقق من الاتصال وحاول مجددًا.';
@@ -235,7 +252,14 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
         listenable: AuthSession.instance,
         builder: (context, _) {
           final user = AuthSession.instance.currentUser;
-          if (user == null) return const ConnectedPrototypeEntry();
+          if (user == null) {
+            // Onboarding (splash + intro) shows only once ever.
+            // Returning logged-out users go directly to login.
+            return _onboardingDone
+                ? const _DirectLoginEntry()
+                : const ConnectedPrototypeEntry();
+          }
+          if (AuthSession.instance.requiresGooglePasswordSetup || !user.hasPassword) return const SetPasswordScreen();
           // GATE DISABLED — re-enable when needed
           // if (user.verifiedPhone == null || user.verifiedPhone!.isEmpty) {
           //   return _PhoneVerificationGate(user: user);
@@ -245,29 +269,6 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
   }
 }
 
-/// Shown when the logged-in user has no verified phone number.
-/// Blocks access to the app until a phone number is verified.
-/// Uses PhoneVerificationScreen directly (no nested Scaffold).
-class _PhoneVerificationGate extends StatelessWidget {
-  final AuthUser user;
-  const _PhoneVerificationGate({required this.user});
-
-  @override
-  Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      child: PhoneVerificationScreen(
-        onVerified: (phone) => AuthSession.instance.patchVerifiedPhone(phone),
-        actions: [
-          TextButton(
-            onPressed: () => AuthSession.instance.logout(),
-            child: const Text('خروج', style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 /// Opens onboarding and login. The authenticated server role decides the home.
 class ConnectedPrototypeEntry extends StatelessWidget {
@@ -295,8 +296,11 @@ class ConnectedPrototypeEntry extends StatelessWidget {
   static void _goAccountType(BuildContext context) {
     Navigator.of(context).pushReplacement(MaterialPageRoute(
       builder: (ctx) => AccountTypeSelectionScreen(
-        onSelected: (type) {
+        onSelected: (type) async {
           AnalyticsService.instance.onboardingCompleted();
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool('_onboarding_done', true);
+          if (!ctx.mounted) return;
           _goLogin(ctx, selectedRole: type);
         },
       ),
@@ -306,9 +310,10 @@ class ConnectedPrototypeEntry extends StatelessWidget {
   // Roles that require admin to create — self-registration is disabled.
   static const _adminCreatedRoles = {'university', 'employee'};
 
-  static void _goLogin(BuildContext context, {String? selectedRole}) {
+  static void _goLogin(BuildContext context,
+      {String? selectedRole, bool replaceAll = false}) {
     final adminOnly = _adminCreatedRoles.contains(selectedRole);
-    Navigator.of(context).push(MaterialPageRoute(
+    final route = MaterialPageRoute(
       builder: (ctx) => LoginScreen(
         onForgotPassword: () => Navigator.of(ctx).push(
             MaterialPageRoute(builder: (_) => const PasswordReset2FAScreen())),
@@ -333,9 +338,19 @@ class ConnectedPrototypeEntry extends StatelessWidget {
                 )
             : () => Navigator.of(ctx).push(MaterialPageRoute(
                   builder: (ctx2) => RegisterScreen(
-                      onRegisterAttempt: (name, email, password) =>
+                      onRegisterAttempt: (name, email, password,
+                              [referralCode]) =>
                           _attemptRegister(ctx2, name, email, password,
-                              role: selectedRole)),
+                              role: selectedRole,
+                              referralCode: referralCode),
+                      onGoLogin: () => Navigator.of(ctx2).pop(),
+                      onGoogleSignInSuccess: () {
+                        if (!ctx2.mounted) return;
+                        Navigator.of(ctx2).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                                builder: (_) => const RootChooserScreen()),
+                            (route) => false);
+                      }),
                 )),
         onGoogleSignInSuccess: () {
           if (!ctx.mounted) return;
@@ -344,7 +359,12 @@ class ConnectedPrototypeEntry extends StatelessWidget {
               (route) => false);
         },
       ),
-    ));
+    );
+    if (replaceAll) {
+      Navigator.of(context).pushAndRemoveUntil(route, (r) => false);
+    } else {
+      Navigator.of(context).push(route);
+    }
   }
 
   static Future<bool> _attemptLogin(
@@ -360,10 +380,19 @@ class ConnectedPrototypeEntry extends StatelessWidget {
       if (e.statusCode != 428 || !context.mounted) return false;
       final confirmed =
           await Navigator.of(context).push<bool>(MaterialPageRoute(
-              builder: (_) => EmailChallengeScreen(confirm: (code) async {
-                    result = await AuthService.instance
-                        .loginOrThrow(email, password, twoFactorCode: code);
-                  })));
+              builder: (_) => EmailChallengeScreen(
+                    confirm: (code) async {
+                      result = await AuthService.instance
+                          .loginOrThrow(email, password, twoFactorCode: code);
+                    },
+                    resend: () async {
+                      try {
+                        await AuthService.instance.loginOrThrow(email, password);
+                      } on ApiException catch (e) {
+                        if (e.statusCode != 428) rethrow;
+                      }
+                    },
+                  )));
       if (confirmed != true) return false;
     } catch (_) {
       return false;
@@ -411,13 +440,18 @@ class ConnectedPrototypeEntry extends StatelessWidget {
     String email,
     String password, {
     String? role,
+    String? referralCode,
   }) async {
     final AuthUser user;
     final String token;
     String? refreshToken;
     try {
-      final result = await AuthService.instance
-          .register(name: name, email: email, password: password, role: role);
+      final result = await AuthService.instance.register(
+          name: name,
+          email: email,
+          password: password,
+          role: role,
+          referralCode: referralCode);
       user = result.user;
       token = result.token;
       refreshToken = result.refreshToken;
@@ -438,6 +472,32 @@ class ConnectedPrototypeEntry extends StatelessWidget {
           builder: (_) => const StudentRegistrationWizardScreen()));
     }
     return true;
+  }
+}
+
+/// Shown to returning users (onboarding already seen) who are not logged in.
+/// Navigates directly to the login screen on the first frame — no splash, no onboarding.
+class _DirectLoginEntry extends StatefulWidget {
+  const _DirectLoginEntry();
+
+  @override
+  State<_DirectLoginEntry> createState() => _DirectLoginEntryState();
+}
+
+class _DirectLoginEntryState extends State<_DirectLoginEntry> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // replaceAll clears any stale routes left over after logout.
+      ConnectedPrototypeEntry._goLogin(context, replaceAll: true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(backgroundColor: AppColors.background);
   }
 }
 

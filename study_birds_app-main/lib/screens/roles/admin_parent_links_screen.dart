@@ -1,7 +1,8 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/employee_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/repositories/employee_repository.dart';
 
 class AdminParentLinksScreen extends StatefulWidget {
   const AdminParentLinksScreen({super.key});
@@ -53,7 +54,7 @@ class _AdminParentLinksScreenState extends State<AdminParentLinksScreen> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر تحديث الطلب')));
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر تحديث الطلب')));
       }
     } finally {
       if (mounted) setState(() => _actingOnId = null);

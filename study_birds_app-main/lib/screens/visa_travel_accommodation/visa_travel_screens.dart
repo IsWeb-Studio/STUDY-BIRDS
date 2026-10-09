@@ -1,13 +1,14 @@
-﻿import 'arrival_services_screen.dart';
+import '../../core/widgets/app_notice.dart';
+import 'arrival_services_screen.dart';
 import 'package:flutter/material.dart';
-import '../../core/document_access.dart';
+import '../../core/utils/document_access.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/student_repository.dart';
-import '../../core/catalog_repository.dart';
-import '../../core/feature_ui.dart';
-import '../../core/analytics_service.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/repositories/student_repository.dart';
+import '../../core/repositories/catalog_repository.dart';
+import '../../core/widgets/feature_ui.dart';
+import '../../core/services/analytics_service.dart';
 
 // ── Pure helpers (extracted for testability) ───────────────────────────────
 
@@ -883,7 +884,7 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                                   if (url != null && !await launchUrl(url, mode: LaunchMode.externalApplication)) {
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('تعذر فتح بطاقة التأمين.')));
+                                          AppSnackBar(content: Text('تعذر فتح بطاقة التأمين.')));
                                     }
                                   }
                                 },
@@ -1108,7 +1109,7 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
                                 if (url != null && !await launchUrl(url, mode: LaunchMode.externalApplication)) {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('تعذر فتح الملف.')));
+                                        AppSnackBar(content: Text('تعذر فتح الملف.')));
                                   }
                                 }
                               },

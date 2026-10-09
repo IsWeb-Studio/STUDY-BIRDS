@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/catalog_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/catalog_repository.dart';
 
 /// Shows the SAME public program catalog, but highlights the agent-only
 /// price (Program.partnerTuition) instead of the public tuition — the

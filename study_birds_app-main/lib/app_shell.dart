@@ -1,6 +1,7 @@
-﻿import 'package:flutter/material.dart';
+import 'core/widgets/app_notice.dart';
+import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-import 'core/app_theme.dart';
+import 'core/config/app_theme.dart';
 import 'screens/home_journey/home_dashboard_screen.dart';
 import 'screens/home_journey/journey_tracker_screen.dart';
 import 'screens/universities_programs_countries/explore_hub_screen.dart';
@@ -53,7 +54,7 @@ class _StudentAppShellState extends State<StudentAppShell> {
         results.contains(ConnectivityResult.none) && results.length == 1;
     setState(() => _offline = nowOffline);
     if (wasOffline && !nowOffline) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
         content: Text('عاد الاتصال بالإنترنت'),
         backgroundColor: AppColors.success,
         duration: Duration(seconds: 2),

@@ -1,7 +1,7 @@
-﻿import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/analytics_service.dart';
-import '../../core/student_events.dart';
+import 'package:flutter/material.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/services/analytics_service.dart';
+import '../../core/utils/student_events.dart';
 
 class ImportantDatesScreen extends StatefulWidget {
   const ImportantDatesScreen({super.key});

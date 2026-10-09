@@ -97,7 +97,7 @@ class _ConnectedHomeShellState extends State<_ConnectedHomeShell> {
           'GET', partner ? '/partners/overview' : '/students/overview');
       if (mounted) setState(() => overview = Json.from(result));
     } catch (e) {
-      if (mounted) setState(() => overviewError = e.toString());
+      if (mounted) setState(() => overviewError = AppError.message(e));
     } finally {
       if (mounted) setState(() => loadingOverview = false);
     }
@@ -602,7 +602,7 @@ class _ConnectedHomeShellState extends State<_ConnectedHomeShell> {
     if (overviewError != null) {
       return AppCard(
           child: Column(children: [
-        Text(overviewError!, style: AppTextStyles.body),
+        InlineNotice(overviewError!, error: true),
         TextButton(
             onPressed: loadOverview,
             child: const Text('إعادة تحميل ملخص الرحلة'))
@@ -810,7 +810,7 @@ class _ConnectedHomeShellState extends State<_ConnectedHomeShell> {
                   } catch (e) {
                     if (mounted) {
                       ScaffoldMessenger.of(context)
-                          .showSnackBar(SnackBar(content: Text(e.toString())));
+                          .showSnackBar(AppSnackBar(content: Text(AppError.message(e))));
                     }
                   }
                 },

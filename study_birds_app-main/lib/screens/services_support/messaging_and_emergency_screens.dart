@@ -1,12 +1,13 @@
+import '../../core/widgets/app_notice.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/app_theme.dart';
-import '../../core/feature_ui.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/widgets/feature_ui.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
 import 'support_team_ai_screens.dart';
 
 class ConversationThreadScreen extends StatefulWidget {
@@ -140,7 +141,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
       });
     } catch (e) {
       if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text(e is ApiException
                 ? e.message
                 : 'تعذر الإرسال؛ رسالتك محفوظة في الحقل')));
@@ -335,7 +336,7 @@ class EmergencySupportScreen extends StatelessWidget {
     } catch (_) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تعذر فتح التطبيق الخارجي')));
+            AppSnackBar(content: Text('تعذر فتح التطبيق الخارجي')));
       }
     }
   }

@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { GoogleSignInButton } from "../../components/auth/GoogleSignInButton";
 import { FormInput } from "../../components/forms/FormInput";
+import { PasswordStrengthBar, validatePassword } from "../../components/forms/PasswordStrengthBar";
 import { Seo } from "../../components/seo/Seo";
 import { useAuth } from "../../hooks/useAuth";
 import { useLanguage } from "../../hooks/useLanguage";
@@ -16,7 +17,7 @@ import { SITE_NAME, seoText } from "../../seo/site";
 const schema = z.object({
   name: z.string().min(2),
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().refine(v => !validatePassword(v), { message: "كلمة المرور لا تستوفي متطلبات الأمان" }),
 });
 
 type RegisterValues = z.infer<typeof schema>;
@@ -32,8 +33,10 @@ export const RegisterPage = () => {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<RegisterValues>({ resolver: zodResolver(schema) });
+  const passwordValue = watch("password", "");
 
   useEffect(() => {
     if (user) {
@@ -94,7 +97,10 @@ export const RegisterPage = () => {
         ) : null}
         <FormInput label={t("name")} {...register("name")} error={errors.name?.message} />
         <FormInput label={t("email")} type="email" {...register("email")} error={errors.email?.message} />
-        <FormInput label={t("password")} type="password" {...register("password")} error={errors.password?.message} />
+        <div>
+          <FormInput label={t("password")} type="password" autoComplete="new-password" {...register("password")} error={errors.password?.message} />
+          <PasswordStrengthBar value={passwordValue} language={language} />
+        </div>
         <button type="submit" disabled={isSubmitting} className="w-full rounded-full bg-brand-900 px-5 py-3 font-semibold text-white">
           {isSubmitting ? t("creatingAccount") : t("register")}
         </button>

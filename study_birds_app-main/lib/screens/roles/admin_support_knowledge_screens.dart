@@ -1,7 +1,8 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/admin_modules_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/repositories/admin_modules_repository.dart';
 import '../services_support/support_team_ai_screens.dart' show ticketStatusMeta;
 
 class AdminSupportTicketsScreen extends StatefulWidget {
@@ -64,7 +65,7 @@ class _AdminSupportTicketsScreenState extends State<AdminSupportTicketsScreen> {
         _tickets = _tickets.map((t) => (t as Map<String, dynamic>)['_id'] == updated['_id'] ? updated : t).toList();
       });
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر إرسال الرد')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر إرسال الرد')));
     }
   }
 
@@ -178,7 +179,7 @@ class _AdminKnowledgeBaseScreenState extends State<AdminKnowledgeBaseScreen> {
                   await AdminModulesRepository.instance.createKnowledgeBaseItem(title: titleController.text.trim(), body: bodyController.text.trim());
                   if (context.mounted) Navigator.of(context).pop(true);
                 } catch (_) {
-                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر النشر')));
+                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر النشر')));
                 }
               },
             ),
@@ -195,7 +196,7 @@ class _AdminKnowledgeBaseScreenState extends State<AdminKnowledgeBaseScreen> {
       await AdminModulesRepository.instance.deleteKnowledgeBaseItem(id);
       if (mounted) setState(() => _items.removeWhere((i) => (i as Map<String, dynamic>)['_id'] == id));
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر الحذف')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر الحذف')));
     }
   }
 

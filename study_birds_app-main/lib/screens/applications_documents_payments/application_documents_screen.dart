@@ -1,7 +1,8 @@
-﻿import 'package:flutter/material.dart';
-import '../../core/api_client.dart';
-import '../../core/auth_session.dart';
-import '../../core/app_theme.dart';
+import '../../core/widgets/feature_ui.dart';
+import 'package:flutter/material.dart';
+import '../../core/network/api_client.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/config/app_theme.dart';
 import 'documents_screens.dart';
 
 class ApplicationDocumentsScreen extends StatefulWidget {
@@ -246,8 +247,7 @@ class _ApplicationDocumentsScreenState
                             ]));
                       }),
                     if (error != null)
-                      Text(error!,
-                          style: const TextStyle(color: AppColors.danger)),
+                      InlineNotice(error!, error: true),
                     if (busy) const Center(child: CircularProgressIndicator()),
                     TextButton(
                         onPressed: busy ? null : load,

@@ -1,10 +1,12 @@
-﻿import '../../core/api_client.dart';
+import '../../core/widgets/app_notice.dart';
+import 'countries_discovery_view.dart';
+import '../../core/network/api_client.dart';
 import 'catalog_detail.dart' show catalogArticleSections, catalogAssetUrl;
-import '../../core/auth_session.dart';
+import '../../core/services/auth_session.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/catalog_repository.dart';
-import '../../core/analytics_service.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/catalog_repository.dart';
+import '../../core/services/analytics_service.dart';
 import 'universities_screens.dart' show UniversitiesExplorerScreen;
 
 class CountriesExplorerScreen extends StatefulWidget {
@@ -51,10 +53,7 @@ class _CountriesExplorerScreenState extends State<CountriesExplorerScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'استكشاف الدول',
-      body: RefreshIndicator(
-        onRefresh: _load,
-        color: AppColors.navy,
-        child: _loading
+      body: _loading
             ? GridView.builder(
                 padding: const EdgeInsets.all(16),
                 gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -69,67 +68,14 @@ class _CountriesExplorerScreenState extends State<CountriesExplorerScreen> {
                         icon: Icons.public_off_rounded,
                         title: 'لا توجد دول مضافة بعد',
                         message: 'سيتم إضافتها من لوحة التحكم قريبًا.')
-                    : GridView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _countries.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 2,
-                              mainAxisSpacing: 12,
-                              crossAxisSpacing: 12,
-                              childAspectRatio: 1.15),
-                      itemBuilder: (context, i) {
-                        final c = _countries[i] as Map<String, dynamic>;
-                        return GestureDetector(
-                          onTap: () => Navigator.of(context).push(
-                              MaterialPageRoute(
-                                  builder: (_) =>
-                                      CountryDetailScreen(country: c))),
-                          child: Container(
-                            decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius:
-                                    BorderRadius.circular(AppRadius.card),
-                                border: Border.all(color: AppColors.border)),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  width: 52,
-                                  height: 52,
-                                  decoration: BoxDecoration(
-                                      color: AppColors.navy.withValues(alpha: 0.08),
-                                      shape: BoxShape.circle),
-                                  child: (c['heroImage'] as String?)
-                                              ?.isNotEmpty ==
-                                          true
-                                      ? ClipOval(
-                                          child: AppNetworkImage(
-                                            c['heroImage'] as String,
-                                            fit: BoxFit.cover,
-                                            width: 52,
-                                            height: 52,
-                                            errorWidget: const Icon(Icons.public_rounded,
-                                                    color: AppColors.navy,
-                                                    size: 24),
-                                          ),
-                                        )
-                                      : const Icon(Icons.public_rounded,
-                                          color: AppColors.navy, size: 24),
-                                ),
-                                const SizedBox(height: 10),
-                                Text(c['name'] as String? ?? '—',
-                                    style: AppTextStyles.cardTitle),
-                                const SizedBox(height: 2),
-                                Text('${c['universityCount'] ?? 0} جامعة',
-                                    style: AppTextStyles.caption),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-      ),
+                    : CountriesDiscoveryView(
+                        countries: _countries.whereType<Map>()
+                            .map((row) => Map<String, dynamic>.from(row)).toList(),
+                        onRefresh: _load,
+                        onCountryTap: (country) => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => CountryDetailScreen(country: country)),
+                        ),
+                      ),
     );
   }
 }
@@ -391,12 +337,12 @@ class _ScholarshipsScreenState extends State<ScholarshipsScreen> {
           token: AuthSession.instance.token, body: {});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تم تسجيل الطلب للمراجعة')));
+            AppSnackBar(content: Text('تم تسجيل الطلب للمراجعة')));
         await load();
       }
     } catch (e) {
       if (mounted)
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text(e is ApiException ? e.message : 'تعذر إرسال الطلب')));
     } finally {
       if (mounted) setState(() => sending = false);

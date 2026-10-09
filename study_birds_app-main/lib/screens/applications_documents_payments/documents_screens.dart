@@ -1,16 +1,16 @@
 ﻿import 'dart:async';
-import 'package:study_birds/core/api_client.dart';
-import '../../core/passport_scan.dart';
+import 'package:study_birds/core/network/api_client.dart';
+import '../../core/utils/passport_scan.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../../core/document_access.dart';
+import '../../core/utils/document_access.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../core/app_theme.dart';
-import '../../core/status_info.dart';
-import '../../core/student_repository.dart';
-import '../../core/analytics_service.dart';
-import '../../core/notification_scheduler.dart';
-import '../../core/realtime_sync_service.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/utils/status_info.dart';
+import '../../core/repositories/student_repository.dart';
+import '../../core/services/analytics_service.dart';
+import '../../core/services/notification_scheduler.dart';
+import '../../core/services/realtime_sync_service.dart';
 
 /// Maps the backend's document status (legacy 3-value `status`, or the
 /// richer 8-value `detailedStatus` when present) to Arabic label + color.

@@ -1,7 +1,9 @@
+import '../../core/widgets/feature_ui.dart';
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/student_repository.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/repositories/student_repository.dart';
 
 class ArrivalServicesScreen extends StatefulWidget {
   const ArrivalServicesScreen({super.key});
@@ -63,7 +65,7 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
     if (!mounted) return;
 
     if (available.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
         content: Text('جميع رحلاتك الدراسية لديها طلبات وصول مرتبطة بها بالفعل.'),
         backgroundColor: AppColors.orange,
       ));
@@ -415,7 +417,7 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
         );
       }
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
         content: Text(_isEditing ? 'تم تحديث الطلب بنجاح' : 'تم إرسال طلبك بنجاح'),
         backgroundColor: AppColors.success,
       ));
@@ -524,7 +526,7 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
-                child: Text(_saveError!, style: const TextStyle(color: AppColors.warning, fontSize: 12.5)),
+                child: InlineNotice(_saveError!, error: true),
               ),
             ],
             const SizedBox(height: 20),

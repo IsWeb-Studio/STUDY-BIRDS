@@ -5,9 +5,10 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { GoogleSignInButton } from "../../components/auth/GoogleSignInButton";
 import { FormInput } from "../../components/forms/FormInput";
+import { PasswordStrengthBar, validatePassword } from "../../components/forms/PasswordStrengthBar";
 import { Seo } from "../../components/seo/Seo";
 import { useAuth } from "../../hooks/useAuth";
 import { useLanguage } from "../../hooks/useLanguage";
@@ -42,6 +43,20 @@ export const LoginPage = () => {
   const [newPassConfirm, setNewPassConfirm] = useState("");
   const [passError, setPassError] = useState("");
   const [passSaving, setPassSaving] = useState(false);
+
+  // Google email verification state (428 flow)
+  const [pendingGoogleCredential, setPendingGoogleCredential] = useState<string | null>(null);
+  const [googleEmailCode, setGoogleEmailCode] = useState("");
+  const [googleCodeError, setGoogleCodeError] = useState("");
+  const [googleCodeCountdown, setGoogleCodeCountdown] = useState(0);
+  const googleCountdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const startGoogleCountdown = () => {
+    setGoogleCodeCountdown(60);
+    if (googleCountdownRef.current) clearInterval(googleCountdownRef.current);
+    googleCountdownRef.current = setInterval(() => {
+      setGoogleCodeCountdown(s => { if (s <= 1) { clearInterval(googleCountdownRef.current!); return 0; } return s - 1; });
+    }, 1000);
+  };
 
   // OTP state
   const [otpMode, setOtpMode] = useState(false);
@@ -98,6 +113,13 @@ export const LoginPage = () => {
         redirectAfterLogin(u);
       }
     } catch (error) {
+      if (isAxiosError(error) && error.response?.status === 428) {
+        setPendingGoogleCredential(credential);
+        setGoogleCodeError("");
+        setGoogleEmailCode("");
+        startGoogleCountdown();
+        return;
+      }
       setFormError(
         getErrorMessage(error, ar ? "تعذر تسجيل الدخول عبر Google. حاول مرة أخرى." : "Unable to sign in with Google. Please try again.")
       );
@@ -106,9 +128,32 @@ export const LoginPage = () => {
     }
   };
 
+  const handleGoogleCodeSubmit = async () => {
+    setGoogleCodeError("");
+    if (googleEmailCode.length !== 6) {
+      setGoogleCodeError(ar ? "الرمز مكون من 6 أرقام" : "Code must be 6 digits");
+      return;
+    }
+    setGoogleSubmitting(true);
+    try {
+      const u = await googleLogin(pendingGoogleCredential!, googleEmailCode.trim());
+      setPendingGoogleCredential(null);
+      if (!u.hasPassword) {
+        setPendingRedirectUser(u);
+      } else {
+        redirectAfterLogin(u);
+      }
+    } catch (error) {
+      setGoogleCodeError(getErrorMessage(error, ar ? "الرمز غير صحيح أو منتهي الصلاحية." : "Invalid or expired code."));
+    } finally {
+      setGoogleSubmitting(false);
+    }
+  };
+
   const handleSetPassword = async () => {
     setPassError("");
-    if (newPass.length < 6) { setPassError(ar ? "كلمة المرور يجب أن تكون 6 أحرف على الأقل" : "Password must be at least 6 characters"); return; }
+    const pwErr = validatePassword(newPass);
+    if (pwErr) { setPassError(pwErr); return; }
     if (newPass !== newPassConfirm) { setPassError(ar ? "كلمتا المرور غير متطابقتين" : "Passwords do not match"); return; }
     setPassSaving(true);
     try {
@@ -155,6 +200,60 @@ export const LoginPage = () => {
     }
   };
 
+  if (pendingGoogleCredential) {
+    return (
+      <div className="mx-auto max-w-xl panel p-8">
+        <h1 className="text-2xl font-semibold text-slate-900">
+          {ar ? "تحقق من بريدك الإلكتروني" : "Verify your email"}
+        </h1>
+        <p className="mt-2 text-sm text-slate-500">
+          {ar
+            ? "أُرسل رمز تحقق مكون من 6 أرقام إلى بريد حساب Google. أدخله أدناه لإتمام تسجيل الدخول."
+            : "A 6-digit verification code was sent to your Google account email. Enter it below to complete sign-in."}
+        </p>
+        <div className="mt-6 space-y-4">
+          {googleCodeError ? (
+            <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{googleCodeError}</div>
+          ) : null}
+          <FormInput
+            label={ar ? "رمز التحقق" : "Verification Code"}
+            type="text"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            maxLength={6}
+            pattern="[0-9]{6}"
+            value={googleEmailCode}
+            onChange={e => setGoogleEmailCode(e.target.value.replace(/\D/g, ""))}
+            onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); void handleGoogleCodeSubmit(); } }}
+          />
+          <button
+            type="button"
+            disabled={googleSubmitting}
+            onClick={() => void handleGoogleCodeSubmit()}
+            className="w-full rounded-full bg-brand-900 px-5 py-3 font-semibold text-white disabled:opacity-60"
+          >
+            {googleSubmitting ? (ar ? "جارٍ التحقق..." : "Verifying...") : (ar ? "تحقق وسجّل الدخول" : "Verify & Sign In")}
+          </button>
+          <div className="flex items-center gap-4 text-sm">
+            {googleCodeCountdown > 0
+              ? <span className="text-slate-400">{ar ? `إعادة الإرسال بعد ${googleCodeCountdown}ث` : `Resend in ${googleCodeCountdown}s`}</span>
+              : <button type="button" disabled={googleSubmitting} className="text-brand-700 underline"
+                  onClick={() => { void handleGoogleCredential(pendingGoogleCredential!); }}>
+                  {ar ? "أعد إرسال الرمز" : "Resend code"}
+                </button>}
+            <button
+              type="button"
+              className="text-slate-500 underline"
+              onClick={() => { setPendingGoogleCredential(null); setGoogleEmailCode(""); setGoogleCodeError(""); if (googleCountdownRef.current) clearInterval(googleCountdownRef.current); }}
+            >
+              {ar ? "إلغاء" : "Cancel"}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (pendingRedirectUser) {
     return (
       <div className="mx-auto max-w-xl panel p-8">
@@ -170,13 +269,16 @@ export const LoginPage = () => {
           {passError ? (
             <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{passError}</div>
           ) : null}
-          <FormInput
-            label={ar ? "كلمة المرور الجديدة" : "New password"}
-            type="password"
-            autoComplete="new-password"
-            value={newPass}
-            onChange={e => setNewPass(e.target.value)}
-          />
+          <div>
+            <FormInput
+              label={ar ? "كلمة المرور الجديدة" : "New password"}
+              type="password"
+              autoComplete="new-password"
+              value={newPass}
+              onChange={e => setNewPass(e.target.value)}
+            />
+            <PasswordStrengthBar value={newPass} language={language} />
+          </div>
           <FormInput
             label={ar ? "تأكيد كلمة المرور" : "Confirm password"}
             type="password"

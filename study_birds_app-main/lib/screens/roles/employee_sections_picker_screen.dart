@@ -1,8 +1,9 @@
-﻿import 'package:flutter/material.dart';
-import '../../core/app_theme.dart';
-import '../../core/api_client.dart';
-import '../../core/employee_repository.dart';
-import '../../core/employee_sections.dart';
+import '../../core/widgets/feature_ui.dart';
+import 'package:flutter/material.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
+import '../../core/repositories/employee_repository.dart';
+import '../../core/widgets/employee_sections.dart';
 
 /// Mirrors the web's EmployeePermissionsDialog.tsx exactly: pick one or more
 /// sections, save via PATCH /api/admin/users/:id with role="employee".
@@ -91,7 +92,7 @@ class _EmployeeSectionsPickerScreenState extends State<EmployeeSectionsPickerScr
                 if (_error != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12.5)),
+                    child: InlineNotice(_error!, error: true),
                   ),
               ],
             ),

@@ -1,8 +1,10 @@
+import '../../core/widgets/feature_ui.dart';
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
-import '../../core/app_theme.dart';
-import '../../core/parent_repository.dart';
-import '../../core/auth_session.dart';
+import '../../core/config/app_theme.dart';
+import '../../core/repositories/parent_repository.dart';
+import '../../core/services/auth_session.dart';
 import '../applications_documents_payments/applications_screens.dart'
     show appStatusMeta;
 import '../services_support/messaging_and_emergency_screens.dart';
@@ -168,7 +170,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       _emailCtrl.clear();
       _relationshipCtrl.clear();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content:
                 Text('تم إرسال طلب الربط، بانتظار موافقة الإدارة'),
             backgroundColor: AppColors.success));
@@ -964,9 +966,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               hint: 'صلة القرابة (اختياري)'),
           if (_requestError != null) ...[
             const SizedBox(height: 8),
-            Text(_requestError!,
-                style: const TextStyle(
-                    color: AppColors.danger, fontSize: 12.5)),
+            InlineNotice(_requestError!, error: true),
           ],
           const SizedBox(height: 12),
           PrimaryButton(
@@ -1129,14 +1129,14 @@ class _PayInvoiceButtonState extends State<_PayInvoiceButton> {
         fileName: file.name,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text('تم إرسال إثبات الدفع، بانتظار مراجعة الفريق'),
             backgroundColor: AppColors.success));
         widget.onPaid();
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text('تعذر رفع الملف، حاول مرة أخرى'),
             backgroundColor: AppColors.danger));
       }
