@@ -1,3 +1,5 @@
+import '../../core/widgets/app_notice.dart';
+import 'services_center_view.dart';
 import 'live_consultation_screen.dart';
 import 'package:flutter/material.dart';
 import 'dart:typed_data';
@@ -40,17 +42,17 @@ class _ServicesCenterScreenState extends State<ServicesCenterScreen> {
           future: future,
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
-              return GridView.builder(
+              return ListView(
                 padding: const EdgeInsets.all(16),
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
-                    childAspectRatio: 1.1),
-                itemCount: 6,
-                itemBuilder: (_, __) => const SkeletonBox(
-                    width: double.infinity, height: double.infinity,
-                    borderRadius: 14),
+                children: const [
+                  SkeletonBox(width: double.infinity, height: 260, borderRadius: 26),
+                  SizedBox(height: 24),
+                  SkeletonBox(width: double.infinity, height: 52, borderRadius: 16),
+                  SizedBox(height: 18),
+                  SkeletonBox(width: double.infinity, height: 180, borderRadius: 22),
+                  SizedBox(height: 14),
+                  SkeletonBox(width: double.infinity, height: 180, borderRadius: 22),
+                ],
               );
             }
             if (snapshot.hasError) {
@@ -64,72 +66,18 @@ class _ServicesCenterScreenState extends State<ServicesCenterScreen> {
                   title: 'لا توجد خدمات متاحة',
                   message: 'ستظهر الخدمات التي ينشرها الفريق هنا.');
             }
-            final scale = MediaQuery.textScalerOf(context).scale(14) / 14;
-            return RefreshIndicator(
-                onRefresh: refresh,
-                color: AppColors.navy,
-                child: GridView.builder(
-                  physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                  padding: const EdgeInsets.fromLTRB(12, 16, 12, 20),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      crossAxisSpacing: 12,
-                      mainAxisSpacing: 12,
-                      mainAxisExtent: 152 + (scale > 1 ? (scale - 1) * 90 : 0)),
-                  itemCount: rows.length,
-                  itemBuilder: (context, index) {
-                    final row = Map<String, dynamic>.from(rows[index]);
-                    final title = row['title']?.toString() ?? '';
-                    return Semantics(
-                        button: true,
-                        label: title,
-                        child: Material(
-                          color: Colors.white,
-                          shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                              side: const BorderSide(color: AppColors.border)),
-                          clipBehavior: Clip.antiAlias,
-                          child: InkWell(
-                            onTap: () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                    builder: (_) =>
-                                        ServiceDetailScreen(service: {
-                                          ...row,
-                                          'name': title,
-                                        }))),
-                            child: Padding(
-                                padding: const EdgeInsets.all(13),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                        width: 36,
-                                        height: 36,
-                                        decoration: BoxDecoration(
-                                            color: const Color(0xFFFFEEDD),
-                                            borderRadius:
-                                                BorderRadius.circular(10)),
-                                        child: Icon(_serviceIcon(title),
-                                            size: 19, color: AppColors.orange)),
-                                    const Spacer(),
-                                    Text(title,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: AppTextStyles.body.copyWith(
-                                            fontSize: 14,
-                                            height: 1.5,
-                                            fontWeight: FontWeight.w500)),
-                                    const SizedBox(height: 16),
-                                    Text((row['priceDescription']?.toString().trim().isNotEmpty ?? false)
-                                        ? '${row['priceDescription']}' : 'السعر عند الطلب',
-                                        maxLines: 2, overflow: TextOverflow.ellipsis,
-                                        style: AppTextStyles.caption),
-                                  ],
-                                )),
-                          ),
-                        ));
-                  },
-                ));
+            return ServicesCenterView(
+              services: rows.map((row) => Map<String, dynamic>.from(row)).toList(),
+              onRefresh: refresh,
+              iconFor: _serviceIcon,
+              onRequests: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const MyServiceRequestsScreen())),
+              onOpen: (row) => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => ServiceDetailScreen(service: {
+                    ...row,
+                    'name': row['title']?.toString() ?? '',
+                  }))),
+            );
           },
         ),
       );
@@ -217,13 +165,13 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         'notes': _notesCtrl.text.trim(),
       });
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: Text('تم إرسال طلبك — تابع حالته من "طلباتي"'),
           backgroundColor: AppColors.success));
       Navigator.of(context).pop();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: Text(e is ApiException ? e.message : 'تعذر إرسال الطلب، حاول مرة أخرى')));
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -523,7 +471,7 @@ class _ConsultationConfirmationScreenState
     } catch (_) {
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
-            const SnackBar(content: Text('تعذر فتح رابط الاجتماع.')));
+            AppSnackBar(content: Text('تعذر فتح رابط الاجتماع.')));
       }
     }
   }
@@ -554,7 +502,7 @@ class _ConsultationConfirmationScreenState
     } catch (_) {
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
-            const SnackBar(content: Text('تعذر فتح تطبيق التقويم.')));
+            AppSnackBar(content: Text('تعذر فتح تطبيق التقويم.')));
       }
     }
   }
@@ -569,7 +517,7 @@ class _ConsultationConfirmationScreenState
     } catch (_) {
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
-            const SnackBar(content: Text('تعذر تحميل ملف التقويم.')));
+            AppSnackBar(content: Text('تعذر تحميل ملف التقويم.')));
       }
     }
   }

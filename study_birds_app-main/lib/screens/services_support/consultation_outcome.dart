@@ -1,3 +1,4 @@
+import '../../core/widgets/feature_ui.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/config/app_theme.dart';
@@ -121,7 +122,7 @@ class _ConsultationOutcomeEditorState extends State<ConsultationOutcomeEditor> {
               decoration: const InputDecoration(
                   labelText: 'الخطوات التالية (اختياري)')),
           if (error != null)
-            Text(error!, style: const TextStyle(color: AppColors.danger)),
+            InlineNotice(error!, error: true),
           const SizedBox(height: 16),
           PrimaryButton(
               label: saving ? 'جاري الحفظ...' : 'حفظ النتيجة',

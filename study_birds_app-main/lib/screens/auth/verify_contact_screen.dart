@@ -1,3 +1,4 @@
+import '../../core/widgets/security_fields.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/widgets/feature_ui.dart';
@@ -69,7 +70,7 @@ class _VerifyContactScreenState extends State<VerifyContactScreen> {
   Widget build(BuildContext context) => AppScaffold(
           title: 'تأكيد التواصل',
           body: FeatureBody(children: [
-            FeatureIntro(
+            SecurityIntro(
                 title: verified ? 'تم تأكيد بريدك' : 'بريد موثوق لحسابك',
                 subtitle: verified
                     ? 'تم التحقق بنجاح من البريد المرتبط بحسابك.'
@@ -93,13 +94,7 @@ class _VerifyContactScreenState extends State<VerifyContactScreen> {
                     const Text('أدخل الرمز الذي وصلك في البريد.',
                         style: AppTextStyles.caption),
                     const SizedBox(height: 16),
-                    TextField(
-                        controller: code,
-                        enabled: !busy,
-                        textDirection: TextDirection.ltr,
-                        keyboardType: TextInputType.number,
-                        autofillHints: const [AutofillHints.oneTimeCode],
-                        decoration: featureInput('رمز التحقق', hint: '000000')),
+                    VerificationCodeField(controller: code, enabled: !busy),
                     const SizedBox(height: 24),
                   ],
                   PrimaryButton(

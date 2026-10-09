@@ -1,4 +1,4 @@
-﻿part of 'connected_app.dart';
+part of 'connected_app.dart';
 
 class StudentSetupWizard extends StatefulWidget {
   const StudentSetupWizard(
@@ -64,7 +64,7 @@ class _StudentSetupWizardState extends State<StudentSetupWizard> {
                 : initial[key]?.toString() ?? '');
       }
     } catch (e) {
-      error = e.toString();
+      error = AppError.message(e);
     }
     if (mounted) setState(() => loading = false);
   }
@@ -112,7 +112,7 @@ class _StudentSetupWizardState extends State<StudentSetupWizard> {
       });
       if (mounted) widget.onDone();
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted) setState(() => error = AppError.message(e));
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -151,8 +151,7 @@ class _StudentSetupWizardState extends State<StudentSetupWizard> {
                                     labelText: field.value,
                                     border: const OutlineInputBorder()))),
                       if (error != null)
-                        Text(error!,
-                            style: const TextStyle(color: AppColors.danger)),
+                        InlineNotice(error!, error: true),
                       PrimaryButton(
                           label: busy
                               ? 'جارٍ الحفظ…'
@@ -204,14 +203,14 @@ class _PasswordRecoveryState extends State<PasswordRecovery> {
           });
       if (!mounted) return;
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(result['message'])));
+          .showSnackBar(AppSnackBar(content: Text(result['message'])));
       if (sent) {
         Navigator.of(context).pop();
       } else {
         setState(() => sent = true);
       }
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted) setState(() => error = AppError.message(e));
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -238,13 +237,10 @@ class _PasswordRecoveryState extends State<PasswordRecovery> {
                 decoration:
                     const InputDecoration(labelText: 'البريد الإلكتروني')),
             if (sent) ...[
-              TextField(
-                  controller: code,
-                  keyboardType: TextInputType.number,
-                  maxLength: 6,
-                  decoration: const InputDecoration(labelText: 'رمز التحقق')),
-              TextField(
+              VerificationCodeField(controller: code, enabled: !busy),
+              SecureTextField(
                   controller: password,
+                  requireStrong: true,
                   obscureText: true,
                   decoration: const InputDecoration(
                       labelText: 'كلمة المرور الجديدة (8 أحرف على الأقل)')),
@@ -252,8 +248,7 @@ class _PasswordRecoveryState extends State<PasswordRecovery> {
             if (error != null)
               Padding(
                   padding: const EdgeInsets.all(12),
-                  child: Text(error!,
-                      style: const TextStyle(color: AppColors.danger))),
+                  child: InlineNotice(error!, error: true)),
             const SizedBox(height: 24),
             PrimaryButton(
                 label: busy
@@ -359,7 +354,7 @@ class _StudentFeaturePageState extends State<StudentFeaturePage> {
       }
       if (mounted) setState(() => data = result);
     } catch (e) {
-      if (mounted) setState(() => error = e.toString());
+      if (mounted) setState(() => error = AppError.message(e));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -374,7 +369,7 @@ class _StudentFeaturePageState extends State<StudentFeaturePage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.toString())));
+            .showSnackBar(AppSnackBar(content: Text(AppError.message(e))));
       }
     } finally {
       if (mounted) setState(() => busy = false);
@@ -577,7 +572,7 @@ class _StudentFeaturePageState extends State<StudentFeaturePage> {
               await Clipboard.setData(ClipboardData(text: data['code']));
               if (mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('تم نسخ الرمز')));
+                    AppSnackBar(content: Text('تم نسخ الرمز')));
               }
             }),
         if (data['linked'] != true)

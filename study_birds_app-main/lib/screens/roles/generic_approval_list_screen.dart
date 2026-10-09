@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/network/api_client.dart';
@@ -123,7 +124,7 @@ class _GenericApprovalListBodyState extends State<_GenericApprovalListBody> {
       });
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر تحديث الحالة')));
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر تحديث الحالة')));
       }
     } finally {
       if (mounted) setState(() => _actingOnId = null);

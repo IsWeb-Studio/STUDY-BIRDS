@@ -1,3 +1,4 @@
+import '../utils/app_error.dart';
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
@@ -493,35 +494,29 @@ class ErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                  color: AppColors.danger.withValues(alpha: 0.08),
-                  shape: BoxShape.circle),
-              child: const Icon(Icons.error_outline_rounded,
-                  size: 36, color: AppColors.danger),
-            ),
-            const SizedBox(height: 16),
-            Text(message,
-                style: AppTextStyles.body, textAlign: TextAlign.center),
+    final text = AppError.safeText(message);
+    final offline = text.contains('اتصال') || text.contains('إنترنت');
+    return Center(child: SingleChildScrollView(padding: const EdgeInsets.all(24),
+      child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 420),
+        child: Container(width: double.infinity, padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [BoxShadow(color: AppColors.navy.withValues(alpha: .04), blurRadius: 24, offset: const Offset(0, 8))]),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Container(padding: const EdgeInsets.all(18), decoration: const BoxDecoration(color: AppColors.orangeSoft, shape: BoxShape.circle),
+              child: Icon(offline ? Icons.wifi_off_rounded : Icons.cloud_off_rounded, size: 34, color: AppColors.orange)),
+            const SizedBox(height: 20),
+            Text(offline ? 'لنعد الاتصال' : 'نحتاج لحظة لإكمال طلبك', style: AppTextStyles.cardTitle, textAlign: TextAlign.center),
+            const SizedBox(height: 10),
+            Text(text, style: AppTextStyles.caption.copyWith(fontSize: 14, height: 1.8), textAlign: TextAlign.center),
             if (onRetry != null) ...[
-              const SizedBox(height: 16),
-              PrimaryButton(
-                  label: 'إعادة المحاولة',
-                  onPressed: onRetry,
-                  expand: false,
-                  icon: Icons.refresh_rounded),
+              const SizedBox(height: 22),
+              PrimaryButton(label: 'إعادة المحاولة', onPressed: onRetry, expand: false, icon: Icons.refresh_rounded),
             ],
-          ],
+          ]),
         ),
       ),
-    );
+    ));
   }
 }
 

@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -75,7 +76,7 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
       if (mounted) {
         setState(() => _capturing = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر التقاط الصورة، حاول مجدداً')),
+          AppSnackBar(content: Text('تعذر التقاط الصورة، حاول مجدداً')),
         );
       }
     }

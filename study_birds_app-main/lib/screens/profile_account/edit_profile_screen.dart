@@ -1,3 +1,5 @@
+import '../../core/widgets/app_notice.dart';
+import '../../core/utils/app_error.dart';
 import 'package:camera/camera.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -251,7 +253,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (widget.section == ProfileSection.passport) _loadPassportDoc();
     } catch (e) {
-      if (mounted) _error = e.toString();
+      if (mounted) _error = AppError.message(e);
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -347,7 +349,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         Navigator.of(context).pop(true);
       }
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = AppError.message(e));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -410,7 +412,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (file.bytes == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('تعذر قراءة الملف')));
+              AppSnackBar(content: Text('تعذر قراءة الملف')));
         }
         return;
       }
@@ -421,7 +423,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (!mounted) return;
     if (bytes.length > 10 * 1024 * 1024) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('حجم الملف كبير جدًا (الحد 10 ميجابايت)')));
+          AppSnackBar(content: Text('حجم الملف كبير جدًا (الحد 10 ميجابايت)')));
       return;
     }
 
@@ -433,7 +435,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
       setState(() => _passportVerifying = false);
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message), duration: const Duration(seconds: 5)));
+          AppSnackBar(content: Text(e.message), duration: const Duration(seconds: 5)));
       return;
     } catch (_) {
       // Unexpected error — allow upload
@@ -465,7 +467,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       );
       if (mounted) {
         setState(() => _passportDoc = doc);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: Text(extracted.passportNumber != null
               ? 'تم رفع الجواز واستخراج البيانات تلقائيًا ✓'
               : 'تم رفع جواز السفر بنجاح ✓'),
@@ -474,7 +476,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('تعذر رفع الجواز: ${e.toString()}')));
+            AppSnackBar(content: Text('تعذر رفع الجواز: ${AppError.message(e)}')));
       }
     } finally {
       if (mounted) setState(() => _passportUploading = false);

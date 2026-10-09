@@ -1,3 +1,5 @@
+import '../../core/widgets/feature_ui.dart';
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/config/app_theme.dart';
@@ -184,7 +186,7 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
                   );
                 }),
                 if (formError != null) ...[
-                  Text(formError!, style: const TextStyle(color: AppColors.danger, fontSize: 12.5)),
+                  InlineNotice(formError!, error: true),
                   const SizedBox(height: 8),
                 ],
                 PrimaryButton(
@@ -233,7 +235,7 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
       await widget.deleteItem!(id);
       if (mounted) setState(() => _items.removeWhere((i) => (i as Map<String, dynamic>)[widget.idKey] == id));
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر الحذف')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر الحذف')));
     }
   }
 

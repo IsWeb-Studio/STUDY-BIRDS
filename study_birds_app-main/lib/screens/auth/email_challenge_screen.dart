@@ -1,3 +1,5 @@
+import '../../core/widgets/app_notice.dart';
+import '../../core/widgets/security_fields.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -7,7 +9,17 @@ import '../../core/widgets/feature_ui.dart';
 class EmailChallengeScreen extends StatefulWidget {
   final Future<void> Function(String) confirm;
   final Future<void> Function()? resend;
-  const EmailChallengeScreen({super.key, required this.confirm, this.resend});
+  final String title;
+  final String introTitle;
+  final String subtitle;
+  const EmailChallengeScreen({
+    super.key,
+    required this.confirm,
+    this.resend,
+    this.title = 'التحقق من الهوية',
+    this.introTitle = 'خطوة أخيرة لحماية حسابك',
+    this.subtitle = 'أدخل رمز التحقق المرسل إلى بريدك الإلكتروني.',
+  });
   @override
   State<EmailChallengeScreen> createState() => _EmailChallengeScreenState();
 }
@@ -60,7 +72,7 @@ class _EmailChallengeScreenState extends State<EmailChallengeScreen> {
       _startCountdown();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم إعادة إرسال رمز التحقق')),
+          AppSnackBar(content: Text('تم إعادة إرسال رمز التحقق')),
         );
       }
     } catch (e) {
@@ -72,12 +84,12 @@ class _EmailChallengeScreenState extends State<EmailChallengeScreen> {
 
   @override
   Widget build(BuildContext context) => AppScaffold(
-    title: 'التحقق من الهوية',
+    title: widget.title,
     body: FeatureBody(children: [
-      const FeatureIntro(title: 'خطوة أخيرة لحماية حسابك', subtitle: 'أدخل رمز التحقق المرسل إلى بريدك الإلكتروني.', icon: Icons.shield_outlined),
+      SecurityIntro(title: widget.introTitle, subtitle: widget.subtitle, icon: Icons.shield_outlined),
       if (error != null) InlineNotice(error!, error: true),
       FeaturePanel(child: Column(children: [
-        TextField(controller: code, enabled: !busy, keyboardType: TextInputType.number, textDirection: TextDirection.ltr, autofillHints: const [AutofillHints.oneTimeCode], decoration: featureInput('رمز التحقق', hint: '000000')),
+        VerificationCodeField(controller: code, enabled: !busy),
         const SizedBox(height: 24),
         PrimaryButton(label: busy ? 'جاري التحقق...' : 'تأكيد', onPressed: busy ? null : confirm),
         if (widget.resend != null) ...[

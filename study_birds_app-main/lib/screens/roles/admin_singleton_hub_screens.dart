@@ -1,3 +1,5 @@
+import '../../core/widgets/feature_ui.dart';
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/network/api_client.dart';
@@ -174,7 +176,7 @@ class _SingletonEditScreenState extends State<_SingletonEditScreen> {
     try {
       final payload = {for (final f in widget.fields) f.key: _controllers[f.key]!.text.trim()};
       await widget.save(payload);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم الحفظ بنجاح'), backgroundColor: AppColors.success));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تم الحفظ بنجاح'), backgroundColor: AppColors.success));
     } catch (e) {
       if (mounted) setState(() => _error = e is ApiException ? e.message : 'تعذر الحفظ.');
     } finally {
@@ -210,7 +212,7 @@ class _SingletonEditScreenState extends State<_SingletonEditScreen> {
                         ),
                       )),
                   if (_error != null) ...[
-                    Text(_error!, style: const TextStyle(color: AppColors.danger, fontSize: 12.5)),
+                    InlineNotice(_error!, error: true),
                     const SizedBox(height: 10),
                   ],
                   PrimaryButton(label: _saving ? 'جاري الحفظ...' : 'حفظ التغييرات', onPressed: _saving ? null : _save),

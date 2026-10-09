@@ -1,3 +1,4 @@
+import '../utils/app_error.dart';
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
 
@@ -84,13 +85,14 @@ class InlineNotice extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
             color: color.withValues(alpha: .06),
-            borderRadius: BorderRadius.circular(14)),
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: color.withValues(alpha: .18))),
         child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Icon(error ? Icons.error_outline : Icons.info_outline,
               color: color, size: 20),
           const SizedBox(width: 10),
           Expanded(
-              child: Text(text,
+              child: Text(error ? AppError.safeText(text) : text,
                   style: TextStyle(
                       color: error ? AppColors.danger : AppColors.navy,
                       height: 1.6,

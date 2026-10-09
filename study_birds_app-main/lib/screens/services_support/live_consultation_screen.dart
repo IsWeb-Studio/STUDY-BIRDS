@@ -1,3 +1,5 @@
+import '../../core/widgets/feature_ui.dart';
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/config/app_theme.dart';
@@ -126,7 +128,7 @@ class _LiveConsultationScreenState extends State<LiveConsultationScreen> {
       await load();
       if (!mounted) return;
       ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text(message)));
+          .showSnackBar(AppSnackBar(content: Text(message)));
       onSuccess?.call();
     } catch (e) {
       if (mounted) {
@@ -160,7 +162,7 @@ class _LiveConsultationScreenState extends State<LiveConsultationScreen> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تعذر فتح رابط الاجتماع.')));
+            AppSnackBar(content: Text('تعذر فتح رابط الاجتماع.')));
       }
     }
   }
@@ -204,8 +206,7 @@ class _LiveConsultationScreenState extends State<LiveConsultationScreen> {
                 if (error != null)
                   Padding(
                       padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Text(error!,
-                          style: const TextStyle(color: AppColors.danger))),
+                      child: InlineNotice(error!, error: true)),
                 const SizedBox(height: 12),
                 const Text('استشاراتي', style: AppTextStyles.cardTitle),
                 if (bookings.isEmpty)

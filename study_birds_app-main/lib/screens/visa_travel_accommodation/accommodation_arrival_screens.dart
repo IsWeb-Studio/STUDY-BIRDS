@@ -1,3 +1,5 @@
+import '../../core/widgets/feature_ui.dart';
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/repositories/student_repository.dart';
@@ -198,19 +200,19 @@ class _ListingCardState extends State<_ListingCard> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم تقديم طلب الحجز بنجاح')),
+          AppSnackBar(content: Text('تم تقديم طلب الحجز بنجاح')),
         );
         widget.onBooked();
       }
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+            .showSnackBar(AppSnackBar(content: Text(e.message)));
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('حدث خطأ. أعد المحاولة.')),
+          AppSnackBar(content: Text('حدث خطأ. أعد المحاولة.')),
         );
       }
     } finally {
@@ -413,19 +415,19 @@ class _BookingCardState extends State<_BookingCard> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم إلغاء الحجز')),
+          AppSnackBar(content: Text('تم إلغاء الحجز')),
         );
         widget.onCancelled();
       }
     } on ApiException catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(e.message)));
+            .showSnackBar(AppSnackBar(content: Text(e.message)));
       }
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('حدث خطأ. أعد المحاولة.')),
+          AppSnackBar(content: Text('حدث خطأ. أعد المحاولة.')),
         );
       }
     } finally {
@@ -625,8 +627,7 @@ class _UniversityRegistrationScreenState
                     child: StatusBadge(label: badge.label, color: badge.color)),
                 if (_error != null) ...[
                   const SizedBox(height: 10),
-                  Text(_error!,
-                      style: const TextStyle(color: AppColors.danger)),
+                  InlineNotice(_error!, error: true),
                 ],
                 const SizedBox(height: 16),
                 const Text('المستندات المطلوبة',

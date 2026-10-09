@@ -1,3 +1,4 @@
+import '../../core/widgets/feature_ui.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import 'catalog_browser.dart';
@@ -174,9 +175,7 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
                 if (_error != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(_error!,
-                        style: const TextStyle(
-                            color: AppColors.danger, fontSize: 12.5)),
+                    child: InlineNotice(_error!, error: true),
                   ),
                 PrimaryButton(
                   label: _step < _steps.length - 1

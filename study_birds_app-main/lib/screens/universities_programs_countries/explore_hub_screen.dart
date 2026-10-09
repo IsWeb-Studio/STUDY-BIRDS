@@ -20,49 +20,58 @@ class ExploreHubScreen extends StatelessWidget {
       showBackButton: false,
       body: GridView(
         padding: const EdgeInsets.all(16),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             mainAxisSpacing: 12,
             crossAxisSpacing: 12,
-            childAspectRatio: 1.15),
+            childAspectRatio: 1.05 /
+                (MediaQuery.textScalerOf(context).scale(16) / 16).clamp(1, 1.6)),
         children: [
           _ExploreCard(
               label: 'الجامعات',
+              image: 'assets/images/explore/universities.jpg',
               icon: Icons.account_balance_rounded,
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const UniversitiesExplorerScreen()))),
           _ExploreCard(
               label: 'البرامج',
+              image: 'assets/images/dashboard/library.jpg',
               icon: Icons.menu_book_rounded,
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const ProgramsExplorerScreen()))),
           _ExploreCard(
               label: 'الدول',
+              image: 'assets/images/explore/countries.jpg',
               icon: Icons.public_rounded,
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const CountriesExplorerScreen()))),
           _ExploreCard(
               label: 'المنح الدراسية',
+              image: 'assets/images/dashboard/campus.jpg',
               icon: Icons.card_giftcard_rounded,
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const ScholarshipsScreen()))),
           _ExploreCard(
               label: 'مكتشف البرنامج',
+              image: 'assets/images/explore/finder.jpg',
               icon: Icons.quiz_outlined,
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const ProgramFinderScreen()))),
           _ExploreCard(
               label: 'قائمة المقارنة',
+              image: 'assets/images/explore/comparison.jpg',
               icon: Icons.compare_arrows_rounded,
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const CompareListScreen()))),
           _ExploreCard(
               label: 'محطة المعارض',
+              image: 'assets/images/explore/exhibitions.jpg',
               icon: Icons.article_rounded,
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const ExhibitionsScreen()))),
           _ExploreCard(
               label: 'المفضلة',
+              image: 'assets/images/dashboard/students.jpg',
               icon: Icons.bookmark_rounded,
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const FavoritesScreen()))),
@@ -74,31 +83,71 @@ class ExploreHubScreen extends StatelessWidget {
 
 class _ExploreCard extends StatelessWidget {
   final String label;
+  final String image;
   final IconData icon;
   final VoidCallback onTap;
   const _ExploreCard(
-      {required this.label, required this.icon, required this.onTap});
+      {required this.label, required this.image, required this.icon, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
+    return Semantics(
+      button: true,
+      label: label,
       child: Container(
         decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(AppRadius.card),
-            border: Border.all(color: AppColors.border)),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            AppIconTile(icon),
-            const SizedBox(height: 10),
-            Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(label,
-                    textAlign: TextAlign.center,
-                    style: AppTextStyles.cardTitle)),
-          ],
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          boxShadow: [BoxShadow(color: AppColors.navy.withValues(alpha: .12),
+              blurRadius: 12, offset: const Offset(0, 5))],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(AppRadius.card),
+          child: Stack(fit: StackFit.expand, children: [
+            Image.asset(image, fit: BoxFit.cover, excludeFromSemantics: true,
+                errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.navy)),
+            const DecoratedBox(decoration: BoxDecoration(
+              gradient: LinearGradient(begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0x300C223A), Color(0xED0C223A)]),
+            )),
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onTap,
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(9),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: .18),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.white.withValues(alpha: .3)),
+                        ),
+                        child: Icon(icon, color: Colors.white, size: 21),
+                      ),
+                      const Spacer(),
+                      Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+                        Expanded(child: Text(label, maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: AppTextStyles.cardTitle.copyWith(
+                              color: Colors.white, fontSize: 16, height: 1.3),
+                        )),
+                        const SizedBox(width: 6),
+                        const Icon(Icons.arrow_forward_rounded,
+                            color: Colors.white70, size: 17),
+                      ]),
+                      const SizedBox(height: 8),
+                      Container(width: 26, height: 3,
+                        decoration: BoxDecoration(color: AppColors.orange,
+                            borderRadius: BorderRadius.circular(3))),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ]),
         ),
       ),
     );

@@ -26,6 +26,7 @@ import '../universities_programs_countries/explore_hub_screen.dart';
 import '../visa_travel_accommodation/accommodation_arrival_screens.dart';
 import '../visa_travel_accommodation/visa_travel_screens.dart' show InsuranceScreen, EquivalencyScreen, VisaCenterScreen, TravelCenterScreen;
 import 'smart_home_sections.dart';
+import 'student_banner_carousel.dart';
 
 /// Real, live Home Dashboard — fetches GET /api/students/overview on load.
 class HomeDashboardScreen extends StatefulWidget {
@@ -339,6 +340,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       'equivalency'              => const EquivalencyScreen(),
       'programs' || 'catalog'    => const ProgramsExplorerScreen(),
       'universities'             => const UniversitiesExplorerScreen(),
+      'scholarships'             => const ScholarshipsScreen(),
       'documents' || 'upload-document' => const MyDocumentsScreen(),
       'payments'                 => const PaymentsSummaryScreen(),
       'support'                  => const SupportCenterScreen(),
@@ -591,6 +593,11 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         // ── Journey card(s) ───────────────────────────────────────────────────
         _buildJourneySection(
             context, overview, currentStage, journeyPathLabel, progress, homeStatus),
+
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
+          child: StudentBannerCarousel(onExplore: _openDestination),
+        ),
 
         // ── Recognitions slider ───────────────────────────────────────────────
         if (overview.recognitions.isNotEmpty) ...[

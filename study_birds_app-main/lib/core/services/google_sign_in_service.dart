@@ -14,8 +14,6 @@ class GoogleSignInService {
   bool _initialized = false;
   Future<void>? _initFuture;
   String? _initError;
-  // Stored during Google 2FA flow — holds the idToken between the initial
-  // sign-in attempt (which returned 428) and the 2FA confirmation call.
   String? _pendingIdToken;
 
   Future<void> init() async {
@@ -42,12 +40,13 @@ class GoogleSignInService {
   /// Returns true on success. Throws [ApiException] with a user-readable
   /// Arabic message on failure, or returns false if the user cancelled.
   Future<bool> signIn() async {
+    _pendingIdToken = null;
     if (!_initialized) await init();
     if (!_initialized) {
       // Surface the real init error so developers can diagnose the issue
       final reason = _initError ?? 'لم يتم تهيئة Google Sign-In';
       if (kDebugMode) print('[GoogleSignIn] not available, init error: $reason');
-      throw ApiException(503, 'تسجيل الدخول عبر Google غير متاح على هذا الجهاز.\n($reason)');
+      throw const ApiException(503, 'تسجيل الدخول عبر Google غير متاح حاليًا. حاول لاحقًا.');
     }
     try {
       final account = await GoogleSignIn.instance.authenticate();
@@ -60,40 +59,54 @@ class GoogleSignInService {
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) return false;
       if (kDebugMode) print('[GoogleSignIn] error: ${e.code} ${e.description}');
-      final detail = e.description != null ? '\n(${e.description})' : '';
-      throw ApiException(401, 'تعذر تسجيل الدخول عبر Google$detail');
+      throw const ApiException(401, 'تعذّر تسجيل الدخول عبر Google. أعد اختيار الحساب وحاول مجددًا.');
     } catch (e) {
       if (e is ApiException) rethrow;
       if (kDebugMode) print('[GoogleSignIn] unexpected: $e');
-      throw ApiException(500, 'حدث خطأ أثناء تسجيل الدخول عبر Google\n($e)');
+      throw const ApiException(500, 'تعذّر تسجيل الدخول عبر Google. حاول مجددًا بعد قليل.');
     }
   }
 
-  Future<void> _loginWithCredential(String idToken, {String? twoFactorCode}) async {
-    final body = <String, dynamic>{'credential': idToken};
-    if (twoFactorCode != null) body['twoFactorCode'] = twoFactorCode;
+  Future<void> _loginWithCredential(String idToken, {String? emailCode}) async {
+    final Map<String, dynamic> data;
     try {
-      final data = await ApiClient.instance.post('/auth/google', body: body);
-      final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
-      final token = data['token'] as String;
-      await AuthSession.instance.login(user, authToken: token, refreshToken: data['refreshToken'] as String?);
-      AnalyticsService.instance.loginCompleted(user.role.name);
-      _pendingIdToken = null;
+      data = await ApiClient.instance.post('/auth/google', body: {
+        'credential': idToken,
+        if (emailCode != null) 'emailCode': emailCode,
+        // Older deployed servers read the Google challenge as twoFactorCode.
+        if (emailCode != null) 'twoFactorCode': emailCode,
+      });
     } on ApiException catch (e) {
-      if (e.statusCode == 428) {
-        // 2FA required — save idToken so caller can re-confirm with a code
-        _pendingIdToken = idToken;
-      }
+      if (e.statusCode == 428) _pendingIdToken = idToken;
       rethrow;
     }
+    final user = AuthUser.fromGoogleJson(data['user'] as Map<String, dynamic>);
+    final token = data['token'] as String;
+    await AuthSession.instance.login(user,
+        requireGooglePasswordSetup: true,
+        authToken: token, refreshToken: data['refreshToken'] as String?);
+    AnalyticsService.instance.loginCompleted(user.role.name);
+    _pendingIdToken = null;
   }
 
-  /// Call after receiving ApiException(428) from [signIn].
-  /// Completes sign-in using the 2FA code the user entered.
-  Future<void> confirmTwoFactor(String code) async {
+  Future<void> confirmEmail(String code) async {
     final idToken = _pendingIdToken;
-    if (idToken == null) throw const ApiException(400, 'انتهت صلاحية جلسة Google. أعد المحاولة.');
-    await _loginWithCredential(idToken, twoFactorCode: code);
+    if (idToken == null) {
+      throw const ApiException(400, 'انتهت جلسة Google. أعد تسجيل الدخول.');
+    }
+    await _loginWithCredential(idToken, emailCode: code);
+  }
+
+  Future<void> resendEmailCode() async {
+    final idToken = _pendingIdToken;
+    if (idToken == null) {
+      throw const ApiException(400, 'انتهت جلسة Google. أعد تسجيل الدخول.');
+    }
+    try {
+      await _loginWithCredential(idToken);
+    } on ApiException catch (e) {
+      if (e.statusCode != 428) rethrow;
+    }
   }
 
   Future<void> signOut() async {

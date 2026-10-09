@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/network/api_client.dart';
@@ -52,7 +53,7 @@ class _AdminStudentFinancialsScreenState extends State<AdminStudentFinancialsScr
         _data = {..._data!, 'paymentProofs': proofs};
       });
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e is ApiException ? e.message : 'تعذر التحديث')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر التحديث')));
     }
   }
 
@@ -221,7 +222,7 @@ class _AdminMarketingAssetsScreenState extends State<AdminMarketingAssetsScreen>
       await AdminModulesRepository.instance.deleteMarketingAsset(id);
       if (mounted) setState(() => _assets.removeWhere((a) => (a as Map<String, dynamic>)['_id'] == id));
     } catch (_) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر الحذف')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر الحذف')));
     }
   }
 

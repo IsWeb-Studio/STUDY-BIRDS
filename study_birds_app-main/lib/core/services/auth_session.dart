@@ -129,6 +129,16 @@ class AuthUser {
 
   /// Parses the `user` object exactly as returned by the backend's
   /// serializeUser() (see server/src/controllers/authController.js).
+  factory AuthUser.fromGoogleJson(Map<String, dynamic> json) {
+    // Older Google endpoints omit both provider and password status.
+    // An unknown password status must keep the setup gate closed.
+    return AuthUser.fromJson({
+      ...json,
+      'authProvider': json['authProvider'] ?? 'google',
+      'hasPassword': json['hasPassword'] == true,
+    });
+  }
+
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     final role = UserRoleWire.fromWire(json['role'] as String?);
     if (role == null) {
@@ -155,7 +165,9 @@ class AuthUser {
       verifiedPhone: json['verifiedPhone'] as String?,
       emailVerified: json['emailVerified'] == true,
       authProvider: json['authProvider'] as String?,
-      hasPassword: json['hasPassword'] != false,
+      hasPassword: json['hasPassword'] is bool
+          ? json['hasPassword'] as bool
+          : json['authProvider'] != 'google',
     );
   }
 
@@ -180,6 +192,29 @@ class AuthUser {
 class AuthService {
   AuthService._();
   static final AuthService instance = AuthService._();
+
+  Future<AuthUser> _restoredUser(Map<String, dynamic> json) async {
+    if (json['hasPassword'] is! bool) {
+      final cached = await const FlutterSecureStorage().read(key: 'cached_user');
+      if (cached != null) {
+        try {
+          final saved = jsonDecode(cached)['user'] as Map<String, dynamic>;
+          final id = json['_id'] ?? json['id'];
+          if (id != null && id == (saved['_id'] ?? saved['id'])) {
+            json = {
+              ...json,
+              if (saved['hasPassword'] is bool)
+                'hasPassword': saved['hasPassword'],
+              'authProvider': json['authProvider'] ?? saved['authProvider'],
+            };
+          }
+        } on FormatException catch (_) {
+          // Invalid cached JSON must not prevent server-authenticated restore.
+        } on TypeError catch (_) {}
+      }
+    }
+    return AuthUser.fromJson(json);
+  }
 
   /// Returns the authenticated user on success, or null on bad credentials
   /// / any request failure. Callers that need the specific failure reason
@@ -237,7 +272,7 @@ class AuthService {
   Future<({AuthUser user, String token, String? refreshToken})?> tryRefresh(String refreshToken) async {
     try {
       final data = await ApiClient.instance.post('/auth/refresh', body: {'refreshToken': refreshToken});
-      final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
+      final user = await _restoredUser(data['user'] as Map<String, dynamic>);
       final token = data['token'] as String;
       final newRefresh = data['refreshToken'] as String?;
       return (user: user, token: token, refreshToken: newRefresh);
@@ -253,7 +288,7 @@ class AuthService {
   Future<AuthUser?> fetchCurrentUser(String token) async {
     try {
       final data = await ApiClient.instance.get('/auth/me', token: token);
-      return AuthUser.fromJson(data['user'] as Map<String, dynamic>);
+      return await _restoredUser(data['user'] as Map<String, dynamic>);
     } on ApiException catch (e) {
       if (e.statusCode == 401 || e.statusCode == 403) return null;
       rethrow;
@@ -272,6 +307,7 @@ class AuthSession extends ChangeNotifier {
   static final AuthSession instance = AuthSession._();
 
   AuthUser? currentUser;
+  bool requiresGooglePasswordSetup = false;
   String? token;
   bool _restored = false;
   bool get isRestored => _restored;
@@ -321,6 +357,17 @@ class AuthSession extends ChangeNotifier {
 
   Future<void> restore() async {
     if (_restored) return;
+    final pendingGoogleSetup = await const FlutterSecureStorage()
+        .read(key: 'google_password_setup_required') == 'true';
+    if (pendingGoogleSetup) {
+      // The email proof expires after ten minutes. A restored unfinished
+      // setup must authenticate again rather than reopen an unusable form.
+      await logout(revoke: false);
+      _restored = true;
+      notifyListeners();
+      return;
+    }
+    requiresGooglePasswordSetup = false;
     final prefs = await SharedPreferences.getInstance();
     const storage = FlutterSecureStorage();
     var storedToken = await storage.read(key: 'active_session_token');
@@ -394,6 +441,9 @@ class AuthSession extends ChangeNotifier {
       }
     }
 
+    if (currentUser != null && !currentUser!.hasPassword) {
+      await logout(revoke: false);
+    }
     final restoredUser = currentUser;
     if (restoredUser != null) {
       PushNotificationService.instance.setUser(restoredUser.id);
@@ -431,7 +481,9 @@ class AuthSession extends ChangeNotifier {
     refreshCurrentUser();
   }
 
-  void patchHasPassword() {
+  Future<void> patchHasPassword() async {
+    await const FlutterSecureStorage().delete(key: 'google_password_setup_required');
+    requiresGooglePasswordSetup = false;
     final u = currentUser;
     if (u == null) return;
     currentUser = AuthUser(
@@ -441,7 +493,9 @@ class AuthSession extends ChangeNotifier {
       verifiedPhone: u.verifiedPhone, emailVerified: u.emailVerified,
       authProvider: u.authProvider, hasPassword: true,
     );
+    ApiClient.instance.clearCache();
     notifyListeners();
+    await _cacheUser(currentUser!);
   }
 
   /// Fetches fresh user data from /auth/me and updates the session in-place.
@@ -458,7 +512,10 @@ class AuthSession extends ChangeNotifier {
     } catch (_) {}
   }
 
-  Future<void> login(AuthUser user, {String? authToken, String? refreshToken}) async {
+  Future<void> login(AuthUser user, {String? authToken, String? refreshToken, bool requireGooglePasswordSetup = false}) async {
+    ApiClient.instance.clearCache();
+    requiresGooglePasswordSetup = requireGooglePasswordSetup;
+    await const FlutterSecureStorage().write(key: 'google_password_setup_required', value: requireGooglePasswordSetup.toString());
     _revision++;
     _previousToken = null;
     final prefs = await SharedPreferences.getInstance();
@@ -483,6 +540,8 @@ class AuthSession extends ChangeNotifier {
   }
 
   Future<void> logout({bool revoke = true}) async {
+    requiresGooglePasswordSetup = false;
+    await const FlutterSecureStorage().delete(key: 'google_password_setup_required');
     _revision++;
     _previousToken = null;
     final owner = currentUser?.id ?? '';

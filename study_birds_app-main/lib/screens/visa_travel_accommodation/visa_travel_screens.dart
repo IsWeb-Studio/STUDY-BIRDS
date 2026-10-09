@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import 'arrival_services_screen.dart';
 import 'package:flutter/material.dart';
 import '../../core/utils/document_access.dart';
@@ -883,7 +884,7 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                                   if (url != null && !await launchUrl(url, mode: LaunchMode.externalApplication)) {
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('تعذر فتح بطاقة التأمين.')));
+                                          AppSnackBar(content: Text('تعذر فتح بطاقة التأمين.')));
                                     }
                                   }
                                 },
@@ -1108,7 +1109,7 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
                                 if (url != null && !await launchUrl(url, mode: LaunchMode.externalApplication)) {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text('تعذر فتح الملف.')));
+                                        AppSnackBar(content: Text('تعذر فتح الملف.')));
                                   }
                                 }
                               },

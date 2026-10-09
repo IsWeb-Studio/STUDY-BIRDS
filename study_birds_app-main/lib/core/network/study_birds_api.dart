@@ -1,3 +1,4 @@
+import '../utils/app_error.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
@@ -6,10 +7,12 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:file_picker/file_picker.dart';
 
-class ApiException implements Exception {
-  final String message;
+class ApiException implements Exception, UserFacingFailure {
+  final String _rawMessage;
   final int? status;
-  const ApiException(this.message, [this.status]);
+  const ApiException(this._rawMessage, [this.status]);
+  @override
+  String get message => AppError.response(status, _rawMessage);
   @override
   String toString() => message;
 }

@@ -1,3 +1,5 @@
+import '../../core/widgets/app_notice.dart';
+import '../../core/widgets/security_fields.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/network/api_client.dart';
@@ -20,7 +22,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
     } catch (_) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تعذر فتح وسيلة التواصل')));
+            AppSnackBar(content: Text('تعذر فتح وسيلة التواصل')));
     }
   }
 
@@ -130,7 +132,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
       body: Form(
           key: form,
           child: FeatureBody(children: [
-            FeatureIntro(
+            SecurityIntro(
                 title: complete
                     ? 'تم تحديث كلمة المرور'
                     : sent
@@ -172,20 +174,14 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                       textDirection: TextDirection.ltr,
                       style: AppTextStyles.cardTitle),
                   const SizedBox(height: 20),
-                  TextFormField(
-                      controller: codeController,
-                      enabled: !busy,
-                      keyboardType: TextInputType.number,
-                      textDirection: TextDirection.ltr,
-                      autofillHints: const [AutofillHints.oneTimeCode],
-                      decoration: featureInput('رمز التحقق', hint: '000000'),
-                      validator: (v) =>
+                  VerificationCodeField(controller: codeController, enabled: !busy, validator: (v) =>
                           v == null || !RegExp(r'^\d{6}$').hasMatch(v.trim())
                               ? 'أدخل الرمز المكون من 6 أرقام'
                               : null),
                   const SizedBox(height: 20),
-                  TextFormField(
+                  SecureTextField(
                       controller: passwordController,
+                      requireStrong: true,
                       enabled: !busy,
                       obscureText: true,
                       decoration: featureInput('كلمة المرور الجديدة'),
@@ -193,7 +189,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                           ? 'استخدم 8 أحرف على الأقل'
                           : null),
                   const SizedBox(height: 20),
-                  TextFormField(
+                  SecureTextField(
                       controller: confirmationController,
                       enabled: !busy,
                       obscureText: true,

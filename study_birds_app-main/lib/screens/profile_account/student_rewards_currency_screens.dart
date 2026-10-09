@@ -1,3 +1,5 @@
+import '../../core/widgets/feature_ui.dart';
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
 import 'package:url_launcher/url_launcher.dart';
@@ -337,7 +339,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                               color: AppColors.navy)))
                   : _error != null
                       ? Column(children: [
-                          Text(_error!, style: AppTextStyles.caption),
+                          InlineNotice(_error!, error: true),
                           const SizedBox(height: 8),
                           TextButton(
                               onPressed: _fetchRates,
@@ -480,7 +482,7 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
     if (!mounted) return;
     if (unpaidInvoices.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('لا توجد فواتير غير مدفوعة حاليًا.')));
+        AppSnackBar(content: Text('لا توجد فواتير غير مدفوعة حاليًا.')));
       return;
     }
 
@@ -552,7 +554,7 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
               final amount = double.tryParse(amountCtrl.text.trim()) ?? 0;
               if (inv == null || amount <= 0) {
                 ScaffoldMessenger.of(ctx2).showSnackBar(
-                  const SnackBar(content: Text('اختر فاتورة وأدخل مبلغاً صحيحاً.')));
+                  AppSnackBar(content: Text('اختر فاتورة وأدخل مبلغاً صحيحاً.')));
                 return;
               }
               final nav = Navigator.of(ctx2);
@@ -563,10 +565,10 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
                     body: { 'invoiceId': inv['_id'], 'amount': amount });
                 nav.pop();
                 await _load();
-                messenger.showSnackBar(const SnackBar(content: Text('تم خصم الرصيد بنجاح.')));
+                messenger.showSnackBar(AppSnackBar(content: Text('تم خصم الرصيد بنجاح.')));
               } catch (e) {
                 messenger.showSnackBar(
-                  SnackBar(content: Text(e is ApiException ? e.message : 'تعذر تنفيذ الخصم.')));
+                  AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر تنفيذ الخصم.')));
               }
             },
           )),
@@ -690,7 +692,7 @@ class _WalletBalanceCard extends StatelessWidget {
               onTap: () {
                 Clipboard.setData(ClipboardData(text: referralCode));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('تم نسخ الكود')),
+                  AppSnackBar(content: Text('تم نسخ الكود')),
                 );
               },
               child: Container(

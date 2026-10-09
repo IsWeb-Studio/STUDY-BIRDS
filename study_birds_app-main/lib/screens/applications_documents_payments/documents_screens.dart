@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:study_birds/core/network/api_client.dart';
 import '../../core/utils/passport_scan.dart';
 import 'package:url_launcher/url_launcher.dart';

@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/utils/document_access.dart';
 import 'bird_ai_screen.dart';
@@ -247,9 +248,7 @@ class _NewSupportTicketScreenState extends State<NewSupportTicketScreen> {
             ),
             if (_error != null) ...[
               const SizedBox(height: 10),
-              Text(_error!,
-                  style:
-                      const TextStyle(color: AppColors.danger, fontSize: 12.5)),
+              InlineNotice(_error!, error: true),
             ],
             const SizedBox(height: 20),
             PrimaryButton(
@@ -420,7 +419,7 @@ class _SupportTicketDetailScreenState
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: Text(e is ApiException ? e.message : 'تعذر إرسال الرد')));
     } finally {
       if (mounted) setState(() => _sending = false);
@@ -461,7 +460,7 @@ class _SupportTicketDetailScreenState
                       } catch (_) {
                         if (context.mounted)
                           ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
+                              AppSnackBar(
                                   content: Text(
                                       'تعذر فتح المرفق. تحقق من الجلسة والصلاحيات.')));
                       }

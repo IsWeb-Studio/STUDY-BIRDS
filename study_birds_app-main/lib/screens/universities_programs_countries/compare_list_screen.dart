@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/config/app_theme.dart';
@@ -51,7 +52,7 @@ class _CompareListScreenState extends State<CompareListScreen> {
   Future<void> toggle(String id, bool value) async {
     if (value && selected.length >= 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('اختر ثلاث جامعات كحد أقصى')));
+          AppSnackBar(content: Text('اختر ثلاث جامعات كحد أقصى')));
       return;
     }
     setState(() {
@@ -71,7 +72,7 @@ class _CompareListScreenState extends State<CompareListScreen> {
     } catch (_) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تعذر حفظ الاختيار على الجهاز')));
+            AppSnackBar(content: Text('تعذر حفظ الاختيار على الجهاز')));
     }
   }
 

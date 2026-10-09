@@ -1,3 +1,4 @@
+import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:image_picker/image_picker.dart';
@@ -188,13 +189,13 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
       );
       if (!mounted) return;
       setState(() => _student = updated);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
         content: Text('تم رفع "$label" بنجاح'),
         backgroundColor: AppColors.success,
       ));
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
         content: Text('تعذر رفع المستند، حاول مرة أخرى'),
         backgroundColor: AppColors.danger,
       ));
@@ -680,17 +681,17 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
     final summary = _wallet?['summary'] as Map<String, dynamic>? ?? {};
     final available = (summary['availableBalance'] as num?) ?? 0;
     if (available <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لا يوجد رصيد متاح للسحب حاليًا')));
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('لا يوجد رصيد متاح للسحب حاليًا')));
       return;
     }
     try {
       await AgentRepository.instance.requestPayout(amount: available.toDouble(), method: 'bank-transfer', payoutDetails: 'تحويل بنكي — بيانات الوكيل المسجّلة');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم إرسال طلب السحب بنجاح'), backgroundColor: AppColors.success));
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تم إرسال طلب السحب بنجاح'), backgroundColor: AppColors.success));
       _load();
     } catch (_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تعذر إرسال طلب السحب'), backgroundColor: AppColors.danger));
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر إرسال طلب السحب'), backgroundColor: AppColors.danger));
     }
   }
 
