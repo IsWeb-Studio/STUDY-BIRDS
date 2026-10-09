@@ -1,8 +1,25 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
+import '../../core/network/api_client.dart';
 
-/// Local photographs keep the carousel available even without a connection.
+class _BannerSlide {
+  final String tag;
+  final String title;
+  final String subtitle;
+  final String action;
+  final String destination;
+  final String? imageUrl;
+  const _BannerSlide({
+    required this.tag,
+    required this.title,
+    required this.subtitle,
+    required this.action,
+    required this.destination,
+    this.imageUrl,
+  });
+}
+
 class StudentBannerCarousel extends StatefulWidget {
   final ValueChanged<String> onExplore;
   const StudentBannerCarousel({super.key, required this.onExplore});
@@ -20,25 +37,22 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
   bool _dragging = false;
   bool _active = true;
 
-  static const _slides = [
-    (
-      image: 'campus',
+  static const _fallback = [
+    _BannerSlide(
       tag: 'وجهتك القادمة',
       title: 'جامعة تناسب طموحك',
       subtitle: 'اكتشف الجامعات وابدأ خطوتك القادمة بثقة.',
       action: 'استكشف الجامعات',
       destination: 'universities',
     ),
-    (
-      image: 'library',
+    _BannerSlide(
       tag: 'فرص تستحق الاكتشاف',
       title: 'طموحك يبدأ بفرصة',
       subtitle: 'تعرّف على المنح المتاحة واختر ما يناسبك.',
       action: 'اكتشف المنح',
       destination: 'scholarships',
     ),
-    (
-      image: 'students',
+    _BannerSlide(
       tag: 'مستقبلك بين يديك',
       title: 'تخصص تحبه، مستقبل تصنعه',
       subtitle: 'استكشف البرامج الدراسية وابنِ مسارك الجامعي.',
@@ -47,10 +61,16 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
     ),
   ];
 
+  // fallback local image per index (cycles if fewer remote banners)
+  static const _localImages = ['campus', 'library', 'students'];
+
+  List<_BannerSlide> _slides = _fallback;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _loadBanners();
     _timer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted ||
           !_active ||
@@ -66,6 +86,33 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
           duration: const Duration(milliseconds: 650),
           curve: Curves.easeInOutCubic);
     });
+  }
+
+  Future<void> _loadBanners() async {
+    try {
+      final raw = await ApiClient.instance.get('/content/banners', cached: false);
+      final list = raw as List<dynamic>;
+      if (list.isEmpty) return;
+      final slides = list.map((b) {
+        final m = b as Map<String, dynamic>;
+        return _BannerSlide(
+          tag: (m['tag'] as String?) ?? '',
+          title: (m['title'] as String?) ?? '',
+          subtitle: (m['subtitle'] as String?) ?? '',
+          action: (m['actionLabel'] as String?) ?? 'اكتشف المزيد',
+          destination: (m['destination'] as String?) ?? 'universities',
+          imageUrl: (m['imageUrl'] as String?) ?? '',
+        );
+      }).where((s) => s.title.isNotEmpty).toList();
+      if (slides.isNotEmpty && mounted) {
+        setState(() {
+          _slides = slides;
+          _index = 0;
+        });
+      }
+    } catch (_) {
+      // keep fallback
+    }
   }
 
   @override
@@ -112,9 +159,10 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
                 onPageChanged: (index) => setState(() => _index = index),
                 itemBuilder: (context, index) {
                   final slide = _slides[index];
+                  final localImg =
+                      _localImages[index % _localImages.length];
                   return Stack(fit: StackFit.expand, children: [
-                    Image.asset('assets/images/dashboard/${slide.image}.jpg',
-                        fit: BoxFit.cover, excludeFromSemantics: true),
+                    _buildBg(slide, localImg),
                     const DecoratedBox(
                         decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -128,11 +176,12 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Text(slide.tag,
-                              style: const TextStyle(
-                                  color: Color(0xFFFFCE91),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700)),
+                          if (slide.tag.isNotEmpty)
+                            Text(slide.tag,
+                                style: const TextStyle(
+                                    color: Color(0xFFFFCE91),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700)),
                           const SizedBox(height: 8),
                           Text(slide.title,
                               maxLines: 2,
@@ -143,11 +192,12 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
                                   height: 1.2,
                                   fontWeight: FontWeight.w700)),
                           const SizedBox(height: 6),
-                          Text(slide.subtitle,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 12.5)),
+                          if (slide.subtitle.isNotEmpty)
+                            Text(slide.subtitle,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 12.5)),
                           const SizedBox(height: 10),
                           TextButton(
                             onPressed: () =>
@@ -224,6 +274,27 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
           ]),
         ),
       ),
+    );
+  }
+
+  Widget _buildBg(_BannerSlide slide, String localImg) {
+    final url = slide.imageUrl ?? '';
+    if (url.isNotEmpty) {
+      return Image.network(
+        url,
+        fit: BoxFit.cover,
+        excludeFromSemantics: true,
+        errorBuilder: (_, __, ___) => Image.asset(
+          'assets/images/dashboard/$localImg.jpg',
+          fit: BoxFit.cover,
+          excludeFromSemantics: true,
+        ),
+      );
+    }
+    return Image.asset(
+      'assets/images/dashboard/$localImg.jpg',
+      fit: BoxFit.cover,
+      excludeFromSemantics: true,
     );
   }
 }
