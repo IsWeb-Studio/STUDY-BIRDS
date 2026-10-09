@@ -57,5 +57,14 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
     assert.equal((await request(`/invoices/${invoice.body._id}`,'DELETE')).status,409);
     const anotherOwner=await User.create({name:'Other',email:'other@crm.test',role:'admin'});assert.equal((await request(`/invoices/${invoice.body._id}`,'GET',undefined,anotherOwner)).status,404);
     assert.equal(await Invoice.countDocuments(),1);
+    const websiteInvoice=await Invoice.create({student:student._id,invoiceNumber:'WEB-ORIGINAL',description:'Original website invoice',amount:500});
+    const importedPayment=await request(`/invoices/${websiteInvoice._id}/payments`,'PATCH',{paidAmount:125,version:websiteInvoice.__v});
+    assert.equal(importedPayment.status,200);assert.equal(importedPayment.body.crmPaidAmount,125);
+    assert.equal((await request(`/invoices/${websiteInvoice._id}/payments`,'PATCH',{paidAmount:126,version:websiteInvoice.__v})).status,409);
+    const paidElsewhere=await Invoice.create({student:student._id,invoiceNumber:'WEB-PAID',description:'Paid externally',amount:500,status:'paid'});
+    assert.equal((await request(`/invoices/${paidElsewhere._id}/payments`,'PATCH',{paidAmount:100,version:paidElsewhere.__v})).status,409);
+    const proofInvoice=await Invoice.create({student:student._id,invoiceNumber:'WEB-PROOF',description:'Under review',amount:500});
+    await require('../src/models/PaymentProof').create({student:student._id,invoice:proofInvoice._id,amount:100,filePath:'https://example.test/proof.pdf',fileName:'proof.pdf'});
+    assert.equal((await request(`/invoices/${proofInvoice._id}/payments`,'PATCH',{paidAmount:100,version:proofInvoice.__v})).status,409);
   }finally{if(server)await new Promise(resolve=>server.close(resolve));await mongoose.disconnect();await mongo.stop();}
 });

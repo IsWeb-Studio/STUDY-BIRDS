@@ -11,7 +11,9 @@ const fail=(status,message)=>{throw Object.assign(new Error(message),{status});}
 router.use(requireSection('student-financials'));
 const owned=async(req)=>{
   if(!mongoose.isValidObjectId(req.params.id))fail(400,'Invalid invoice ID');
-  const row=await Invoice.findOne({_id:req.params.id,'crmIdentity.owner':req.user._id});
+  // Authorized finance staff also manage invoices originally created by the
+  // website. An invoice claimed by another integration remains inaccessible.
+  const row=await Invoice.findOne({_id:req.params.id,$or:[{'crmIdentity.owner':req.user._id},{'crmIdentity.owner':{$exists:false}}]});
   if(!row)fail(404,'Linked invoice not found');return row;
 };
 router.post('/',run(async(req,res)=>{
