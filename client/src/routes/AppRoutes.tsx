@@ -78,6 +78,7 @@ const AdminRecognitionsPage = lazy(() => import("../pages/admin/AdminRecognition
 const AdminServicesPage = lazy(() => import("../pages/admin/AdminServicesPage").then((module) => ({ default: module.AdminServicesPage })));
 const AdminFaqsPage = lazy(() => import("../pages/admin/AdminFaqsPage").then((module) => ({ default: module.AdminFaqsPage })));
 const AdminTestimonialsPage = lazy(() => import("../pages/admin/AdminTestimonialsPage").then((module) => ({ default: module.AdminTestimonialsPage })));
+const AdminBannersPage = lazy(() => import("../pages/admin/AdminBannersPage").then((module) => ({ default: module.AdminBannersPage })));
 const AdminSiteSettingsPage = lazy(() => import("../pages/admin/AdminSiteSettingsPage").then((module) => ({ default: module.AdminSiteSettingsPage })));
 const AdminAgencyRequestsPage = lazy(() => import("../pages/admin/AdminAgencyRequestsPage").then((module) => ({ default: module.AdminAgencyRequestsPage })));
 const AdminAgentsPage = lazy(() => import("../pages/admin/AdminAgentsResponsivePage").then((module) => ({ default: module.AdminAgentsResponsivePage })));
@@ -202,6 +203,7 @@ export const AppRoutes = () => (
           <Route path="/admin/services" element={<AdminServicesPage />} />
           <Route path="/admin/faqs" element={<AdminFaqsPage />} />
           <Route path="/admin/testimonials" element={<AdminTestimonialsPage />} />
+          <Route path="/admin/banners" element={<AdminBannersPage />} />
           <Route path="/admin/site-settings" element={<AdminSiteSettingsPage />} />
           <Route path="/admin/agency-requests" element={<AdminAgencyRequestsPage />} />
           <Route path="/admin/agents" element={<AdminAgentsPage />} />

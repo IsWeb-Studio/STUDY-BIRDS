@@ -615,6 +615,20 @@ export interface AgencyRequest {
   updatedAt?: string;
 }
 
+export interface Banner {
+  _id: string;
+  tag?: string;
+  title: string;
+  subtitle?: string;
+  actionLabel?: string;
+  destination?: string;
+  imageUrl?: string;
+  active?: boolean;
+  order?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Testimonial {
   _id: string;
   studentName: string;
