@@ -1,4 +1,7 @@
 const cacheStore = new Map();
+let cacheGeneration = 0;
+// Keep the fast server cache, but require browsers and proxies to revalidate.
+const cacheControl = "public, max-age=0, must-revalidate";
 
 const buildCacheKey = (req) => `${req.originalUrl}`;
 
@@ -31,6 +34,7 @@ const cacheRoute = (ttlMs = 60_000) => (req, res, next) => {
   }
 
   const key = buildCacheKey(req);
+  const requestGeneration = cacheGeneration;
   const cached = getCachedResponse(key);
 
   if (cached) {
@@ -46,7 +50,6 @@ const cacheRoute = (ttlMs = 60_000) => (req, res, next) => {
 
   res.send = (body) => {
     if (res.statusCode >= 200 && res.statusCode < 300) {
-      const cacheControl = `public, max-age=${Math.floor(ttlMs / 1000)}, stale-while-revalidate=${Math.floor(ttlMs / 2000)}`;
       res.set("Cache-Control", cacheControl);
       const payload = {
         statusCode: res.statusCode,
@@ -56,7 +59,8 @@ const cacheRoute = (ttlMs = 60_000) => (req, res, next) => {
           "Cache-Control": cacheControl,
         },
       };
-      setCachedResponse(key, payload, ttlMs);
+      // A read started before a mutation must not restore invalidated data.
+      if (requestGeneration === cacheGeneration) setCachedResponse(key, payload, ttlMs);
       res.set("X-Cache", "MISS");
     }
 
@@ -67,6 +71,7 @@ const cacheRoute = (ttlMs = 60_000) => (req, res, next) => {
 };
 
 const clearResponseCache = () => {
+  cacheGeneration++;
   cacheStore.clear();
 };
 
