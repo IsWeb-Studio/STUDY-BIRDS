@@ -201,6 +201,15 @@ const buildOurServiceSlug = async (title, currentId) => {
 };
 
 const buildOurServicePayload = async (body, currentService = null) => {
+  const numeric = {};
+  for(const key of ['price','durationDays']){
+    const value = body[key] === undefined ? currentService?.[key] ?? 0 : Number(body[key]);
+    if(!Number.isFinite(value) || value < 0 || (key==='durationDays' && !Number.isInteger(value)))throw Object.assign(new Error(`Invalid service field: ${key}`),{statusCode:400});
+    numeric[key]=value;
+  }
+  const journeyStage=body.journeyStage===undefined?currentService?.journeyStage || '':body.journeyStage;
+  if(!['','visa','travel','housing','arrival','registration','residence'].includes(journeyStage))throw Object.assign(new Error('Invalid journey stage'),{statusCode:400});
+
   const details = {};
   for (const [key, limit] of Object.entries({ priceDescription: 200, estimatedDuration: 200, requirementsText: 4000, documentsText: 4000 })) {
     const value = body[key] === undefined ? currentService?.[key] || '' : body[key];
@@ -218,6 +227,8 @@ const buildOurServicePayload = async (body, currentService = null) => {
 
   return {
     ...details,
+    ...numeric,
+    journeyStage,
     title,
     slug,
     image: body.image || "",
@@ -1024,6 +1035,8 @@ const deleteFaq = asyncHandler(async (req, res) => {
 });
 
 const deleteOurService = asyncHandler(async (req, res) => {
+  if(await require('../models/ServiceRequest').exists({service:req.params.id}))return res.status(409).json({message:'لا يمكن حذف خدمة مرتبطة بطلبات؛ يمكنك تعديلها.'});
+
   const service = await OurService.findByIdAndDelete(req.params.id);
 
   if (!service) {

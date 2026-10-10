@@ -42,11 +42,13 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
     app.put('/api/crm/student-listings/:id',protect,section('community'),require('../src/controllers/studentListingsController').save);
     const catalogAdmin=require('../src/controllers/adminController'),catalogUniversity=require('../src/controllers/universityController'),catalogProgram=require('../src/controllers/programController'),catalogField=require('../src/controllers/studyFieldController');
     for(const [path,permission,create,update,remove] of [
+      ['services','services',catalogAdmin.createOurService,catalogAdmin.updateOurService,catalogAdmin.deleteOurService],
       ['countries','countries',catalogAdmin.createCountry,catalogAdmin.updateCountry,catalogAdmin.deleteCountry],
       ['universities','universities',catalogUniversity.createUniversity,catalogUniversity.updateUniversity,catalogUniversity.deleteUniversity],
       ['programs','programs',catalogProgram.createProgram,catalogProgram.updateProgram,catalogProgram.deleteProgram],
       ['fields','study-fields',catalogField.createStudyField,catalogField.updateStudyField,catalogField.deleteStudyField]
     ]){app.post(`/api/crm/catalog-${path}`,protect,section(permission),create);app.put(`/api/crm/catalog-${path}/:id`,protect,section(permission),update);app.delete(`/api/crm/catalog-${path}/:id`,protect,section(permission),remove);}
+    app.use('/api/crm/service-control',require('../src/routes/serviceRequestRoutes'));
     app.use('/api/crm',require('../src/routes/crmRoutes'));app.use(require('../src/middleware/errorMiddleware').errorHandler);
     server=app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));
     const base=`http://127.0.0.1:${server.address().port}/api/crm`;
@@ -181,6 +183,33 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
     assert.equal((await request(`/catalog-universities/${uid}`,'DELETE')).status,200);
     assert.equal((await request(`/catalog-countries/${cid}`,'DELETE')).status,200);
   }finally{storage.uploadPrivateDocument=originalUpload;}
+    {
+    const serviceCreated=await request('/catalog-services','POST',{title:'QA Service',price:250,durationDays:3,journeyStage:'arrival'});
+    assert.equal(serviceCreated.status,201);assert.equal(serviceCreated.body.price,250);assert.equal(serviceCreated.body.durationDays,3);
+    const serviceId=serviceCreated.body._id;
+    const serviceChanged=await request(`/catalog-services/${serviceId}`,'PUT',{title:'QA Service Updated',price:300,durationDays:4,journeyStage:'registration'});
+    assert.equal(serviceChanged.status,200);assert.equal(serviceChanged.body.price,300);assert.equal(serviceChanged.body.journeyStage,'registration');
+    const preserved=await request(`/catalog-services/${serviceId}`,'PUT',{title:'QA Service Updated',detailBody:'Updated text'});
+    assert.equal(preserved.body.price,300);assert.equal(preserved.body.durationDays,4);assert.equal(preserved.body.journeyStage,'registration');
+    assert.equal((await request(`/catalog-services/${serviceId}`,'PUT',{price:-1})).status,400);
+    assert.equal((await request(`/catalog-services/${serviceId}`,'PUT',{durationDays:1.5})).status,400);
+    const serviceStaff=await User.create({name:'Service Staff',email:'service-staff@crm.test',role:'employee',permissions:['services'],isActive:true});
+    const inactiveStaff=await User.create({name:'Inactive Staff',email:'service-inactive@crm.test',role:'employee',permissions:['services'],isActive:false});
+    const assignees=await request('/service-assignees');assert.equal(assignees.status,200);assert(assignees.body.some(row=>row._id===String(serviceStaff._id)));assert(!assignees.body.some(row=>row._id===String(inactiveStaff._id)));assert(assignees.body.every(row=>!row.password));
+    assert.equal((await request('/service-assignees','GET',undefined,employee)).status,403);
+    const serviceRequest=await require('../src/models/ServiceRequest').create({student:student._id,service:serviceId,serviceTitle:'QA Service Updated',price:300});
+    const servicePath=`/service-control/${serviceRequest._id}`;
+    const assigned=await request(servicePath,'PATCH',{status:'assigned',assignedTo:String(serviceStaff._id),staffNote:'Follow up',expectedVersion:0},serviceStaff);
+    assert.equal(assigned.status,200);assert.equal(assigned.body.assignedTo._id,String(serviceStaff._id));assert.equal(assigned.body.__v,1);
+    assert.equal((await request(servicePath,'PATCH',{status:'in-progress',expectedVersion:0})).status,409);
+    assert.equal((await request(servicePath,'PATCH',{assignedTo:String(inactiveStaff._id),expectedVersion:1})).status,400);
+    assert.equal((await request(servicePath,'PATCH',{assignedTo:String(student._id),expectedVersion:1})).status,400);
+    const unassigned=await request(servicePath,'PATCH',{assignedTo:null,status:'in-progress',expectedVersion:1});assert.equal(unassigned.status,200);assert.equal(unassigned.body.assignedTo,null);
+    assert.equal((await request(servicePath+'/driver','PATCH',{name:'Driver',phone:'123',etaMinutes:15})).status,200);
+    assert.equal((await request(`/catalog-services/${serviceId}`,'DELETE')).status,409);
+    await require('../src/models/ServiceRequest').deleteOne({_id:serviceRequest._id});
+    assert.equal((await request(`/catalog-services/${serviceId}`,'DELETE')).status,200);
+    }
     const invoice=await request('/invoices','POST',{studentId:String(student._id),companyId:'company-default',recordId:'INV-100',invoiceNumber:'INV-100',description:'Education',amount:1000,currency:'USD'});assert.equal(invoice.status,201);
     const same=await request('/invoices','POST',{studentId:String(student._id),companyId:'company-default',recordId:'INV-100',invoiceNumber:'INV-100',description:'Education',amount:1000,currency:'USD'});assert.equal(same.body._id,invoice.body._id);
     const partial=await request(`/invoices/${invoice.body._id}/payments`,'PATCH',{paidAmount:300,version:invoice.body.__v});assert.equal(partial.status,200);assert.equal(partial.body.crmPaidAmount,300);assert.equal(partial.body.status,'unpaid');

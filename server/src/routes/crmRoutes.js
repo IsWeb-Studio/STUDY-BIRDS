@@ -14,6 +14,12 @@ router.get('/support-assignees',requireSection('support'),run(async(req,res)=>{
     .select('_id name email employeeRole').sort({name:1}).lean();
   res.json(staff);
 }));
+router.get('/service-assignees',run(async(req,res)=>{
+  if(!hasSection(req.user,'services') && !hasSection(req.user,'support'))return res.status(403).json({message:'غير مصرح'});
+  const staff=await User.find({isActive:true,$or:[{role:'admin'},{role:'employee',permissions:{$in:['services','support']}}]})
+    .select('_id name email employeeRole').sort({name:1}).lean();
+  res.json(staff);
+}));
 router.use('/invoices',require('./crmFinanceRoutes'));
 router.post('/accounts/link',run(async(req,res)=>{
   const body=req.body || {};
