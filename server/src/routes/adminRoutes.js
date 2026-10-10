@@ -30,9 +30,11 @@ const {
   createRecognition,
   createOurService,
   upsertOurStory,
+  deleteOurStory,
   createFaq,
   createExhibitionArticle,
   upsertUpcomingEvent,
+  deleteUpcomingEvent,
   createPastEvent,
   updateTestimonial,
   updateRecognition,
@@ -199,6 +201,7 @@ router.put("/our-services/:id", updateOurService);
 router.delete("/our-services/:id", deleteOurService);
 router.get("/our-story", getOurStoryAdmin);
 router.put("/our-story", upsertOurStory);
+router.delete("/our-story/:id", deleteOurStory);
 router.post("/our-story/upload-image", upload.single("file"), uploadOurStoryImage);
 router.get("/faqs", getFaqsAdmin);
 router.post("/faqs", createFaq);
@@ -206,6 +209,7 @@ router.put("/faqs/:id", updateFaq);
 router.delete("/faqs/:id", deleteFaq);
 router.get("/upcoming-event", getUpcomingEventAdmin);
 router.put("/upcoming-event", upsertUpcomingEvent);
+router.delete("/upcoming-event/:id", deleteUpcomingEvent);
 router.post("/upcoming-event/upload-image", upload.single("file"), uploadUpcomingEventImage);
 router.get("/past-events", getPastEventsAdmin);
 router.post("/past-events/upload-media", upload.single("file"), uploadPastEventMedia);

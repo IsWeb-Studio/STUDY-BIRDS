@@ -833,6 +833,20 @@ const upsertOurStory = asyncHandler(async (req, res) => {
   res.json(existingStory);
 });
 
+const deleteOurStory = asyncHandler(async (req,res) => {
+  if(!require('mongoose').isValidObjectId(req.params.id))return res.status(400).json({message:'معرّف المحتوى غير صالح'});
+  const deleted=await OurStory.findByIdAndDelete(req.params.id);
+  if(!deleted)return res.status(404).json({message:'المحتوى غير موجود'});
+  invalidatePublicContent();res.json({message:'تم حذف محتوى من نحن'});
+});
+const deleteUpcomingEvent = asyncHandler(async (req,res) => {
+  if(!require('mongoose').isValidObjectId(req.params.id))return res.status(400).json({message:'معرّف الفعالية غير صالح'});
+  if(await EventRegistration.exists({upcomingEvent:req.params.id}))return res.status(409).json({message:'لا يمكن حذف فعالية مرتبطة بتسجيلات؛ يمكنك إلغاء نشرها.'});
+  const deleted=await UpcomingEvent.findByIdAndDelete(req.params.id);
+  if(!deleted)return res.status(404).json({message:'الفعالية غير موجودة'});
+  invalidatePublicContent();res.json({message:'تم حذف الفعالية القادمة'});
+});
+
 const createExhibitionArticle = asyncHandler(async (req, res) => {
   const payload = {
     ...buildExhibitionPayload(req.body),
@@ -1237,9 +1251,11 @@ module.exports = {
   createRecognition,
   createOurService,
   upsertOurStory,
+  deleteOurStory,
   createFaq,
   createExhibitionArticle,
   upsertUpcomingEvent,
+  deleteUpcomingEvent,
   createPastEvent,
   updateTestimonial,
   updateRecognition,

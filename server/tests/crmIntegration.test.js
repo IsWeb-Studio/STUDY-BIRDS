@@ -49,6 +49,17 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
       ['programs','programs',catalogProgram.createProgram,catalogProgram.updateProgram,catalogProgram.deleteProgram],
       ['fields','study-fields',catalogField.createStudyField,catalogField.updateStudyField,catalogField.deleteStudyField]
     ]){app.post(`/api/crm/catalog-${path}`,protect,section(permission),create);app.put(`/api/crm/catalog-${path}/:id`,protect,section(permission),update);app.delete(`/api/crm/catalog-${path}/:id`,protect,section(permission),remove);}
+    for(const [path,permission,create,update,remove] of [
+      ['testimonials','testimonials',catalogAdmin.createTestimonial,catalogAdmin.updateTestimonial,catalogAdmin.deleteTestimonial],
+      ['recognitions','recognitions',catalogAdmin.createRecognition,catalogAdmin.updateRecognition,catalogAdmin.deleteRecognition],
+      ['exhibitions','exhibitions',catalogAdmin.createExhibitionArticle,catalogAdmin.updateExhibitionArticle,catalogAdmin.deleteExhibitionArticle],
+      ['past-events','past-events',catalogAdmin.createPastEvent,catalogAdmin.updatePastEvent,catalogAdmin.deletePastEvent],
+      ['faqs','faqs',catalogAdmin.createFaq,catalogAdmin.updateFaq,catalogAdmin.deleteFaq],
+      ['knowledge','knowledge-base',supportController.createKnowledgeBaseItemAdmin,supportController.updateKnowledgeBaseItemAdmin,supportController.deleteKnowledgeBaseItemAdmin]
+    ]){app.post(`/api/crm/content-${path}`,protect,section(permission),create);app.put(`/api/crm/content-${path}/:id`,protect,section(permission),update);app.delete(`/api/crm/content-${path}/:id`,protect,section(permission),remove);}
+    for(const [path,permission,get,save,remove] of [['our-story','our-story',catalogAdmin.getOurStoryAdmin,catalogAdmin.upsertOurStory,catalogAdmin.deleteOurStory],['upcoming-event','upcoming-event',catalogAdmin.getUpcomingEventAdmin,catalogAdmin.upsertUpcomingEvent,catalogAdmin.deleteUpcomingEvent]]){
+      app.get(`/api/crm/content-${path}`,protect,section(permission),get);app.put(`/api/crm/content-${path}`,protect,section(permission),save);app.delete(`/api/crm/content-${path}/:id`,protect,section(permission),remove);
+    }
     app.use('/api/crm/service-control',require('../src/routes/serviceRequestRoutes'));
     app.use('/api/crm',require('../src/routes/crmRoutes'));app.use(require('../src/middleware/errorMiddleware').errorHandler);
     server=app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));
@@ -219,6 +230,29 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
     assert.equal((await request(`/catalog-services/${serviceId}`,'DELETE')).status,409);
     await require('../src/models/ServiceRequest').deleteOne({_id:serviceRequest._id});
     assert.equal((await request(`/catalog-services/${serviceId}`,'DELETE')).status,200);
+    }
+    {
+    const contentFixtures={testimonials:{studentName:'QA Student',quote:'QA quote'},recognitions:{title:'QA Recognition'},exhibitions:{title:'QA Article',summary:'QA summary',body:'QA Body',articleHeadings:['First'],articleBodies:['First body'],seoTitle:'QA SEO',published:false},'past-events':{title:'QA Past Event',mediaItems:[{type:'image',url:'https://example.test/image.jpg'}]},faqs:{question:'QA Question',answer:'QA Answer'},knowledge:{title:'QA Knowledge',body:'QA Body',resourceType:'pdf',fileUrl:'https://example.test/resource.pdf',targetRole:'student',published:false}};
+    for(const [path,body] of Object.entries(contentFixtures)){
+      const created=await request(`/content-${path}`,'POST',body);assert.equal(created.status,201,`${path}: ${JSON.stringify(created.body)}`);const recordId=created.body._id;
+      const updated=await request(`/content-${path}/${recordId}`,'PUT',{...created.body,...body,...(path==='testimonials'?{quote:'Updated quote'}:path==='faqs'?{answer:'Updated answer'}:{title:'Updated content'})});assert.equal(updated.status,200);
+      if(path==='exhibitions'){assert.equal(updated.body.seoTitle,'QA SEO');assert.deepEqual(updated.body.articleBodies,['First body']);}
+      if(path==='past-events')assert.equal(updated.body.mediaItems.length,1);
+      if(path==='knowledge'){assert.equal(updated.body.resourceType,'pdf');assert.equal(updated.body.targetRole,'student');}
+      assert.equal((await request(`/content-${path}/${recordId}`,'DELETE',undefined,employee)).status,403);
+      assert.equal((await request(`/content-${path}/${recordId}`,'DELETE')).status,200);
+    }
+    const storyBody={heroTitle:'QA Story',founders:[{name:'Founder',role:'Director'}],timelineItems:[{year:'2026',title:'Started',body:'Story'}],impactStats:[{value:'100',label:'Students'}],isPublished:true};
+    assert.equal((await request('/content-our-story')).body._id,undefined);
+    const story=await request('/content-our-story','PUT',storyBody);assert.equal(story.status,201);assert.equal(story.body.founders[0].name,'Founder');
+    const storyUpdate=await request('/content-our-story','PUT',{...storyBody,heroTitle:'Updated story'});assert.equal(storyUpdate.status,200);assert.equal(storyUpdate.body._id,story.body._id);assert.equal(storyUpdate.body.timelineItems.length,1);
+    assert.equal((await request(`/content-our-story/${story.body._id}`,'DELETE')).status,200);assert.equal((await request('/content-our-story')).body._id,undefined);
+    const upcoming=await request('/content-upcoming-event','PUT',{title:'QA Upcoming',isPublished:true});assert.equal(upcoming.status,201);
+    const registration=await require('../src/models/EventRegistration').create({name:'Registrant',phone:'123',fieldOfInterest:'Engineering',currentCountry:'Egypt',desiredStudyCountry:'Turkey',upcomingEvent:upcoming.body._id});
+    assert.equal((await request(`/content-upcoming-event/${upcoming.body._id}`,'DELETE')).status,409);
+    assert.equal((await request('/content-upcoming-event','PUT',{title:'QA Upcoming',isPublished:false})).status,200);
+    await require('../src/models/EventRegistration').deleteOne({_id:registration._id});
+    assert.equal((await request(`/content-upcoming-event/${upcoming.body._id}`,'DELETE')).status,200);assert.equal((await request('/content-upcoming-event')).body._id,undefined);
     }
     const invoice=await request('/invoices','POST',{studentId:String(student._id),companyId:'company-default',recordId:'INV-100',invoiceNumber:'INV-100',description:'Education',amount:1000,currency:'USD'});assert.equal(invoice.status,201);
     const same=await request('/invoices','POST',{studentId:String(student._id),companyId:'company-default',recordId:'INV-100',invoiceNumber:'INV-100',description:'Education',amount:1000,currency:'USD'});assert.equal(same.body._id,invoice.body._id);
