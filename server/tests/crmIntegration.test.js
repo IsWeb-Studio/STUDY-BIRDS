@@ -40,6 +40,13 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
     app.get('/api/crm/student-listings',protect,section('community'),require('../src/controllers/studentListingsController').list(true));
     app.post('/api/crm/student-listings',protect,section('community'),require('../src/controllers/studentListingsController').save);
     app.put('/api/crm/student-listings/:id',protect,section('community'),require('../src/controllers/studentListingsController').save);
+    const catalogAdmin=require('../src/controllers/adminController'),catalogUniversity=require('../src/controllers/universityController'),catalogProgram=require('../src/controllers/programController'),catalogField=require('../src/controllers/studyFieldController');
+    for(const [path,permission,create,update,remove] of [
+      ['countries','countries',catalogAdmin.createCountry,catalogAdmin.updateCountry,catalogAdmin.deleteCountry],
+      ['universities','universities',catalogUniversity.createUniversity,catalogUniversity.updateUniversity,catalogUniversity.deleteUniversity],
+      ['programs','programs',catalogProgram.createProgram,catalogProgram.updateProgram,catalogProgram.deleteProgram],
+      ['fields','study-fields',catalogField.createStudyField,catalogField.updateStudyField,catalogField.deleteStudyField]
+    ]){app.post(`/api/crm/catalog-${path}`,protect,section(permission),create);app.put(`/api/crm/catalog-${path}/:id`,protect,section(permission),update);app.delete(`/api/crm/catalog-${path}/:id`,protect,section(permission),remove);}
     app.use('/api/crm',require('../src/routes/crmRoutes'));app.use(require('../src/middleware/errorMiddleware').errorHandler);
     server=app.listen(0,'127.0.0.1');await new Promise(resolve=>server.once('listening',resolve));
     const base=`http://127.0.0.1:${server.address().port}/api/crm`;
@@ -153,7 +160,27 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
       const serviceUpload=await fetch(`${base}/service-requests/${service._id}/documents`,{method:'POST',headers:{Authorization:`Bearer ${token(owner)}`},body:serviceForm});assert.equal(serviceUpload.status,201);
       const serviceDocument=await serviceUpload.json();assert.equal(serviceDocument.storage,undefined);assert.ok(await require('../src/models/ServiceRequest').exists({_id:service._id,'documents._id':serviceDocument._id}));
       assert.equal((await request(`/service-requests/${service._id}/documents/${new mongoose.Types.ObjectId()}/access`,'POST')).status,404);
-    }finally{storage.uploadPrivateDocument=originalUpload;}
+      const countryCreated=await request('/catalog-countries','POST',{name:'QA Catalog Country',code:'QA'});assert.equal(countryCreated.status,201);
+    const cid=countryCreated.body._id;
+    assert.equal((await request(`/catalog-countries/${cid}`,'PUT',{name:'Updated Catalog Country',code:'QA'})).status,200);
+    const fieldCreated=await request('/catalog-fields','POST',{name:'QA Catalog Field',featured:true});assert.equal(fieldCreated.status,201);
+    const fid=fieldCreated.body._id;
+    assert.equal((await request(`/catalog-fields/${fid}`,'PUT',{name:'QA Catalog Field',description:'Updated',featured:true})).status,200);
+    const uniCreated=await request('/catalog-universities','POST',{name:'QA Catalog University',country:cid,city:'QA City'});assert.equal(uniCreated.status,201);
+    const uid=uniCreated.body._id;
+    assert.equal((await request(`/catalog-universities/${uid}`,'PUT',{name:'Updated Catalog University',country:cid,city:'Updated City'})).status,200);
+    const programBody={title:'QA Program',university:uid,degreeLevel:'Bachelor',fieldOfStudy:'QA Catalog Field',language:'English',tuition:100};
+    const programCreated=await request('/catalog-programs','POST',programBody);assert.equal(programCreated.status,201);const pid=programCreated.body._id;
+    assert.equal((await request(`/catalog-programs/${pid}`,'PUT',{...programBody,title:'Updated QA Program',tuition:200})).status,200);
+    assert.equal((await request(`/catalog-countries/${cid}`,'DELETE')).status,409);
+    assert.equal((await request(`/catalog-universities/${uid}`,'DELETE')).status,409);
+    assert.equal((await request(`/catalog-fields/${fid}`,'DELETE')).status,409);
+    assert.equal((await request('/catalog-countries','POST',{name:'Forbidden',code:'XX'},employee)).status,403);
+    assert.equal((await request(`/catalog-programs/${pid}`,'DELETE')).status,200);
+    assert.equal((await request(`/catalog-fields/${fid}`,'DELETE')).status,200);
+    assert.equal((await request(`/catalog-universities/${uid}`,'DELETE')).status,200);
+    assert.equal((await request(`/catalog-countries/${cid}`,'DELETE')).status,200);
+  }finally{storage.uploadPrivateDocument=originalUpload;}
     const invoice=await request('/invoices','POST',{studentId:String(student._id),companyId:'company-default',recordId:'INV-100',invoiceNumber:'INV-100',description:'Education',amount:1000,currency:'USD'});assert.equal(invoice.status,201);
     const same=await request('/invoices','POST',{studentId:String(student._id),companyId:'company-default',recordId:'INV-100',invoiceNumber:'INV-100',description:'Education',amount:1000,currency:'USD'});assert.equal(same.body._id,invoice.body._id);
     const partial=await request(`/invoices/${invoice.body._id}/payments`,'PATCH',{paidAmount:300,version:invoice.body.__v});assert.equal(partial.status,200);assert.equal(partial.body.crmPaidAmount,300);assert.equal(partial.body.status,'unpaid');

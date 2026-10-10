@@ -46,6 +46,8 @@ const updateStudyField = asyncHandler(async (req, res) => {
 });
 
 const deleteStudyField = asyncHandler(async (req, res) => {
+  const existing=await StudyField.findById(req.params.id);
+  if(existing && (await require('../models/Program').exists({$or:[{fieldOfStudy:existing.name},{fieldsOfStudy:existing.name}]}) || await require('../models/CommunityPost').exists({studyField:existing._id}))){res.status(409);throw new Error('Study field is in use and cannot be deleted');}
   const studyField = await StudyField.findByIdAndDelete(req.params.id);
 
   if (!studyField) {

@@ -580,6 +580,7 @@ const updateCountry = asyncHandler(async (req, res) => {
 });
 
 const deleteCountry = asyncHandler(async (req, res) => {
+  if(await University.exists({country:req.params.id})){res.status(409);throw new Error('Country has universities and cannot be deleted');}
   const country = await Country.findByIdAndDelete(req.params.id);
 
   if (!country) {
