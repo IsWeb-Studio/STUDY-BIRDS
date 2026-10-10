@@ -99,7 +99,7 @@ app.get("/api/health", (req, res) => {
     status: healthy ? 'ok' : 'degraded',
     service: 'study-birds-api',
     crmIntegration: 1,
-    crmControlVersion: 8,
+    crmControlVersion: 9,
     buildCommit: process.env.RENDER_GIT_COMMIT || process.env.VERCEL_GIT_COMMIT_SHA || null,
     db: dbStatus,
     uptime: Math.floor(process.uptime()),

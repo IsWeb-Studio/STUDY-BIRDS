@@ -77,6 +77,24 @@ router.post('/accounts', run(async (req,res) => {
   const savedProfile = body.kind === 'student' ? await profileSave(user._id,profile,true) : undefined;
   res.status(201).json({...safeAccount(user), ...(savedProfile ? {profile:savedProfile.toObject()} : {})});
 }));
+router.post('/partners',requireSection('agents'),run(async(req,res)=>{
+  const body=req.body || {},profileKeys=['phone','companyName','website','location','taxId','bio','address'];
+  if(Object.keys(body).some(key=>!['name','email','password','isActive','profile','companyId','recordId'].includes(key)) || !/^[\w-]{1,100}$/.test(body.companyId || '') || !/^[\w-]{1,100}$/.test(body.recordId || ''))fail(400,'Invalid partner identity or fields');
+  if(body.profile !== undefined && (!body.profile || typeof body.profile!=='object' || Array.isArray(body.profile) || Object.entries(body.profile).some(([key,value])=>!profileKeys.includes(key) || typeof value!=='string' || value.length>2000)))fail(400,'Invalid partner profile');
+  if(typeof body.password!=='string')fail(400,'Password is required');
+  const account=accountPayload({name:body.name,email:body.email,password:body.password,...(body.isActive!==undefined?{isActive:body.isActive}:{})});
+  const identity={owner:req.user._id,companyId:body.companyId,recordId:body.recordId};
+  if(body.profile)await new Profile({user:new mongoose.Types.ObjectId(),...body.profile}).validate();
+  let partner=await User.findOne({'crmIdentity.owner':identity.owner,'crmIdentity.companyId':identity.companyId,'crmIdentity.recordId':identity.recordId});
+  if(partner){if(partner.role!=='partner' || partner.email!==account.email)fail(409,'CRM identity already belongs to a different account');}
+  else{
+    if(await User.exists({email:account.email}))fail(409,'Email already exists; existing accounts are not overwritten');
+    try{partner=await User.create({...account,role:'partner',crmIdentity:identity,emailVerified:false});}
+    catch(error){if(error.code!==11000)throw error;partner=await User.findOne({'crmIdentity.owner':identity.owner,'crmIdentity.companyId':identity.companyId,'crmIdentity.recordId':identity.recordId});if(!partner || partner.role!=='partner' || partner.email!==account.email)fail(409,'Partner creation conflicted');}
+  }
+  const profile=await profileSave(partner._id,body.profile,true);
+  res.status(201).json({...safeAccount(partner),__v:partner.__v,profile:profile.toObject()});
+}));
 router.param('id',(req,res,next,id) => mongoose.isValidObjectId(id) ? next() : res.status(400).json({message:'Invalid account ID'}));
 router.patch('/partners/:id',requireSection('agents'),run(async(req,res)=>{
   const body=req.body || {},keys=['name','email','isActive','profile','version'];

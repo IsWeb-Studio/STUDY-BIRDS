@@ -1,3 +1,4 @@
+const {crmPagination,crmPage}=require('../utils/crmPagination');
 const mongoose = require("mongoose");
 const asyncHandler = require("../utils/asyncHandler");
 const StudentReferral = require("../models/StudentReferral");
@@ -68,8 +69,9 @@ const redeemWalletCredit = asyncHandler(async (req, res) => {
 const getWalletEntriesAdmin = asyncHandler(async (req, res) => {
   const query = {};
   if (req.query.student && mongoose.isValidObjectId(req.query.student)) query.student = req.query.student;
-  const entries = await StudentWalletEntry.find(query).populate("student", "name email").populate("createdBy", "name").sort({ createdAt: -1 }).limit(300).lean();
-  res.json(entries);
+  const pagination=crmPagination(req.query);
+  const entries = await StudentWalletEntry.find(query).populate("student", "name email").populate("createdBy", "name").sort({ createdAt: -1, _id:-1 }).skip(pagination?.skip || 0).limit(pagination?.limit || 300).lean();
+  res.json(pagination?crmPage(entries,await StudentWalletEntry.countDocuments(query),pagination):entries);
 });
 
 const createWalletAdjustmentAdmin = asyncHandler(async (req, res) => {

@@ -1,3 +1,4 @@
+const {crmPagination,crmPage}=require('../utils/crmPagination');
 const mongoose = require("mongoose");
 const asyncHandler = require("../utils/asyncHandler");
 const AccommodationListing = require("../models/AccommodationListing");
@@ -71,11 +72,12 @@ const deleteAccommodationListing = asyncHandler(async (req, res) => {
 const getAccommodationBookingsAdmin = asyncHandler(async (req, res) => {
   const filter = {};
   if (req.query.student) filter.student = req.query.student;
-  const bookings = await AccommodationBooking.find(filter)
-    .populate("student", "name")
+  const pagination=crmPagination(req.query);
+  const query=AccommodationBooking.find(filter).populate("student", "name")
     .populate({ path: "listing", select: "title type university price currency", populate: { path: "university", select: "name" } })
-    .sort({ createdAt: -1 }).limit(500).lean();
-  res.json(bookings);
+    .sort({ createdAt: -1, _id:-1 });
+  const [bookings,total]=await Promise.all([query.skip(pagination?.skip || 0).limit(pagination?.limit || 500).lean(),pagination?AccommodationBooking.countDocuments(filter):Promise.resolve(0)]);
+  res.json(pagination?crmPage(bookings,total,pagination):bookings);
 });
 
 const updateAccommodationBookingStatus = asyncHandler(async (req, res) => {

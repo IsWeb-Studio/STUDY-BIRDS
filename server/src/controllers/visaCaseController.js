@@ -1,3 +1,4 @@
+const {crmPagination,crmPage}=require('../utils/crmPagination');
 const mongoose = require('mongoose');
 const Application = require('../models/Application');
 const asyncHandler = require('../utils/asyncHandler');
@@ -6,13 +7,16 @@ const { VISA_STATES, isVisaCaseEligible, visaCaseView } = require('../utils/visa
 const { advanceTo } = require('../utils/journeyAutomation');
 
 const listVisaCases = asyncHandler(async (req, res) => {
-  const candidates = await Application.find({ status: { $nin: ['rejected', 'file-completed-rejected', 'file-completed-accepted'] } })
+  const pagination=crmPagination(req.query);
+  const filter={status:{$nin:['rejected','file-completed-rejected','file-completed-accepted']},...(pagination?{$or:[{detailedStatus:{$in:['accepted','final-admission','visa-preparation']}},{$and:[{$or:[{detailedStatus:null},{detailedStatus:''}]},{status:{$in:['accepted','final-admission','visa-preparation','final-accepted']}}]}]}:{})};
+  const candidates = await Application.find(filter)
     .select('student program university status detailedStatus visaCase __v updatedAt')
     .populate('student', 'name')
     .populate('program', 'title')
     .populate('university', 'name')
-    .sort({ updatedAt: -1 })
-    .limit(500)
+    .sort({ updatedAt: -1, _id:-1 })
+    .skip(pagination?.skip || 0)
+    .limit(pagination?.limit || 500)
     .lean();
   const rows = candidates.filter(isVisaCaseEligible).map(app => ({
     applicationId: app._id,
@@ -20,7 +24,7 @@ const listVisaCases = asyncHandler(async (req, res) => {
     program: app.program?.title || '', university: app.university?.name || '',
     ...visaCaseView(app),
   }));
-  res.json(rows);
+  res.json(pagination?crmPage(rows,await Application.countDocuments(filter),pagination):rows);
 });
 
 const getVisaCase = asyncHandler(async (req, res) => {

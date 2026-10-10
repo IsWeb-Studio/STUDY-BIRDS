@@ -1,3 +1,4 @@
+const {crmPagination,crmPage}=require('../utils/crmPagination');
 const mongoose = require("mongoose");
 const asyncHandler = require("../utils/asyncHandler");
 const CommunityPost = require("../models/CommunityPost");
@@ -170,10 +171,12 @@ const listPostsAdmin = asyncHandler(async (req, res) => {
   if (req.query.topic && COMMUNITY_TOPICS.includes(req.query.topic)) query.topic = req.query.topic;
   // "reported" = posts with any open report on the post or one of its comments.
   if (req.query.reported === "1") query._id = { $in: await CommunityReport.distinct("post", { status: "open" }) };
+  const pagination=crmPagination(req.query);
   const posts = await CommunityPost.find(query).populate("author", "name email").populate("moderatedBy", "name")
-    .populate("studyField", "name").sort({ createdAt: -1 }).limit(300).lean();
+    .populate("studyField", "name").sort({ createdAt: -1, _id:-1 }).skip(pagination?.skip || 0).limit(pagination?.limit || 300).lean();
   const counts = await openReportCounts(posts.map((post) => post._id));
-  res.json(posts.map((post) => ({ ...post, openReports: counts.get(String(post._id)) || 0 })));
+  const items=posts.map(post=>({...post,openReports:counts.get(String(post._id)) || 0}));
+  res.json(pagination?crmPage(items,await CommunityPost.countDocuments(query),pagination):items);
 });
 
 const getPostAdmin = asyncHandler(async (req, res) => {
@@ -191,17 +194,20 @@ const getPostAdmin = asyncHandler(async (req, res) => {
 
 const listReportsAdmin = asyncHandler(async (req, res) => {
   const status = ["open", "resolved", "dismissed"].includes(req.query.status) ? req.query.status : "open";
+  const pagination=crmPagination(req.query);
   const reports = await CommunityReport.find({ status }).populate("reporter", "name email").populate("post", "title status")
-    .populate("reviewedBy", "name").sort({ createdAt: -1 }).limit(300).lean();
-  res.json(reports);
+    .populate("reviewedBy", "name").sort({ createdAt: -1, _id:-1 }).skip(pagination?.skip || 0).limit(pagination?.limit || 300).lean();
+  res.json(pagination?crmPage(reports,await CommunityReport.countDocuments({status}),pagination):reports);
 });
 
 const listModerationLogAdmin = asyncHandler(async (req, res) => {
   const query = {};
   if (req.query.post && validId(req.query.post)) query.post = req.query.post;
   if (req.query.subject && validId(req.query.subject)) query.subject = req.query.subject;
-  res.json(await CommunityModerationLog.find(query).populate("actor", "name").populate("subject", "name email").populate("post", "title")
-    .sort({ createdAt: -1 }).limit(300).lean());
+  const pagination=crmPagination(req.query);
+  const items=await CommunityModerationLog.find(query).populate("actor", "name").populate("subject", "name email").populate("post", "title")
+    .sort({ createdAt: -1, _id:-1 }).skip(pagination?.skip || 0).limit(pagination?.limit || 300).lean();
+  res.json(pagination?crmPage(items,await CommunityModerationLog.countDocuments(query),pagination):items);
 });
 
 // ---- Suspensions -------------------------------------------------------------

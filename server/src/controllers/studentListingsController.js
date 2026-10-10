@@ -1,3 +1,4 @@
+const {crmPagination,crmPage}=require('../utils/crmPagination');
 const mongoose = require('mongoose');
 const run = require('../utils/asyncHandler');
 const Listing = require('../models/StudentListing');
@@ -10,7 +11,9 @@ const list = (staff = false) => run(async (req, res) => {
     { $or: [{ validFrom: null }, { validFrom: { $lte: new Date() } }] },
     { $or: [{ expiresAt: null }, { expiresAt: { $gt: new Date() } }] },
   ] });
-  res.json(await Listing.find(query).select(staff ? '' : '-updatedBy').sort({ createdAt: -1 }).limit(200).lean());
+  const pagination=staff?crmPagination(req.query):null;
+  const items=await Listing.find(query).select(staff ? '' : '-updatedBy').sort({ createdAt: -1, _id:-1 }).skip(pagination?.skip || 0).limit(pagination?.limit || 200).lean();
+  res.json(pagination?crmPage(items,await Listing.countDocuments(query),pagination):items);
 });
 const save = run(async (req, res) => {
   if (!validKind(req.body.kind) || typeof req.body.published !== 'boolean') return res.sendStatus(400);
