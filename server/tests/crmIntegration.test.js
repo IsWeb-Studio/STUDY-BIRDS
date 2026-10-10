@@ -24,6 +24,7 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
     app.delete('/api/crm/guarded-invoices/:id',protect,financeController.deleteStudentInvoiceAdmin);
     const supportController=require('../src/controllers/adminAgentController');
     const section=require('../src/middleware/employeeAccess').requireSection;
+    app.get('/api/crm/support/:id',protect,section('support'),supportController.getSupportTicketAdmin);
     app.patch('/api/crm/support/:id/reply',protect,section('support'),supportController.replySupportTicketAdmin);
     app.patch('/api/crm/support/:id/assign',protect,section('support'),supportController.assignSupportTicketAdmin);
     app.get('/api/crm/housing-pages',protect,require('../src/middleware/employeeAccess').requireSection('housing'),require('../src/controllers/accommodationController').getAccommodationBookingsAdmin);
@@ -74,8 +75,17 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
     const ticket=await require('../src/models/SupportTicket').create({user:student._id,requesterRole:'student',subject:'CRM support',message:'Help'});
     assert.equal((await request(`/support/${ticket._id}/assign`,'PATCH',{assignedTo:String(employee._id)})).status,400);
     assert.equal((await request(`/support/${ticket._id}/assign`,'PATCH',{assignedTo:String(supportAdvisor._id)})).status,200);
+    const ticketDetails=await request(`/support/${ticket._id}`);assert.equal(ticketDetails.status,200);assert.equal(ticketDetails.body.assignedTo.name,'Support Advisor');
+    assert.equal((await request(`/support/${ticket._id}`,'GET',undefined,employee)).status,403);
+    assert.equal((await request(`/support/${ticket._id}/assign`,'PATCH',{assignedTo:'bad'})).status,400);
+    assert.equal((await request(`/support/${ticket._id}/reply`,'PATCH',{message:'   '})).status,400);
+    assert.equal((await request(`/support/${ticket._id}/reply`,'PATCH',{message:'Bad',status:'invalid'})).status,400);
     const replied=await request(`/support/${ticket._id}/reply`,'PATCH',{message:'Reply from CRM',status:'answered'},supportAdvisor);assert.equal(replied.status,200);assert.equal(replied.body.replies[0].message,'Reply from CRM');
     assert.equal((await request(`/support/${ticket._id}/assign`,'PATCH',{assignedTo:null})).body.assignedTo,null);
+    const concurrentReplies=await Promise.all(['First simultaneous reply','Second simultaneous reply'].map(message=>request(`/support/${ticket._id}/reply`,'PATCH',{message,status:'answered'},supportAdvisor)));
+    assert(concurrentReplies.every(row=>row.status===200));
+    const afterReplies=await request(`/support/${ticket._id}`);assert.equal(afterReplies.body.replies.length,3);assert(afterReplies.body.replies.every(row=>row.user.name==='Support Advisor'));
+
     const newPartner={companyId:'company-default',recordId:'agent-one',name:'CRM Agency',email:'new-agent@crm.test',password:'AgentUnique!42',profile:{companyName:'New agency'}};
     const agentCreated=await request('/partners','POST',newPartner);assert.equal(agentCreated.status,201);assert.equal(agentCreated.body.password,undefined);assert.equal(agentCreated.body.role,'partner');
     const agentRetry=await request('/partners','POST',{...newPartner,profile:{companyName:'Must not overwrite'}});assert.equal(agentRetry.body._id,agentCreated.body._id);assert.equal(agentRetry.body.profile.companyName,'New agency');

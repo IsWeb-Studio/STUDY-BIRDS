@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const User = require("../models/User");
 const StudentProfile = require("../models/StudentProfile");
 const AgentStudent = require("../models/AgentStudent");
@@ -276,9 +277,17 @@ const getSupportTicketsAdmin = asyncHandler(async (req, res) => {
   const tickets = await SupportTicket.find()
     .populate("user", "name email role")
     .populate("agent", "name email role")
+    .populate("assignedTo", "name email employeeRole")
     .populate("replies.user", "name email role")
     .sort({ updatedAt: -1 });
   res.json(tickets);
+});
+
+const getSupportTicketAdmin = asyncHandler(async (req,res) => {
+  if(!mongoose.isValidObjectId(req.params.id))return res.status(400).json({message:'معرّف التذكرة غير صالح'});
+  const ticket=await SupportTicket.findById(req.params.id).populate('user agent','name email role').populate('assignedTo','name email employeeRole').populate('replies.user','name email role').lean();
+  if(!ticket)return res.status(404).json({message:'التذكرة غير موجودة'});
+  res.json(ticket);
 });
 
 const replySupportTicketAdmin = asyncHandler(async (req, res) => {
@@ -294,13 +303,11 @@ const replySupportTicketAdmin = asyncHandler(async (req, res) => {
     throw new Error("Reply message is required");
   }
 
-  ticket.status = req.body.status || "answered";
-  ticket.replies.push({
-    message,
-    fromRole: "admin",
-    user: req.user._id,
-  });
-  await ticket.save();
+  const status=req.body.status || 'answered';
+  if(!['open','in-progress','answered','closed'].includes(status))return res.status(400).json({message:'حالة التذكرة غير صالحة'});
+  // Append atomically so two staff replies cannot overwrite each other.
+  const updated=await SupportTicket.findByIdAndUpdate(ticket._id,{$set:{status},$push:{replies:{message,fromRole:'admin',user:req.user._id}},$inc:{__v:1}},{new:true,runValidators:true});
+  if(!updated)return res.status(404).json({message:'التذكرة غير موجودة'});
 
   await Notification.create({
     user: ticket.user || ticket.agent,
@@ -309,7 +316,7 @@ const replySupportTicketAdmin = asyncHandler(async (req, res) => {
     type: "info",
   });
 
-  res.json(ticket);
+  res.json(updated);
 });
 
 // #44: Assign ticket to a support staff member
@@ -318,6 +325,7 @@ const assignSupportTicketAdmin = asyncHandler(async (req, res) => {
   if (!ticket) return res.status(404).json({ message: 'Support ticket not found' });
   const { assignedTo } = req.body;
   if (assignedTo !== null && assignedTo !== undefined) {
+    if(!mongoose.isValidObjectId(assignedTo))return res.status(400).json({message:'معرّف الموظف غير صالح'});
     const assignee = await User.findById(assignedTo).lean();
     if (!assignee?.isActive || !hasSection(assignee, 'support')) {
       return res.status(400).json({ message: 'اختر موظف دعم مخوّلًا ونشطًا' });
@@ -446,6 +454,7 @@ module.exports = {
   getVerificationQueueAdmin,
   reviewVerificationDocumentAdmin,
   getSupportTicketsAdmin,
+  getSupportTicketAdmin,
   replySupportTicketAdmin,
   assignSupportTicketAdmin,
   escalateSupportTicketAdmin,

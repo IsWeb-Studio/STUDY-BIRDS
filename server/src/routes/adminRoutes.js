@@ -76,6 +76,7 @@ const {
   getVerificationQueueAdmin,
   reviewVerificationDocumentAdmin,
   getSupportTicketsAdmin,
+  getSupportTicketAdmin,
   replySupportTicketAdmin,
   assignSupportTicketAdmin,
   escalateSupportTicketAdmin,
@@ -228,6 +229,7 @@ router.delete("/marketing-assets/:id", deleteMarketingAssetAdmin);
 router.get("/verification-documents", getVerificationQueueAdmin);
 router.patch("/verification-documents/:id", reviewVerificationDocumentAdmin);
 router.get("/support-tickets", getSupportTicketsAdmin);
+router.get("/support-tickets/:id", getSupportTicketAdmin);
 router.patch("/support-tickets/:id/reply", replySupportTicketAdmin);
 router.patch("/support-tickets/:id/assign", assignSupportTicketAdmin);
 router.patch("/support-tickets/:id/escalate", escalateSupportTicketAdmin);
