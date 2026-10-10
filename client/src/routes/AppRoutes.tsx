@@ -74,6 +74,8 @@ const AdminStudentNotificationsPage = lazy(() => import("../pages/admin/AdminStu
 const AdminUniversitiesPage = lazy(() => import("../pages/admin/AdminUniversitiesPage").then((module) => ({ default: module.AdminUniversitiesPage })));
 const AdminProgramsPage = lazy(() => import("../pages/admin/AdminProgramsPage").then((module) => ({ default: module.AdminProgramsPage })));
 const AdminApplicationsPage = lazy(() => import("../pages/admin/AdminApplicationsPage").then((module) => ({ default: module.AdminApplicationsPage })));
+const AdminCountriesPage = lazy(() => import("../pages/admin/AdminCountriesPage").then(module => ({ default: module.AdminCountriesPage })));
+const AdminStudyFieldsPage = lazy(() => import("../pages/admin/AdminStudyFieldsPage").then(module => ({ default: module.AdminStudyFieldsPage })));
 const AdminContentPage = lazy(() => import("../pages/admin/AdminContentPage").then((module) => ({ default: module.AdminContentPage })));
 const AdminRecognitionsPage = lazy(() => import("../pages/admin/AdminRecognitionsPage").then((module) => ({ default: module.AdminRecognitionsPage })));
 const AdminServicesPage = lazy(() => import("../pages/admin/AdminServicesPage").then((module) => ({ default: module.AdminServicesPage })));
@@ -201,6 +203,8 @@ export const AppRoutes = () => (
           <Route path="/admin/programs" element={<AdminProgramsPage />} />
           <Route path="/admin/applications" element={<AdminApplicationsPage />} />
           <Route path="/admin/content" element={<AdminContentPage />} />
+          <Route path="/admin/countries" element={<AdminCountriesPage />} />
+          <Route path="/admin/study-fields" element={<AdminStudyFieldsPage />} />
           <Route path="/admin/recognitions" element={<AdminRecognitionsPage />} />
           <Route path="/admin/services" element={<AdminServicesPage />} />
           <Route path="/admin/faqs" element={<AdminFaqsPage />} />

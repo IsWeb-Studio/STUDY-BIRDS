@@ -132,6 +132,8 @@
     "ar": "الدول والمجالات الدراسية",
     "en": "Countries and study fields",
     "pages": [
+      "countries",
+      "study-fields",
       "content"
     ],
     "resources": [

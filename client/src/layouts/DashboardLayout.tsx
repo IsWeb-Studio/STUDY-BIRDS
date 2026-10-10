@@ -128,7 +128,8 @@ export const DashboardLayout = () => {
     { label: language === "ar" ? "اختبار التوجيه" : "Student Orientation", href: "/admin/student-orientation-results", icon: ScrollText, description: language === "ar" ? "عرض نتائج اختبار التوجيه للطلاب." : "Review student orientation test outcomes." },
     { label: t("universities"), href: "/admin/universities", icon: Building2, description: dt(language, "institutionsDesc") },
     { label: t("programs"), href: "/admin/programs", icon: GraduationCap, description: dt(language, "programsDesc") },
-    { label: dt(language, "content"), href: "/admin/content", icon: Layers3, description: dt(language, "contentDesc") },
+    { label: language === "ar" ? "الدول" : "Countries", href: "/admin/countries", icon: Globe, description: language === "ar" ? "إدارة وجهات الدراسة ومتطلبات التأشيرة." : "Manage study destinations and visa requirements." },
+    { label: language === "ar" ? "مجالات الدراسة" : "Study fields", href: "/admin/study-fields", icon: BookUser, description: language === "ar" ? "إدارة المجالات المعروضة في الموقع والبرامج." : "Manage website and program study fields." },
     { label: dt(language, "testimonialsContent"), href: "/admin/testimonials", icon: MessageSquare, description: dt(language, "testimonialsHelp") },
     { label: language === "ar" ? "البنرات" : "Banners", href: "/admin/banners", icon: Image, description: language === "ar" ? "إدارة بنرات تطبيق الموبايل." : "Manage mobile app banners." },
     { label: dt(language, "contactLinksNav"), href: "/admin/site-settings", icon: Settings2, description: dt(language, "contactLinksNavDesc") },
@@ -183,6 +184,7 @@ export const DashboardLayout = () => {
   ];
 
   const employeeLinks = employeeSections.filter((section) => user?.permissions?.includes(section.key)).flatMap((section) => {
+    if (section.key === "content") return adminLinks.filter(item => ["/admin/countries", "/admin/study-fields"].includes(item.href));
     const link = adminLinks.find((item) => item.href === `/admin/${section.pages[0]}`);
     return link ? [{ ...link, label: language === "ar" ? section.ar : section.en, description: "" }] : [];
   });
@@ -191,7 +193,7 @@ export const DashboardLayout = () => {
   const navigationGroups = [
     { ar: "نظرة عامة", en: "Overview", pages: ["admin", "student", "dashboard", "parent", "university"] },
     { ar: "الطلاب والقبول", en: "Students & admissions", pages: ["students", "applications", "student-documents", "student-financials", "student-arrivals", "student-orientation-results", "student-favorites", "student-notifications", "documents", "financials", "arrival-services", "favorites", "orientation-test", "partner-students"] },
-    { ar: "الجامعات والبرامج", en: "Universities & programs", pages: ["universities", "programs", "recognitions"] },
+    { ar: "الجامعات والبرامج", en: "Universities & programs", pages: ["universities", "programs", "countries", "study-fields", "recognitions"] },
     { ar: "الخدمات والتواصل", en: "Services & communication", pages: ["consultations", "visa", "accommodation", "wallet", "community", "support-tickets", "tickets", "support", "service-requests", "notifications", "rewards"] },
     { ar: "رحلتي الدراسية", en: "My journey", pages: ["journey"] },
     { ar: "المحتوى والفعاليات", en: "Content & events", pages: ["content", "testimonials", "banners", "services", "faqs", "events", "our-story", "exhibitions", "knowledge-base", "resources"] },
