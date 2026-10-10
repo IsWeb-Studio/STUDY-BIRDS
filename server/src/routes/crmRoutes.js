@@ -9,6 +9,7 @@ const { accountPayload, safeAccount } = require('../utils/crmAccountPolicy');
 const router = express.Router();
 const fail = (status, message) => { throw Object.assign(new Error(message), {status}); };
 router.use(protect);
+router.use('/sync/:companyId',require('./crmSyncRoutes'));
 router.get('/support-assignees',requireSection('support'),run(async(req,res)=>{
   const staff=await User.find({isActive:true,$or:[{role:'admin'},{role:'employee',permissions:'support'}]})
     .select('_id name email employeeRole').sort({name:1}).lean();

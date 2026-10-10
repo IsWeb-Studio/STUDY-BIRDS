@@ -17,3 +17,5 @@ server/src/uploads/
 
 .DS_Store
 Thumbs.db
+backups/
+.sync-staging/
