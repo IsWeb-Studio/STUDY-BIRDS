@@ -7,6 +7,7 @@ import { Seo } from "../components/seo/Seo";
 import { DOCUMENT_UPLOAD_ACCEPT } from "../constants/upload";
 import { useAuth } from "../hooks/useAuth";
 import { useLanguage } from "../hooks/useLanguage";
+import { pickLocalized, programTitle, universityName } from "../utils/localizedContent";
 import { SITE_NAME, seoText } from "../seo/site";
 import { applicationService } from "../services/applicationService";
 import { programService } from "../services/programService";
@@ -235,12 +236,15 @@ export const ProgramDetailsPage = () => {
 
   const isPartnerUser = user?.role === "partner";
   const visibleTuition = isPartnerUser ? program.partnerTuition ?? program.tuition : program.tuition;
+  const pTitle = programTitle(language, program);
+  const pUniversity = universityName(language, program.university);
+  const pSummary = pickLocalized(language, program.summary, program.summaryEn);
   const seoDescription =
-    program.summary ||
+    pSummary ||
     seoText(
       language,
-      `Explore ${program.title} at ${program.university?.name || SITE_NAME} and review tuition and admission requirements.`,
-      `استكشف برنامج ${program.title} في ${program.university?.name || SITE_NAME} وتعرّف على الرسوم ومتطلبات القبول.`
+      `Explore ${pTitle} at ${pUniversity || SITE_NAME} and review tuition and admission requirements.`,
+      `استكشف برنامج ${pTitle} في ${pUniversity || SITE_NAME} وتعرّف على الرسوم ومتطلبات القبول.`
     );
   const structuredData = {
     "@context": "https://schema.org",
@@ -270,7 +274,7 @@ export const ProgramDetailsPage = () => {
   return (
     <div className="grid gap-6 xl:grid-cols-[1.08fr_0.92fr]">
       <Seo
-        title={program.title}
+        title={pTitle}
         description={seoDescription}
         keywords={[
           program.title,
@@ -283,15 +287,15 @@ export const ProgramDetailsPage = () => {
       <section className="panel overflow-hidden p-0">
         <div className="p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-700">{tv(program.degreeLevel)}</p>
-          <h1 className="mt-3 text-4xl font-semibold text-slate-900">{program.title}</h1>
-          <p className="mt-4 text-slate-600">{program.summary}</p>
+          <h1 className="mt-3 text-4xl font-semibold text-slate-900">{pTitle}</h1>
+          <p className="mt-4 text-slate-600">{pSummary}</p>
 
           <div className="mt-8 grid gap-4 md:grid-cols-2">
             <div className="rounded-3xl bg-slate-50 p-5">
               <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{t("university")}</div>
               {program.university ? (
                 <Link to={`/universities/${program.university._id}`} className="mt-2 inline-flex font-semibold text-brand-700">
-                  {program.university.name}
+                  {pUniversity}
                 </Link>
               ) : (
                 <p className="mt-2 font-semibold text-slate-900">{dt(language, "unknownUniversity")}</p>
@@ -360,7 +364,7 @@ export const ProgramDetailsPage = () => {
               <ul className="mt-4 space-y-2 text-slate-600">
                 {program.offeredAt.map((item) => (
                   <li key={item._id}>
-                    <Link className="font-semibold text-brand-700" to={`/programs/${item._id}`}>{item.university?.name}</Link>
+                    <Link className="font-semibold text-brand-700" to={`/programs/${item._id}`}>{universityName(language, item.university)}</Link>
                     {[item.university?.city, item.university?.country?.name].filter(Boolean).length ? ` — ${[item.university?.city, item.university?.country?.name].filter(Boolean).join("، ")}` : ""}
                   </li>
                 ))}
@@ -373,8 +377,8 @@ export const ProgramDetailsPage = () => {
               <ul className="mt-4 space-y-2 text-slate-600">
                 {program.relatedPrograms.map((item) => (
                   <li key={item._id}>
-                    <Link className="font-semibold text-brand-700" to={`/programs/${item._id}`}>{item.title}</Link>
-                    {item.university?.name ? ` — ${item.university.name}` : ""}
+                    <Link className="font-semibold text-brand-700" to={`/programs/${item._id}`}>{programTitle(language, item)}</Link>
+                    {universityName(language, item.university) ? ` — ${universityName(language, item.university)}` : ""}
                   </li>
                 ))}
               </ul>

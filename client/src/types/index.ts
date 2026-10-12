@@ -27,6 +27,9 @@ export interface ArticleContent {
   articleBodyColor?: string;
   articleHeadings?: string[];
   articleBodies?: string[];
+  articleTitleEn?: string;
+  articleHeadingsEn?: string[];
+  articleBodiesEn?: string[];
 }
 
 export interface User {

@@ -10,6 +10,7 @@ import { universityService } from "../services/universityService";
 import { contentService } from "../services/contentService";
 import type { Country, Program, StudyField, University } from "../types";
 import { useLanguage } from "../hooks/useLanguage";
+import { universityName } from "../utils/localizedContent";
 import { seoText } from "../seo/site";
 import { getApiAssetUrl } from "../lib/api";
 import { getPaginatedItems, getPaginationMeta } from "../utils/pagination";
@@ -40,8 +41,8 @@ export const ProgramsPage = () => {
     [filters.fieldOfStudy, studyFields]
   );
   const selectedUniversityName = useMemo(
-    () => universities.find((university) => university._id === filters.university)?.name || "",
-    [filters.university, universities]
+    () => universityName(language, universities.find((university) => university._id === filters.university)) || "",
+    [filters.university, universities, language]
   );
 
   useEffect(() => {

@@ -5,6 +5,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { Seo } from "../components/seo/Seo";
 import { useAuth } from "../hooks/useAuth";
 import { useLanguage } from "../hooks/useLanguage";
+import { pickLocalized, universityName } from "../utils/localizedContent";
 import { getApiAssetUrl } from "../lib/api";
 import { seoText } from "../seo/site";
 import { studentService } from "../services/studentService";
@@ -82,12 +83,14 @@ export const UniversityDetailsPage = () => {
   }
 
   const coverImage = university.campusImages?.[0] || university.logo;
+  const uName = universityName(language, university);
+  const uOverview = pickLocalized(language, university.overview, university.overviewEn);
   const seoDescription =
-    university.overview ||
+    uOverview ||
     seoText(
       language,
-      `Explore ${university.name}, its city, ranking, and tuition options for international students.`,
-      `استكشف ${university.name} وتعرّف على المدينة والتصنيف وخيارات الرسوم للطلاب الدوليين.`
+      `Explore ${uName}, its city, ranking, and tuition options for international students.`,
+      `استكشف ${uName} وتعرّف على المدينة والتصنيف وخيارات الرسوم للطلاب الدوليين.`
     );
   const structuredData = {
     "@context": "https://schema.org",
@@ -118,7 +121,7 @@ export const UniversityDetailsPage = () => {
   return (
     <div className="space-y-6">
       <Seo
-        title={university.name}
+        title={uName}
         description={seoDescription}
         keywords={[
           university.name,
@@ -130,12 +133,12 @@ export const UniversityDetailsPage = () => {
       />
       <section className="panel overflow-hidden p-0">
         {coverImage ? (
-          <img src={getApiAssetUrl(coverImage)} alt={university.name} className="h-80 w-full object-cover" />
+          <img src={getApiAssetUrl(coverImage)} alt={uName} className="h-80 w-full object-cover" />
         ) : null}
         <div className="grid gap-6 p-8 xl:grid-cols-[1.1fr_0.9fr]">
           <div>
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-700">{tv(university.country?.name)}</p>
-            <h1 className="mt-3 text-4xl font-semibold text-slate-900">{university.name}</h1>
+            <h1 className="mt-3 text-4xl font-semibold text-slate-900">{uName}</h1>
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               <div className="rounded-3xl bg-slate-50 p-5">
                 <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{t("city")}</div>
@@ -154,7 +157,7 @@ export const UniversityDetailsPage = () => {
 
           <div className="rounded-[2rem] bg-slate-950 p-6 text-white">
             {university.logo ? (
-              <img src={getApiAssetUrl(university.logo)} alt={`${university.name} logo`} className="h-20 w-20 rounded-3xl bg-white object-cover p-2" />
+              <img src={getApiAssetUrl(university.logo)} alt={`${uName} logo`} className="h-20 w-20 rounded-3xl bg-white object-cover p-2" />
             ) : null}
             <h2 className="mt-5 text-2xl font-semibold">{dt(language, "browsePrograms")}</h2>
             <p className="mt-3 text-sm leading-6 text-slate-300">{dt(language, "applicationFormSubtitle")}</p>
@@ -174,11 +177,11 @@ export const UniversityDetailsPage = () => {
         </div>
       </section>
 
-      {university.overview ? (
+      {uOverview ? (
         <section className="panel p-8">
           <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-700">{t("overview")}</p>
-          <h2 className="mt-3 text-2xl font-semibold text-slate-900">{university.name}</h2>
-          <p className="mt-4 max-w-4xl text-base leading-8 text-slate-600">{university.overview}</p>
+          <h2 className="mt-3 text-2xl font-semibold text-slate-900">{uName}</h2>
+          <p className="mt-4 max-w-4xl text-base leading-8 text-slate-600">{uOverview}</p>
         </section>
       ) : null}
 
@@ -189,7 +192,7 @@ export const UniversityDetailsPage = () => {
           <h2 className="text-2xl font-semibold text-slate-900">{dt(language, "availableCampusPhotos")}</h2>
           <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             {university.campusImages.map((imageUrl) => (
-              <img key={imageUrl} src={getApiAssetUrl(imageUrl)} alt={university.name} className="h-56 w-full rounded-3xl object-cover" />
+              <img key={imageUrl} src={getApiAssetUrl(imageUrl)} alt={uName} className="h-56 w-full rounded-3xl object-cover" />
             ))}
           </div>
         </section>

@@ -1,12 +1,14 @@
 import type { ArticleContent } from "../../types";
 import { renderRichTextLines } from "../../utils/richText";
+import { localizedArticle } from "../../utils/localizedContent";
 
 interface ArticleContentSectionProps {
   article: ArticleContent;
   language: "ar" | "en";
 }
 
-export const ArticleContentSection = ({ article, language }: ArticleContentSectionProps) => {
+export const ArticleContentSection = ({ article: rawArticle, language }: ArticleContentSectionProps) => {
+  const article = localizedArticle(language, rawArticle);
   const headings = (article.articleHeadings || []).filter(Boolean);
   const bodies = article.articleBodies || [];
 

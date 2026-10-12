@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import type { Country, StudyField, University } from "../../types";
 import { useLanguage } from "../../hooks/useLanguage";
+import { universityName } from "../../utils/localizedContent";
 import { PriceRangeFilter } from "./PriceRangeFilter";
 import {
   PROGRAM_DEGREE_LEVELS,
@@ -44,7 +45,7 @@ export const SearchFilter = ({
 
     return universities.filter((university) => {
       const matchesCountry = !filters.country || university.country?._id === filters.country;
-      const matchesQuery = !normalizedQuery || university.name.toLowerCase().includes(normalizedQuery);
+      const matchesQuery = !normalizedQuery || (university.name.toLowerCase().includes(normalizedQuery) || (university.nameEn || "").toLowerCase().includes(normalizedQuery));
       return matchesCountry && matchesQuery;
     });
   }, [filters.country, universities, universityQuery]);
@@ -130,13 +131,13 @@ export const SearchFilter = ({
                   type="button"
                   onMouseDown={(event) => {
                     event.preventDefault();
-                    setUniversityQuery(university.name);
+                    setUniversityQuery(universityName(language, university));
                     setIsUniversityMenuOpen(false);
                     onUniversitySelect(university._id);
                   }}
                   className="flex w-full min-w-0 items-center justify-between gap-3 rounded-2xl px-4 py-3 text-start text-sm text-slate-700 transition hover:bg-slate-100"
                 >
-                  <span className="min-w-0 truncate font-medium">{university.name}</span>
+                  <span className="min-w-0 truncate font-medium">{universityName(language, university)}</span>
                   {university.country?.name ? (
                     <span className="shrink-0 text-xs text-slate-400">{tv(university.country.name)}</span>
                   ) : null}
