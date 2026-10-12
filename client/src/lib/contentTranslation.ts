@@ -17,6 +17,43 @@ export const subscribeTranslations = (listener: () => void) => {
 };
 export const getTranslationVersion = () => version;
 
+const chunkText = (text: string) => {
+  const chunks: string[] = [];
+  let current = "";
+  for (const line of text.split("
+")) {
+    if (current && current.length + line.length + 1 > 1200) { chunks.push(current); current = line; }
+    else current = current ? `${current}
+${line}` : line;
+  }
+  if (current) chunks.push(current);
+  return chunks;
+};
+
+// Used when the site's own /translate endpoint is unavailable (older deployment, no provider configured).
+const publicTranslate = async (text: string): Promise<string | null> => {
+  try {
+    const parts: string[] = [];
+    for (const chunk of chunkText(text)) {
+      if (!ARABIC.test(chunk)) { parts.push(chunk); continue; }
+      const response = await fetch("https://translate.googleapis.com/translate_a/single?client=gtx&sl=ar&tl=en&dt=t", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ q: chunk }),
+      });
+      if (!response.ok) return null;
+      const data = await response.json();
+      if (!Array.isArray(data?.[0])) return null;
+      parts.push((data[0] as unknown[]).map((segment) => (Array.isArray(segment) && typeof segment[0] === "string" ? segment[0] : "")).join(""));
+    }
+    const result = parts.join("
+").trim();
+    return result || null;
+  } catch {
+    return null;
+  }
+};
+
 const flush = async () => {
   timer = null;
   const pending = [...queued];
@@ -35,13 +72,16 @@ const flush = async () => {
       batch.forEach((text, i) => {
         const value = data.translations?.[i];
         if (typeof value === "string" && value.trim()) { translated.set(text, value.trim()); changed = true; }
-        else failed.add(text);
       });
     } catch {
-      batch.forEach((text) => failed.add(text));
-    } finally {
-      batch.forEach((text) => inFlight.delete(text));
+      // fall through to the public endpoint below
     }
+    await Promise.all(batch.filter((text) => !translated.has(text)).map(async (text) => {
+      const value = await publicTranslate(text);
+      if (value) { translated.set(text, value); changed = true; }
+      else failed.add(text);
+    }));
+    batch.forEach((text) => inFlight.delete(text));
   }
   if (changed) { version += 1; listeners.forEach((listener) => listener()); }
 };

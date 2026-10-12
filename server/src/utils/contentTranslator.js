@@ -22,6 +22,37 @@ const takeBudget = () => {
   return true;
 };
 
+// Keyless fallback used when no AI provider is configured: Google's public
+// translate endpoint, one request per chunk of ≤1200 characters.
+const chunkText = (text) => {
+  const chunks = [];
+  let current = "";
+  for (const line of text.split("\n")) {
+    if (current && current.length + line.length + 1 > 1200) { chunks.push(current); current = line; }
+    else current = current ? `${current}\n${line}` : line;
+  }
+  if (current) chunks.push(current);
+  return chunks;
+};
+
+const googleTranslate = async (text, target) => {
+  const parts = [];
+  for (const chunk of chunkText(text)) {
+    if (!(target === "en" ? ARABIC : LATIN).test(chunk)) { parts.push(chunk); continue; }
+    const response = await fetch("https://translate.googleapis.com/translate_a/single?" + new URLSearchParams({ client: "gtx", sl: target === "en" ? "ar" : "en", tl: target, dt: "t" }), {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ q: chunk }),
+      signal: AbortSignal.timeout(15000),
+    });
+    if (!response.ok) throw new Error(`public translate responded ${response.status}`);
+    const data = await response.json();
+    if (!Array.isArray(data?.[0])) throw new Error("public translate returned an unexpected shape");
+    parts.push(data[0].map((segment) => (typeof segment?.[0] === "string" ? segment[0] : "")).join(""));
+  }
+  return parts.join("\n");
+};
+
 const callModel = async (texts, target) => {
   const endpoint = new URL("chat/completions", process.env.AI_BASE_URL.replace(/\/?$/, "/"));
   if (endpoint.protocol !== "https:") throw new Error("AI endpoint must use https");
@@ -77,14 +108,15 @@ const translateTexts = async (texts, target) => {
     pending.get(row.hash)?.indexes.forEach((index) => { results[index] = row.text; });
     pending.delete(row.hash);
   });
-  if (!pending.size || !isConfigured()) return results;
+  if (!pending.size) return results;
 
   const entries = [...pending.entries()];
   for (let start = 0; start < entries.length; start += BATCH_SIZE) {
     const batch = entries.slice(start, start + BATCH_SIZE);
     if (!takeBudget()) break;
     try {
-      const translated = await callModel(batch.map(([, value]) => value.text), target);
+      const sources = batch.map(([, value]) => value.text);
+      const translated = isConfigured() ? await callModel(sources, target) : await Promise.all(sources.map((text) => googleTranslate(text, target)));
       await Promise.all(
         batch.map(async ([hash, value], i) => {
           const text = translated[i].trim();
