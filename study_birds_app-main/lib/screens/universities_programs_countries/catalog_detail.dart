@@ -222,7 +222,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                                                     const SizedBox(width: 8),
                                                     Expanded(
                                                         child: _ArticleText(
-                                                            '$item')),
+                                                            CatalogLanguage.instance.tr('$item'))),
                                                   ])),
                                       ])),
                             // PRD 21: careers, same program elsewhere, related programs.
@@ -262,7 +262,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
   Widget _heading(Map<String, dynamic> row) {
     final uni = widget.university ? row : catalogMap(row['university']);
     final country = catalogCountryName(catalogMap(uni['country']));
-    final location = [catalogText(uni['city']), country]
+    final location = [catalogValue(catalogText(uni['city'])), country]
         .where((s) => s.isNotEmpty)
         .join(cl('، ', ', '));
     final logo = catalogAssetUrl(uni['logo']);
@@ -426,7 +426,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
             cl('مجالات العمل بعد التخرج', 'Career opportunities'),
             Wrap(spacing: 8, runSpacing: 8, children: [
               for (final career in careers)
-                StatusBadge(label: career, color: AppColors.navy)
+                StatusBadge(label: CatalogLanguage.instance.tr(career), color: AppColors.navy)
             ])),
       if (offeredAt.isNotEmpty)
         _section(

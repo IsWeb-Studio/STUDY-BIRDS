@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../core/network/api_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/config/app_theme.dart';
 
@@ -28,8 +30,73 @@ class CatalogLanguage extends ChangeNotifier {
     } catch (_) {}
   }
 
+  // ── On-demand machine translation of catalog content ───────────────────
+  // Arabic text that has no hand-written English version is sent to
+  // POST /translate (server caches results) and swapped in when it arrives.
+  static bool translationEnabled = true;
+  static final _arabic = RegExp('[؀-ۿ]');
+  final Map<String, String> _translated = {};
+  final Set<String> _queued = {}, _inFlight = {}, _failed = {};
+  Timer? _flushTimer;
+
+  /// English text for [arabic]: the translation if known (otherwise the
+  /// original, and a fetch is scheduled that re-notifies listeners).
+  String tr(String arabic) {
+    final text = arabic.trim();
+    if (!english || text.isEmpty || !_arabic.hasMatch(text)) return arabic;
+    final known = _translated[text];
+    if (known != null) return known;
+    if (translationEnabled &&
+        !_failed.contains(text) &&
+        !_inFlight.contains(text) &&
+        _queued.add(text)) {
+      _flushTimer ??= Timer(const Duration(milliseconds: 150), _flush);
+    }
+    return arabic;
+  }
+
+  Future<void> _flush() async {
+    _flushTimer = null;
+    final pending = _queued.toList();
+    _queued.clear();
+    var changed = false;
+    var index = 0;
+    while (index < pending.length) {
+      // keep each request well under the server's body limit
+      final batch = <String>[];
+      var size = 0;
+      while (index < pending.length &&
+          batch.length < 40 &&
+          (batch.isEmpty || size + pending[index].length < 50000)) {
+        size += pending[index].length;
+        batch.add(pending[index++]);
+      }
+      _inFlight.addAll(batch);
+      try {
+        final data = await ApiClient.instance
+            .post('/translate', body: {'texts': batch, 'target': 'en'});
+        final list = data is Map ? data['translations'] : null;
+        for (var i = 0; i < batch.length; i++) {
+          final value = list is List && i < list.length ? list[i] : null;
+          if (value is String && value.trim().isNotEmpty) {
+            _translated[batch[i]] = value.trim();
+            changed = true;
+          } else {
+            _failed.add(batch[i]);
+          }
+        }
+      } catch (_) {
+        _failed.addAll(batch);
+      } finally {
+        _inFlight.removeAll(batch);
+      }
+    }
+    if (changed) notifyListeners();
+  }
+
   Future<void> toggle() async {
     english = !english;
+    _failed.clear();
     notifyListeners();
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -49,7 +116,9 @@ String _text(dynamic value) => value is String ? value.trim() : '';
 String catalogName(Map<String, dynamic> row, String key) {
   final ar = _text(row['${key}Ar'] ?? row[key]);
   final en = _text(row['${key}En']);
-  if (CatalogLanguage.instance.english) return en.isNotEmpty ? en : ar;
+  if (CatalogLanguage.instance.english) {
+    return en.isNotEmpty ? en : CatalogLanguage.instance.tr(ar);
+  }
   return ar.isNotEmpty ? ar : en;
 }
 
@@ -58,7 +127,7 @@ String catalogCountryName(Map<String, dynamic> country) {
   final base = _text(country['name']);
   if (CatalogLanguage.instance.english) {
     final en = _text(country['nameEn']);
-    return en.isNotEmpty ? en : base;
+    return en.isNotEmpty ? en : CatalogLanguage.instance.tr(base);
   }
   final ar = _text(country['nameAr']);
   return ar.isNotEmpty ? ar : base;
@@ -71,7 +140,9 @@ List<String> catalogLocalizedList(
   final ar = read(row[key]);
   final en = read(row['${key}En']);
   bool has(List<String> l) => l.any((e) => e.trim().isNotEmpty);
-  if (CatalogLanguage.instance.english) return has(en) ? en : ar;
+  if (CatalogLanguage.instance.english) {
+    return has(en) ? en : ar.map(CatalogLanguage.instance.tr).toList();
+  }
   return has(ar) ? ar : en;
 }
 
@@ -79,7 +150,9 @@ List<String> catalogLocalizedList(
 String catalogLocalizedText(Map<String, dynamic> row, String key) {
   final ar = _text(row[key]);
   final en = _text(row['${key}En']);
-  if (CatalogLanguage.instance.english) return en.isNotEmpty ? en : ar;
+  if (CatalogLanguage.instance.english) {
+    return en.isNotEmpty ? en : CatalogLanguage.instance.tr(ar);
+  }
   return ar.isNotEmpty ? ar : en;
 }
 
@@ -157,7 +230,7 @@ String catalogValue(String raw) {
     final n = years.group(1)!;
     return en ? '$n ${n == '1' ? 'year' : 'years'}' : '$n ${n == '1' ? 'سنة' : 'سنوات'}';
   }
-  return value;
+  return en ? CatalogLanguage.instance.tr(value) : value;
 }
 
 /// عربي | EN switch shown in the app bar of the catalog pages.

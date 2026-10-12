@@ -163,11 +163,15 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
 
   // Country / university facet values are names in the current language, so a
   // language switch invalidates them.
+  bool _seenEnglish = CatalogLanguage.instance.english;
   void _languageChanged() {
     if (!mounted) return;
+    final switched = _seenEnglish != CatalogLanguage.instance.english;
+    _seenEnglish = CatalogLanguage.instance.english;
     setState(() {
-      if (selection.facets.containsKey('country') ||
-          selection.facets.containsKey('university')) {
+      if (switched &&
+          (selection.facets.containsKey('country') ||
+              selection.facets.containsKey('university'))) {
         selection = CatalogSelection(
             facets: Map.of(selection.facets)
               ..remove('country')
@@ -365,8 +369,7 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
                           padding: const EdgeInsetsDirectional.only(end: 6),
                           child: InputChip(
                               label: Text(entry.key == 'country' ||
-                                      entry.key == 'university' ||
-                                      entry.key == 'city'
+                                      entry.key == 'university'
                                   ? entry.value
                                   : catalogValue(entry.value)),
                               onDeleted: () => setState(() => selection =
@@ -570,7 +573,7 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
                                           for (final option in sorted)
                                             DropdownMenuItem(
                                                 value: option,
-                                                child: Text(entry.key == 'country' || entry.key == 'university' || entry.key == 'city' ? option : catalogValue(option),
+                                                child: Text(entry.key == 'country' || entry.key == 'university' ? option : catalogValue(option),
                                                     maxLines: 1,
                                                     overflow:
                                                         TextOverflow.ellipsis))
