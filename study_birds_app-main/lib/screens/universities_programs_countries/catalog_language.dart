@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -81,17 +83,69 @@ class CatalogLanguage extends ChangeNotifier {
           if (value is String && value.trim().isNotEmpty) {
             _translated[batch[i]] = value.trim();
             changed = true;
-          } else {
-            _failed.add(batch[i]);
           }
         }
       } catch (_) {
-        _failed.addAll(batch);
-      } finally {
-        _inFlight.removeAll(batch);
+        // server translation unavailable (older deployment, offline, ...)
       }
+      // Anything the server did not translate goes straight to the public
+      // translate endpoint so the page never stays in Arabic.
+      final missing = batch.where((t) => !_translated.containsKey(t)).toList();
+      await Future.wait(missing.map((text) async {
+        final value = await _publicTranslate(text);
+        if (value != null) {
+          _translated[text] = value;
+          changed = true;
+        } else {
+          _failed.add(text);
+        }
+      }));
+      _inFlight.removeAll(batch);
     }
     if (changed) notifyListeners();
+  }
+
+  static List<String> _chunks(String text) {
+    final chunks = <String>[];
+    var current = '';
+    for (final line in text.split('\n')) {
+      if (current.isNotEmpty && current.length + line.length + 1 > 1200) {
+        chunks.add(current);
+        current = line;
+      } else {
+        current = current.isEmpty ? line : '$current\n$line';
+      }
+    }
+    if (current.isNotEmpty) chunks.add(current);
+    return chunks;
+  }
+
+  Future<String?> _publicTranslate(String text) async {
+    try {
+      final parts = <String>[];
+      for (final chunk in _chunks(text)) {
+        if (!_arabic.hasMatch(chunk)) {
+          parts.add(chunk);
+          continue;
+        }
+        final response = await http
+            .post(
+                Uri.https('translate.googleapis.com', '/translate_a/single',
+                    {'client': 'gtx', 'sl': 'ar', 'tl': 'en', 'dt': 't'}),
+                body: {'q': chunk})
+            .timeout(const Duration(seconds: 15));
+        if (response.statusCode != 200) return null;
+        final data = jsonDecode(utf8.decode(response.bodyBytes));
+        if (data is! List || data.isEmpty || data[0] is! List) return null;
+        parts.add((data[0] as List)
+            .map((s) => s is List && s.isNotEmpty && s[0] is String ? s[0] : '')
+            .join());
+      }
+      final result = parts.join('\n').trim();
+      return result.isEmpty ? null : result;
+    } catch (_) {
+      return null;
+    }
   }
 
   Future<void> toggle() async {
