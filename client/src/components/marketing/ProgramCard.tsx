@@ -5,12 +5,14 @@ import type { Program } from "../../types";
 import { useAuth } from "../../hooks/useAuth";
 import { formatCurrency } from "../../utils/format";
 import { useLanguage } from "../../hooks/useLanguage";
+import { useContentTranslation } from "../../hooks/useContentTranslation";
 import { findProgramLanguage, PROGRAM_DEGREE_LEVELS } from "../../constants/programOptions";
 import { getApiAssetUrl } from "../../lib/api";
 import { programTitle, universityName } from "../../utils/localizedContent";
 
 export const ProgramCard = ({ program }: { program: Program }) => {
   const { t, tv, language } = useLanguage();
+  const tr = useContentTranslation(language);
   const { user } = useAuth();
   const [failedLogo, setFailedLogo] = useState<string | null>(null);
   const universityLogo = getApiAssetUrl(program.university?.logo);
@@ -34,13 +36,13 @@ export const ProgramCard = ({ program }: { program: Program }) => {
             {program.featured && <span className="rounded-lg border border-brand-100 px-2.5 py-1 text-xs font-medium text-brand-700">{language === "ar" ? "مميز" : "Featured"}</span>}
           </div>
           <h3 className="mt-3 break-words text-lg font-bold leading-7 text-slate-900">
-            <Link to={`/programs/${program._id}`} className="transition hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300">{programTitle(language, program)}</Link>
+            <Link to={`/programs/${program._id}`} className="transition hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-300">{programTitle(language, program, tr)}</Link>
           </h3>
           <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-slate-500">
             {universityLogo && failedLogo !== universityLogo ? (
               <img src={universityLogo} alt="" loading="lazy" width={48} height={48} onError={() => setFailedLogo(universityLogo)} className="h-12 w-12 shrink-0 rounded-md object-contain" />
             ) : <School className="h-4 w-4 shrink-0 text-brand-500" />}
-            <span>{universityName(language, program.university)}</span>
+            <span>{universityName(language, program.university, tr)}</span>
             {program.university?.country?.name && <><span aria-hidden="true" className="h-1 w-1 rounded-full bg-slate-300" /><span>{tv(program.university.country.name)}</span></>}
           </p>
           {program.fieldOfStudy && <p className="mt-2 text-xs text-slate-400">{tv(program.fieldOfStudy)}</p>}

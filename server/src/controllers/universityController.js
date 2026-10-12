@@ -7,6 +7,7 @@ const { uploadFileToCloudinary } = require("../utils/uploadToCloudinary");
 
 const buildUniversityPayload = (body) => ({
   name: body.name,
+  nameEn: body.nameEn || "",
   country: body.country,
   city: body.city || "",
   language: body.language || "",
@@ -14,6 +15,10 @@ const buildUniversityPayload = (body) => ({
   specialtyCount: Number.isFinite(Number(body.specialtyCount)) ? Number(body.specialtyCount) : 0,
   ranking: Number.isFinite(Number(body.ranking)) ? Number(body.ranking) : undefined,
   overview: body.overview || "",
+  overviewEn: body.overviewEn || "",
+  articleTitleEn: body.articleTitleEn || "",
+  articleHeadingsEn: Array.isArray(body.articleHeadingsEn) ? body.articleHeadingsEn : [],
+  articleBodiesEn: Array.isArray(body.articleBodiesEn) ? body.articleBodiesEn : [],
   articleTitle: body.articleTitle || "",
   articleTitleColor: body.articleTitleColor || "#0f172a",
   articleHeadingColor: body.articleHeadingColor || "#0f172a",
@@ -48,9 +53,9 @@ const getUniversities = asyncHandler(async (req, res) => {
 
   const listQuery = University.find(query)
     .select(
-      "name slug city language studentCount specialtyCount overview ranking tuitionRange logo campusImages articleTitle articleTitleColor articleHeadingColor articleBodyColor articleHeadings articleBodies featured isPartnerInstitution country createdAt"
+      "name nameEn slug city language studentCount specialtyCount overview overviewEn ranking tuitionRange logo campusImages articleTitle articleTitleColor articleHeadingColor articleBodyColor articleHeadings articleBodies articleTitleEn articleHeadingsEn articleBodiesEn featured isPartnerInstitution country createdAt"
     )
-    .populate("country", "name slug code heroImage featured")
+    .populate("country", "name nameAr slug code heroImage featured")
     .sort({ featured: -1, name: 1 });
 
   if (shouldPaginate) {

@@ -8,6 +8,7 @@ import { DOCUMENT_UPLOAD_ACCEPT } from "../constants/upload";
 import { useAuth } from "../hooks/useAuth";
 import { useLanguage } from "../hooks/useLanguage";
 import { pickLocalized, programTitle, universityName } from "../utils/localizedContent";
+import { useContentTranslation } from "../hooks/useContentTranslation";
 import { SITE_NAME, seoText } from "../seo/site";
 import { applicationService } from "../services/applicationService";
 import { programService } from "../services/programService";
@@ -46,6 +47,7 @@ const emptyForm: ApplicationFormState = {
 
 export const ProgramDetailsPage = () => {
   const { t, tv, language } = useLanguage();
+  const tr = useContentTranslation(language);
   const { id = "" } = useParams();
   const { hash } = useLocation();
   const { profile, refreshSession, user } = useAuth();
@@ -236,9 +238,9 @@ export const ProgramDetailsPage = () => {
 
   const isPartnerUser = user?.role === "partner";
   const visibleTuition = isPartnerUser ? program.partnerTuition ?? program.tuition : program.tuition;
-  const pTitle = programTitle(language, program);
-  const pUniversity = universityName(language, program.university);
-  const pSummary = pickLocalized(language, program.summary, program.summaryEn);
+  const pTitle = programTitle(language, program, tr);
+  const pUniversity = universityName(language, program.university, tr);
+  const pSummary = pickLocalized(language, program.summary, program.summaryEn, tr);
   const seoDescription =
     pSummary ||
     seoText(
@@ -312,7 +314,7 @@ export const ProgramDetailsPage = () => {
             <div className="rounded-3xl bg-slate-50 p-5">
               <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{language === "ar" ? "مجالات الدراسة" : "Study fields"}</div>
               <p className="mt-2 font-semibold text-slate-900">
-                {program.fieldsOfStudy?.length ? program.fieldsOfStudy.join(language === "ar" ? "، " : ", ") : program.fieldOfStudy}
+                {program.fieldsOfStudy?.length ? program.fieldsOfStudy.map((field) => tr(field)).join(language === "ar" ? "، " : ", ") : tr(program.fieldOfStudy)}
               </p>
             </div>
             <div className="rounded-3xl bg-slate-50 p-5">
@@ -337,7 +339,7 @@ export const ProgramDetailsPage = () => {
             {program.requirements?.length ? (
               <ul className="mt-4 list-disc space-y-2 pl-5 text-slate-600">
                 {program.requirements.map((item) => (
-                  <li key={item}>{tv(item)}</li>
+                  <li key={item}>{tr(tv(item))}</li>
                 ))}
               </ul>
             ) : (
@@ -354,7 +356,7 @@ export const ProgramDetailsPage = () => {
             <div className="panel p-6">
               <h2 className="text-xl font-semibold text-slate-900">{language === "ar" ? "مجالات العمل بعد التخرج" : "Career opportunities"}</h2>
               <ul className="mt-4 list-disc space-y-2 ps-5 text-slate-600">
-                {program.careerOpportunities.map((item) => <li key={item}>{item}</li>)}
+                {program.careerOpportunities.map((item) => <li key={item}>{tr(item)}</li>)}
               </ul>
             </div>
           ) : null}
@@ -364,7 +366,7 @@ export const ProgramDetailsPage = () => {
               <ul className="mt-4 space-y-2 text-slate-600">
                 {program.offeredAt.map((item) => (
                   <li key={item._id}>
-                    <Link className="font-semibold text-brand-700" to={`/programs/${item._id}`}>{universityName(language, item.university)}</Link>
+                    <Link className="font-semibold text-brand-700" to={`/programs/${item._id}`}>{universityName(language, item.university, tr)}</Link>
                     {[item.university?.city, item.university?.country?.name].filter(Boolean).length ? ` — ${[item.university?.city, item.university?.country?.name].filter(Boolean).join("، ")}` : ""}
                   </li>
                 ))}
@@ -377,8 +379,8 @@ export const ProgramDetailsPage = () => {
               <ul className="mt-4 space-y-2 text-slate-600">
                 {program.relatedPrograms.map((item) => (
                   <li key={item._id}>
-                    <Link className="font-semibold text-brand-700" to={`/programs/${item._id}`}>{programTitle(language, item)}</Link>
-                    {universityName(language, item.university) ? ` — ${universityName(language, item.university)}` : ""}
+                    <Link className="font-semibold text-brand-700" to={`/programs/${item._id}`}>{programTitle(language, item, tr)}</Link>
+                    {universityName(language, item.university, tr) ? ` — ${universityName(language, item.university, tr)}` : ""}
                   </li>
                 ))}
               </ul>

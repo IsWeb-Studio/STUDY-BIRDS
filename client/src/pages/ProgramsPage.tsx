@@ -11,6 +11,7 @@ import { contentService } from "../services/contentService";
 import type { Country, Program, StudyField, University } from "../types";
 import { useLanguage } from "../hooks/useLanguage";
 import { universityName } from "../utils/localizedContent";
+import { useContentTranslation } from "../hooks/useContentTranslation";
 import { seoText } from "../seo/site";
 import { getApiAssetUrl } from "../lib/api";
 import { getPaginatedItems, getPaginationMeta } from "../utils/pagination";
@@ -18,6 +19,7 @@ import type { PaginationMeta } from "../types";
 
 export const ProgramsPage = () => {
   const { t, language, tv } = useLanguage();
+  const tr = useContentTranslation(language);
   const [searchParams] = useSearchParams();
   const [programs, setPrograms] = useState<Program[]>([]);
   const [programPagination, setProgramPagination] = useState<PaginationMeta | null>(null);
@@ -41,8 +43,8 @@ export const ProgramsPage = () => {
     [filters.fieldOfStudy, studyFields]
   );
   const selectedUniversityName = useMemo(
-    () => universityName(language, universities.find((university) => university._id === filters.university)) || "",
-    [filters.university, universities, language]
+    () => universityName(language, universities.find((university) => university._id === filters.university), tr) || "",
+    [filters.university, universities, language, tr]
   );
 
   useEffect(() => {

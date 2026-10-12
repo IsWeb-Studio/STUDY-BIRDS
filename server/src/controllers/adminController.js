@@ -540,6 +540,7 @@ const getCountriesAdmin = asyncHandler(async (req, res) => {
 });
 
 const buildCountryPayload = (body) => ({
+  nameAr: body.nameAr || "",
   name: body.name,
   code: body.code,
   description: body.description || "",

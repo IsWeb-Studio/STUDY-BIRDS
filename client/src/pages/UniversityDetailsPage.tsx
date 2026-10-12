@@ -6,6 +6,7 @@ import { Seo } from "../components/seo/Seo";
 import { useAuth } from "../hooks/useAuth";
 import { useLanguage } from "../hooks/useLanguage";
 import { pickLocalized, universityName } from "../utils/localizedContent";
+import { useContentTranslation } from "../hooks/useContentTranslation";
 import { getApiAssetUrl } from "../lib/api";
 import { seoText } from "../seo/site";
 import { studentService } from "../services/studentService";
@@ -17,6 +18,7 @@ import { formatCurrency } from "../utils/format";
 
 export const UniversityDetailsPage = () => {
   const { t, tv, language } = useLanguage();
+  const tr = useContentTranslation(language);
   const { user } = useAuth();
   const { id = "" } = useParams();
   const [university, setUniversity] = useState<University | null>(null);
@@ -83,8 +85,8 @@ export const UniversityDetailsPage = () => {
   }
 
   const coverImage = university.campusImages?.[0] || university.logo;
-  const uName = universityName(language, university);
-  const uOverview = pickLocalized(language, university.overview, university.overviewEn);
+  const uName = universityName(language, university, tr);
+  const uOverview = pickLocalized(language, university.overview, university.overviewEn, tr);
   const seoDescription =
     uOverview ||
     seoText(
@@ -142,7 +144,7 @@ export const UniversityDetailsPage = () => {
             <div className="mt-8 grid gap-4 md:grid-cols-3">
               <div className="rounded-3xl bg-slate-50 p-5">
                 <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{t("city")}</div>
-                <p className="mt-2 font-semibold text-slate-900">{university.city || dt(language, "notAvailable")}</p>
+                <p className="mt-2 font-semibold text-slate-900">{tr(university.city) || dt(language, "notAvailable")}</p>
               </div>
               <div className="rounded-3xl bg-slate-50 p-5">
                 <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{t("ranking")}</div>

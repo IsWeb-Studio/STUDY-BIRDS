@@ -141,6 +141,7 @@ app.use('/api/mobile-security', requireDatabaseConnection, require('./routes/mob
 app.use('/api/mobile-workspace', requireDatabaseConnection, require('./routes/mobileMessagingRoutes'));
 app.use("/api/scholarships", requireDatabaseConnection, require("./routes/scholarshipRoutes"));
 app.use("/api/assistant", requireDatabaseConnection, require("./routes/assistantRoutes").router);
+app.use("/api/translate", requireDatabaseConnection, require("./routes/translateRoutes"));
 app.use("/api/identity", requireDatabaseConnection, require("./routes/identityRoutes"));
 app.use("/api/auth", requireDatabaseConnection, authRoutes);
 app.use("/api/support-attachments", requireDatabaseConnection, require("./routes/supportAttachmentAccessRoutes"));

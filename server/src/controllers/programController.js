@@ -60,11 +60,11 @@ const getPrograms = asyncHandler(async (req, res) => {
   };
 
   const listQuery = Program.find(query)
-    .select("title slug degreeLevel fieldOfStudy fieldsOfStudy language duration tuition partnerTuition applicationDeadline intake summary popularity coverImage university featured createdAt")
+    .select("title titleEn slug degreeLevel fieldOfStudy fieldsOfStudy language duration tuition partnerTuition applicationDeadline intake summary summaryEn popularity coverImage university featured createdAt")
     .populate({
       path: "university",
-      select: "name slug city language ranking logo tuitionRange country featured isPartnerInstitution",
-      populate: { path: "country", select: "name slug code heroImage featured" },
+      select: "name nameEn slug city language ranking logo tuitionRange country featured isPartnerInstitution",
+      populate: { path: "country", select: "name nameAr slug code heroImage featured" },
     })
     .sort(sortMap[req.query.sortBy] || { featured: -1, createdAt: -1 });
 
@@ -106,12 +106,12 @@ const getProgramById = asyncHandler(async (req, res) => {
   const escaped = String(program.title || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const [offeredAt, related] = await Promise.all([
     Program.find({ _id: { $ne: program._id }, title: new RegExp(`^${escaped}$`, "i") })
-      .select("title degreeLevel tuition language duration university")
-      .populate({ path: "university", select: "name city country", populate: { path: "country", select: "name" } })
+      .select("title titleEn degreeLevel tuition language duration university")
+      .populate({ path: "university", select: "name nameEn city country", populate: { path: "country", select: "name nameAr" } })
       .limit(10).lean(),
     program.fieldOfStudy
       ? Program.find({ _id: { $ne: program._id }, fieldOfStudy: program.fieldOfStudy, title: { $not: new RegExp(`^${escaped}$`, "i") } })
-        .select("title degreeLevel university").populate({ path: "university", select: "name" })
+        .select("title titleEn degreeLevel university").populate({ path: "university", select: "name nameEn" })
         .sort({ featured: -1, popularity: -1 }).limit(6).lean()
       : [],
   ]);

@@ -143,7 +143,7 @@ const getCountries = asyncHandler(async (req, res) => {
     res,
     model: Country,
     query: {},
-    select: "name slug code description visaNotes visaRequirements processingDays visaFeeUsd languageRequirements visaNotesList heroImage universityCount specialtyCount averageTuition featured articleTitle articleTitleColor articleHeadingColor articleBodyColor articleHeadings articleBodies createdAt updatedAt",
+    select: "name nameAr slug code description visaNotes visaRequirements processingDays visaFeeUsd languageRequirements visaNotesList heroImage universityCount specialtyCount averageTuition featured articleTitle articleTitleColor articleHeadingColor articleBodyColor articleHeadings articleBodies createdAt updatedAt",
     sort: { featured: -1, name: 1 },
   });
 });
@@ -236,7 +236,7 @@ const getOurServiceBySlug = asyncHandler(async (req, res) => {
     OurService.findOne({
       $or: [{ slug }, ...(mongoose.Types.ObjectId.isValid(slug) ? [{ _id: slug }] : [])],
     })
-      .populate("country", "name code slug")
+      .populate("country", "name nameAr code slug")
       .select("slug title image detailTitle detailBody detailImage featured sortOrder country createdAt updatedAt")
       .lean()
   );
@@ -450,7 +450,7 @@ const getExhibitionArticleBySlug = asyncHandler(async (req, res) => {
       slug: req.params.slug,
       published: true,
     })
-      .populate("country", "name code slug")
+      .populate("country", "name nameAr code slug")
       .select("title slug customSlug image summary body articleTitle articleTitleColor articleHeadingColor articleBodyColor articleHeadings articleBodies titleColor ctaText ctaUrl youtubeUrl featured published seoTitle metaDescription focusKeyword seoKeywords canonicalUrl ogTitle ogDescription ogImage twitterTitle twitterDescription twitterImage imageAltText robotsIndex robotsFollow category country authorName publishedAt seoUpdatedAt sections createdAt updatedAt")
       .lean()
   );
@@ -481,7 +481,7 @@ const getHomePageContent = asyncHandler(async (req, res) => {
   const [countries, studyFields, universities, testimonials, recognitions, services, faqs] = await Promise.all([
     timedOperation("home.countries", () =>
       Country.find()
-        .select("name slug code description visaNotes heroImage universityCount specialtyCount averageTuition featured createdAt")
+        .select("name nameAr slug code description visaNotes heroImage universityCount specialtyCount averageTuition featured createdAt")
         .sort({ featured: -1, name: 1 })
         .limit(7)
         .lean()
@@ -495,8 +495,8 @@ const getHomePageContent = asyncHandler(async (req, res) => {
     ),
     timedOperation("home.universities", () =>
       University.find()
-        .select("name slug city language studentCount specialtyCount overview ranking tuitionRange logo featured isPartnerInstitution country createdAt")
-        .populate("country", "name slug code heroImage featured")
+        .select("name nameEn slug city language studentCount specialtyCount overview overviewEn ranking tuitionRange logo featured isPartnerInstitution country createdAt")
+        .populate("country", "name nameAr slug code heroImage featured")
         .sort({ featured: -1, name: 1 })
         .limit(12)
         .lean()

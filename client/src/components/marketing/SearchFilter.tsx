@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Search, X } from "lucide-react";
 import type { Country, StudyField, University } from "../../types";
 import { useLanguage } from "../../hooks/useLanguage";
+import { useContentTranslation } from "../../hooks/useContentTranslation";
 import { universityName } from "../../utils/localizedContent";
 import { PriceRangeFilter } from "./PriceRangeFilter";
 import {
@@ -33,6 +34,7 @@ export const SearchFilter = ({
   onUniversitySelect,
 }: SearchFilterProps) => {
   const { t, tv, language } = useLanguage();
+  const tr = useContentTranslation(language);
   const [universityQuery, setUniversityQuery] = useState(selectedUniversityName);
   const [isUniversityMenuOpen, setIsUniversityMenuOpen] = useState(false);
 
@@ -131,13 +133,13 @@ export const SearchFilter = ({
                   type="button"
                   onMouseDown={(event) => {
                     event.preventDefault();
-                    setUniversityQuery(universityName(language, university));
+                    setUniversityQuery(universityName(language, university, tr));
                     setIsUniversityMenuOpen(false);
                     onUniversitySelect(university._id);
                   }}
                   className="flex w-full min-w-0 items-center justify-between gap-3 rounded-2xl px-4 py-3 text-start text-sm text-slate-700 transition hover:bg-slate-100"
                 >
-                  <span className="min-w-0 truncate font-medium">{universityName(language, university)}</span>
+                  <span className="min-w-0 truncate font-medium">{universityName(language, university, tr)}</span>
                   {university.country?.name ? (
                     <span className="shrink-0 text-xs text-slate-400">{tv(university.country.name)}</span>
                   ) : null}
