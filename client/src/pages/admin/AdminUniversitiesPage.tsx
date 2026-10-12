@@ -14,6 +14,7 @@ import { getPaginatedItems } from "../../utils/pagination";
 
 const emptyUniversityForm = {
   name: "",
+  nameEn: "",
   country: "",
   city: "",
   language: "",
@@ -23,12 +24,16 @@ const emptyUniversityForm = {
   tuitionMin: "",
   tuitionMax: "",
   overview: "",
+  overviewEn: "",
   articleTitle: "",
   articleTitleColor: "#0f172a",
   articleHeadingColor: "#0f172a",
   articleBodyColor: "#475569",
   articleHeadings: createEmptyArticleHeadings(),
   articleBodies: createEmptyArticleBodies(),
+  articleTitleEn: "",
+  articleHeadingsEn: createEmptyArticleHeadings(),
+  articleBodiesEn: createEmptyArticleBodies(),
   featured: false,
   isPartnerInstitution: false,
   logo: "",
@@ -82,9 +87,11 @@ export const AdminUniversitiesPage = () => {
     setFormError("");
     setEditorOpen(true);
     const articleItemCount = Math.max(1, university.articleHeadings?.length || 0, university.articleBodies?.length || 0);
+    const articleItemCountEn = Math.max(1, university.articleHeadingsEn?.length || 0, university.articleBodiesEn?.length || 0);
     setEditingId(university._id);
     setForm({
       name: university.name || "",
+      nameEn: university.nameEn || "",
       country: university.country?._id || "",
       city: university.city || "",
       language: university.language || "",
@@ -94,12 +101,16 @@ export const AdminUniversitiesPage = () => {
       tuitionMin: university.tuitionRange?.min ? String(university.tuitionRange.min) : "",
       tuitionMax: university.tuitionRange?.max ? String(university.tuitionRange.max) : "",
       overview: university.overview || "",
+      overviewEn: university.overviewEn || "",
       articleTitle: university.articleTitle || "",
       articleTitleColor: university.articleTitleColor || "#0f172a",
       articleHeadingColor: university.articleHeadingColor || "#0f172a",
       articleBodyColor: university.articleBodyColor || "#475569",
       articleHeadings: normalizeArticleHeadings(university.articleHeadings, articleItemCount),
       articleBodies: normalizeArticleBodies(university.articleBodies, articleItemCount),
+      articleTitleEn: university.articleTitleEn || "",
+      articleHeadingsEn: normalizeArticleHeadings(university.articleHeadingsEn, articleItemCountEn),
+      articleBodiesEn: normalizeArticleBodies(university.articleBodiesEn, articleItemCountEn),
       featured: Boolean(university.featured),
       isPartnerInstitution: Boolean(university.isPartnerInstitution),
       logo: university.logo || "",
@@ -143,6 +154,7 @@ export const AdminUniversitiesPage = () => {
 
     const payload = {
       name: form.name,
+      nameEn: form.nameEn || undefined,
       country: form.country,
       city: form.city || undefined,
       language: form.language || undefined,
@@ -150,12 +162,16 @@ export const AdminUniversitiesPage = () => {
       specialtyCount: form.specialtyCount ? Number(form.specialtyCount) : 0,
       ranking: form.ranking ? Number(form.ranking) : undefined,
       overview: form.overview || undefined,
+      overviewEn: form.overviewEn || undefined,
       articleTitle: form.articleTitle.trim() || undefined,
       articleTitleColor: form.articleTitleColor || "#0f172a",
       articleHeadingColor: form.articleHeadingColor || "#0f172a",
       articleBodyColor: form.articleBodyColor || "#475569",
       articleHeadings: form.articleHeadings.map((item) => item.trim()).filter(Boolean),
       articleBodies: form.articleBodies.map((item) => item.trim()).filter(Boolean),
+      articleTitleEn: form.articleTitleEn.trim() || undefined,
+      articleHeadingsEn: form.articleHeadingsEn.map((item) => item.trim()).filter(Boolean),
+      articleBodiesEn: form.articleBodiesEn.map((item) => item.trim()).filter(Boolean),
       featured: form.featured,
       isPartnerInstitution: form.isPartnerInstitution,
       logo: form.logo || undefined,
@@ -221,21 +237,26 @@ export const AdminUniversitiesPage = () => {
         <form onSubmit={handleSubmit} className="mt-6 space-y-5">
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "universityName")}</span>
+              <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "universityName")} (العربية)</span>
               <input value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} required className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
             </label>
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">{t("country")}</span>
-              <select value={form.country} onChange={(event) => setForm((current) => ({ ...current, country: event.target.value }))} required className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring">
-                <option value="">{dt(language, "selectCountry")}</option>
-                {countries.map((country) => (
-                  <option key={country._id} value={country._id}>
-                    {tv(country.name)}
-                  </option>
-                ))}
-              </select>
+              <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "اسم الجامعة (English)" : "University Name (English)"}</span>
+              <input dir="ltr" value={form.nameEn} onChange={(event) => setForm((current) => ({ ...current, nameEn: event.target.value }))} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
             </label>
           </div>
+
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-700">{t("country")}</span>
+            <select value={form.country} onChange={(event) => setForm((current) => ({ ...current, country: event.target.value }))} required className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring">
+              <option value="">{dt(language, "selectCountry")}</option>
+              {countries.map((country) => (
+                <option key={country._id} value={country._id}>
+                  {tv(country.name)}
+                </option>
+              ))}
+            </select>
+          </label>
 
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
             <label className="block">
@@ -281,10 +302,16 @@ export const AdminUniversitiesPage = () => {
             </label>
           </div>
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "overviewText")}</span>
-            <textarea value={form.overview} onChange={(event) => setForm((current) => ({ ...current, overview: event.target.value }))} rows={5} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
-          </label>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "overviewText")} (العربية)</span>
+              <textarea value={form.overview} onChange={(event) => setForm((current) => ({ ...current, overview: event.target.value }))} rows={5} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "نبذة (English)" : "Overview (English)"}</span>
+              <textarea dir="ltr" value={form.overviewEn} onChange={(event) => setForm((current) => ({ ...current, overviewEn: event.target.value }))} rows={5} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
+            </label>
+          </div>
 
           <ArticleContentFields
             articleTitle={form.articleTitle}
@@ -324,6 +351,47 @@ export const AdminUniversitiesPage = () => {
               }))
             }
             language={language}
+          />
+
+          <ArticleContentFields
+            titleLabel={language === "ar" ? "عنوان المقال (English)" : "Article title (English)"}
+            articleTitle={form.articleTitleEn}
+            articleTitleColor={form.articleTitleColor}
+            articleHeadingColor={form.articleHeadingColor}
+            articleBodyColor={form.articleBodyColor}
+            articleHeadings={form.articleHeadingsEn}
+            articleBodies={form.articleBodiesEn}
+            onArticleTitleChange={(value) => setForm((current) => ({ ...current, articleTitleEn: value }))}
+            onArticleTitleColorChange={(value) => setForm((current) => ({ ...current, articleTitleColor: value }))}
+            onArticleHeadingColorChange={(value) => setForm((current) => ({ ...current, articleHeadingColor: value }))}
+            onArticleBodyColorChange={(value) => setForm((current) => ({ ...current, articleBodyColor: value }))}
+            onArticleHeadingChange={(index, value) =>
+              setForm((current) => ({
+                ...current,
+                articleHeadingsEn: current.articleHeadingsEn.map((item, itemIndex) => (itemIndex === index ? value : item)),
+              }))
+            }
+            onArticleBodyChange={(index, value) =>
+              setForm((current) => ({
+                ...current,
+                articleBodiesEn: current.articleBodiesEn.map((item, itemIndex) => (itemIndex === index ? value : item)),
+              }))
+            }
+            onAddArticleItem={() =>
+              setForm((current) => ({
+                ...current,
+                articleHeadingsEn: appendArticleItem(current.articleHeadingsEn),
+                articleBodiesEn: appendArticleItem(current.articleBodiesEn),
+              }))
+            }
+            onRemoveArticleItem={(index) =>
+              setForm((current) => ({
+                ...current,
+                articleHeadingsEn: removeArticleItem(current.articleHeadingsEn, index),
+                articleBodiesEn: removeArticleItem(current.articleBodiesEn, index),
+              }))
+            }
+            language="en"
           />
 
           <div className="rounded-2xl border border-slate-200 p-4">

@@ -85,6 +85,7 @@ export interface ParentChildOverview {
 export interface Country extends ArticleContent {
   _id: string;
   name: string;
+  nameAr?: string;
   slug: string;
   code: string;
   description?: string;
@@ -191,12 +192,17 @@ export interface StudyField {
 export interface University extends ArticleContent {
   _id: string;
   name: string;
+  nameEn?: string;
   slug: string;
   city?: string;
   language?: string;
   studentCount?: number;
   specialtyCount?: number;
   overview?: string;
+  overviewEn?: string;
+  articleTitleEn?: string;
+  articleHeadingsEn?: string[];
+  articleBodiesEn?: string[];
   ranking?: number;
   featured?: boolean;
   isPartnerInstitution?: boolean;
@@ -224,6 +230,7 @@ export interface Program extends ArticleContent {
   requiredDocumentTypes?: string[];
   _id: string;
   title: string;
+  titleEn?: string;
   slug: string;
   degreeLevel: string;
   fieldOfStudy: string;
@@ -240,6 +247,10 @@ export interface Program extends ArticleContent {
   offeredAt?: Array<{ _id: string; title: string; university?: { name: string; city?: string; country?: { name: string } } }>;
   relatedPrograms?: Array<{ _id: string; title: string; university?: { name: string } }>;
   summary?: string;
+  summaryEn?: string;
+  articleTitleEn?: string;
+  articleHeadingsEn?: string[];
+  articleBodiesEn?: string[];
   popularity?: number;
   coverImage?: string;
   university?: University;

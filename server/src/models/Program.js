@@ -73,6 +73,17 @@ const programSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    titleEn: { type: String },
+    summaryEn: String,
+    articleTitleEn: String,
+    articleHeadingsEn: {
+      type: [String],
+      default: [],
+    },
+    articleBodiesEn: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true }
 );

@@ -1,15 +1,20 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { BookOpenText, Check, ChevronDown, PencilLine, Plus, Search, Trash2, X } from "lucide-react";
+import { ArticleContentFields } from "../../components/admin/ArticleContentFields";
 import { useLanguage } from "../../hooks/useLanguage";
 import { adminService } from "../../services/adminService";
 import { programService } from "../../services/programService";
 import { universityService } from "../../services/universityService";
 import type { Program, StudyField, University } from "../../types";
+import { createEmptyArticleBodies, createEmptyArticleHeadings, normalizeArticleBodies, normalizeArticleHeadings } from "../../constants/articleContent";
 import { findProgramLanguage, PROGRAM_DEGREE_LEVELS, PROGRAM_LANGUAGES } from "../../constants/programOptions";
 import { getErrorMessage } from "../../utils/errors";
 import { formatCurrency } from "../../utils/format";
 import { dt } from "../../utils/dashboardTranslations";
 import { getPaginatedItems } from "../../utils/pagination";
+
+const appendArticleItem = (items: string[]) => [...items, ""];
+const removeArticleItem = (items: string[], index: number) => (items.length > 1 ? items.filter((_, i) => i !== index) : items);
 
 const SearchableSelect = ({
   value, onChange, options, placeholder, required,
@@ -96,6 +101,7 @@ const SectionHeader = ({ title }: { title: string }) => (
 
 const emptyProgramForm = {
   title: "",
+  titleEn: "",
   university: "",
   degreeLevel: "",
   fieldOfStudy: "",
@@ -106,9 +112,19 @@ const emptyProgramForm = {
   partnerTuition: "",
   popularity: "",
   summary: "",
+  summaryEn: "",
   requirements: "",
   careerOpportunities: "",
   requiredDocumentTypes: ["passport", "biometric-photo", "latest-qualification"],
+  articleTitle: "",
+  articleTitleColor: "#0f172a",
+  articleHeadingColor: "#0f172a",
+  articleBodyColor: "#475569",
+  articleHeadings: createEmptyArticleHeadings(),
+  articleBodies: createEmptyArticleBodies(),
+  articleTitleEn: "",
+  articleHeadingsEn: createEmptyArticleHeadings(),
+  articleBodiesEn: createEmptyArticleBodies(),
   featured: false,
 };
 
@@ -156,11 +172,14 @@ export const AdminProgramsPage = () => {
     let program: Program;
     try { program = await programService.getById(item._id); }
     catch (issue) { setFormError(getErrorMessage(issue, "Unable to load program")); return; }
+    const articleItemCount = Math.max(1, program.articleHeadings?.length || 0, program.articleBodies?.length || 0);
+    const articleItemCountEn = Math.max(1, program.articleHeadingsEn?.length || 0, program.articleBodiesEn?.length || 0);
     setEditingId(program._id);
     setCustomLanguage(Boolean(program.language) && !findProgramLanguage(program.language || ""));
     setEditorOpen(true);
     setForm({
       title: program.title || "",
+      titleEn: program.titleEn || "",
       university: program.university?._id || "",
       degreeLevel: program.degreeLevel || "",
       fieldOfStudy: program.fieldOfStudy || "",
@@ -171,9 +190,19 @@ export const AdminProgramsPage = () => {
       partnerTuition: typeof program.partnerTuition === "number" ? String(program.partnerTuition) : "",
       popularity: typeof program.popularity === "number" ? String(program.popularity) : "",
       summary: program.summary || "",
+      summaryEn: program.summaryEn || "",
       requirements: program.requirements?.join("\n") || "",
       careerOpportunities: program.careerOpportunities?.join("\n") || "",
       requiredDocumentTypes: program.requiredDocumentTypes ?? ["passport", "biometric-photo", "latest-qualification"],
+      articleTitle: program.articleTitle || "",
+      articleTitleColor: program.articleTitleColor || "#0f172a",
+      articleHeadingColor: program.articleHeadingColor || "#0f172a",
+      articleBodyColor: program.articleBodyColor || "#475569",
+      articleHeadings: normalizeArticleHeadings(program.articleHeadings, articleItemCount),
+      articleBodies: normalizeArticleBodies(program.articleBodies, articleItemCount),
+      articleTitleEn: program.articleTitleEn || "",
+      articleHeadingsEn: normalizeArticleHeadings(program.articleHeadingsEn, articleItemCountEn),
+      articleBodiesEn: normalizeArticleBodies(program.articleBodiesEn, articleItemCountEn),
       featured: Boolean(program.featured),
     });
   };
@@ -190,6 +219,7 @@ export const AdminProgramsPage = () => {
     const payload = {
       requiredDocumentTypes: form.requiredDocumentTypes,
       title: form.title,
+      titleEn: form.titleEn || undefined,
       university: form.university,
       degreeLevel: form.degreeLevel,
       fieldOfStudy: form.fieldOfStudy || form.fieldsOfStudy[0] || "",
@@ -200,8 +230,18 @@ export const AdminProgramsPage = () => {
       partnerTuition: form.partnerTuition ? Number(form.partnerTuition) : undefined,
       popularity: form.popularity ? Number(form.popularity) : undefined,
       summary: form.summary || undefined,
+      summaryEn: form.summaryEn || undefined,
       requirements: form.requirements.split("\n").map((item) => item.trim()).filter(Boolean),
       careerOpportunities: form.careerOpportunities.split("\n").map((item) => item.trim()).filter(Boolean),
+      articleTitle: form.articleTitle.trim() || undefined,
+      articleTitleColor: form.articleTitleColor || "#0f172a",
+      articleHeadingColor: form.articleHeadingColor || "#0f172a",
+      articleBodyColor: form.articleBodyColor || "#475569",
+      articleHeadings: form.articleHeadings.map((item) => item.trim()).filter(Boolean),
+      articleBodies: form.articleBodies.map((item) => item.trim()).filter(Boolean),
+      articleTitleEn: form.articleTitleEn.trim() || undefined,
+      articleHeadingsEn: form.articleHeadingsEn.map((item) => item.trim()).filter(Boolean),
+      articleBodiesEn: form.articleBodiesEn.map((item) => item.trim()).filter(Boolean),
       featured: form.featured,
     };
 
@@ -279,8 +319,12 @@ export const AdminProgramsPage = () => {
 
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
-              <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "programTitle")}</span>
+              <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "programTitle")} (العربية)</span>
               <input value={form.title} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} required className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "عنوان البرنامج (English)" : "Program Title (English)"}</span>
+              <input dir="ltr" value={form.titleEn} onChange={(event) => setForm((current) => ({ ...current, titleEn: event.target.value }))} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{t("university")}</span>
@@ -403,10 +447,97 @@ export const AdminProgramsPage = () => {
 
           <SectionHeader title={language === "ar" ? "المحتوى والمتطلبات" : "Content & Requirements"} />
 
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "summary")}</span>
-            <textarea value={form.summary} onChange={(event) => setForm((current) => ({ ...current, summary: event.target.value }))} rows={4} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
-          </label>
+          <div className="grid gap-4 md:grid-cols-2">
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "summary")} (العربية)</span>
+              <textarea value={form.summary} onChange={(event) => setForm((current) => ({ ...current, summary: event.target.value }))} rows={4} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "وصف البرنامج (English)" : "Summary (English)"}</span>
+              <textarea dir="ltr" value={form.summaryEn} onChange={(event) => setForm((current) => ({ ...current, summaryEn: event.target.value }))} rows={4} className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
+            </label>
+          </div>
+
+          <ArticleContentFields
+            articleTitle={form.articleTitle}
+            articleTitleColor={form.articleTitleColor}
+            articleHeadingColor={form.articleHeadingColor}
+            articleBodyColor={form.articleBodyColor}
+            articleHeadings={form.articleHeadings}
+            articleBodies={form.articleBodies}
+            onArticleTitleChange={(value) => setForm((current) => ({ ...current, articleTitle: value }))}
+            onArticleTitleColorChange={(value) => setForm((current) => ({ ...current, articleTitleColor: value }))}
+            onArticleHeadingColorChange={(value) => setForm((current) => ({ ...current, articleHeadingColor: value }))}
+            onArticleBodyColorChange={(value) => setForm((current) => ({ ...current, articleBodyColor: value }))}
+            onArticleHeadingChange={(index, value) =>
+              setForm((current) => ({
+                ...current,
+                articleHeadings: current.articleHeadings.map((item, i) => (i === index ? value : item)),
+              }))
+            }
+            onArticleBodyChange={(index, value) =>
+              setForm((current) => ({
+                ...current,
+                articleBodies: current.articleBodies.map((item, i) => (i === index ? value : item)),
+              }))
+            }
+            onAddArticleItem={() =>
+              setForm((current) => ({
+                ...current,
+                articleHeadings: appendArticleItem(current.articleHeadings),
+                articleBodies: appendArticleItem(current.articleBodies),
+              }))
+            }
+            onRemoveArticleItem={(index) =>
+              setForm((current) => ({
+                ...current,
+                articleHeadings: removeArticleItem(current.articleHeadings, index),
+                articleBodies: removeArticleItem(current.articleBodies, index),
+              }))
+            }
+            language={language}
+          />
+
+          <ArticleContentFields
+            titleLabel={language === "ar" ? "عنوان المقال (English)" : "Article title (English)"}
+            articleTitle={form.articleTitleEn}
+            articleTitleColor={form.articleTitleColor}
+            articleHeadingColor={form.articleHeadingColor}
+            articleBodyColor={form.articleBodyColor}
+            articleHeadings={form.articleHeadingsEn}
+            articleBodies={form.articleBodiesEn}
+            onArticleTitleChange={(value) => setForm((current) => ({ ...current, articleTitleEn: value }))}
+            onArticleTitleColorChange={(value) => setForm((current) => ({ ...current, articleTitleColor: value }))}
+            onArticleHeadingColorChange={(value) => setForm((current) => ({ ...current, articleHeadingColor: value }))}
+            onArticleBodyColorChange={(value) => setForm((current) => ({ ...current, articleBodyColor: value }))}
+            onArticleHeadingChange={(index, value) =>
+              setForm((current) => ({
+                ...current,
+                articleHeadingsEn: current.articleHeadingsEn.map((item, i) => (i === index ? value : item)),
+              }))
+            }
+            onArticleBodyChange={(index, value) =>
+              setForm((current) => ({
+                ...current,
+                articleBodiesEn: current.articleBodiesEn.map((item, i) => (i === index ? value : item)),
+              }))
+            }
+            onAddArticleItem={() =>
+              setForm((current) => ({
+                ...current,
+                articleHeadingsEn: appendArticleItem(current.articleHeadingsEn),
+                articleBodiesEn: appendArticleItem(current.articleBodiesEn),
+              }))
+            }
+            onRemoveArticleItem={(index) =>
+              setForm((current) => ({
+                ...current,
+                articleHeadingsEn: removeArticleItem(current.articleHeadingsEn, index),
+                articleBodiesEn: removeArticleItem(current.articleBodiesEn, index),
+              }))
+            }
+            language="en"
+          />
 
           <SectionHeader title={language === "ar" ? "المستندات والإعدادات" : "Documents & Settings"} />
 

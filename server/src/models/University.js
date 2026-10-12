@@ -78,6 +78,20 @@ const universitySchema = new mongoose.Schema(
       ],
       default: [],
     },
+    nameEn: {
+      type: String,
+      trim: true,
+    },
+    overviewEn: String,
+    articleTitleEn: String,
+    articleHeadingsEn: {
+      type: [String],
+      default: [],
+    },
+    articleBodiesEn: {
+      type: [String],
+      default: [],
+    },
   },
   { timestamps: true }
 );

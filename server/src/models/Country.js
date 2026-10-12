@@ -8,6 +8,10 @@ const countrySchema = new mongoose.Schema(
       required: true,
       unique: true,
     },
+    nameAr: {
+      type: String,
+      trim: true,
+    },
     slug: {
       type: String,
       unique: true,
