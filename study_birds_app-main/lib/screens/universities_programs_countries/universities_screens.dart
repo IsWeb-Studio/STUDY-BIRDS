@@ -1,9 +1,9 @@
 import 'compare_list_screen.dart';
 import 'package:flutter/material.dart';
-import '../../core/config/app_theme.dart';
 import '../../core/services/analytics_service.dart';
 import 'catalog_browser.dart';
 import 'catalog_detail.dart';
+import 'catalog_language.dart';
 
 class UniversitiesExplorerScreen extends StatefulWidget {
   final String? countryId;
@@ -22,8 +22,8 @@ class _UniversitiesExplorerScreenState
   }
 
   @override
-  Widget build(BuildContext context) => AppScaffold(
-        title: 'الجامعات',
+  Widget build(BuildContext context) => CatalogScaffold(
+        title: () => cl('الجامعات', 'Universities'),
         body: CatalogBrowser(
             universities: true,
             countryId: widget.countryId,

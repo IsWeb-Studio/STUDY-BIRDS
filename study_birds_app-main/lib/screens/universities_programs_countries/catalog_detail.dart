@@ -10,6 +10,7 @@ import '../../core/config/app_theme.dart';
 import '../../core/repositories/catalog_repository.dart';
 import '../../core/repositories/student_repository.dart';
 import 'catalog_browser.dart';
+import 'catalog_language.dart';
 import 'compare_list_screen.dart';
 
 String? catalogAssetUrl(dynamic value) {
@@ -73,7 +74,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
     } catch (_) {
       if (mounted) {
         setState(() => error =
-            'تعذر تحميل التفاصيل الكاملة. اسحب للتحديث أو أعد المحاولة.');
+            cl('تعذر تحميل التفاصيل الكاملة. اسحب للتحديث أو أعد المحاولة.', 'Could not load the full details. Pull to refresh or retry.'));
       }
     } finally {
       if (mounted) setState(() => loading = false);
@@ -91,7 +92,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
     } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            AppSnackBar(content: Text('تعذر تحديث المفضلة. حاول مجددًا.')));
+            AppSnackBar(content: Text(cl('تعذر تحديث المفضلة. حاول مجددًا.', 'Could not update favorites. Try again.'))));
       }
     } finally {
       if (mounted) setState(() => savingFavorite = false);
@@ -101,21 +102,29 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
   @override
   Widget build(BuildContext context) {
     final row = data;
+    return CatalogLanguageBuilder(builder: (_) => _buildPage(row));
+  }
+
+  Widget _buildPage(Map<String, dynamic>? row) {
     return AppScaffold(
-        title: widget.university ? 'تفاصيل الجامعة' : 'تفاصيل البرنامج',
+        textDirection: CatalogLanguage.instance.direction,
+        title: widget.university
+            ? cl('تفاصيل الجامعة', 'University details')
+            : cl('تفاصيل البرنامج', 'Program details'),
         actions: [
           IconButton(
-              tooltip: 'المفضلة',
+              tooltip: cl('المفضلة', 'Favorites'),
               onPressed: savingFavorite ? null : toggleFavorite,
               icon: Icon(favorite
                   ? Icons.favorite_rounded
                   : Icons.favorite_border_rounded)),
+          const CatalogLanguageToggle(),
         ],
         body: row == null
             ? loading
                 ? const LoadingState()
                 : ErrorState(
-                    message: error ?? 'تعذر تحميل التفاصيل', onRetry: load)
+                    message: error ?? cl('تعذر تحميل التفاصيل', 'Could not load the details'), onRetry: load)
             : Column(children: [
                 if (loading) const LinearProgressIndicator(minHeight: 2),
                 if (widget.university)
@@ -123,7 +132,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
                       child: Row(children: [
                         for (final entry
-                            in {0: 'عن الجامعة', 1: 'البرامج'}.entries)
+                            in {0: cl('عن الجامعة', 'About'), 1: cl('البرامج', 'Programs')}.entries)
                           Expanded(
                               child: Padding(
                                   padding:
@@ -155,7 +164,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                                 InlineNotice(error!, error: true),
                                 TextButton(
                                     onPressed: load,
-                                    child: const Text('إعادة المحاولة'))
+                                    child: Text(cl('إعادة المحاولة', 'Retry')))
                               ])),
                             _DetailGallery(
                                 key: ValueKey(
@@ -165,30 +174,32 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                             _heading(row),
                             const SizedBox(height: 8),
                             _facts(row),
-                            if (catalogText(row[
-                                    widget.university ? 'overview' : 'summary'])
+                            if (catalogLocalizedText(row,
+                                    widget.university ? 'overview' : 'summary')
                                 .isNotEmpty)
                               _section(
                                   widget.university
-                                      ? 'نبذة عن الجامعة'
-                                      : 'عن البرنامج',
-                                  _ArticleText(catalogText(row[widget.university
-                                      ? 'overview'
-                                      : 'summary']))),
+                                      ? cl('نبذة عن الجامعة', 'About the university')
+                                      : cl('عن البرنامج', 'About the program'),
+                                  _ArticleText(catalogLocalizedText(
+                                      row,
+                                      widget.university
+                                          ? 'overview'
+                                          : 'summary'))),
                             if (!widget.university &&
                                 catalogFields(row).isNotEmpty)
                               _section(
-                                  'المجالات الدراسية',
+                                  cl('المجالات الدراسية', 'Fields of study'),
                                   Wrap(spacing: 8, runSpacing: 8, children: [
                                     for (final field in catalogFields(row))
                                       StatusBadge(
-                                          label: field, color: AppColors.navy)
+                                          label: catalogValue(field), color: AppColors.navy)
                                   ])),
                             if (!widget.university &&
                                 row['requirements'] is List &&
                                 (row['requirements'] as List).isNotEmpty)
                               _section(
-                                  'شروط القبول',
+                                  cl('شروط القبول', 'Admission requirements'),
                                   Column(
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
@@ -221,7 +232,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                                 AuthSession.instance.currentUser?.role ==
                                     UserRole.student)
                               PrimaryButton(
-                                  label: 'التقديم على البرنامج',
+                                  label: cl('التقديم على البرنامج', 'Apply to this program'),
                                   onPressed: () => Navigator.of(context).push(
                                       MaterialPageRoute(
                                           builder: (_) =>
@@ -234,7 +245,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                                           builder: (_) =>
                                               const CompareListScreen())),
                                   icon: const Icon(Icons.compare_arrows),
-                                  label: const Text('مقارنة الجامعات')),
+                                  label: Text(cl('مقارنة الجامعات', 'Compare universities'))),
                             const SizedBox(height: 16),
                           ])),
                   if (widget.university)
@@ -250,11 +261,13 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
 
   Widget _heading(Map<String, dynamic> row) {
     final uni = widget.university ? row : catalogMap(row['university']);
-    final country = catalogText(catalogMap(uni['country'])['name']);
+    final country = catalogCountryName(catalogMap(uni['country']));
     final location = [catalogText(uni['city']), country]
         .where((s) => s.isNotEmpty)
-        .join('، ');
+        .join(cl('، ', ', '));
     final logo = catalogAssetUrl(uni['logo']);
+    final name = catalogName(row, widget.university ? 'name' : 'title');
+    final uniName = catalogName(uni, 'name');
     return AppCard(
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       if (widget.university && logo != null)
@@ -264,10 +277,9 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                 width: 64,
                 height: 64,
                 child: _RemotePhoto(url: logo, fit: BoxFit.contain))),
-      Text(catalogText(row[widget.university ? 'name' : 'title']),
-          style: AppTextStyles.screenTitle.copyWith(height: 1.5)),
+      Text(name, style: AppTextStyles.screenTitle.copyWith(height: 1.5)),
       const SizedBox(height: 10),
-      if (!widget.university && catalogText(uni['name']).isNotEmpty)
+      if (!widget.university && uniName.isNotEmpty)
         InkWell(
             onTap: uni['_id'] is String
                 ? () => Navigator.of(context).push(MaterialPageRoute(
@@ -284,9 +296,11 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                         child: _RemotePhoto(url: logo, fit: BoxFit.contain)),
                   const SizedBox(width: 8),
                   Expanded(
-                      child: Text(catalogText(uni['name']),
-                          style: AppTextStyles.cardTitle)),
-                  const Icon(Icons.chevron_left,
+                      child: Text(uniName, style: AppTextStyles.cardTitle)),
+                  Icon(
+                      CatalogLanguage.instance.english
+                          ? Icons.chevron_right
+                          : Icons.chevron_left,
                       textDirection: TextDirection.ltr),
                 ]))),
       if (location.isNotEmpty)
@@ -297,43 +311,53 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
           Expanded(child: Text(location, style: AppTextStyles.body))
         ]),
       if (widget.university && row['isPartnerInstitution'] == true)
-        const Padding(
-            padding: EdgeInsets.only(top: 12),
-            child: StatusBadge(label: 'جامعة شريكة', color: AppColors.success)),
+        Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: StatusBadge(
+                label: cl('جامعة شريكة', 'Partner university'),
+                color: AppColors.success)),
     ]));
   }
 
   Widget _facts(Map<String, dynamic> row) {
     final range = catalogMap(row['tuitionRange']);
     final date = DateTime.tryParse('${row['applicationDeadline']}');
+    final notPublished = cl('غير معلنة', 'Not published');
     final facts = <String, String>{
-      if (!widget.university) 'الدرجة العلمية': catalogText(row['degreeLevel']),
-      'لغة الدراسة': catalogText(row['language']),
-      if (!widget.university) 'مدة الدراسة': catalogText(row['duration']),
-      'الرسوم الدراسية': widget.university
+      if (!widget.university)
+        cl('الدرجة العلمية', 'Degree level'):
+            catalogValue(catalogText(row['degreeLevel'])),
+      cl('لغة الدراسة', 'Study language'):
+          catalogValue(catalogText(row['language'])),
+      if (!widget.university)
+        cl('مدة الدراسة', 'Duration'):
+            catalogValue(catalogText(row['duration'])),
+      cl('الرسوم الدراسية', 'Tuition fees'): widget.university
           ? range['min'] == null && range['max'] == null
-              ? 'غير معلنة'
+              ? notPublished
               : range['max'] == null
-                  ? 'تبدأ من ${range['min']} USD'
+                  ? '${cl('تبدأ من', 'From')} ${range['min']} USD'
                   : range['min'] == null
-                      ? 'حتى ${range['max']} USD'
+                      ? '${cl('حتى', 'Up to')} ${range['max']} USD'
                       : '${range['min']} – ${range['max']} USD'
           : row['tuition'] == null
-              ? 'غير معلنة'
+              ? notPublished
               : '${row['tuition']} USD',
-      if (!widget.university) 'موعد الالتحاق': catalogText(row['intake']),
+      if (!widget.university)
+        cl('موعد الالتحاق', 'Intake'): catalogValue(catalogText(row['intake'])),
       if (date != null)
-        'آخر موعد للتقديم': '${date.day}/${date.month}/${date.year}',
+        cl('آخر موعد للتقديم', 'Application deadline'):
+            '${date.day}/${date.month}/${date.year}',
       if (widget.university && row['ranking'] is num && row['ranking'] > 0)
-        'التصنيف': '${row['ranking']}',
+        cl('التصنيف', 'Ranking'): '${row['ranking']}',
       if (widget.university &&
           row['studentCount'] is num &&
           row['studentCount'] > 0)
-        'عدد الطلاب': '${row['studentCount']}',
+        cl('عدد الطلاب', 'Students'): '${row['studentCount']}',
       if (widget.university &&
           row['specialtyCount'] is num &&
           row['specialtyCount'] > 0)
-        'عدد التخصصات': '${row['specialtyCount']}',
+        cl('عدد التخصصات', 'Specialties'): '${row['specialtyCount']}',
     }..removeWhere((_, v) => v.isEmpty);
     return LayoutBuilder(
         builder: (_, constraints) =>
@@ -399,32 +423,33 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
     return [
       if (careers.isNotEmpty)
         _section(
-            'مجالات العمل بعد التخرج',
+            cl('مجالات العمل بعد التخرج', 'Career opportunities'),
             Wrap(spacing: 8, runSpacing: 8, children: [
               for (final career in careers)
                 StatusBadge(label: career, color: AppColors.navy)
             ])),
       if (offeredAt.isNotEmpty)
         _section(
-            'جامعات أخرى تقدّم البرنامج',
+            cl('جامعات أخرى تقدّم البرنامج', 'Other universities offering this program'),
             Column(children: [
               for (final item in offeredAt)
                 link(
                     item,
-                    '${(item['university'] as Map?)?['name'] ?? ''}',
+                    catalogName(catalogMap(item['university']), 'name'),
                     [
-                      (item['university'] as Map?)?['city'],
-                      ((item['university'] as Map?)?['country']
-                          as Map?)?['name'],
-                    ].where((e) => e != null && '$e'.isNotEmpty).join('، '))
+                      catalogMap(item['university'])['city'],
+                      catalogCountryName(catalogMap(
+                          catalogMap(item['university'])['country'])),
+
+                    ].where((e) => e != null && '$e'.isNotEmpty).join(cl('، ', ', ')))
             ])),
       if (related.isNotEmpty)
         _section(
-            'برامج ذات صلة',
+            cl('برامج ذات صلة', 'Related programs'),
             Column(children: [
               for (final item in related)
-                link(item, '${item['title'] ?? ''}',
-                    '${(item['university'] as Map?)?['name'] ?? ''}')
+                link(item, catalogName(item, 'title'),
+                    catalogName(catalogMap(item['university']), 'name'))
             ])),
     ];
   }
@@ -440,11 +465,9 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
 }
 
 List<Widget> catalogArticleSections(Map<String, dynamic> row) {
-  final headings =
-      row['articleHeadings'] is List ? row['articleHeadings'] as List : [];
-  final bodies =
-      row['articleBodies'] is List ? row['articleBodies'] as List : [];
-  final title = catalogText(row['articleTitle']);
+  final headings = catalogLocalizedList(row, 'articleHeadings');
+  final bodies = catalogLocalizedList(row, 'articleBodies');
+  final title = catalogLocalizedText(row, 'articleTitle');
   if (title.isEmpty &&
       headings.every((v) => catalogText(v).isEmpty) &&
       bodies.every((v) => catalogText(v).isEmpty)) {
@@ -453,7 +476,7 @@ List<Widget> catalogArticleSections(Map<String, dynamic> row) {
   return [
     Padding(
         padding: const EdgeInsets.only(top: 24, bottom: 12),
-        child: Text(title.isEmpty ? 'دليل الدراسة' : title,
+        child: Text(title.isEmpty ? cl('دليل الدراسة', 'Study guide') : title,
             style: AppTextStyles.screenTitle)),
     for (var i = 0; i < math.max(headings.length, bodies.length); i++)
       if ((i < headings.length && catalogText(headings[i]).isNotEmpty) ||
@@ -499,7 +522,7 @@ class _ArticleText extends StatelessWidget {
             } catch (_) {
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                    AppSnackBar(content: Text('تعذر فتح الرابط.')));
+                    AppSnackBar(content: Text(cl('تعذر فتح الرابط.', 'Could not open the link.'))));
               }
             }
           }));
@@ -528,11 +551,11 @@ class _RemotePhoto extends StatelessWidget {
               child: constraints.maxHeight < 80
                   ? const Icon(Icons.broken_image_outlined,
                       color: AppColors.textSecondary)
-                  : const Column(mainAxisSize: MainAxisSize.min, children: [
+                  : Column(mainAxisSize: MainAxisSize.min, children: [
                       Icon(Icons.broken_image_outlined,
                           color: AppColors.textSecondary),
                       SizedBox(height: 6),
-                      Text('تعذر تحميل الصورة', style: AppTextStyles.caption)
+                      Text(cl('تعذر تحميل الصورة', 'Could not load the image'), style: AppTextStyles.caption)
                     ]))));
 }
 
@@ -564,7 +587,7 @@ class _DetailGalleryState extends State<_DetailGallery> {
                                 child: Scaffold(
                                     backgroundColor: AppColors.navy,
                                     appBar: AppBar(
-                                        title: Text('الصورة ${i + 1}'),
+                                        title: Text('${cl('الصورة', 'Image')} ${i + 1}'),
                                         backgroundColor: AppColors.navy,
                                         foregroundColor: Colors.white),
                                     body: InteractiveViewer(
@@ -590,9 +613,9 @@ class _DetailGalleryState extends State<_DetailGallery> {
                                 style: const TextStyle(color: Colors.white))))),
               ]))),
       if (widget.urls.length > 1)
-        const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: Text('اسحب لاستعراض الصور • اضغط للتكبير',
+        Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Text(cl('اسحب لاستعراض الصور • اضغط للتكبير', 'Swipe to browse • tap to zoom'),
                 style: AppTextStyles.caption)),
     ]);
   }

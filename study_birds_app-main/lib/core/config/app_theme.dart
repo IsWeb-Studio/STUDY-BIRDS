@@ -177,6 +177,7 @@ class AppScaffold extends StatelessWidget {
   final Widget? bottomBar;
   final bool showBackButton;
   final bool hideAiButton;
+  final TextDirection textDirection;
 
   const AppScaffold({
     super.key,
@@ -187,12 +188,13 @@ class AppScaffold extends StatelessWidget {
     this.bottomBar,
     this.showBackButton = true,
     this.hideAiButton = false,
+    this.textDirection = TextDirection.rtl,
   });
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: textDirection,
       child: Scaffold(
         backgroundColor: AppColors.background,
         resizeToAvoidBottomInset: true,

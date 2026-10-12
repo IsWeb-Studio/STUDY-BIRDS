@@ -2,14 +2,16 @@ import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/repositories/catalog_repository.dart';
 import '../../core/services/favorites_service.dart';
+import 'catalog_language.dart';
 
 String catalogText(dynamic value) => value is String ? value.trim() : '';
 Map<String, dynamic> catalogMap(dynamic value) =>
     value is Map ? Map<String, dynamic>.from(value) : {};
+
 String catalogFacet(Map<String, dynamic> row, String key, bool universities) {
   final uni = universities ? row : catalogMap(row['university']);
-  if (key == 'country') return catalogText(catalogMap(uni['country'])['name']);
-  if (key == 'university') return catalogText(uni['name']);
+  if (key == 'country') return catalogCountryName(catalogMap(uni['country']));
+  if (key == 'university') return catalogName(uni, 'name');
   if (key == 'city') return catalogText(uni['city']);
   return catalogText(row[key]);
 }
@@ -49,8 +51,8 @@ List<Map<String, dynamic>> filterCatalog(List<Map<String, dynamic>> rows,
   final q = query.trim().toLowerCase();
   final result = rows.where((row) {
     final words = [
-      row['title'],
-      row['name'],
+      row['title'], row['titleAr'], row['titleEn'],
+      row['name'], row['nameAr'], row['nameEn'],
       catalogFacet(row, 'university', universities),
       catalogFacet(row, 'country', universities),
       catalogFacet(row, 'city', universities),
@@ -76,8 +78,8 @@ List<Map<String, dynamic>> filterCatalog(List<Map<String, dynamic>> rows,
     return true;
   }).toList();
   if (selection.sort == 'name') {
-    result.sort((a, b) => catalogText(a[universities ? 'name' : 'title'])
-        .compareTo(catalogText(b[universities ? 'name' : 'title'])));
+    final key = universities ? 'name' : 'title';
+    result.sort((a, b) => catalogName(a, key).compareTo(catalogName(b, key)));
   } else if (selection.sort == 'fee') {
     result.sort((a, b) => (catalogTuition(a, universities) ?? double.infinity)
         .compareTo(catalogTuition(b, universities) ?? double.infinity));
@@ -95,7 +97,7 @@ List<String> catalogFacetOptions(
     bool isUniversityList) {
   if (key == 'country') {
     return ({
-      for (final c in countries) catalogText(c['name']),
+      for (final c in countries) catalogCountryName(c),
       for (final row in rows) catalogFacet(row, 'country', isUniversityList)
     }..remove(''))
         .toList()
@@ -147,13 +149,34 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
   @override
   void initState() {
     super.initState();
+    CatalogLanguage.instance.addListener(_languageChanged);
+    CatalogLanguage.instance.load();
     load();
   }
 
   @override
   void dispose() {
+    CatalogLanguage.instance.removeListener(_languageChanged);
     search.dispose();
     super.dispose();
+  }
+
+  // Country / university facet values are names in the current language, so a
+  // language switch invalidates them.
+  void _languageChanged() {
+    if (!mounted) return;
+    setState(() {
+      if (selection.facets.containsKey('country') ||
+          selection.facets.containsKey('university')) {
+        selection = CatalogSelection(
+            facets: Map.of(selection.facets)
+              ..remove('country')
+              ..remove('university'),
+            maxTuition: selection.maxTuition,
+            partnerOnly: selection.partnerOnly,
+            sort: selection.sort);
+      }
+    });
   }
 
   Future<void> load() async {
@@ -191,7 +214,7 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
               countries.where((c) => c['_id'] == widget.countryId).firstOrNull;
           if (country != null) {
             selection = CatalogSelection(
-                facets: {'country': catalogText(country['name'])});
+                facets: {'country': catalogCountryName(country)});
           }
         }
         initializedCountry = true;
@@ -201,21 +224,22 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
       if (mounted) {
         setState(() {
           loading = false;
-          error = 'تعذر تحميل الكتالوج. تحقق من الاتصال وحاول مجددًا.';
+          error = 'load'; // marker; the message is localized in build()
         });
       }
     }
   }
 
   Map<String, String> get labels => {
-        if (widget.universityId == null) 'country': 'الدولة',
+        if (widget.universityId == null) 'country': cl('الدولة', 'Country'),
         if (!widget.universities && widget.universityId == null)
-          'university': 'الجامعة',
-        if (widget.universities) 'city': 'المدينة',
-        if (!widget.universities) 'fieldOfStudy': 'التخصص',
-        if (!widget.universities) 'degreeLevel': 'الدرجة العلمية',
-        'language': 'لغة الدراسة',
-        if (!widget.universities) 'intake': 'موعد الالتحاق',
+          'university': cl('الجامعة', 'University'),
+        if (widget.universities) 'city': cl('المدينة', 'City'),
+        if (!widget.universities) 'fieldOfStudy': cl('التخصص', 'Field of study'),
+        if (!widget.universities)
+          'degreeLevel': cl('الدرجة العلمية', 'Degree level'),
+        'language': cl('لغة الدراسة', 'Study language'),
+        if (!widget.universities) 'intake': cl('موعد الالتحاق', 'Intake'),
       };
   Future<void> showFilters() async {
     final result = await showModalBottomSheet<CatalogSelection>(
@@ -256,17 +280,19 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             if (widget.finder) ...[
-              const Text('ابدأ بمستقبلك الدراسي',
+              Text(cl('ابدأ بمستقبلك الدراسي', 'Start your study journey'),
                   style: AppTextStyles.screenTitle),
               const SizedBox(height: 4),
-              const Text(
-                  'اختر التخصص والدرجة والميزانية لعرض البرامج المطابقة من الكتالوج.',
+              Text(
+                  cl('اختر التخصص والدرجة والميزانية لعرض البرامج المطابقة من الكتالوج.',
+                      'Choose the field, degree and budget to see matching programs from the catalog.'),
                   style: AppTextStyles.caption),
               if (widget.onOrientation != null)
                 TextButton.icon(
                     onPressed: widget.onOrientation,
                     icon: const Icon(Icons.explore_outlined, size: 18),
-                    label: const Text('لم تحدد تخصصك؟ قيّم اهتماماتك')),
+                    label: Text(cl('لم تحدد تخصصك؟ قيّم اهتماماتك',
+                        'Not sure what to study? Rate your interests'))),
             ],
             Row(children: [
               Expanded(
@@ -276,15 +302,17 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
                       textInputAction: TextInputAction.search,
                       decoration: InputDecoration(
                           hintText: widget.universities
-                              ? 'ابحث عن جامعة أو مدينة'
-                              : 'ابحث عن برنامج أو تخصص',
+                              ? cl('ابحث عن جامعة أو مدينة',
+                                  'Search for a university or city')
+                              : cl('ابحث عن برنامج أو تخصص',
+                                  'Search for a program or field'),
                           filled: true,
                           fillColor: Colors.white,
                           prefixIcon: const Icon(Icons.search_rounded),
                           suffixIcon: search.text.isEmpty
                               ? null
                               : IconButton(
-                                  tooltip: 'مسح البحث',
+                                  tooltip: cl('مسح البحث', 'Clear search'),
                                   onPressed: () =>
                                       setState(() => search.clear()),
                                   icon: const Icon(Icons.close, size: 18)),
@@ -303,7 +331,7 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
                   isLabelVisible: selection.count > 0,
                   label: Text('${selection.count}'),
                   child: IconButton.filled(
-                      tooltip: 'تصفية النتائج',
+                      tooltip: cl('تصفية النتائج', 'Filter results'),
                       onPressed: loading || error != null ? null : showFilters,
                       style: IconButton.styleFrom(
                           backgroundColor: AppColors.navy,
@@ -319,11 +347,14 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
                   child: Row(children: [
                     Expanded(
                         child: Text(
-                            '${filtered.length} ${widget.universities ? 'جامعة' : 'برنامج'}${selection.count > 0 || search.text.isNotEmpty ? ' من ${rows.length}' : ''}',
+                            CatalogLanguage.instance.english
+                                ? '${filtered.length} ${widget.universities ? (filtered.length == 1 ? 'university' : 'universities') : (filtered.length == 1 ? 'program' : 'programs')}${selection.count > 0 || search.text.isNotEmpty ? ' of ${rows.length}' : ''}'
+                                : '${filtered.length} ${widget.universities ? 'جامعة' : 'برنامج'}${selection.count > 0 || search.text.isNotEmpty ? ' من ${rows.length}' : ''}',
                             style: AppTextStyles.caption)),
                     if (selection.count > 0 || search.text.isNotEmpty)
                       TextButton(
-                          onPressed: clear, child: const Text('مسح الكل')),
+                          onPressed: clear,
+                          child: Text(cl('مسح الكل', 'Clear all'))),
                   ])),
             if (selection.count > 0)
               SizedBox(
@@ -333,7 +364,11 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
                       Padding(
                           padding: const EdgeInsetsDirectional.only(end: 6),
                           child: InputChip(
-                              label: Text(entry.value),
+                              label: Text(entry.key == 'country' ||
+                                      entry.key == 'university' ||
+                                      entry.key == 'city'
+                                  ? entry.value
+                                  : catalogValue(entry.value)),
                               onDeleted: () => setState(() => selection =
                                   CatalogSelection(
                                       facets: Map.of(selection.facets)
@@ -342,35 +377,49 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
                                       partnerOnly: selection.partnerOnly,
                                       sort: selection.sort)))),
                     if (selection.maxTuition != null)
-                      Chip(label: Text('حتى ${selection.maxTuition} USD')),
+                      Chip(
+                          label: Text(cl('حتى ${selection.maxTuition} USD',
+                              'Up to ${selection.maxTuition} USD'))),
                     if (selection.partnerOnly)
-                      const Chip(label: Text('الجامعات الشريكة')),
+                      Chip(
+                          label: Text(
+                              cl('الجامعات الشريكة', 'Partner universities'))),
                     if (selection.sort != 'default')
                       Chip(
                           label: Text(selection.sort == 'fee'
-                              ? 'الأقل رسومًا'
-                              : 'الاسم')),
+                              ? cl('الأقل رسومًا', 'Lowest fees')
+                              : cl('الاسم', 'Name'))),
                   ])),
           ])),
       Expanded(
         child: loading
-            ? const LoadingState(message: 'جارٍ تحميل الكتالوج...')
+            ? LoadingState(
+                message: cl('جارٍ تحميل الكتالوج...', 'Loading catalog...'))
             : error != null
                 ? SingleChildScrollView(
-                    child: ErrorState(message: error!, onRetry: load))
+                    child: ErrorState(
+                        message: cl(
+                            'تعذر تحميل الكتالوج. تحقق من الاتصال وحاول مجددًا.',
+                            'Could not load the catalog. Check your connection and try again.'),
+                        onRetry: load))
                 : filtered.isEmpty
                     ? SingleChildScrollView(
                         child: EmptyState(
                             icon: Icons.search_off_rounded,
                             title: rows.isEmpty
-                                ? 'لا توجد بيانات متاحة بعد'
-                                : 'لا توجد نتائج مطابقة',
+                                ? cl('لا توجد بيانات متاحة بعد',
+                                    'No data available yet')
+                                : cl('لا توجد نتائج مطابقة',
+                                    'No matching results'),
                             message: rows.isEmpty
-                                ? 'يمكنك إعادة التحميل لاحقًا.'
-                                : 'جرّب توسيع اختياراتك أو مسح الفلاتر.',
+                                ? cl('يمكنك إعادة التحميل لاحقًا.',
+                                    'You can try reloading later.')
+                                : cl('جرّب توسيع اختياراتك أو مسح الفلاتر.',
+                                    'Try widening your choices or clearing the filters.'),
                             ctaLabel: rows.isEmpty
-                                ? 'إعادة التحميل'
-                                : 'مسح الفلاتر والبحث',
+                                ? cl('إعادة التحميل', 'Reload')
+                                : cl('مسح الفلاتر والبحث',
+                                    'Clear filters and search'),
                             onCta: rows.isEmpty ? load : clear))
                     : RefreshIndicator(
                         onRefresh: load,
@@ -445,7 +494,7 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
         filterCatalog(widget.rows, draft, widget.query, widget.universities)
             .length;
     return Directionality(
-        textDirection: TextDirection.rtl,
+        textDirection: CatalogLanguage.instance.direction,
         child: Padding(
           padding:
               EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
@@ -469,11 +518,11 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
                       child: Row(children: [
                         const Icon(Icons.tune_rounded, color: AppColors.navy),
                         const SizedBox(width: 10),
-                        const Expanded(
-                            child: Text('تصفية النتائج',
+                        Expanded(
+                            child: Text(cl('تصفية النتائج', 'Filter results'),
                                 style: AppTextStyles.sectionLabel)),
                         IconButton(
-                            tooltip: 'إغلاق الفلاتر',
+                            tooltip: cl('إغلاق الفلاتر', 'Close filters'),
                             onPressed: () => Navigator.pop(context),
                             icon: const Icon(Icons.close)),
                       ])),
@@ -484,8 +533,8 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
                               padding:
                                   const EdgeInsets.symmetric(horizontal: 20),
                               children: [
-                                const Text(
-                                    'حدّد ما يناسبك؛ تُطبّق الاختيارات عند الضغط على عرض النتائج.',
+                                Text(
+                                    cl('حدّد ما يناسبك؛ تُطبّق الاختيارات عند الضغط على عرض النتائج.', 'Choose what suits you; selections apply when you tap Show results.'),
                                     style: AppTextStyles.caption),
                                 const SizedBox(height: 20),
                                 for (final entry in widget.labels.entries) ...[
@@ -516,12 +565,12 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
                                                 borderSide: const BorderSide(
                                                     color: AppColors.border))),
                                         items: [
-                                          const DropdownMenuItem(
-                                              value: '', child: Text('الكل')),
+                                          DropdownMenuItem(
+                                              value: '', child: Text(cl('الكل', 'All'))),
                                           for (final option in sorted)
                                             DropdownMenuItem(
                                                 value: option,
-                                                child: Text(option,
+                                                child: Text(entry.key == 'country' || entry.key == 'university' || entry.key == 'city' ? option : catalogValue(option),
                                                     maxLines: 1,
                                                     overflow:
                                                         TextOverflow.ellipsis))
@@ -556,28 +605,28 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
                                               (n == null ||
                                                   !n.isFinite ||
                                                   n < 0)
-                                          ? 'أدخل مبلغًا صحيحًا لا يقل عن صفر'
+                                          ? cl('أدخل مبلغًا صحيحًا لا يقل عن صفر', 'Enter a valid amount, zero or more')
                                           : null;
                                     },
                                     decoration: InputDecoration(
-                                        labelText: 'الحد الأقصى للرسوم (USD)',
-                                        hintText: 'بدون حد',
+                                        labelText: cl('الحد الأقصى للرسوم (USD)', 'Maximum fees (USD)'),
+                                        hintText: cl('بدون حد', 'No limit'),
                                         helperText: widget.universities
-                                            ? 'حسب الحد الأدنى للرسوم المعلنة للجامعة'
-                                            : 'حسب الرسوم المنشورة للبرنامج',
+                                            ? cl('حسب الحد الأدنى للرسوم المعلنة للجامعة', 'Based on the university minimum published fees')
+                                            : cl('حسب الرسوم المنشورة للبرنامج', 'Based on the published program fees'),
                                         helperMaxLines: 2,
                                         border: OutlineInputBorder(
                                             borderRadius:
                                                 BorderRadius.circular(14)))),
                                 const SizedBox(height: 8),
-                                const Text(
-                                    'عند تحديد ميزانية، تُستبعد النتائج التي لم تُعلن رسومها.',
+                                Text(
+                                    cl('عند تحديد ميزانية، تُستبعد النتائج التي لم تُعلن رسومها.', 'When a budget is set, results with unpublished fees are excluded.'),
                                     style: AppTextStyles.caption),
                                 const SizedBox(height: 16),
                                 if (widget.universities)
                                   SwitchListTile.adaptive(
                                       contentPadding: EdgeInsets.zero,
-                                      title: const Text('الجامعات الشريكة فقط'),
+                                      title: Text(cl('الجامعات الشريكة فقط', 'Partner universities only')),
                                       value: partner,
                                       onChanged: (v) =>
                                           setState(() => partner = v)),
@@ -586,19 +635,19 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
                                     initialValue: sort,
                                     isExpanded: true,
                                     decoration: InputDecoration(
-                                        labelText: 'ترتيب النتائج',
+                                        labelText: cl('ترتيب النتائج', 'Sort results'),
                                         border: OutlineInputBorder(
                                             borderRadius:
                                                 BorderRadius.circular(14))),
-                                    items: const [
+                                    items: [
                                       DropdownMenuItem(
                                           value: 'default',
-                                          child: Text('الترتيب الافتراضي')),
+                                          child: Text(cl('الترتيب الافتراضي', 'Default order'))),
                                       DropdownMenuItem(
-                                          value: 'name', child: Text('الاسم')),
+                                          value: 'name', child: Text(cl('الاسم', 'Name'))),
                                       DropdownMenuItem(
                                           value: 'fee',
-                                          child: Text('الأقل رسومًا أولًا'))
+                                          child: Text(cl('الأقل رسومًا أولًا', 'Lowest fees first')))
                                     ],
                                     onChanged: (v) =>
                                         setState(() => sort = v ?? 'default')),
@@ -615,7 +664,7 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
                                   partner = false;
                                   sort = 'default';
                                 }),
-                            child: const Text('إعادة ضبط')),
+                            child: Text(cl('إعادة ضبط', 'Reset'))),
                         const SizedBox(width: 12),
                         Expanded(
                             child: FilledButton(
@@ -630,7 +679,7 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
                                     shape: RoundedRectangleBorder(
                                         borderRadius:
                                             BorderRadius.circular(14))),
-                                child: Text('عرض النتائج ($count)'))),
+                                child: Text(cl('عرض النتائج ($count)', 'Show results ($count)')))),
                       ])),
                 ])),
           ),
@@ -683,7 +732,7 @@ class _CatalogCardState extends State<_CatalogCard> {
     final location = [
       catalogFacet(row, 'city', universities),
       catalogFacet(row, 'country', universities)
-    ].where((v) => v.isNotEmpty).join('، ');
+    ].where((v) => v.isNotEmpty).join(cl('، ', ', '));
     return AppCard(
         onTap: widget.onTap,
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -711,11 +760,11 @@ class _CatalogCardState extends State<_CatalogCard> {
                 child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                  Text(catalogText(row[universities ? 'name' : 'title']),
+                  Text(catalogName(row, universities ? 'name' : 'title'),
                       style: AppTextStyles.cardTitle),
-                  const SizedBox(height: 4),
-                  if (!universities && catalogText(uni['name']).isNotEmpty)
-                    Text(catalogText(uni['name']),
+                  const SizedBox(height: 2),
+                  if (!universities && catalogName(uni, 'name').isNotEmpty)
+                    Text(catalogName(uni, 'name'),
                         style: AppTextStyles.caption),
                   if (location.isNotEmpty)
                     Text(location, style: AppTextStyles.caption),
@@ -732,9 +781,9 @@ class _CatalogCardState extends State<_CatalogCard> {
           const SizedBox(height: 14),
           Wrap(spacing: 6, runSpacing: 6, children: [
             for (final label in [
-              if (!universities) catalogText(row['degreeLevel']),
-              catalogText(row['language']),
-              if (!universities) catalogText(row['duration'])
+              if (!universities) catalogValue(catalogText(row['degreeLevel'])),
+              catalogValue(catalogText(row['language'])),
+              if (!universities) catalogValue(catalogText(row['duration']))
             ].where((s) => s.isNotEmpty))
               Container(
                   padding:
@@ -744,17 +793,21 @@ class _CatalogCardState extends State<_CatalogCard> {
                       borderRadius: BorderRadius.circular(8)),
                   child: Text(label, style: AppTextStyles.caption)),
             if (universities && row['isPartnerInstitution'] == true)
-              const StatusBadge(label: 'جامعة شريكة', color: AppColors.success),
+              StatusBadge(
+                  label: cl('جامعة شريكة', 'Partner university'),
+                  color: AppColors.success),
           ]),
           const Divider(height: 24),
           Wrap(spacing: 12, runSpacing: 6, children: [
             Text(
                 fee == null
-                    ? 'الرسوم غير معلنة'
-                    : '${universities ? 'تبدأ من ' : ''}${fee.toString()} USD',
+                    ? cl('الرسوم غير معلنة', 'Fees not published')
+                    : '${universities ? cl('تبدأ من ', 'From ') : ''}${fee.toString()} USD',
                 style: AppTextStyles.cardTitle.copyWith(color: AppColors.navy)),
             if (!universities && catalogText(row['intake']).isNotEmpty)
-              Text('الالتحاق: ${row['intake']}', style: AppTextStyles.caption),
+              Text(
+                  '${cl('الالتحاق', 'Intake')}: ${catalogValue(catalogText(row['intake']))}',
+                  style: AppTextStyles.caption),
           ]),
         ]));
   }

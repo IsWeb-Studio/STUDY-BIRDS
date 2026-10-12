@@ -3,13 +3,14 @@ import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import 'catalog_browser.dart';
 import 'catalog_detail.dart';
+import 'catalog_language.dart';
 import '../../core/repositories/student_repository.dart';
 
 class ProgramsExplorerScreen extends StatelessWidget {
   const ProgramsExplorerScreen({super.key});
   @override
-  Widget build(BuildContext context) => AppScaffold(
-        title: 'البرامج الدراسية',
+  Widget build(BuildContext context) => CatalogScaffold(
+        title: () => cl('البرامج الدراسية', 'Study programs'),
         body: CatalogBrowser(
             onOpen: (p) => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => ProgramDetailScreen(
@@ -20,8 +21,8 @@ class ProgramsExplorerScreen extends StatelessWidget {
 class ProgramFinderScreen extends StatelessWidget {
   const ProgramFinderScreen({super.key});
   @override
-  Widget build(BuildContext context) => AppScaffold(
-        title: 'مكتشف البرامج',
+  Widget build(BuildContext context) => CatalogScaffold(
+        title: () => cl('مكتشف البرامج', 'Program finder'),
         body: CatalogBrowser(
             finder: true,
             onOrientation: () => Navigator.of(context).push(MaterialPageRoute(
