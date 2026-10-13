@@ -141,7 +141,7 @@ void main() {
   tearDown(() => AuthSession.instance.token = null);
 
   testWidgets(
-      'smart home: greeting, context card, journey, countdowns, sections, quick actions',
+      'smart home: greeting, journey, progress and next step',
       (tester) async {
     phone(tester);
     await http.runWithClient(() async {
@@ -151,37 +151,11 @@ void main() {
       expect(find.text('مرحباً أحمد'), findsOneWidget);
       expect(find.text('Turkey - Istanbul - Physiotherapy'), findsOneWidget);
       expect(find.text('47%'), findsOneWidget);
-      // The context card is the first thing below the status card.
-      expect(find.text('أكمل أوراقك المطلوبة'), findsWidgets);
-      // Server quick actions (11) plus the app's community shortcut.
-      for (final label in [
-        'البرامج',
-        'رفع مستند',
-        'التأشيرة',
-        'السكن',
-        'المجتمع'
-      ]) {
-        expect(find.text(label), findsOneWidget);
-      }
-
-      await tester.scrollUntilVisible(find.text('متأخر 1 يوم'), 300,
-          scrollable: find.byType(Scrollable).first);
-      expect(find.text('استحقاق دفعة: القسط الأول'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('بعد 17 يوم'), 200,
-          scrollable: find.byType(Scrollable).first);
-      await tester.scrollUntilVisible(find.text('1 يحتاج إجراء منك'), 200,
-          scrollable: find.byType(Scrollable).first);
-      expect(find.text('1 متأخرة'), findsOneWidget);
-      await tester.scrollUntilVisible(find.text('كشف الدرجات: مرفوض'), 200,
-          scrollable: find.byType(Scrollable).first);
+      // Redesigned home: the status card, then the next required step.
+      expect(find.text('الخطوة القادمة'), findsOneWidget);
+      expect(find.text('استكمال مستند'), findsWidgets);
+      expect(find.text('الطلبات النشطة'), findsOneWidget);
       expect(tester.takeException(), isNull);
-
-      // The documents section opens the student's documents.
-      await tester.ensureVisible(find.text('1 يحتاج إجراء منك'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('1 يحتاج إجراء منك'));
-      await tester.pumpAndSettle();
-      expect(find.byType(MyDocumentsScreen), findsOneWidget);
     },
         () => MockClient((r) async => reply(
             r.url.path.endsWith('/students/overview')
@@ -198,6 +172,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('مرحباً بك'), findsOneWidget);
       expect(find.text('المواعيد المهمة'), findsNothing);
+      await tester.scrollUntilVisible(find.text('طلباتي'), 300,
+          scrollable: find.byType(Scrollable).first);
       expect(find.text('طلباتي'), findsOneWidget);
       expect(tester.takeException(), isNull);
     },

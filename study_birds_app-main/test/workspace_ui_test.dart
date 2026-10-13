@@ -78,7 +78,7 @@ void main() {
     await tester.tap(find.widgetWithText(FilledButton, 'تسجيل الدخول'));
     await tester.pumpAndSettle();
     expect(api.authenticated, isFalse);
-    expect(find.text('رمز التحقق من البريد'), findsOneWidget);
+    expect(find.text('رمز التحقق'), findsOneWidget);
     await tester.enterText(find.byType(TextFormField).at(2), '123456');
     await tester
         .ensureVisible(find.widgetWithText(FilledButton, 'تسجيل الدخول'));

@@ -1,0 +1,48 @@
+name: App CI (Flutter)
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "study_birds_app-main/**"
+      - ".github/workflows/app-ci.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "study_birds_app-main/**"
+      - ".github/workflows/app-ci.yml"
+
+concurrency:
+  group: app-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  analyze-and-test:
+    name: Analyze & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: study_birds_app-main
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pinned: the project is built and tested with this exact SDK.
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "3.41.9"
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Only real errors fail the build; the existing info/warning backlog does not.
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+
+      - name: Error-message policy
+        run: dart run tool/check_error_policy.dart
+
+      - name: Test
+        run: flutter test --reporter expanded

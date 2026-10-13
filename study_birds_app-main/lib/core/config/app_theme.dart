@@ -465,22 +465,34 @@ class LoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 6,
-      itemBuilder: (_, i) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: i == 0 && message != null
-            ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: SkeletonBox(height: 14, width: 140),
-                ),
-                const SkeletonCard(),
-              ])
-            : const SkeletonCard(),
-      ),
-    );
+    Widget item(int i) => Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: i == 0 && message != null
+              ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: SkeletonBox(height: 14, width: 140),
+                  ),
+                  const SkeletonCard(),
+                ])
+              : const SkeletonCard(),
+        );
+    return LayoutBuilder(builder: (context, constraints) {
+      // Used both as a full-screen body and inside other scrollables (parent
+      // dashboard). A ListView inside an unbounded parent throws "Vertical
+      // viewport was given unbounded height" - so fall back to a plain Column.
+      if (!constraints.hasBoundedHeight) {
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(children: [for (var i = 0; i < 3; i++) item(i)]),
+        );
+      }
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: 6,
+        itemBuilder: (_, i) => item(i),
+      );
+    });
   }
 }
 
@@ -574,9 +586,9 @@ class _ErrorStateState extends State<ErrorState> {
 
   bool get _offline {
     final text = AppError.safeText(widget.message);
-    return text == AppError.connection ||
-        text.contains('اتصال') ||
-        text.contains('إنترنت');
+    // Only a genuine connectivity failure gets the offline treatment; a message
+    // that merely mentions the connection (e.g. a 503) must not claim "no internet".
+    return text == AppError.connection;
   }
 
   @override

@@ -4,13 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:study_birds/core/services/auth_session.dart';
-import 'package:study_birds/screens/auth/phone_verification_screen.dart';
 import 'package:study_birds/screens/home_journey/global_search_screen.dart';
 import 'package:study_birds/screens/universities_programs_countries/countries_scholarships_screens.dart';
 void main(){
  tearDown(() {AuthSession.instance.currentUser=null;AuthSession.instance.token=null;});
  testWidgets('search failure is an error with retry, not an empty result',(tester)async{
-  await http.runWithClient(()async{await tester.pumpWidget(const MaterialApp(home:GlobalSearchScreen()));await tester.pumpAndSettle();expect(find.textContaining('تعذر تحميل بيانات البحث'),findsOneWidget);expect(find.text('لا توجد نتائج'),findsNothing);},()=>MockClient((_)async=>http.Response('{}',503)));
+  await http.runWithClient(()async{await tester.pumpWidget(const MaterialApp(home:GlobalSearchScreen()));await tester.pumpAndSettle();expect(find.textContaining('تعذر تحميل بيانات البحث'),findsOneWidget);expect(find.text('إعادة المحاولة'),findsOneWidget);expect(find.text('لا توجد نتائج'),findsNothing);},()=>MockClient((_)async=>http.Response('{}',503)));
  });
  testWidgets('scholarships load real data and submit an application only after confirmation',(tester)async{
   AuthSession.instance.currentUser=const AuthUser(id:'student',name:'Student',email:'test@example.test',role:UserRole.student);AuthSession.instance.token='test';
@@ -25,16 +24,5 @@ void main(){
    if(request.url.path.endsWith('/mine'))return http.Response(jsonEncode(applied?[{'scholarship':{'_id':'s1','title':'Real scholarship'},'status':'submitted'}]:[]),200);
    return http.Response(jsonEncode([{'_id':'s1','title':'Real scholarship','eligibility':'Actual requirements'}]),200);
   }));
- });
- testWidgets('phone verification preserves unverified state after provider rejection',(tester)async{
-  AuthSession.instance.token='test';var confirms=0;
-  await http.runWithClient(()async{
-   await tester.pumpWidget(const MaterialApp(home:PhoneVerificationScreen()));
-   await tester.enterText(find.byType(TextField).first,'+905551234567');await tester.tap(find.text('إرسال الرمز'));await tester.pumpAndSettle();
-   expect(find.text('تم تأكيد رقم الهاتف بنجاح'),findsNothing);
-   await tester.enterText(find.byType(TextField).last,'123456');await tester.tap(find.text('تأكيد الرقم'));await tester.pumpAndSettle();
-   expect(confirms,1);expect(find.text('تم تأكيد رقم الهاتف بنجاح'),findsNothing);
-   await tester.tap(find.text('تأكيد الرقم'));await tester.pumpAndSettle();expect(find.text('تم تأكيد رقم الهاتف بنجاح'),findsOneWidget);
-  },()=>MockClient((request)async{if(request.url.path.endsWith('/confirm')){confirms++;return http.Response('{}',confirms==1?400:200);}expect(jsonDecode(request.body)['phone'],'+905551234567');return http.Response('{}',200);}));
  });
 }

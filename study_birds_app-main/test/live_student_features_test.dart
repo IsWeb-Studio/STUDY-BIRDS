@@ -115,7 +115,9 @@ void main() {
       await tester.tap(find.text('حفظ البيانات'));
       await tester.pumpAndSettle();
       expect(complete, false);
-      expect(find.textContaining('Save failed'), findsOneWidget);
+      // Server internals ('Save failed') are never shown; the user gets safe text.
+      expect(find.textContaining('Save failed'), findsNothing);
+      expect(find.textContaining('الخدمة غير متاحة مؤقتًا'), findsOneWidget);
       expect(find.byType(Form), findsOneWidget);
       await tester.dragUntilVisible(
           find.widgetWithText(TextFormField, 'الاسم بالإنجليزية'),
@@ -197,13 +199,13 @@ void main() {
     await http.runWithClient(() async {
       await tester.pumpWidget(app(const ChangePasswordScreen()));
       await tester.enterText(find.byType(TextFormField).at(0), 'old-password');
-      await tester.enterText(find.byType(TextFormField).at(1), 'new-password');
+      await tester.enterText(find.byType(TextFormField).at(1), 'Birds@Sky2026');
       await tester.enterText(find.byType(TextFormField).at(2), 'mismatch');
       await tester.tap(find.text('حفظ كلمة المرور'));
       await tester.pump();
       expect(calls, 0);
       expect(find.text('كلمتا المرور غير متطابقتين'), findsOneWidget);
-      await tester.enterText(find.byType(TextFormField).at(2), 'new-password');
+      await tester.enterText(find.byType(TextFormField).at(2), 'Birds@Sky2026');
       await tester.tap(find.text('حفظ كلمة المرور'));
       await tester.pumpAndSettle();
     },
@@ -212,7 +214,7 @@ void main() {
               expect(request.url.path, '/api/auth/change-password');
               expect(jsonDecode(request.body), {
                 'currentPassword': 'old-password',
-                'newPassword': 'new-password'
+                'newPassword': 'Birds@Sky2026'
               });
               return response({});
             }));

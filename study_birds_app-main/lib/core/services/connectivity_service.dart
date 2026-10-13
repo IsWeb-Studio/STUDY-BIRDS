@@ -205,6 +205,8 @@ class ConnectivityService extends ChangeNotifier with WidgetsBindingObserver {
     if (!ok && !_disposed) {
       // A single failed probe is not enough to declare an outage.
       await Future<void>.delayed(confirmDelay);
+      // stop() / dispose() during the wait must not start another probe.
+      if (_disposed || !_started) return;
       ok = await _safeProbe();
     }
     _lastVerifyAt = DateTime.now();

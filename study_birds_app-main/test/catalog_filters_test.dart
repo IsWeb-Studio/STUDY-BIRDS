@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:study_birds/core/config/app_theme.dart';
 import 'package:study_birds/screens/universities_programs_countries/catalog_detail.dart';
 import 'dart:convert';
@@ -364,11 +365,11 @@ void main() {
       await mount(tester,
           ProgramDetailScreen(programId: 'p1', initialData: programs.first));
       expect(find.byType(Image), findsWidgets);
+      // Catalog images go through the cached image widget (CachedNetworkImage).
       expect(
-          tester.widgetList<Image>(find.byType(Image)).any((w) =>
-              w.image is NetworkImage &&
-              (w.image as NetworkImage).url ==
-                  'https://example.test/cover.jpg'),
+          tester
+              .widgetList<CachedNetworkImage>(find.byType(CachedNetworkImage))
+              .any((w) => w.imageUrl == 'https://example.test/cover.jpg'),
           isTrue);
       await preview(tester, 'catalog-program-detail');
       await tester.scrollUntilVisible(find.text('دليل هندسة البرمجيات'), 350,

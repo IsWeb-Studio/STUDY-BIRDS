@@ -50,6 +50,11 @@ void main() {
   testWidgets(
       'recovery requests code then confirms password without claiming success early',
       (tester) async {
+    // The strength meter makes the form taller than the default 800x600 view.
+    tester.view.physicalSize = const Size(800, 1600);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     final paths = <String>[];
     await http.runWithClient(() async {
       await tester.pumpWidget(const MaterialApp(home: AccountRecoveryScreen()));
@@ -61,8 +66,8 @@ void main() {
       expect(find.text('تحقق من بريدك'), findsOneWidget);
       expect(find.text('تم تحديث كلمة المرور'), findsNothing);
       await tester.enterText(find.byType(TextFormField).at(0), '123456');
-      await tester.enterText(find.byType(TextFormField).at(1), 'new-password');
-      await tester.enterText(find.byType(TextFormField).at(2), 'new-password');
+      await tester.enterText(find.byType(TextFormField).at(1), 'Birds@Sky2026');
+      await tester.enterText(find.byType(TextFormField).at(2), 'Birds@Sky2026');
       await tester.ensureVisible(find.text('تعيين كلمة المرور'));
       await tester.tap(find.text('تعيين كلمة المرور'));
       await tester.pumpAndSettle();
@@ -75,7 +80,7 @@ void main() {
                 expect(jsonDecode(r.body), {
                   'email': 'student@example.test',
                   'code': '123456',
-                  'password': 'new-password'
+                  'password': 'Birds@Sky2026'
                 });
               return http.Response('{}', 200,
                   headers: {'content-type': 'application/json'});

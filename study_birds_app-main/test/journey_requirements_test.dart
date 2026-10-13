@@ -33,7 +33,10 @@ void main() {
             ]))));
     expect(find.text('بانتظار المراجعة'), findsOneWidget);
     expect(find.text('متأخرة'), findsOneWidget);
-    expect(find.textContaining('%'), findsNothing);
+    // The only percentage allowed is the one derived from real stage counts
+    // (0 of 2 stages complete => 0%), never an invented figure.
+    expect(find.text('0% مكتمل — 0 من 2 مرحلة'), findsOneWidget);
+    expect(find.textContaining('%'), findsNWidgets(2));
     expect(find.text('مسؤول المتابعة: أحمد'), findsOneWidget);
     expect(find.text('تأخرت متابعة الفريق عن الموعد المحدد'), findsOneWidget);
     expect(tester.takeException(), isNull);

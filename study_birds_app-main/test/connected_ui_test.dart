@@ -1,3 +1,4 @@
+import 'package:study_birds/core/utils/app_error.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -171,7 +172,9 @@ void main() {
             kind: 'applications',
             path: '/students/applications')));
     await tester.pumpAndSettle();
-    expect(find.text('Unavailable'), findsOneWidget);
+    // Raw server text is never shown; a 503 maps to the safe unavailable message.
+    expect(find.text('Unavailable'), findsNothing);
+    expect(find.text(AppError.unavailable), findsOneWidget);
     await tester.tap(find.text('إعادة المحاولة'));
     await tester.pumpAndSettle();
     expect(find.text('لا توجد نتائج حالياً'), findsOneWidget);
