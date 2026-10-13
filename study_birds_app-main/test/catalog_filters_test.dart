@@ -1,3 +1,4 @@
+import 'package:study_birds/screens/universities_programs_countries/catalog_language.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:study_birds/core/config/app_theme.dart';
 import 'package:study_birds/screens/universities_programs_countries/catalog_detail.dart';
@@ -85,6 +86,8 @@ Future<void> mount(WidgetTester tester, Widget home) async {
 }
 
 void main() {
+  // These tests exercise the Arabic view; the catalog is English by default.
+  setUp(() => CatalogLanguage.instance.english = false);
   setUpAll(() async {
     final loader = FontLoader('Tajawal')
       ..addFont(rootBundle.load('assets/fonts/Tajawal-Regular.ttf'))

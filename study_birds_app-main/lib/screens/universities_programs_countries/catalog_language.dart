@@ -15,7 +15,10 @@ class CatalogLanguage extends ChangeNotifier {
   static final instance = CatalogLanguage._();
   static const _key = 'catalog_language_en';
 
-  bool english = false;
+  /// The catalog pages (universities, programs, countries) are English by
+  /// default; the user can switch to Arabic and back, and the choice is
+  /// remembered. The rest of the app stays Arabic.
+  bool english = true;
   bool _loaded = false;
 
   TextDirection get direction =>
@@ -26,37 +29,57 @@ class CatalogLanguage extends ChangeNotifier {
     _loaded = true;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final saved = prefs.getBool(_key) ?? false;
+      final saved = prefs.getBool(_key) ?? true;
       if (saved != english) {
         english = saved;
         notifyListeners();
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/catalog_language.dart:32');}
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/universities_programs_countries/catalog_language.dart:load');
+    }
   }
 
-  // ── On-demand machine translation of catalog content ───────────────────
-  // Arabic text that has no hand-written English version is sent to
-  // POST /translate (server caches results) and swapped in when it arrives.
+  // ── On-demand machine translation of catalog content, BOTH directions ───
+  //  • English view: Arabic text with no hand-written English version → English
+  //  • Arabic view:  English-only text (names, descriptions typed in English)
+  //                  → Arabic
+  // Text is sent to POST /translate (server caches results) with the wanted
+  // `target`, and swapped in when it arrives. Keys are "<target>|<text>".
   static bool translationEnabled = true;
   static final _arabic = RegExp('[؀-ۿ]');
+  static final _latin = RegExp('[A-Za-z]');
   final Map<String, String> _translated = {};
   final Set<String> _queued = {}, _inFlight = {}, _failed = {};
   Timer? _flushTimer;
 
+  static String _key2(String target, String text) => '$target|$text';
+
+  /// Whether [text] is in the *other* language and so needs translating.
+  static bool needsTranslation(String text, String target) => target == 'en'
+      ? _arabic.hasMatch(text)
+      : _latin.hasMatch(text) && !_arabic.hasMatch(text);
+
   /// English text for [arabic]: the translation if known (otherwise the
   /// original, and a fetch is scheduled that re-notifies listeners).
-  String tr(String arabic) {
-    final text = arabic.trim();
-    if (!english || text.isEmpty || !_arabic.hasMatch(text)) return arabic;
-    final known = _translated[text];
+  String tr(String arabic) => english ? _translate(arabic, 'en') : arabic;
+
+  /// Arabic text for [english]-only content (used in the Arabic view).
+  String trAr(String text) => english ? text : _translate(text, 'ar');
+
+  String _translate(String original, String target) {
+    final text = original.trim();
+    if (text.isEmpty || !needsTranslation(text, target)) return original;
+    final key = _key2(target, text);
+    final known = _translated[key];
     if (known != null) return known;
     if (translationEnabled &&
-        !_failed.contains(text) &&
-        !_inFlight.contains(text) &&
-        _queued.add(text)) {
+        !_failed.contains(key) &&
+        !_inFlight.contains(key) &&
+        _queued.add(key)) {
       _flushTimer ??= Timer(const Duration(milliseconds: 150), _flush);
     }
-    return arabic;
+    return original;
   }
 
   Future<void> _flush() async {
@@ -64,45 +87,55 @@ class CatalogLanguage extends ChangeNotifier {
     final pending = _queued.toList();
     _queued.clear();
     var changed = false;
-    var index = 0;
-    while (index < pending.length) {
-      // keep each request well under the server's body limit
-      final batch = <String>[];
-      var size = 0;
-      while (index < pending.length &&
-          batch.length < 40 &&
-          (batch.isEmpty || size + pending[index].length < 50000)) {
-        size += pending[index].length;
-        batch.add(pending[index++]);
-      }
-      _inFlight.addAll(batch);
-      try {
-        final data = await ApiClient.instance
-            .post('/translate', body: {'texts': batch, 'target': 'en'});
-        final list = data is Map ? data['translations'] : null;
-        for (var i = 0; i < batch.length; i++) {
-          final value = list is List && i < list.length ? list[i] : null;
-          if (value is String && value.trim().isNotEmpty) {
-            _translated[batch[i]] = value.trim();
-            changed = true;
+    for (final target in const ['en', 'ar']) {
+      final texts = pending
+          .where((k) => k.startsWith('$target|'))
+          .map((k) => k.substring(target.length + 1))
+          .toList();
+      var index = 0;
+      while (index < texts.length) {
+        // keep each request well under the server's body limit
+        final batch = <String>[];
+        var size = 0;
+        while (index < texts.length &&
+            batch.length < 40 &&
+            (batch.isEmpty || size + texts[index].length < 50000)) {
+          size += texts[index].length;
+          batch.add(texts[index++]);
+        }
+        _inFlight.addAll(batch.map((t) => _key2(target, t)));
+        try {
+          final data = await ApiClient.instance
+              .post('/translate', body: {'texts': batch, 'target': target});
+          final list = data is Map ? data['translations'] : null;
+          for (var i = 0; i < batch.length; i++) {
+            final value = list is List && i < list.length ? list[i] : null;
+            if (value is String && value.trim().isNotEmpty) {
+              _translated[_key2(target, batch[i])] = value.trim();
+              changed = true;
+            }
           }
+        } catch (swallowedError, swallowedStack) {
+          // server translation unavailable (older deployment, offline, ...)
+          ErrorReporter.swallowed(swallowedError, swallowedStack,
+              'screens/universities_programs_countries/catalog_language.dart:flush');
         }
-      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/catalog_language.dart:88');
-        // server translation unavailable (older deployment, offline, ...)
+        // Anything the server did not translate goes straight to the public
+        // translate endpoint so the page never stays in the wrong language.
+        final missing = batch
+            .where((t) => !_translated.containsKey(_key2(target, t)))
+            .toList();
+        await Future.wait(missing.map((text) async {
+          final value = await _publicTranslate(text, target);
+          if (value != null) {
+            _translated[_key2(target, text)] = value;
+            changed = true;
+          } else {
+            _failed.add(_key2(target, text));
+          }
+        }));
+        _inFlight.removeAll(batch.map((t) => _key2(target, t)));
       }
-      // Anything the server did not translate goes straight to the public
-      // translate endpoint so the page never stays in Arabic.
-      final missing = batch.where((t) => !_translated.containsKey(t)).toList();
-      await Future.wait(missing.map((text) async {
-        final value = await _publicTranslate(text);
-        if (value != null) {
-          _translated[text] = value;
-          changed = true;
-        } else {
-          _failed.add(text);
-        }
-      }));
-      _inFlight.removeAll(batch);
     }
     if (changed) notifyListeners();
   }
@@ -122,18 +155,22 @@ class CatalogLanguage extends ChangeNotifier {
     return chunks;
   }
 
-  Future<String?> _publicTranslate(String text) async {
+  Future<String?> _publicTranslate(String text, String target) async {
     try {
       final parts = <String>[];
       for (final chunk in _chunks(text)) {
-        if (!_arabic.hasMatch(chunk)) {
+        if (!needsTranslation(chunk, target)) {
           parts.add(chunk);
           continue;
         }
         final response = await http
             .post(
-                Uri.https('translate.googleapis.com', '/translate_a/single',
-                    {'client': 'gtx', 'sl': 'ar', 'tl': 'en', 'dt': 't'}),
+                Uri.https('translate.googleapis.com', '/translate_a/single', {
+                  'client': 'gtx',
+                  'sl': target == 'en' ? 'ar' : 'en',
+                  'tl': target,
+                  'dt': 't'
+                }),
                 body: {'q': chunk})
             .timeout(const Duration(seconds: 15));
         if (response.statusCode != 200) return null;
@@ -145,9 +182,21 @@ class CatalogLanguage extends ChangeNotifier {
       }
       final result = parts.join('\n').trim();
       return result.isEmpty ? null : result;
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/catalog_language.dart:146');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/universities_programs_countries/catalog_language.dart:public');
       return null;
     }
+  }
+
+  /// Test helper: forget cached translations and pending work.
+  void resetTranslationsForTest() {
+    _translated.clear();
+    _queued.clear();
+    _inFlight.clear();
+    _failed.clear();
+    _flushTimer?.cancel();
+    _flushTimer = null;
   }
 
   Future<void> toggle() async {
@@ -157,7 +206,10 @@ class CatalogLanguage extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_key, english);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/catalog_language.dart:158');}
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/universities_programs_countries/catalog_language.dart:toggle');
+    }
   }
 }
 
@@ -175,7 +227,7 @@ String catalogName(Map<String, dynamic> row, String key) {
   if (CatalogLanguage.instance.english) {
     return en.isNotEmpty ? en : CatalogLanguage.instance.tr(ar);
   }
-  return ar.isNotEmpty ? ar : en;
+  return CatalogLanguage.instance.trAr(ar.isNotEmpty ? ar : en);
 }
 
 /// Country names are stored in `name` (English) with an optional `nameAr`.
@@ -186,7 +238,7 @@ String catalogCountryName(Map<String, dynamic> country) {
     return en.isNotEmpty ? en : CatalogLanguage.instance.tr(base);
   }
   final ar = _text(country['nameAr']);
-  return ar.isNotEmpty ? ar : base;
+  return CatalogLanguage.instance.trAr(ar.isNotEmpty ? ar : base);
 }
 
 /// Picks the list (article headings / bodies) matching the current language.
@@ -199,7 +251,7 @@ List<String> catalogLocalizedList(
   if (CatalogLanguage.instance.english) {
     return has(en) ? en : ar.map(CatalogLanguage.instance.tr).toList();
   }
-  return has(ar) ? ar : en;
+  return (has(ar) ? ar : en).map(CatalogLanguage.instance.trAr).toList();
 }
 
 /// Picks a single text field (overview, summary, article title).
@@ -209,7 +261,7 @@ String catalogLocalizedText(Map<String, dynamic> row, String key) {
   if (CatalogLanguage.instance.english) {
     return en.isNotEmpty ? en : CatalogLanguage.instance.tr(ar);
   }
-  return ar.isNotEmpty ? ar : en;
+  return CatalogLanguage.instance.trAr(ar.isNotEmpty ? ar : en);
 }
 
 const _pairs = <List<String>>[
@@ -286,7 +338,7 @@ String catalogValue(String raw) {
     final n = years.group(1)!;
     return en ? '$n ${n == '1' ? 'year' : 'years'}' : '$n ${n == '1' ? 'سنة' : 'سنوات'}';
   }
-  return en ? CatalogLanguage.instance.tr(value) : value;
+  return en ? CatalogLanguage.instance.tr(value) : CatalogLanguage.instance.trAr(value);
 }
 
 /// عربي | EN switch shown in the app bar of the catalog pages.

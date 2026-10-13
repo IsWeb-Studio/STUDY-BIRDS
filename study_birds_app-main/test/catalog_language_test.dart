@@ -6,6 +6,7 @@ import 'package:study_birds/screens/universities_programs_countries/catalog_lang
 
 void main() {
   CatalogLanguage.translationEnabled = false;
+  setUp(() => CatalogLanguage.instance.english = false);
   tearDown(() => CatalogLanguage.instance.english = false);
   translationFlow();
 
