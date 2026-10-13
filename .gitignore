@@ -1,21 +1,72 @@
+# ── Dependencies ─────────────────────────────────────────────────────────────
 node_modules/
 client/node_modules/
 server/node_modules/
 
+# ── Secrets: never commit these (only the *.example templates) ──────────────
 .env
+.env.*
+!.env.example
 client/.env
 server/.env
+*.jks
+*.keystore
+*.p12
+*.pfx
+*.pem
+*.key
+# The ONLY certificate bundle that belongs in git: public CA roots used for
+# certificate pinning in the app (no private keys).
+!app/assets/certs/trusted_roots.pem
+app/android/key.properties
+app/android/local.properties
+app/android/app/google-services.json
+app/ios/Runner/GoogleService-Info.plist
+serviceAccount*.json
+*-adminsdk-*.json
 
+# ── Build output / caches ───────────────────────────────────────────────────
 .dist/
 dist/
 client/dist/
-
-server/src/uploads/
-
-*.log
 *.tsbuildinfo
+*.log
+server/src/uploads/
+coverage/
 
+# ── Flutter app (app/) ──────────────────────────────────────────────────────
+app/.dart_tool/
+app/build/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+app/.pub-cache/
+app/.pub/
+app/android/.gradle/
+app/android/app/debug/
+app/android/app/profile/
+app/android/app/release/
+app/android/**/GeneratedPluginRegistrant.java
+app/ios/Pods/
+app/ios/.symlinks/
+app/ios/Flutter/Generated.xcconfig
+app/ios/Flutter/flutter_export_environment.sh
+app/ios/Flutter/ephemeral/
+app/ios/Flutter/.last_build_id
+app/ios/Runner/GeneratedPluginRegistrant.*
+app/.build-tools/
+app/.claude/settings.local.json
+# Machine-local editor / tooling files
+app/.vscode/settings.json
+app/devtools_options.yaml
+# Throwaway test certificates are generated at test time, never stored
+app/test/fixtures/*.pem
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 backups/
 .sync-staging/
+*.zip
+*.tar
+*.tgz

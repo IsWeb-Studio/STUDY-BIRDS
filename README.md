@@ -1,112 +1,72 @@
 # Study Birds
 
-Study Birds is a full-stack MERN study abroad platform with original branding, a student application flow, and an admin operations dashboard.
+منصة دراسة بالخارج: **سيرفر (Backend)** + **تطبيق جوال (Flutter)** + **موقع ويب**.
+A study-abroad platform: backend API, mobile app and website in one repository.
 
-Deployment guide: see `DEPLOYMENT.md`.
-Render-only deployment is supported with `render.yaml` for both frontend and backend services.
-
-## Stack
-
-- Frontend: React, TypeScript, Vite, Tailwind CSS, React Router, Axios, React Hook Form, Zod, Lucide React, Framer Motion
-- Backend: Node.js, Express, MongoDB, Mongoose, JWT, bcrypt, Multer, dotenv, cors
-
-## Structure
+## هيكل المستودع / Layout
 
 ```text
-study-birds/
-  client/
-  server/
+.
+├── server/    Backend: Node.js + Express + MongoDB (API)          ← يُنشر على Render (study-birds-api)
+├── app/       Flutter mobile app (Android / iOS)
+├── client/    Website: React + Vite (static site)                  ← يُنشر على Render (study-birds-web)
+├── docs/      Feature guides, deployment and setup notes
+├── load-test/ k6 load-test script for the API
+├── render.yaml  Render blueprint (points at server/ and client/)
+└── .github/workflows/  CI (server, app, web)
 ```
 
-## Server setup
+> `client/` يبقى في مكانه لأن `render.yaml` ينشر الموقع منه (`rootDir: client`).
+> نقله أو حذفه يوقف الموقع المنشور.
 
-1. `cd server`
-2. `copy .env.example .env`
-3. Update `MONGODB_URI` and `JWT_SECRET`
-4. Optional: add `GOOGLE_CLIENT_ID` to enable Sign in with Google
-5. Add `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` for persistent file uploads
-6. `npm install`
-7. `npm run seed`
-8. `npm run dev`
+## التشغيل السريع / Quick start
 
-### MongoDB Atlas
+### 1) السيرفر — `server/`
+```bash
+cd server
+cp .env.example .env        # ثم املأ MONGODB_URI و JWT_SECRET (لا ترفع .env إلى Git)
+npm install
+npm run seed                # بيانات تجريبية (مرة واحدة)
+npm run dev                 # http://localhost:5000
+```
+تفاصيل الإعداد (Atlas، Cloudinary، البريد…): [`docs/PLATFORM_SETUP.md`](docs/PLATFORM_SETUP.md) و[`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
-- Use a `mongodb+srv://...` connection string in `MONGODB_URI`
-- Example:
+### 2) التطبيق — `app/`
+يتطلب Flutter **3.41.9**.
+```bash
+cd app
+flutter pub get
+flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5000/api   # محاكي Android مع السيرفر المحلي
+```
+الإصدار الرسمي: `flutter build apk --release --dart-define=API_BASE_URL=https://<API_HOST>/api`.
+أعلام البناء الاختيارية: `API_PINNING=false` (إيقاف تثبيت الشهادات)، `SENTRY_ENABLED=true`، `ENABLE_EN=true`.
+المزيد: [`app/README.md`](app/README.md).
 
-```env
-MONGODB_URI=mongodb+srv://<username>:<password>@<cluster>.mongodb.net/study-birds?retryWrites=true&w=majority
+### 3) الموقع — `client/`
+```bash
+cd client
+npm install
+npm run dev                 # http://localhost:5173
 ```
 
-- In MongoDB Atlas, allow the server IP in Network Access
-- If your database password contains special characters, URL-encode it before placing it in `MONGODB_URI`
-- Seed your Atlas database once with `npm run seed` after updating `server/.env`
+## الاختبارات / Tests
 
-Seeded accounts:
+| المكوّن | الأمر |
+|---|---|
+| App | `cd app && flutter analyze && flutter test` |
+| Server | `cd server && node --test tests/idempotency.test.js` (باقي الاختبارات تحتاج MongoDB مؤقتة: `mongodb-memory-server-core`) |
+| Website | `cd client && npx tsc -b && npm test && npx vite build` |
 
-- Admin: `admin@studybirds.net` / `Admin123!`
-- Student: `ava@student.com` / `Student123!`
-- Student: `noah@student.com` / `Student123!`
-- Student: `sara@student.com` / `Student123!`
-- Partner: `partner@studybirds.net` / `Partner123!`
+يعمل CI تلقائيًا عند كل تغيير: [`app-ci.yml`](.github/workflows/app-ci.yml) و[`web-ci.yml`](.github/workflows/web-ci.yml) و[`ci.yml`](.github/workflows/ci.yml) (السيرفر). بناء APK يدوي عبر [`app-build.yml`](.github/workflows/app-build.yml).
 
-## Client setup
+## الأسرار / Secrets
 
-1. `cd client`
-2. `npm install`
-3. Optional: create `.env` with:
-   - `VITE_API_URL=http://localhost:5000/api`
-   - `VITE_GOOGLE_CLIENT_ID=your-google-web-client-id.apps.googleusercontent.com`
-   - `NEXT_PUBLIC_SITE_URL=https://studybirds.net`
-   - `VITE_SITE_URL=https://studybirds.net`
-4. `npm run dev`
+- لا ترفع `.env` أو مفاتيح API أو ملفات `*.jks`/`*.keystore`/`key.properties` إلى Git — مستثناة في `.gitignore`.
+- القوالب فقط: `server/.env.example` و`client/.env.example`.
+- متغيرات Render (MongoDB، JWT، Brevo، Cloudinary…) تُضبط من لوحة Render لا من الكود.
+- نقطتان جديدتان تُفعَّلان بمتغيرات على السيرفر (اختيارية): `APP_MIN_VERSION_ANDROID` / `APP_MIN_VERSION_IOS` / `APP_STORE_URL_*` للتحديث الإجباري للتطبيق.
 
-## Core features
+## الأدلة / Docs
 
-- JWT authentication with role-based route protection
-- Student profile management
-- Program search and filtering
-- Online application submission
-- Persistent image and document uploads via Cloudinary
-- In-app assistant guidance without external AI provider setup
-- Admin stats and application management
-- Seed data for countries, universities, programs, testimonials, and users
-
-## Deployment env vars
-
-Server:
-
-- `MONGODB_URI`: MongoDB Atlas connection string
-- `JWT_SECRET`: production secret
-- `CLIENT_URL`: main frontend URL
-- `CLIENT_URLS`: optional comma-separated list of allowed frontend URLs
-- `SITE_URL`: canonical public site URL for SEO, sitemap, and robots generation
-- `GOOGLE_CLIENT_ID`: optional if using Google sign-in
-- `UPLOAD_DIR`: optional writable uploads path on the host
-- `CLOUDINARY_CLOUD_NAME`: Cloudinary cloud name for persistent uploads
-- `CLOUDINARY_API_KEY`: Cloudinary API key
-- `CLOUDINARY_API_SECRET`: Cloudinary API secret
-
-Client:
-
-- `VITE_API_URL`: deployed backend API URL, for example `https://api.example.com/api`
-- `VITE_GOOGLE_CLIENT_ID`: optional if using Google sign-in
-- `NEXT_PUBLIC_SITE_URL`: official public site URL for SEO metadata on Vercel or compatible hosts
-- `VITE_SITE_URL`: deployed frontend URL, for example `https://studybirds.net`
-- `VITE_CONTACT_EMAIL`: public support email shown in the footer and contact page
-- `VITE_WHATSAPP_URL`: WhatsApp chat link
-- `VITE_FACEBOOK_URL`: Facebook page link
-- `VITE_INSTAGRAM_URL`: Instagram profile link
-- `VITE_TIKTOK_URL`: TikTok profile link
-
-## Deployment note
-
-- MongoDB Atlas solves the database hosting part only
-- Uploaded files should use Cloudinary in production so they persist across deploys and server restarts
-
-## Verification checklist
-
-- `npm install` should work in both `client` and `server`
-- Backend should run on `http://localhost:5000`
-- Frontend should run on `http://localhost:5173`
-- Run seed before first login to populate demo data
+[`docs/`](docs/): الإعداد والنشر (`PLATFORM_SETUP`, `DEPLOYMENT`)، الهوية (`IDENTITY_SETUP`)، الإشعارات (`PUSH_NOTIFICATIONS`)، المحفظة (`STUDENT_WALLET`)، الاستشارات (`CONSULTATION_BOOKING`)، التوزيع التلقائي (`AUTOMATIC_ASSIGNMENT`)، التخزين الخاص للمستندات (`PRIVATE_DOCUMENT_STORAGE`)، وغيرها.
+وثائق تدقيق التطبيق: [`app/docs/`](app/docs/).
