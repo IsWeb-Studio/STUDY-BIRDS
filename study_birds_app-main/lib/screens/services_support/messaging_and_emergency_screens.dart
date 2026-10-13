@@ -60,6 +60,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
   // Reconnects with exponential backoff + jitter (never a tight loop), waits
   // while the device is offline, and re-syncs missed messages after a gap.
   int _sseAttempt = 0;
+  bool _sseRefreshed = false;
   bool _sseGap = false;
   Timer? _sseTimer;
   StreamSubscription<void>? _reconnectSub;
@@ -122,10 +123,20 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     }).then((res) {
       if (!mounted || client != _httpClient) return;
       if (res.statusCode != 200) {
+        if (res.statusCode == 401 && !_sseRefreshed) {
+          // Expired access token: renew once, then reconnect with the new one.
+          _sseRefreshed = true;
+          res.drain<void>().catchError((_) {});
+          AuthSession.instance.refreshAccessToken(tok).then((fresh) {
+            if (mounted && fresh != null) _connectSse();
+          }).catchError((_) {});
+          return;
+        }
         // Auth/feature errors will not fix themselves: stop, don't hammer.
         if (res.statusCode >= 500 || res.statusCode == 429) _scheduleSse();
         return;
       }
+      _sseRefreshed = false;
       _sseAttempt = 0;
       if (_sseGap) {
         _sseGap = false;

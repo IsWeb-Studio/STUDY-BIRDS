@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'core/services/connectivity_service.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'core/widgets/app_notice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -164,12 +166,16 @@ class StudyBirdsApp extends StatefulWidget {
 }
 
 class _StudyBirdsAppState extends State<StudyBirdsApp> {
+  StreamSubscription<void>? _reconnectSub;
   @override
   void initState() {
     super.initState();
     DeepLinkService.instance.init(rootNavigatorKey);
     NotificationScheduler.instance.init();
     PushNotificationService.instance.setTapHandler(_onPushTap);
+    // Sign-outs that happened offline are finished once the server is reachable.
+    _reconnectSub = ConnectivityService.instance.onReconnected
+        .listen((_) => AuthSession.instance.flushPendingRevocations());
     // Show the notification rationale sheet only once, ever.
     // We persist a flag in SharedPreferences so the sheet never re-appears
     // after the user has interacted with it — even if OneSignal.permission
@@ -217,6 +223,7 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
   @override
   void dispose() {
     DeepLinkService.instance.dispose();
+    _reconnectSub?.cancel();
     super.dispose();
   }
 

@@ -14,6 +14,7 @@ class DeepLinkService {
   StreamSubscription<Uri>? _subscription;
   String? _pending;
   bool _initialized = false;
+  bool _hadUser = false;
 
   Future<void> init(GlobalKey<NavigatorState> navigatorKey) async {
     _navigatorKey = navigatorKey;
@@ -34,6 +35,11 @@ class DeepLinkService {
   }
 
   void _flush() {
+    // A link opened for one account must never be replayed after sign-out
+    // into the next account.
+    final hasUser = AuthSession.instance.currentUser != null;
+    if (_hadUser && !hasUser) _pending = null;
+    _hadUser = hasUser;
     if (_pending == null || AuthSession.instance.currentUser == null) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_pending == null) return;

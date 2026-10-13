@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'error_reporter.dart';
 import '../utils/app_error.dart';
 import 'dart:convert';
@@ -429,6 +430,16 @@ class AuthSession extends ChangeNotifier {
       storedToken = legacy;
     }
     await prefs.remove('session_token');
+    // Legacy plain-text caches from older versions: never keep account data
+    // in SharedPreferences.
+    for (final key in [
+      'sb_overview_cache',
+      'sb_apps_cache',
+      'sb_docs_cache',
+      'sb_financials_cache'
+    ]) {
+      await prefs.remove(key);
+    }
 
     var networkFailed = false;
     if (storedToken != null) {
@@ -512,6 +523,7 @@ class AuthSession extends ChangeNotifier {
     }
     _restored = true;
     notifyListeners();
+    unawaited(flushPendingRevocations());
   }
 
   /// Instantly marks verifiedPhone on the current user without a network round-trip.
@@ -602,6 +614,52 @@ class AuthSession extends ChangeNotifier {
     notifyListeners();
   }
 
+  static const _pendingRevocationKey = 'pending_refresh_revocations';
+  bool _flushingRevocations = false;
+
+  Future<void> _queueRevocation(String refreshToken) async {
+    const storage = FlutterSecureStorage();
+    final existing = (await storage.read(key: _pendingRevocationKey)) ?? '';
+    final tokens = existing.isEmpty ? <String>[] : existing.split('\n');
+    if (!tokens.contains(refreshToken)) tokens.add(refreshToken);
+    // Keep the queue bounded; the newest tokens matter most.
+    final bounded = tokens.length > 5 ? tokens.sublist(tokens.length - 5) : tokens;
+    await storage.write(key: _pendingRevocationKey, value: bounded.join('\n'));
+  }
+
+  /// Revokes refresh tokens whose sign-out could not reach the server.
+  /// Safe to call repeatedly: single-flight, and a token is removed only after
+  /// the server confirmed (or said the token is already invalid).
+  Future<void> flushPendingRevocations() async {
+    if (_flushingRevocations) return;
+    _flushingRevocations = true;
+    try {
+      const storage = FlutterSecureStorage();
+      final raw = await storage.read(key: _pendingRevocationKey);
+      if (raw == null || raw.isEmpty) return;
+      final remaining = <String>[];
+      for (final tokenValue in raw.split('\n').where((t) => t.isNotEmpty)) {
+        try {
+          await ApiClient.instance.post('/auth/logout', body: {'refreshToken': tokenValue});
+        } on ApiException catch (e) {
+          // 4xx: the server no longer accepts it, nothing left to revoke.
+          if (e.statusCode == 0 || e.statusCode == 408 || e.statusCode >= 500) {
+            remaining.add(tokenValue);
+          }
+        } catch (_) {
+          remaining.add(tokenValue);
+        }
+      }
+      if (remaining.isEmpty) {
+        await storage.delete(key: _pendingRevocationKey);
+      } else {
+        await storage.write(key: _pendingRevocationKey, value: remaining.join('\n'));
+      }
+    } finally {
+      _flushingRevocations = false;
+    }
+  }
+
   Future<void> logout({bool revoke = true}) async {
     requiresGooglePasswordSetup = false;
     await const FlutterSecureStorage().delete(key: 'google_password_setup_required');
@@ -615,7 +673,14 @@ class AuthSession extends ChangeNotifier {
     const storage = FlutterSecureStorage();
     final refresh = await storage.read(key: 'refresh_token');
     if (revoke && refresh != null) {
-      try { await ApiClient.instance.post('/auth/logout', body: {'refreshToken': refresh}); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/auth_session.dart:618');}
+      try {
+        await ApiClient.instance.post('/auth/logout', body: {'refreshToken': refresh});
+      } catch (_) {
+        // Offline or server down: the local session is already gone, but the
+        // refresh token is still valid on the server. Queue its revocation so
+        // it is invalidated as soon as we can reach the server.
+        await _queueRevocation(refresh);
+      }
     }
     await SecureDataCache.clear(owner);
     await NotificationScheduler.instance.cancelAll();
