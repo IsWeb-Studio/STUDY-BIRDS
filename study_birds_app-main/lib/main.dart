@@ -17,6 +17,7 @@ import 'screens/auth/email_challenge_screen.dart';
 import 'package:flutter/material.dart';
 import 'core/config/app_theme.dart';
 import 'core/services/auth_session.dart';
+import 'core/utils/app_error.dart';
 import 'core/utils/animations.dart';
 
 import 'screens/auth/splash_screen.dart';
@@ -252,6 +253,12 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
         listenable: AuthSession.instance,
         builder: (context, _) {
           final user = AuthSession.instance.currentUser;
+          if (user == null && AuthSession.instance.restoreNeedsNetwork) {
+            return Scaffold(
+                body: SafeArea(
+                    child: ErrorState(
+                        message: AppError.connection, onRetry: _restore)));
+          }
           if (user == null) {
             // Onboarding (splash + intro) shows only once ever.
             // Returning logged-out users go directly to login.
@@ -377,6 +384,7 @@ class ConnectedPrototypeEntry extends StatelessWidget {
     try {
       result = await AuthService.instance.loginOrThrow(email, password);
     } on ApiException catch (e) {
+      if (e.statusCode != 428) AuthSession.instance.reportAuthFailure(e);
       if (e.statusCode != 428 || !context.mounted) return false;
       final confirmed =
           await Navigator.of(context).push<bool>(MaterialPageRoute(
@@ -394,7 +402,8 @@ class ConnectedPrototypeEntry extends StatelessWidget {
                     },
                   )));
       if (confirmed != true) return false;
-    } catch (_) {
+    } catch (e) {
+      AuthSession.instance.reportAuthFailure(e);
       return false;
     }
     final user = result.user;
@@ -455,7 +464,8 @@ class ConnectedPrototypeEntry extends StatelessWidget {
       user = result.user;
       token = result.token;
       refreshToken = result.refreshToken;
-    } catch (_) {
+    } catch (e) {
+      AuthSession.instance.reportAuthFailure(e, mayHaveCompleted: true);
       return false; // RegisterScreen shows its generic "couldn't create account" message.
     }
 

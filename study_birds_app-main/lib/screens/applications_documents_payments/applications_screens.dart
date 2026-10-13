@@ -1,10 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/services/auth_session.dart';
-<<<<<<< HEAD
-=======
 import '../../core/network/api_client.dart';
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
 import 'application_documents_screen.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/utils/status_info.dart';

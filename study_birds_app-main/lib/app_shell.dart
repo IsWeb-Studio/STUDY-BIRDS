@@ -1,7 +1,6 @@
-import 'core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'core/config/app_theme.dart';
+import 'core/utils/responsive.dart';
 import 'screens/home_journey/home_dashboard_screen.dart';
 import 'screens/home_journey/journey_tracker_screen.dart';
 import 'screens/universities_programs_countries/explore_hub_screen.dart';
@@ -35,7 +34,6 @@ class _StudentAppShellState extends State<StudentAppShell> {
       _instance?.setState(() => _instance!._index = index);
 
   int _index = 0;
-  bool _offline = false;
 
   static const _navItems = [
     _NavItemData(icon: Icons.home_rounded, label: 'الرئيسية'),
@@ -49,39 +47,12 @@ class _StudentAppShellState extends State<StudentAppShell> {
   void initState() {
     super.initState();
     _instance = this;
-    _checkConnectivity();
-    Connectivity().onConnectivityChanged.listen(_onConnectivityChanged);
   }
 
   @override
   void dispose() {
     if (_instance == this) _instance = null;
     super.dispose();
-  }
-
-  Future<void> _checkConnectivity() async {
-    try {
-      final result = await Connectivity().checkConnectivity();
-      if (mounted) {
-        setState(() => _offline = result.contains(ConnectivityResult.none) &&
-            result.length == 1);
-      }
-    } catch (_) {}
-  }
-
-  void _onConnectivityChanged(List<ConnectivityResult> results) {
-    if (!mounted) return;
-    final wasOffline = _offline;
-    final nowOffline =
-        results.contains(ConnectivityResult.none) && results.length == 1;
-    setState(() => _offline = nowOffline);
-    if (wasOffline && !nowOffline) {
-      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-        content: Text('عاد الاتصال بالإنترنت'),
-        backgroundColor: AppColors.success,
-        duration: Duration(seconds: 2),
-      ));
-    }
   }
 
   @override
@@ -94,46 +65,52 @@ class _StudentAppShellState extends State<StudentAppShell> {
       const ProfileScreen(),
     ];
 
+    final content = IndexedStack(index: _index, children: tabs);
+    // Phones keep the bottom bar. Wider windows (tablets, iPad, split view)
+    // switch to a side rail — the row's start side, so it sits on the right
+    // in this RTL app — and the pages stay inside a readable max width.
+    final wide = !Responsive.isCompact(context);
+
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        body: Column(
-          children: [
-            if (_offline)
-              Material(
-                color: Colors.grey.shade800,
-                child: SafeArea(
-                  bottom: false,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
-                    child: Row(
-                      children: const [
-                        Icon(Icons.wifi_off_rounded,
-                            size: 16, color: Colors.white),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'لا يوجد اتصال بالإنترنت — بعض البيانات قد تكون غير محدّثة',
-                            style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12.5,
-                                fontWeight: FontWeight.w500),
-                          ),
-                        ),
+        body: wide
+            ? Row(
+                children: [
+                  SafeArea(
+                    child: NavigationRail(
+                      selectedIndex: _index,
+                      onDestinationSelected: (i) => setState(() => _index = i),
+                      labelType: NavigationRailLabelType.all,
+                      backgroundColor: Colors.white,
+                      indicatorColor: AppColors.orangeSoft,
+                      selectedIconTheme:
+                          const IconThemeData(color: AppColors.orange),
+                      selectedLabelTextStyle: const TextStyle(
+                          color: AppColors.orange,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12),
+                      unselectedLabelTextStyle: const TextStyle(
+                          color: AppColors.textSecondary, fontSize: 12),
+                      destinations: [
+                        for (final item in _navItems)
+                          NavigationRailDestination(
+                              icon: Icon(item.icon), label: Text(item.label)),
                       ],
                     ),
                   ),
-                ),
+                  const VerticalDivider(width: 1),
+                  Expanded(child: MaxWidthBody(maxWidth: 960, child: content)),
+                ],
+              )
+            : Column(children: [Expanded(child: content)]),
+        bottomNavigationBar: wide
+            ? null
+            : _AnimatedBottomNav(
+                currentIndex: _index,
+                items: _navItems,
+                onTap: (i) => setState(() => _index = i),
               ),
-            Expanded(child: IndexedStack(index: _index, children: tabs)),
-          ],
-        ),
-        bottomNavigationBar: _AnimatedBottomNav(
-          currentIndex: _index,
-          items: _navItems,
-          onTap: (i) => setState(() => _index = i),
-        ),
       ),
     );
   }

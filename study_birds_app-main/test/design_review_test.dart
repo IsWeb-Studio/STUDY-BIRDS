@@ -8,7 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:study_birds/core/auth_session.dart';
+import 'package:study_birds/core/services/auth_session.dart';
 import 'package:study_birds/screens/home_journey/calendar_screen.dart';
 import 'package:study_birds/screens/profile_account/edit_profile_screen.dart';
 import 'package:study_birds/screens/profile_account/security_settings_screen.dart';

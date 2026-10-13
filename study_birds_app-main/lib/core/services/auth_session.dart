@@ -1,3 +1,4 @@
+import '../utils/app_error.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'analytics_service.dart';
@@ -321,10 +322,44 @@ class AuthSession extends ChangeNotifier {
   static final AuthSession instance = AuthSession._();
 
   AuthUser? currentUser;
+  /// True when a saved session exists but could not be verified because the
+  /// server was unreachable. The session is NOT cleared in that case.
+  bool restoreNeedsNetwork = false;
+
+  /// Reason the last login/register attempt failed for a NON-credential
+  /// cause (offline, timeout, server down, rate limit). Lets the form show
+  /// the truth instead of "wrong password". Consumed once by the screen.
+  String? _lastAuthError;
+  void reportAuthFailure(Object error, {bool mayHaveCompleted = false}) {
+    if (mayHaveCompleted && error is ApiException && error.statusCode == 408) {
+      _lastAuthError =
+          'انتهت مهلة الاتصال. ربما أُنشئ حسابك بالفعل — جرّب تسجيل الدخول قبل إعادة التسجيل.';
+      return;
+    }
+    _lastAuthError = (error is ApiException &&
+            (error.statusCode == 0 ||
+                error.statusCode == 408 ||
+                error.statusCode == 429 ||
+                error.statusCode >= 500))
+        ? error.message
+        : (AppError.isConnectivity(error) ? AppError.connection : null);
+  }
+
+  String? takeAuthFailure() {
+    final value = _lastAuthError;
+    _lastAuthError = null;
+    return value;
+  }
   bool requiresGooglePasswordSetup = false;
   String? token;
   bool _restored = false;
   bool get isRestored => _restored;
+
+  @visibleForTesting
+  void debugResetRestore() {
+    _restored = false;
+    restoreNeedsNetwork = false;
+  }
   int _revision = 0;
   String? _previousToken;
   Future<String?>? _refreshing;
@@ -370,7 +405,8 @@ class AuthSession extends ChangeNotifier {
   }
 
   Future<void> restore() async {
-    if (_restored) return;
+    if (_restored && !restoreNeedsNetwork) return;
+    restoreNeedsNetwork = false;
     final pendingGoogleSetup = await const FlutterSecureStorage()
         .read(key: 'google_password_setup_required') == 'true';
     if (pendingGoogleSetup) {
@@ -392,9 +428,14 @@ class AuthSession extends ChangeNotifier {
     }
     await prefs.remove('session_token');
 
+    var networkFailed = false;
     if (storedToken != null) {
       try {
-        final user = await AuthService.instance.fetchCurrentUser(storedToken);
+        // Bounded: a dead network must not keep the splash up for 30s+.
+        // A timeout lands in the offline branch below and never logs out.
+        final user = await AuthService.instance
+            .fetchCurrentUser(storedToken)
+            .timeout(const Duration(seconds: 10));
         if (user != null) {
           currentUser = user;
           token = storedToken;
@@ -430,6 +471,7 @@ class AuthSession extends ChangeNotifier {
           notifyListeners();
           return;
         }
+        networkFailed = true;
         // Network or transport error — restore from cached user snapshot so
         // the app can work offline with stale data; the next successful request
         // will re-validate the token via the 401 refresh path.
@@ -455,6 +497,9 @@ class AuthSession extends ChangeNotifier {
       }
     }
 
+    // Saved login kept but unverifiable offline (staff, or no fresh snapshot):
+    // the root screen shows a retry state instead of a misleading login form.
+    restoreNeedsNetwork = networkFailed && currentUser == null;
     if (currentUser != null && !currentUser!.hasPassword) {
       await logout(revoke: false);
     }

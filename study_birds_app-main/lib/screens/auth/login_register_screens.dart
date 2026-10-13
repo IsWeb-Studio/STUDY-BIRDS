@@ -264,7 +264,10 @@ class _LoginScreenState extends State<LoginScreen>
     if (!mounted) return;
     setState(() {
       _loading = false;
-      if (!ok) _error = 'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+      if (!ok) {
+        _error = AuthSession.instance.takeAuthFailure() ??
+            'البريد الإلكتروني أو كلمة المرور غير صحيحة';
+      }
     });
   }
 
@@ -633,7 +636,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     setState(() {
       _loading = false;
       if (!ok) {
-        _error =
+        _error = AuthSession.instance.takeAuthFailure() ??
             'تعذر إنشاء الحساب — تأكد إن البريد الإلكتروني غير مستخدم من قبل';
       }
     });

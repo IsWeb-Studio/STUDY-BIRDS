@@ -267,7 +267,7 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
 
   Future<void> _refresh() async {
     setState(() => _future = ApiClient.instance.get('/service-requests/mine', token: AuthSession.instance.token).then((d) => d is List ? d : []));
-    await _future;
+    try { await _future; } catch (_) {}
   }
 
   @override

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:study_birds/core/app_theme.dart';
+import 'package:study_birds/core/config/app_theme.dart';
 
 /// Widget tests for the UX improvements batch:
 /// - EmptyState CTA button (Applications, Favorites, ReferralProgram, SupportTickets)

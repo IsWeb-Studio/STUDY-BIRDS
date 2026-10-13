@@ -1,13 +1,13 @@
-import 'package:study_birds/core/feature_ui.dart';
+import 'package:study_birds/core/widgets/feature_ui.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:study_birds/core/auth_session.dart';
-import 'package:study_birds/core/student_events.dart';
-import 'package:study_birds/core/student_repository.dart';
+import 'package:study_birds/core/services/auth_session.dart';
+import 'package:study_birds/core/utils/student_events.dart';
+import 'package:study_birds/core/repositories/student_repository.dart';
 import 'package:study_birds/screens/profile_account/edit_profile_screen.dart';
 import 'package:study_birds/screens/profile_account/security_settings_screen.dart';
 import 'package:study_birds/screens/home_journey/journey_tracker_screen.dart';

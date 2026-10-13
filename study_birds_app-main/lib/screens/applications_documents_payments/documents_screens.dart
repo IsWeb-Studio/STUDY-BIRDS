@@ -3,6 +3,7 @@ import 'package:study_birds/core/network/api_client.dart';
 import '../../core/utils/passport_scan.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/utils/document_access.dart';
+import '../../core/utils/app_error.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/config/app_theme.dart';
@@ -92,15 +93,20 @@ String docTypeLabel(String? key) {
 /// widget-tree ancestor of the screen that opened it, so this can't be a
 /// method looked up via findAncestorStateOfType — it's a standalone helper).
 Future<bool> pickAndUploadDocument(BuildContext context, String type,
-    {String? replaces, String? translationOf}) async {
-  final result = await FilePicker.platform.pickFiles(
-    type: FileType.custom,
-    allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-    withData: true,
-  );
-  if (result == null || result.files.isEmpty) return false;
-
-  final file = result.files.single;
+    {String? replaces, String? translationOf, PlatformFile? picked}) async {
+  // [picked] lets a retry reuse the already-selected file after a failure.
+  PlatformFile file;
+  if (picked != null) {
+    file = picked;
+  } else {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return false;
+    file = result.files.single;
+  }
   if (file.bytes == null) {
     if (context.mounted)
       ScaffoldMessenger.of(context).showSnackBar(
@@ -200,8 +206,11 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
       builder: (ctx) => AlertDialog(
         title: const Text('تعذّر رفع المستند',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
-        content: const Text(
-            'قد يكون السبب ضعف الاتصال أو مشكلة مؤقتة في الخادم.'),
+        content: Text(AppError.isOffline(error)
+            ? 'لا يوجد اتصال بالإنترنت، ولم يتم رفع المستند. ملفك محفوظ هنا، أعد المحاولة عند عودة الاتصال.'
+            : error is ApiException && error.statusCode == 408
+                ? AppError.uncertain
+                : AppError.message(error)),
         actions: [
           TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
@@ -217,7 +226,7 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
     );
     if (retry == true && context.mounted) {
       return pickAndUploadDocument(context, type,
-          replaces: replaces, translationOf: translationOf);
+          replaces: replaces, translationOf: translationOf, picked: file);
     }
     return false;
   } finally {

@@ -1,7 +1,8 @@
 import '../utils/app_error.dart';
+import '../utils/responsive.dart';
 import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
+import '../services/connectivity_service.dart';
 import 'package:flutter/material.dart';
 import '../../screens/ai/birds_ai_screen.dart';
 
@@ -217,7 +218,7 @@ class AppScaffold extends StatelessWidget {
         body: SafeArea(
           child: Stack(
             children: [
-              OfflineBannerWrapper(child: body),
+              MaxWidthBody(child: body),
               if (!hideAiButton) const _DraggableAiButton(),
             ],
           ),
@@ -554,7 +555,7 @@ class SkeletonCard extends StatelessWidget {
 }
 
 /// Standard error state — never a blank/broken screen, per spec point 69.
-class ErrorState extends StatelessWidget {
+class ErrorState extends StatefulWidget {
   final String message;
   final VoidCallback? onRetry;
   const ErrorState(
@@ -563,9 +564,61 @@ class ErrorState extends StatelessWidget {
       this.onRetry});
 
   @override
+  State<ErrorState> createState() => _ErrorStateState();
+}
+
+class _ErrorStateState extends State<ErrorState> {
+  StreamSubscription<void>? _reconnectSub;
+  bool _checking = false;
+  bool _autoRetried = false;
+
+  bool get _offline {
+    final text = AppError.safeText(widget.message);
+    return text == AppError.connection ||
+        text.contains('اتصال') ||
+        text.contains('إنترنت');
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Connectivity errors recover by themselves: when the verified connection
+    // returns, retry exactly once (no loops, no duplicate loads).
+    _reconnectSub = ConnectivityService.instance.onReconnected.listen((_) {
+      if (!mounted || _autoRetried || widget.onRetry == null || !_offline) return;
+      _autoRetried = true;
+      widget.onRetry!();
+    });
+  }
+
+  @override
+  void dispose() {
+    _reconnectSub?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _retry() async {
+    if (_checking) return; // ignore double taps
+    setState(() => _checking = true);
+    try {
+      // Bounded so "Try again" can never hang on a dead network.
+      if (_offline) {
+        await ConnectivityService.instance
+            .checkNow()
+            .timeout(const Duration(seconds: 4), onTimeout: () => false);
+      }
+      if (mounted) widget.onRetry?.call();
+    } finally {
+      if (mounted) setState(() => _checking = false);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final text = AppError.safeText(message);
-    final offline = text.contains('اتصال') || text.contains('إنترنت');
+    final offline = _offline;
+    final text = offline
+        ? 'يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.'
+        : AppError.safeText(widget.message);
     return Center(child: SingleChildScrollView(padding: const EdgeInsets.all(24),
       child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 420),
         child: Container(width: double.infinity, padding: const EdgeInsets.all(24),
@@ -573,15 +626,21 @@ class ErrorState extends StatelessWidget {
             border: Border.all(color: AppColors.border),
             boxShadow: [BoxShadow(color: AppColors.navy.withValues(alpha: .04), blurRadius: 24, offset: const Offset(0, 8))]),
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            Container(padding: const EdgeInsets.all(18), decoration: const BoxDecoration(color: AppColors.orangeSoft, shape: BoxShape.circle),
-              child: Icon(offline ? Icons.wifi_off_rounded : Icons.cloud_off_rounded, size: 34, color: AppColors.orange)),
+            TweenAnimationBuilder<double>(
+              tween: Tween(begin: .85, end: 1),
+              duration: const Duration(milliseconds: 450),
+              curve: Curves.easeOutBack,
+              builder: (context, scale, child) => Opacity(opacity: scale.clamp(0, 1), child: Transform.scale(scale: scale, child: child)),
+              child: Container(padding: const EdgeInsets.all(18), decoration: const BoxDecoration(color: AppColors.orangeSoft, shape: BoxShape.circle),
+                child: Icon(offline ? Icons.wifi_off_rounded : Icons.cloud_off_rounded, size: 34, color: AppColors.orange)),
+            ),
             const SizedBox(height: 20),
-            Text(offline ? 'لنعد الاتصال' : 'نحتاج لحظة لإكمال طلبك', style: AppTextStyles.cardTitle, textAlign: TextAlign.center),
+            Text(offline ? 'لا يوجد اتصال بالإنترنت' : 'نحتاج لحظة لإكمال طلبك', style: AppTextStyles.cardTitle, textAlign: TextAlign.center),
             const SizedBox(height: 10),
             Text(text, style: AppTextStyles.caption.copyWith(fontSize: 14, height: 1.8), textAlign: TextAlign.center),
-            if (onRetry != null) ...[
+            if (widget.onRetry != null) ...[
               const SizedBox(height: 22),
-              PrimaryButton(label: 'إعادة المحاولة', onPressed: onRetry, expand: false, icon: Icons.refresh_rounded),
+              PrimaryButton(label: 'إعادة المحاولة', onPressed: _checking ? null : _retry, expand: false, icon: Icons.refresh_rounded),
             ],
           ]),
         ),
@@ -704,10 +763,12 @@ class EmptyState extends StatelessWidget {
   }
 }
 
-/// Wraps a [child] and shows a persistent banner at the top when the device
-/// has no internet connection. Listens to connectivity changes in real time.
+/// Wraps the app and shows ONE animated connectivity banner above it.
 ///
-/// PRD بند 69 — Offline Banner.
+/// Driven by [ConnectivityService] (verified reachability, debounced), so it
+/// does not flash during Wi-Fi/mobile hand-overs. When the connection returns
+/// it briefly shows "back online" and then slides away — no snackbars, no
+/// dialogs, nothing that can stack. Install once (MaterialApp.builder).
 class OfflineBannerWrapper extends StatefulWidget {
   final Widget child;
   const OfflineBannerWrapper({super.key, required this.child});
@@ -717,56 +778,112 @@ class OfflineBannerWrapper extends StatefulWidget {
 }
 
 class _OfflineBannerWrapperState extends State<OfflineBannerWrapper> {
-  bool _offline = false;
-  StreamSubscription<List<ConnectivityResult>>? _sub;
+  final _service = ConnectivityService.instance;
+  bool _showRestored = false;
+  Timer? _restoredTimer;
+  StreamSubscription<void>? _reconnectSub;
 
   @override
   void initState() {
     super.initState();
-    Connectivity().checkConnectivity().then(_update);
-    _sub = Connectivity().onConnectivityChanged.listen(_update);
+    _service.addListener(_onChanged);
+    _reconnectSub = _service.onReconnected.listen((_) {
+      _restoredTimer?.cancel();
+      if (!mounted) return;
+      setState(() => _showRestored = true);
+      _restoredTimer = Timer(const Duration(milliseconds: 2500), () {
+        if (mounted) setState(() => _showRestored = false);
+      });
+    });
+    _service.start();
   }
 
-  void _update(List<ConnectivityResult> results) {
-    final offline = results.every((r) => r == ConnectivityResult.none);
-    if (mounted && offline != _offline) setState(() => _offline = offline);
+  void _onChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
-    _sub?.cancel();
+    _service.removeListener(_onChanged);
+    _reconnectSub?.cancel();
+    _restoredTimer?.cancel();
     super.dispose();
+  }
+
+  ({String text, Color color, IconData icon})? get _banner {
+    switch (_service.status) {
+      case NetworkStatus.offline:
+        return (
+          text: 'لا يوجد اتصال بالإنترنت — تُعرض آخر بيانات محفوظة',
+          color: AppColors.neutral,
+          icon: Icons.wifi_off_rounded,
+        );
+      case NetworkStatus.unreachable:
+        return (
+          text: _service.isUnstable
+              ? 'الاتصال غير مستقر — نحاول إعادة الاتصال'
+              : 'متصل بالشبكة لكن تعذّر الوصول إلى الخدمة — نحاول إعادة الاتصال',
+          color: AppColors.warning,
+          icon: Icons.cloud_off_rounded,
+        );
+      case NetworkStatus.online:
+        if (_showRestored) {
+          return (
+            text: 'عاد الاتصال بالإنترنت',
+            color: AppColors.success,
+            icon: Icons.wifi_rounded,
+          );
+        }
+        return null;
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (!_offline) return widget.child;
+    final banner = _banner;
     return Column(
       children: [
-        Material(
-          color: AppColors.warning,
-          child: SafeArea(
-            bottom: false,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(children: [
-                const Icon(Icons.wifi_off_rounded, color: Colors.white, size: 18),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Text(
-                    'لا يوجد اتصال بالإنترنت — تعرض البيانات المحفوظة',
-                    style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w600),
+        AnimatedSize(
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+          alignment: Alignment.topCenter,
+          child: banner == null
+              ? const SizedBox(width: double.infinity)
+              : Semantics(
+                  liveRegion: true,
+                  child: Material(
+                    color: banner.color,
+                    child: SafeArea(
+                      bottom: false,
+                      child: Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 7),
+                        child: Row(children: [
+                          Icon(banner.icon, color: Colors.white, size: 17),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              banner.text,
+                              style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12.5,
+                                  fontWeight: FontWeight.w600),
+                            ),
+                          ),
+                        ]),
+                      ),
+                    ),
                   ),
                 ),
-              ]),
-            ),
-          ),
         ),
-        Expanded(child: widget.child),
+        Expanded(
+          // The banner already consumed the status-bar inset.
+          child: MediaQuery.removePadding(
+              context: context,
+              removeTop: banner != null,
+              child: widget.child),
+        ),
       ],
     );
   }

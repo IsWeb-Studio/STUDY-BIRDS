@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io' show IOException;
+import 'dart:developer' as developer;
 
 /// Exceptions may opt in to a safe, actionable message without exposing internals.
 abstract interface class UserFacingFailure {
@@ -19,9 +21,48 @@ class AppError {
   static String message(Object? error) {
     if (error is UserFacingFailure) return error.message;
     if (error is TimeoutException) return timeout;
+    if (isConnectivity(error)) return connection;
     if (error is String) return safeText(error);
     return unexpected;
   }
+
+  /// True for transport-level failures (socket, DNS, TLS, connection reset),
+  /// as opposed to a server that answered with an error.
+  static bool isConnectivity(Object? error) =>
+      error is IOException ||
+      (error != null && error.runtimeType.toString() == 'ClientException');
+
+  /// True when [error] means "the device could not reach the server".
+  static bool isOffline(Object? error) =>
+      isConnectivity(error) || (error is UserFacingFailure && error.message == connection);
+
+  /// Developer-only diagnostics (debug builds). Secrets are redacted.
+  static void log(String where, Object error, [StackTrace? stack]) {
+    // Debug builds only (asserts are stripped from release); always redacted.
+    assert(() {
+      developer.log(redact('$error'),
+          name: where,
+          stackTrace: stack == null
+              ? null
+              : StackTrace.fromString(
+                  redact('$stack').split('\n').take(6).join('\n')));
+      return true;
+    }());
+  }
+
+  /// Strips bearer tokens, JWTs, emails and password/token pairs from log text.
+  static String redact(String text) => text
+      .replaceAll(RegExp(r'Bearer\s+[A-Za-z0-9._\-]+', caseSensitive: false),
+          'Bearer ***')
+      .replaceAll(
+          RegExp(r'eyJ[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]+\.[A-Za-z0-9_\-]*'),
+          '***jwt***')
+      .replaceAll(RegExp(r'[\w.+\-]+@[\w\-]+\.[\w.\-]+'), '***@***')
+      .replaceAllMapped(
+          RegExp(
+              r'''(password|token|secret|code|apikey|api_key)(["']?\s*[:=]\s*["']?)[^\s,"'&}]+''',
+              caseSensitive: false),
+          (m) => '${m[1]}${m[2]}***');
 
   static String response(int? status, String? raw) {
     if (status == 0) return connection;

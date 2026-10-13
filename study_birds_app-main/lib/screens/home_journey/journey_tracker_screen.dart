@@ -170,7 +170,7 @@ class _LiveJourneyScreenState extends State<LiveJourneyScreen> {
                 journeys: journeys,
                 onRefresh: () async {
                   refresh();
-                  await future;
+                  try { await future; } catch (_) {}
                 });
           }
           final stage = overview.journeyStage;
@@ -178,7 +178,7 @@ class _LiveJourneyScreenState extends State<LiveJourneyScreen> {
             return JourneyRequirementsView(
               onRefresh: () async {
                 refresh();
-                await future;
+                try { await future; } catch (_) {}
               },
               journeys: overview.stages.isEmpty
                   ? []
@@ -204,7 +204,7 @@ class _LiveJourneyScreenState extends State<LiveJourneyScreen> {
           return RefreshIndicator(
               onRefresh: () async {
                 refresh();
-                await future;
+                try { await future; } catch (_) {}
               },
               color: AppColors.navy,
               child: JourneyTrackerScreen(

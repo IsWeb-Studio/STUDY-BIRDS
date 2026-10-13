@@ -1,6 +1,9 @@
 import 'dart:async';
 import '../utils/app_error.dart';
+import '../services/connectivity_service.dart';
 import 'dart:convert';
+import 'dart:io' show IOException, Platform;
+import 'dart:math' show Random;
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 
@@ -42,13 +45,24 @@ class ApiException implements Exception, UserFacingFailure {
 /// Single place that knows the backend's base URL. When the Render URL
 /// changes, this is the only line that needs editing.
 class ApiClient {
-  ApiClient._();
+  ApiClient._() : _fixed = null;
+
+  /// Test seam: lets tests inject a fake transport.
+  ApiClient.forTesting(http.Client client) : _fixed = client;
   static final ApiClient instance = ApiClient._();
 
   static const String baseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'https://study-birds1.onrender.com/api');
 
   /// Reused across all requests — avoids TCP+TLS setup per call.
-  final _http = http.Client();
+  final http.Client? _fixed;
+  http.Client? _shared;
+
+  /// Under `flutter test`, `http.runWithClient` supplies a different fake client
+  /// per test, so a process-wide cached client would keep serving the first
+  /// test's fake. Production keeps one pooled client.
+  static final bool _perCallClient = Platform.environment.containsKey('FLUTTER_TEST');
+
+  http.Client get _http => _fixed ?? (_perCallClient ? http.Client() : (_shared ??= http.Client()));
 
   /// In-memory GET cache, isolated by session and path.
   /// Cleared on logout. TTL = 3 minutes.
@@ -68,43 +82,106 @@ class ApiClient {
   Future<http.Response> _authorized(
       String? token, Future<http.Response> Function(String?) send,
       {bool mayChangeData = false}) async {
+    final connectivity = ConnectivityService.instance;
     try {
       var response = await send(token).timeout(const Duration(seconds: 30));
       if (response.statusCode == 401 && token != null && refreshSession != null) {
         final replacement = await refreshSession!(token);
         if (replacement != null) response = await send(replacement).timeout(const Duration(seconds: 30));
       }
+      connectivity.reportSuccess();
       return response;
-    } on TimeoutException {
+    } on TimeoutException catch (e, s) {
+      AppError.log('api', e, s);
+      connectivity.reportFailure();
       throw ApiException(408, mayChangeData ? AppError.uncertain : AppError.timeout);
-    } on http.ClientException {
+    } on IOException catch (e, s) {
+      // SocketException (DNS/no route/reset), HandshakeException, HttpException…
+      AppError.log('api', e, s);
+      connectivity.reportFailure();
+      throw const ApiException(0, AppError.connection);
+    } on http.ClientException catch (e, s) {
+      AppError.log('api', e, s);
+      connectivity.reportFailure();
       throw const ApiException(0, AppError.connection);
     }
   }
 
-  Future<dynamic> _request(String method, String path, {String? token, Map<String, dynamic>? body}) async {
+  static final _random = Random();
+
+  /// One key per logical user action, reused if the same request is re-sent
+  /// after a 401 token refresh, so a server that supports it can de-duplicate.
+  static String newOperationId() => _newOperationId();
+
+  static String _newOperationId() =>
+      '${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}-${_random.nextInt(1 << 32).toRadixString(36)}';
+
+  Future<dynamic> _request(String method, String path,
+      {String? token, Map<String, dynamic>? body, String? idempotencyKey}) async {
+    final mutating = method != 'GET';
+    final operationId = mutating ? (idempotencyKey ?? _newOperationId()) : null;
     final response = await _authorized(token, (credential) async {
       final request = http.Request(method, Uri.parse('$baseUrl$path'));
       request.headers.addAll(_headers(credential));
+      if (operationId != null) request.headers['Idempotency-Key'] = operationId;
       if (body != null) request.body = jsonEncode(body);
       return await http.Response.fromStream(await _http.send(request));
-    }, mayChangeData: method != 'GET' && !path.startsWith('/auth/'));
+    }, mayChangeData: mutating && !path.startsWith('/auth/'));
     return _decode(response);
   }
 
+  /// Identical concurrent GETs share one request (no pile-up after reconnect).
+  final _inflight = <String, Future<dynamic>>{};
+
+  /// Bounded retry for safe (idempotent) reads only: transport failures,
+  /// exponential backoff with jitter, and never while the device has no
+  /// network interface at all (retrying cannot help there).
+  Future<dynamic> _getWithRetry(String path, String? token) async {
+    const maxRetries = 2;
+    for (var attempt = 0;; attempt++) {
+      try {
+        return await _request('GET', path, token: token);
+      } on ApiException catch (e) {
+        final canRetry = e.statusCode == 0 &&
+            attempt < maxRetries &&
+            ConnectivityService.instance.status != NetworkStatus.offline;
+        if (!canRetry) rethrow;
+        final backoff = 400 * (1 << attempt);
+        await Future<void>.delayed(Duration(milliseconds: backoff + _random.nextInt(backoff)));
+      }
+    }
+  }
+
   Future<dynamic> get(String path, {String? token, bool cached = true}) async {
+    // The in-memory cache is process-wide; under `flutter test` it would leak
+    // one test's responses into the next.
+    if (_perCallClient) cached = false;
+    final key = '${token ?? ''}:$path';
     if (cached) {
-      final hit = _cache['${token ?? ''}:$path'];
+      final hit = _cache[key];
       if (hit != null && DateTime.now().difference(hit.at) < _cacheTtl) {
         return hit.data;
       }
     }
-    final data = await _request('GET', path, token: token);
-    if (cached) _cache['${token ?? ''}:$path'] = (at: DateTime.now(), data: data);
-    return data;
+    final pending = _inflight[key];
+    if (pending != null) return pending;
+    final future = _getWithRetry(path, token);
+    _inflight[key] = future;
+    try {
+      final data = await future;
+      if (cached) _cache[key] = (at: DateTime.now(), data: data);
+      return data;
+    } finally {
+      _inflight.remove(key);
+    }
   }
 
-  Future<dynamic> post(String path, {Map<String, dynamic>? body, String? token}) => _request('POST', path, body: body, token: token);
+  /// [idempotencyKey]: reuse the same key when the user re-sends the SAME
+  /// draft after an uncertain failure, so a supporting server can de-duplicate.
+  Future<dynamic> post(String path,
+          {Map<String, dynamic>? body, String? token, String? idempotencyKey}) =>
+      _request('POST', path,
+          body: body, token: token, idempotencyKey: idempotencyKey);
   Future<dynamic> put(String path, {Map<String, dynamic>? body, String? token}) => _request('PUT', path, body: body, token: token);
   Future<dynamic> patch(String path, {Map<String, dynamic>? body, String? token}) => _request('PATCH', path, body: body, token: token);
   Future<dynamic> delete(String path, {String? token}) => _request('DELETE', path, token: token);

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
+import '../../core/utils/app_error.dart';
 
 class BirdsAiScreen extends StatefulWidget {
   const BirdsAiScreen({super.key});
@@ -36,12 +37,14 @@ class _BirdsAiScreenState extends State<BirdsAiScreen> {
     try {
       final cfg = await ApiClient.instance
           .get('/assistant/config', token: AuthSession.instance.token);
+      if (!mounted) return;
       if (cfg is Map && cfg['enabled'] == false) {
         setState(() => _enabled = false);
         return;
       }
       final q = await ApiClient.instance
           .get('/assistant/suggested-questions', token: AuthSession.instance.token);
+      if (!mounted) return;
       if (q is List) {
         setState(() => _suggested = List<String>.from(q.whereType<String>()));
       }
@@ -65,6 +68,7 @@ class _BirdsAiScreenState extends State<BirdsAiScreen> {
         body: body,
         token: AuthSession.instance.token,
       );
+      if (!mounted) return;
       if (res is Map) {
         _threadId = res['threadId'] as String?;
         final msgs = res['messages'];
@@ -81,15 +85,24 @@ class _BirdsAiScreenState extends State<BirdsAiScreen> {
         }
       }
     } catch (e) {
+      if (!mounted) return;
+      // Never claim the assistant answered; keep the question so it can be
+      // re-sent. The server may or may not have received it, so no auto-retry.
+      final offline = AppError.isOffline(e);
       setState(() {
+        if (_ctrl.text.isEmpty) _ctrl.text = msg;
         _messages.add(_Msg(
             role: 'assistant',
-            content: 'حدث خطأ. يرجى المحاولة مرة أخرى.',
+            content: offline
+                ? 'لا يوجد اتصال بالإنترنت. لم يتم إرسال رسالتك، أعد المحاولة عند عودة الاتصال.'
+                : AppError.message(e),
             isError: true));
       });
     } finally {
-      setState(() => _sending = false);
-      _scrollBottom();
+      if (mounted) {
+        setState(() => _sending = false);
+        _scrollBottom();
+      }
     }
   }
 

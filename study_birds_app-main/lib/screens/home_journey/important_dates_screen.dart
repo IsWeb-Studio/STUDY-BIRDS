@@ -73,7 +73,7 @@ class _ImportantDatesScreenState extends State<ImportantDatesScreen> {
           return RefreshIndicator(
             onRefresh: () async {
               _refresh();
-              await _future;
+              try { await _future; } catch (_) {}
             },
             color: AppColors.navy,
             child: ListView.builder(

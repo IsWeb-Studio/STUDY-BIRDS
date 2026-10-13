@@ -1,4 +1,4 @@
-import 'package:study_birds/core/notification_links.dart';
+import 'package:study_birds/core/utils/notification_links.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:study_birds/screens/home_journey/notifications_screen.dart';
 import 'package:study_birds/screens/services_support/services_consultation_screens.dart';

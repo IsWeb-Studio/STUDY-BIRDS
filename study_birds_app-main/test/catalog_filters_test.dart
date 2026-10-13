@@ -1,4 +1,4 @@
-import 'package:study_birds/core/app_theme.dart';
+import 'package:study_birds/core/config/app_theme.dart';
 import 'package:study_birds/screens/universities_programs_countries/catalog_detail.dart';
 import 'dart:convert';
 import 'dart:io';

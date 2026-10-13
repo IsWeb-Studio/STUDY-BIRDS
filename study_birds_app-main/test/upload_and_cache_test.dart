@@ -4,9 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:study_birds/core/api_client.dart';
-import 'package:study_birds/core/auth_session.dart';
-import 'package:study_birds/core/secure_data_cache.dart';
+import 'package:study_birds/core/network/api_client.dart';
+import 'package:study_birds/core/services/auth_session.dart';
+import 'package:study_birds/core/services/secure_data_cache.dart';
 
 void main() {
   setUp(() => FlutterSecureStorage.setMockInitialValues({}));

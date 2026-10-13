@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'package:flutter/widgets.dart';
 
+import 'connectivity_service.dart';
+
 /// Lightweight foreground-only polling bus.
 /// Screens subscribe to [onTick] and refresh their data when called.
 /// Polling pauses automatically when the app goes to background.
@@ -21,16 +23,23 @@ class RealtimeSyncService with WidgetsBindingObserver {
   /// Subscribe to receive a tick every 30 s while the app is foregrounded.
   Stream<DateTime> get onTick => _controller.stream;
 
+  StreamSubscription<void>? _reconnectSub;
+
   bool _started = false;
 
   void start() {
     if (_started) return;
     _started = true;
     WidgetsBinding.instance.addObserver(this);
+    // Refresh subscribed screens once when verified connectivity returns.
+    _reconnectSub = ConnectivityService.instance.onReconnected
+        .listen((_) => forceSync());
     _startTimer();
   }
 
   void stop() {
+    _reconnectSub?.cancel();
+    _reconnectSub = null;
     _timer?.cancel();
     _timer = null;
     if (_started) {
@@ -57,6 +66,12 @@ class RealtimeSyncService with WidgetsBindingObserver {
 
   void _startTimer() {
     _timer?.cancel();
-    _timer = Timer.periodic(_interval, (_) => _controller.add(DateTime.now()));
+    _timer = Timer.periodic(_interval, (_) {
+      // No point polling a network that is known to be down; the
+      // reconnect hook below refreshes everything once it is back.
+      if (ConnectivityService.instance.status == NetworkStatus.online) {
+        _controller.add(DateTime.now());
+      }
+    });
   }
 }

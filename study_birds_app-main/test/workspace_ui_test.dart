@@ -9,8 +9,8 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:study_birds/connected/connected_app.dart';
-import 'package:study_birds/core/app_theme.dart';
-import 'package:study_birds/data/study_birds_api.dart';
+import 'package:study_birds/core/config/app_theme.dart';
+import 'package:study_birds/core/network/study_birds_api.dart';
 import 'package:study_birds/screens/auth/onboarding_and_account_type_screens.dart';
 
 const preview = bool.fromEnvironment('WRITE_UI_PREVIEWS');

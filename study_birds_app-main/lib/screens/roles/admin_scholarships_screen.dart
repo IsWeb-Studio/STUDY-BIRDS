@@ -86,7 +86,7 @@ class _ScholarshipApplicationsScreenState
                   title: 'لا توجد طلبات',
                   message: 'ستظهر طلبات الطلاب هنا.');
             return RefreshIndicator(
-              onRefresh: () async { setState(() => future = fetch()); await future; },
+              onRefresh: () async { setState(() => future = fetch()); try { await future; } catch (_) {} },
               color: AppColors.navy,
               child: ListView(
                   padding: const EdgeInsets.all(16),

@@ -1,10 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
-<<<<<<< HEAD
-
-/// Local photographs keep the carousel available even without a connection.
-=======
 import '../../core/network/api_client.dart';
 
 class _BannerSlide {
@@ -24,7 +20,6 @@ class _BannerSlide {
   });
 }
 
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
 class StudentBannerCarousel extends StatefulWidget {
   final ValueChanged<String> onExplore;
   const StudentBannerCarousel({super.key, required this.onExplore});
@@ -42,38 +37,22 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
   bool _dragging = false;
   bool _active = true;
 
-<<<<<<< HEAD
-  static const _slides = [
-    (
-      image: 'campus',
-=======
   static const _fallback = [
     _BannerSlide(
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
       tag: 'وجهتك القادمة',
       title: 'جامعة تناسب طموحك',
       subtitle: 'اكتشف الجامعات وابدأ خطوتك القادمة بثقة.',
       action: 'استكشف الجامعات',
       destination: 'universities',
     ),
-<<<<<<< HEAD
-    (
-      image: 'library',
-=======
     _BannerSlide(
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
       tag: 'فرص تستحق الاكتشاف',
       title: 'طموحك يبدأ بفرصة',
       subtitle: 'تعرّف على المنح المتاحة واختر ما يناسبك.',
       action: 'اكتشف المنح',
       destination: 'scholarships',
     ),
-<<<<<<< HEAD
-    (
-      image: 'students',
-=======
     _BannerSlide(
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
       tag: 'مستقبلك بين يديك',
       title: 'تخصص تحبه، مستقبل تصنعه',
       subtitle: 'استكشف البرامج الدراسية وابنِ مسارك الجامعي.',
@@ -82,22 +61,16 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
     ),
   ];
 
-<<<<<<< HEAD
-=======
   // fallback local image per index (cycles if fewer remote banners)
   static const _localImages = ['campus', 'library', 'students'];
 
   List<_BannerSlide> _slides = _fallback;
 
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-<<<<<<< HEAD
-=======
     _loadBanners();
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
     _timer = Timer.periodic(const Duration(seconds: 5), (_) {
       if (!mounted ||
           !_active ||
@@ -115,8 +88,6 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
     });
   }
 
-<<<<<<< HEAD
-=======
   Future<void> _loadBanners() async {
     try {
       final raw = await ApiClient.instance.get('/content/banners', cached: false);
@@ -144,7 +115,6 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
     }
   }
 
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     _active = state == AppLifecycleState.resumed;
@@ -189,16 +159,10 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
                 onPageChanged: (index) => setState(() => _index = index),
                 itemBuilder: (context, index) {
                   final slide = _slides[index];
-<<<<<<< HEAD
-                  return Stack(fit: StackFit.expand, children: [
-                    Image.asset('assets/images/dashboard/${slide.image}.jpg',
-                        fit: BoxFit.cover, excludeFromSemantics: true),
-=======
                   final localImg =
                       _localImages[index % _localImages.length];
                   return Stack(fit: StackFit.expand, children: [
                     _buildBg(slide, localImg),
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
                     const DecoratedBox(
                         decoration: BoxDecoration(
                       gradient: LinearGradient(
@@ -212,20 +176,12 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-<<<<<<< HEAD
-                          Text(slide.tag,
-                              style: const TextStyle(
-                                  color: Color(0xFFFFCE91),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700)),
-=======
                           if (slide.tag.isNotEmpty)
                             Text(slide.tag,
                                 style: const TextStyle(
                                     color: Color(0xFFFFCE91),
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700)),
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
                           const SizedBox(height: 8),
                           Text(slide.title,
                               maxLines: 2,
@@ -236,20 +192,12 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
                                   height: 1.2,
                                   fontWeight: FontWeight.w700)),
                           const SizedBox(height: 6),
-<<<<<<< HEAD
-                          Text(slide.subtitle,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 12.5)),
-=======
                           if (slide.subtitle.isNotEmpty)
                             Text(slide.subtitle,
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
                                 style: const TextStyle(
                                     color: Colors.white, fontSize: 12.5)),
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
                           const SizedBox(height: 10),
                           TextButton(
                             onPressed: () =>
@@ -328,8 +276,6 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
       ),
     );
   }
-<<<<<<< HEAD
-=======
 
   Widget _buildBg(_BannerSlide slide, String localImg) {
     final url = slide.imageUrl ?? '';
@@ -351,5 +297,4 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
       excludeFromSemantics: true,
     );
   }
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
 }

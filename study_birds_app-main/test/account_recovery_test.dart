@@ -1,5 +1,5 @@
 import 'package:study_birds/screens/auth/verify_contact_screen.dart';
-import 'package:study_birds/core/auth_session.dart';
+import 'package:study_birds/core/services/auth_session.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

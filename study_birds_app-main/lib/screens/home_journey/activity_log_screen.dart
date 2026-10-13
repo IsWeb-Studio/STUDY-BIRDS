@@ -83,7 +83,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
             return RefreshIndicator(
               onRefresh: () async {
                 _refresh();
-                await future;
+                try { await future; } catch (_) {}
               },
               color: AppColors.navy,
               child: ListView.builder(

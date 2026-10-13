@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:study_birds/connected/connected_app.dart';
-import 'package:study_birds/data/study_birds_api.dart';
+import 'package:study_birds/core/network/study_birds_api.dart';
 
 void main() {
   testWidgets('comparison displays current prices for selected favorites',

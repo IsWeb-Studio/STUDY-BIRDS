@@ -57,6 +57,9 @@ flutter:
         - asset: assets/fonts/Tajawal-Bold.ttf
           weight: 700
   assets:
+    - assets/images/dashboard/
+    - assets/images/explore/
+    - assets/images/services/
     - assets/images/logo_full.png
     - assets/images/logo_mark.png
     - assets/images/app_icon.png

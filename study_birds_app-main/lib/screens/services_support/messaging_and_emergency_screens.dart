@@ -8,6 +8,9 @@ import '../../core/config/app_theme.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
+import '../../core/services/connectivity_service.dart';
+import '../../core/utils/app_error.dart';
+import '../../core/utils/responsive.dart';
 import 'support_team_ai_screens.dart';
 
 class ConversationThreadScreen extends StatefulWidget {
@@ -24,6 +27,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
   HttpClient? _httpClient;
   StreamSubscription<String>? _sseSub;
   bool loading = true, sending = false, older = false;
+  String? _draftKey, _draftText;
   String? error;
   final text = TextEditingController();
   String? get token => AuthSession.instance.token;
@@ -32,10 +36,19 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
   void initState() {
     super.initState();
     load();
+    _reconnectSub = ConnectivityService.instance.onReconnected.listen((_) {
+      if (contact != null) {
+        _sseGap = true;
+        _sseAttempt = 0;
+        _connectSse();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _sseTimer?.cancel();
+    _reconnectSub?.cancel();
     _sseSub?.cancel();
     _httpClient?.close(force: true);
     text.dispose();
@@ -43,20 +56,80 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
   }
 
   // Opens SSE connection to receive real-time messages from the server.
+  // Reconnects with exponential backoff + jitter (never a tight loop), waits
+  // while the device is offline, and re-syncs missed messages after a gap.
+  int _sseAttempt = 0;
+  bool _sseGap = false;
+  Timer? _sseTimer;
+  StreamSubscription<void>? _reconnectSub;
+
+  void _scheduleSse() {
+    if (!mounted) return;
+    _sseGap = true;
+    _sseTimer?.cancel();
+    final seconds = (2 << (_sseAttempt < 5 ? _sseAttempt : 5)).clamp(2, 60);
+    _sseAttempt++;
+    final jitter = Duration(
+        milliseconds:
+            (seconds * 1000 * .3 * (DateTime.now().microsecond / 1000000))
+                .round());
+    _sseTimer = Timer(Duration(seconds: seconds) + jitter, () {
+      // No point opening sockets while the network is known to be down;
+      // onReconnected below resumes immediately when it returns.
+      if (ConnectivityService.instance.status == NetworkStatus.offline) {
+        _scheduleSse();
+      } else {
+        _connectSse();
+      }
+    });
+  }
+
+  Future<void> _resyncAfterGap() async {
+    final selected = contact;
+    if (selected == null) return;
+    try {
+      final query =
+          Uri(queryParameters: {'recipient': '${selected['_id']}'}).query;
+      final value = await ApiClient.instance.get(
+          '/mobile-workspace/messages?$query',
+          token: token,
+          cached: false);
+      if (!mounted || value is! List) return;
+      setState(() {
+        final seen = <String>{for (final m in messages) '${m['_id']}'};
+        final missing = value.where((m) => !seen.contains('${m['_id']}'));
+        if (missing.isNotEmpty) messages = [...messages, ...missing];
+      });
+    } catch (_) {}
+  }
+
   void _connectSse() {
+    _sseTimer?.cancel();
     _sseSub?.cancel();
     _httpClient?.close(force: true);
     final tok = token;
     if (tok == null) return;
     final baseUrl = ApiClient.baseUrl;
     final uri = Uri.parse('$baseUrl/mobile-workspace/events');
-    _httpClient = HttpClient();
-    _httpClient!.getUrl(uri).then((req) {
+    final client = _httpClient = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 15);
+    client.getUrl(uri).then((req) {
       req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $tok');
       req.headers.set(HttpHeaders.acceptHeader, 'text/event-stream');
       req.headers.set(HttpHeaders.cacheControlHeader, 'no-cache');
       return req.close();
     }).then((res) {
+      if (!mounted || client != _httpClient) return;
+      if (res.statusCode != 200) {
+        // Auth/feature errors will not fix themselves: stop, don't hammer.
+        if (res.statusCode >= 500 || res.statusCode == 429) _scheduleSse();
+        return;
+      }
+      _sseAttempt = 0;
+      if (_sseGap) {
+        _sseGap = false;
+        _resyncAfterGap(); // messages that arrived while the stream was down
+      }
       _sseSub = res
           .transform(const Utf8Decoder())
           .transform(const LineSplitter())
@@ -79,12 +152,12 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
           ApiClient.instance.post('/mobile-workspace/messages/read',
               token: token, body: {'sender': senderId}).catchError((_) {});
         } catch (_) {}
-      }, onError: (_) {
-        // Reconnect after 5s on connection error
-        if (mounted) Future.delayed(const Duration(seconds: 5), _connectSse);
-      }, cancelOnError: true);
+      },
+              onError: (_) => _scheduleSse(),
+              onDone: _scheduleSse,
+              cancelOnError: true);
     }).catchError((_) {
-      if (mounted) Future.delayed(const Duration(seconds: 5), _connectSse);
+      _scheduleSse();
     });
   }
 
@@ -121,7 +194,9 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
       if (mounted)
         setState(() => error = e is ApiException && e.statusCode == 404
             ? 'المحادثات لم تُفعّل على السيرفر بعد. يمكنك استخدام تذاكر الدعم.'
-            : 'تعذر تحميل الرسائل. حاول مجددًا.');
+            : AppError.isOffline(e)
+                ? AppError.connection
+                : 'تعذر تحميل الرسائل. حاول مجددًا.');
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -131,20 +206,38 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     final body = text.text.trim();
     if (body.isEmpty || contact == null || sending) return;
     setState(() => sending = true);
+    // One key per draft: a re-send of the SAME text after an uncertain failure
+    // carries the same key so a supporting server can drop the duplicate.
+    final key = (_draftKey != null && _draftText == body)
+        ? _draftKey!
+        : ApiClient.newOperationId();
+    _draftKey = key;
+    _draftText = body;
     try {
       final value = await ApiClient.instance.post('/mobile-workspace/messages',
-          token: token, body: {'recipient': contact!['_id'], 'body': body});
+          token: token,
+          idempotencyKey: key,
+          body: {'recipient': contact!['_id'], 'body': body});
       if (!mounted) return;
+      _draftKey = null;
+      _draftText = null;
       setState(() {
-        messages = [...messages, value];
+        final id = '${value is Map ? value['_id'] : ''}';
+        if (id.isEmpty || !messages.any((m) => '${m['_id']}' == id)) {
+          messages = [...messages, value];
+        }
         text.clear();
       });
     } catch (e) {
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-            content: Text(e is ApiException
-                ? e.message
-                : 'تعذر الإرسال؛ رسالتك محفوظة في الحقل')));
+            content: Text(e is ApiException && e.statusCode == 408
+                ? 'تأخر الاتصال؛ قد تكون الرسالة أُرسلت. حدّث المحادثة قبل إعادة الإرسال.'
+                : AppError.isOffline(e)
+                    ? 'لا يوجد اتصال بالإنترنت. لم تُرسل الرسالة وهي محفوظة في الحقل.'
+                    : e is ApiException
+                        ? e.message
+                        : 'تعذر الإرسال؛ رسالتك محفوظة في الحقل')));
     } finally {
       if (mounted) setState(() => sending = false);
     }
@@ -186,141 +279,147 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
                               builder: (_) => const NewSupportTicketScreen())),
                       child: const Text('إرسال تذكرة دعم')),
                 ])
-              : contact == null
-                  ? FeatureBody(children: [
-                      const FeatureIntro(
-                          title: 'تواصل مع فريقك',
-                          subtitle: 'جهات الاتصال المتاحة حسب حسابك وطلباتك.',
-                          icon: Icons.forum_outlined),
-                      if (contacts.isEmpty)
-                        const InlineNotice('لا توجد جهات اتصال متاحة حاليًا.'),
-                      for (final row in contacts)
-                        FeaturePanel(
-                            child: ListTile(
-                                contentPadding: EdgeInsets.zero,
-                                leading: const CircleAvatar(
-                                    child: Icon(Icons.person_outline)),
-                                title: Text('${row['name']}',
-                                    style: AppTextStyles.cardTitle),
-                                trailing: const Icon(Icons.chevron_left),
-                                onTap: () {
-                                  setState(() => contact = row as Map);
-                                  load();
-                                })),
-                    ])
-                  : Column(
-                      children: [
-                        Expanded(
-                          child: ListView(
-                            reverse: true,
-                            padding: const EdgeInsets.all(16),
+              : _content(context));
+
+  /// Phones: one pane at a time (unchanged). Wide windows: contacts on the
+  /// side and the open conversation next to them (master-detail).
+  Widget _content(BuildContext context) {
+    if (!MasterDetail.isWide(context)) {
+      return contact == null ? _contactsList() : _thread();
+    }
+    return MasterDetail(
+      master: _contactsList(),
+      detail: contact == null ? null : _thread(),
+      placeholder: const Center(
+          child: Text('اختر محادثة من القائمة', style: AppTextStyles.caption)),
+    );
+  }
+
+  Widget _contactsList() => FeatureBody(children: [
+        const FeatureIntro(
+            title: 'تواصل مع فريقك',
+            subtitle: 'جهات الاتصال المتاحة حسب حسابك وطلباتك.',
+            icon: Icons.forum_outlined),
+        if (contacts.isEmpty)
+          const InlineNotice('لا توجد جهات اتصال متاحة حاليًا.'),
+        for (final row in contacts)
+          FeaturePanel(
+              child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading:
+                      const CircleAvatar(child: Icon(Icons.person_outline)),
+                  title: Text('${row['name']}', style: AppTextStyles.cardTitle),
+                  trailing: const Icon(Icons.chevron_left),
+                  onTap: () {
+                    setState(() => contact = row as Map);
+                    load();
+                  })),
+      ]);
+
+  Widget _thread() => Column(
+        children: [
+          Expanded(
+            child: ListView(
+              reverse: true,
+              padding: const EdgeInsets.all(16),
+              children: [
+                for (final row in messages.reversed)
+                  Align(
+                      alignment: '${row['sender']}' ==
+                              AuthSession.instance.currentUser?.id
+                          ? Alignment.centerLeft
+                          : Alignment.centerRight,
+                      child: Container(
+                        constraints: BoxConstraints(
+                            maxWidth: MediaQuery.sizeOf(context).width * .8),
+                        margin: const EdgeInsets.only(bottom: 12),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                            color: '${row['sender']}' ==
+                                    AuthSession.instance.currentUser?.id
+                                ? AppColors.navy
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(16)),
+                        child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              for (final row in messages.reversed)
-                                Align(
-                                    alignment: '${row['sender']}' ==
-                                            AuthSession.instance.currentUser?.id
-                                        ? Alignment.centerLeft
-                                        : Alignment.centerRight,
-                                    child: Container(
-                                      constraints: BoxConstraints(
-                                          maxWidth:
-                                              MediaQuery.sizeOf(context).width *
-                                                  .8),
-                                      margin: const EdgeInsets.only(bottom: 12),
-                                      padding: const EdgeInsets.all(14),
-                                      decoration: BoxDecoration(
-                                          color: '${row['sender']}' ==
-                                                  AuthSession
-                                                      .instance.currentUser?.id
-                                              ? AppColors.navy
-                                              : Colors.white,
-                                          borderRadius:
-                                              BorderRadius.circular(16)),
-                                      child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text('${row['body']}',
-                                                style: TextStyle(
-                                                    color: '${row['sender']}' ==
-                                                            AuthSession.instance
-                                                                .currentUser?.id
-                                                        ? Colors.white
-                                                        : AppColors.textPrimary,
-                                                    height: 1.5)),
-                                            const SizedBox(height: 5),
-                                            Text(
-                                                '${row['createdAt'] ?? ''}'
-                                                    .replaceFirst('T', ' ')
-                                                    .split('.')
-                                                    .first,
-                                                style: TextStyle(
-                                                    fontSize: 10,
-                                                    color: '${row['sender']}' ==
-                                                            AuthSession.instance
-                                                                .currentUser?.id
-                                                        ? Colors.white70
-                                                        : AppColors
-                                                            .textSecondary)),
-                                            if ('${row['sender']}' ==
-                                                AuthSession
-                                                    .instance.currentUser?.id)
-                                              Text(
-                                                  row['readAt'] != null
-                                                      ? 'مقروءة'
-                                                      : 'تم الإرسال',
-                                                  style: const TextStyle(
-                                                      fontSize: 10,
-                                                      color: Colors.white70))
-                                          ]),
-                                    )),
-                              if (older)
-                                TextButton(
-                                    onPressed: () => load(previous: true),
-                                    child: const Text('رسائل أقدم')),
-                              if (messages.isEmpty)
-                                const Padding(
-                                    padding: EdgeInsets.all(24),
-                                    child: Text('ابدأ المحادثة بإرسال رسالة.',
-                                        textAlign: TextAlign.center)),
-                            ],
-                          ),
-                        ),
-                        // Input bar — sits above the keyboard
-                        SafeArea(
-                          top: false,
-                          child: Container(
-                            color: Colors.white,
-                            padding: const EdgeInsets.all(12),
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Expanded(
-                                    child: TextField(
-                                        controller: text,
-                                        enabled: !sending,
-                                        maxLength: 4000,
-                                        minLines: 1,
-                                        maxLines: 4,
-                                        decoration: featureInput('رسالتك')
-                                            .copyWith(counterText: ''))),
-                                const SizedBox(width: 8),
-                                IconButton.filled(
-                                    tooltip: 'إرسال',
-                                    onPressed: sending ? null : send,
-                                    icon: sending
-                                        ? const SizedBox(
-                                            width: 18,
-                                            height: 18,
-                                            child: CircularProgressIndicator(
-                                                strokeWidth: 2))
-                                        : const Icon(Icons.send_rounded)),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-                    ));
+                              Text('${row['body']}',
+                                  style: TextStyle(
+                                      color: '${row['sender']}' ==
+                                              AuthSession
+                                                  .instance.currentUser?.id
+                                          ? Colors.white
+                                          : AppColors.textPrimary,
+                                      height: 1.5)),
+                              const SizedBox(height: 5),
+                              Text(
+                                  '${row['createdAt'] ?? ''}'
+                                      .replaceFirst('T', ' ')
+                                      .split('.')
+                                      .first,
+                                  style: TextStyle(
+                                      fontSize: 10,
+                                      color: '${row['sender']}' ==
+                                              AuthSession
+                                                  .instance.currentUser?.id
+                                          ? Colors.white70
+                                          : AppColors.textSecondary)),
+                              if ('${row['sender']}' ==
+                                  AuthSession.instance.currentUser?.id)
+                                Text(
+                                    row['readAt'] != null
+                                        ? 'مقروءة'
+                                        : 'تم الإرسال',
+                                    style: const TextStyle(
+                                        fontSize: 10, color: Colors.white70))
+                            ]),
+                      )),
+                if (older)
+                  TextButton(
+                      onPressed: () => load(previous: true),
+                      child: const Text('رسائل أقدم')),
+                if (messages.isEmpty)
+                  const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text('ابدأ المحادثة بإرسال رسالة.',
+                          textAlign: TextAlign.center)),
+              ],
+            ),
+          ),
+          // Input bar — sits above the keyboard
+          SafeArea(
+            top: false,
+            child: Container(
+              color: Colors.white,
+              padding: const EdgeInsets.all(12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Expanded(
+                      child: TextField(
+                          controller: text,
+                          enabled: !sending,
+                          maxLength: 4000,
+                          minLines: 1,
+                          maxLines: 4,
+                          decoration: featureInput('رسالتك')
+                              .copyWith(counterText: ''))),
+                  const SizedBox(width: 8),
+                  IconButton.filled(
+                      tooltip: 'إرسال',
+                      onPressed: sending ? null : send,
+                      icon: sending
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.send_rounded)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
 }
 
 class EmergencySupportScreen extends StatelessWidget {
@@ -353,8 +452,8 @@ class EmergencySupportScreen extends StatelessWidget {
             decoration: BoxDecoration(
               color: AppColors.danger.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(AppRadius.card),
-              border: Border.all(
-                  color: AppColors.danger.withValues(alpha: 0.3)),
+              border:
+                  Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
             ),
             child: Row(
               children: const [
@@ -374,8 +473,7 @@ class EmergencySupportScreen extends StatelessWidget {
                       Text(
                         'للحالات الحرجة فقط: مشاكل في المطار، أزمات السكن، موعد السفارة الغد.',
                         style: TextStyle(
-                            fontSize: 12.5,
-                            color: AppColors.textPrimary),
+                            fontSize: 12.5, color: AppColors.textPrimary),
                       ),
                     ],
                   ),
@@ -417,14 +515,13 @@ class EmergencySupportScreen extends StatelessWidget {
             label: 'إرسال تذكرة عاجلة',
             icon: Icons.confirmation_number_outlined,
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const NewSupportTicketScreen(
-                    initialSubject: '[عاجل] '))),
+                builder: (_) =>
+                    const NewSupportTicketScreen(initialSubject: '[عاجل] '))),
           ),
           const SizedBox(height: 24),
           const Divider(),
           const SizedBox(height: 16),
-          const Text('أو تحدّث مع فريقك',
-              style: AppTextStyles.sectionLabel),
+          const Text('أو تحدّث مع فريقك', style: AppTextStyles.sectionLabel),
           const SizedBox(height: 14),
           OutlinedButton.icon(
             icon: const Icon(Icons.message_outlined),

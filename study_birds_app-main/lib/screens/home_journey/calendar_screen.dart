@@ -46,7 +46,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               final days = DateUtils.getDaysInMonth(month.year, month.month);
               final offset = month.weekday % 7;
               return RefreshIndicator(
-                onRefresh: () async { refresh(); await future; },
+                onRefresh: () async { refresh(); try { await future; } catch (_) {} },
                 color: AppColors.navy,
                 child: FeatureBody(children: [
                 const FeatureIntro(

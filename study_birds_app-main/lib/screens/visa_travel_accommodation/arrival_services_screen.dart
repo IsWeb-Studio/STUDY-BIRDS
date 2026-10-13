@@ -64,32 +64,8 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
 
     if (!mounted) return;
 
-<<<<<<< HEAD
-    if (available.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-        content: Text('جميع رحلاتك الدراسية لديها طلبات وصول مرتبطة بها بالفعل.'),
-        backgroundColor: AppColors.orange,
-      ));
-      return;
-    }
-
-    // If only one available, go directly to form.
-    if (available.length == 1) {
-      final result = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(
-          builder: (_) => _ArrivalFormScreen(application: available.first),
-        ),
-      );
-      if (result == true) _load();
-      return;
-    }
-
-    // Multiple available — show picker.
-    final picked = await showModalBottomSheet<Map<String, dynamic>>(
-=======
     // Show picker — always includes "standalone airport pickup" option.
     final picked = await showModalBottomSheet<Map<String, dynamic>?>(
->>>>>>> cb2c05047b4a1ed7ed068f12134e1da99aaeeccf
       context: context,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(

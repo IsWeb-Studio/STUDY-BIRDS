@@ -2,8 +2,8 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:study_birds/core/auth_session.dart';
-import 'package:study_birds/core/document_access.dart';
+import 'package:study_birds/core/services/auth_session.dart';
+import 'package:study_birds/core/utils/document_access.dart';
 
 void main() {
   test(
