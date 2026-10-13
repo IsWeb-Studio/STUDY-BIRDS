@@ -94,8 +94,7 @@ Bird AI مؤجل بطلب المستخدم لحين إعداد مزود الذك
 
 ## الملفات والتحقق
 
-- `lib/data/study_birds_api.dart`: عميل API والجلسة ورفع الملفات.
-- `lib/connected/connected_app.dart`: الواجهات المتصلة وعرض المحتوى والنماذج.
+- `lib/core/network/api_client.dart`: عميل API الوحيد (إعادة محاولة للقراءات، رصد الأخطاء، رفع الملفات)، و`lib/core/services/auth_session.dart`: الجلسة.
 - `integration/website`: نسخة ملفات التعديل المطبقة بالفعل في مشروع الموقع المحدد.
 - `integration/mobile-api.test.cjs`: اختبارات مسارات Express وصلاحيات JWT باستخدام نماذج معزولة في الذاكرة؛ لا تتصل بقاعدة فعلية.
 - `integration/mobile-live.test.cjs`: اختبار Express وMongoDB فعليين على localhost، بقاعدة مؤقتة تُحذف بعد الاختبار. يُستبدل موصل تخزين Cloudinary فقط؛ تمر الملفات عبر محلل multipart الفعلي وتُحفظ بياناتها في MongoDB.
@@ -104,7 +103,7 @@ Bird AI مؤجل بطلب المستخدم لحين إعداد مزود الذك
 
 ```powershell
 flutter test
-dart analyze lib/connected lib/data test
+flutter analyze
 node integration/mobile-api.test.cjs
 ```
 
