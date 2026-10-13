@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -50,7 +51,7 @@ class _AdminParentLinksScreenState extends State<AdminParentLinksScreen> {
       final updated = await EmployeeRepository.instance.updateParentLinkStatus(id, status: status);
       if (!mounted) return;
       setState(() {
-        _links = _links.map((l) => (l as Map<String, dynamic>)['_id'] == id ? updated : l).toList();
+        _links = _links.map((l) => (Json.map(l))['_id'] == id ? updated : l).toList();
       });
     } catch (e) {
       if (mounted) {
@@ -78,9 +79,9 @@ class _AdminParentLinksScreenState extends State<AdminParentLinksScreen> {
                       padding: const EdgeInsets.all(16),
                       itemCount: _links.length,
                       itemBuilder: (context, i) {
-                        final link = _links[i] as Map<String, dynamic>;
-                        final parent = link['parent'] as Map<String, dynamic>?;
-                        final student = link['student'] as Map<String, dynamic>?;
+                        final link = Json.map(_links[i]);
+                        final parent = Json.mapOrNull(link['parent']);
+                        final student = Json.mapOrNull(link['student']);
                         final status = link['status'] as String? ?? 'pending';
                         final id = link['_id'] as String;
 

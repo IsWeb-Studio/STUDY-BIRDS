@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
@@ -40,10 +41,10 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
         token: AuthSession.instance.token,
       );
       if (!mounted) return;
-      final map = data as Map<String, dynamic>;
+      final map = Json.map(data);
       setState(() {
         _totalPoints = (map['totalPoints'] as num?)?.toInt() ?? 0;
-        _entries = map['entries'] as List? ?? [];
+        _entries = Json.listOrNull(map['entries']) ?? [];
       });
     } catch (e) {
       if (mounted) setState(() => _error = 'تعذر تحميل المكافآت. أعد المحاولة.');
@@ -314,7 +315,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                   )),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: IconButton(
+                    child: IconButton(tooltip: 'تبديل العملتين', 
                         onPressed: _swap,
                         icon: const Icon(Icons.swap_horiz_rounded,
                             color: AppColors.navy)),
@@ -462,7 +463,7 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
         token: AuthSession.instance.token,
       );
       if (!mounted) return;
-      setState(() => _data = data as Map<String, dynamic>);
+      setState(() => _data = Json.map(data));
     } catch (e) {
       if (mounted) setState(() => _error = 'تعذر تحميل المحفظة. أعد المحاولة.');
     } finally {
@@ -474,9 +475,9 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
     final balance = (_data?['balance'] as num?)?.toDouble() ?? 0;
     List<dynamic> unpaidInvoices = [];
     try {
-      final fin = await ApiClient.instance.get('/students/financials', token: AuthSession.instance.token) as Map;
-      unpaidInvoices = ((fin['invoices'] as List?) ?? [])
-          .where((i) => (i as Map)['status'] == 'unpaid')
+      final fin = Json.rawMap(await ApiClient.instance.get('/students/financials', token: AuthSession.instance.token));
+      unpaidInvoices = ((Json.listOrNull(fin['invoices'])) ?? [])
+          .where((i) => (Json.rawMap(i))['status'] == 'unpaid')
           .toList();
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/student_rewards_currency_screens.dart:480');}
 
@@ -505,12 +506,12 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
           const SizedBox(height: 8),
           for (final inv in unpaidInvoices) ...[
             GestureDetector(
-              onTap: () => setSheet(() => selectedInvoice = inv as Map<String, dynamic>),
+              onTap: () => setSheet(() => selectedInvoice = Json.map(inv)),
               child: Container(
                 margin: const EdgeInsets.only(bottom: 6),
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: BoxDecoration(
-                  color: selectedInvoice?['_id'] == (inv as Map)['_id']
+                  color: selectedInvoice?['_id'] == (Json.rawMap(inv))['_id']
                       ? AppColors.navy.withValues(alpha: 0.08)
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(AppRadius.card),
@@ -598,8 +599,8 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
     final d = _data!;
     final balance = (d['balance'] as num?)?.toDouble() ?? 0;
     final referralCode = '${d['referralCode'] ?? ''}';
-    final referrals = (d['referrals'] as List?) ?? [];
-    final transactions = (d['transactions'] as List?) ?? [];
+    final referrals = (Json.listOrNull(d['referrals'])) ?? [];
+    final transactions = (Json.listOrNull(d['transactions'])) ?? [];
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -615,7 +616,7 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
               children: [
                 for (int i = 0; i < referrals.length; i++) ...[
                   if (i > 0) const Divider(height: 1),
-                  _ReferralRow(referral: referrals[i] as Map),
+                  _ReferralRow(referral: Json.rawMap(referrals[i])),
                 ],
               ],
             ),
@@ -643,7 +644,7 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
               children: [
                 for (int i = 0; i < transactions.length; i++) ...[
                   if (i > 0) const Divider(height: 1),
-                  _TransactionRow(tx: transactions[i] as Map),
+                  _TransactionRow(tx: Json.rawMap(transactions[i])),
                 ],
               ],
             ),

@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -12,8 +13,8 @@ class AdminAgencyRequestsScreen extends StatelessWidget {
     return GenericApprovalListScreen(
       title: 'طلبات الوكالة',
       fetchItems: () => AdminModulesRepository.instance.getAgencyRequests(),
-      itemTitle: (item) => (item['student'] as Map<String, dynamic>?)?['name'] as String? ?? '—',
-      itemSubtitle: (item) => (item['student'] as Map<String, dynamic>?)?['email'] as String? ?? '',
+      itemTitle: (item) => (Json.mapOrNull(item['student']))?['name'] as String? ?? '—',
+      itemSubtitle: (item) => (Json.mapOrNull(item['student']))?['email'] as String? ?? '',
       idOf: (item) => item['_id'] as String,
       statusOf: (item) => item['status'] as String? ?? 'pending',
       statusOptions: const [
@@ -35,7 +36,7 @@ class AdminArrivalRequestsScreen extends StatelessWidget {
     return GenericApprovalListScreen(
       title: 'طلبات وصول الطلاب',
       fetchItems: () => AdminModulesRepository.instance.getArrivalRequests(),
-      itemTitle: (item) => (item['student'] as Map<String, dynamic>?)?['name'] as String? ?? '—',
+      itemTitle: (item) => (Json.mapOrNull(item['student']))?['name'] as String? ?? '—',
       itemSubtitle: (item) => 'رحلة: ${item['flightNumber'] ?? '—'} • ${item['airport'] ?? ''}',
       idOf: (item) => item['_id'] as String,
       statusOf: (item) => item['status'] as String? ?? 'submitted',
@@ -58,7 +59,7 @@ class AdminPayoutRequestsScreen extends StatelessWidget {
     return GenericApprovalListScreen(
       title: 'طلبات سحب العمولات',
       fetchItems: () => AdminModulesRepository.instance.getPayoutRequests(),
-      itemTitle: (item) => '\$${item['amount'] ?? 0} — ${(item['agent'] as Map<String, dynamic>?)?['name'] ?? ''}',
+      itemTitle: (item) => '\$${item['amount'] ?? 0} — ${(Json.mapOrNull(item['agent']))?['name'] ?? ''}',
       itemSubtitle: (item) => item['method'] as String? ?? '',
       idOf: (item) => item['_id'] as String,
       statusOf: (item) => item['status'] as String? ?? 'pending',
@@ -81,7 +82,7 @@ class AdminVerificationScreen extends StatelessWidget {
     return GenericApprovalListScreen(
       title: 'توثيق الوكلاء',
       fetchItems: () => AdminModulesRepository.instance.getVerificationQueue(),
-      itemTitle: (item) => (item['agent'] as Map<String, dynamic>?)?['name'] as String? ?? '—',
+      itemTitle: (item) => (Json.mapOrNull(item['agent']))?['name'] as String? ?? '—',
       itemSubtitle: (item) => item['documentType'] as String? ?? '',
       idOf: (item) => item['_id'] as String,
       statusOf: (item) => item['status'] as String? ?? 'pending',
@@ -168,7 +169,7 @@ class _AdminAgentsScreenState extends State<AdminAgentsScreen> {
                   padding: const EdgeInsets.all(16),
                   itemCount: _agents.length,
                   itemBuilder: (context, i) {
-                    final agent = _agents[i] as Map<String, dynamic>;
+                    final agent = Json.map(_agents[i]);
                     return AppCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

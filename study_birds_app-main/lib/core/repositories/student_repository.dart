@@ -1,3 +1,4 @@
+import '../utils/json_safe.dart';
 import '../services/error_reporter.dart';
 import '../services/secure_data_cache.dart';
 import '../network/api_client.dart';
@@ -95,26 +96,26 @@ class DashboardOverview {
   String? get journeyStage => profile?['journeyStage'] as String?;
 
   factory DashboardOverview.fromJson(Map<String, dynamic> json) {
-    final progress = json['progress'] as Map<String, dynamic>? ?? {};
-    final statsJson = json['stats'] as Map<String, dynamic>? ?? {};
+    final progress = Json.mapOrNull(json['progress']) ?? {};
+    final statsJson = Json.mapOrNull(json['stats']) ?? {};
     return DashboardOverview(
       home: json['home'] is Map
-          ? Map<String, dynamic>.from(json['home'] as Map)
+          ? Map<String, dynamic>.from(Json.rawMap(json['home']))
           : null,
-      journeys: (json['journeys'] as List<dynamic>?)
-          ?.map((e) => Map<String, dynamic>.from(e as Map))
+      journeys: (Json.listOrNull(json['journeys']))
+          ?.map((e) => Map<String, dynamic>.from(Json.rawMap(e)))
           .toList(),
-      nextAction: json['nextAction'] as Map<String, dynamic>?,
-      profile: json['profile'] as Map<String, dynamic>?,
+      nextAction: Json.mapOrNull(json['nextAction']),
+      profile: Json.mapOrNull(json['profile']),
       currentStage: progress['currentStage'] as String? ?? 'file-received',
-      stages: (progress['stages'] as List<dynamic>? ?? [])
-          .map((e) => DashboardStage.fromJson(e as Map<String, dynamic>))
+      stages: (Json.listOrNull(progress['stages']) ?? [])
+          .map((e) => DashboardStage.fromJson(Json.map(e)))
           .toList(),
       stats: DashboardStats.fromJson(statsJson),
-      latestNotification: json['latestNotification'] as Map<String, dynamic>?,
-      recentApplications: json['recentApplications'] as List<dynamic>? ?? [],
-      recentDocuments: json['recentDocuments'] as List<dynamic>? ?? [],
-      recognitions: (json['recognitions'] as List<dynamic>? ?? [])
+      latestNotification: Json.mapOrNull(json['latestNotification']),
+      recentApplications: Json.listOrNull(json['recentApplications']) ?? [],
+      recentDocuments: Json.listOrNull(json['recentDocuments']) ?? [],
+      recognitions: (Json.listOrNull(json['recognitions']) ?? [])
           .whereType<Map>()
           .map((e) => Map<String, dynamic>.from(e))
           .toList(),
@@ -180,10 +181,10 @@ class StudentRepository {
   }
 
   Future<DashboardOverview> getOverview({bool forceRefresh = false}) async =>
-      DashboardOverview.fromJson(await _loadSnapshot('overview', forceRefresh: forceRefresh) as Map<String, dynamic>);
+      DashboardOverview.fromJson(Json.map(await _loadSnapshot('overview', forceRefresh: forceRefresh)));
 
   Future<Map<String, dynamic>> getFinancials({bool forceRefresh = false}) async =>
-      await _loadSnapshot('financials', forceRefresh: forceRefresh) as Map<String, dynamic>;
+      Json.map(await _loadSnapshot('financials', forceRefresh: forceRefresh));
 
   Future<void> clearOverviewCache() async {
     await SecureDataCache.clear(AuthSession.instance.currentUser?.id ?? '');
@@ -192,7 +193,7 @@ class StudentRepository {
   Future<Map<String, dynamic>?> getProfile() async {
     final data =
         await ApiClient.instance.get('/students/profile', token: _token);
-    return data as Map<String, dynamic>?;
+    return Json.mapOrNull(data);
   }
 
   Future<void> updateProfile(Map<String, dynamic> profile) async {
@@ -226,11 +227,11 @@ class StudentRepository {
   }
 
   Future<List<dynamic>> getApplications({bool forceRefresh = false}) async {
-    return await _loadSnapshot('applications', forceRefresh: forceRefresh) as List<dynamic>;
+    return Json.list(await _loadSnapshot('applications', forceRefresh: forceRefresh));
   }
 
   Future<List<dynamic>> getDocuments({bool forceRefresh = false}) async {
-    return await _loadSnapshot('documents', forceRefresh: forceRefresh) as List<dynamic>;
+    return Json.list(await _loadSnapshot('documents', forceRefresh: forceRefresh));
   }
 
   /// Uploads a document — matches POST /api/students/documents
@@ -265,13 +266,13 @@ class StudentRepository {
       onProgress: onProgress,
       cancellation: cancellation,
     );
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<List<dynamic>> getNotifications() async {
     final data =
         await ApiClient.instance.get('/students/notifications', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<void> markNotificationRead(String id) async {
@@ -341,7 +342,7 @@ class StudentRepository {
     if (applicationId != null) body['applicationId'] = applicationId;
     final data = await ApiClient.instance.post('/students/arrival-services',
         token: _token, body: body);
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   /// Throws ApiException(400, ...) if the student hasn't reached
@@ -369,13 +370,13 @@ class StudentRepository {
           airportPickup: airportPickup, studentHousing: studentHousing,
           residencePermitSupport: residencePermitSupport, visaSupport: visaSupport,
         ));
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<List<dynamic>> getSupportTickets() async {
     final data = await ApiClient.instance
         .get('/students/support-tickets', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   /// Categories accepted by the backend (STUDENT_SUPPORT_CATEGORIES in
@@ -397,7 +398,7 @@ class StudentRepository {
       token: _token,
       body: {'message': message},
     );
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<Map<String, dynamic>> createSupportTicket({
@@ -415,7 +416,7 @@ class StudentRepository {
         fields: {'subject': subject, 'message': message, 'category': category},
         token: _token,
       );
-      return data as Map<String, dynamic>;
+      return Json.map(data);
     }
     final data = await ApiClient.instance
         .post('/students/support-tickets', token: _token, body: {
@@ -423,7 +424,7 @@ class StudentRepository {
       'message': message,
       'category': category,
     });
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   /// Uploads a payment proof against a specific invoice — matches
@@ -445,7 +446,7 @@ class StudentRepository {
       },
       token: _token,
     );
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   // ---- Favorites ----------------------------------------------------------
@@ -453,7 +454,7 @@ class StudentRepository {
   Future<List<dynamic>> getFavorites() async {
     final data =
         await ApiClient.instance.get('/students/favorites', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   /// Toggles a favorite on/off. Returns the raw response — either the
@@ -473,7 +474,7 @@ class StudentRepository {
       if (articleSlug != null) 'articleSlug': articleSlug,
       if (articleTitle != null) 'articleTitle': articleTitle,
     });
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<void> removeFavorite(String id) async {
@@ -485,7 +486,7 @@ class StudentRepository {
   Future<List<dynamic>> getKnowledgeBase() async {
     final data =
         await ApiClient.instance.get('/students/knowledge-base', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   // ---- Orientation Test (a.k.a. "Program Finder") ----------------------------
@@ -494,7 +495,7 @@ class StudentRepository {
   Future<Map<String, dynamic>?> getOrientationTestResult() async {
     final data = await ApiClient.instance
         .get('/students/orientation-test', token: _token);
-    return data as Map<String, dynamic>?;
+    return Json.mapOrNull(data);
   }
 
   Future<Map<String, dynamic>> submitOrientationTest({
@@ -518,20 +519,20 @@ class StudentRepository {
       if (desiredDegreeLevel != null) 'desiredDegreeLevel': desiredDegreeLevel,
       if (avoidFields != null) 'avoidFields': avoidFields,
     });
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<Map<String, dynamic>?> getInsurance() async {
     final data = await ApiClient.instance
         .get('/students/insurance', token: _token);
     if (data == null) return null;
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<Map<String, dynamic>?> getEquivalency() async {
     final data = await ApiClient.instance
         .get('/students/equivalency', token: _token);
     if (data == null) return null;
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 }

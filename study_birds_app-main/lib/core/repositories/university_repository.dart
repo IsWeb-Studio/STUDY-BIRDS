@@ -1,3 +1,4 @@
+import '../utils/json_safe.dart';
 import '../network/api_client.dart';
 import '../services/auth_session.dart';
 
@@ -17,12 +18,12 @@ class UniversityRepository {
   Future<List<dynamic>> getApplications({String? status}) async {
     final qs = status != null ? '?status=$status' : '';
     final data = await ApiClient.instance.get('/university-portal/applications$qs', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<Map<String, dynamic>> getApplicationById(String id) async {
     final data = await ApiClient.instance.get('/university-portal/applications/$id', token: _token);
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<Map<String, dynamic>> updateApplicationStatus(String id, {required String detailedStatus, String? note}) async {
@@ -30,7 +31,7 @@ class UniversityRepository {
       'detailedStatus': detailedStatus,
       if (note != null) 'note': note,
     });
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<void> requestDocument(String id, {String? documentType, String? reason}) async {
@@ -42,13 +43,13 @@ class UniversityRepository {
 
   Future<int> getFavoritesCount() async {
     final data = await ApiClient.instance.get('/university-portal/favorites-count', token: _token);
-    return (data as Map<String, dynamic>)['count'] as int? ?? 0;
+    return (Json.map(data))['count'] as int? ?? 0;
   }
 
   /// Returns a short-lived signed URL to view/download the document file.
   Future<String> getDocumentAccessUrl(String documentId) async {
     final data = await ApiClient.instance.post('/documents/$documentId/access', token: _token, body: {});
-    return (data as Map<String, dynamic>)['url'] as String;
+    return (Json.map(data))['url'] as String;
   }
 
   Future<String> uploadAvatar({required List<int> fileBytes, required String fileName}) async {
@@ -59,6 +60,6 @@ class UniversityRepository {
       fields: {},
       token: _token,
     );
-    return (data as Map<String, dynamic>)['avatar'] as String;
+    return (Json.map(data))['avatar'] as String;
   }
 }

@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/widgets/feature_ui.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
@@ -46,7 +47,7 @@ class _ConsultationOutcomeEditorState extends State<ConsultationOutcomeEditor> {
   @override
   void initState() {
     super.initState();
-    final outcome = widget.booking['outcome'] as Map?;
+    final outcome = Json.rawMapOrNull(widget.booking['outcome']);
     summary = TextEditingController(text: '${outcome?['summary'] ?? ''}');
     nextSteps = TextEditingController(text: '${outcome?['nextSteps'] ?? ''}');
     result = outcome?['result'] == 'no-show' ? 'no-show' : 'completed';

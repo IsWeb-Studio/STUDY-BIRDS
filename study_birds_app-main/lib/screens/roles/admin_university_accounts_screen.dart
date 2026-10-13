@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/password_strength_inline.dart';
 import '../../core/widgets/feature_ui.dart';
@@ -84,9 +85,8 @@ class _AdminUniversityAccountsScreenState
                         padding: const EdgeInsets.all(16),
                         itemCount: _accounts.length,
                         itemBuilder: (context, i) {
-                          final account = _accounts[i] as Map<String, dynamic>;
-                          final linked = account['linkedUniversity']
-                              as Map<String, dynamic>?;
+                          final account = Json.map(_accounts[i]);
+                          final linked = Json.mapOrNull(account['linkedUniversity']);
                           final isActive = account['isActive'] != false;
                           return AppCard(
                             child: Row(
@@ -294,7 +294,7 @@ class _CreateUniversityAccountScreenState
                               padding: EdgeInsets.all(4),
                               child: Text('اختر جامعة')),
                           items: _universities.map((u) {
-                            final uni = u as Map<String, dynamic>;
+                            final uni = Json.map(u);
                             return DropdownMenuItem(
                                 value: uni['_id'] as String,
                                 child: Text(uni['name'] as String? ?? '—'));

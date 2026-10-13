@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
@@ -198,7 +199,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                                   ])),
                             if (!widget.university &&
                                 row['requirements'] is List &&
-                                (row['requirements'] as List).isNotEmpty)
+                                (Json.list(row['requirements'])).isNotEmpty)
                               _section(
                                   cl('شروط القبول', 'Admission requirements'),
                                   Column(
@@ -206,7 +207,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                                           CrossAxisAlignment.start,
                                       children: [
                                         for (final item
-                                            in row['requirements'] as List)
+                                            in Json.list(row['requirements']))
                                           Padding(
                                               padding: const EdgeInsets.only(
                                                   bottom: 10),
@@ -392,7 +393,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
             .toList()
         : const [];
     final careers = (row['careerOpportunities'] is List)
-        ? (row['careerOpportunities'] as List)
+        ? (Json.list(row['careerOpportunities']))
             .map((e) => '$e')
             .where((e) => e.trim().isNotEmpty)
             .toList()

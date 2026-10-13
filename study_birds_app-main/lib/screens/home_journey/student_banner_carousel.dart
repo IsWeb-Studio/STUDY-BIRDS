@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -92,10 +93,10 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
   Future<void> _loadBanners() async {
     try {
       final raw = await ApiClient.instance.get('/content/banners', cached: false);
-      final list = raw as List<dynamic>;
+      final list = Json.list(raw);
       if (list.isEmpty) return;
       final slides = list.map((b) {
-        final m = b as Map<String, dynamic>;
+        final m = Json.map(b);
         return _BannerSlide(
           tag: (m['tag'] as String?) ?? '',
           title: (m['title'] as String?) ?? '',

@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -72,11 +73,11 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
                       padding: const EdgeInsets.all(16),
                       itemCount: _apps.length,
                       itemBuilder: (context, i) {
-                        final app = _apps[i] as Map<String, dynamic>;
-                        final student = app['student'] as Map<String, dynamic>?;
-                        final program = app['program'] as Map<String, dynamic>?;
+                        final app = Json.map(_apps[i]);
+                        final student = Json.mapOrNull(app['student']);
+                        final program = Json.mapOrNull(app['program']);
                         final university =
-                            program?['university'] as Map<String, dynamic>?;
+                            Json.mapOrNull(program?['university']);
                         final meta = appStatusMeta(app);
                         return AppCard(
                           child: Row(
@@ -156,8 +157,8 @@ class _AdminStudentDocumentsScreenState
                       padding: const EdgeInsets.all(16),
                       itemCount: _docs.length,
                       itemBuilder: (context, i) {
-                        final doc = _docs[i] as Map<String, dynamic>;
-                        final student = doc['student'] as Map<String, dynamic>?;
+                        final doc = Json.map(_docs[i]);
+                        final student = Json.mapOrNull(doc['student']);
                         final meta = docStatusMeta(doc);
                         return AppCard(
                           child: Row(

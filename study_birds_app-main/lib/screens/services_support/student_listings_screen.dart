@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -25,7 +26,7 @@ class _StudentListingsScreenState extends State<StudentListingsScreen> {
     body: FutureBuilder<dynamic>(future: _rows, builder: (context, snapshot) {
       if (snapshot.hasError) return ErrorState(message: 'تعذر تحميل القائمة', onRetry: () => setState(_reload));
       if (!snapshot.hasData) return const LoadingState();
-      final rows = snapshot.data as List;
+      final rows = Json.list(snapshot.data);
       return RefreshIndicator(onRefresh: () async { setState(_reload); await _rows; },
         child: ListView(physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()), padding: const EdgeInsets.all(16), children: [
           if (rows.isEmpty) const Padding(padding: EdgeInsets.all(24), child: Text('لا توجد إعلانات سارية حاليًا')),
@@ -71,14 +72,14 @@ class AdminStudentListingsScreen extends StatelessWidget {
       CrudField('expiresAt', 'الانتهاء (YYYY-MM-DD، اختياري)'),
       CrudField('published', 'نشر الإعلان للطلاب', type: CrudFieldType.boolean),
     ],
-    fetchItems: () async => (await ApiClient.instance.get('$path?kind=$kind', token: AuthSession.instance.token) as List).map((row) => {
-      ...row as Map,
+    fetchItems: () async => (Json.list(await ApiClient.instance.get('$path?kind=$kind', token: AuthSession.instance.token))).map((row) => {
+      ...Json.rawMap(row),
       for (final key in ['validFrom', 'expiresAt']) key: row[key] == null ? '' : '${row[key]}'.split('T').first,
     }).toList(),
-    createItem: (body) async => Map<String, dynamic>.from(await ApiClient.instance.post(path,
-      token: AuthSession.instance.token, body: {...body, 'kind': kind}) as Map),
-    updateItem: (id, body) async => Map<String, dynamic>.from(await ApiClient.instance.put('$path/$id',
-      token: AuthSession.instance.token, body: {...body, 'kind': kind}) as Map),
+    createItem: (body) async => Map<String, dynamic>.from(Json.rawMap(await ApiClient.instance.post(path,
+      token: AuthSession.instance.token, body: {...body, 'kind': kind}))),
+    updateItem: (id, body) async => Map<String, dynamic>.from(Json.rawMap(await ApiClient.instance.put('$path/$id',
+      token: AuthSession.instance.token, body: {...body, 'kind': kind}))),
     itemTitle: (row) => '${row['title']}',
     itemSubtitle: (row) => '${row['organization'] ?? ''} • ${row['published'] == true ? 'منشور ضمن فترة الصلاحية' : 'مسودة'}',
   );

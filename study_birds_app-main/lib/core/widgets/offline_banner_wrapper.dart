@@ -1,3 +1,4 @@
+import '../../l10n/l10n.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
@@ -50,26 +51,26 @@ class _OfflineBannerWrapperState extends State<OfflineBannerWrapper> {
     super.dispose();
   }
 
-  ({String text, Color color, IconData icon})? get _banner {
+  ({String text, Color color, IconData icon})? _bannerFor(AppLocalizations l10n) {
     switch (_service.status) {
       case NetworkStatus.offline:
         return (
-          text: 'لا يوجد اتصال بالإنترنت — تُعرض آخر بيانات محفوظة',
+          text: l10n.bannerOffline,
           color: AppColors.neutral,
           icon: Icons.wifi_off_rounded,
         );
       case NetworkStatus.unreachable:
         return (
           text: _service.isUnstable
-              ? 'الاتصال غير مستقر — نحاول إعادة الاتصال'
-              : 'متصل بالشبكة لكن تعذّر الوصول إلى الخدمة — نحاول إعادة الاتصال',
+              ? l10n.bannerUnstable
+              : l10n.bannerUnreachable,
           color: AppColors.warning,
           icon: Icons.cloud_off_rounded,
         );
       case NetworkStatus.online:
         if (_showRestored) {
           return (
-            text: 'عاد الاتصال بالإنترنت',
+            text: l10n.bannerRestored,
             color: AppColors.success,
             icon: Icons.wifi_rounded,
           );
@@ -80,7 +81,7 @@ class _OfflineBannerWrapperState extends State<OfflineBannerWrapper> {
 
   @override
   Widget build(BuildContext context) {
-    final banner = _banner;
+    final banner = _bannerFor(context.l10n);
     return Column(
       children: [
         AnimatedSize(

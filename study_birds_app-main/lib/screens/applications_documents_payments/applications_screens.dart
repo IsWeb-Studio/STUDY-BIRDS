@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -210,10 +211,10 @@ class _UniversityApplicationsTab extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         itemCount: apps.length,
         itemBuilder: (context, i) {
-          final a = apps[i] as Map<String, dynamic>;
-          final program = a['program'] as Map<String, dynamic>?;
-          final university = program?['university'] as Map<String, dynamic>?;
-          final country = university?['country'] as Map<String, dynamic>?;
+          final a = Json.map(apps[i]);
+          final program = Json.mapOrNull(a['program']);
+          final university = Json.mapOrNull(program?['university']);
+          final country = Json.mapOrNull(university?['country']);
           final meta = appStatusMeta(a);
 
           return AppCard(
@@ -309,7 +310,7 @@ class _ServiceRequestsTabState extends State<_ServiceRequestsTab> {
                   : null;
               final staffNote = r['staffNote'] as String? ?? '';
               final driver = r['driverDetails'] is Map
-                  ? Map<String, dynamic>.from(r['driverDetails'] as Map)
+                  ? Map<String, dynamic>.from(Json.rawMap(r['driverDetails']))
                   : null;
               final showDriver = status == 'en-route' &&
                   driver != null &&
@@ -425,11 +426,11 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final a = _updatedApplication ?? widget.application;
-    final program = a['program'] as Map<String, dynamic>?;
-    final university = program?['university'] as Map<String, dynamic>?;
-    final country = university?['country'] as Map<String, dynamic>?;
-    final documents = a['documents'] as List<dynamic>? ?? [];
-    final timeline = a['statusTimeline'] as List<dynamic>? ?? [];
+    final program = Json.mapOrNull(a['program']);
+    final university = Json.mapOrNull(program?['university']);
+    final country = Json.mapOrNull(university?['country']);
+    final documents = Json.listOrNull(a['documents']) ?? [];
+    final timeline = Json.listOrNull(a['statusTimeline']) ?? [];
     final meta = appStatusMeta(a);
 
     return AppScaffold(
@@ -578,7 +579,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
         }
         return Column(
           children: documents.map((d) {
-            final doc = d as Map<String, dynamic>;
+            final doc = Json.map(d);
             final docMeta = docStatusMeta(doc);
             return AppCard(
               onTap: () => Navigator.of(context).push(MaterialPageRoute(
@@ -604,7 +605,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
         }
         return Column(
           children: timeline.reversed.map((t) {
-            final entry = t as Map<String, dynamic>;
+            final entry = Json.map(t);
             return AppCard(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,

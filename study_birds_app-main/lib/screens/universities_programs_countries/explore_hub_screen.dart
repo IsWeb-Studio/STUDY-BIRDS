@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -192,11 +193,11 @@ class _FavoritesScreenState extends State<FavoritesScreen>
       ]);
       final favUniIds = results[0] as Set<String>;
       final favProgIds = results[1] as Set<String>;
-      final allUnis = (results[2] as List)
+      final allUnis = (Json.list(results[2]))
           .whereType<Map>()
           .map((v) => Map<String, dynamic>.from(v))
           .toList();
-      final allProgs = (results[3] as List)
+      final allProgs = (Json.list(results[3]))
           .whereType<Map>()
           .map((v) => Map<String, dynamic>.from(v))
           .toList();

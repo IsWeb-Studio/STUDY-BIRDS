@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -20,7 +21,7 @@ String catalogFacet(Map<String, dynamic> row, String key, bool universities) {
 List<String> catalogFields(Map<String, dynamic> row) => {
       catalogText(row['fieldOfStudy']),
       if (row['fieldsOfStudy'] is List)
-        ...(row['fieldsOfStudy'] as List)
+        ...(Json.list(row['fieldsOfStudy']))
             .whereType<String>()
             .map((s) => s.trim()),
     }.where((s) => s.isNotEmpty).toList();

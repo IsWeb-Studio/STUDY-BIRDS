@@ -1,5 +1,9 @@
 import 'dart:async';
+import 'l10n/l10n.dart';
+import 'core/services/locale_controller.dart';
 import 'core/services/connectivity_service.dart';
+import 'core/services/app_update_service.dart';
+import 'core/widgets/update_gate.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'core/widgets/app_notice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -137,6 +141,11 @@ Future<void> _initServicesInBackground() async {
     _safeInit(GoogleSignInService.instance.init),
   ]);
   RealtimeSyncService.instance.start();
+  unawaited(LocaleController.instance.load());
+  // Forced-update check (no restriction if offline or the server has no policy).
+  unawaited(AppUpdateService.instance.check());
+  ConnectivityService.instance.onReconnected
+      .listen((_) => unawaited(AppUpdateService.instance.check()));
 }
 
 Future<void> _safeInit(Future<void> Function() initialize) async {
@@ -218,25 +227,29 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return ListenableBuilder(
+      listenable: LocaleController.instance,
+      builder: (context, _) => MaterialApp(
       title: 'Study Birds',
       navigatorKey: rootNavigatorKey,
-      locale: const Locale('ar'),
-      supportedLocales: const [Locale('ar')],
+      locale: LocaleController.instance.locale,
+      supportedLocales: AppLocalizations.supportedLocales,
       localizationsDelegates: const [
+        AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,
         GlobalWidgetsLocalizations.delegate,
         GlobalCupertinoLocalizations.delegate,
       ],
-      builder: (context, child) =>
-          OfflineBannerWrapper(child: child ?? const SizedBox.shrink()),
+      builder: (context, child) => UpdateGate(
+          service: AppUpdateService.instance,
+          child: OfflineBannerWrapper(child: child ?? const SizedBox.shrink())),
       scaffoldMessengerKey: rootScaffoldMessengerKey,
       debugShowCheckedModeBanner: false,
       scrollBehavior: const _BouncingScrollBehavior(),
       theme: AppTheme.light
           .copyWith(pageTransitionsTheme: appPageTransitionsTheme),
       home: const RootChooserScreen(),
-    );
+    ));
   }
 }
 

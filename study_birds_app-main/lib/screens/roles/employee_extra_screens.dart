@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -63,7 +64,7 @@ class _MyStudentsQueueScreenState extends State<MyStudentsQueueScreen> {
     final q = _searchController.text.trim().toLowerCase();
     final filtered = q.isEmpty
         ? _students
-        : _students.where((s) => ((s as Map<String, dynamic>)['name'] as String? ?? '').toLowerCase().contains(q)).toList();
+        : _students.where((s) => ((Json.map(s))['name'] as String? ?? '').toLowerCase().contains(q)).toList();
 
     return AppScaffold(
       title: 'كل الطلاب',
@@ -91,8 +92,8 @@ class _MyStudentsQueueScreenState extends State<MyStudentsQueueScreen> {
                             padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                             itemCount: filtered.length,
                             itemBuilder: (context, i) {
-                              final s = filtered[i] as Map<String, dynamic>;
-                              final profile = s['profile'] as Map<String, dynamic>?;
+                              final s = Json.map(filtered[i]);
+                              final profile = Json.mapOrNull(s['profile']);
                               final stage = profile?['applicationStage'] as String?;
                               return AppCard(
                                 child: Row(
@@ -248,7 +249,7 @@ class _ManagerOverviewScreenState extends State<ManagerOverviewScreen> {
   }
 
   Widget _buildContent(Map<String, dynamic> overview) {
-    final stats = overview['stats'] as Map<String, dynamic>? ?? {};
+    final stats = Json.mapOrNull(overview['stats']) ?? {};
     final metrics = [
       {'label': 'إجمالي الطلاب', 'value': '${stats['students'] ?? 0}', 'color': AppColors.info},
       {'label': 'إجمالي الطلبات', 'value': '${stats['applications'] ?? 0}', 'color': AppColors.navy},
@@ -370,7 +371,7 @@ class _EmployeeServiceRequestsScreenState extends State<EmployeeServiceRequestsS
                         itemCount: _requests.length,
                         itemBuilder: (_, i) => _RequestCard(
                           key: ValueKey('${_requests[i]['_id']}:${_requests[i]['__v']}'),
-                          req: _requests[i] as Map,
+                          req: Json.rawMap(_requests[i]),
                           statusLabels: _statusLabels,
                           statusColors: _statusColors,
                           statuses: _statuses,
@@ -423,7 +424,7 @@ class _RequestCardState extends State<_RequestCard> {
   @override
   Widget build(BuildContext context) {
     final req = widget.req;
-    final studentName = (req['student'] as Map?)?['name'] ?? 'طالب';
+    final studentName = (Json.rawMapOrNull(req['student']))?['name'] ?? 'طالب';
     final color = widget.statusColors[_status] ?? AppColors.textSecondary;
     final label = widget.statusLabels[_status] ?? _status;
     return AppCard(
@@ -440,7 +441,7 @@ class _RequestCardState extends State<_RequestCard> {
             decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
             child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
           ),
-          IconButton(
+          IconButton(tooltip: 'تعديل', 
             icon: Icon(_expanded ? Icons.expand_less : Icons.edit_outlined, size: 20, color: AppColors.navy),
             onPressed: () => setState(() => _expanded = !_expanded),
           ),

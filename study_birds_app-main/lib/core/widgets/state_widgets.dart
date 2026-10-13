@@ -1,3 +1,4 @@
+import '../../l10n/l10n.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
@@ -175,7 +176,7 @@ class _ErrorStateState extends State<ErrorState> {
   Widget build(BuildContext context) {
     final offline = _offline;
     final text = offline
-        ? 'يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.'
+        ? context.l10n.offlineMessage
         : AppError.safeText(widget.message);
     return Center(child: SingleChildScrollView(padding: const EdgeInsets.all(24),
       child: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 420),
@@ -193,12 +194,12 @@ class _ErrorStateState extends State<ErrorState> {
                 child: Icon(offline ? Icons.wifi_off_rounded : Icons.cloud_off_rounded, size: 34, color: AppColors.orange)),
             ),
             const SizedBox(height: 20),
-            Text(offline ? 'لا يوجد اتصال بالإنترنت' : 'نحتاج لحظة لإكمال طلبك', style: AppTextStyles.cardTitle, textAlign: TextAlign.center),
+            Text(offline ? context.l10n.offlineTitle : context.l10n.errorGenericTitle, style: AppTextStyles.cardTitle, textAlign: TextAlign.center),
             const SizedBox(height: 10),
             Text(text, style: AppTextStyles.caption.copyWith(fontSize: 14, height: 1.8), textAlign: TextAlign.center),
             if (widget.onRetry != null) ...[
               const SizedBox(height: 22),
-              PrimaryButton(label: 'إعادة المحاولة', onPressed: _checking ? null : _retry, expand: false, icon: Icons.refresh_rounded),
+              PrimaryButton(label: context.l10n.tryAgain, onPressed: _checking ? null : _retry, expand: false, icon: Icons.refresh_rounded),
             ],
           ]),
         ),

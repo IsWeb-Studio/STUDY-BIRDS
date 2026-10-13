@@ -250,7 +250,7 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
           Positioned(
             top: MediaQuery.paddingOf(context).top + 4,
             left: 4,
-            child: IconButton(
+            child: IconButton(tooltip: 'رجوع', 
               icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
               onPressed: () => Navigator.of(context).pop(),
             ),

@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -211,7 +212,7 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
   Widget build(BuildContext context) {
     final s = _student;
     final meta = agentStudentStatusMeta(s['applicationStatus'] as String?);
-    final documents = s['documents'] as List<dynamic>? ?? [];
+    final documents = Json.listOrNull(s['documents']) ?? [];
 
     return AppScaffold(
       title: s['name'] as String? ?? 'طالب',
@@ -339,7 +340,7 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
             AppCard(
               child: Column(
                 children: List.generate(documents.length, (i) {
-                  final doc = documents[i] as Map<String, dynamic>;
+                  final doc = Json.map(documents[i]);
                   return Column(
                     children: [
                       if (i > 0) const Divider(height: 1),
@@ -679,7 +680,7 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
   }
 
   Future<void> _requestPayout() async {
-    final summary = _wallet?['summary'] as Map<String, dynamic>? ?? {};
+    final summary = Json.mapOrNull(_wallet?['summary']) ?? {};
     final available = (summary['availableBalance'] as num?) ?? 0;
     if (available <= 0) {
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('لا يوجد رصيد متاح للسحب حاليًا')));
@@ -713,8 +714,8 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
   }
 
   Widget _buildContent(BuildContext context, Map<String, dynamic> wallet) {
-    final summary = wallet['summary'] as Map<String, dynamic>? ?? {};
-    final entries = wallet['entries'] as List<dynamic>? ?? [];
+    final summary = Json.mapOrNull(wallet['summary']) ?? {};
+    final entries = Json.listOrNull(wallet['entries']) ?? [];
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -744,7 +745,7 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
           const EmptyState(icon: Icons.receipt_long_outlined, title: 'لا يوجد سجل بعد', message: 'ستظهر هنا عمولاتك أول ما تتحقق.')
         else
           ...entries.map((e) {
-            final entry = e as Map<String, dynamic>;
+            final entry = Json.map(e);
             final isCredit = entry['direction'] == 'credit';
             return AppCard(
               child: Row(

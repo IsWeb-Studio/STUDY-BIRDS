@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -52,9 +53,9 @@ class _StudentLifeOffersScreenState extends State<StudentLifeOffersScreen> {
       if (!mounted) return;
       setState(() {
         _upcoming = results[0] is Map
-            ? Map<String, dynamic>.from(results[0] as Map)
+            ? Map<String, dynamic>.from(Json.rawMap(results[0]))
             : null;
-        _past = results[1] is List ? results[1] as List : [];
+        _past = results[1] is List ? Json.list(results[1]) : [];
       });
     } catch (e) {
       if (mounted) {
@@ -308,9 +309,9 @@ class _AlumniNetworkScreenState extends State<AlumniNetworkScreen> {
       if (!mounted) return;
       setState(() {
         _upcoming = results[0] is Map
-            ? Map<String, dynamic>.from(results[0] as Map)
+            ? Map<String, dynamic>.from(Json.rawMap(results[0]))
             : null;
-        _past = results[1] is List ? results[1] as List : [];
+        _past = results[1] is List ? Json.list(results[1]) : [];
       });
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/student_life_alumni_screens.dart:314');
       if (mounted) setState(() => _error = 'تعذر التحميل. أعد المحاولة.');
@@ -581,8 +582,8 @@ class _ScholarshipsScreenState extends State<ScholarshipsScreen>
       ]);
       if (!mounted) return;
       setState(() {
-        _all = results[0] as List? ?? [];
-        _mine = results[1] as List? ?? [];
+        _all = Json.listOrNull(results[0]) ?? [];
+        _mine = Json.listOrNull(results[1]) ?? [];
       });
     } catch (e) {
       if (mounted) setState(() => _error = 'تعذر تحميل المنح. أعد المحاولة.');
@@ -631,7 +632,7 @@ class _ScholarshipsScreenState extends State<ScholarshipsScreen>
                                 items: _all,
                                 appliedIds: _mine
                                     .map((e) =>
-                                        '${(e is Map && e['scholarship'] is Map) ? (e['scholarship'] as Map)['_id'] : ''}')
+                                        '${(e is Map && e['scholarship'] is Map) ? (Json.rawMap(e['scholarship']))['_id'] : ''}')
                                     .toSet(),
                                 onApplied: _load),
                             _MyScholarshipsTab(items: _mine),
@@ -668,7 +669,7 @@ class _AllScholarshipsTab extends StatelessWidget {
       physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       itemCount: items.length,
       itemBuilder: (ctx, i) {
-        final item = items[i] as Map;
+        final item = Json.rawMap(items[i]);
         final id = '${item['_id']}';
         return Padding(
           padding: const EdgeInsets.only(bottom: 12),
@@ -842,8 +843,8 @@ class _MyScholarshipsTab extends StatelessWidget {
       physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       itemCount: items.length,
       itemBuilder: (ctx, i) {
-        final e = items[i] as Map;
-        final s = e['scholarship'] is Map ? e['scholarship'] as Map : null;
+        final e = Json.rawMap(items[i]);
+        final s = e['scholarship'] is Map ? Json.rawMap(e['scholarship']) : null;
         final status = '${e['status'] ?? 'submitted'}';
         return Padding(
           padding: const EdgeInsets.only(bottom: 10),
@@ -968,10 +969,10 @@ class _JobPostsScreenState extends State<JobPostsScreen> {
                         separatorBuilder: (_, __) => const SizedBox(height: 10),
                         itemCount: _posts.length,
                         itemBuilder: (_, i) {
-                          final p = Map<String, dynamic>.from(_posts[i] as Map);
+                          final p = Map<String, dynamic>.from(Json.rawMap(_posts[i]));
                           final type = p['type'] as String? ?? 'internship';
                           final myId = AuthSession.instance.currentUser?.id ?? '';
-                          final postedById = p['postedBy'] is Map ? '${(p['postedBy'] as Map)['_id']}' : '${p['postedBy']}';
+                          final postedById = p['postedBy'] is Map ? '${(Json.rawMap(p['postedBy']))['_id']}' : '${p['postedBy']}';
                           final isOwn = postedById == myId;
                           return AppCard(
                             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

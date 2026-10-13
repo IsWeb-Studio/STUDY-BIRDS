@@ -1,3 +1,4 @@
+import '../utils/json_safe.dart';
 import '../services/error_reporter.dart';
 import '../network/api_client.dart';
 import '../services/auth_session.dart';
@@ -10,8 +11,8 @@ class ConsultationRepository {
   Future<List<Map<String, dynamic>>> _list(String path) async {
     final data =
         await ApiClient.instance.get('/consultations$path', token: _token);
-    return (data as List)
-        .map((row) => Map<String, dynamic>.from(row as Map))
+    return (Json.list(data))
+        .map((row) => Map<String, dynamic>.from(Json.rawMap(row)))
         .toList();
   }
 
@@ -20,7 +21,7 @@ class ConsultationRepository {
   Future<Map<String, dynamic>> book(String slotId) async {
     final result = await ApiClient.instance.post('/consultations/bookings',
         token: _token, body: {'slotId': slotId});
-    final booking = Map<String, dynamic>.from(result as Map);
+    final booking = Map<String, dynamic>.from(Json.rawMap(result));
     await _remind(booking);
     return booking;
   }
@@ -39,7 +40,7 @@ class ConsultationRepository {
         token: _token,
         body: {'version': booking['__v'], 'slotId': slotId});
     await NotificationScheduler.instance.cancel('consultation:${booking['_id']}');
-    final updated = Map<String, dynamic>.from(result as Map);
+    final updated = Map<String, dynamic>.from(Json.rawMap(result));
     await _remind(updated);
     return updated;
   }

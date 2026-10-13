@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -63,7 +64,7 @@ class _AdminSupportTicketsScreenState extends State<AdminSupportTicketsScreen> {
       final updated = await AdminModulesRepository.instance.replySupportTicket(ticket['_id'] as String, message: message.trim(), status: 'answered');
       if (!mounted) return;
       setState(() {
-        _tickets = _tickets.map((t) => (t as Map<String, dynamic>)['_id'] == updated['_id'] ? updated : t).toList();
+        _tickets = _tickets.map((t) => (Json.map(t))['_id'] == updated['_id'] ? updated : t).toList();
       });
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر إرسال الرد')));
@@ -87,8 +88,8 @@ class _AdminSupportTicketsScreenState extends State<AdminSupportTicketsScreen> {
                       padding: const EdgeInsets.all(16),
                       itemCount: _tickets.length,
                       itemBuilder: (context, i) {
-                        final ticket = _tickets[i] as Map<String, dynamic>;
-                        final requester = ticket['student'] as Map<String, dynamic>? ?? ticket['user'] as Map<String, dynamic>?;
+                        final ticket = Json.map(_tickets[i]);
+                        final requester = Json.mapOrNull(ticket['student']) ?? Json.mapOrNull(ticket['user']);
                         final meta = ticketStatusMeta(ticket['status'] as String?);
                         return AppCard(
                           onTap: () => _openReply(ticket),
@@ -195,7 +196,7 @@ class _AdminKnowledgeBaseScreenState extends State<AdminKnowledgeBaseScreen> {
   Future<void> _delete(String id) async {
     try {
       await AdminModulesRepository.instance.deleteKnowledgeBaseItem(id);
-      if (mounted) setState(() => _items.removeWhere((i) => (i as Map<String, dynamic>)['_id'] == id));
+      if (mounted) setState(() => _items.removeWhere((i) => (Json.map(i))['_id'] == id));
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_support_knowledge_screens.dart:198');
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر الحذف')));
     }
@@ -219,7 +220,7 @@ class _AdminKnowledgeBaseScreenState extends State<AdminKnowledgeBaseScreen> {
                       padding: const EdgeInsets.all(16),
                       itemCount: _items.length,
                       itemBuilder: (context, i) {
-                        final item = _items[i] as Map<String, dynamic>;
+                        final item = Json.map(_items[i]);
                         return AppCard(
                           child: Row(
                             children: [

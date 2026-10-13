@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
@@ -621,7 +622,7 @@ class _CommunityThreadScreenState extends State<CommunityThreadScreen> {
       final data = await repo.thread(widget.postId);
       if (!mounted) return;
       setState(() {
-        post = data['post'] as Map<String, dynamic>;
+        post = Json.map(data['post']);
         comments = data['comments'] as List<Map<String, dynamic>>;
       });
     } catch (e) {

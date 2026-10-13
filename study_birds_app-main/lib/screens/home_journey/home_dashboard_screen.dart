@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -476,7 +477,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         overview.stages.where((s) => s.status == 'completed').length;
     final home = overview.home;
     final homeStatus = home?['statusCard'] is Map
-        ? Map<String, dynamic>.from(home!['statusCard'] as Map)
+        ? Map<String, dynamic>.from(Json.rawMap(home!['statusCard']))
         : null;
     final progress = home?['progressPercent'] is num
         ? (home!['progressPercent'] as num).clamp(0, 100) / 100
@@ -484,7 +485,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             ? 0.0
             : completedCount / overview.stages.length;
     final greetingName = home?['greeting'] is Map
-        ? '${(home!['greeting'] as Map)['name'] ?? ''}'.trim()
+        ? '${(Json.rawMap(home!['greeting']))['name'] ?? ''}'.trim()
         : '';
 
     String journeyPathLabel = 'لم تبدأ رحلة تقديم بعد';
@@ -495,9 +496,9 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           .where((e) => e.isNotEmpty);
       if (parts.isNotEmpty) journeyPathLabel = parts.join(' - ');
     } else if (overview.recentApplications.isNotEmpty) {
-      final app = overview.recentApplications.first as Map<String, dynamic>;
-      final program = app['program'] as Map<String, dynamic>?;
-      final university = program?['university'] as Map<String, dynamic>?;
+      final app = Json.map(overview.recentApplications.first);
+      final program = Json.mapOrNull(app['program']);
+      final university = Json.mapOrNull(program?['university']);
       final uniName = university?['name'] as String?;
       final progName = program?['name'] as String?;
       if (uniName != null || progName != null) {
@@ -855,7 +856,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     if (overview.journeys?.isNotEmpty == true) {
       final ordered = <Map<String, dynamic>>[];
       for (final j in overview.journeys!) {
-        final jId = (j as Map)['applicationId']?.toString();
+        final jId = (Json.rawMap(j))['applicationId']?.toString();
         final match = apps.where((a) => a['_id']?.toString() == jId);
         if (match.isNotEmpty) ordered.add(match.first);
       }
@@ -1146,8 +1147,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
 String _labelFromApp(Map<String, dynamic> app) {
-    final program = app['program'] as Map<String, dynamic>?;
-    final university = program?['university'] as Map<String, dynamic>?;
+    final program = Json.mapOrNull(app['program']);
+    final university = Json.mapOrNull(program?['university']);
     final parts = <String>[
       if (university?['name'] is String) university!['name'] as String,
       if (program?['name'] is String) program!['name'] as String,
@@ -1163,7 +1164,7 @@ String _labelFromApp(Map<String, dynamic> app) {
         .toList();
     if (matches.isEmpty) return 0.0;
     final journey = matches.first;
-    final stages = (journey['stages'] as List? ?? []).whereType<Map>().toList();
+    final stages = (Json.listOrNull(journey['stages']) ?? []).whereType<Map>().toList();
     final active = stages.where((s) => s['status'] != 'not-required').toList();
     if (active.isEmpty) return 0.0;
     final done = active.where((s) => s['status'] == 'completed').length;

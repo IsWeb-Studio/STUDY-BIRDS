@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -379,10 +380,10 @@ class _UniversityApplicationReviewScreenState
 
   @override
   Widget build(BuildContext context) {
-    final student = _app['student'] as Map<String, dynamic>?;
-    final program = _app['program'] as Map<String, dynamic>?;
-    final documents = _app['documents'] as List<dynamic>? ?? [];
-    final timeline = _app['statusTimeline'] as List<dynamic>? ?? [];
+    final student = Json.mapOrNull(_app['student']);
+    final program = Json.mapOrNull(_app['program']);
+    final documents = Json.listOrNull(_app['documents']) ?? [];
+    final timeline = Json.listOrNull(_app['statusTimeline']) ?? [];
     final meta = appStatusMeta(_app);
     final name = student?['name'] as String? ?? '—';
     final email = student?['email'] as String? ?? '';
@@ -530,7 +531,7 @@ class _UniversityApplicationReviewScreenState
       child: Column(
         children: populated.asMap().entries.map((e) {
           final idx = e.key;
-          final doc = e.value as Map<String, dynamic>;
+          final doc = Json.map(e.value);
           final docMeta = docStatusMeta(doc);
           final docId = doc['_id'] as String?;
           final docName = docTypeLabel(doc['type'] as String?);
@@ -619,7 +620,7 @@ class _UniversityApplicationReviewScreenState
       child: Column(
         children: items.asMap().entries.map((e) {
           final idx = e.key;
-          final entry = e.value as Map<String, dynamic>;
+          final entry = Json.map(e.value);
           final status = entry['status'] as String? ?? '';
           final statusMeta = kApplicationDetailedStatuses.firstWhere(
               (s) => s['key'] == status,

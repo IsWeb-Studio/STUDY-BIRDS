@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/utils/status_info.dart';
@@ -68,7 +69,7 @@ class SmartHomeDates extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final dates = (home['importantDates'] as List? ?? const [])
+    final dates = (Json.listOrNull(home['importantDates']) ?? const [])
         .map(_m)
         .where((d) => DateTime.tryParse(_s(d['date'])) != null)
         .toList();
@@ -266,7 +267,7 @@ class SmartHomeSections extends StatelessWidget {
         'notifications'));
 
     final activity =
-        (sections['recentActivity'] as List? ?? const []).map(_m).toList();
+        (Json.listOrNull(sections['recentActivity']) ?? const []).map(_m).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

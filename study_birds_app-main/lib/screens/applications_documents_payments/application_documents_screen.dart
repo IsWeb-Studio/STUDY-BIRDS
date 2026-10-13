@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import 'package:flutter/material.dart';
@@ -45,8 +46,8 @@ class _ApplicationDocumentsScreenState
       ]);
       if (!mounted) return;
       setState(() {
-        application = result[0] as Map<String, dynamic>;
-        documents = (result[1] as List).cast<Map<String, dynamic>>();
+        application = Json.map(result[0]);
+        documents = (Json.list(result[1])).cast<Map<String, dynamic>>();
         selection.clear();
       });
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/application_documents_screen.dart:51');
@@ -144,16 +145,16 @@ class _ApplicationDocumentsScreenState
           'under-review',
           'additional-documents-required'
         ].contains(application?['detailedStatus'] ?? application?['status']);
-    final requests = (application?['documentRequests'] as List? ?? [])
+    final requests = (Json.listOrNull(application?['documentRequests']) ?? [])
         .cast<Map<String, dynamic>>()
         .where((item) => ['requested', 'submitted'].contains(item['status']))
         .toList();
     final attached =
-        (application?['documents'] as List? ?? []).cast<Map<String, dynamic>>();
-    final program = application?['program'] as Map<String, dynamic>? ?? {};
+        (Json.listOrNull(application?['documents']) ?? []).cast<Map<String, dynamic>>();
+    final program = Json.mapOrNull(application?['program']) ?? {};
     final types = <String>{
-      ...(application?['requiredDocumentTypes'] as List? ??
-              program['requiredDocumentTypes'] as List? ??
+      ...(Json.listOrNull(application?['requiredDocumentTypes']) ??
+              Json.listOrNull(program['requiredDocumentTypes']) ??
               ['passport', 'biometric-photo', 'latest-qualification'])
           .cast<String>(),
       ...requests.map((item) => item['type'] as String),

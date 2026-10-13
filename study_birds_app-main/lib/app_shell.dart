@@ -1,3 +1,4 @@
+import 'l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import 'core/config/app_theme.dart';
 import 'core/utils/responsive.dart';
@@ -35,13 +36,16 @@ class _StudentAppShellState extends State<StudentAppShell> {
 
   int _index = 0;
 
-  static const _navItems = [
-    _NavItemData(icon: Icons.home_rounded, label: 'الرئيسية'),
-    _NavItemData(icon: Icons.timeline_rounded, label: 'الرحلة'),
-    _NavItemData(icon: Icons.explore_outlined, label: 'استكشاف'),
-    _NavItemData(icon: Icons.miscellaneous_services_outlined, label: 'الخدمات'),
-    _NavItemData(icon: Icons.person_outline_rounded, label: 'حسابي'),
-  ];
+  List<_NavItemData> _items(BuildContext context) => [
+        _NavItemData(icon: Icons.home_rounded, label: context.l10n.tabHome),
+        _NavItemData(icon: Icons.timeline_rounded, label: context.l10n.tabJourney),
+        _NavItemData(icon: Icons.explore_outlined, label: context.l10n.tabExplore),
+        _NavItemData(
+            icon: Icons.miscellaneous_services_outlined,
+            label: context.l10n.tabServices),
+        _NavItemData(
+            icon: Icons.person_outline_rounded, label: context.l10n.tabProfile),
+      ];
 
   @override
   void initState() {
@@ -57,6 +61,7 @@ class _StudentAppShellState extends State<StudentAppShell> {
 
   @override
   Widget build(BuildContext context) {
+    final navItems = _items(context);
     final tabs = [
       const HomeDashboardScreen(embedInShell: true),
       const JourneyTrackerScreen(),
@@ -72,7 +77,7 @@ class _StudentAppShellState extends State<StudentAppShell> {
     final wide = !Responsive.isCompact(context);
 
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: appTextDirection,
       child: Scaffold(
         body: wide
             ? Row(
@@ -93,7 +98,7 @@ class _StudentAppShellState extends State<StudentAppShell> {
                       unselectedLabelTextStyle: const TextStyle(
                           color: AppColors.textSecondary, fontSize: 12),
                       destinations: [
-                        for (final item in _navItems)
+                        for (final item in navItems)
                           NavigationRailDestination(
                               icon: Icon(item.icon), label: Text(item.label)),
                       ],
@@ -108,7 +113,7 @@ class _StudentAppShellState extends State<StudentAppShell> {
             ? null
             : _AnimatedBottomNav(
                 currentIndex: _index,
-                items: _navItems,
+                items: navItems,
                 onTap: (i) => setState(() => _index = i),
               ),
       ),

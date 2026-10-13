@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import 'package:flutter/material.dart';
@@ -376,9 +377,9 @@ class ProgramFinderResultsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final suggestedFields =
-        (result['suggestedFields'] as List<dynamic>? ?? []).cast<String>();
+        (Json.listOrNull(result['suggestedFields']) ?? []).cast<String>();
     final suggestedCountries =
-        (result['suggestedCountries'] as List<dynamic>? ?? []).cast<String>();
+        (Json.listOrNull(result['suggestedCountries']) ?? []).cast<String>();
     final summary = result['recommendationSummary'] as String?;
 
     return AppScaffold(

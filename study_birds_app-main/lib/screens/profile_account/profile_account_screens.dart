@@ -1,3 +1,6 @@
+import '../../core/services/locale_controller.dart';
+import '../../core/widgets/language_tile.dart';
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import '../../core/utils/app_error.dart';
@@ -478,6 +481,7 @@ class SettingsScreen extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (LocaleController.englishEnabled) const LanguageTile(),
           AppCard(
             onTap: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const ChangePasswordScreen())),
@@ -724,7 +728,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       await StudentRepository.instance.removeFavorite(id);
       if (mounted)
         setState(() => _favorites
-            .removeWhere((f) => (f as Map<String, dynamic>)['_id'] == id));
+            .removeWhere((f) => (Json.map(f))['_id'] == id));
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/profile_account_screens.dart:727');
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
@@ -762,15 +766,15 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                         padding: const EdgeInsets.all(16),
                         itemCount: _favorites.length,
                         itemBuilder: (context, i) {
-                          final fav = _favorites[i] as Map<String, dynamic>;
+                          final fav = Json.map(_favorites[i]);
                           final itemType =
                               fav['itemType'] as String? ?? 'university';
                           final isUniversity = itemType == 'university';
                           final isArticle = itemType == 'article';
                           final university =
-                              fav['university'] as Map<String, dynamic>?;
+                              Json.mapOrNull(fav['university']);
                           final program =
-                              fav['program'] as Map<String, dynamic>?;
+                              Json.mapOrNull(fav['program']);
                           final String label;
                           final String? subtitle;
                           final IconData icon;
@@ -784,8 +788,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                             icon = Icons.article_outlined;
                           } else {
                             label = program?['title'] as String? ?? '—';
-                            subtitle = (program?['university']
-                                as Map<String, dynamic>?)?['name'] as String?;
+                            subtitle = (Json.mapOrNull(program?['university']))?['name'] as String?;
                             icon = Icons.menu_book_rounded;
                           }
 
@@ -816,7 +819,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                     ],
                                   ),
                                 ),
-                                IconButton(
+                                IconButton(tooltip: 'المفضلة', 
                                   icon: const Icon(Icons.favorite_rounded,
                                       color: AppColors.orange, size: 20),
                                   onPressed: () =>

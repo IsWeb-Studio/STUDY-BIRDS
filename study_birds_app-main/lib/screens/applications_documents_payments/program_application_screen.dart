@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import 'package:flutter/material.dart';
@@ -41,7 +42,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
   String? error;
   String? get token => AuthSession.instance.token;
   List<String> get requiredTypes =>
-      (program?['requiredDocumentTypes'] as List? ??
+      (Json.listOrNull(program?['requiredDocumentTypes']) ??
               ['passport', 'biometric-photo', 'latest-qualification'])
           .cast<String>();
 
@@ -71,15 +72,15 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
         ApiClient.instance.get('/students/documents', token: token),
       ]);
       if (!mounted) return;
-      program = values[0] as Map<String, dynamic>;
-      final profile = values[1] as Map<String, dynamic>? ?? {};
-      final user = profile['user'] as Map<String, dynamic>? ?? {};
+      program = Json.map(values[0]);
+      final profile = Json.mapOrNull(values[1]) ?? {};
+      final user = Json.mapOrNull(profile['user']) ?? {};
       for (final key in fields.keys) {
         if (fields[key]!.text.isEmpty) {
           fields[key]!.text = '${profile[key] ?? user[key] ?? ''}';
         }
       }
-      updateDocuments(values[2] as List);
+      updateDocuments(Json.list(values[2]));
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/program_application_screen.dart:82');
       if (mounted) error = 'تعذر تحميل بيانات التقديم. حاول مرة أخرى.';
     } finally {
@@ -124,7 +125,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
             await ApiClient.instance.get('/students/documents', token: token);
         if (mounted) {
           setState(() {
-            updateDocuments(data as List);
+            updateDocuments(Json.list(data));
           });
         }
       }
@@ -185,7 +186,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (_) => ApplicationDetailScreen(
-              application: result as Map<String, dynamic>)));
+              application: Json.map(result))));
     } catch (issue) {
       if (mounted) {
         setState(() {

@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
@@ -44,8 +45,8 @@ class _BirdAssistantScreenState extends State<BirdAssistantScreen> {
       ]);
       if (mounted) {
         setState(() {
-          threads = (results[0] as List?) ?? [];
-          suggestedQuestions = ((results[1] as List?) ?? []).map((e) => e.toString()).toList();
+          threads = (Json.listOrNull(results[0])) ?? [];
+          suggestedQuestions = ((Json.listOrNull(results[1])) ?? []).map((e) => e.toString()).toList();
         });
       }
     } catch (e) {
@@ -58,11 +59,11 @@ class _BirdAssistantScreenState extends State<BirdAssistantScreen> {
   Future<void> open(String id) async {
     setState(() => loading = true);
     try {
-      final data = await ApiClient.instance.get('/assistant/threads/$id', token: token) as Map;
+      final data = Json.rawMap(await ApiClient.instance.get('/assistant/threads/$id', token: token));
       if (mounted) {
         setState(() {
           threadId = id;
-          messages = data['messages'] as List;
+          messages = Json.list(data['messages']);
           error = null;
         });
         _scrollToBottom();
@@ -80,13 +81,13 @@ class _BirdAssistantScreenState extends State<BirdAssistantScreen> {
     if (preset != null) input.clear();
     setState(() { busy = true; error = null; });
     try {
-      final data = await ApiClient.instance.post('/assistant/message',
+      final data = Json.rawMap(await ApiClient.instance.post('/assistant/message',
           token: token,
-          body: { 'message': body, if (threadId != null) 'threadId': threadId }) as Map;
+          body: { 'message': body, if (threadId != null) 'threadId': threadId }));
       if (mounted) {
         setState(() {
           threadId = data['threadId'] as String;
-          messages = data['messages'] as List;
+          messages = Json.list(data['messages']);
           input.clear();
         });
         _scrollToBottom();
@@ -204,7 +205,7 @@ class _BirdAssistantScreenState extends State<BirdAssistantScreen> {
                             onSubmitted: (_) => send(),
                             decoration: featureInput('رسالتك للمساعد...'))),
                     const SizedBox(width: 4),
-                    IconButton(
+                    IconButton(tooltip: 'إرسال', 
                         onPressed: busy || loading ? null : () => send(),
                         icon: busy
                             ? const SizedBox(width: 22, height: 22,

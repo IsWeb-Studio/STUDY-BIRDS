@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import '../../core/utils/app_error.dart';
@@ -195,7 +196,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       // Parent info
-      final pi = data['parentInfo'] as Map? ?? {};
+      final pi = Json.rawMapOrNull(data['parentInfo']) ?? {};
       _controllers['parentName']!.text = pi['name']?.toString() ?? '';
       final parentPhoneRaw = pi['phone']?.toString() ?? '';
       final parsedParent = parseFullPhone(parentPhoneRaw);
@@ -217,7 +218,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       // Emergency contact
-      final ec = data['emergencyContact'] as Map? ?? {};
+      final ec = Json.rawMapOrNull(data['emergencyContact']) ?? {};
       _controllers['emergencyName']!.text = ec['name']?.toString() ?? '';
       final emergPhoneRaw = ec['phone']?.toString() ?? '';
       final parsedEmerg = parseFullPhone(emergPhoneRaw);
@@ -807,7 +808,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   enabled: !_saving,
                                   decoration: featureInput(
                                     'بلد الإقامة',
-                                    suffix: IconButton(
+                                    suffix: IconButton(tooltip: 'عرض الخيارات', 
                                       icon: Icon(
                                           Icons.arrow_drop_down_rounded,
                                           size: 24,

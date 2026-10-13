@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
@@ -262,8 +263,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
           token: AuthSession.instance.token);
       if (!mounted) return;
       final now = DateTime.now();
-      final overdue = (data as List<dynamic>).where((r) {
-        final due = DateTime.tryParse('${(r as Map)['dueDate'] ?? ''}')?.toLocal();
+      final overdue = (Json.list(data)).where((r) {
+        final due = DateTime.tryParse('${(Json.rawMap(r))['dueDate'] ?? ''}')?.toLocal();
         return due != null && due.isBefore(now.add(const Duration(hours: 24)));
       }).length;
       setState(() => _overdueReminders = overdue);
@@ -294,7 +295,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
         fields: {},
         token: AuthSession.instance.token!,
       );
-      final url = (data as Map<String, dynamic>)['avatar'] as String;
+      final url = (Json.map(data))['avatar'] as String;
       if (mounted) setState(() => _avatarUrl = url);
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/employee_dashboard_screen.dart:297');
       if (mounted) {
@@ -440,12 +441,12 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
           const SizedBox(height: 10),
           _KpiRow(kpis: _myKpis!),
           if (_isAdmin &&
-              (_myKpis!['teamStats'] as List?)?.isNotEmpty == true) ...[
+              (Json.listOrNull(_myKpis!['teamStats']))?.isNotEmpty == true) ...[
             const SizedBox(height: 16),
             const Text('أداء الفريق — هذا الشهر',
                 style: AppTextStyles.sectionLabel),
             const SizedBox(height: 10),
-            _TeamStatsTable(rows: (_myKpis!['teamStats'] as List).cast()),
+            _TeamStatsTable(rows: (Json.list(_myKpis!['teamStats'])).cast()),
           ],
           const SizedBox(height: 16),
         ],
@@ -468,7 +469,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
           else if (_error != null)
             ErrorState(message: _error!, onRetry: _load)
           else
-            _StatsGrid(stats: _overview?['stats'] as Map<String, dynamic>? ?? {}),
+            _StatsGrid(stats: Json.mapOrNull(_overview?['stats']) ?? {}),
           const SizedBox(height: 16),
           const Text('روابط سريعة', style: AppTextStyles.sectionLabel),
           const SizedBox(height: 10),

@@ -33,6 +33,7 @@ dependencies:
   sentry_flutter: ^8.14.2
   camera: ^0.11.0
   cached_network_image: ^3.4.1
+  package_info_plus: ^9.0.1
 
 dev_dependencies:
   flutter_test:
@@ -49,6 +50,7 @@ flutter_launcher_icons:
   adaptive_icon_foreground: "assets/images/logo_mark.png"
 
 flutter:
+  generate: true
   uses-material-design: true
   fonts:
     - family: Tajawal
@@ -57,6 +59,7 @@ flutter:
         - asset: assets/fonts/Tajawal-Bold.ttf
           weight: 700
   assets:
+    - assets/certs/
     - assets/images/dashboard/
     - assets/images/explore/
     - assets/images/services/

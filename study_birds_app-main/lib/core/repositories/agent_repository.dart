@@ -1,3 +1,4 @@
+import '../utils/json_safe.dart';
 import '../network/api_client.dart';
 import '../services/auth_session.dart';
 
@@ -15,12 +16,12 @@ class AgentRepository {
 
   Future<Map<String, dynamic>> getOverview() async {
     final data = await ApiClient.instance.get('/partners/overview', token: _token);
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<List<dynamic>> getStudents() async {
     final data = await ApiClient.instance.get('/partners/students', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<Map<String, dynamic>> createStudent({
@@ -47,7 +48,7 @@ class AgentRepository {
       if (country != null && country.isNotEmpty) 'country': country,
       if (applicationStage != null) 'applicationStage': applicationStage,
     });
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<Map<String, dynamic>> uploadStudentDocument({
@@ -63,12 +64,12 @@ class AgentRepository {
       fields: {'label': label},
       token: _token,
     );
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<Map<String, dynamic>> getWallet() async {
     final data = await ApiClient.instance.get('/partners/wallet', token: _token);
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<Map<String, dynamic>> requestPayout({required double amount, required String method, required String payoutDetails, String? notes}) async {
@@ -78,17 +79,17 @@ class AgentRepository {
       'payoutDetails': payoutDetails,
       if (notes != null) 'notes': notes,
     });
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<Map<String, dynamic>> getReferralSummary() async {
     final data = await ApiClient.instance.get('/partners/referral', token: _token);
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<List<dynamic>> getNotifications() async {
     final data = await ApiClient.instance.get('/partners/notifications', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<void> markNotificationRead(String notificationId) async {

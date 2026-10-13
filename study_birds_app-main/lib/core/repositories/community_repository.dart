@@ -1,3 +1,4 @@
+import '../utils/json_safe.dart';
 import '../network/api_client.dart';
 import '../services/auth_session.dart';
 
@@ -24,8 +25,8 @@ class CommunityRepository {
     'other': 'سبب آخر',
   };
 
-  List<Map<String, dynamic>> _rows(dynamic data) => (data as List)
-      .map((row) => Map<String, dynamic>.from(row as Map))
+  List<Map<String, dynamic>> _rows(dynamic data) => (Json.list(data))
+      .map((row) => Map<String, dynamic>.from(Json.rawMap(row)))
       .toList();
 
   Future<List<Map<String, dynamic>>> posts(
@@ -50,7 +51,7 @@ class CommunityRepository {
     final data =
         await ApiClient.instance.get('/community/posts/$postId', token: _token);
     return {
-      'post': Map<String, dynamic>.from(data['post'] as Map),
+      'post': Map<String, dynamic>.from(Json.rawMap(data['post'])),
       'comments': _rows(data['comments']),
     };
   }
@@ -97,7 +98,7 @@ class CommunityRepository {
 
   /// {'suspended': bool, 'until': ISO date or null, 'reason': String}
   Future<Map<String, dynamic>> status() async => Map<String, dynamic>.from(
-      await ApiClient.instance.get('/community/status', token: _token) as Map);
+      Json.rawMap(await ApiClient.instance.get('/community/status', token: _token)));
 
   // ---- Moderation (employees with the 'community' section, and admins) ----
 
@@ -110,7 +111,7 @@ class CommunityRepository {
     final data = await ApiClient.instance
         .get('/admin/community-posts/$postId', token: _token);
     return {
-      'post': Map<String, dynamic>.from(data['post'] as Map),
+      'post': Map<String, dynamic>.from(Json.rawMap(data['post'])),
       'comments': _rows(data['comments']),
       'reports': _rows(data['reports']),
       'log': _rows(data['log']),

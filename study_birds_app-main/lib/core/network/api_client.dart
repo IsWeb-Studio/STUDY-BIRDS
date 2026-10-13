@@ -3,6 +3,7 @@ import '../utils/app_error.dart';
 import '../services/connectivity_service.dart';
 import '../services/error_reporter.dart';
 import 'dart:convert';
+import 'pinned_http.dart';
 import 'dart:io' show IOException, Platform;
 import 'dart:math' show Random;
 import 'package:http/http.dart' as http;
@@ -63,7 +64,13 @@ class ApiClient {
   /// test's fake. Production keeps one pooled client.
   static final bool _perCallClient = Platform.environment.containsKey('FLUTTER_TEST');
 
-  http.Client get _http => _fixed ?? (_perCallClient ? http.Client() : (_shared ??= http.Client()));
+  http.Client get _http =>
+      _fixed ?? (_perCallClient ? http.Client() : (_shared ??= createTransport()));
+
+  /// The transport used for API traffic: certificate-pinned in production,
+  /// the zone's fake client under `flutter test`.
+  static http.Client createTransport() =>
+      _perCallClient ? http.Client() : PinnedClient(baseUrl: baseUrl);
 
   /// In-memory GET cache, isolated by session and path.
   /// Cleared on logout. TTL = 3 minutes.
@@ -245,7 +252,7 @@ class ApiClient {
       request.headers['X-Study-Birds-Client'] = 'mobile';
       if (fields != null) request.fields.addAll(fields);
       request.files.add(http.MultipartFile.fromBytes(fileFieldName, fileBytes, filename: fileName, contentType: _mimeTypeFor(fileName)));
-      final client = http.Client();
+      final client = createTransport();
       if (cancellation != null) cancellation._abort = client.close;
       try {
         final streamed = await client.send(request);

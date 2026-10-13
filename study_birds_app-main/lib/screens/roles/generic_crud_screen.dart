@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -233,7 +234,7 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
     if (widget.deleteItem == null) return;
     try {
       await widget.deleteItem!(id);
-      if (mounted) setState(() => _items.removeWhere((i) => (i as Map<String, dynamic>)[widget.idKey] == id));
+      if (mounted) setState(() => _items.removeWhere((i) => (Json.map(i))[widget.idKey] == id));
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر الحذف')));
     }
@@ -257,7 +258,7 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
                       padding: const EdgeInsets.all(16),
                       itemCount: _items.length,
                       itemBuilder: (context, i) {
-                        final item = _items[i] as Map<String, dynamic>;
+                        final item = Json.map(_items[i]);
                         return AppCard(
                           onTap: () => _openForm(existing: item),
                           child: Row(

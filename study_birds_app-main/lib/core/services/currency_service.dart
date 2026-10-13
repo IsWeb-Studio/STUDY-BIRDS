@@ -1,3 +1,4 @@
+import '../utils/json_safe.dart';
 import 'error_reporter.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
@@ -90,9 +91,9 @@ class CurrencyService {
     final uri = Uri.parse('https://api.frankfurter.app/latest?from=$base&to=$others');
     final resp = await http.get(uri).timeout(const Duration(seconds: 8));
     if (resp.statusCode != 200) throw Exception('Failed to fetch rates');
-    final body = jsonDecode(resp.body) as Map;
+    final body = Json.rawMap(jsonDecode(resp.body));
     final rates = Map<String, double>.from(
-        (body['rates'] as Map).map((k, v) => MapEntry(k as String, (v as num).toDouble())));
+        (Json.rawMap(body['rates'])).map((k, v) => MapEntry(k as String, (v as num).toDouble())));
     rates[base] = 1.0;
     if (base == 'USD') _ratesFromUsd = rates;
     return rates;

@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import '../../core/widgets/security_fields.dart';
@@ -97,7 +98,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                   settings = ApiClient.instance.get('/content/site-settings')),
               icon: const Icon(Icons.refresh),
               label: const Text('إعادة تحميل وسائل الدعم'));
-        final data = snapshot.data is Map ? snapshot.data as Map : {};
+        final data = snapshot.data is Map ? Json.rawMap(snapshot.data) : {};
         final email = data['contactEmail']?.toString().trim() ?? '';
         final whatsapp = Uri.tryParse(data['whatsappUrl']?.toString() ?? '');
         final validWhatsapp = whatsapp != null &&

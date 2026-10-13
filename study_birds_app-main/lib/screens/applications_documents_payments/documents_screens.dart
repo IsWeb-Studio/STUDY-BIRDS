@@ -1,4 +1,5 @@
-﻿import '../../core/services/error_reporter.dart';
+﻿import '../../core/utils/json_safe.dart';
+import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:study_birds/core/network/api_client.dart';
 import '../../core/utils/passport_scan.dart';
@@ -323,7 +324,7 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
       if (!mounted) return;
       // Schedule local expiry reminders for documents nearing their deadline.
       for (final d in docs) {
-        final exp = DateTime.tryParse('${(d as Map<String, dynamic>)['expiresAt'] ?? ''}');
+        final exp = DateTime.tryParse('${(Json.map(d))['expiresAt'] ?? ''}');
         final id = d['_id']?.toString();
         final name = d['originalName']?.toString() ?? d['type']?.toString() ?? 'مستند';
         if (exp != null && id != null && exp.isAfter(DateTime.now())) {
@@ -388,7 +389,7 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
     return AppScaffold(
       title: 'مستنداتي',
       actions: [
-        IconButton(
+        IconButton(tooltip: 'رفع مستند', 
           onPressed: _uploading ? null : _pickTypeAndUpload,
           icon: _uploading
               ? const SizedBox(
@@ -458,7 +459,7 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
           );
         }
         final docIndex = hasBanner ? i - 1 : i;
-        final d = _docs[docIndex] as Map<String, dynamic>;
+        final d = Json.map(_docs[docIndex]);
         final meta = docStatusMeta(d);
         final info = StatusInfo.of(d);
         final needsAction = info != null &&
@@ -542,10 +543,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final expiresAt = DateTime.tryParse('${document['expiresAt']}')?.toLocal();
     // PRD 29: reviewer, translation state and version history from the server.
     final reviewer = document['reviewedBy'] is Map
-        ? '${(document['reviewedBy'] as Map)['name'] ?? ''}'
+        ? '${(Json.rawMap(document['reviewedBy']))['name'] ?? ''}'
         : '';
     final translation =
-        document['translation'] is Map ? document['translation'] as Map : null;
+        document['translation'] is Map ? Json.rawMap(document['translation']) : null;
     final translationStatus = translation?['status'] as String?;
     const translationLabels = {
       'required': 'مطلوبة',
@@ -555,7 +556,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
       'not-required': 'غير مطلوبة',
     };
     final versions = (document['versions'] is List)
-        ? (document['versions'] as List)
+        ? (Json.list(document['versions']))
             .whereType<Map>()
             .map((v) => Map<String, dynamic>.from(v))
             .toList()

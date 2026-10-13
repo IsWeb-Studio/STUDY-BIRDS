@@ -1,3 +1,4 @@
+import '../utils/json_safe.dart';
 import '../network/api_client.dart';
 
 /// Public catalog data — Universities, Programs, Countries. No token
@@ -14,12 +15,12 @@ class CatalogRepository {
     if (featured != null) query['featured'] = featured.toString();
     final qs = query.isEmpty ? '' : '?${Uri(queryParameters: query).query}';
     final data = await ApiClient.instance.get('/universities$qs');
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<Map<String, dynamic>> getUniversityById(String id) async {
     final data = await ApiClient.instance.get('/universities/$id');
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<List<dynamic>> getPrograms(
@@ -34,39 +35,39 @@ class CatalogRepository {
     if (university != null) query['university'] = university;
     final qs = query.isEmpty ? '' : '?${Uri(queryParameters: query).query}';
     final data = await ApiClient.instance.get('/programs$qs');
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<Map<String, dynamic>> getProgramById(String id) async {
     final data = await ApiClient.instance.get('/programs/$id');
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<List<dynamic>> getCountries() async {
     final data = await ApiClient.instance.get('/content/countries');
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<List<dynamic>> getServices() async =>
-      await ApiClient.instance.get('/content/our-services') as List<dynamic>;
+      Json.list(await ApiClient.instance.get('/content/our-services'));
 
   Future<List<dynamic>> getFaqs() async {
     final data = await ApiClient.instance.get('/content/faqs');
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<List<dynamic>> getExhibitions() async {
     final data = await ApiClient.instance.get('/content/exhibitions');
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<Map<String, dynamic>> getExhibitionBySlug(String slug) async {
     final data = await ApiClient.instance.get('/content/exhibitions/$slug');
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<List<dynamic>> getArticles() async {
     final data = await ApiClient.instance.get('/content/blog');
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 }

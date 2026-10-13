@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -120,7 +121,7 @@ class _GenericApprovalListBodyState extends State<_GenericApprovalListBody> {
       final updated = await widget.onDecide(id, status);
       if (!mounted) return;
       setState(() {
-        _items = _items.map((item) => widget.idOf(item as Map<String, dynamic>) == id ? updated : item).toList();
+        _items = _items.map((item) => widget.idOf(Json.map(item)) == id ? updated : item).toList();
       });
     } catch (e) {
       if (mounted) {
@@ -153,7 +154,7 @@ class _GenericApprovalListBodyState extends State<_GenericApprovalListBody> {
                       padding: const EdgeInsets.all(16),
                       itemCount: _items.length,
                       itemBuilder: (context, i) {
-                        final item = _items[i] as Map<String, dynamic>;
+                        final item = Json.map(_items[i]);
                         final id = widget.idOf(item);
                         final status = widget.statusOf(item);
                         final meta = _metaFor(status);

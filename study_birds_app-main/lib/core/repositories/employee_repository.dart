@@ -1,3 +1,4 @@
+import '../utils/json_safe.dart';
 import '../network/api_client.dart';
 import '../services/auth_session.dart';
 
@@ -19,31 +20,31 @@ class EmployeeRepository {
 
   Future<Map<String, dynamic>> getOverview() async {
     final data = await ApiClient.instance.get('/admin/overview', token: _token);
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<Map<String, dynamic>> getMyKpis() async {
     final data = await ApiClient.instance.get('/admin/my-kpis', token: _token);
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   /// All students on the platform (not scoped to this employee — the
   /// backend has no per-employee assignment concept).
   Future<List<dynamic>> getAllStudents() async {
     final data = await ApiClient.instance.get('/admin/students', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<List<dynamic>> getAllApplications() async {
     final data = await ApiClient.instance.get('/admin/applications', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   // ---- Parent links (requires the 'parent-links' section) -----------------
 
   Future<List<dynamic>> getParentLinks() async {
     final data = await ApiClient.instance.get('/admin/parent-links', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<Map<String, dynamic>> updateParentLinkStatus(String id, {required String status, String? adminNote}) async {
@@ -51,14 +52,14 @@ class EmployeeRepository {
       'status': status,
       if (adminNote != null) 'adminNote': adminNote,
     });
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   // ---- University accounts (requires the 'university-accounts' section) --
 
   Future<List<dynamic>> getUniversityAccounts() async {
     final data = await ApiClient.instance.get('/admin/university-accounts', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<Map<String, dynamic>> createUniversityAccount({
@@ -73,7 +74,7 @@ class EmployeeRepository {
       'password': password,
       'universityId': universityId,
     });
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   // ---- General users & access (role="admin" only — matches the backend's
@@ -81,7 +82,7 @@ class EmployeeRepository {
 
   Future<List<dynamic>> getAllUsers() async {
     final data = await ApiClient.instance.get('/admin/users', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   /// Generic account update — role change, activation, linking a university,
@@ -100,6 +101,6 @@ class EmployeeRepository {
       if (linkedUniversity != null) 'linkedUniversity': linkedUniversity,
       if (permissions != null) 'permissions': permissions,
     });
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 }

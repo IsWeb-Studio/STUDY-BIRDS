@@ -1,3 +1,4 @@
+import '../utils/json_safe.dart';
 import 'error_reporter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../network/api_client.dart';
@@ -36,10 +37,10 @@ class FavoritesService {
     for (final item in list.whereType<Map<String, dynamic>>()) {
       final type = item['itemType'] as String?;
       if (type == 'university') {
-        final id = (item['university'] as Map<String, dynamic>?)?['_id']?.toString();
+        final id = (Json.mapOrNull(item['university']))?['_id']?.toString();
         if (id != null && id.isNotEmpty) unis.add(id);
       } else if (type == 'program') {
-        final id = (item['program'] as Map<String, dynamic>?)?['_id']?.toString();
+        final id = (Json.mapOrNull(item['program']))?['_id']?.toString();
         if (id != null && id.isNotEmpty) progs.add(id);
       }
     }
@@ -71,11 +72,11 @@ class FavoritesService {
         final body = university
             ? {'itemType': 'university', 'universityId': id}
             : {'itemType': 'program', 'programId': id};
-        final res = await ApiClient.instance.post(
+        final res = Json.map(await ApiClient.instance.post(
           '/students/favorites/toggle',
           token: token,
           body: body,
-        ) as Map<String, dynamic>;
+        ));
         // { removed: true } means item was deleted → not a favorite
         // anything else means it was added → is a favorite
         return res['removed'] != true;
@@ -94,14 +95,14 @@ class FavoritesService {
     if (token != null) {
       try {
         final res = await ApiClient.instance.get('/students/favorites', token: token);
-        final list = res as List<dynamic>;
+        final list = Json.list(res);
         await _cacheFromServerList(list);
         final type = university ? 'university' : 'program';
         return list
             .whereType<Map<String, dynamic>>()
             .where((item) => item['itemType'] == type)
             .map((item) {
-              final ref = item[type] as Map<String, dynamic>?;
+              final ref = Json.mapOrNull(item[type]);
               return ref?['_id']?.toString() ?? '';
             })
             .where((id) => id.isNotEmpty)

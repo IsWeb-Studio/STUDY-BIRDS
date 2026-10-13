@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 
@@ -14,7 +15,7 @@ class ApplicationCardFacts extends StatelessWidget {
 
   static Map<String, dynamic>? of(Map<String, dynamic> application) =>
       application['card'] is Map
-          ? Map<String, dynamic>.from(application['card'] as Map)
+          ? Map<String, dynamic>.from(Json.rawMap(application['card']))
           : null;
 
   static Color _tone(dynamic tone) => switch ('$tone') {
@@ -40,7 +41,7 @@ class ApplicationCardFacts extends StatelessWidget {
     final local = MaterialLocalizations.of(context);
     final lastUpdate = DateTime.tryParse('${card['lastUpdate']}')?.toLocal();
     final visa = card['visaStatus'];
-    final next = card['nextAction'] is Map ? card['nextAction'] as Map : null;
+    final next = card['nextAction'] is Map ? Json.rawMap(card['nextAction']) : null;
     final rows = <(String, String, Color?)>[
       if (!compact && '${card['degreeLevel'] ?? ''}'.isNotEmpty)
         ('الدرجة', '${card['degreeLevel']}', null),

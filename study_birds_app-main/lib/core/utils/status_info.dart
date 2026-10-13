@@ -1,3 +1,4 @@
+import 'json_safe.dart';
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
 
@@ -18,7 +19,7 @@ class StatusInfo {
   static StatusInfo? of(Map<String, dynamic>? item) {
     final raw = item?['statusInfo'];
     if (raw is! Map || raw['ar'] is! Map) return null;
-    final ar = raw['ar'] as Map;
+    final ar = Json.rawMap(raw['ar']);
     final label = '${ar['label'] ?? ''}';
     if (label.isEmpty) return null;
     return StatusInfo(

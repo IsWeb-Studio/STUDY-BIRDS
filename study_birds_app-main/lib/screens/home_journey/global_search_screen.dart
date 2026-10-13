@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -95,31 +96,31 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     final matchedUniversities = showResults
         ? _universities
             .where(
-                (u) => _matches((u as Map<String, dynamic>)['name'] as String?))
+                (u) => _matches((Json.map(u))['name'] as String?))
             .toList()
         : [];
     final matchedPrograms = showResults
         ? _programs
             .where((p) =>
-                _matches((p as Map<String, dynamic>)['title'] as String?))
+                _matches((Json.map(p))['title'] as String?))
             .toList()
         : [];
     final matchedCountries = showResults
         ? _countries
             .where(
-                (c) => _matches((c as Map<String, dynamic>)['name'] as String?))
+                (c) => _matches((Json.map(c))['name'] as String?))
             .toList()
         : [];
     final matchedFaqs = showResults
         ? _faqs
             .where((f) =>
-                _matches((f as Map<String, dynamic>)['question'] as String?))
+                _matches((Json.map(f))['question'] as String?))
             .toList()
         : [];
     final matchedArticles = showResults
         ? _articles
             .where((a) {
-              final m = a as Map<String, dynamic>;
+              final m = Json.map(a);
               return _matches(m['title'] as String?) ||
                   _matches(m['summary'] as String?);
             })
@@ -183,7 +184,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                     _section(
                         'الجامعات',
                         matchedUniversities.map((u) {
-                          final uni = u as Map<String, dynamic>;
+                          final uni = Json.map(u);
                           return _ResultTile(
                             icon: Icons.account_balance_rounded,
                             title: uni['name'] as String? ?? '—',
@@ -199,7 +200,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                     _section(
                         'البرامج',
                         matchedPrograms.map((p) {
-                          final program = p as Map<String, dynamic>;
+                          final program = Json.map(p);
                           return _ResultTile(
                             icon: Icons.menu_book_rounded,
                             title: program['title'] as String? ?? '—',
@@ -215,7 +216,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                     _section(
                         'الدول',
                         matchedCountries.map((c) {
-                          final country = c as Map<String, dynamic>;
+                          final country = Json.map(c);
                           return _ResultTile(
                             icon: Icons.public_rounded,
                             title: country['name'] as String? ?? '—',
@@ -231,7 +232,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                     _section(
                         'الأسئلة الشائعة',
                         matchedFaqs.map((f) {
-                          final faq = f as Map<String, dynamic>;
+                          final faq = Json.map(f);
                           return _ResultTile(
                             icon: Icons.help_outline_rounded,
                             title: faq['question'] as String? ?? '—',
@@ -245,7 +246,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                     _section(
                         'المقالات',
                         matchedArticles.map((a) {
-                          final article = Map<String, dynamic>.from(a as Map);
+                          final article = Map<String, dynamic>.from(Json.rawMap(a));
                           return _ResultTile(
                             icon: Icons.article_outlined,
                             title: article['title'] as String? ?? '—',

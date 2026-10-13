@@ -1,0 +1,29 @@
+{
+  "@@locale": "ar",
+
+  "appName": "Study Birds",
+
+  "tabHome": "الرئيسية",
+  "tabJourney": "الرحلة",
+  "tabExplore": "استكشاف",
+  "tabServices": "الخدمات",
+  "tabProfile": "حسابي",
+
+  "offlineTitle": "لا يوجد اتصال بالإنترنت",
+  "offlineMessage": "يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
+  "errorGenericTitle": "نحتاج لحظة لإكمال طلبك",
+  "tryAgain": "إعادة المحاولة",
+
+  "bannerOffline": "لا يوجد اتصال بالإنترنت — تُعرض آخر بيانات محفوظة",
+  "bannerUnreachable": "متصل بالشبكة لكن تعذّر الوصول إلى الخدمة — نحاول إعادة الاتصال",
+  "bannerUnstable": "الاتصال غير مستقر — نحاول إعادة الاتصال",
+  "bannerRestored": "عاد الاتصال بالإنترنت",
+
+  "updateTitle": "تحديث مطلوب",
+  "updateNow": "تحديث الآن",
+  "updateDefaultMessage": "يتوفر إصدار أحدث من التطبيق ولم يعد هذا الإصدار مدعومًا. حدّث التطبيق للمتابعة.",
+
+  "language": "اللغة",
+  "languageArabic": "العربية",
+  "languageEnglish": "English"
+}

@@ -1,3 +1,4 @@
+import '../../l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
 import '../utils/responsive.dart';
@@ -12,7 +13,7 @@ class AppScaffold extends StatelessWidget {
   final Widget? bottomBar;
   final bool showBackButton;
   final bool hideAiButton;
-  final TextDirection textDirection;
+  final TextDirection? textDirection;
 
   const AppScaffold({
     super.key,
@@ -23,13 +24,13 @@ class AppScaffold extends StatelessWidget {
     this.bottomBar,
     this.showBackButton = true,
     this.hideAiButton = false,
-    this.textDirection = TextDirection.rtl,
+    this.textDirection,
   });
 
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: textDirection,
+      textDirection: textDirection ?? appTextDirection,
       child: Scaffold(
         backgroundColor: AppColors.background,
         resizeToAvoidBottomInset: true,

@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'arrival_services_screen.dart';
@@ -92,16 +93,16 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
         CatalogRepository.instance.getCountries(),
       ]);
       final overview = results[0] as DashboardOverview;
-      final docs = results[1] as List<dynamic>;
-      final profile = results[2] as Map<String, dynamic>?;
-      final countries = results[3] as List<dynamic>;
+      final docs = Json.list(results[1]);
+      final profile = Json.mapOrNull(results[2]);
+      final countries = Json.list(results[3]);
 
-      final targetCountries = (profile?['targetCountries'] as List?)?.cast<String>() ?? [];
+      final targetCountries = (Json.listOrNull(profile?['targetCountries']))?.cast<String>() ?? [];
       Map<String, dynamic>? matchedCountry;
       if (targetCountries.isNotEmpty) {
         final target = targetCountries.first.toLowerCase();
         for (final c in countries) {
-          final map = c as Map<String, dynamic>;
+          final map = Json.map(c);
           final name = (map['name'] as String? ?? '').toLowerCase();
           final slug = (map['slug'] as String? ?? '').toLowerCase();
           if (name == target || slug == target || name.contains(target) || target.contains(name)) {
@@ -113,7 +114,7 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
 
       List<({String docKey, String label})> reqs = kVisaRequirements;
       if (matchedCountry != null) {
-        final raw = matchedCountry['visaRequirements'] as List?;
+        final raw = Json.listOrNull(matchedCountry['visaRequirements']);
         if (raw != null && raw.isNotEmpty) {
           reqs = raw
               .cast<Map>()
@@ -130,7 +131,7 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
       setState(() {
         _currentStage = overview.currentStage;
         _uploadedDocKeys =
-            docs.map((d) => (d as Map)['type']?.toString() ?? '').toSet();
+            docs.map((d) => (Json.rawMap(d))['type']?.toString() ?? '').toSet();
         _requirements = reqs;
         _countryData = matchedCountry;
         _loading = false;
@@ -169,8 +170,8 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
     final countryName = _countryData?['name'] as String?;
     final processingDays = (_countryData?['processingDays'] as num?)?.toInt() ?? 0;
     final visaFeeUsd = (_countryData?['visaFeeUsd'] as num?)?.toInt() ?? 0;
-    final langReqs = (_countryData?['languageRequirements'] as List?)?.cast<String>() ?? [];
-    final notesList = (_countryData?['visaNotesList'] as List?)?.cast<String>() ?? [];
+    final langReqs = (Json.listOrNull(_countryData?['languageRequirements']))?.cast<String>() ?? [];
+    final notesList = (Json.listOrNull(_countryData?['visaNotesList']))?.cast<String>() ?? [];
 
     return AppScaffold(
       title: 'مركز التأشيرة',
@@ -484,7 +485,7 @@ class _TravelCenterScreenState extends State<TravelCenterScreen> {
       final list = await StudentRepository.instance.getArrivalServices();
       if (!mounted) return;
       setState(() {
-        _data = list.isNotEmpty ? list.first as Map<String, dynamic>? : null;
+        _data = list.isNotEmpty ? Json.mapOrNull(list.first) : null;
         _loading = false;
       });
     } on ApiException catch (e) {
@@ -612,7 +613,7 @@ class _AirportPickupScreenState extends State<AirportPickupScreen> {
       final list = await StudentRepository.instance.getArrivalServices();
       if (!mounted) return;
       setState(() {
-        _data = list.isNotEmpty ? list.first as Map<String, dynamic>? : null;
+        _data = list.isNotEmpty ? Json.mapOrNull(list.first) : null;
         _loading = false;
       });
     } on ApiException catch (e) {
@@ -644,7 +645,7 @@ class _AirportPickupScreenState extends State<AirportPickupScreen> {
       );
     }
 
-    final services = (_data?['services'] as Map?)?.cast<String, dynamic>() ?? {};
+    final services = (Json.rawMapOrNull(_data?['services']))?.cast<String, dynamic>() ?? {};
     final pickupRequested = services['airportPickup'] == true;
     final status = _data?['status']?.toString() ?? '';
 
@@ -1009,7 +1010,7 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
     final status = _data?['status'] as String? ?? 'not-started';
     final statusLabel = _statusLabels[status] ?? status;
     final statusColor = _statusColors[status] ?? AppColors.textSecondary;
-    final docs = (_data?['requiredDocuments'] as List?)?.cast<String>() ?? [];
+    final docs = (Json.listOrNull(_data?['requiredDocuments']))?.cast<String>() ?? [];
 
     return AppScaffold(
       title: 'معادلة الشهادة',

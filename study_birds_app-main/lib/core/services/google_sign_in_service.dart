@@ -1,3 +1,4 @@
+import '../utils/json_safe.dart';
 import 'error_reporter.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:google_sign_in/google_sign_in.dart';
@@ -81,7 +82,7 @@ class GoogleSignInService {
       if (e.statusCode == 428) _pendingIdToken = idToken;
       rethrow;
     }
-    final user = AuthUser.fromGoogleJson(data['user'] as Map<String, dynamic>);
+    final user = AuthUser.fromGoogleJson(Json.map(data['user']));
     final token = data['token'] as String;
     await AuthSession.instance.login(user,
         requireGooglePasswordSetup: !user.hasPassword,

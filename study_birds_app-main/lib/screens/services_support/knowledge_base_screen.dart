@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -84,7 +85,7 @@ class _KnowledgeBaseScreenState extends State<KnowledgeBaseScreen> {
                       padding: const EdgeInsets.all(16),
                       itemCount: _items.length,
                       itemBuilder: (context, i) {
-                        final item = _items[i] as Map<String, dynamic>;
+                        final item = Json.map(_items[i]);
                         return AppCard(
                           onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => KnowledgeBaseArticleScreen(item: item))),
                           child: Row(
@@ -196,7 +197,7 @@ class _ExhibitionsScreenState extends State<ExhibitionsScreen> {
                           itemCount: _items.length,
                           separatorBuilder: (_, __) => const SizedBox(height: 10),
                           itemBuilder: (context, i) {
-                            final item = Map<String, dynamic>.from(_items[i] as Map);
+                            final item = Map<String, dynamic>.from(Json.rawMap(_items[i]));
                             return _ExhibitionCard(
                               item: item,
                               onTap: () => Navigator.of(context).push(

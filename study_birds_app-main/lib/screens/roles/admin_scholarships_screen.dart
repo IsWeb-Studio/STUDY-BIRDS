@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -23,14 +24,12 @@ class AdminScholarshipsScreen extends StatelessWidget {
           CrudField('deadline', 'آخر موعد (YYYY-MM-DD)'),
           CrudField('active', 'منشورة', type: CrudFieldType.boolean)
         ],
-        fetchItems: () async => await ApiClient.instance
-            .get('/scholarships/manage', token: token) as List,
-        createItem: (body) async => await ApiClient.instance
-                .post('/scholarships', token: token, body: body)
-            as Map<String, dynamic>,
-        updateItem: (id, body) async => await ApiClient.instance
-                .put('/scholarships/$id', token: token, body: body)
-            as Map<String, dynamic>,
+        fetchItems: () async => Json.list(await ApiClient.instance
+            .get('/scholarships/manage', token: token)),
+        createItem: (body) async => Json.map(await ApiClient.instance
+                .post('/scholarships', token: token, body: body)),
+        updateItem: (id, body) async => Json.map(await ApiClient.instance
+                .put('/scholarships/$id', token: token, body: body)),
         itemTitle: (row) => '${row['title']}',
         itemSubtitle: (row) => row['active'] == true ? 'منشورة' : 'مسودة',
       );
@@ -80,7 +79,7 @@ class _ScholarshipApplicationsScreenState
                   message: 'تعذر تحميل الطلبات',
                   onRetry: () => setState(() => future = fetch()));
             if (!snapshot.hasData) return const LoadingState();
-            final rows = snapshot.data as List;
+            final rows = Json.list(snapshot.data);
             if (rows.isEmpty)
               return const EmptyState(
                   icon: Icons.school_outlined,
@@ -115,7 +114,7 @@ class _ScholarshipApplicationsScreenState
                                         ? null
                                         : (value) {
                                             if (value != null)
-                                              update(row as Map, value);
+                                              update(Json.rawMap(row), value);
                                           })
                               ])))
                       .toList()),

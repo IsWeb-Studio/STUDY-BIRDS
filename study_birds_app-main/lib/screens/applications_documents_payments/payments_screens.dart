@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -116,10 +117,10 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
   }
 
   Widget _buildContent(BuildContext context, Map<String, dynamic> financials) {
-    final summary = financials['summary'] as Map<String, dynamic>? ?? {};
-    final groups = financials['applicationGroups'] as List<dynamic>? ?? [];
+    final summary = Json.mapOrNull(financials['summary']) ?? {};
+    final groups = Json.listOrNull(financials['applicationGroups']) ?? [];
     // Fallback for old API: flat invoice list
-    final flatInvoices = financials['invoices'] as List<dynamic>? ?? [];
+    final flatInvoices = Json.listOrNull(financials['invoices']) ?? [];
     final totalProgramFees = summary['totalProgramFees'] as num?;
     final paidAmount = summary['paidAmount'] as num? ?? 0;
     final remainingFees = summary['remainingFees'] as num?;
@@ -164,7 +165,7 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
 
         if (hasGroups) ...[
           // ── قسم لكل برنامج/جامعة ──
-          ...groups.map((g) => _buildApplicationGroup(context, g as Map<String, dynamic>)),
+          ...groups.map((g) => _buildApplicationGroup(context, Json.map(g))),
         ] else if (flatInvoices.isEmpty)
           const EmptyState(
               icon: Icons.receipt_long_outlined,
@@ -173,7 +174,7 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
         else ...[
           const Text('الفواتير', style: AppTextStyles.sectionLabel),
           const SizedBox(height: 10),
-          ...flatInvoices.map((inv) => _invoiceCard(context, inv as Map<String, dynamic>)),
+          ...flatInvoices.map((inv) => _invoiceCard(context, Json.map(inv))),
         ],
       ],
     );
@@ -186,7 +187,7 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
     final pending = group['pendingAmount'] as num? ?? 0;
     final remaining = group['remainingAmount'] as num?;
     final status = group['paymentStatus'] as String? ?? 'not-issued';
-    final invoices = group['invoices'] as List<dynamic>? ?? [];
+    final invoices = Json.listOrNull(group['invoices']) ?? [];
 
     final statusColor = _paymentGroupColor(status);
     final statusLabel = _paymentGroupLabel(status);
@@ -246,7 +247,7 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
         else
           ...invoices.map((inv) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
-                child: _invoiceCard(context, inv as Map<String, dynamic>),
+                child: _invoiceCard(context, Json.map(inv)),
               )),
         const SizedBox(height: 8),
       ],
@@ -396,7 +397,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> with WidgetsB
   Future<void> _refreshInvoice() async {
     try {
       final data = await StudentRepository.instance.getFinancials(forceRefresh: true);
-      final matches = (data['invoices'] as List? ?? []).whereType<Map>().where((row) => row['_id'] == _invoice['_id']);
+      final matches = (Json.listOrNull(data['invoices']) ?? []).whereType<Map>().where((row) => row['_id'] == _invoice['_id']);
       if (mounted && matches.isNotEmpty) {
         setState(() => _invoice = Map<String, dynamic>.from(matches.first));
         if (_invoice['status'] == 'paid') await NotificationScheduler.instance.cancel('payment:${_invoice['_id']}');
@@ -581,7 +582,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
       final data = await StudentRepository.instance.getFinancials();
       if (!mounted) return;
       setState(() {
-        _proofs = data['paymentProofs'] as List<dynamic>? ?? [];
+        _proofs = Json.listOrNull(data['paymentProofs']) ?? [];
         _loading = false;
       });
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:586');
@@ -617,10 +618,10 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                       padding: const EdgeInsets.all(16),
                       itemCount: _proofs.length,
                       itemBuilder: (context, i) {
-                        final p = _proofs[i] as Map<String, dynamic>;
+                        final p = Json.map(_proofs[i]);
                         final meta =
                             paymentProofStatusMeta(p['status'] as String?);
-                        final invoice = p['invoice'] as Map<String, dynamic>?;
+                        final invoice = Json.mapOrNull(p['invoice']);
                         return AppCard(
                           child: Row(
                             children: [

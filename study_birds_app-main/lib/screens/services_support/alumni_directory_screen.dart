@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -39,11 +40,11 @@ class _AlumniDirectoryScreenState extends State<AlumniDirectoryScreen> {
     Expanded(child: FutureBuilder<dynamic>(future: _profiles, builder: (context, snapshot) {
       if (snapshot.hasError) return ErrorState(message: 'تعذر تحميل الخريجين', onRetry: () => setState(_reload));
       if (!snapshot.hasData) return const LoadingState();
-      final rows = snapshot.data as List;
+      final rows = Json.list(snapshot.data);
       if (rows.isEmpty) return const Center(child: Text('لا توجد ملفات منشورة تطابق البحث'));
       return ListView(padding: const EdgeInsets.all(16), children: [for (final row in rows)
         AppCard(margin: const EdgeInsets.only(bottom: 12), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('${(row['user'] as Map?)?['name'] ?? 'خريج'}', style: AppTextStyles.cardTitle),
+          Text('${(Json.rawMapOrNull(row['user']))?['name'] ?? 'خريج'}', style: AppTextStyles.cardTitle),
           for (final key in ['university', 'fieldOfStudy', 'country', 'graduationYear', 'currentJob', 'bio'])
             if (row[key] != null && '${row[key]}'.isNotEmpty) Text('${row[key]}'),
           if (row['openToMentoring'] == true) const Text('متاح لإرشاد الطلاب'),

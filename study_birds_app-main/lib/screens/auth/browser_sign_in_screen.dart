@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import 'dart:convert';
 import 'dart:math';
 import 'package:crypto/crypto.dart';
@@ -30,8 +31,8 @@ class _BrowserSignInScreenState extends State<BrowserSignInScreen> {
       final challenge =
           base64UrlEncode(sha256.convert(utf8.encode(secret)).bytes)
               .replaceAll('=', '');
-      final data = await ApiClient.instance.post('/identity/mobile/start',
-          body: {'challenge': challenge}) as Map;
+      final data = Json.rawMap(await ApiClient.instance.post('/identity/mobile/start',
+          body: {'challenge': challenge}));
       if (!mounted) return;
       verifier = secret;
       id = data['challengeId'] as String;
@@ -53,15 +54,15 @@ class _BrowserSignInScreenState extends State<BrowserSignInScreen> {
       error = null;
     });
     try {
-      final data = await ApiClient.instance.post('/identity/mobile/exchange',
-          body: {'challengeId': id, 'verifier': verifier}) as Map;
+      final data = Json.rawMap(await ApiClient.instance.post('/identity/mobile/exchange',
+          body: {'challengeId': id, 'verifier': verifier}));
       if (data['pending'] == true) {
         if (mounted)
           setState(() => error = 'أكمل الدخول والموافقة في المتصفح أولًا.');
         return;
       }
       await AuthSession.instance.login(
-          AuthUser.fromJson(Map<String, dynamic>.from(data['user'] as Map)),
+          AuthUser.fromJson(Map<String, dynamic>.from(Json.rawMap(data['user']))),
           authToken: data['token'] as String,
           refreshToken: data['refreshToken'] as String?);
       verifier = null;

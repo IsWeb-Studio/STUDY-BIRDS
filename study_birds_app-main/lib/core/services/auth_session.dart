@@ -203,7 +203,7 @@ class AuthService {
       final cached = await const FlutterSecureStorage().read(key: 'cached_user');
       if (cached != null) {
         try {
-          final saved = jsonDecode(cached)['user'] as Map<String, dynamic>;
+          final saved = Json.map(jsonDecode(cached)['user']);
           final id = json['_id'] ?? json['id'];
           if (id != null && id == (saved['_id'] ?? saved['id'])) {
             json = {
@@ -492,10 +492,10 @@ class AuthSession extends ChangeNotifier {
         final cachedRaw = await storage.read(key: 'cached_user');
         if (cachedRaw != null) {
           try {
-            final cached = jsonDecode(cachedRaw) as Map;
+            final cached = Json.rawMap(jsonDecode(cachedRaw));
             final savedAt = DateTime.tryParse('${cached['savedAt']}');
             final age = savedAt == null ? null : DateTime.now().difference(savedAt);
-            final user = AuthUser.fromJson(Map<String, dynamic>.from(cached['user'] as Map));
+            final user = AuthUser.fromJson(Map<String, dynamic>.from(Json.rawMap(cached['user'])));
             // Staff permissions must be verified online before opening tools.
             // Parents (read-only view) are safe to restore offline like students.
             final offlineSafe = user.role == UserRole.student || user.role == UserRole.parent;

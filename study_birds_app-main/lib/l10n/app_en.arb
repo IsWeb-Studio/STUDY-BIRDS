@@ -1,0 +1,29 @@
+{
+  "@@locale": "en",
+
+  "appName": "Study Birds",
+
+  "tabHome": "Home",
+  "tabJourney": "Journey",
+  "tabExplore": "Explore",
+  "tabServices": "Services",
+  "tabProfile": "Account",
+
+  "offlineTitle": "No Internet Connection",
+  "offlineMessage": "Please check your internet connection and try again.",
+  "errorGenericTitle": "We need a moment to finish your request",
+  "tryAgain": "Try Again",
+
+  "bannerOffline": "No internet connection — showing the last saved data",
+  "bannerUnreachable": "Connected, but the service can't be reached — retrying",
+  "bannerUnstable": "Your connection is unstable — retrying",
+  "bannerRestored": "You're back online",
+
+  "updateTitle": "Update required",
+  "updateNow": "Update now",
+  "updateDefaultMessage": "A newer version of the app is available and this version is no longer supported. Please update to continue.",
+
+  "language": "Language",
+  "languageArabic": "العربية",
+  "languageEnglish": "English"
+}

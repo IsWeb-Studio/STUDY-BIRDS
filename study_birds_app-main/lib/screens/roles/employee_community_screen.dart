@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -327,7 +328,7 @@ class _EmployeeCommunityPostScreenState
           title: 'مراجعة موضوع',
           body: ErrorState(message: error!, onRetry: load));
     }
-    final post = data!['post'] as Map<String, dynamic>;
+    final post = Json.map(data!['post']);
     final comments = data!['comments'] as List<Map<String, dynamic>>;
     final reports = data!['reports'] as List<Map<String, dynamic>>;
     return AppScaffold(

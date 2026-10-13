@@ -1,3 +1,4 @@
+import '../utils/json_safe.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -21,7 +22,7 @@ class SecureDataCache {
     final raw = await _storage.read(key: _key(owner, resource));
     if (raw == null) return null;
     try {
-      final value = jsonDecode(raw) as Map;
+      final value = Json.rawMap(jsonDecode(raw));
       final savedAt = DateTime.tryParse('${value['savedAt']}');
       final age = savedAt == null ? null : DateTime.now().difference(savedAt);
       if (age == null || age.isNegative || age >= const Duration(days: 7)) {

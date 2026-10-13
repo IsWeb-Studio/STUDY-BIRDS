@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
@@ -89,8 +90,8 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
       ]);
       if (!mounted) return;
       setState(() {
-        _overview = results[0] as Map<String, dynamic>;
-        _students = results[1] as List<dynamic>;
+        _overview = Json.map(results[0]);
+        _students = Json.list(results[1]);
         _loading = false;
       });
       _applyFilter();
@@ -104,7 +105,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     final q = _searchController.text.trim().toLowerCase();
     setState(() {
       _filtered = _students.where((s) {
-        final st = s as Map<String, dynamic>;
+        final st = Json.map(s);
         final nameMatch = q.isEmpty ||
             (st['name'] as String? ?? '').toLowerCase().contains(q) ||
             (st['desiredUniversity'] as String? ?? '').toLowerCase().contains(q) ||
@@ -172,7 +173,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   // ── build ────────────────────────────────────────────────────────────────
 
   void _openNotificationsSheet() {
-    final notifications = (_overview?['notifications'] as List<dynamic>?) ?? [];
+    final notifications = (Json.listOrNull(_overview?['notifications'])) ?? [];
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -183,8 +184,8 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final notifications = (_overview?['notifications'] as List<dynamic>?) ?? [];
-    final unreadCount = notifications.where((n) => (n as Map)['isRead'] != true).length;
+    final notifications = (Json.listOrNull(_overview?['notifications'])) ?? [];
+    final unreadCount = notifications.where((n) => (Json.rawMap(n))['isRead'] != true).length;
 
     return AppScaffold(
       title: 'لوحة الوكيل',
@@ -258,8 +259,8 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   }
 
   Widget _buildContent() {
-    final stats = _overview?['stats'] as Map<String, dynamic>? ?? {};
-    final pending = _students.where((s) => (s as Map)['applicationStatus'] == 'under-review').length;
+    final stats = Json.mapOrNull(_overview?['stats']) ?? {};
+    final pending = _students.where((s) => (Json.rawMap(s))['applicationStatus'] == 'under-review').length;
     final accepted = (stats['acceptedStudents'] as num?)?.toInt() ?? 0;
 
     return ListView(
@@ -455,7 +456,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Column(
               children: _filtered.map((s) {
-                final student = s as Map<String, dynamic>;
+                final student = Json.map(s);
                 final meta = agentStudentStatusMeta(student['applicationStatus'] as String?);
                 final name = student['name'] as String? ?? '—';
                 final initials = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : '?';
@@ -531,7 +532,7 @@ class _NotificationsSheet extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                   decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(10)),
                   child: Text(
-                    '${notifications.where((n) => (n as Map)['isRead'] != true).length} جديد',
+                    '${notifications.where((n) => (Json.rawMap(n))['isRead'] != true).length} جديد',
                     style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
                   ),
                 ),
@@ -556,7 +557,7 @@ class _NotificationsSheet extends StatelessWidget {
                 itemCount: notifications.length,
                 separatorBuilder: (_, __) => const SizedBox(height: 8),
                 itemBuilder: (_, i) {
-                  final notif = notifications[i] as Map<String, dynamic>;
+                  final notif = Json.map(notifications[i]);
                   final type = notif['type'] as String? ?? 'info';
                   final color = _typeColors[type] ?? AppColors.info;
                   final icon = _typeIcons[type] ?? Icons.info_rounded;

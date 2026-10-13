@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
@@ -30,7 +31,7 @@ class _FollowUpRemindersState extends State<FollowUpRemindersScreen> {
       final result = await ApiClient.instance.get(
           '/applications/follow-up-reminders',
           token: AuthSession.instance.token);
-      if (mounted) setState(() => rows = result as List<dynamic>);
+      if (mounted) setState(() => rows = Json.list(result));
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/follow_up_reminders_screen.dart:33');
       if (mounted) setState(() => error = 'تعذر تحميل تذكيرات المتابعة.');
     } finally {

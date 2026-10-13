@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
@@ -87,8 +88,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       ]);
       if (!mounted) return;
       setState(() {
-        _children = results[0] as List<dynamic>;
-        _linkRequests = results[1] as List<dynamic>;
+        _children = Json.list(results[0]);
+        _linkRequests = Json.list(results[1]);
         _loadingChildren = false;
       });
       if (_children.isNotEmpty) {
@@ -113,7 +114,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     });
     try {
       final studentId =
-          (_children[index] as Map<String, dynamic>)['_id'] as String;
+          (Json.map(_children[index]))['_id'] as String;
       final data =
           await ParentRepository.instance.getChildOverview(studentId);
       if (!mounted || request != _overviewRequest) return;
@@ -134,7 +135,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     });
     try {
       final studentId =
-          (_children[index] as Map<String, dynamic>)['_id'] as String;
+          (Json.map(_children[index]))['_id'] as String;
       final data =
           await ParentRepository.instance.getChildPayments(studentId);
       if (!mounted) return;
@@ -333,7 +334,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   Widget _buildSingleChildHeader() {
-    final child = _children[0] as Map<String, dynamic>;
+    final child = Json.map(_children[0]);
     return AppCard(
       child: Row(
         children: [
@@ -373,8 +374,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   Widget _buildLinkRequestRow(dynamic r) {
-    final req = r as Map<String, dynamic>;
-    final student = req['student'] as Map<String, dynamic>?;
+    final req = Json.map(r);
+    final student = Json.mapOrNull(req['student']);
     final status = req['status'] as String?;
     final (label, color) = switch (status) {
       'approved' => ('مقبول', AppColors.success),
@@ -410,7 +411,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           for (int i = 0; i < _children.length; i++) ...[
             if (i > 0) const SizedBox(width: 8),
             _ChildChip(
-              name: (_children[i] as Map<String, dynamic>)['name'] as String? ?? '—',
+              name: (Json.map(_children[i]))['name'] as String? ?? '—',
               selected: i == _selectedIndex,
               onTap: () => _selectChild(i),
             ),
@@ -421,11 +422,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   Widget _buildOverviewCards(Map<String, dynamic> overview) {
-    final applications = overview['applications'] as List<dynamic>? ?? [];
-    final notifications = overview['notifications'] as List<dynamic>? ?? [];
-    final student = overview['student'] as Map<String, dynamic>?;
+    final applications = Json.listOrNull(overview['applications']) ?? [];
+    final notifications = Json.listOrNull(overview['notifications']) ?? [];
+    final student = Json.mapOrNull(overview['student']);
     final targetCountries =
-        (overview['targetCountries'] as List<dynamic>? ?? []).join('، ');
+        (Json.listOrNull(overview['targetCountries']) ?? []).join('، ');
     final stageKey = overview['journeyStage'] as String?;
     final stageName = (stageKey != null ? _stageLabels[stageKey] : null) ??
         stageKey ??
@@ -590,9 +591,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   style: AppTextStyles.caption))
         else
           ...applications.map((a) {
-            final app = a as Map<String, dynamic>;
-            final uni = app['university'] as Map<String, dynamic>?;
-            final program = app['program'] as Map<String, dynamic>?;
+            final app = Json.map(a);
+            final uni = Json.mapOrNull(app['university']);
+            final program = Json.mapOrNull(app['program']);
             final meta = appStatusMeta(app);
             return Padding(
               padding: const EdgeInsets.only(bottom: 8),
@@ -629,7 +630,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           const Text('الإشعارات المهمة', style: AppTextStyles.sectionLabel),
           const SizedBox(height: 10),
           ...notifications.map((n) {
-            final notif = n as Map<String, dynamic>;
+            final notif = Json.map(n);
             final type = notif['type'] as String? ?? 'info';
             final isRead = notif['isRead'] as bool? ?? true;
             final notifColor = switch (type) {
@@ -759,14 +760,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   }
 
   Widget _buildInvoiceRow(dynamic p) {
-    final inv = p as Map<String, dynamic>;
+    final inv = Json.map(p);
     final status = inv['status'] as String? ?? 'unpaid';
     final amount = inv['amount'];
     final currency = inv['currency'] as String? ?? 'USD';
     final desc = inv['description'] as String? ?? inv['invoiceNumber'] as String? ?? 'فاتورة';
     final invNum = inv['invoiceNumber'] as String? ?? '';
     final dueDate = inv['dueDate'] as String?;
-    final proofs = inv['proofs'] as List<dynamic>? ?? [];
+    final proofs = Json.listOrNull(inv['proofs']) ?? [];
     final canPay = status == 'unpaid' || status == 'rejected';
 
     final (label, color) = switch (status) {
@@ -812,8 +813,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             if (proofs.isNotEmpty) ...[
               const Divider(height: 16),
               ...proofs.map((pr) {
-                final proof = pr as Map<String, dynamic>;
-                final paidBy = proof['paidBy'] as Map<String, dynamic>?;
+                final proof = Json.map(pr);
+                final paidBy = Json.mapOrNull(proof['paidBy']);
                 final paidByName = paidBy?['name'] as String?;
                 final paidByRole = paidBy?['role'] as String?;
                 final pStatus = proof['status'] as String? ?? 'pending';
@@ -844,7 +845,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               SizedBox(
                 width: double.infinity,
                 child: _PayInvoiceButton(
-                  studentId: (_children[_selectedIndex] as Map<String, dynamic>)['_id'] as String,
+                  studentId: (Json.map(_children[_selectedIndex]))['_id'] as String,
                   invoiceId: inv['_id'] as String,
                   invoiceDesc: desc,
                   onPaid: () {

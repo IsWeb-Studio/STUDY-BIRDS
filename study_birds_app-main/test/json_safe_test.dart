@@ -7,6 +7,7 @@ import 'package:study_birds/core/utils/app_error.dart';
 import 'package:study_birds/core/utils/json_safe.dart';
 
 void main() {
+  jsonCastTests();
   group('JsonSafe', () {
     test('returns well-formed values', () {
       expect(JsonSafe.object({'user': {'a': 1}}, 'user'), {'a': 1});
@@ -50,6 +51,25 @@ void main() {
       expect(user.id, 'u1');
       expect(user.name, '');
       expect(user.avatar, isNull);
+    });
+  });
+}
+
+void jsonCastTests() {
+  group('Json casts never throw', () {
+    test('wrong shapes give empty containers / null', () {
+      expect(Json.map('x'), isEmpty);
+      expect(Json.map(null), isEmpty);
+      expect(Json.mapOrNull(null), isNull);
+      expect(Json.mapOrNull(5), isNull);
+      expect(Json.list({'a': 1}), isEmpty);
+      expect(Json.listOrNull('x'), isNull);
+      expect(Json.rawMap([]), isEmpty);
+    });
+    test('right shapes pass through (and Map<dynamic,dynamic> is converted)', () {
+      expect(Json.map({'a': 1}), {'a': 1});
+      expect(Json.map(<dynamic, dynamic>{'a': 1}), {'a': 1});
+      expect(Json.list([1, 2]), [1, 2]);
     });
   });
 }

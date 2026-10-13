@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
@@ -164,7 +165,7 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
       itemCount: _requests.length,
       itemBuilder: (_, i) {
         final req = _requests[i];
-        final services = req['services'] as Map<String, dynamic>? ?? {};
+        final services = Json.mapOrNull(req['services']) ?? {};
         final tags = [
           if (services['airportPickup'] == true) 'استقبال المطار',
           if (services['studentHousing'] == true) 'السكن',
@@ -371,7 +372,7 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
       _airport.text = d['airport'] as String? ?? '';
       _arrivalTime.text = d['arrivalTime'] as String? ?? '';
       _notes.text = d['notes'] as String? ?? '';
-      final services = d['services'] as Map<String, dynamic>? ?? {};
+      final services = Json.mapOrNull(d['services']) ?? {};
       _airportPickup = services['airportPickup'] == true;
       _studentHousing = services['studentHousing'] == true;
       _residencePermitSupport = services['residencePermitSupport'] == true;

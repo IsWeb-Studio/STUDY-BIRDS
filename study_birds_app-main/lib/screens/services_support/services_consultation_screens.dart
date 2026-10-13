@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'services_center_view.dart';
@@ -299,7 +300,7 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
                 final status = r['status'] as String? ?? 'pending';
                 final assignedTo = r['assignedTo'] is Map ? r['assignedTo']['name'] as String? : null;
                 final staffNote = r['staffNote'] as String? ?? '';
-                final driver = r['driverDetails'] is Map ? Map<String, dynamic>.from(r['driverDetails'] as Map) : null;
+                final driver = r['driverDetails'] is Map ? Map<String, dynamic>.from(Json.rawMap(r['driverDetails'])) : null;
                 final showDriver = status == 'en-route' && driver != null &&
                     (driver['name'] as String? ?? '').isNotEmpty;
                 return AppCard(

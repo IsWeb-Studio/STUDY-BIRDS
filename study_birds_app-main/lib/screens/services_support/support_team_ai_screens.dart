@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -331,7 +332,7 @@ class _SupportTicketsListScreenState extends State<SupportTicketsListScreen> {
                         padding: const EdgeInsets.all(16),
                         itemCount: _tickets.length,
                         itemBuilder: (context, i) {
-                          final t = _tickets[i] as Map<String, dynamic>;
+                          final t = Json.map(_tickets[i]);
                           final meta = ticketStatusMeta(t['status'] as String?);
                           return AppCard(
                             onTap: () => Navigator.of(context).push(
@@ -429,8 +430,8 @@ class _SupportTicketDetailScreenState
 
   @override
   Widget build(BuildContext context) {
-    final attachment = _ticket['attachment'] as Map<String, dynamic>?;
-    final replies = _ticket['replies'] as List<dynamic>? ?? [];
+    final attachment = Json.mapOrNull(_ticket['attachment']);
+    final replies = Json.listOrNull(_ticket['replies']) ?? [];
     final meta = ticketStatusMeta(_ticket['status'] as String?);
 
     return AppScaffold(
@@ -468,7 +469,7 @@ class _SupportTicketDetailScreenState
                     },
                   ),
                 ...replies.map((r) {
-                  final reply = r as Map<String, dynamic>;
+                  final reply = Json.map(r);
                   final isStudent = reply['fromRole'] == 'student';
                   return Align(
                     alignment:

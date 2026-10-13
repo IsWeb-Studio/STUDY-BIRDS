@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -63,8 +64,8 @@ class _AgentProgramPricingScreenState extends State<AgentProgramPricingScreen> {
                         padding: const EdgeInsets.all(16),
                         itemCount: _programs.length,
                         itemBuilder: (context, i) {
-                          final p = _programs[i] as Map<String, dynamic>;
-                          final uni = p['university'] as Map<String, dynamic>?;
+                          final p = Json.map(_programs[i]);
+                          final uni = Json.mapOrNull(p['university']);
                           final publicPrice = p['tuition'];
                           final partnerPrice = p['partnerTuition'];
                           return AppCard(

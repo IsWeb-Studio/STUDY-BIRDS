@@ -1,4 +1,5 @@
 import '../network/api_client.dart';
+import '../services/error_reporter.dart';
 import 'app_error.dart';
 
 /// Defensive access to server JSON.
@@ -32,4 +33,59 @@ class JsonSafe {
 
   /// A list when the value is a list, otherwise an empty list.
   static List<dynamic> list(dynamic value) => value is List ? value : const [];
+}
+
+/// Drop-in, non-throwing replacements for `value as Map/List` casts on server
+/// data. A wrong shape yields an empty container (or null for the `…OrNull`
+/// forms) and is reported once, instead of crashing the screen with a
+/// `TypeError`.
+class Json {
+  Json._();
+
+  static void _report(Object? value, String expected) {
+    // Imported lazily to keep this file dependency-light for pure-Dart tools.
+    ErrorReporter.swallowed(
+        TypeError(), StackTrace.current, 'json: expected $expected, got ${value.runtimeType}');
+  }
+
+  static Map<String, dynamic> map(Object? value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    _report(value, 'Map');
+    return <String, dynamic>{};
+  }
+
+  static Map<String, dynamic>? mapOrNull(Object? value) {
+    if (value == null) return null;
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    _report(value, 'Map?');
+    return null;
+  }
+
+  static Map<dynamic, dynamic> rawMap(Object? value) {
+    if (value is Map) return value;
+    _report(value, 'Map');
+    return <dynamic, dynamic>{};
+  }
+
+  static Map<dynamic, dynamic>? rawMapOrNull(Object? value) {
+    if (value == null) return null;
+    if (value is Map) return value;
+    _report(value, 'Map?');
+    return null;
+  }
+
+  static List<dynamic> list(Object? value) {
+    if (value is List) return value;
+    _report(value, 'List');
+    return <dynamic>[];
+  }
+
+  static List<dynamic>? listOrNull(Object? value) {
+    if (value == null) return null;
+    if (value is List) return value;
+    _report(value, 'List?');
+    return null;
+  }
 }

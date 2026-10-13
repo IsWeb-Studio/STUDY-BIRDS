@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -138,7 +139,7 @@ class CatalogLanguage extends ChangeNotifier {
         if (response.statusCode != 200) return null;
         final data = jsonDecode(utf8.decode(response.bodyBytes));
         if (data is! List || data.isEmpty || data[0] is! List) return null;
-        parts.add((data[0] as List)
+        parts.add((Json.list(data[0]))
             .map((s) => s is List && s.isNotEmpty && s[0] is String ? s[0] : '')
             .join());
       }

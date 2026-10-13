@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
@@ -22,7 +23,7 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
     setState(() { loading = true; error = null; });
     try {
       final values = await Future.wait([ApiClient.instance.get('/mobile-security/two-factor', token: token), ApiClient.instance.get('/mobile-security/sessions', token: token)]);
-      if (mounted) setState(() { enabled = values[0]['enabled'] == true; sessions = values[1] as List; });
+      if (mounted) setState(() { enabled = values[0]['enabled'] == true; sessions = Json.list(values[1]); });
     } catch (e) { if (mounted) setState(() => error = e is ApiException && e.statusCode == 404 ? 'خدمات الأمان الإضافية لم تُفعّل على السيرفر بعد.' : 'تعذر تحميل إعدادات الأمان.'); }
     finally { if (mounted) setState(() => loading = false); }
   }
@@ -98,7 +99,7 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
     for (final row in sessions) FeaturePanel(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Row(children: [const Icon(Icons.devices_outlined, color: AppColors.navy), const SizedBox(width: 12), Expanded(child: Text(row['current'] == true ? 'هذا الجهاز' : row['device']?.toString() ?? 'جهاز آخر', style: AppTextStyles.cardTitle))]),
       const SizedBox(height: 8), Text('آخر نشاط: ${DateTime.tryParse(row['lastSeen']?.toString() ?? '')?.toLocal().toString().split('.').first ?? 'غير محدد'}', style: AppTextStyles.caption),
-      TextButton(onPressed: busy ? null : () => revoke(row as Map), child: const Text('إنهاء الجلسة', style: TextStyle(color: AppColors.danger))),
+      TextButton(onPressed: busy ? null : () => revoke(Json.rawMap(row)), child: const Text('إنهاء الجلسة', style: TextStyle(color: AppColors.danger))),
     ])),
     if (sessions.length > 1) ...[
       const SizedBox(height: 8),

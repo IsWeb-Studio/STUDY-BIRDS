@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -72,7 +73,7 @@ class _SimpleAdminListScreenState extends State<_SimpleAdminListScreen> {
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: _items.length,
-                        itemBuilder: (context, i) => widget.itemBuilder(_items[i] as Map<String, dynamic>),
+                        itemBuilder: (context, i) => widget.itemBuilder(Json.map(_items[i])),
                       ),
       ),
     );
@@ -91,7 +92,7 @@ class AdminStudentNotificationsScreen extends StatelessWidget {
       emptyTitle: 'لا توجد إشعارات',
       emptyMessage: 'ستظهر هنا كل الإشعارات المرسلة للمستخدمين.',
       itemBuilder: (n) {
-        final user = n['user'] as Map<String, dynamic>?;
+        final user = Json.mapOrNull(n['user']);
         return AppCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -120,9 +121,9 @@ class AdminStudentFavoritesScreen extends StatelessWidget {
       emptyTitle: 'لا توجد مفضلات',
       emptyMessage: 'ستظهر هنا العناصر المفضلة لدى الطلاب.',
       itemBuilder: (f) {
-        final student = f['student'] as Map<String, dynamic>?;
-        final university = f['university'] as Map<String, dynamic>?;
-        final program = f['program'] as Map<String, dynamic>?;
+        final student = Json.mapOrNull(f['student']);
+        final university = Json.mapOrNull(f['university']);
+        final program = Json.mapOrNull(f['program']);
         return AppCard(
           child: Row(
             children: [
@@ -155,8 +156,8 @@ class AdminOrientationResultsScreen extends StatelessWidget {
       emptyTitle: 'لا توجد نتائج',
       emptyMessage: 'ستظهر هنا نتائج اختبارات التوجيه اللي عملها الطلاب.',
       itemBuilder: (r) {
-        final student = r['student'] as Map<String, dynamic>?;
-        final fields = (r['suggestedFields'] as List<dynamic>? ?? []).join('، ');
+        final student = Json.mapOrNull(r['student']);
+        final fields = (Json.listOrNull(r['suggestedFields']) ?? []).join('، ');
         return AppCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

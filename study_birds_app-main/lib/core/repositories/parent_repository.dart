@@ -1,3 +1,4 @@
+import '../utils/json_safe.dart';
 import '../network/api_client.dart';
 import '../services/auth_session.dart';
 
@@ -14,12 +15,12 @@ class ParentRepository {
 
   Future<List<dynamic>> getChildren() async {
     final data = await ApiClient.instance.get('/parents/children', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<List<dynamic>> getLinkRequests() async {
     final data = await ApiClient.instance.get('/parents/link-requests', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<Map<String, dynamic>> createLinkRequest({required String studentEmail, String? relationship, String? note}) async {
@@ -28,17 +29,17 @@ class ParentRepository {
       if (relationship != null) 'relationship': relationship,
       if (note != null) 'note': note,
     });
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<Map<String, dynamic>> getChildOverview(String studentId) async {
     final data = await ApiClient.instance.get('/parents/children/$studentId/overview', token: _token);
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 
   Future<List<dynamic>> getChildPayments(String studentId) async {
     final data = await ApiClient.instance.get('/parents/children/$studentId/payments', token: _token);
-    return data as List<dynamic>;
+    return Json.list(data);
   }
 
   Future<Map<String, dynamic>> uploadPaymentProof({
@@ -55,6 +56,6 @@ class ParentRepository {
       fileName: fileName,
       fields: {if (note != null && note.isNotEmpty) 'note': note},
     );
-    return data as Map<String, dynamic>;
+    return Json.map(data);
   }
 }

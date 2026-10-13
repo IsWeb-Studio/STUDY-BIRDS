@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
@@ -107,7 +108,7 @@ class _UniversityDashboardScreenState
       ]);
       if (!mounted) return;
       setState(() {
-        _all = results[0] as List<dynamic>;
+        _all = Json.list(results[0]);
         _favoritesCount = results[1] as int;
         _loading = false;
       });
@@ -126,9 +127,9 @@ class _UniversityDashboardScreenState
     final q = _searchCtrl.text.toLowerCase();
     setState(() {
       _filtered = _all.where((a) {
-        final app = a as Map<String, dynamic>;
+        final app = Json.map(a);
         final status = app['detailedStatus'] as String? ?? app['status'] as String? ?? '';
-        final student = app['student'] as Map<String, dynamic>?;
+        final student = Json.mapOrNull(app['student']);
         final name = (student?['name'] as String? ?? '').toLowerCase();
         final matchStatus =
             _statusFilter == 'all' || status == _statusFilter;
@@ -143,17 +144,17 @@ class _UniversityDashboardScreenState
     final uniName = AuthSession.instance.currentUser?.name ?? 'الجامعة';
     final total = _all.length;
     final pending = _all.where((a) {
-      final m = a as Map;
+      final m = Json.rawMap(a);
       final s = m['detailedStatus'] ?? m['status'];
       return s == 'submitted' || s == 'under-review';
     }).length;
     final accepted = _all.where((a) {
-      final m = a as Map;
+      final m = Json.rawMap(a);
       final s = m['detailedStatus'] ?? m['status'];
       return s == 'accepted' || s == 'final-admission';
     }).length;
     final rejected = _all.where((a) {
-      final m = a as Map;
+      final m = Json.rawMap(a);
       return (m['detailedStatus'] ?? m['status']) == 'rejected';
     }).length;
 
@@ -327,7 +328,7 @@ class _UniversityDashboardScreenState
               separatorBuilder: (_, __) => const SizedBox(height: 10),
               itemCount: _filtered.length,
               itemBuilder: (_, i) {
-                final app = _filtered[i] as Map<String, dynamic>;
+                final app = Json.map(_filtered[i]);
                 return _AppCard(
                   app: app,
                   onTap: () => Navigator.of(context)
@@ -512,8 +513,8 @@ class _AppCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final student = app['student'] as Map<String, dynamic>?;
-    final program = app['program'] as Map<String, dynamic>?;
+    final student = Json.mapOrNull(app['student']);
+    final program = Json.mapOrNull(app['program']);
     final name = student?['name'] as String? ?? '—';
     final email = student?['email'] as String? ?? '';
     final programName = program?['title'] as String? ?? program?['name'] as String? ?? '—';

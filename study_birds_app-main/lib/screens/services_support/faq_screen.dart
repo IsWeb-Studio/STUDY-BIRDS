@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -67,7 +68,7 @@ class _FaqScreenState extends State<FaqScreen> {
                       padding: const EdgeInsets.all(16),
                       itemCount: _faqs.length,
                       itemBuilder: (context, i) {
-                        final faq = _faqs[i] as Map<String, dynamic>;
+                        final faq = Json.map(_faqs[i]);
                         final expanded = _expandedIndex == i;
                         return AppCard(
                           onTap: () => setState(() => _expandedIndex = expanded ? null : i),

@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
@@ -107,13 +108,13 @@ class _AdminEventRegistrationsScreenState extends State<AdminEventRegistrationsS
                       padding: const EdgeInsets.all(16),
                       itemCount: _regs.length,
                       itemBuilder: (context, i) {
-                        final reg = _regs[i] as Map<String, dynamic>;
+                        final reg = Json.map(_regs[i]);
                         return AppCard(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(reg['name'] as String? ?? reg['email'] as String? ?? '—', style: AppTextStyles.cardTitle),
-                              Text((reg['upcomingEvent'] as Map<String, dynamic>?)?['title'] as String? ?? '', style: AppTextStyles.caption),
+                              Text((Json.mapOrNull(reg['upcomingEvent']))?['title'] as String? ?? '', style: AppTextStyles.caption),
                             ],
                           ),
                         );

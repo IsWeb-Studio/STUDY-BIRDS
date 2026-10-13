@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -50,7 +51,7 @@ class _AdminStudentFinancialsScreenState extends State<AdminStudentFinancialsScr
       final updated = await AdminModulesRepository.instance.reviewPaymentProof(id, status: status);
       if (!mounted) return;
       setState(() {
-        final proofs = (_data!['paymentProofs'] as List<dynamic>).map((p) => (p as Map<String, dynamic>)['_id'] == id ? updated : p).toList();
+        final proofs = (Json.list(_data!['paymentProofs'])).map((p) => (Json.map(p))['_id'] == id ? updated : p).toList();
         _data = {..._data!, 'paymentProofs': proofs};
       });
     } catch (e) {
@@ -98,7 +99,7 @@ class _AdminStudentFinancialsScreenState extends State<AdminStudentFinancialsScr
   }
 
   Widget _buildInvoices() {
-    final invoices = _data!['invoices'] as List<dynamic>? ?? [];
+    final invoices = Json.listOrNull(_data!['invoices']) ?? [];
     if (invoices.isEmpty) return const EmptyState(icon: Icons.receipt_long_outlined, title: 'لا توجد فواتير', message: 'ستظهر هنا كل الفواتير المُصدرة.');
     return RefreshIndicator(
       onRefresh: _load,
@@ -107,8 +108,8 @@ class _AdminStudentFinancialsScreenState extends State<AdminStudentFinancialsScr
         padding: const EdgeInsets.all(16),
         itemCount: invoices.length,
         itemBuilder: (context, i) {
-          final inv = invoices[i] as Map<String, dynamic>;
-          final student = inv['student'] as Map<String, dynamic>?;
+          final inv = Json.map(invoices[i]);
+          final student = Json.mapOrNull(inv['student']);
           return AppCard(
             child: Row(
               children: [
@@ -131,7 +132,7 @@ class _AdminStudentFinancialsScreenState extends State<AdminStudentFinancialsScr
   }
 
   Widget _buildProofs() {
-    final proofs = _data!['paymentProofs'] as List<dynamic>? ?? [];
+    final proofs = Json.listOrNull(_data!['paymentProofs']) ?? [];
     if (proofs.isEmpty) return const EmptyState(icon: Icons.receipt_outlined, title: 'لا توجد إثباتات', message: 'ستظهر هنا إثباتات الدفع المرفوعة من الطلاب.');
     return RefreshIndicator(
       onRefresh: _load,
@@ -140,8 +141,8 @@ class _AdminStudentFinancialsScreenState extends State<AdminStudentFinancialsScr
         padding: const EdgeInsets.all(16),
         itemCount: proofs.length,
         itemBuilder: (context, i) {
-        final proof = proofs[i] as Map<String, dynamic>;
-        final student = proof['student'] as Map<String, dynamic>?;
+        final proof = Json.map(proofs[i]);
+        final student = Json.mapOrNull(proof['student']);
         final status = proof['status'] as String? ?? 'pending';
         return AppCard(
           child: Column(
@@ -221,7 +222,7 @@ class _AdminMarketingAssetsScreenState extends State<AdminMarketingAssetsScreen>
   Future<void> _delete(String id) async {
     try {
       await AdminModulesRepository.instance.deleteMarketingAsset(id);
-      if (mounted) setState(() => _assets.removeWhere((a) => (a as Map<String, dynamic>)['_id'] == id));
+      if (mounted) setState(() => _assets.removeWhere((a) => (Json.map(a))['_id'] == id));
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_financials_marketing_screens.dart:224');
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر الحذف')));
     }
@@ -244,7 +245,7 @@ class _AdminMarketingAssetsScreenState extends State<AdminMarketingAssetsScreen>
                         padding: const EdgeInsets.all(16),
                         itemCount: _assets.length,
                         itemBuilder: (context, i) {
-                          final asset = _assets[i] as Map<String, dynamic>;
+                          final asset = Json.map(_assets[i]);
                           return AppCard(
                             child: Row(
                               children: [

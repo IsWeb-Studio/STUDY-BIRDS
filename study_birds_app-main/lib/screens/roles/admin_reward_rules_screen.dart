@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/widgets/feature_ui.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
@@ -81,12 +82,12 @@ class _AdminRewardRulesScreenState extends State<AdminRewardRulesScreen> {
     Expanded(child: FutureBuilder<dynamic>(future: _rules, builder: (context, snapshot) {
       if (snapshot.hasError) return ErrorState(message: 'تعذر تحميل القواعد', onRetry: () => setState(_reload));
       if (!snapshot.hasData) return const LoadingState();
-      final rules = snapshot.data as List;
+      final rules = Json.list(snapshot.data);
       if (rules.isEmpty) return const Center(child: Text('لا توجد قواعد مفعّلة. أضف القواعد وحدد عدد النقاط.'));
       return ListView(children: [for (final row in rules) ListTile(
         title: Text('${row['title']}'),
         subtitle: Text('${events[row['event']] ?? ''} • ${row['points']} نقطة • ${row['enabled'] == true ? 'مفعّلة' : 'معطّلة'}'),
-        trailing: const Icon(Icons.edit_outlined), onTap: () => _edit(row as Map),
+        trailing: const Icon(Icons.edit_outlined), onTap: () => _edit(Json.rawMap(row)),
       )]);
     })),
   ]));

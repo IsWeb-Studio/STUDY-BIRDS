@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'journey_timeline_widgets.dart';
@@ -76,7 +77,7 @@ class _JourneyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stages =
-        (journey['stages'] as List? ?? []).whereType<Map>().toList();
+        (Json.listOrNull(journey['stages']) ?? []).whereType<Map>().toList();
     final required =
         stages.where((s) => s['status'] != 'not-required').toList();
     final completed =
@@ -171,7 +172,7 @@ class _JourneyDetailScreen extends StatelessWidget {
             applications.where((item) => item['_id'] == applicationId);
         if (matches.isEmpty) throw StateError('Application unavailable');
         screen = ApplicationDetailScreen(
-            application: Map<String, dynamic>.from(matches.first as Map));
+            application: Map<String, dynamic>.from(Json.rawMap(matches.first)));
       } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/journey_requirements_view.dart:174');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
@@ -221,7 +222,7 @@ class _JourneyDetailScreen extends StatelessWidget {
 
   List<Widget> _journeyWidgets(
       BuildContext context, Map<String, dynamic> journey) {
-    final stages = (journey['stages'] as List? ?? []).whereType<Map>().toList();
+    final stages = (Json.listOrNull(journey['stages']) ?? []).whereType<Map>().toList();
     final required =
         stages.where((stage) => stage['status'] != 'not-required').toList();
     final completed =

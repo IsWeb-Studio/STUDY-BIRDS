@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -155,7 +156,7 @@ class _PaymentByIdState extends State<_PaymentById> {
   void initState() {
     super.initState();
     StudentRepository.instance.getFinancials().then((fin) {
-      final list = (fin['invoices'] as List<dynamic>? ?? []);
+      final list = (Json.listOrNull(fin['invoices']) ?? []);
       final match = list.whereType<Map<String, dynamic>>().cast<Map<String, dynamic>?>()
           .firstWhere((inv) => (inv?['_id'] ?? inv?['id'])?.toString() == widget.id,
               orElse: () => null);
@@ -317,7 +318,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       padding: const EdgeInsets.all(16),
                       itemCount: _notifications.length,
                       itemBuilder: (context, i) {
-                        final n = _notifications[i] as Map<String, dynamic>;
+                        final n = Json.map(_notifications[i]);
                         final isRead = n['isRead'] == true;
                         final color = _notificationColor(n['type'] as String?);
                         final createdAt =

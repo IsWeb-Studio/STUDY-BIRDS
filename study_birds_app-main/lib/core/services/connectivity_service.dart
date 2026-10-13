@@ -287,7 +287,7 @@ class ConnectivityService extends ChangeNotifier with WidgetsBindingObserver {
 
   /// Any HTTP answer (even 404) proves DNS + TLS + server are reachable.
   static Future<bool> _defaultProbe() async {
-    final client = http.Client();
+    final client = ApiClient.createTransport();
     try {
       await client
           .head(Uri.parse(ApiClient.baseUrl))

@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
@@ -49,8 +50,8 @@ class _AccommodationScreenState extends State<AccommodationScreen>
       ]);
       if (!mounted) return;
       setState(() {
-        _listings = results[0] as List? ?? [];
-        _bookings = results[1] as List? ?? [];
+        _listings = Json.listOrNull(results[0]) ?? [];
+        _bookings = Json.listOrNull(results[1]) ?? [];
       });
     } catch (e) {
       if (mounted) setState(() => _error = 'تعذر تحميل السكن. أعد المحاولة.');
@@ -144,7 +145,7 @@ class _ListingsTab extends StatelessWidget {
       itemBuilder: (ctx, i) => Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: _ListingCard(
-          listing: listings[i] as Map,
+          listing: Json.rawMap(listings[i]),
           canBook: !_hasActive,
           onBooked: onBooked,
         ),
@@ -227,9 +228,9 @@ class _ListingCardState extends State<_ListingCard> {
     final typeLabel =
         _typeLabels['${l['type']}'] ?? '${l['type']}';
     final uniName = (l['university'] is Map)
-        ? '${(l['university'] as Map)['name'] ?? ''}'
+        ? '${(Json.rawMap(l['university']))['name'] ?? ''}'
         : '';
-    final amenities = (l['amenities'] as List?) ?? [];
+    final amenities = (Json.listOrNull(l['amenities'])) ?? [];
     final price = (l['price'] as num?)?.toDouble() ?? 0;
     final currency = '${l['currency'] ?? 'USD'}';
     final capacity = (l['capacity'] as num?)?.toInt() ?? 0;
@@ -356,7 +357,7 @@ class _BookingsTab extends StatelessWidget {
       itemBuilder: (ctx, i) => Padding(
         padding: const EdgeInsets.only(bottom: 12),
         child: _BookingCard(
-          booking: bookings[i] as Map,
+          booking: Json.rawMap(bookings[i]),
           onCancelled: onCancelled,
         ),
       ),
@@ -442,10 +443,10 @@ class _BookingCardState extends State<_BookingCard> {
     final status = '${b['status'] ?? 'pending'}';
     final statusLabel = _statusLabels[status] ?? status;
     final statusColor = _statusColors[status] ?? AppColors.neutral;
-    final listing = b['listing'] is Map ? b['listing'] as Map : null;
+    final listing = b['listing'] is Map ? Json.rawMap(b['listing']) : null;
     final title = listing != null ? '${listing['title'] ?? ''}' : 'وحدة سكنية';
     final uniName = listing != null && listing['university'] is Map
-        ? '${(listing['university'] as Map)['name'] ?? ''}'
+        ? '${(Json.rawMap(listing['university']))['name'] ?? ''}'
         : '';
     final canCancel = ['pending', 'confirmed'].contains(status);
     final date = _fmtDate(b['createdAt']);
@@ -588,8 +589,8 @@ class _UniversityRegistrationScreenState
       final results =
           await Future.wait([_repo.getOverview(), _repo.getDocuments()]);
       if (!mounted) return;
-      final overview = results[0] as Map<String, dynamic>?;
-      final docs = results[1] as List<dynamic>;
+      final overview = Json.mapOrNull(results[0]);
+      final docs = Json.list(results[1]);
       setState(() {
         _stage = '${overview?['journeyStage'] ?? ''}';
         _uploadedKeys = docs

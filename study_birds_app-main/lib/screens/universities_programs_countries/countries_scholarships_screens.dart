@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'countries_discovery_view.dart';
@@ -106,7 +107,7 @@ class _CountryDetailScreenState extends State<CountryDetailScreen> {
     try {
       final list = await CatalogRepository.instance.getCountries();
       final updated = list.firstWhere(
-              (c) => (c as Map)['_id'] == _country['_id'],
+              (c) => (Json.rawMap(c))['_id'] == _country['_id'],
               orElse: () => _country) as Map<String, dynamic>;
       if (mounted) setState(() => _country = updated);
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/countries_scholarships_screens.dart:111');
@@ -135,7 +136,7 @@ class _CountryDetailScreenState extends State<CountryDetailScreen> {
     final healthInsuranceNotes = _country['healthInsuranceNotes'] as String?;
     final language = _country['language'] as String?;
     final currency = _country['currency'] as String?;
-    final faqs = _country['faqs'] is List ? _country['faqs'] as List : null;
+    final faqs = _country['faqs'] is List ? Json.list(_country['faqs']) : null;
     final heroImage = catalogAssetUrl(_country['heroImage']);
 
     return AppScaffold(
@@ -312,8 +313,8 @@ class _ScholarshipsScreenState extends State<ScholarshipsScreen> {
       ]);
       if (mounted)
         setState(() {
-          rows = values[0] as List;
-          entries = values.length > 1 ? values[1] as List : [];
+          rows = Json.list(values[0]);
+          entries = values.length > 1 ? Json.list(values[1]) : [];
         });
     } catch (e) {
       if (mounted)
@@ -405,7 +406,7 @@ class _ScholarshipsScreenState extends State<ScholarshipsScreen> {
                                                 e['scholarship']?['_id'] ==
                                                 item['_id'])
                                         ? null
-                                        : () => apply(item as Map)),
+                                        : () => apply(Json.rawMap(item))),
                             ])),
                       if (entries.isNotEmpty)
                         const Text('طلباتي السابقة',

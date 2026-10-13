@@ -1,8 +1,10 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import '../../core/network/pinned_http.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/config/app_theme.dart';
@@ -113,8 +115,21 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     if (tok == null) return;
     final baseUrl = ApiClient.baseUrl;
     final uri = Uri.parse('$baseUrl/mobile-workspace/events');
-    final client = _httpClient = HttpClient()
-      ..connectionTimeout = const Duration(seconds: 15);
+    PinnedHttp.newHttpClient(forUrl: baseUrl).then((created) {
+      if (!mounted) {
+        created.close(force: true);
+        return;
+      }
+      _httpClient?.close(force: true);
+      _httpClient = created..connectionTimeout = const Duration(seconds: 15);
+      _openSse(created, uri, tok);
+    }).catchError((Object e, StackTrace s) {
+      ErrorReporter.swallowed(e, s, 'messaging.sse.client');
+      _scheduleSse();
+    });
+  }
+
+  void _openSse(HttpClient client, Uri uri, String tok) {
     client.getUrl(uri).then((req) {
       req.headers.set(HttpHeaders.authorizationHeader, 'Bearer $tok');
       req.headers.set(HttpHeaders.acceptHeader, 'text/event-stream');
@@ -184,15 +199,15 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
       if (selected == null) {
         final value = await ApiClient.instance
             .get('/mobile-workspace/contacts', token: token);
-        if (mounted) setState(() => contacts = value as List);
+        if (mounted) setState(() => contacts = Json.list(value));
       } else {
         final query = Uri(queryParameters: {
           'recipient': '${selected['_id']}',
           if (previous && messages.isNotEmpty)
             'before': '${messages.first['_id']}'
         }).query;
-        final value = await ApiClient.instance
-            .get('/mobile-workspace/messages?$query', token: token) as List;
+        final value = Json.list(await ApiClient.instance
+            .get('/mobile-workspace/messages?$query', token: token));
         if (!mounted) return;
         setState(() {
           messages = previous ? [...value, ...messages] : value;
@@ -324,7 +339,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
                   title: Text('${row['name']}', style: AppTextStyles.cardTitle),
                   trailing: const Icon(Icons.chevron_left),
                   onTap: () {
-                    setState(() => contact = row as Map);
+                    setState(() => contact = Json.rawMap(row));
                     load();
                   })),
       ]);

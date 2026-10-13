@@ -1,3 +1,4 @@
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
@@ -74,7 +75,7 @@ class _AdminUsersAccessScreenState extends State<AdminUsersAccessScreen> {
     final q = _searchController.text.trim().toLowerCase();
     setState(() {
       _filtered = _users.where((u) {
-        final user = u as Map<String, dynamic>;
+        final user = Json.map(u);
         final matchesQuery = q.isEmpty || (user['name'] as String? ?? '').toLowerCase().contains(q) || (user['email'] as String? ?? '').toLowerCase().contains(q);
         final matchesRole = _roleFilter == 'all' || user['role'] == _roleFilter;
         return matchesQuery && matchesRole;
@@ -84,7 +85,7 @@ class _AdminUsersAccessScreenState extends State<AdminUsersAccessScreen> {
 
   void _replaceUser(Map<String, dynamic> updated) {
     setState(() {
-      _users = _users.map((u) => (u as Map<String, dynamic>)['_id'] == updated['_id'] ? updated : u).toList();
+      _users = _users.map((u) => (Json.map(u))['_id'] == updated['_id'] ? updated : u).toList();
     });
     _applyFilter();
   }
@@ -102,7 +103,7 @@ class _AdminUsersAccessScreenState extends State<AdminUsersAccessScreen> {
 
   Future<void> _onRoleSelected(Map<String, dynamic> user, String newRole) async {
     if (newRole == 'employee') {
-      final permissions = (user['permissions'] as List<dynamic>? ?? []).cast<String>();
+      final permissions = (Json.listOrNull(user['permissions']) ?? []).cast<String>();
       final updated = await Navigator.of(context).push<Map<String, dynamic>>(MaterialPageRoute(
         builder: (_) => EmployeeSectionsPickerScreen(
           userId: user['_id'] as String,
@@ -173,7 +174,7 @@ class _AdminUsersAccessScreenState extends State<AdminUsersAccessScreen> {
                         value: selectedId,
                         hint: const Padding(padding: EdgeInsets.symmetric(horizontal: 12), child: Text('اختر جامعة')),
                         items: universities.map((u) {
-                          final uni = u as Map<String, dynamic>;
+                          final uni = Json.map(u);
                           return DropdownMenuItem(value: uni['_id'] as String, child: Padding(padding: const EdgeInsets.symmetric(horizontal: 12), child: Text(uni['name'] as String? ?? '—')));
                         }).toList(),
                         onChanged: (v) => setSheetState(() => selectedId = v),
@@ -254,7 +255,7 @@ class _AdminUsersAccessScreenState extends State<AdminUsersAccessScreen> {
                               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                               itemCount: _filtered.length,
                             itemBuilder: (context, i) {
-                              final user = _filtered[i] as Map<String, dynamic>;
+                              final user = Json.map(_filtered[i]);
                               final isActive = user['isActive'] != false;
                               return AppCard(
                                 child: Column(

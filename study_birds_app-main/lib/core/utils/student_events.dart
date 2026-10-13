@@ -1,3 +1,4 @@
+import 'json_safe.dart';
 import '../services/error_reporter.dart';
 import '../repositories/student_repository.dart';
 import '../repositories/consultation_repository.dart';
@@ -25,7 +26,7 @@ List<StudentEvent> calendarEvents(
           '${booking['advisor']?['name'] ?? ''}'));
     }
   }
-  for (final invoice in (financials['invoices'] as List? ?? [])) {
+  for (final invoice in (Json.listOrNull(financials['invoices']) ?? [])) {
     final date = DateTime.tryParse(invoice['dueDate']?.toString() ?? '');
     if (date != null && invoice['status'] != 'paid') {
       events.add(StudentEvent(date,
@@ -34,7 +35,7 @@ List<StudentEvent> calendarEvents(
   }
   // Document expiry dates
   for (final doc in documents) {
-    final exp = DateTime.tryParse((doc as Map<String, dynamic>)['expiresAt']?.toString() ?? '');
+    final exp = DateTime.tryParse((Json.map(doc))['expiresAt']?.toString() ?? '');
     if (exp != null) {
       final name = doc['originalName']?.toString() ?? doc['type']?.toString() ?? 'مستند';
       events.add(StudentEvent(exp.toLocal(), 'انتهاء صلاحية: $name'));
@@ -66,7 +67,7 @@ List<StudentEvent> activityEvents(
 
   for (final application in applications) {
     add(application['createdAt'], 'تقديم طلب دراسي');
-    for (final item in (application['timeline'] as List? ?? [])) {
+    for (final item in (Json.listOrNull(application['timeline']) ?? [])) {
       add(item['changedAt'], 'تحديث الطلب',
           item['note']?.toString() ?? item['status']?.toString() ?? '');
     }
@@ -80,7 +81,7 @@ List<StudentEvent> activityEvents(
             '');
   }
   for (final invoice in invoices) {
-    final m = invoice as Map<String, dynamic>;
+    final m = Json.map(invoice);
     if (m['status'] == 'paid' && m['reviewedAt'] != null) {
       add(m['reviewedAt'], 'دفع فاتورة',
           m['description']?.toString() ?? m['invoiceNumber']?.toString() ?? '');
@@ -90,10 +91,10 @@ List<StudentEvent> activityEvents(
     }
   }
   for (final sr in serviceRequests) {
-    final m = sr as Map<String, dynamic>;
+    final m = Json.map(sr);
     add(m['createdAt'], 'طلب خدمة',
         m['serviceType']?.toString() ?? m['status']?.toString() ?? '');
-    for (final item in (m['statusHistory'] as List? ?? [])) {
+    for (final item in (Json.listOrNull(m['statusHistory']) ?? [])) {
       add(item['changedAt'], 'تحديث طلب الخدمة',
           item['status']?.toString() ?? '');
     }
@@ -113,12 +114,12 @@ Future<List<StudentEvent>> loadCalendarEvents() async {
     repo.getArrivalServices().catchError(ErrorReporter.fallback('core/utils/student_events.dart:113', <dynamic>[])),
     repo.getDocuments().catchError(ErrorReporter.fallback('core/utils/student_events.dart:114', <dynamic>[])),
   ]);
-  final financials = results[0] as Map<String, dynamic>;
-  final arrivalList = results[1] as List<dynamic>;
+  final financials = Json.map(results[0]);
+  final arrivalList = Json.list(results[1]);
   final arrival = arrivalList.isNotEmpty
-      ? arrivalList.first as Map<String, dynamic>?
+      ? Json.mapOrNull(arrivalList.first)
       : null;
-  final documents = results[2] as List<dynamic>;
+  final documents = Json.list(results[2]);
   List<Map<String, dynamic>> consultations;
   try {
     consultations = await ConsultationRepository.instance.mine();
@@ -138,11 +139,11 @@ Future<List<StudentEvent>> loadActivityEvents() async {
     repo.getNotifications(),
     repo.getFinancials(),
   ]);
-  final applications = results[0] as List<dynamic>;
-  final documents = results[1] as List<dynamic>;
-  final notifications = results[2] as List<dynamic>;
-  final financials = results[3] as Map<String, dynamic>;
-  final invoices = (financials['invoices'] as List?)?.cast<dynamic>() ?? [];
+  final applications = Json.list(results[0]);
+  final documents = Json.list(results[1]);
+  final notifications = Json.list(results[2]);
+  final financials = Json.map(results[3]);
+  final invoices = (Json.listOrNull(financials['invoices']))?.cast<dynamic>() ?? [];
   List<dynamic> serviceRequests;
   try {
     final raw = await ApiClient.instance.get(
