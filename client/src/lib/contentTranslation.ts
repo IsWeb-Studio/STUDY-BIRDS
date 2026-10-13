@@ -20,11 +20,9 @@ export const getTranslationVersion = () => version;
 const chunkText = (text: string) => {
   const chunks: string[] = [];
   let current = "";
-  for (const line of text.split("
-")) {
+  for (const line of text.split("\n")) {
     if (current && current.length + line.length + 1 > 1200) { chunks.push(current); current = line; }
-    else current = current ? `${current}
-${line}` : line;
+    else current = current ? `${current}\n${line}` : line;
   }
   if (current) chunks.push(current);
   return chunks;
@@ -46,8 +44,7 @@ const publicTranslate = async (text: string): Promise<string | null> => {
       if (!Array.isArray(data?.[0])) return null;
       parts.push((data[0] as unknown[]).map((segment) => (Array.isArray(segment) && typeof segment[0] === "string" ? segment[0] : "")).join(""));
     }
-    const result = parts.join("
-").trim();
+    const result = parts.join("\n").trim();
     return result || null;
   } catch {
     return null;

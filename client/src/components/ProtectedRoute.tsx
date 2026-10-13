@@ -3,15 +3,22 @@ import { canAccessEmployeePage, employeeHome } from "../utils/employeeAccess";
 import { useLanguage } from "../hooks/useLanguage";
 import { useAuth } from "../hooks/useAuth";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { OfflineState } from "./OfflineState";
 import type { Role } from "../types";
 
 export const ProtectedRoute = ({ roles }: { roles?: Role[] }) => {
-  const { user, loading } = useAuth();
+  const { user, loading, sessionUnverified, refreshSession } = useAuth();
   const { pathname } = useLocation();
   const { language } = useLanguage();
 
   if (loading) {
     return <LoadingSpinner />;
+  }
+
+  // A saved login that could not be verified (offline / server down) must not
+  // bounce the user to the login page or sign them out.
+  if (!user && sessionUnverified) {
+    return <OfflineState onRetry={() => refreshSession().catch(() => undefined)} />;
   }
 
   if (!user) {

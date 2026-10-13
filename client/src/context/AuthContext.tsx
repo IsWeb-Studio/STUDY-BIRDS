@@ -1,5 +1,6 @@
 import { isAxiosError } from "axios";
-import { createContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { connectivity } from "../lib/connectivity";
 import { authService } from "../services/authService";
 import type { StudentProfile, User } from "../types";
 
@@ -15,6 +16,7 @@ interface AuthContextValue {
   register: (payload: { name: string; email: string; password: string; referralCode?: string }) => Promise<User>;
   logout: () => void;
   refreshSession: () => Promise<void>;
+  sessionUnverified: boolean;
 }
 
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
@@ -24,6 +26,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem("studyBirdsToken"));
   const [loading, setLoading] = useState(true);
+  // True when a saved login exists but the server could not be reached to verify
+  // it. The saved token is kept (no logout); routes show a retry state.
+  const [sessionUnverified, setSessionUnverified] = useState(false);
 
   const persistAuth = (nextToken: string, nextUser: User) => {
     localStorage.setItem("studyBirdsToken", nextToken);
@@ -42,8 +47,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const data = await authService.me();
       setUser(data.user);
       setProfile(data.profile ?? null);
+      setSessionUnverified(false);
     } catch (error) {
-      if (!isAxiosError(error) || ![401, 403].includes(error.response?.status ?? 0)) throw error;
+      if (!isAxiosError(error) || ![401, 403].includes(error.response?.status ?? 0)) {
+        setSessionUnverified(true);
+        throw error;
+      }
+      setSessionUnverified(false);
       localStorage.removeItem("studyBirdsToken");
       setToken(null);
       setUser(null);
@@ -56,6 +66,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     void refreshSession().catch(() => setLoading(false));
   }, []);
+
+  // When verified connectivity returns, re-check a session that could not be
+  // verified (once per reconnect, never in a loop).
+  const unverifiedRef = useRef(false);
+  unverifiedRef.current = sessionUnverified;
+  useEffect(
+    () =>
+      connectivity.onReconnected(() => {
+        if (unverifiedRef.current) void refreshSession().catch(() => undefined);
+      }),
+    []
+  );
 
   const login = async (email: string, password: string, twoFactorCode?: string) => {
     const data = await authService.login({ email, password, twoFactorCode });
@@ -120,6 +142,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         register,
         logout,
         refreshSession,
+        sessionUnverified,
       }}
     >
       {children}

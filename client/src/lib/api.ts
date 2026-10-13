@@ -1,4 +1,6 @@
 import axios from "axios";
+import { configureConnectivity, connectivity } from "./connectivity";
+import { installResilience } from "./apiResilience";
 
 const resolveApiUrl = () => {
   const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
@@ -24,6 +26,9 @@ const API_ORIGIN = API_URL.replace(/\/api\/?$/, "");
 export const api = axios.create({
   baseURL: API_URL,
 });
+
+configureConnectivity(API_ORIGIN);
+installResilience(api, connectivity);
 
 api.interceptors.request.use((config) => {
   config.headers["X-Study-Birds-Client"] = "web";
