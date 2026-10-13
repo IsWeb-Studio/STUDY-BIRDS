@@ -70,6 +70,9 @@ app.use(express.json({ limit: '100kb', verify: (req, res, buffer) => {
 } }));
 app.use(express.urlencoded({ extended: true, limit: '100kb', parameterLimit: 1000, depth: 16 }));
 app.use('/api', requestSafety);
+// Safe retries for writes: honoured only when the client sends Idempotency-Key.
+const { createIdempotency, mongoStore } = require('./middleware/idempotency');
+app.use('/api', createIdempotency(mongoStore(require('./models/IdempotencyRecord'))));
 app.use(morgan("dev"));
 app.use((req, res, next) => {
   const startedAt = process.hrtime.bigint();
@@ -130,6 +133,17 @@ app.get("/sitemap.xml", requireDatabaseConnection, async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+});
+
+// Lets the mobile app block versions that can no longer talk to this API.
+// Unset variables mean 'no restriction'.
+app.get('/api/mobile/app-config', (req, res) => {
+  const env = process.env;
+  res.set('Cache-Control', 'public, max-age=300').json({
+    minVersion: { android: env.APP_MIN_VERSION_ANDROID || null, ios: env.APP_MIN_VERSION_IOS || null },
+    storeUrl: { android: env.APP_STORE_URL_ANDROID || null, ios: env.APP_STORE_URL_IOS || null },
+    message: env.APP_UPDATE_MESSAGE || null,
+  });
 });
 
 app.get('/api/mobile/capabilities', (req, res) => {
