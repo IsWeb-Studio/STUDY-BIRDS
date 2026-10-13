@@ -7,10 +7,14 @@ type Tr = (text?: string | null) => string;
 const clean = (value?: string | null) => (typeof value === "string" ? value.trim() : "");
 const identity: Tr = (text) => text || "";
 
-/** English text when the site language is English (hand-written first, then machine translation); otherwise the Arabic/base text. */
+/**
+ * Text in the site language. English: hand-written English first, then machine
+ * translation of the Arabic. Arabic: the Arabic/base text, falling back to the
+ * English text; English-only content is machine-translated into Arabic.
+ */
 export const pickLocalized = (language: Lang, base?: string | null, en?: string | null, tr: Tr = identity) => {
   if (language === "en") return clean(en) || tr(clean(base));
-  return clean(base) || clean(en);
+  return tr(clean(base) || clean(en));
 };
 
 export const universityName = (language: Lang, university?: { name?: string; nameEn?: string } | null, tr: Tr = identity) =>
@@ -20,7 +24,16 @@ export const programTitle = (language: Lang, program?: { title?: string; titleEn
   pickLocalized(language, program?.title, program?.titleEn, tr);
 
 export const localizedArticle = (language: Lang, article: ArticleContent, tr: Tr = identity): ArticleContent => {
-  if (language !== "en") return article;
+  if (language !== "en") {
+    // Arabic mode: the Arabic text, or the English one (machine-translated into Arabic).
+    const list = (arabic?: string[], english?: string[]) => ((arabic || []).some(Boolean) ? arabic || [] : english || []);
+    return {
+      ...article,
+      articleTitle: tr(clean(article.articleTitle) || clean(article.articleTitleEn)),
+      articleHeadings: list(article.articleHeadings, article.articleHeadingsEn).map((item) => tr(item)),
+      articleBodies: list(article.articleBodies, article.articleBodiesEn).map((item) => tr(item)),
+    };
+  }
   const hasEnglish =
     Boolean(clean(article.articleTitleEn)) ||
     (article.articleHeadingsEn || []).some(Boolean) ||
