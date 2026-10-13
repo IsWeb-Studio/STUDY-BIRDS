@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
@@ -48,7 +49,7 @@ class _ApplicationDocumentsScreenState
         documents = (result[1] as List).cast<Map<String, dynamic>>();
         selection.clear();
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/application_documents_screen.dart:51');
       if (mounted) {
         setState(() {
           error = 'تعذر تحميل مستندات الطلب. أعد المحاولة.';
@@ -69,7 +70,7 @@ class _ApplicationDocumentsScreenState
     });
     try {
       if (await pickAndUploadDocument(context, type) && mounted) await load();
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/application_documents_screen.dart:72');
       if (mounted) {
         setState(() {
           error = 'تعذر تحميل الملف.';

@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/security_fields.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -59,7 +60,7 @@ class _VerifyContactScreenState extends State<VerifyContactScreen> {
         setState(() => error = e.statusCode == 404
             ? 'تأكيد البريد غير متاح حاليًا. يرجى المحاولة لاحقًا.'
             : e.message);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/auth/verify_contact_screen.dart:62');
       if (mounted) setState(() => error = 'تعذر الاتصال. حاول مجددًا.');
     } finally {
       if (mounted) setState(() => busy = false);

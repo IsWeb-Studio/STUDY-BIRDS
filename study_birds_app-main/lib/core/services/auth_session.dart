@@ -1,7 +1,9 @@
+import 'error_reporter.dart';
 import '../utils/app_error.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'analytics_service.dart';
+import 'error_reporter.dart';
 import 'push_notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -223,7 +225,7 @@ class AuthService {
   Future<AuthUser?> login(String email, String password) async {
     try {
       return (await loginOrThrow(email, password)).user;
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/auth_session.dart:228');
       return null;
     }
   }
@@ -398,7 +400,7 @@ class AuthSession extends ChangeNotifier {
       if (result.refreshToken != null) await storage.write(key: 'refresh_token', value: result.refreshToken);
       notifyListeners();
       return token;
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/auth_session.dart:403');
       // A transport failure must not erase a valid saved session.
       return null;
     }
@@ -489,7 +491,7 @@ class AuthSession extends ChangeNotifier {
               currentUser = user;
               token = storedToken;
             }
-          } catch (_) {
+          } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/auth_session.dart:494');
             // A missing/old snapshot is not proof that saved credentials were revoked.
             await storage.delete(key: 'cached_user');
           }
@@ -506,6 +508,7 @@ class AuthSession extends ChangeNotifier {
     final restoredUser = currentUser;
     if (restoredUser != null) {
       PushNotificationService.instance.setUser(restoredUser.id);
+      ErrorReporter.setUser(restoredUser.id, role: restoredUser.role.key);
     }
     _restored = true;
     notifyListeners();
@@ -568,7 +571,7 @@ class AuthSession extends ChangeNotifier {
         await _cacheUser(user);
         notifyListeners();
       }
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/auth_session.dart:574');}
   }
 
   Future<void> login(AuthUser user, {String? authToken, String? refreshToken, bool requireGooglePasswordSetup = false}) async {
@@ -594,6 +597,7 @@ class AuthSession extends ChangeNotifier {
     currentUser = user;
     token = authToken;
     PushNotificationService.instance.setUser(user.id);
+    ErrorReporter.setUser(user.id, role: user.role.key);
     AnalyticsService.instance.identify(user.id, traits: {'role': user.role.name, 'name': user.name});
     notifyListeners();
   }
@@ -611,7 +615,7 @@ class AuthSession extends ChangeNotifier {
     const storage = FlutterSecureStorage();
     final refresh = await storage.read(key: 'refresh_token');
     if (revoke && refresh != null) {
-      try { await ApiClient.instance.post('/auth/logout', body: {'refreshToken': refresh}); } catch (_) {}
+      try { await ApiClient.instance.post('/auth/logout', body: {'refreshToken': refresh}); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/auth_session.dart:618');}
     }
     await SecureDataCache.clear(owner);
     await NotificationScheduler.instance.cancelAll();
@@ -624,6 +628,7 @@ class AuthSession extends ChangeNotifier {
     await storage.delete(key: 'refresh_token');
     await storage.delete(key: 'cached_user');
     PushNotificationService.instance.clearUser();
+    ErrorReporter.setUser(null);
     AnalyticsService.instance.reset();
     notifyListeners();
   }

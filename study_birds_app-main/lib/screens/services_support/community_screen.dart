@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -68,7 +69,7 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen> {
     try {
       final status = await repo.status();
       if (mounted) setState(() => suspension = status);
-    } catch (_) {/* Reading still works; the server enforces on write. */}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/community_screen.dart:71');/* Reading still works; the server enforces on write. */}
   }
 
   Future<void> loadLookups() async {

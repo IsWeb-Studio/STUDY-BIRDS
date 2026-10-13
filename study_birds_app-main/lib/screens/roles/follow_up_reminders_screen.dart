@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
@@ -30,7 +31,7 @@ class _FollowUpRemindersState extends State<FollowUpRemindersScreen> {
           '/applications/follow-up-reminders',
           token: AuthSession.instance.token);
       if (mounted) setState(() => rows = result as List<dynamic>);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/follow_up_reminders_screen.dart:33');
       if (mounted) setState(() => error = 'تعذر تحميل تذكيرات المتابعة.');
     } finally {
       if (mounted) setState(() => busy = false);
@@ -44,7 +45,7 @@ class _FollowUpRemindersState extends State<FollowUpRemindersScreen> {
           '/applications/follow-up-reminders/$id/read',
           token: AuthSession.instance.token);
       if (mounted) await load();
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/follow_up_reminders_screen.dart:47');
       if (mounted)
         setState(() {
           error = 'تعذر تحديث التذكير.';

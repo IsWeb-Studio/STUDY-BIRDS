@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
@@ -66,7 +67,7 @@ class _BirdAssistantScreenState extends State<BirdAssistantScreen> {
         });
         _scrollToBottom();
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/bird_ai_screen.dart:69');
       if (mounted) setState(() => error = 'تعذر فتح المحادثة');
     } finally {
       if (mounted) setState(() => loading = false);

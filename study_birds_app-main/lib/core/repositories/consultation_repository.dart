@@ -1,3 +1,4 @@
+import '../services/error_reporter.dart';
 import '../network/api_client.dart';
 import '../services/auth_session.dart';
 import '../services/notification_scheduler.dart';
@@ -48,7 +49,7 @@ class ConsultationRepository {
     if (at == null || booking['_id'] == null) return;
     try {
       await NotificationScheduler.instance.scheduleConsultation(id: '${booking['_id']}', title: 'تذكير: استشارتك بعد ساعة', at: at);
-    } catch (_) { /* The booking remains valid when device reminders are denied. */ }
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/repositories/consultation_repository.dart:51'); /* The booking remains valid when device reminders are denied. */ }
   }
 
   // ---- Staff availability & bookings (requires the 'consultations'

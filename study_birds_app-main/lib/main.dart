@@ -18,6 +18,7 @@ import 'package:flutter/material.dart';
 import 'core/config/app_theme.dart';
 import 'core/services/auth_session.dart';
 import 'core/utils/app_error.dart';
+import 'core/services/error_reporter.dart';
 import 'core/utils/animations.dart';
 
 import 'screens/auth/splash_screen.dart';
@@ -87,21 +88,56 @@ void main() async {
     ErrorWidget.builder = (_) => const Directionality(textDirection: TextDirection.rtl,
       child: Material(color: AppColors.background, child: ErrorState()));
   }
-  // Render the splash on the first frame — no blocking before the user sees anything
+  // Sentry is initialised BEFORE the first frame (it is local and fast, capped
+  // at 3s) so errors during startup are captured, not lost.
+  await _initSentry();
+  // Render the splash on the first frame - nothing else blocks it.
   runApp(SentryWidget(child: const StudyBirdsApp()));
   _initServicesInBackground();
 }
 
+Future<void> _initSentry() async {
+  try {
+    await SentryFlutter.init((options) {
+      // An empty DSN disables Sentry entirely.
+      const enabled = kReleaseMode ||
+          bool.fromEnvironment('SENTRY_ENABLED', defaultValue: false);
+      options.dsn = enabled ? AppConfig.sentryDsn : '';
+      // Debug runs never pollute the production project.
+      options.environment = const String.fromEnvironment('SENTRY_ENV',
+          defaultValue: kReleaseMode ? 'production' : 'development');
+      // Sampling kept low: profiling and tracing are costly on weak devices.
+      options.tracesSampleRate = 0.05;
+      options.profilesSampleRate = 0.0;
+      options.attachScreenshot = false;
+      options.sendDefaultPii = false;
+      options.attachViewHierarchy = false;
+      options.maxBreadcrumbs = 60;
+      options.beforeSend = (event, hint) {
+        // Offline / timeout noise is expected, not a defect.
+        final error = event.throwable;
+        if (error != null && ErrorReporter.isExpected(error)) return null;
+        return event;
+      };
+      options.beforeBreadcrumb = (crumb, hint) {
+        if (crumb == null) return null;
+        // HTTP breadcrumbs may carry URLs with ids/tokens in the query string.
+        final data = crumb.data;
+        final url = data?['url'];
+        return crumb.copyWith(
+          message: crumb.message == null ? null : AppError.redact(crumb.message!),
+          data: (url is String && url.contains('?'))
+              ? {...data!, 'url': url.split('?').first}
+              : data,
+        );
+      };
+    }).timeout(const Duration(seconds: 3));
+  } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'main.dart:132');
+    // Monitoring must never stop the app from starting.
+  }
+}
+
 Future<void> _initServicesInBackground() async {
-  // Sentry first so it can capture errors in subsequent inits
-  await _safeInit(() => SentryFlutter.init((options) {
-    options.dsn = AppConfig.sentryDsn;
-    options.tracesSampleRate = 0.2;
-    options.profilesSampleRate = 0.1;
-    options.attachScreenshot = false;
-    options.sendDefaultPii = false;
-    options.attachViewHierarchy = false;
-  }));
   // All four services run in parallel instead of sequentially
   await Future.wait([
     _safeInit(PushNotificationService.instance.init),
@@ -114,7 +150,7 @@ Future<void> _initServicesInBackground() async {
 
 Future<void> _safeInit(Future<void> Function() initialize) async {
   try { await initialize(); } catch (error, stack) {
-    try { await Sentry.captureException(error, stackTrace: stack); } catch (_) {
+    try { await Sentry.captureException(error, stackTrace: stack); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'main.dart:150');
       // Optional services and diagnostic delivery must not block startup.
     }
   }
@@ -163,7 +199,7 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
       if (allow == true) {
         try {
           await PushNotificationService.instance.requestPermission();
-        } catch (_) {
+        } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'main.dart:199');
           rootScaffoldMessengerKey.currentState?.showSnackBar(
             AppSnackBar(
                 content: Text(
@@ -236,7 +272,7 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
       await AuthSession.instance.restore();
       final prefs = await SharedPreferences.getInstance();
       _onboardingDone = prefs.getBool('_onboarding_done') ?? false;
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'main.dart:272');
       if (mounted)
         _error = 'تعذر استعادة الحساب. تحقق من الاتصال وحاول مجددًا.';
     } finally {

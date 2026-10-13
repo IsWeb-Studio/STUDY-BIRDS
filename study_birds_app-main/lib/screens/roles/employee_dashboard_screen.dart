@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'follow_up_reminders_screen.dart';
 import 'admin_scholarships_screen.dart';
@@ -249,7 +250,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
       final data = await EmployeeRepository.instance.getMyKpis();
       if (!mounted) return;
       setState(() => _myKpis = data);
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/employee_dashboard_screen.dart:252');}
   }
 
   Future<void> _loadReminders() async {
@@ -265,7 +266,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
         return due != null && due.isBefore(now.add(const Duration(hours: 24)));
       }).length;
       setState(() => _overdueReminders = overdue);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/employee_dashboard_screen.dart:268');
     } finally {
       if (mounted) setState(() => _remindersLoading = false);
     }
@@ -294,7 +295,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
       );
       final url = (data as Map<String, dynamic>)['avatar'] as String;
       if (mounted) setState(() => _avatarUrl = url);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/employee_dashboard_screen.dart:297');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text('تعذر رفع الصورة'),

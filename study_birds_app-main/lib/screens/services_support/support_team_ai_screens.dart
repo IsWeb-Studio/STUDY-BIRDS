@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/utils/document_access.dart';
@@ -165,7 +166,7 @@ class _NewSupportTicketScreenState extends State<NewSupportTicketScreen> {
       if (!mounted) return;
       widget.onSubmit?.call();
       Navigator.of(context).pop(true);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/support_team_ai_screens.dart:168');
       if (mounted)
         setState(() => _error = 'تعذر إرسال التذكرة، حاول مرة أخرى.');
     } finally {
@@ -293,7 +294,7 @@ class _SupportTicketsListScreenState extends State<SupportTicketsListScreen> {
         _tickets = data;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/support_team_ai_screens.dart:296');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل تذاكرك.';
@@ -457,7 +458,7 @@ class _SupportTicketDetailScreenState
                         if (!await launchUrl(uri,
                             mode: LaunchMode.externalApplication))
                           throw Exception('Cannot open attachment');
-                      } catch (_) {
+                      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/support_team_ai_screens.dart:460');
                         if (context.mounted)
                           ScaffoldMessenger.of(context).showSnackBar(
                               AppSnackBar(

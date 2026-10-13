@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -35,7 +36,7 @@ class _AdminSupportTicketsScreenState extends State<AdminSupportTicketsScreen> {
         _tickets = data;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_support_knowledge_screens.dart:38');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل التذاكر.';
@@ -142,7 +143,7 @@ class _AdminKnowledgeBaseScreenState extends State<AdminKnowledgeBaseScreen> {
         _items = data;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_support_knowledge_screens.dart:145');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل المحتوى.';
@@ -178,7 +179,7 @@ class _AdminKnowledgeBaseScreenState extends State<AdminKnowledgeBaseScreen> {
                 try {
                   await AdminModulesRepository.instance.createKnowledgeBaseItem(title: titleController.text.trim(), body: bodyController.text.trim());
                   if (context.mounted) Navigator.of(context).pop(true);
-                } catch (_) {
+                } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_support_knowledge_screens.dart:181');
                   if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر النشر')));
                 }
               },
@@ -195,7 +196,7 @@ class _AdminKnowledgeBaseScreenState extends State<AdminKnowledgeBaseScreen> {
     try {
       await AdminModulesRepository.instance.deleteKnowledgeBaseItem(id);
       if (mounted) setState(() => _items.removeWhere((i) => (i as Map<String, dynamic>)['_id'] == id));
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_support_knowledge_screens.dart:198');
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر الحذف')));
     }
   }

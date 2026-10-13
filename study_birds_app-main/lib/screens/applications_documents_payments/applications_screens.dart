@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/services/auth_session.dart';
@@ -120,7 +121,7 @@ class _ApplicationsListScreenState extends State<ApplicationsListScreen>
         _apps = apps;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/applications_screens.dart:123');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل طلباتك، تحقق من الاتصال وحاول مرة أخرى.';

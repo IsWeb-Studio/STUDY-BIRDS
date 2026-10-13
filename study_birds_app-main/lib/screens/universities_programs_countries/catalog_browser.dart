@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/repositories/catalog_repository.dart';
@@ -224,7 +225,7 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
         initializedCountry = true;
         loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/catalog_browser.dart:227');
       if (mounted) {
         setState(() {
           loading = false;

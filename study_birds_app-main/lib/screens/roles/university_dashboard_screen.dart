@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
 import '../profile_account/security_settings_screen.dart';
@@ -66,7 +67,7 @@ class _UniversityDashboardScreenState
       final url = await UniversityRepository.instance
           .uploadAvatar(fileBytes: bytes, fileName: img.name);
       if (mounted) setState(() => _avatarUrl = url);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/university_dashboard_screen.dart:69');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text('تعذر رفع الصورة'),

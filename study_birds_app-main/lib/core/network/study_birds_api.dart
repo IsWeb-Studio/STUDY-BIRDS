@@ -1,3 +1,4 @@
+import '../services/error_reporter.dart';
 import '../utils/app_error.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -136,7 +137,7 @@ class StudyBirdsApi extends ChangeNotifier {
     dynamic data;
     try {
       data = response.body.isEmpty ? null : jsonDecode(utf8.decode(response.bodyBytes));
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/network/study_birds_api.dart:139');
       throw ApiException(
           'استجابة غير صالحة من الخادم (${response.statusCode}).', response.statusCode);
     }
@@ -212,7 +213,7 @@ class StudyBirdsApi extends ChangeNotifier {
         data = response.body.isEmpty
             ? null
             : jsonDecode(utf8.decode(response.bodyBytes));
-      } catch (_) {
+      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/network/study_birds_api.dart:215');
         throw ApiException(
             'استجابة غير صالحة من الخادم (${response.statusCode}).',
             response.statusCode);

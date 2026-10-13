@@ -1,3 +1,4 @@
+import '../services/error_reporter.dart';
 import '../services/secure_data_cache.dart';
 import '../network/api_client.dart';
 import '../utils/passport_scan.dart';
@@ -163,7 +164,7 @@ class StudentRepository {
       final data = await ApiClient.instance.get('/students/$resource', token: sessionToken);
       // A response from the account that just signed out must not refill its cache.
       if (owner.isNotEmpty && AuthSession.instance.currentUser?.id == owner && AuthSession.instance.token != null) {
-        try { await SecureDataCache.write(owner, resource, data as Object); } catch (_) {}
+        try { await SecureDataCache.write(owner, resource, data as Object); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/repositories/student_repository.dart:166');}
       }
       return data;
     } catch (error) {
@@ -172,7 +173,7 @@ class StudentRepository {
         try {
           final cached = await SecureDataCache.read(owner, resource);
           if (cached != null) return cached;
-        } catch (_) {}
+        } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/repositories/student_repository.dart:175');}
       }
       rethrow;
     }

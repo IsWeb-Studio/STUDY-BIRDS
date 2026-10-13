@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -110,7 +111,7 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
           _index = 0;
         });
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/student_banner_carousel.dart:113');
       // keep fallback
     }
   }

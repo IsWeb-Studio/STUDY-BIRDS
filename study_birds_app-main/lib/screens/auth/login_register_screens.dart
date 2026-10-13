@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/utils/password_policy.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/utils/app_error.dart';
@@ -795,7 +796,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
     });
     try {
       await AuthSession.instance.logout(revoke: false);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/auth/login_register_screens.dart:798');
       if (mounted)
         setState(() => _error = 'تعذر العودة لتسجيل الدخول. حاول مجددًا.');
     } finally {
@@ -842,7 +843,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
       await AuthSession.instance.patchHasPassword();
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/auth/login_register_screens.dart:845');
       if (mounted)
         setState(() => _error = 'تعذر حفظ كلمة المرور. حاول مجددًا.');
     } finally {

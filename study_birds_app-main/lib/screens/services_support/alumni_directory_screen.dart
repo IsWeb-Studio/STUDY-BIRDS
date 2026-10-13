@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -83,7 +84,7 @@ class _AlumniProfileEditorState extends State<_AlumniProfileEditor> {
         for (final entry in _fields.entries) { entry.value.text = '${data[entry.key] ?? ''}'; }
         _public = data['isPublic'] == true; _mentoring = data['openToMentoring'] == true;
       }
-    } catch (_) { if (mounted) _error = 'تعذر تحميل ملفك'; }
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/alumni_directory_screen.dart:86'); if (mounted) _error = 'تعذر تحميل ملفك'; }
     finally { if (mounted) setState(() => _loading = false); }
   }
   Future<void> _save() async {

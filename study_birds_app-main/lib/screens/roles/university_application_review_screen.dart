@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -78,7 +79,7 @@ class _UniversityApplicationReviewScreenState
       final data = await UniversityRepository.instance
           .getApplicationById(widget.applicationId);
       if (mounted) setState(() => _app = data);
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/university_application_review_screen.dart:81');}
     finally {
       if (mounted) setState(() => _firstLoad = false);
     }
@@ -95,7 +96,7 @@ class _UniversityApplicationReviewScreenState
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: Text('تم تحديث حالة الطلب'),
           backgroundColor: AppColors.success));
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/university_application_review_screen.dart:98');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: Text('تعذر تحديث الحالة'),
@@ -367,7 +368,7 @@ class _UniversityApplicationReviewScreenState
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text(msg), backgroundColor: AppColors.warning));
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/university_application_review_screen.dart:370');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text('تعذر تحميل رابط الملف'),

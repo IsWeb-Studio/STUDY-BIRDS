@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import '../../core/widgets/security_fields.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +20,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
     try {
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication))
         throw Exception();
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/auth/account_recovery_screen.dart:22');
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
             AppSnackBar(content: Text('تعذر فتح وسيلة التواصل')));
@@ -78,7 +79,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
             ? 'الاستعادة بالرمز غير متاحة حاليًا. تواصل مع الدعم بالوسائل أدناه.'
             : e.message;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/auth/account_recovery_screen.dart:81');
       if (mounted) setState(() => error = 'تعذر الاتصال. حاول مجددًا.');
     } finally {
       if (mounted) setState(() => busy = false);

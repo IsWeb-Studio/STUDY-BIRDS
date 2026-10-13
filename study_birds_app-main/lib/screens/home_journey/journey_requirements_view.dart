@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'journey_timeline_widgets.dart';
 import '../../core/repositories/student_repository.dart';
@@ -171,7 +172,7 @@ class _JourneyDetailScreen extends StatelessWidget {
         if (matches.isEmpty) throw StateError('Application unavailable');
         screen = ApplicationDetailScreen(
             application: Map<String, dynamic>.from(matches.first as Map));
-      } catch (_) {
+      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/journey_requirements_view.dart:174');
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
               content: Text(

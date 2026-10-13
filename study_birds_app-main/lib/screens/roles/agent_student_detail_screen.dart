@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -193,7 +194,7 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
         content: Text('تم رفع "$label" بنجاح'),
         backgroundColor: AppColors.success,
       ));
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/agent_student_detail_screen.dart:196');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
         content: Text('تعذر رفع المستند، حاول مرة أخرى'),
@@ -671,7 +672,7 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
       final data = await AgentRepository.instance.getWallet();
       if (!mounted) return;
       setState(() { _wallet = data; _loading = false; });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/agent_student_detail_screen.dart:674');
       if (!mounted) return;
       setState(() { _error = 'تعذر تحميل بيانات المحفظة.'; _loading = false; });
     }
@@ -689,7 +690,7 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تم إرسال طلب السحب بنجاح'), backgroundColor: AppColors.success));
       _load();
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/agent_student_detail_screen.dart:692');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر إرسال طلب السحب'), backgroundColor: AppColors.danger));
     }

@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -239,7 +240,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       });
       // Mark all as read in the background — user has seen them.
       _markAllReadSilent();
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/notifications_screen.dart:242');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل الإشعارات.';
@@ -263,7 +264,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
     try {
       await StudentRepository.instance.markAllNotificationsRead();
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/notifications_screen.dart:266');
       // Silent failure — unread dots are a convenience, not critical state.
     }
   }
@@ -273,7 +274,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     setState(() => n['isRead'] = true); // optimistic
     try {
       await StudentRepository.instance.markNotificationRead(n['_id'] as String);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/notifications_screen.dart:276');
       if (!mounted) return;
       setState(() => n['isRead'] = false); // revert on failure
     }

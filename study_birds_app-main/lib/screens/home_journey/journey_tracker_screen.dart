@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'journey_requirements_view.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -170,7 +171,7 @@ class _LiveJourneyScreenState extends State<LiveJourneyScreen> {
                 journeys: journeys,
                 onRefresh: () async {
                   refresh();
-                  try { await future; } catch (_) {}
+                  try { await future; } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/journey_tracker_screen.dart:173');}
                 });
           }
           final stage = overview.journeyStage;
@@ -178,7 +179,7 @@ class _LiveJourneyScreenState extends State<LiveJourneyScreen> {
             return JourneyRequirementsView(
               onRefresh: () async {
                 refresh();
-                try { await future; } catch (_) {}
+                try { await future; } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/journey_tracker_screen.dart:181');}
               },
               journeys: overview.stages.isEmpty
                   ? []
@@ -204,7 +205,7 @@ class _LiveJourneyScreenState extends State<LiveJourneyScreen> {
           return RefreshIndicator(
               onRefresh: () async {
                 refresh();
-                try { await future; } catch (_) {}
+                try { await future; } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/journey_tracker_screen.dart:207');}
               },
               color: AppColors.navy,
               child: JourneyTrackerScreen(

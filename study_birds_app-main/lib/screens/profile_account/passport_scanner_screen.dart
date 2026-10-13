@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -48,7 +49,7 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
       await ctrl.initialize();
       if (!mounted) { ctrl.dispose(); return; }
       setState(() { _ctrl = ctrl; _ready = true; });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/passport_scanner_screen.dart:51');
       if (mounted) setState(() => _error = 'تعذر فتح الكاميرا');
     }
   }
@@ -72,7 +73,7 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
     try {
       final img = await _ctrl!.takePicture();
       if (mounted) Navigator.of(context).pop(img);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/passport_scanner_screen.dart:75');
       if (mounted) {
         setState(() => _capturing = false);
         ScaffoldMessenger.of(context).showSnackBar(

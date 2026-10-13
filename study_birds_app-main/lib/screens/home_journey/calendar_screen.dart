@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/widgets/feature_ui.dart';
@@ -46,7 +47,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
               final days = DateUtils.getDaysInMonth(month.year, month.month);
               final offset = month.weekday % 7;
               return RefreshIndicator(
-                onRefresh: () async { refresh(); try { await future; } catch (_) {} },
+                onRefresh: () async { refresh(); try { await future; } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/calendar_screen.dart:49');} },
                 color: AppColors.navy,
                 child: FeatureBody(children: [
                 const FeatureIntro(

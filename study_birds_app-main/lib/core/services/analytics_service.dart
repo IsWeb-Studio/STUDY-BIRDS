@@ -1,3 +1,4 @@
+import 'error_reporter.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:posthog_flutter/posthog_flutter.dart';
 import '../config/app_config.dart';
@@ -33,12 +34,12 @@ class AnalyticsService {
     try {
       final props = traits?.map((k, v) => MapEntry(k, v as Object));
       await Posthog().identify(userId: userId, userProperties: props);
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/analytics_service.dart:36');}
   }
 
   Future<void> reset() async {
     if (!_ready) return;
-    try { await Posthog().reset(); } catch (_) {}
+    try { await Posthog().reset(); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/analytics_service.dart:41');}
   }
 
   Future<void> track(String event, [Map<String, dynamic>? props]) async {
@@ -50,7 +51,7 @@ class AnalyticsService {
         eventName: event,
         properties: {'userId': userId, ...?props},
       );
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/analytics_service.dart:53');}
   }
 
   // ── convenience wrappers ──────────────────────────────────────────────────
@@ -58,7 +59,7 @@ class AnalyticsService {
   Future<void> screenView(String screenName) async {
     if (kDebugMode) print('[Analytics] screen: $screenName');
     if (!_ready) return;
-    try { await Posthog().screen(screenName: screenName); } catch (_) {}
+    try { await Posthog().screen(screenName: screenName); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/analytics_service.dart:61');}
   }
 
   Future<void> buttonTap(String button, {String? screen}) =>

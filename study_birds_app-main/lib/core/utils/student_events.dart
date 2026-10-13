@@ -1,3 +1,4 @@
+import '../services/error_reporter.dart';
 import '../repositories/student_repository.dart';
 import '../repositories/consultation_repository.dart';
 import '../services/auth_session.dart' show AuthSession;
@@ -147,7 +148,7 @@ Future<List<StudentEvent>> loadActivityEvents() async {
     final raw = await ApiClient.instance.get(
         '/service-requests/mine', token: AuthSession.instance.token);
     serviceRequests = raw is List ? raw : [];
-  } catch (_) {
+  } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/utils/student_events.dart:150');
     serviceRequests = [];
   }
   return activityEvents(applications, documents, notifications,

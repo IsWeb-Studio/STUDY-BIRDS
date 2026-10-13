@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/services/analytics_service.dart';
@@ -83,7 +84,7 @@ class _ActivityLogScreenState extends State<ActivityLogScreen> {
             return RefreshIndicator(
               onRefresh: () async {
                 _refresh();
-                try { await future; } catch (_) {}
+                try { await future; } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/activity_log_screen.dart:86');}
               },
               color: AppColors.navy,
               child: ListView.builder(

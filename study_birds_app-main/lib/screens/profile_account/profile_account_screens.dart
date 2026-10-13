@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import '../../core/utils/app_error.dart';
 import 'dart:convert';
@@ -54,14 +55,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (b64 != null && b64.isNotEmpty && mounted) {
         setState(() => _avatarBytes = base64Decode(b64));
       }
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/profile_account_screens.dart:57');}
   }
 
   Future<void> _cacheAvatar(Uint8List bytes) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_avatarPrefKey, base64Encode(bytes));
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/profile_account_screens.dart:64');}
   }
 
   Future<void> _load() async {
@@ -76,7 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _profile = profile;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/profile_account_screens.dart:79');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل ملفك الشخصي.';
@@ -709,7 +710,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         _favorites = data;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/profile_account_screens.dart:712');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل المفضلة.';
@@ -724,7 +725,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       if (mounted)
         setState(() => _favorites
             .removeWhere((f) => (f as Map<String, dynamic>)['_id'] == id));
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/profile_account_screens.dart:727');
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
             AppSnackBar(content: Text('تعذر إزالة العنصر من المفضلة')));

@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -48,7 +49,7 @@ class _BirdsAiScreenState extends State<BirdsAiScreen> {
       if (q is List) {
         setState(() => _suggested = List<String>.from(q.whereType<String>()));
       }
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/ai/birds_ai_screen.dart:51');}
   }
 
   Future<void> _send([String? text]) async {

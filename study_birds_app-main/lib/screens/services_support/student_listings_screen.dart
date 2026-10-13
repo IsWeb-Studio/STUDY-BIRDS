@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -42,7 +43,7 @@ class _StudentListingsScreenState extends State<StudentListingsScreen> {
                 if (uri == null || uri.scheme != 'https' || uri.userInfo.isNotEmpty) return;
                 try {
                   if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) throw Exception();
-                } catch (_) {
+                } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/student_listings_screen.dart:45');
                   if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر فتح الرابط')));
                 }
               }, child: Text(widget.kind == 'offer' ? 'الاستفادة من العرض' : 'تفاصيل التقديم')),

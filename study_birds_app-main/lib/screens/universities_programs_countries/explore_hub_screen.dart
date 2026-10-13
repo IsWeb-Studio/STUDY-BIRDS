@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/services/favorites_service.dart';
@@ -208,7 +209,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
           _loading = false;
         });
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/explore_hub_screen.dart:211');
       if (mounted) setState(() => _loading = false);
     }
   }

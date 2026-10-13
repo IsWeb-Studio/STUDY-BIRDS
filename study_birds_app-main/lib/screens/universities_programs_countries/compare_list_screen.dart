@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -42,7 +43,7 @@ class _CompareListScreenState extends State<CompareListScreen> {
       selected.addAll((prefs.getStringList(storageKey) ?? [])
           .where((id) => universities.any((u) => u['_id'] == id))
           .take(3));
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/compare_list_screen.dart:45');
       error = 'تعذر تحميل الجامعات';
     } finally {
       if (mounted) setState(() => loading = false);
@@ -69,7 +70,7 @@ class _CompareListScreenState extends State<CompareListScreen> {
         await prefs.setStringList(storageKey, ids);
       });
       await pendingSave;
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/compare_list_screen.dart:72');
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
             AppSnackBar(content: Text('تعذر حفظ الاختيار على الجهاز')));

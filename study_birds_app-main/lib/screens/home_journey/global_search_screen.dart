@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -69,7 +70,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         _articles = results[4];
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/global_search_screen.dart:72');
       if (mounted)
         setState(() {
           _loading = false;

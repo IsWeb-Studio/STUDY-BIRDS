@@ -1,6 +1,7 @@
 import 'dart:async';
 import '../utils/app_error.dart';
 import '../services/connectivity_service.dart';
+import '../services/error_reporter.dart';
 import 'dart:convert';
 import 'dart:io' show IOException, Platform;
 import 'dart:math' show Random;
@@ -127,7 +128,7 @@ class ApiClient {
       if (body != null) request.body = jsonEncode(body);
       return await http.Response.fromStream(await _http.send(request));
     }, mayChangeData: mutating && !path.startsWith('/auth/'));
-    return _decode(response);
+    return _decodeReporting(response, method, path);
   }
 
   /// Identical concurrent GETs share one request (no pile-up after reconnect).
@@ -249,7 +250,7 @@ class ApiClient {
       try {
         final streamed = await client.send(request);
         return await http.Response.fromStream(streamed);
-      } catch (_) {
+      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/network/api_client.dart:253');
         if (cancellation?.cancelled == true) throw const ApiException(499, 'تم إلغاء الرفع');
         rethrow;
       } finally {
@@ -257,7 +258,18 @@ class ApiClient {
         client.close();
       }
     }, mayChangeData: true);
-    return _decode(response);
+    return _decodeReporting(response, 'POST', path);
+  }
+
+  /// Decodes and records failures: every non-2xx leaves a breadcrumb, and
+  /// server-side faults (5xx, unparseable 2xx) become de-duplicated Sentry events.
+  dynamic _decodeReporting(http.Response response, String method, String path) {
+    try {
+      return _decode(response);
+    } on ApiException catch (e) {
+      ErrorReporter.apiFailure(method, path, e.statusCode, error: e);
+      rethrow;
+    }
   }
 
   dynamic _decode(http.Response response) {
@@ -265,7 +277,7 @@ class ApiClient {
     late final dynamic decoded;
     try {
       decoded = jsonDecode(bodyText);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/network/api_client.dart:280');
       if (response.statusCode >= 200 && response.statusCode < 300) {
         throw const ApiException(502, AppError.unavailable);
       }

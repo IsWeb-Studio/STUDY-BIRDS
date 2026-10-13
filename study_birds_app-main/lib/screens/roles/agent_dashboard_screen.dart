@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
 import '../profile_account/security_settings_screen.dart';
@@ -93,7 +94,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
         _loading = false;
       });
       _applyFilter();
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/agent_dashboard_screen.dart:96');
       if (!mounted) return;
       setState(() { _error = 'تعذر تحميل بيانات لوحتك.'; _loading = false; });
     }
@@ -895,7 +896,7 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
         applicationStage: _stage,
       );
       if (mounted) Navigator.of(context).pop({'name': name});
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/agent_dashboard_screen.dart:898');
       if (mounted) setState(() => _error = 'تعذر إضافة الطالب، تأكد من البيانات وحاول مرة أخرى.');
     } finally {
       if (mounted) setState(() => _saving = false);

@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'arrival_services_screen.dart';
 import 'package:flutter/material.dart';
@@ -140,7 +141,7 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
         _error = e.message;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/visa_travel_screens.dart:143');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل بيانات التأشيرة. تحقق من الإنترنت وحاول مجدداً.';
@@ -362,7 +363,7 @@ class _VisaStepsScreenState extends State<VisaStepsScreen> {
         _error = e.message;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/visa_travel_screens.dart:365');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل مراحل التأشيرة.';
@@ -492,7 +493,7 @@ class _TravelCenterScreenState extends State<TravelCenterScreen> {
         _error = e.message;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/visa_travel_screens.dart:495');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل بيانات السفر.';
@@ -620,7 +621,7 @@ class _AirportPickupScreenState extends State<AirportPickupScreen> {
         _error = e.message;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/visa_travel_screens.dart:623');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل بيانات الاستقبال.';
@@ -796,7 +797,7 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
     try {
       final d = await StudentRepository.instance.getInsurance();
       if (mounted) setState(() { _data = d; _loading = false; });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/visa_travel_screens.dart:799');
       if (mounted) setState(() { _error = 'تعذر تحميل بيانات التأمين.'; _loading = false; });
     }
   }
@@ -974,7 +975,7 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
     try {
       final d = await StudentRepository.instance.getEquivalency();
       if (mounted) setState(() { _data = d; _loading = false; });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/visa_travel_screens.dart:977');
       if (mounted) setState(() { _error = 'تعذر تحميل بيانات المعادلة.'; _loading = false; });
     }
   }

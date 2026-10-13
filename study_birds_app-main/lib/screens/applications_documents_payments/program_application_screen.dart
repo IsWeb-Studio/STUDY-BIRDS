@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
@@ -79,7 +80,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
         }
       }
       updateDocuments(values[2] as List);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/program_application_screen.dart:82');
       if (mounted) error = 'تعذر تحميل بيانات التقديم. حاول مرة أخرى.';
     } finally {
       if (mounted) {
@@ -127,7 +128,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
           });
         }
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/program_application_screen.dart:130');
       if (mounted) {
         setState(() {
           error = 'تعذر تحديث قائمة المستندات.';

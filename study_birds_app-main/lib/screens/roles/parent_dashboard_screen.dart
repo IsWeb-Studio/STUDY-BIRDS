@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -93,7 +94,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         _loadOverview(0);
         _loadPayments(0);
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/parent_dashboard_screen.dart:96');
       if (!mounted) return;
       setState(() {
         _loadError = 'تعذر تحميل بياناتك. تحقق من الاتصال وحاول مجدداً.';
@@ -119,7 +120,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         _overview = data;
         _loadingOverview = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/parent_dashboard_screen.dart:122');
       if (!mounted || request != _overviewRequest) return;
       setState(() => _loadingOverview = false);
     }
@@ -140,7 +141,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         _payments = data;
         _loadingPayments = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/parent_dashboard_screen.dart:143');
       if (!mounted) return;
       setState(() => _loadingPayments = false);
     }
@@ -176,7 +177,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             backgroundColor: AppColors.success));
       }
       await _loadChildren();
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/parent_dashboard_screen.dart:179');
       if (mounted)
         setState(() => _requestError =
             'تعذر إرسال الطلب — تأكد من أن البريد صحيح ومسجّل كحساب طالب.');
@@ -1006,7 +1007,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     try {
       final d = DateTime.parse(iso).toLocal();
       return '${d.day}/${d.month}/${d.year}';
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/parent_dashboard_screen.dart:1009');
       return iso;
     }
   }
@@ -1134,7 +1135,7 @@ class _PayInvoiceButtonState extends State<_PayInvoiceButton> {
             backgroundColor: AppColors.success));
         widget.onPaid();
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/parent_dashboard_screen.dart:1137');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text('تعذر رفع الملف، حاول مرة أخرى'),

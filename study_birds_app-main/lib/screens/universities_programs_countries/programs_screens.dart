@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -116,7 +117,7 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (_) => ProgramFinderResultsScreen(result: result)));
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/programs_screens.dart:119');
       if (mounted) setState(() => _error = 'تعذر إرسال بياناتك، حاول مرة أخرى.');
     } finally {
       if (mounted) setState(() => _submitting = false);

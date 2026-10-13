@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -242,7 +243,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
     try {
       final rates = await CurrencyService.instance.fetchRates(_from);
       if (mounted) setState(() => _rates = rates);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/student_rewards_currency_screens.dart:245');
       if (mounted) setState(() => _error = 'تعذر جلب أسعار الصرف.');
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -477,7 +478,7 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
       unpaidInvoices = ((fin['invoices'] as List?) ?? [])
           .where((i) => (i as Map)['status'] == 'unpaid')
           .toList();
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/student_rewards_currency_screens.dart:480');}
 
     if (!mounted) return;
     if (unpaidInvoices.isEmpty) {

@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -83,7 +84,7 @@ class _AdminEventRegistrationsScreenState extends State<AdminEventRegistrationsS
       final data = await AdminModulesRepository.instance.getEventRegistrations();
       if (!mounted) return;
       setState(() { _regs = data; _loading = false; });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_singleton_hub_screens.dart:86');
       if (!mounted) return;
       setState(() { _error = 'تعذر تحميل التسجيلات.'; _loading = false; });
     }

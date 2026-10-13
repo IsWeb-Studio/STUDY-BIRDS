@@ -1,3 +1,4 @@
+import '../services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
 import 'country_data.dart';
@@ -114,7 +115,7 @@ const kRelationshipOptions = [
 Country? countryByIso2(String iso2) {
   try {
     return kCountries.firstWhere((c) => c.iso2 == iso2.toUpperCase());
-  } catch (_) {
+  } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/utils/profile_field_data.dart:117');
     return null;
   }
 }
@@ -129,7 +130,7 @@ Country? countryByIso2(String iso2) {
     try {
       final c = kCountries.firstWhere((c) => c.dialCode == code);
       return (country: c, local: digits.substring(len));
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/utils/profile_field_data.dart:132');}
   }
   return null;
 }

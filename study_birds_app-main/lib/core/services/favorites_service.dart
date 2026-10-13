@@ -1,3 +1,4 @@
+import 'error_reporter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../network/api_client.dart';
 import 'auth_session.dart';
@@ -78,7 +79,7 @@ class FavoritesService {
         // { removed: true } means item was deleted → not a favorite
         // anything else means it was added → is a favorite
         return res['removed'] != true;
-      } catch (_) {
+      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/favorites_service.dart:81');
         // Server error — local optimistic state stands
       }
     }
@@ -105,7 +106,7 @@ class FavoritesService {
             })
             .where((id) => id.isNotEmpty)
             .toSet();
-      } catch (_) {
+      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/favorites_service.dart:108');
         // Fall through to local cache
       }
     }

@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -209,7 +210,7 @@ class _ListingCardState extends State<_ListingCard> {
         ScaffoldMessenger.of(context)
             .showSnackBar(AppSnackBar(content: Text(e.message)));
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/accommodation_arrival_screens.dart:212');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           AppSnackBar(content: Text('حدث خطأ. أعد المحاولة.')),
@@ -424,7 +425,7 @@ class _BookingCardState extends State<_BookingCard> {
         ScaffoldMessenger.of(context)
             .showSnackBar(AppSnackBar(content: Text(e.message)));
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/accommodation_arrival_screens.dart:427');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           AppSnackBar(content: Text('حدث خطأ. أعد المحاولة.')),

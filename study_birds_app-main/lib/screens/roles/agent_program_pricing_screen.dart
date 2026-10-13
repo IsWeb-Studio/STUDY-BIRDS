@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/repositories/catalog_repository.dart';
@@ -36,7 +37,7 @@ class _AgentProgramPricingScreenState extends State<AgentProgramPricingScreen> {
         _programs = data;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/agent_program_pricing_screen.dart:39');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل البرامج.';

@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -35,7 +36,7 @@ class _AdminStudentFinancialsScreenState extends State<AdminStudentFinancialsScr
         _data = data;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_financials_marketing_screens.dart:38');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل البيانات المالية.';
@@ -208,7 +209,7 @@ class _AdminMarketingAssetsScreenState extends State<AdminMarketingAssetsScreen>
         _assets = data;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_financials_marketing_screens.dart:211');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل المواد التسويقية.';
@@ -221,7 +222,7 @@ class _AdminMarketingAssetsScreenState extends State<AdminMarketingAssetsScreen>
     try {
       await AdminModulesRepository.instance.deleteMarketingAsset(id);
       if (mounted) setState(() => _assets.removeWhere((a) => (a as Map<String, dynamic>)['_id'] == id));
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_financials_marketing_screens.dart:224');
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر الحذف')));
     }
   }

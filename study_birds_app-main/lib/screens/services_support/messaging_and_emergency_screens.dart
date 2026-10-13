@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'dart:async';
 import 'dart:convert';
@@ -100,7 +101,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
         final missing = value.where((m) => !seen.contains('${m['_id']}'));
         if (missing.isNotEmpty) messages = [...messages, ...missing];
       });
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/messaging_and_emergency_screens.dart:103');}
   }
 
   void _connectSse() {
@@ -151,7 +152,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
           // Mark as read immediately
           ApiClient.instance.post('/mobile-workspace/messages/read',
               token: token, body: {'sender': senderId}).catchError((_) {});
-        } catch (_) {}
+        } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/messaging_and_emergency_screens.dart:154');}
       },
               onError: (_) => _scheduleSse(),
               onDone: _scheduleSse,
@@ -432,7 +433,7 @@ class EmergencySupportScreen extends StatelessWidget {
     try {
       final uri = Uri.parse(url);
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) throw '';
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/messaging_and_emergency_screens.dart:435');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             AppSnackBar(content: Text('تعذر فتح التطبيق الخارجي')));

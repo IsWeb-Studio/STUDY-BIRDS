@@ -1,4 +1,5 @@
-﻿import 'dart:async';
+﻿import '../../core/services/error_reporter.dart';
+import 'dart:async';
 import 'package:study_birds/core/network/api_client.dart';
 import '../../core/utils/passport_scan.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -339,7 +340,7 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
             .toList();
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/documents_screens.dart:342');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل مستنداتك.';
@@ -525,7 +526,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     try {
       final uri = await resolveDocumentDownload(widget.document['filePath'] as String);
       if (mounted) setState(() => _previewUri = uri);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/documents_screens.dart:528');
     } finally {
       if (mounted) setState(() => _loadingPreview = false);
     }
@@ -712,7 +713,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                       if (!await launchUrl(uri,
                           mode: LaunchMode.externalApplication))
                         throw Exception('Cannot open file');
-                    } catch (_) {
+                    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/documents_screens.dart:715');
                       if (context.mounted)
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                             content: Text(

@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -159,7 +160,7 @@ class _LiveConsultationScreenState extends State<LiveConsultationScreen> {
           !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         throw StateError('Unavailable');
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/live_consultation_screen.dart:162');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             AppSnackBar(content: Text('تعذر فتح رابط الاجتماع.')));

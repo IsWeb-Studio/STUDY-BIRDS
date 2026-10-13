@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
@@ -86,7 +87,7 @@ class _ScholarshipApplicationsScreenState
                   title: 'لا توجد طلبات',
                   message: 'ستظهر طلبات الطلاب هنا.');
             return RefreshIndicator(
-              onRefresh: () async { setState(() => future = fetch()); try { await future; } catch (_) {} },
+              onRefresh: () async { setState(() => future = fetch()); try { await future; } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_scholarships_screen.dart:89');} },
               color: AppColors.navy,
               child: ListView(
                   padding: const EdgeInsets.all(16),

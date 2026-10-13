@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -50,7 +51,7 @@ class _KnowledgeBaseScreenState extends State<KnowledgeBaseScreen> {
         _items = data;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/knowledge_base_screen.dart:53');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل مركز المعرفة.';
@@ -165,7 +166,7 @@ class _ExhibitionsScreenState extends State<ExhibitionsScreen> {
             .toList();
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/knowledge_base_screen.dart:168');
       if (mounted) setState(() { _error = 'تعذر تحميل المقالات. أعد المحاولة.'; _loading = false; });
     }
   }
@@ -306,7 +307,7 @@ class _ExhibitionArticleScreenState extends State<ExhibitionArticleScreen> {
       final res = await StudentRepository.instance.toggleFavorite(
           itemType: 'article', articleSlug: slug, articleTitle: title);
       if (mounted) setState(() => _favorited = res['removed'] != true);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/knowledge_base_screen.dart:309');
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(
           AppSnackBar(content: Text('تعذر تحديث المفضلة.')));
     } finally {

@@ -1,3 +1,4 @@
+import 'error_reporter.dart';
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:google_sign_in/google_sign_in.dart';
 import '../network/api_client.dart';
@@ -111,7 +112,7 @@ class GoogleSignInService {
 
   Future<void> signOut() async {
     _pendingIdToken = null;
-    try { await GoogleSignIn.instance.signOut(); } catch (_) {}
+    try { await GoogleSignIn.instance.signOut(); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/google_sign_in_service.dart:114');}
   }
 
   bool get isAvailable =>

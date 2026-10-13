@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
@@ -29,7 +30,7 @@ class CatalogLanguage extends ChangeNotifier {
         english = saved;
         notifyListeners();
       }
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/catalog_language.dart:32');}
   }
 
   // ── On-demand machine translation of catalog content ───────────────────
@@ -85,7 +86,7 @@ class CatalogLanguage extends ChangeNotifier {
             changed = true;
           }
         }
-      } catch (_) {
+      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/catalog_language.dart:88');
         // server translation unavailable (older deployment, offline, ...)
       }
       // Anything the server did not translate goes straight to the public
@@ -143,7 +144,7 @@ class CatalogLanguage extends ChangeNotifier {
       }
       final result = parts.join('\n').trim();
       return result.isEmpty ? null : result;
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/catalog_language.dart:146');
       return null;
     }
   }
@@ -155,7 +156,7 @@ class CatalogLanguage extends ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool(_key, english);
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/catalog_language.dart:158');}
   }
 }
 

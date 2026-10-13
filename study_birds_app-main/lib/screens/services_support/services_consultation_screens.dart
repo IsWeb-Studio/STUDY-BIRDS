@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'services_center_view.dart';
 import 'live_consultation_screen.dart';
@@ -32,7 +33,7 @@ class _ServicesCenterScreenState extends State<ServicesCenterScreen> {
     setState(() => future = next);
     try {
       await next;
-    } catch (_) {/* The FutureBuilder presents the retry state. */}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/services_consultation_screens.dart:35');/* The FutureBuilder presents the retry state. */}
   }
 
   @override
@@ -267,7 +268,7 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
 
   Future<void> _refresh() async {
     setState(() => _future = ApiClient.instance.get('/service-requests/mine', token: AuthSession.instance.token).then((d) => d is List ? d : []));
-    try { await _future; } catch (_) {}
+    try { await _future; } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/services_consultation_screens.dart:270');}
   }
 
   @override
@@ -468,7 +469,7 @@ class _ConsultationConfirmationScreenState
           !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         throw StateError('unavailable');
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/services_consultation_screens.dart:471');
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
             AppSnackBar(content: Text('تعذر فتح رابط الاجتماع.')));
@@ -499,7 +500,7 @@ class _ConsultationConfirmationScreenState
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         throw StateError('unavailable');
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/services_consultation_screens.dart:502');
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
             AppSnackBar(content: Text('تعذر فتح تطبيق التقويم.')));
@@ -514,7 +515,7 @@ class _ConsultationConfirmationScreenState
     try {
       final bytes = await ApiClient.instance.download('/consultations/bookings/$bookingId/ics', token: AuthSession.instance.token);
       await FilePicker.platform.saveFile(dialogTitle: 'حفظ موعد التقويم', fileName: 'consultation-$bookingId.ics', bytes: Uint8List.fromList(bytes));
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/services_consultation_screens.dart:517');
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
             AppSnackBar(content: Text('تعذر تحميل ملف التقويم.')));

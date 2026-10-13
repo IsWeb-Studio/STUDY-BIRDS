@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -311,7 +312,7 @@ class _AlumniNetworkScreenState extends State<AlumniNetworkScreen> {
             : null;
         _past = results[1] is List ? results[1] as List : [];
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/student_life_alumni_screens.dart:314');
       if (mounted) setState(() => _error = 'تعذر التحميل. أعد المحاولة.');
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -714,7 +715,7 @@ class _ScholarshipCardState extends State<_ScholarshipCard> {
         ScaffoldMessenger.of(context)
             .showSnackBar(AppSnackBar(content: Text(e.message)));
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/student_life_alumni_screens.dart:717');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           AppSnackBar(content: Text('حدث خطأ. أعد المحاولة.')),
@@ -1014,7 +1015,7 @@ class _JobPostsScreenState extends State<JobPostsScreen> {
                                       onPressed: () async {
                                         final uri = Uri.tryParse('${p['externalUrl']}');
                                         if (uri == null || (!uri.scheme.startsWith('http'))) return;
-                                        try { await launchUrl(uri, mode: LaunchMode.externalApplication); } catch (_) {}
+                                        try { await launchUrl(uri, mode: LaunchMode.externalApplication); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/student_life_alumni_screens.dart:1017');}
                                       },
                                     ),
                                   if ('${p['contactEmail'] ?? ''}'.isNotEmpty)
@@ -1023,7 +1024,7 @@ class _JobPostsScreenState extends State<JobPostsScreen> {
                                       label: Text('${p['contactEmail']}', overflow: TextOverflow.ellipsis),
                                       onPressed: () async {
                                         final uri = Uri.parse('mailto:${p['contactEmail']}');
-                                        try { await launchUrl(uri); } catch (_) {}
+                                        try { await launchUrl(uri); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/student_life_alumni_screens.dart:1026');}
                                       },
                                     ),
                                 ]),

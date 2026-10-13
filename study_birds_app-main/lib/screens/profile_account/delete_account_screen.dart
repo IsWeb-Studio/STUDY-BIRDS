@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/security_fields.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
@@ -54,7 +55,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             ? 'كلمة المرور غير صحيحة. تحقق منها وحاول مجدداً.'
             : e.message;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/delete_account_screen.dart:57');
       setState(() => _error = 'تعذر الاتصال بالخادم. تحقق من الإنترنت وحاول مجدداً.');
     } finally {
       if (mounted) setState(() => _busy = false);

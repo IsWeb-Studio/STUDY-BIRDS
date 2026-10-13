@@ -1,3 +1,4 @@
+import 'error_reporter.dart';
 import 'dart:async';
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
@@ -24,7 +25,7 @@ class DeepLinkService {
     try {
       final uri = await _appLinks.getInitialLink();
       if (uri != null) open(uri.toString());
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/deep_link_service.dart:27');}
   }
 
   void open(String link) {

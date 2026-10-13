@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/repositories/admin_modules_repository.dart';
@@ -46,7 +47,7 @@ class _SimpleAdminListScreenState extends State<_SimpleAdminListScreen> {
         _items = data;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_simple_lists_screens.dart:49');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل البيانات.';

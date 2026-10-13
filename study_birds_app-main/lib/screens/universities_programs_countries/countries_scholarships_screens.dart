@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'countries_discovery_view.dart';
 import '../../core/network/api_client.dart';
@@ -40,7 +41,7 @@ class _CountriesExplorerScreenState extends State<CountriesExplorerScreen> {
         _countries = data;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/countries_scholarships_screens.dart:43');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل قائمة الدول.';
@@ -108,7 +109,7 @@ class _CountryDetailScreenState extends State<CountryDetailScreen> {
               (c) => (c as Map)['_id'] == _country['_id'],
               orElse: () => _country) as Map<String, dynamic>;
       if (mounted) setState(() => _country = updated);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/countries_scholarships_screens.dart:111');
     } finally {
       if (mounted) setState(() => _loading = false);
     }

@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -88,7 +89,7 @@ class _NotificationPreferencesScreenState
     setState(() => _requesting = true);
     try {
       await PushNotificationService.instance.requestPermission();
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/notification_preferences_screen.dart:91');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           AppSnackBar(content: Text('تعذر تفعيل الإشعارات. حاول مجددًا.')),
@@ -117,7 +118,7 @@ class _NotificationPreferencesScreenState
           }
         }
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/notification_preferences_screen.dart:120');
       for (final (key, _, _, _) in _categories) {
         _prefs.putIfAbsent(key, () => true);
       }
@@ -136,7 +137,7 @@ class _NotificationPreferencesScreenState
       );
       final p = await SharedPreferences.getInstance();
       await p.setBool('$_prefix$key', value);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/notification_preferences_screen.dart:139');
       if (!mounted) return;
       setState(() => _prefs[key] = previous);
       ScaffoldMessenger.of(context).showSnackBar(
@@ -204,7 +205,7 @@ Future<bool> isNotificationCategoryEnabled(String category) async {
   try {
     final p = await SharedPreferences.getInstance();
     return p.getBool('notif_pref_$category') ?? true;
-  } catch (_) {
+  } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/notification_preferences_screen.dart:207');
     return true;
   }
 }

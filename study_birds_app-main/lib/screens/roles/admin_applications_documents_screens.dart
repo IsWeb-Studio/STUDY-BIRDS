@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/repositories/admin_modules_repository.dart';
@@ -42,7 +43,7 @@ class _AdminApplicationsScreenState extends State<AdminApplicationsScreen> {
                 .toList();
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_applications_documents_screens.dart:45');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل الطلبات.';
@@ -129,7 +130,7 @@ class _AdminStudentDocumentsScreenState
       final data = await AdminModulesRepository.instance.getStudentDocuments();
       if (!mounted) return;
       setState(() { _docs = data; _loading = false; });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_applications_documents_screens.dart:132');
       if (!mounted) return;
       setState(() { _error = 'تعذر تحميل المستندات.'; _loading = false; });
     }

@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/services/analytics_service.dart';
@@ -73,7 +74,7 @@ class _ImportantDatesScreenState extends State<ImportantDatesScreen> {
           return RefreshIndicator(
             onRefresh: () async {
               _refresh();
-              try { await _future; } catch (_) {}
+              try { await _future; } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/important_dates_screen.dart:76');}
             },
             color: AppColors.navy,
             child: ListView.builder(

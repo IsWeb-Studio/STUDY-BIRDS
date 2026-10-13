@@ -1,3 +1,4 @@
+import '../services/error_reporter.dart';
 import 'app_error.dart';
 import 'dart:typed_data';
 import 'package:flutter/services.dart';
@@ -89,7 +90,7 @@ class PassportScan {
           dateOfBirth: dob,
         );
       }
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/utils/passport_scan.dart:92');}
     return (passportNumber: null, dateOfBirth: null);
   }
 

@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
 import 'dart:math' as math;
@@ -71,7 +72,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
           ? await CatalogRepository.instance.getUniversityById(widget.id)
           : await CatalogRepository.instance.getProgramById(widget.id);
       if (mounted) setState(() => data = result);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/catalog_detail.dart:74');
       if (mounted) {
         setState(() => error =
             cl('تعذر تحميل التفاصيل الكاملة. اسحب للتحديث أو أعد المحاولة.', 'Could not load the full details. Pull to refresh or retry.'));
@@ -89,7 +90,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
           universityId: widget.university ? widget.id : null,
           programId: widget.university ? null : widget.id);
       if (mounted) setState(() => favorite = !favorite);
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/catalog_detail.dart:92');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             AppSnackBar(content: Text(cl('تعذر تحديث المفضلة. حاول مجددًا.', 'Could not update favorites. Try again.'))));
@@ -519,7 +520,7 @@ class _ArticleText extends StatelessWidget {
                   mode: LaunchMode.externalApplication)) {
                 throw Exception();
               }
-            } catch (_) {
+            } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/catalog_detail.dart:522');
               if (context.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                     AppSnackBar(content: Text(cl('تعذر فتح الرابط.', 'Could not open the link.'))));

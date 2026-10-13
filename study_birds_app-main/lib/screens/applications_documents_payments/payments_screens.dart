@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/utils/document_access.dart';
@@ -77,7 +78,7 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
         _financials = data;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:80');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل بيانات المدفوعات.';
@@ -389,7 +390,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> with WidgetsB
     try {
       final status = await ApiClient.instance.get('/payments/stripe/status');
       if (mounted) setState(() => _stripeEnabled = status is Map && status['enabled'] == true);
-    } catch (_) { /* Bank transfer remains available when card payment is disabled. */ }
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:392'); /* Bank transfer remains available when card payment is disabled. */ }
   }
 
   Future<void> _refreshInvoice() async {
@@ -400,7 +401,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> with WidgetsB
         setState(() => _invoice = Map<String, dynamic>.from(matches.first));
         if (_invoice['status'] == 'paid') await NotificationScheduler.instance.cancel('payment:${_invoice['_id']}');
       }
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:403');
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر تحديث حالة الدفع. حاول مجددًا.')));
     }
   }
@@ -457,7 +458,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> with WidgetsB
           content: Text('تم رفع إيصال الدفع بنجاح'),
           backgroundColor: AppColors.success));
       Navigator.of(context).pop();
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:460');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: Text('تعذر رفع الإيصال، حاول مرة أخرى'),
@@ -583,7 +584,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         _proofs = data['paymentProofs'] as List<dynamic>? ?? [];
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:586');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل سجل الدفعات.';
@@ -665,7 +666,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                               throw Exception(
                                                   'Cannot open file');
                                             }
-                                          } catch (_) {
+                                          } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:668');
                                             if (context.mounted) {
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(AppSnackBar(

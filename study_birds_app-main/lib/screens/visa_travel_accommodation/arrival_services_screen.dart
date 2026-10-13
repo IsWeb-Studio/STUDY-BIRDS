@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -47,7 +48,7 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
     try {
       final data = await StudentRepository.instance.getApplications();
       applications = data.whereType<Map<String, dynamic>>().toList();
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/arrival_services_screen.dart:50');}
 
     final usedAppIds = _requests
         .map((r) {

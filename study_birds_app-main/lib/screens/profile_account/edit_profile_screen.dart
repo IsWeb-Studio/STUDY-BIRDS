@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import '../../core/utils/app_error.dart';
 import 'package:camera/camera.dart';
@@ -189,7 +190,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       try {
         final c = kCountries.firstWhere((c) => c.nameAr == countryName);
         _residenceIso2 = c.iso2;
-      } catch (_) {
+      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/edit_profile_screen.dart:192');
         _residenceIso2 = '';
       }
 
@@ -268,7 +269,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           .where((d) => d['type'] == 'passport')
           .toList();
       if (passports.isNotEmpty) setState(() => _passportDoc = passports.last);
-    } catch (_) {}
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/edit_profile_screen.dart:271');}
   }
 
   Future<void> _save() async {
@@ -437,7 +438,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
           AppSnackBar(content: Text(e.message), duration: const Duration(seconds: 5)));
       return;
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/edit_profile_screen.dart:440');
       // Unexpected error — allow upload
     } finally {
       if (mounted) setState(() => _passportVerifying = false);

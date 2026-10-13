@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/repositories/catalog_repository.dart';
@@ -33,7 +34,7 @@ class _FaqScreenState extends State<FaqScreen> {
         _faqs = data;
         _loading = false;
       });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/faq_screen.dart:36');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل الأسئلة الشائعة.';

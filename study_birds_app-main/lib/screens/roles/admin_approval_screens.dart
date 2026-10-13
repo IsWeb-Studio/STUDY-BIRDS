@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/repositories/admin_modules_repository.dart';
@@ -146,7 +147,7 @@ class _AdminAgentsScreenState extends State<AdminAgentsScreen> {
       final data = await AdminModulesRepository.instance.getPartners();
       if (!mounted) return;
       setState(() { _agents = data; _loading = false; });
-    } catch (_) {
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_approval_screens.dart:149');
       if (!mounted) return;
       setState(() { _error = 'تعذر تحميل قائمة الوكلاء.'; _loading = false; });
     }
