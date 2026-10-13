@@ -8,7 +8,7 @@ class NotificationPermissionSheet extends StatelessWidget {
   Widget build(BuildContext context) => SingleChildScrollView(
         child: Container(
           padding: EdgeInsets.fromLTRB(
-              24, 16, 24, MediaQuery.of(context).padding.bottom + 20),
+              24, 16, 24, MediaQuery.paddingOf(context).bottom + 20),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(32)),

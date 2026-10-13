@@ -249,7 +249,7 @@ class _AdminMarketingAssetsScreenState extends State<AdminMarketingAssetsScreen>
                             child: Row(
                               children: [
                                 Expanded(child: Text(asset['title'] as String? ?? asset['fileName'] as String? ?? '—', style: AppTextStyles.cardTitle)),
-                                IconButton(icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger), onPressed: () => _delete(asset['_id'] as String)),
+                                IconButton(tooltip: 'حذف', icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger), onPressed: () => _delete(asset['_id'] as String)),
                               ],
                             ),
                           );

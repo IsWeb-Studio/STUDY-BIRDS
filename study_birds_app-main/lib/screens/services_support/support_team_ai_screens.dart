@@ -476,7 +476,7 @@ class _SupportTicketDetailScreenState
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 10),
                       constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.75),
+                          maxWidth: MediaQuery.sizeOf(context).width * 0.75),
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         color: isStudent ? AppColors.navy : Colors.white,
@@ -507,7 +507,7 @@ class _SupportTicketDetailScreenState
                   left: 12,
                   right: 12,
                   top: 10,
-                  bottom: MediaQuery.of(context).viewInsets.bottom > 0 ? 10 : 10,
+                  bottom: MediaQuery.viewInsetsOf(context).bottom > 0 ? 10 : 10,
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,

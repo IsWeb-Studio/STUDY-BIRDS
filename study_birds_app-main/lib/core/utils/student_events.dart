@@ -109,9 +109,9 @@ List<StudentEvent> activityEvents(
 Future<List<StudentEvent>> loadCalendarEvents() async {
   final repo = StudentRepository.instance;
   final results = await Future.wait([
-    repo.getFinancials().catchError((_) => <String, dynamic>{}),
-    repo.getArrivalServices().catchError((_) => <dynamic>[]),
-    repo.getDocuments().catchError((_) => <dynamic>[]),
+    repo.getFinancials().catchError(ErrorReporter.fallback('core/utils/student_events.dart:112', <String, dynamic>{})),
+    repo.getArrivalServices().catchError(ErrorReporter.fallback('core/utils/student_events.dart:113', <dynamic>[])),
+    repo.getDocuments().catchError(ErrorReporter.fallback('core/utils/student_events.dart:114', <dynamic>[])),
   ]);
   final financials = results[0] as Map<String, dynamic>;
   final arrivalList = results[1] as List<dynamic>;

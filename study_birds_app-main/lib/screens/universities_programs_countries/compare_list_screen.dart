@@ -66,7 +66,7 @@ class _CompareListScreenState extends State<CompareListScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final ids = selected.toList();
-      pendingSave = pendingSave.catchError((Object _) {}).then((_) async {
+      pendingSave = pendingSave.catchError(ErrorReporter.silent('screens/universities_programs_countries/compare_list_screen.dart:69')).then((_) async {
         await prefs.setStringList(storageKey, ids);
       });
       await pendingSave;

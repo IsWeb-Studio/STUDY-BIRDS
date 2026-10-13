@@ -126,10 +126,10 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
         if (res.statusCode == 401 && !_sseRefreshed) {
           // Expired access token: renew once, then reconnect with the new one.
           _sseRefreshed = true;
-          res.drain<void>().catchError((_) {});
+          res.drain<void>().catchError(ErrorReporter.silent('screens/services_support/messaging_and_emergency_screens.dart:129'));
           AuthSession.instance.refreshAccessToken(tok).then((fresh) {
             if (mounted && fresh != null) _connectSse();
-          }).catchError((_) {});
+          }).catchError(ErrorReporter.silent('screens/services_support/messaging_and_emergency_screens.dart:132'));
           return;
         }
         // Auth/feature errors will not fix themselves: stop, don't hammer.
@@ -162,13 +162,14 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
           });
           // Mark as read immediately
           ApiClient.instance.post('/mobile-workspace/messages/read',
-              token: token, body: {'sender': senderId}).catchError((_) {});
+              token: token, body: {'sender': senderId}).catchError(ErrorReporter.silent('screens/services_support/messaging_and_emergency_screens.dart:165'));
         } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/messaging_and_emergency_screens.dart:154');}
       },
               onError: (_) => _scheduleSse(),
               onDone: _scheduleSse,
               cancelOnError: true);
-    }).catchError((_) {
+    }).catchError((Object e_, StackTrace s_) {
+      ErrorReporter.swallowed(e_, s_, 'screens/services_support/messaging_and_emergency_screens.dart:171');
       _scheduleSse();
     });
   }
@@ -331,11 +332,27 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
   Widget _thread() => Column(
         children: [
           Expanded(
-            child: ListView(
+            child: ListView.builder(
               reverse: true,
               padding: const EdgeInsets.all(16),
-              children: [
-                for (final row in messages.reversed)
+              // Built lazily: a long conversation no longer builds every bubble.
+              itemCount: messages.length + (older ? 1 : 0) + (messages.isEmpty ? 1 : 0),
+              itemBuilder: (context, index) {
+                if (index >= messages.length) {
+                  final extra = index - messages.length;
+                  if (older && extra == 0) {
+                    return TextButton(
+                        onPressed: () => load(previous: true),
+                        child: const Text('رسائل أقدم'));
+                  }
+                  return const Padding(
+                      padding: EdgeInsets.all(24),
+                      child: Text('ابدأ المحادثة بإرسال رسالة.',
+                          textAlign: TextAlign.center));
+                }
+                // reverse: true => index 0 is the newest message.
+                final row = messages[messages.length - 1 - index];
+                return
                   Align(
                       alignment: '${row['sender']}' ==
                               AuthSession.instance.currentUser?.id
@@ -385,17 +402,8 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
                                     style: const TextStyle(
                                         fontSize: 10, color: Colors.white70))
                             ]),
-                      )),
-                if (older)
-                  TextButton(
-                      onPressed: () => load(previous: true),
-                      child: const Text('رسائل أقدم')),
-                if (messages.isEmpty)
-                  const Padding(
-                      padding: EdgeInsets.all(24),
-                      child: Text('ابدأ المحادثة بإرسال رسالة.',
-                          textAlign: TextAlign.center)),
-              ],
+                      ));
+              },
             ),
           ),
           // Input bar — sits above the keyboard

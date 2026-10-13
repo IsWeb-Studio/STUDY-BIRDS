@@ -152,7 +152,7 @@ class _UniversityApplicationReviewScreenState
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setLocal) => Container(
           padding: EdgeInsets.only(
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 16),
+              bottom: MediaQuery.viewInsetsOf(ctx).bottom + 16),
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius:
@@ -190,8 +190,8 @@ class _UniversityApplicationReviewScreenState
               const Divider(height: 1),
               ConstrainedBox(
                 constraints: BoxConstraints(
-                    maxHeight: (MediaQuery.of(ctx).size.height * 0.35 -
-                            MediaQuery.of(ctx).viewInsets.bottom)
+                    maxHeight: (MediaQuery.sizeOf(ctx).height * 0.35 -
+                            MediaQuery.viewInsetsOf(ctx).bottom)
                         .clamp(80.0, double.infinity)),
                 child: ListView.separated(
                   shrinkWrap: true,
@@ -693,7 +693,7 @@ class _StatusSheet extends StatelessWidget {
           const Divider(height: 1),
           ConstrainedBox(
             constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.55),
+                maxHeight: MediaQuery.sizeOf(context).height * 0.55),
             child: ListView.separated(
               shrinkWrap: true,
               padding: const EdgeInsets.symmetric(vertical: 8),

@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -139,7 +140,8 @@ class _AdminUsersAccessScreenState extends State<AdminUsersAccessScreen> {
                 universities = data;
                 loading = false;
               });
-            }).catchError((e) {
+            }).catchError((Object e, StackTrace s_) {
+              ErrorReporter.swallowed(e, s_, 'screens/roles/admin_users_access_screen.dart:142');
               setSheetState(() {
                 error = 'تعذر تحميل الجامعات.';
                 loading = false;
@@ -148,7 +150,7 @@ class _AdminUsersAccessScreenState extends State<AdminUsersAccessScreen> {
           }
 
           return Padding(
-            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 16, right: 16, top: 16),
+            padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom, left: 16, right: 16, top: 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,

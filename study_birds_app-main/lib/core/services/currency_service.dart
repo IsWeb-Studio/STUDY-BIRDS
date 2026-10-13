@@ -1,3 +1,4 @@
+import 'error_reporter.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -99,6 +100,6 @@ class CurrencyService {
 
   /// Silently refreshes USD rates in the background. Safe to call on screen init.
   void refreshRatesInBackground() {
-    fetchRates('USD').catchError((_) => _ratesFromUsd);
+    fetchRates('USD').catchError(ErrorReporter.fallback('core/services/currency_service.dart:102', _ratesFromUsd));
   }
 }

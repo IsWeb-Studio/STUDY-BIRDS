@@ -22,13 +22,11 @@ import 'core/services/auth_session.dart';
 import 'core/utils/app_error.dart';
 import 'core/services/error_reporter.dart';
 import 'core/utils/animations.dart';
-
 import 'screens/auth/splash_screen.dart';
 import 'screens/auth/onboarding_and_account_type_screens.dart';
 import 'screens/auth/login_register_screens.dart';
 import 'screens/auth/otp_and_password_reset_screens.dart';
 import 'screens/auth/student_registration_wizard_screen.dart';
-
 import 'screens/home_journey/home_dashboard_screen.dart';
 import 'screens/home_journey/journey_tracker_screen.dart';
 import 'screens/home_journey/calendar_screen.dart';
@@ -36,32 +34,23 @@ import 'screens/home_journey/activity_log_screen.dart';
 import 'screens/home_journey/notifications_screen.dart';
 import 'screens/home_journey/important_dates_screen.dart';
 import 'screens/home_journey/global_search_screen.dart';
-
 import 'screens/auth/verify_contact_screen.dart';
 import 'screens/profile_account/security_settings_screen.dart';
-
 import 'screens/universities_programs_countries/compare_list_screen.dart';
 import 'screens/services_support/messaging_and_emergency_screens.dart';
-
 import 'screens/roles/agent_student_detail_screen.dart';
 import 'screens/roles/employee_extra_screens.dart';
-
 import 'screens/applications_documents_payments/applications_screens.dart';
 import 'screens/applications_documents_payments/documents_screens.dart';
 import 'screens/applications_documents_payments/payments_screens.dart';
-
 import 'screens/universities_programs_countries/universities_screens.dart';
 import 'screens/universities_programs_countries/programs_screens.dart';
 import 'screens/universities_programs_countries/countries_scholarships_screens.dart';
-
 import 'screens/visa_travel_accommodation/visa_travel_screens.dart';
 import 'screens/visa_travel_accommodation/accommodation_arrival_screens.dart';
-
 import 'screens/services_support/services_consultation_screens.dart';
 import 'screens/services_support/support_team_ai_screens.dart';
-
 import 'screens/profile_account/profile_account_screens.dart';
-
 import 'screens/roles/parent_dashboard_screen.dart';
 import 'screens/roles/agent_dashboard_screen.dart';
 import 'screens/roles/university_dashboard_screen.dart';

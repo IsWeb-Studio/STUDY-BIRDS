@@ -514,7 +514,7 @@ class _NotificationsSheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-      constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.75),
+      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.75),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

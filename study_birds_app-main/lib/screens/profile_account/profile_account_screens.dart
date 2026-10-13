@@ -152,7 +152,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       title: 'الملف الشخصي',
       showBackButton: false,
       actions: [
-        IconButton(
+        IconButton(tooltip: 'الإعدادات', 
           icon: const Icon(Icons.settings_outlined, color: Colors.white),
           onPressed: () => Navigator.of(context)
               .push(MaterialPageRoute(builder: (_) => const SettingsScreen())),

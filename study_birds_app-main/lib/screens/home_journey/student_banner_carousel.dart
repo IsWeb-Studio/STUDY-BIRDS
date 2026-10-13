@@ -283,10 +283,12 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
     if (url.isNotEmpty) {
       return Image.network(
         url,
+        cacheWidth: 900,
         fit: BoxFit.cover,
         excludeFromSemantics: true,
         errorBuilder: (_, __, ___) => Image.asset(
           'assets/images/dashboard/$localImg.jpg',
+          cacheWidth: 900,
           fit: BoxFit.cover,
           excludeFromSemantics: true,
         ),
@@ -294,6 +296,7 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
     }
     return Image.asset(
       'assets/images/dashboard/$localImg.jpg',
+      cacheWidth: 900,
       fit: BoxFit.cover,
       excludeFromSemantics: true,
     );

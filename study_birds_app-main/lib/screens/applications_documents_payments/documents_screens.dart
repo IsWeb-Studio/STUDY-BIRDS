@@ -303,7 +303,7 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
       StudentRepository.instance
           .getDocuments(forceRefresh: true)
           .then((docs) { if (mounted) setState(() => _docs = docs.whereType<Map>().where((d) => d['isLatest'] != false && d['translationOf'] == null).toList()); })
-          .catchError((_) {});
+          .catchError(ErrorReporter.silent('screens/applications_documents_payments/documents_screens.dart:306'));
     });
   }
 

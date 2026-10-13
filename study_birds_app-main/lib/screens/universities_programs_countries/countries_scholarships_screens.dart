@@ -354,7 +354,7 @@ class _ScholarshipsScreenState extends State<ScholarshipsScreen> {
   Widget build(BuildContext context) => AppScaffold(
       title: 'المنح الدراسية',
       actions: [
-        IconButton(
+        IconButton(tooltip: 'تحديث', 
             onPressed: sending ? null : load, icon: const Icon(Icons.refresh))
       ],
       body: loading

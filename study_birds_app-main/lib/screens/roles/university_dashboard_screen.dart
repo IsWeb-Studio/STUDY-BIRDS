@@ -265,7 +265,7 @@ class _UniversityDashboardScreenState
                 hintText: 'ابحث عن طالب...',
                 prefixIcon: const Icon(Icons.search_rounded),
                 suffixIcon: _searchCtrl.text.isNotEmpty
-                    ? IconButton(
+                    ? IconButton(tooltip: 'إغلاق', 
                         icon: const Icon(Icons.close_rounded),
                         onPressed: () {
                           _searchCtrl.clear();

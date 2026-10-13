@@ -1,3 +1,4 @@
+import '../../core/utils/responsive.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
@@ -210,7 +211,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             ),
           ],
         ),
-        body: RefreshIndicator(
+        body: MaxWidthBody(child: RefreshIndicator(
           onRefresh: _loadChildren,
           color: AppColors.navy,
           child: _loadingChildren
@@ -222,8 +223,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       : _tab == 1
                           ? _buildPaymentsTab()
                           : _buildAccountTab(),
-        ),
-        bottomNavigationBar: BottomNavigationBar(
+        )),
+        bottomNavigationBar: AdaptiveBottomBar(child: BottomNavigationBar(
           currentIndex: _tab,
           selectedItemColor: AppColors.navy,
           unselectedItemColor: AppColors.textSecondary,
@@ -237,7 +238,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             BottomNavigationBarItem(
                 icon: Icon(Icons.person_outline_rounded), label: 'حسابي'),
           ],
-        ),
+        )),
       ),
     );
   }

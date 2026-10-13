@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import '../../core/widgets/password_strength_inline.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/security_fields.dart';
@@ -59,7 +60,7 @@ class _AdminUniversityAccountsScreenState
     return AppScaffold(
       title: 'حسابات الجامعات',
       actions: [
-        IconButton(
+        IconButton(tooltip: 'إضافة', 
             onPressed: _openCreateForm,
             icon: const Icon(Icons.add_circle_outline_rounded,
                 color: Colors.white))
@@ -152,7 +153,8 @@ class _CreateUniversityAccountScreenState
           _loadingUniversities = false;
         });
       }
-    }).catchError((_) {
+    }).catchError((Object e_, StackTrace s_) {
+      ErrorReporter.swallowed(e_, s_, 'screens/roles/admin_university_accounts_screen.dart:155');
       if (mounted) {
         setState(() {
           _error = 'تعذر تحميل قائمة الجامعات.';

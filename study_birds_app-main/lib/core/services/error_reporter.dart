@@ -36,6 +36,17 @@ class ErrorReporter {
     _send(error, stack, where, const {});
   }
 
+  /// For `.catchError(...)` that only needs to be reported.
+  static void Function(Object, StackTrace) silent(String where) =>
+      (Object error, StackTrace stack) => swallowed(error, stack, where);
+
+  /// For `.catchError(...)`: report, then yield [value] so callers keep a fallback.
+  static T Function(Object, StackTrace) fallback<T>(String where, T value) =>
+      (Object error, StackTrace stack) {
+        swallowed(error, stack, where);
+        return value;
+      };
+
   /// A server-side failure (5xx) or an unparseable response.
   static void apiFailure(String method, String path, int status,
       {Object? error}) {

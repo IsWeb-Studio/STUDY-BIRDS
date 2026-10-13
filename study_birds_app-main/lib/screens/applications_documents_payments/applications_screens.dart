@@ -98,7 +98,7 @@ class _ApplicationsListScreenState extends State<ApplicationsListScreen>
       StudentRepository.instance
           .getApplications(forceRefresh: true)
           .then((data) { if (mounted) setState(() => _apps = data); })
-          .catchError((_) {});
+          .catchError(ErrorReporter.silent('screens/applications_documents_payments/applications_screens.dart:101'));
     });
   }
 

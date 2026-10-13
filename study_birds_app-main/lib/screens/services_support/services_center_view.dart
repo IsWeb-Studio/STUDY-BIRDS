@@ -111,6 +111,7 @@ class _ServicesWelcome extends StatelessWidget {
         child: Stack(children: [
           Positioned.fill(
               child: Image.asset('assets/images/services/support.jpg',
+                  cacheWidth: 900,
                   fit: BoxFit.cover, excludeFromSemantics: true)),
           const Positioned.fill(
               child: DecoratedBox(
@@ -228,11 +229,13 @@ class _ServicePhotoCard extends StatelessWidget {
             Positioned.fill(
                 child: hasRemote
                     ? Image.network(remote,
+                        cacheWidth: 900,
                         fit: BoxFit.cover,
                         excludeFromSemantics: true,
                         errorBuilder: (_, __, ___) =>
-                            Image.asset(photo, fit: BoxFit.cover))
+                            Image.asset(photo, cacheWidth: 900, fit: BoxFit.cover))
                     : Image.asset(photo,
+                        cacheWidth: 900,
                         fit: BoxFit.cover, excludeFromSemantics: true)),
             const Positioned.fill(
                 child: DecoratedBox(

@@ -75,7 +75,7 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen> {
   Future<void> loadLookups() async {
     Future<List<Map<String, dynamic>>> safe(
             Future<List<Map<String, dynamic>>> Function() call) =>
-        call().catchError((_) => <Map<String, dynamic>>[]);
+        call().catchError(ErrorReporter.fallback('screens/services_support/community_screen.dart:78', <Map<String, dynamic>>[]));
     final results = await Future.wait([
       safe(repo.countries),
       safe(repo.universities),
@@ -357,7 +357,7 @@ class _FilterSheetState extends State<_FilterSheet> {
         textDirection: TextDirection.rtl,
         child: Padding(
           padding: EdgeInsets.fromLTRB(
-              16, 16, 16, 16 + MediaQuery.of(context).viewInsets.bottom),
+              16, 16, 16, 16 + MediaQuery.viewInsetsOf(context).bottom),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,

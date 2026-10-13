@@ -98,3 +98,25 @@ class MasterDetail extends StatelessWidget {
     );
   }
 }
+
+/// Keeps a bottom navigation bar a sensible width on tablets: centered and
+/// capped, instead of stretching its tabs across a 1000px+ window. Phones are
+/// unaffected (the bar is already narrower than [maxWidth]).
+class AdaptiveBottomBar extends StatelessWidget {
+  final Widget child;
+  final double maxWidth;
+  const AdaptiveBottomBar({super.key, required this.child, this.maxWidth = 600});
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
+          Theme.of(context).colorScheme.surface,
+      child: Center(
+        heightFactor: 1,
+        child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: maxWidth), child: child),
+      ),
+    );
+  }
+}

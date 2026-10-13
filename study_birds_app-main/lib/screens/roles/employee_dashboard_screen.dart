@@ -1,3 +1,4 @@
+import '../../core/utils/responsive.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'follow_up_reminders_screen.dart';
@@ -389,7 +390,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
         ),
       ],
       bottomBar: tabs.length > 1
-          ? BottomNavigationBar(
+          ? AdaptiveBottomBar(child: BottomNavigationBar(
               currentIndex: safeTab,
               onTap: (i) => setState(() => _tab = i),
               type: BottomNavigationBarType.fixed,
@@ -406,7 +407,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
                         label: t.label,
                       ))
                   .toList(),
-            )
+            ))
           : null,
       body: RefreshIndicator(
         onRefresh: _refresh,

@@ -495,7 +495,7 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => StatefulBuilder(builder: (ctx2, setSheet) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx2).viewInsets.bottom, left: 20, right: 20, top: 20),
+        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx2).bottom, left: 20, right: 20, top: 20),
         child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
           const Text('استخدام رصيد المحفظة', style: AppTextStyles.cardTitle),
           const SizedBox(height: 4),

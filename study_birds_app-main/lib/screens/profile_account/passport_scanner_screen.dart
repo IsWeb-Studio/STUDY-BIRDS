@@ -112,7 +112,7 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
       );
     }
 
-    final size = MediaQuery.of(context).size;
+    final size = MediaQuery.sizeOf(context);
     final frameW = size.width * 0.88;
     final frameH = frameW * (88 / 125); // passport landscape: 125×88mm
     final frameL = (size.width - frameW) / 2;
@@ -216,7 +216,7 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
 
           // Capture button
           Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + 44,
+            bottom: MediaQuery.paddingOf(context).bottom + 44,
             left: 0,
             right: 0,
             child: Column(children: [
@@ -248,7 +248,7 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
 
           // Back button
           Positioned(
-            top: MediaQuery.of(context).padding.top + 4,
+            top: MediaQuery.paddingOf(context).top + 4,
             left: 4,
             child: IconButton(
               icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),

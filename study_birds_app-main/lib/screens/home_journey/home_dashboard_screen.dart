@@ -1,3 +1,4 @@
+import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -69,7 +70,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       StudentRepository.instance
           .getOverview(forceRefresh: true)
           .then((data) { if (mounted) setState(() => _overview = data); })
-          .catchError((_) {});
+          .catchError(ErrorReporter.silent('screens/home_journey/home_dashboard_screen.dart:72'));
     });
   }
 
@@ -188,7 +189,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         return SafeArea(
           child: ConstrainedBox(
             constraints: BoxConstraints(
-                maxHeight: MediaQuery.of(context).size.height * 0.82),
+                maxHeight: MediaQuery.sizeOf(context).height * 0.82),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -325,7 +326,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     if (destination == 'consultation') {
       showAnimatedBottomSheet(context,
           builder: (_) => SizedBox(
-                height: MediaQuery.of(context).size.height * 0.88,
+                height: MediaQuery.sizeOf(context).height * 0.88,
                 child: const ConsultationBookingScreen(),
               ));
       return;

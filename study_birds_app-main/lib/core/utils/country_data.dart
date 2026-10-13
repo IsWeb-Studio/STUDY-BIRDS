@@ -280,7 +280,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                     child: Text('اختر رمز الدولة',
                         style: AppTextStyles.screenTitle),
                   ),
-                  IconButton(
+                  IconButton(tooltip: 'إغلاق', 
                     onPressed: () => Navigator.of(context).pop(),
                     icon: const Icon(Icons.close_rounded,
                         color: AppColors.textSecondary),

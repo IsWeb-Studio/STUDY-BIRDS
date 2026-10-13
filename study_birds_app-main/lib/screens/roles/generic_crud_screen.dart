@@ -107,7 +107,7 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
       shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom, left: 16, right: 16, top: 16),
+          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom, left: 16, right: 16, top: 16),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -243,7 +243,7 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: widget.title,
-      actions: [IconButton(onPressed: () => _openForm(), icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white))],
+      actions: [IconButton(tooltip: 'إضافة', onPressed: () => _openForm(), icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white))],
       body: RefreshIndicator(
         onRefresh: _load,
         color: AppColors.navy,
@@ -272,7 +272,7 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
                                 ),
                               ),
                               if (widget.deleteItem != null)
-                                IconButton(
+                                IconButton(tooltip: 'حذف', 
                                   icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
                                   onPressed: () => _delete(item[widget.idKey] as String),
                                 ),

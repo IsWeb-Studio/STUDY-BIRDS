@@ -33,7 +33,7 @@ class _AlumniDirectoryScreenState extends State<AlumniDirectoryScreen> {
   ], body: Column(children: [
     Padding(padding: const EdgeInsets.all(16), child: TextField(controller: _country,
       onSubmitted: (_) => setState(_reload), decoration: InputDecoration(labelText: 'البحث حسب الدولة',
-        suffixIcon: IconButton(onPressed: () => setState(_reload), icon: const Icon(Icons.search))))),
+        suffixIcon: IconButton(tooltip: 'بحث', onPressed: () => setState(_reload), icon: const Icon(Icons.search))))),
     CheckboxListTile(title: const Text('المتاحون للإرشاد فقط'), value: _mentoring,
       onChanged: (value) => setState(() { _mentoring = value ?? false; _reload(); })),
     Expanded(child: FutureBuilder<dynamic>(future: _profiles, builder: (context, snapshot) {

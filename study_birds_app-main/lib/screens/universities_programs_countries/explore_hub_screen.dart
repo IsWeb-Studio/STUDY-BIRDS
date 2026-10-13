@@ -104,7 +104,7 @@ class _ExploreCard extends StatelessWidget {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(AppRadius.card),
           child: Stack(fit: StackFit.expand, children: [
-            Image.asset(image, fit: BoxFit.cover, excludeFromSemantics: true,
+            Image.asset(image, cacheWidth: 900, fit: BoxFit.cover, excludeFromSemantics: true,
                 errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.navy)),
             const DecoratedBox(decoration: BoxDecoration(
               gradient: LinearGradient(begin: Alignment.topCenter,

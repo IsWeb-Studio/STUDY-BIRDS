@@ -99,7 +99,7 @@ class _ApplicationByIdState extends State<_ApplicationById> {
           .firstWhere((a) => (a?['_id'] ?? a?['id'])?.toString() == widget.id,
               orElse: () => null);
       if (mounted) setState(() { _loading = false; _app = match; });
-    }).catchError((_) { if (mounted) setState(() => _loading = false); });
+    }).catchError((Object e_, StackTrace s_) { ErrorReporter.swallowed(e_, s_, 'screens/home_journey/notifications_screen.dart:102'); if (mounted) setState(() => _loading = false); });
   }
 
   @override
@@ -129,7 +129,7 @@ class _DocumentByIdState extends State<_DocumentById> {
           .firstWhere((d) => (d?['_id'] ?? d?['id'])?.toString() == widget.id,
               orElse: () => null);
       if (mounted) setState(() { _loading = false; _doc = match; });
-    }).catchError((_) { if (mounted) setState(() => _loading = false); });
+    }).catchError((Object e_, StackTrace s_) { ErrorReporter.swallowed(e_, s_, 'screens/home_journey/notifications_screen.dart:132'); if (mounted) setState(() => _loading = false); });
   }
 
   @override
@@ -160,7 +160,7 @@ class _PaymentByIdState extends State<_PaymentById> {
           .firstWhere((inv) => (inv?['_id'] ?? inv?['id'])?.toString() == widget.id,
               orElse: () => null);
       if (mounted) setState(() { _loading = false; _invoice = match; });
-    }).catchError((_) { if (mounted) setState(() => _loading = false); });
+    }).catchError((Object e_, StackTrace s_) { ErrorReporter.swallowed(e_, s_, 'screens/home_journey/notifications_screen.dart:163'); if (mounted) setState(() => _loading = false); });
   }
 
   @override
@@ -216,7 +216,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
       StudentRepository.instance.getNotifications()
           .then((data) { if (mounted) setState(() => _notifications = data); })
-          .catchError((_) {});
+          .catchError(ErrorReporter.silent('screens/home_journey/notifications_screen.dart:219'));
     });
   }
 

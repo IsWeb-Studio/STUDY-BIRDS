@@ -1,3 +1,4 @@
+import '../utils/json_safe.dart';
 import 'dart:async';
 import 'error_reporter.dart';
 import '../utils/app_error.dart';
@@ -144,7 +145,7 @@ class AuthUser {
   }
 
   factory AuthUser.fromJson(Map<String, dynamic> json) {
-    final role = UserRoleWire.fromWire(json['role'] as String?);
+    final role = UserRoleWire.fromWire(JsonSafe.optString(json['role']));
     if (role == null) {
       throw ApiException(
           0, 'Unknown role "${json['role']}" returned by server');
@@ -154,21 +155,21 @@ class AuthUser {
     final linked = json['linkedUniversity'];
 
     return AuthUser(
-      id: json['_id'] as String? ?? json['id'] as String? ?? '',
-      name: json['name'] as String? ?? '',
-      email: json['email'] as String? ?? '',
+      id: JsonSafe.optString(json['_id']) ?? JsonSafe.optString(json['id']) ?? '',
+      name: JsonSafe.optString(json['name']) ?? '',
+      email: JsonSafe.optString(json['email']) ?? '',
       role: role,
-      employeeRole: json['employeeRole'] as String?,
+      employeeRole: JsonSafe.optString(json['employeeRole']),
       permissions: rawPermissions is List
           ? rawPermissions.map((e) => e.toString()).toSet()
           : const {},
       linkedUniversityId: linked is String
           ? linked
-          : (linked is Map ? linked['_id'] as String? : null),
-      avatar: json['avatar'] as String?,
-      verifiedPhone: json['verifiedPhone'] as String?,
+          : (linked is Map ? JsonSafe.optString(linked['_id']) : null),
+      avatar: JsonSafe.optString(json['avatar']),
+      verifiedPhone: JsonSafe.optString(json['verifiedPhone']),
       emailVerified: json['emailVerified'] == true,
-      authProvider: json['authProvider'] as String?,
+      authProvider: JsonSafe.optString(json['authProvider']),
       hasPassword: json['hasPassword'] is bool
           ? json['hasPassword'] as bool
           : json['authProvider'] != 'google',
@@ -242,9 +243,9 @@ class AuthService {
       'password': password,
       if (twoFactorCode != null) 'twoFactorCode': twoFactorCode,
     });
-    final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
-    final token = data['token'] as String;
-    return (user: user, token: token, refreshToken: data['refreshToken'] as String?);
+    final user = AuthUser.fromJson(JsonSafe.object(data, 'user'));
+    final token = JsonSafe.string(data, 'token');
+    return (user: user, token: token, refreshToken: JsonSafe.optString(data['refreshToken']));
   }
 
   /// Public registration. Converts the app-side role key (e.g. 'agent') to
@@ -269,9 +270,9 @@ class AuthService {
       if (referralCode != null && referralCode.trim().isNotEmpty)
         'referralCode': referralCode.trim(),
     });
-    final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
-    final token = data['token'] as String;
-    return (user: user, token: token, refreshToken: data['refreshToken'] as String?);
+    final user = AuthUser.fromJson(JsonSafe.object(data, 'user'));
+    final token = JsonSafe.string(data, 'token');
+    return (user: user, token: token, refreshToken: JsonSafe.optString(data['refreshToken']));
   }
 
   Future<void> requestEmailOtp(String email) async {
@@ -281,8 +282,8 @@ class AuthService {
   Future<({AuthUser user, String token, String? refreshToken})> verifyEmailOtp(String email, String code) async {
     final data = await ApiClient.instance.post('/auth/email-otp/verify',
         body: {'email': email.trim(), 'code': code.trim()});
-    final user = AuthUser.fromJson(data['user'] as Map<String, dynamic>);
-    return (user: user, token: data['token'] as String, refreshToken: data['refreshToken'] as String?);
+    final user = AuthUser.fromJson(JsonSafe.object(data, 'user'));
+    return (user: user, token: JsonSafe.string(data, 'token'), refreshToken: JsonSafe.optString(data['refreshToken']));
   }
 
   /// Tries to get a fresh access token using the stored refresh token.
@@ -290,9 +291,9 @@ class AuthService {
   Future<({AuthUser user, String token, String? refreshToken})?> tryRefresh(String refreshToken) async {
     try {
       final data = await ApiClient.instance.post('/auth/refresh', body: {'refreshToken': refreshToken});
-      final user = await _restoredUser(data['user'] as Map<String, dynamic>);
-      final token = data['token'] as String;
-      final newRefresh = data['refreshToken'] as String?;
+      final user = await _restoredUser(JsonSafe.object(data, 'user'));
+      final token = JsonSafe.string(data, 'token');
+      final newRefresh = JsonSafe.optString(data['refreshToken']);
       return (user: user, token: token, refreshToken: newRefresh);
     } on ApiException catch (error) {
       if (error.statusCode == 401 || error.statusCode == 403) return null;
@@ -306,7 +307,7 @@ class AuthService {
   Future<AuthUser?> fetchCurrentUser(String token) async {
     try {
       final data = await ApiClient.instance.get('/auth/me', token: token);
-      return await _restoredUser(data['user'] as Map<String, dynamic>);
+      return await _restoredUser(JsonSafe.object(data, 'user'));
     } on ApiException catch (e) {
       if (e.statusCode == 401 || e.statusCode == 403) return null;
       rethrow;
