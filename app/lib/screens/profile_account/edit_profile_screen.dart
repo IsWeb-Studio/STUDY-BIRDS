@@ -1099,7 +1099,8 @@ class _PassportUploadTile extends StatelessWidget {
         OutlinedButton.icon(
           onPressed: onUpload,
           icon: const Icon(Icons.upload_file_outlined, size: 18),
-          label: Text(hasDoc ? 'فحص ورفع جواز بديل' : 'مسح وفحص جواز السفر'),
+          label: Text(
+              hasDoc ? 'تصوير أو رفع جواز بديل' : 'تصوير أو رفع جواز السفر'),
           style: OutlinedButton.styleFrom(
             minimumSize: const Size(double.infinity, 46),
             side: const BorderSide(color: AppColors.navy),
