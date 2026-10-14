@@ -2,12 +2,13 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 
 import 'connectivity_service.dart';
+import '../network/api_client.dart';
 
 /// Lightweight foreground-only polling bus.
 /// Screens subscribe to [onTick] and refresh their data when called.
 /// Polling pauses automatically when the app goes to background.
 ///
-/// PRD بند 77: Real-time Data Sync (polling-based, 30-second interval).
+/// Foreground data sync polls every ten seconds.
 /// True WebSocket is intentionally deferred — the Render.com server does not
 /// expose a WS endpoint and the polling approach satisfies all current use cases
 /// (dashboard KPIs, notifications badge, journey stage updates).
@@ -15,12 +16,12 @@ class RealtimeSyncService with WidgetsBindingObserver {
   RealtimeSyncService._();
   static final RealtimeSyncService instance = RealtimeSyncService._();
 
-  static const _interval = Duration(seconds: 30);
+  static const _interval = Duration(seconds: 10);
 
   Timer? _timer;
   final _controller = StreamController<DateTime>.broadcast();
 
-  /// Subscribe to receive a tick every 30 s while the app is foregrounded.
+  /// Subscribe to receive a tick every ten seconds while foregrounded.
   Stream<DateTime> get onTick => _controller.stream;
 
   StreamSubscription<void>? _reconnectSub;
@@ -50,7 +51,10 @@ class RealtimeSyncService with WidgetsBindingObserver {
 
   /// Manually trigger a tick (e.g. after a user action that should immediately
   /// refresh all subscribed screens).
-  void forceSync() => _controller.add(DateTime.now());
+  void forceSync() {
+    ApiClient.instance.clearCache();
+    _controller.add(DateTime.now());
+  }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -70,7 +74,7 @@ class RealtimeSyncService with WidgetsBindingObserver {
       // No point polling a network that is known to be down; the
       // reconnect hook below refreshes everything once it is back.
       if (ConnectivityService.instance.status == NetworkStatus.online) {
-        _controller.add(DateTime.now());
+        forceSync();
       }
     });
   }

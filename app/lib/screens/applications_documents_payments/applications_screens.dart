@@ -259,11 +259,19 @@ class _ServiceRequestsTab extends StatefulWidget {
 
 class _ServiceRequestsTabState extends State<_ServiceRequestsTab> {
   late Future<List<dynamic>> _future;
+  StreamSubscription<DateTime>? _syncSub;
 
   @override
   void initState() {
     super.initState();
     _reload();
+    _syncSub = RealtimeSyncService.instance.onTick.listen((_) => _reload());
+  }
+
+  @override
+  void dispose() {
+    _syncSub?.cancel();
+    super.dispose();
   }
 
   void _reload() {
@@ -419,6 +427,40 @@ class ApplicationDetailScreen extends StatefulWidget {
 }
 
 class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
+  StreamSubscription<DateTime>? _syncSub;
+  bool _refreshing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _syncSub = RealtimeSyncService.instance.onTick.listen((_) => _refresh());
+    _refresh();
+  }
+
+  Future<void> _refresh() async {
+    if (_refreshing) return;
+    final id = widget.application['_id'];
+    if (id == null) return;
+    _refreshing = true;
+    try {
+      final data = await ApiClient.instance.get('/applications/$id',
+          token: AuthSession.instance.token, cached: false);
+      if (mounted && data is Map<String, dynamic>) {
+        setState(() => _updatedApplication = data);
+      }
+    } catch (error, stack) {
+      ErrorReporter.swallowed(error, stack, 'application_detail.refresh');
+    } finally {
+      _refreshing = false;
+    }
+  }
+
+  @override
+  void dispose() {
+    _syncSub?.cancel();
+    super.dispose();
+  }
+
   int _tab = 0;
   Map<String, dynamic>? _updatedApplication;
   static const _tabs = ['نظرة عامة', 'المستندات', 'الجدول الزمني'];
@@ -436,6 +478,11 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
     return AppScaffold(
       title: 'تفاصيل الطلب',
       actions: [
+        IconButton(
+          tooltip: 'تحديث حالة الطلب',
+          icon: const Icon(Icons.refresh, color: Colors.white),
+          onPressed: _refresh,
+        ),
         if (AuthSession.instance.currentUser?.role == UserRole.student)
           IconButton(
               icon: const Icon(Icons.upload_file, color: Colors.white),

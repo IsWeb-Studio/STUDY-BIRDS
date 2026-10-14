@@ -293,7 +293,7 @@ class StudentRepository {
 
   Future<List<dynamic>> getNotifications() async {
     final data =
-        await ApiClient.instance.get('/students/notifications', token: _token);
+        await ApiClient.instance.get('/students/notifications', token: _token, cached: false);
     return Json.list(data);
   }
 
