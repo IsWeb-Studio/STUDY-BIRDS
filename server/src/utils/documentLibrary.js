@@ -14,7 +14,7 @@ const contentKey = ({ student, type, fileHash, translationOf }) =>
 async function saveLibraryDocument({ student, file, type, previous, translationOf, passportReview }) {
   const fileHash = hashFile(file.buffer);
   const query = { student, type, fileHash, size: file.buffer.length, translationOf: translationOf || null };
-  const existing = await Document.findOne(query).sort({ createdAt: 1 });
+  const existing = await Document.findOne(query).sort({ supersededBy: 1, archivedAt: 1, createdAt: -1 });
   if (existing) {
     if (previous?.supersededBy && String(previous.supersededBy) !== String(existing._id)) {
       throw fail(409, 'A newer version of this document already exists');
@@ -30,7 +30,7 @@ async function saveLibraryDocument({ student, file, type, previous, translationO
   }
   const key = contentKey({ student, type, fileHash, translationOf });
   return withLease(`document-upload:${key}`, async () => {
-    const completed = await Document.findOne(query).sort({ createdAt: 1 });
+    const completed = await Document.findOne(query).sort({ supersededBy: 1, archivedAt: 1, createdAt: -1 });
     if (completed) return { document: completed, reused: true };
     if (previous?.supersededBy) throw fail(409, 'A newer version of this document already exists');
     const documentId = new mongoose.Types.ObjectId(key.slice(0, 24));

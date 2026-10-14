@@ -51,8 +51,8 @@ router.post('/documents/lookup', require('../utils/asyncHandler')(async (req, re
     return res.status(400).json({ message: 'Invalid document lookup' });
   }
   const document = await require('../models/Document').findOne({
-    student: req.user._id, type, fileHash, size, translationOf: translationOf || null, archivedAt: null,
-  }).sort({ createdAt: 1 }).lean();
+    student: req.user._id, type, fileHash, size, translationOf: translationOf || null, archivedAt: null, supersededBy: null,
+  }).sort({ createdAt: -1 }).lean();
   res.json({ document: document ? { ...document, statusInfo: require('../constants/statusCatalog').documentStatusInfo(document) } : null });
 }));
 router.patch('/documents/:id/archive', require('../utils/asyncHandler')(async (req, res) => {

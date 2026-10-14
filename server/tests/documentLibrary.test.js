@@ -152,6 +152,16 @@ test('central document library: reuse, races, failures, versions and tenant perm
       assert.equal(await Document.countDocuments({ fileHash: hashFile(Buffer.from(content)) }), 1);
       assert.equal(writes, before + 1);
     });
+    await t.test('historical duplicate metadata reuses the newest current record', async () => {
+      const content = bytes + '\nhistorical duplicate';
+      const common = { student: student._id, type: 'passport', fileHash: hashFile(Buffer.from(content)),
+        size: Buffer.byteLength(content), fileName: 'legacy.pdf', filePath: '/legacy' };
+      await Document.create({ ...common, detailedStatus: 'rejected', createdAt: new Date('2020-01-01') });
+      const current = await Document.create({ ...common, detailedStatus: 'approved', createdAt: new Date('2021-01-01') });
+      const before = writes, response = await upload(content);
+      assert.equal(response.status, 200); assert.equal((await response.json())._id, String(current._id));
+      assert.equal(writes, before);
+    });
   } finally {
     cloudinary.uploader.upload_stream = original;
     if (server) await new Promise(resolve => server.close(resolve));
