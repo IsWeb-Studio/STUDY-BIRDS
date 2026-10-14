@@ -195,12 +195,15 @@ const uploadDocument = asyncHandler(async (req, res) => {
   // Optional links, checked before anything is stored: a new version of one of
   // the student's own current files, or a certified translation of one.
   const { replaces, translationOf } = req.body;
+  if (req.body.type !== undefined && (typeof req.body.type !== 'string' || !req.body.type.trim() || req.body.type.length > 100)) {
+    return res.status(400).json({ message: 'Invalid document type' });
+  }
   if ((replaces && !mongoose.isValidObjectId(replaces)) || (translationOf && !mongoose.isValidObjectId(translationOf)) || (replaces && translationOf)) {
     return res.status(400).json({ message: "Invalid document link" });
   }
-  const previous = replaces ? await Document.findOne({ _id: replaces, student: req.user._id }).select("type supersededBy").lean() : null;
+  const previous = replaces ? await Document.findOne({ _id: replaces, student: req.user._id }).select("type supersededBy version").lean() : null;
   if (replaces && !previous) return res.status(404).json({ message: "Document to replace not found" });
-  if (previous?.supersededBy) return res.status(409).json({ message: "A newer version of this document already exists" });
+  if (previous && req.body.type && req.body.type !== previous.type) return res.status(400).json({ message: 'Replacement document type must match' });
   const original = translationOf ? await Document.exists({ _id: translationOf, student: req.user._id }) : null;
   if (translationOf && !original) return res.status(404).json({ message: "Document to translate not found" });
 
@@ -213,33 +216,15 @@ const uploadDocument = asyncHandler(async (req, res) => {
     catch { return res.status(400).json({ message: "Invalid passport review information" }); }
   }
 
-  const uploadResult = await uploadPrivateDocument(req.file);
-  const documentId = new mongoose.Types.ObjectId();
-
-  const document = await Document.create({
-    _id: documentId,
-    storage: uploadResult,
-    student: req.user._id,
-    type: translationOf ? "translation" : req.body.type || previous?.type || "general",
-    fileName: req.file.originalname,
-    filePath: `/api/documents/${documentId}/access`,
-    mimeType: req.file.mimetype,
-    size: uploadResult.bytes || req.file.size,
-    ...(previous ? { replaces: previous._id } : {}),
-    ...(translationOf ? { translationOf } : {}),
-    ...(passportReview ? { passportReview } : {}),
+  const { document, reused } = await require('../utils/documentLibrary').saveLibraryDocument({
+    student: req.user._id, file: req.file,
+    type: translationOf ? 'translation' : req.body.type || previous?.type || 'general',
+    previous, translationOf, passportReview,
   });
-  if (previous) {
-    // Guarded so two simultaneous re-uploads can't both claim the old version.
-    const linked = await Document.updateOne({ _id: previous._id, supersededBy: { $exists: false } }, { supersededBy: document._id });
-    if (!linked.modifiedCount) {
-      await Document.updateOne({ _id: document._id }, { $unset: { replaces: 1 } });
-    }
-  }
 
   const response = (await Document.findById(document._id).lean());
   delete response.storage;
-  res.status(201).json({ ...response, statusInfo: documentStatusInfo(response) });
+  res.status(reused ? 200 : 201).json({ ...response, reused, statusInfo: documentStatusInfo(response) });
 });
 
 // Translation state of a document (PRD 29): required by a reviewer, uploaded,
@@ -259,13 +244,20 @@ const getDocuments = asyncHandler(async (req, res) => {
   const documents = await Document.find({ student: req.user._id }).select("-reviewHistory")
     .populate("reviewedBy", "name").sort({ createdAt: -1 }).lean();
   const byId = new Map(documents.map((document) => [String(document._id), document]));
+  const translationsByOriginal = new Map();
+  for (const item of documents) {
+    if (!item.translationOf) continue;
+    const key = String(item.translationOf);
+    if (!translationsByOriginal.has(key)) translationsByOriginal.set(key, []);
+    translationsByOriginal.get(key).push(item);
+  }
   res.json(documents.map((document) => {
     // Older versions, newest first, by following the replaces chain.
     const versions = [];
     for (let prior = byId.get(String(document.replaces || "")); prior && versions.length < 20; prior = byId.get(String(prior.replaces || ""))) {
       versions.push({ _id: prior._id, fileName: prior.fileName, filePath: prior.filePath, createdAt: prior.createdAt, statusInfo: documentStatusInfo(prior) });
     }
-    const translations = documents.filter((item) => String(item.translationOf || "") === String(document._id));
+    const translations = translationsByOriginal.get(String(document._id)) || [];
     return {
       ...document,
       reviewedBy: document.reviewedBy ? { name: document.reviewedBy.name } : undefined,

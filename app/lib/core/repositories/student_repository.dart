@@ -1,10 +1,16 @@
 import '../utils/json_safe.dart';
 import 'dart:convert';
+import 'dart:async';
+import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 import '../services/error_reporter.dart';
 import '../services/secure_data_cache.dart';
 import '../network/api_client.dart';
 import '../utils/passport_scan.dart';
 import '../services/auth_session.dart';
+import '../services/realtime_sync_service.dart';
+
+String documentFileHash(List<int> bytes) => sha256.convert(bytes).toString();
 
 /// One stage in the backend's authoritative journey progress
 /// (STUDENT_DASHBOARD_STAGES in server/src/controllers/studentController.js).
@@ -150,6 +156,19 @@ const List<Map<String, String>> kJourneyStageOrder = [
 class StudentRepository {
   StudentRepository._();
   static final StudentRepository instance = StudentRepository._();
+  final _documentChanges = StreamController<List<dynamic>>.broadcast();
+  Stream<List<dynamic>> get documentChanges => _documentChanges.stream;
+  final _documentUploads = <String, Future<Map<String, dynamic>>>{};
+  String? _documentOwner;
+  List<dynamic> _documents = [];
+  int _documentRevision = 0;
+
+  void _publishDocuments(List<dynamic> documents, String session) {
+    if (AuthSession.instance.token != session) return;
+    _documentOwner = session;
+    _documents = documents;
+    _documentChanges.add(List.unmodifiable(documents));
+  }
 
   String get _token {
     final token = AuthSession.instance.token;
@@ -164,8 +183,8 @@ class StudentRepository {
     final owner = AuthSession.instance.currentUser?.id ?? '';
     final sessionToken = _token;
     try {
-      final data = await ApiClient.instance
-          .get('/students/$resource', token: sessionToken);
+      final data = await ApiClient.instance.get('/students/$resource',
+          token: sessionToken, cached: !forceRefresh);
       // A response from the account that just signed out must not refill its cache.
       if (owner.isNotEmpty &&
           AuthSession.instance.currentUser?.id == owner &&
@@ -249,8 +268,20 @@ class StudentRepository {
   }
 
   Future<List<dynamic>> getDocuments({bool forceRefresh = false}) async {
-    return Json.list(
-        await _loadSnapshot('documents', forceRefresh: forceRefresh));
+    final session = _token;
+    final revision = _documentRevision;
+    final documents =
+        Json.list(await _loadSnapshot('documents', forceRefresh: forceRefresh));
+    if (revision != _documentRevision && _documentOwner == session) {
+      final owner = AuthSession.instance.currentUser?.id;
+      if (owner != null) {
+        unawaited(SecureDataCache.write(owner, 'documents', _documents)
+            .catchError(ErrorReporter.silent('documents.cache.stale-response')));
+      }
+      return List.unmodifiable(_documents);
+    }
+    _publishDocuments(documents, session);
+    return documents;
   }
 
   /// Uploads a document — matches POST /api/students/documents
@@ -266,6 +297,70 @@ class StudentRepository {
     void Function()? onPassportValidated,
     Map<String, Object>? passportReview,
   }) async {
+    final session = _token;
+    final hash = await compute(documentFileHash, fileBytes);
+    if (AuthSession.instance.token != session) {
+      throw const ApiException(401, 'Session changed');
+    }
+    final key = '$session:$type:$hash:${translationOf ?? ''}:${replaces ?? ''}';
+    final pending = _documentUploads[key];
+    if (pending != null) return pending;
+    final upload = _uploadLibraryDocument(
+        fileBytes: fileBytes,
+        fileName: fileName,
+        type: type,
+        replaces: replaces,
+        translationOf: translationOf,
+        onProgress: onProgress,
+        cancellation: cancellation,
+        onPassportValidated: onPassportValidated,
+        passportReview: passportReview,
+        hash: hash,
+        session: session);
+    _documentUploads[key] = upload;
+    try {
+      return await upload;
+    } finally {
+      _documentUploads.remove(key);
+    }
+  }
+
+  Future<Map<String, dynamic>> _uploadLibraryDocument({
+    required List<int> fileBytes,
+    required String fileName,
+    required String type,
+    required String hash,
+    required String session,
+    String? replaces,
+    String? translationOf,
+    void Function(double)? onProgress,
+    UploadCancellation? cancellation,
+    void Function()? onPassportValidated,
+    Map<String, Object>? passportReview,
+  }) async {
+    if (cancellation?.cancelled == true)
+      throw const ApiException(499, 'Upload cancelled');
+    Map<String, dynamic>? existing;
+    try {
+      final lookup = await ApiClient.instance
+          .post('/students/documents/lookup', token: session, body: {
+        'fileHash': hash,
+        'size': fileBytes.length,
+        'type': translationOf != null ? 'translation' : type,
+        if (translationOf != null) 'translationOf': translationOf
+      });
+      existing = Json.mapOrNull(lookup['document']);
+    } on ApiException catch (error) {
+      // Older servers remain compatible. Other failures must not start an
+      // uncertain extra upload; the user can safely retry instead.
+      if (error.statusCode != 404) rethrow;
+    }
+    if (cancellation?.cancelled == true)
+      throw const ApiException(499, 'Upload cancelled');
+    if (existing != null) {
+      _documentConfirmed({...existing, 'reused': true}, session);
+      return {...existing, 'reused': true};
+    }
     if (type == 'passport' && translationOf == null) {
       await PassportScan.validate(fileBytes);
       if (cancellation?.cancelled == true) {
@@ -284,16 +379,67 @@ class StudentRepository {
         if (passportReview != null)
           'passportReview': jsonEncode(passportReview),
       },
-      token: _token,
+      token: session,
       onProgress: onProgress,
       cancellation: cancellation,
     );
-    return Json.map(data);
+    final document = Json.map(data);
+    _documentConfirmed(document, session);
+    return document;
+  }
+
+  void _documentConfirmed(Map<String, dynamic> document, String session) {
+    if (AuthSession.instance.token != session) return;
+    _documentRevision++;
+    final current = _documentOwner == session ? _documents : <dynamic>[];
+    final replaced = document['replaces'];
+    _publishDocuments([
+      document,
+      for (final item in current)
+        if (item['_id'] != document['_id'])
+          if (replaced != null && item['_id'] == replaced)
+            {
+              ...Json.map(item),
+              'supersededBy': document['_id'],
+              'isLatest': false
+            }
+          else
+            item
+    ], session);
+    // Only server-confirmed metadata is published or persisted.
+    final owner = AuthSession.instance.currentUser?.id;
+    if (owner != null) {
+      unawaited(SecureDataCache.write(owner, 'documents', _documents)
+          .catchError(ErrorReporter.silent('documents.cache.confirmed')));
+    }
+    RealtimeSyncService.instance.forceSync();
+  }
+
+  Future<void> archiveDocument(String id) async {
+    final session = _token;
+    await ApiClient.instance
+        .patch('/students/documents/$id/archive', token: session);
+    if (_documentOwner == session) {
+      _documentRevision++;
+      _publishDocuments([
+        for (final item in _documents)
+          if (item['_id'] == id)
+            {...Json.map(item), 'archivedAt': DateTime.now().toIso8601String()}
+          else
+            item
+      ], session);
+      final owner = AuthSession.instance.currentUser?.id;
+      if (owner != null && AuthSession.instance.token == session) {
+        unawaited(SecureDataCache.write(owner, 'documents', _documents)
+            .catchError(ErrorReporter.silent('documents.cache.archived')));
+      }
+    }
+    RealtimeSyncService.instance.forceSync();
   }
 
   Future<List<dynamic>> getNotifications() async {
-    final data =
-        await ApiClient.instance.get('/students/notifications', token: _token, cached: false);
+    final data = await ApiClient.instance
+        .get('/students/notifications', token: _token, cached: false);
     return Json.list(data);
   }
 

@@ -8,6 +8,9 @@ import '../../core/services/auth_session.dart';
 import '../../core/repositories/catalog_repository.dart';
 import 'applications_screens.dart';
 import 'documents_screens.dart';
+import 'dart:async';
+import '../../core/repositories/student_repository.dart';
+import '../../core/utils/document_eligibility.dart';
 
 class ProgramApplicationScreen extends StatefulWidget {
   final String programId;
@@ -40,6 +43,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
   bool loading = true;
   bool busy = false;
   String? error;
+  StreamSubscription<List<dynamic>>? _documentSub;
   String? get token => AuthSession.instance.token;
   List<String> get requiredTypes =>
       (Json.listOrNull(program?['requiredDocumentTypes']) ??
@@ -50,10 +54,14 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
   void initState() {
     super.initState();
     load();
+    _documentSub = StudentRepository.instance.documentChanges.listen((data) {
+      if (mounted && program != null) setState(() => updateDocuments(data));
+    });
   }
 
   @override
   void dispose() {
+    _documentSub?.cancel();
     for (final controller in fields.values) {
       controller.dispose();
     }
@@ -69,7 +77,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
       final values = await Future.wait([
         CatalogRepository.instance.getProgramById(widget.programId),
         ApiClient.instance.get('/students/profile', token: token),
-        ApiClient.instance.get('/students/documents', token: token),
+        StudentRepository.instance.getDocuments(),
       ]);
       if (!mounted) return;
       program = Json.map(values[0]);
@@ -95,15 +103,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
   void updateDocuments(List data) {
     documents = data
         .cast<Map<String, dynamic>>()
-        .where((doc) =>
-            doc['status'] != 'rejected' &&
-            ![
-              'missing',
-              'rejected',
-              'needs-revision',
-              'needs-translation',
-              'expired'
-            ].contains(doc['detailedStatus']))
+        .where(isUsableLibraryDocument)
         .toList();
     for (final type in requiredTypes) {
       final choices = documents.where((doc) => doc['type'] == type).toList();
@@ -115,6 +115,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
   }
 
   Future<void> upload(String type) async {
+    if (busy) return;
     setState(() {
       busy = true;
       error = null;
@@ -122,7 +123,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
     try {
       if (await pickAndUploadDocument(context, type)) {
         final data =
-            await ApiClient.instance.get('/students/documents', token: token);
+            await StudentRepository.instance.getDocuments(forceRefresh: true);
         if (mounted) {
           setState(() {
             updateDocuments(Json.list(data));
@@ -145,6 +146,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
   }
 
   Future<void> submit() async {
+    if (busy) return;
     if (!form.currentState!.validate()) return;
     if (requiredTypes.any((type) => !selected.containsKey(type))) {
       setState(() {
@@ -266,6 +268,9 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                             Text(docTypeLabel(type), style: AppTextStyles.body),
+                            Text(documents.any((doc) => doc['type'] == type)
+                                ? 'موجود في مستنداتك؛ راجع الاختيار قبل إرسال الطلب'
+                                : 'مستند مطلوب غير متوفر', style: AppTextStyles.caption),
                             if (documents.any((doc) => doc['type'] == type))
                               DropdownButton<String>(
                                   isExpanded: true,
@@ -289,6 +294,14 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
                                 onPressed: busy ? null : () => upload(type),
                                 icon: const Icon(Icons.upload_file),
                                 label: const Text('تصوير أو رفع مستند')),
+                            if (selected[type] != null)
+                              TextButton.icon(
+                                icon: const Icon(Icons.visibility_outlined),
+                                label: const Text('عرض المستند'),
+                                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                                    builder: (_) => DocumentDetailScreen(document: documents.firstWhere(
+                                        (doc) => doc['_id'] == selected[type])))),
+                              ),
                           ])),
                     if (error != null)
                       Padding(

@@ -43,6 +43,25 @@ router.post("/agency-request", createAgencyRequest);
 router.get("/overview", getDashboardOverview);
 router.post("/documents", upload.single("file"), uploadDocument);
 router.get("/documents", getDocuments);
+router.post('/documents/lookup', require('../utils/asyncHandler')(async (req, res) => {
+  const { fileHash, size, type, translationOf } = req.body;
+  if (!/^[a-f0-9]{64}$/.test(fileHash || '') || !Number.isSafeInteger(size) || size <= 0 ||
+      typeof type !== 'string' || !type.trim() || type.length > 100 ||
+      (translationOf && !require('mongoose').isValidObjectId(translationOf))) {
+    return res.status(400).json({ message: 'Invalid document lookup' });
+  }
+  const document = await require('../models/Document').findOne({
+    student: req.user._id, type, fileHash, size, translationOf: translationOf || null, archivedAt: null,
+  }).sort({ createdAt: 1 }).lean();
+  res.json({ document: document ? { ...document, statusInfo: require('../constants/statusCatalog').documentStatusInfo(document) } : null });
+}));
+router.patch('/documents/:id/archive', require('../utils/asyncHandler')(async (req, res) => {
+  if (!require('mongoose').isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Document not found' });
+  const document = await require('../models/Document').findOneAndUpdate({ _id: req.params.id, student: req.user._id },
+    { $set: { archivedAt: new Date() } }, { new: true }).lean();
+  if (!document) return res.status(404).json({ message: 'Document not found' });
+  res.json(document);
+}));
 router.get("/applications", getApplications);
 router.get("/notifications", getStudentNotifications);
 router.patch("/notifications/read-all", markAllStudentNotificationsRead);

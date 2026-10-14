@@ -122,12 +122,11 @@ router.post('/service-requests/:id/documents',requireSection('services'),require
   const row=await ServiceRequest.findById(req.params.id);if(!row)fail(404,'Service request not found');
   if(!req.file)fail(400,'File is required');
   if(row.documents.length >= 20)fail(409,'Document limit reached');
-  const storage=await require('../utils/privateDocumentStorage').uploadPrivateDocument(req.file);
-  const id=new mongoose.Types.ObjectId();
-  const document=await Document.create({_id:id,student:row.student,type:'other',fileName:req.file.originalname,filePath:`/api/documents/${id}/access`,mimeType:req.file.mimetype,size:req.file.size,storage});
-  const item={_id:document._id,fileName:document.fileName,filePath:document.filePath,mimeType:document.mimeType,size:document.size};
+  const {document}=await require('../utils/documentLibrary').saveLibraryDocument({student:row.student,file:req.file,type:'other'});
+  const item={_id:document._id,document:document._id,fileName:document.fileName,filePath:document.filePath,mimeType:document.mimeType,size:document.size};
+  if(row.documents.some(doc=>String(doc._id)===String(document._id)))return res.json(item);
   // Preserve other attachments and enforce the limit even when uploads race.
-  const updated=await ServiceRequest.findOneAndUpdate({_id:row._id,'documents.19':{$exists:false}},{$push:{documents:item},$inc:{__v:1}},{new:true});
+  const updated=await ServiceRequest.findOneAndUpdate({_id:row._id,'documents.19':{$exists:false},'documents._id':{$ne:document._id}},{$push:{documents:item},$inc:{__v:1}},{new:true});
   if(!updated)fail(409,'Document limit reached. Refresh the request.');
   res.status(201).json(item);
 }));
@@ -143,11 +142,9 @@ router.post('/applications/:id/documents',requireSection('applications'),require
   const row=await Application.findById(req.params.id);if(!row)fail(404,'Application not found');
   if(!req.file)fail(400,'File is required');
   if(typeof req.body.type !== 'string' || !req.body.type.trim() || req.body.type.length > 100)fail(400,'Invalid document type');
-  const storage=await require('../utils/privateDocumentStorage').uploadPrivateDocument(req.file);
-  const id=new mongoose.Types.ObjectId();
-  const document=await Document.create({_id:id,student:row.student,type:req.body.type.trim(),fileName:req.file.originalname,filePath:`/api/documents/${id}/access`,mimeType:req.file.mimetype,size:req.file.size,storage});
-  row.documents.push(document._id);await row.save();
-  res.status(201).json({_id:document._id,__v:document.__v,applicationVersion:row.__v,fileName:document.fileName,filePath:document.filePath,type:document.type,size:document.size,detailedStatus:document.detailedStatus});
+  const {document,reused}=await require('../utils/documentLibrary').saveLibraryDocument({student:row.student,file:req.file,type:req.body.type.trim()});
+  const updated=await Application.findOneAndUpdate({_id:row._id},{$addToSet:{documents:document._id},$inc:{__v:1}},{new:true});
+  res.status(reused?200:201).json({_id:document._id,__v:document.__v,applicationVersion:updated.__v,fileName:document.fileName,filePath:document.filePath,type:document.type,size:document.size,detailedStatus:document.detailedStatus});
 }));
 router.delete('/applications/:id/documents/:documentId',requireSection('applications'),run(async(req,res)=>{
   if(!mongoose.isValidObjectId(req.params.documentId))fail(400,'Invalid document ID');

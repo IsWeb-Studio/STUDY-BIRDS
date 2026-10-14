@@ -6,7 +6,8 @@ function requiredDocumentTypesFor(program) {
 }
 
 function missingDocumentTypes(required, documents) {
-  const supplied = new Set(documents.filter(doc => doc.status !== 'rejected' && !INVALID_DOCUMENT_STATES.has(doc.detailedStatus)).map(doc => doc.type));
+  const supplied = new Set(documents.filter(doc => doc.status !== 'rejected' && !INVALID_DOCUMENT_STATES.has(doc.detailedStatus) &&
+    (!doc.expiresAt || new Date(doc.expiresAt) > new Date())).map(doc => doc.type));
   return required.filter(type => !supplied.has(type));
 }
 

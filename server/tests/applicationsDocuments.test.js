@@ -43,10 +43,11 @@ test('program details, application cards, document versions/translations and req
       const response = await fetch(base + endpoint, { method, headers: { 'Content-Type': 'application/json', ...(user ? auth(user) : {}) }, body: body ? JSON.stringify(body) : undefined });
       const data = await response.json(); assert.equal(response.status, expected, JSON.stringify(data)); return data;
     }
+    let uploadAttempt = 0;
     async function upload(user, fields, expected = 201) {
       const form = new FormData();
       for (const [key, value] of Object.entries(fields)) form.append(key, value);
-      form.append('file', new Blob(['pdf'], { type: 'application/pdf' }), `${fields.type || 'file'}.pdf`);
+      form.append('file', new Blob([`%PDF-1.4\nversion ${++uploadAttempt}\n%%EOF`], { type: 'application/pdf' }), `${fields.type || 'file'}.pdf`);
       const response = await fetch(base + '/students/documents', { method: 'POST', headers: auth(user), body: form });
       const data = await response.json(); assert.equal(response.status, expected, JSON.stringify(data)); return data;
     }

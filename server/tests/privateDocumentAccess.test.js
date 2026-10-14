@@ -33,7 +33,7 @@ test('private upload, scoped access, expiration and public signer isolation', as
     const token = user => jwt.sign({ userId: user._id }, process.env.JWT_SECRET);
     server = await new Promise(resolve => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
     const base = `http://127.0.0.1:${server.address().port}/api`;
-    const form = new FormData(); form.append('type', 'passport'); form.append('file', new Blob(['test document'], { type: 'application/pdf' }), 'passport.pdf');
+    const form = new FormData(); form.append('type', 'passport'); form.append('file', new Blob(['%PDF-1.4\ntest document\n%%EOF'], { type: 'application/pdf' }), 'passport.pdf');
     const uploaded = await fetch(base + '/students/documents', { method: 'POST', headers: { Authorization: `Bearer ${token(student)}` }, body: form });
     assert.equal(uploaded.status, 201);
     const doc = await uploaded.json();
@@ -61,7 +61,7 @@ test('private upload, scoped access, expiration and public signer isolation', as
     const PaymentProof = require('../src/models/PaymentProof');
     const finance = await User.create({ name: 'Finance', email: 'finance@example.test', role: 'employee', permissions: ['student-financials'] });
     const invoice = await Invoice.create({ student: student._id, invoiceNumber: 'INV-private', description: 'Test invoice', amount: 100 });
-    const proofForm = new FormData(); proofForm.append('file', new Blob(['test receipt'], { type: 'application/pdf' }), 'receipt.pdf');
+    const proofForm = new FormData(); proofForm.append('file', new Blob(['%PDF-1.4\ntest receipt\n%%EOF'], { type: 'application/pdf' }), 'receipt.pdf');
     const proofResponse = await fetch(base + `/students/financials/invoices/${invoice._id}/payment-proof`, { method: 'POST', headers: { Authorization: `Bearer ${token(student)}` }, body: proofForm });
     assert.equal(proofResponse.status, 201);
     const proof = await proofResponse.json();
@@ -82,7 +82,7 @@ test('private upload, scoped access, expiration and public signer isolation', as
     const admin = await User.create({ name: 'Admin', email: 'admin@example.test', role: 'admin' });
     for (const [owner, route] of [[student, '/students/support-tickets'], [partner, '/partners/tickets']]) {
       const form = new FormData(); form.append('subject', 'Help'); form.append('message', 'Please review');
-      form.append('file', new Blob(['support attachment'], { type: 'application/pdf' }), 'help.pdf');
+      form.append('file', new Blob(['%PDF-1.4\nsupport attachment\n%%EOF'], { type: 'application/pdf' }), 'help.pdf');
       const response = await fetch(base + route, { method: 'POST', headers: { Authorization: `Bearer ${token(owner)}` }, body: form });
       assert.equal(response.status, 201);
       const ticket = await response.json();

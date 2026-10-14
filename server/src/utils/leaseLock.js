@@ -28,7 +28,7 @@ class LeaseBusyError extends Error {
 }
 
 // Runs fn while holding the lease; waits briefly for a concurrent holder.
-async function withLease(key, fn, { ms = 15_000, waitMs = 3_000 } = {}) {
+async function withLease(key, fn, { ms = 15_000, waitMs = 3_000, renew = false } = {}) {
   const owner = randomUUID();
   const deadline = Date.now() + waitMs;
   let lease = await acquire(key, owner, ms);
@@ -37,9 +37,14 @@ async function withLease(key, fn, { ms = 15_000, waitMs = 3_000 } = {}) {
     lease = await acquire(key, owner, ms);
   }
   if (!lease) throw new LeaseBusyError();
+  const heartbeat = renew ? setInterval(() => {
+    WorkerLease.updateOne({ _id: key, owner }, { $set: { expiresAt: new Date(Date.now() + ms) } }).catch(() => {});
+  }, Math.max(1000, Math.floor(ms / 3))) : null;
+  heartbeat?.unref();
   try {
     return await fn();
   } finally {
+    if (heartbeat) clearInterval(heartbeat);
     await WorkerLease.updateOne({ _id: key, owner }, { $set: { expiresAt: new Date(0) } });
   }
 }

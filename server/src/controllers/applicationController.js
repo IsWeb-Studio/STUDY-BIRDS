@@ -31,6 +31,8 @@ const createApplication = asyncHandler(async (req, res) => {
   const documents = await Document.find({
     _id: { $in: documentIds },
     student: req.user._id,
+    supersededBy: null,
+    archivedAt: null,
   });
 
   const existingApplication = await Application.findOne({

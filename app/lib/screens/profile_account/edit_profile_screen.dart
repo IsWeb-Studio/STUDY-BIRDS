@@ -278,9 +278,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
       final passports = docs
           .whereType<Map<String, dynamic>>()
-          .where((d) => d['type'] == 'passport')
+          .where((d) => d['type'] == 'passport' && d['supersededBy'] == null && d['archivedAt'] == null)
           .toList();
-      if (passports.isNotEmpty) setState(() => _passportDoc = passports.last);
+      if (passports.isNotEmpty) setState(() => _passportDoc = passports.first);
     } catch (swallowedError, swallowedStack) {
       ErrorReporter.swallowed(swallowedError, swallowedStack,
           'screens/profile_account/edit_profile_screen.dart:271');
@@ -405,6 +405,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _pickAndUploadPassport() async {
+    if (_passportUploading) return;
+    if (_passportDoc != null && mounted) {
+      final replace = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+        title: const Text('استبدال جواز السفر المحفوظ؟'),
+        content: const Text('النسخة الجديدة ستُستخدم في الطلبات المستقبلية. الطلبات السابقة تحتفظ بالجواز المرفق بها.'),
+        actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('متابعة'))],
+      ));
+      if (replace != true || !mounted) return;
+    }
     final file = await pickDocument(context, passport: true);
     if (file == null || file.bytes == null || !mounted) return;
     final bytes = file.bytes!;
@@ -432,6 +442,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         fileBytes: bytes,
         fileName: fileName,
         type: 'passport',
+        replaces: _passportDoc?['_id']?.toString(),
         passportReview: file.submissionMetadata,
       );
       if (mounted) {

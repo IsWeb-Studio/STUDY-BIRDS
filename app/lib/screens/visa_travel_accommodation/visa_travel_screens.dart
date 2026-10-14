@@ -11,6 +11,9 @@ import '../../core/repositories/student_repository.dart';
 import '../../core/repositories/catalog_repository.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/services/analytics_service.dart';
+import 'dart:async';
+import '../../core/utils/document_eligibility.dart';
+import '../applications_documents_payments/documents_screens.dart';
 
 // ── Pure helpers (extracted for testability) ───────────────────────────────
 
@@ -66,6 +69,7 @@ class VisaCenterScreen extends StatefulWidget {
 }
 
 class _VisaCenterScreenState extends State<VisaCenterScreen> {
+  StreamSubscription<List<dynamic>>? _documentSub;
   bool _loading = true;
   String? _error;
   String _currentStage = '';
@@ -78,6 +82,16 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
     super.initState();
     AnalyticsService.instance.screenView('visa_center');
     _load();
+    _documentSub = StudentRepository.instance.documentChanges.listen((docs) {
+      if (mounted) { setState(() => _uploadedDocKeys = docs.whereType<Map>()
+          .where(isUsableLibraryDocument).map((doc) => '${doc['type']}').toSet()); }
+    });
+  }
+
+  @override
+  void dispose() {
+    _documentSub?.cancel();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -131,7 +145,7 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
       setState(() {
         _currentStage = overview.currentStage;
         _uploadedDocKeys =
-            docs.map((d) => (Json.rawMap(d))['type']?.toString() ?? '').toSet();
+            docs.whereType<Map>().where(isUsableLibraryDocument).map((d) => '${d['type']}').toSet();
         _requirements = reqs;
         _countryData = matchedCountry;
         _loading = false;
@@ -278,8 +292,22 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
                           ),
                           const SizedBox(width: 10),
                           Expanded(child: Text(req.label, style: AppTextStyles.body)),
-                          if (!done)
-                            Text('لم يُرفع', style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary)),
+                          TextButton(
+                            child: Text(done ? 'موجود في مستنداتك' : 'تصوير أو رفع'),
+                            onPressed: () async {
+                              if (done) {
+                                final docs = await StudentRepository.instance.getDocuments();
+                                final matches = docs.whereType<Map<String, dynamic>>().where((doc) =>
+                                    doc['type'] == req.docKey && isUsableLibraryDocument(doc));
+                                if (context.mounted && matches.isNotEmpty) {
+                                  await Navigator.of(context).push(MaterialPageRoute(builder: (_) =>
+                                      DocumentDetailScreen(document: matches.first)));
+                                }
+                              } else {
+                                await pickAndUploadDocument(context, req.docKey);
+                              }
+                            },
+                          ),
                         ],
                       ),
                     );

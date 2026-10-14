@@ -1,4 +1,5 @@
 import '../../core/utils/document_picker.dart';
+import '../../core/utils/document_eligibility.dart';
 import '../profile_account/passport_scanner_screen.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
@@ -98,6 +99,29 @@ String docTypeLabel(String? key) {
 /// method looked up via findAncestorStateOfType — it's a standalone helper).
 Future<bool> pickAndUploadDocument(BuildContext context, String type,
     {String? replaces, String? translationOf, PlatformFile? picked}) async {
+  if (replaces == null && translationOf == null && picked == null) {
+    final library = await StudentRepository.instance.getDocuments();
+    final matches = library.whereType<Map>().where((doc) =>
+        doc['type'] == type && isCurrentLibraryDocument(doc)).toList();
+    if (!context.mounted) return false;
+    if (matches.isNotEmpty) {
+      final existing = matches.first;
+      final choice = await showDialog<String>(context: context, builder: (ctx) => AlertDialog(
+        title: Text('${docTypeLabel(type)} موجود في مستنداتك'),
+        content: const Text('يمكنك استخدام المستند الحالي أو رفع نسخة جديدة. الطلبات السابقة تحتفظ بمستنداتها.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إلغاء')),
+          TextButton(onPressed: () => Navigator.pop(ctx, 'keep'), child: const Text('إضافة مستند آخر')),
+          TextButton(onPressed: () => Navigator.pop(ctx, 'replace'), child: const Text('استبدال المستند')),
+          if (isUsableLibraryDocument(existing))
+            FilledButton(onPressed: () => Navigator.pop(ctx, 'reuse'), child: const Text('استخدام المستند الموجود')),
+        ],
+      ));
+      if (choice == null || !context.mounted) return false;
+      if (choice == 'reuse') return true;
+      if (choice == 'replace') replaces = '${existing['_id']}';
+    }
+  }
   // [picked] lets a retry reuse the already-selected file after a failure.
   PlatformFile file;
   if (picked != null) {
@@ -114,10 +138,10 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
           const SnackBar(content: Text('تعذر قراءة الملف المختار')));
     return false;
   }
-  if (file.size > 10 * 1024 * 1024) {
+  if (file.size > 5 * 1024 * 1024) {
     if (context.mounted)
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('حجم الملف كبير جدًا (الحد الأقصى 10 ميجابايت)')));
+          content: Text('حجم الملف كبير جدًا (الحد الأقصى 5 ميجابايت)')));
     return false;
   }
 
@@ -189,7 +213,7 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
   );
 
   try {
-    await StudentRepository.instance.uploadDocument(
+    final result = await StudentRepository.instance.uploadDocument(
         fileBytes: file.bytes!,
         fileName: file.name,
         type: type,
@@ -203,8 +227,8 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
         onProgress: (p) => progressNotifier.value = p);
     if (context.mounted) {
       Navigator.of(context, rootNavigator: true).pop();
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('تم رفع المستند بنجاح'),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(result['reused'] == true ? 'المستند موجود بالفعل؛ تم استخدامه بدون رفع نسخة أخرى' : 'تم رفع المستند بنجاح'),
           backgroundColor: AppColors.success));
     }
     return true;
@@ -321,12 +345,17 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
   String? _error;
   bool _uploading = false;
   StreamSubscription<DateTime>? _syncSub;
+  StreamSubscription<List<dynamic>>? _documentSub;
 
   @override
   void initState() {
     super.initState();
     AnalyticsService.instance.screenView('my_documents');
     _load();
+    _documentSub = StudentRepository.instance.documentChanges.listen((docs) {
+      if (mounted) { setState(() => _docs = docs.whereType<Map>()
+          .where(isCurrentLibraryDocument).toList()); }
+    });
     _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
       if (_uploading) return;
       StudentRepository.instance.getDocuments(forceRefresh: true).then((docs) {
@@ -334,7 +363,7 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
           setState(() => _docs = docs
               .whereType<Map>()
               .where(
-                  (d) => d['isLatest'] != false && d['translationOf'] == null)
+                  isCurrentLibraryDocument)
               .toList());
       }).catchError(ErrorReporter.silent(
           'screens/applications_documents_payments/documents_screens.dart:306'));
@@ -344,6 +373,7 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
   @override
   void dispose() {
     _syncSub?.cancel();
+    _documentSub?.cancel();
     super.dispose();
   }
 
@@ -371,7 +401,7 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
         // their document's detail screen (PRD 29).
         _docs = docs
             .whereType<Map>()
-            .where((d) => d['isLatest'] != false && d['translationOf'] == null)
+            .where(isCurrentLibraryDocument)
             .toList();
         _loading = false;
       });
@@ -417,7 +447,10 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
     final success = await pickAndUploadDocument(context, selectedType);
     if (!mounted) return;
     setState(() => _uploading = false);
-    if (success) await _load();
+    if (success) {
+      StudentRepository.instance.getDocuments(forceRefresh: true)
+          .catchError(ErrorReporter.fallback('documents.refresh.after-upload', <dynamic>[]));
+    }
   }
 
   @override
@@ -509,7 +542,10 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
             final changed = await Navigator.of(context).push<bool>(
                 MaterialPageRoute(
                     builder: (_) => DocumentDetailScreen(document: d)));
-            if (changed == true) _load();
+            if (changed == true) {
+              StudentRepository.instance.getDocuments(forceRefresh: true)
+                  .catchError(ErrorReporter.fallback('documents.refresh.after-change', <dynamic>[]));
+            }
           },
           child: Row(
             children: [
@@ -521,6 +557,13 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
                 children: [
                   Text(docTypeLabel(d['type'] as String?),
                       style: AppTextStyles.cardTitle),
+                  Text('${d['fileName'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: AppTextStyles.caption),
+                  if (d['updatedAt'] != null || d['createdAt'] != null)
+                    Text('آخر تحديث: ${'${d['updatedAt'] ?? d['createdAt']}'.split('T').first}',
+                        style: AppTextStyles.caption),
+                  if (d['expiresAt'] != null)
+                    Text('انتهاء الصلاحية: ${'${d['expiresAt']}'.split('T').first}', style: AppTextStyles.caption),
                   if (needsAction)
                     Text(info.meaning,
                         maxLines: 2,
@@ -781,6 +824,26 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 if (success && context.mounted) Navigator.of(context).pop(true);
               },
             ),
+            if (document['archivedAt'] == null)
+              TextButton.icon(
+                icon: const Icon(Icons.remove_circle_outline),
+                label: const Text('إزالة من مستنداتي'),
+                onPressed: () async {
+                  final confirmed = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
+                    title: const Text('إزالة من مكتبة المستندات؟'),
+                    content: const Text('لن يظهر في الطلبات الجديدة. الطلبات السابقة تحتفظ بالمستند المرفق ولا يُحذف الملف.'),
+                    actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
+                      FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('إزالة'))],
+                  ));
+                  if (confirmed != true) return;
+                  try {
+                    await StudentRepository.instance.archiveDocument('${document['_id']}');
+                    if (context.mounted) Navigator.pop(context, true);
+                  } catch (error) {
+                    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppError.message(error))));
+                  }
+                },
+              ),
             if (translationStatus != null &&
                 translationStatus != 'approved' &&
                 translationStatus != 'uploaded') ...[

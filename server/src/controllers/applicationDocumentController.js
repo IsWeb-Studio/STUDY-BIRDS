@@ -26,7 +26,10 @@ const attachApplicationDocument = asyncHandler(async (req, res) => {
   }
   const document = await Document.findOne({ _id: documentId, student: req.user._id }).lean();
   if (!document) return res.status(404).json({ message: 'Document not found' });
-  if (needsCorrection(document)) return res.status(400).json({ message: 'Choose a valid replacement document' });
+  if (needsCorrection(document) || document.supersededBy || document.archivedAt ||
+      (document.expiresAt && new Date(document.expiresAt) <= new Date())) {
+    return res.status(400).json({ message: 'Choose a valid current replacement document' });
+  }
   const requested = (application.documentRequests || []).find(item => item.type === document.type && item.status === 'requested');
   const previous = application.documents.filter(doc => doc.type === document.type);
   const required = application.requiredDocumentTypes ?? requiredDocumentTypesFor(application.program);

@@ -56,12 +56,13 @@ class AgentRepository {
     required List<int> fileBytes,
     required String fileName,
     required String label,
+    String? type,
   }) async {
     final data = await ApiClient.instance.postMultipart(
       '/partners/students/$studentId/documents',
       fileBytes: fileBytes,
       fileName: fileName,
-      fields: {'label': label},
+      fields: {'label': label, if (type != null) 'type': type},
       token: _token,
     );
     return Json.map(data);

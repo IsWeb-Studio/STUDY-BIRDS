@@ -295,21 +295,29 @@ const uploadAgentStudentDocument = asyncHandler(async (req, res) => {
     throw new Error("Student not found");
   }
 
-  const uploadResult = await uploadFileToCloudinary(req.file, "study-birds/agent-students");
+  if (req.body.type !== undefined && (typeof req.body.type !== 'string' || !req.body.type.trim() || req.body.type.length > 100)) {
+    return res.status(400).json({ message: 'Invalid document type' });
+  }
+  // Agent contacts have no authenticated student-account link in this model.
+  // Scope them to the contact ID; never infer ownership from a matching email.
+  const { document: saved, reused } = await require('../utils/documentLibrary').saveLibraryDocument({
+    student: student._id, file: req.file, type: String(req.body.type || req.body.label || 'other').trim(),
+  });
   const document = {
+    _id: saved._id, document: saved._id,
     label: String(req.body.label || req.body.type || "document").trim(),
     fileName: req.file.originalname,
-    filePath: uploadResult.url,
+    filePath: saved.filePath,
     mimeType: req.file.mimetype,
-    size: uploadResult.bytes || req.file.size,
+    size: saved.size,
   };
 
-  student.documents.push(document);
-  await student.save();
+  await AgentStudent.updateOne({ _id: student._id, agent: req.user._id, 'documents.document': { $ne: saved._id } },
+    { $push: { documents: document } });
 
   await logActivity(req, req.user._id, "student.document.uploaded", `Uploaded a document for ${student.name}`, { studentId: student._id });
 
-  res.status(201).json(student);
+  res.status(reused ? 200 : 201).json(await AgentStudent.findById(student._id));
 });
 
 const getPartnerWallet = asyncHandler(async (req, res) => {

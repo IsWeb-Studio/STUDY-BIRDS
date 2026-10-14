@@ -31,6 +31,10 @@ const documentSchema = new mongoose.Schema(
     }, { _id: false }), select: false },
     mimeType: String,
     size: Number,
+    fileHash: { type: String, match: /^[a-f0-9]{64}$/ },
+    uploadStatus: { type: String, enum: ['uploaded'], default: 'uploaded' },
+    version: { type: Number, default: 1 },
+    archivedAt: Date,
     status: {
       type: String,
       enum: ["pending", "verified", "rejected"],
@@ -89,6 +93,8 @@ const documentSchema = new mongoose.Schema(
 
 documentSchema.index({ expiresAt: 1, detailedStatus: 1 });
 documentSchema.index({ student: 1, translationOf: 1 });
+documentSchema.index({ student: 1, type: 1, fileHash: 1, size: 1 });
+documentSchema.index({ student: 1, archivedAt: 1, createdAt: -1 });
 
 documentSchema.statics.parsePassportReview = function (input) {
   if (typeof input !== "string" || input.length > 5000) throw new Error("Invalid passport review");

@@ -17,6 +17,7 @@ const serviceRequestSchema = new mongoose.Schema({
   durationDays:{ type: Number, min: 0, default: 0 },
   // #36: documents attached to the request (uploaded by student or staff)
   documents: [{
+    document: { type: mongoose.Schema.Types.ObjectId, ref: 'Document' },
     fileName: { type: String },
     filePath: { type: String },
     mimeType: { type: String },

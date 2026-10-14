@@ -56,7 +56,18 @@ async function autoCreateInvoice(request) {
 
 // POST /api/service-requests — submit a new service request
 router.post('/', authorize('student'), run(async (req, res) => {
-  const { serviceId, notes = '' } = req.body;
+  const { serviceId, notes = '', documentIds = [] } = req.body;
+  if (!Array.isArray(documentIds) || documentIds.length > 20 || new Set(documentIds).size !== documentIds.length ||
+      documentIds.some(id => typeof id !== 'string' || !mongoose.isValidObjectId(id))) {
+    return res.status(400).json({ message: 'Invalid document selection' });
+  }
+  const documents = await require('../models/Document').find({ _id: { $in: documentIds },
+    student: req.user._id, supersededBy: null, archivedAt: null }).lean();
+  if (documents.length !== documentIds.length || documents.some(doc => doc.status === 'rejected' ||
+      ['missing', 'rejected', 'needs-revision', 'needs-translation', 'expired'].includes(doc.detailedStatus) ||
+      (doc.expiresAt && new Date(doc.expiresAt) <= new Date()))) {
+    return res.status(400).json({ message: 'Choose valid documents from your library' });
+  }
   if (!mongoose.isValidObjectId(serviceId)) {
     return res.status(400).json({ message: 'معرّف الخدمة غير صالح' });
   }
@@ -72,6 +83,8 @@ router.post('/', authorize('student'), run(async (req, res) => {
     service: serviceId,
     serviceTitle: service.title,
     notes: String(notes || '').trim().slice(0, 2000),
+    documents: documents.map(doc => ({ _id: doc._id, document: doc._id, fileName: doc.fileName,
+      filePath: `/api/documents/${doc._id}/access`, mimeType: doc.mimeType, size: doc.size })),
     price: service.price || 0,
     durationDays: service.durationDays || 0,
     statusHistory: [{ status: 'pending', changedBy: req.user._id, note: 'طلب جديد' }],

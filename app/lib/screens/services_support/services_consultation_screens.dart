@@ -13,6 +13,10 @@ import '../../core/services/auth_session.dart';
 import '../../core/repositories/catalog_repository.dart';
 import '../../core/services/notification_scheduler.dart';
 import '../../core/services/analytics_service.dart';
+import 'dart:async';
+import '../../core/repositories/student_repository.dart';
+import '../../core/utils/document_eligibility.dart';
+import '../applications_documents_payments/documents_screens.dart';
 
 class ServicesCenterScreen extends StatefulWidget {
   const ServicesCenterScreen({super.key});
@@ -141,16 +145,45 @@ class ServiceDetailScreen extends StatefulWidget {
 }
 
 class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
+  List<Map<String, dynamic>> _documents = [];
+  final _selectedDocuments = <String>{};
+  StreamSubscription<List<dynamic>>? _documentSub;
+  bool _loadingDocuments = true;
+  String? _documentError;
+
+  @override
+  void initState() {
+    super.initState();
+    _documentSub = StudentRepository.instance.documentChanges.listen(_setDocuments);
+    _loadDocuments();
+  }
+
+  void _setDocuments(List<dynamic> data) {
+    if (!mounted) return;
+    setState(() {
+      _documents = data.whereType<Map<String, dynamic>>().where(isUsableLibraryDocument).toList();
+      _selectedDocuments.removeWhere((id) => !_documents.any((doc) => doc['_id'] == id));
+      _loadingDocuments = false;
+      _documentError = null;
+    });
+  }
+
+  Future<void> _loadDocuments() async {
+    try { _setDocuments(await StudentRepository.instance.getDocuments()); }
+    catch (_) { if (mounted) setState(() { _loadingDocuments = false; _documentError = 'تعذر تحميل المستندات'; }); }
+  }
   bool _submitting = false;
   final _notesCtrl = TextEditingController();
 
   @override
   void dispose() {
+    _documentSub?.cancel();
     _notesCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _requestService() async {
+    if (_submitting) return;
     final confirmed = await showAppConfirmDialog(
       context,
       title: 'تأكيد طلب الخدمة',
@@ -165,6 +198,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       await ApiClient.instance.post('/service-requests', token: token, body: {
         'serviceId': serviceId,
         'notes': _notesCtrl.text.trim(),
+        'documentIds': _selectedDocuments.toList(),
       });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
@@ -240,6 +274,22 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               style: AppTextStyles.caption,
             ),
             const SizedBox(height: 20),
+            const Text('استخدام مستندات محفوظة (اختياري)', style: AppTextStyles.sectionLabel),
+            const Text('اختر فقط المستندات التي توافق على إرفاقها بهذه الخدمة.'),
+            if (_loadingDocuments) const LinearProgressIndicator(),
+            if (_documentError != null) TextButton(onPressed: _loadDocuments, child: Text(_documentError!)),
+            for (final doc in _documents)
+              CheckboxListTile(
+                title: Text(docTypeLabel(doc['type'] as String?)),
+                subtitle: Text('${doc['fileName']}'),
+                value: _selectedDocuments.contains(doc['_id']),
+                onChanged: _submitting ? null : (selected) => setState(() {
+                  if (selected == true) { _selectedDocuments.add('${doc['_id']}'); }
+                  else { _selectedDocuments.remove(doc['_id']); }
+                }),
+              ),
+            TextButton.icon(icon: const Icon(Icons.folder_outlined), label: const Text('مكتبة المستندات'),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyDocumentsScreen()))),
             PrimaryButton(
               label: _submitting ? 'جاري الإرسال...' : 'طلب الخدمة',
               onPressed: _submitting ? null : _requestService,

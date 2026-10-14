@@ -1,5 +1,6 @@
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
+import '../../core/utils/document_picker.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -100,8 +101,8 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
     List<int>? bytes;
     String? fileName;
 
-    if (source == 'camera') {
-      final img = await ImagePicker().pickImage(source: ImageSource.camera, imageQuality: 90);
+    if (source == 'camera' || source == 'gallery') {
+      final img = await ImagePicker().pickImage(source: source == 'camera' ? ImageSource.camera : ImageSource.gallery, imageQuality: 90);
       if (img == null) return;
       bytes = await img.readAsBytes();
       fileName = img.name;
@@ -131,24 +132,16 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
   // ── generic type: file picker only ─────────────────────────────────────
 
   Future<void> _genericPickFlow(_DocType docType) async {
-    final res = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-      withData: true,
-    );
-    if (res == null || res.files.isEmpty || res.files.single.bytes == null) return;
-    await _doUpload(res.files.single.bytes!, res.files.single.name, docType.label);
+    final file = await pickDocument(context);
+    if (file == null || file.bytes == null) return;
+    await _doUpload(file.bytes!, file.name, docType.label);
   }
 
   // ── other: user types own label ─────────────────────────────────────────
 
   Future<void> _pickWithCustomLabel() async {
-    final res = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-      withData: true,
-    );
-    if (res == null || res.files.isEmpty || res.files.single.bytes == null) return;
+    final file = await pickDocument(context);
+    if (file == null || file.bytes == null) return;
     if (!mounted) return;
 
     final labelCtrl = TextEditingController();
@@ -175,12 +168,13 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
       ),
     );
     if (label == null || !mounted) return;
-    await _doUpload(res.files.single.bytes!, res.files.single.name, label);
+    await _doUpload(file.bytes!, file.name, label);
   }
 
   // ── actual upload call ──────────────────────────────────────────────────
 
   Future<void> _doUpload(List<int> bytes, String fileName, String label) async {
+    if (_uploading) return;
     setState(() => _uploading = true);
     try {
       final updated = await AgentRepository.instance.uploadStudentDocument(
@@ -188,6 +182,8 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
         fileBytes: bytes,
         fileName: fileName,
         label: label,
+        type: _docTypes.firstWhere((type) => type.label == label,
+            orElse: () => _DocType('other', label, Icons.description)).key,
       );
       if (!mounted) return;
       setState(() => _student = updated);
@@ -385,6 +381,8 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
             icon: Icons.upload_file_rounded,
           ),
           const SizedBox(height: 24),
+          TextButton.icon(icon: const Icon(Icons.photo_library_outlined),
+            label: const Text('اختيار من الصور'), onPressed: () => Navigator.pop(context, 'gallery')),
         ],
       ),
     );

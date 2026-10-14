@@ -18,6 +18,7 @@ const agentStudentDocumentSchema = new mongoose.Schema(
       trim: true,
     },
     mimeType: String,
+    document: { type: mongoose.Schema.Types.ObjectId, ref: 'Document' },
     size: Number,
     uploadedAt: {
       type: Date,

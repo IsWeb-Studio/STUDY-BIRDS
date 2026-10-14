@@ -6,6 +6,9 @@ import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
 import '../../core/config/app_theme.dart';
 import 'documents_screens.dart';
+import 'dart:async';
+import '../../core/repositories/student_repository.dart';
+import '../../core/utils/document_eligibility.dart';
 
 class ApplicationDocumentsScreen extends StatefulWidget {
   final String applicationId;
@@ -22,8 +25,10 @@ class _ApplicationDocumentsScreenState
   final selection = <String, String>{};
   bool loading = true, busy = false;
   String? error;
+  StreamSubscription<List<dynamic>>? _documentSub;
   String? get token => AuthSession.instance.token;
   bool invalid(Map doc) =>
+      doc['supersededBy'] != null || doc['archivedAt'] != null || doc['isLatest'] == false ||
       doc['status'] == 'rejected' ||
       ['missing', 'rejected', 'needs-revision', 'needs-translation', 'expired']
           .contains(doc['detailedStatus']);
@@ -31,6 +36,18 @@ class _ApplicationDocumentsScreenState
   void initState() {
     super.initState();
     load();
+    _documentSub = StudentRepository.instance.documentChanges.listen((docs) {
+      if (mounted) { setState(() {
+        documents = docs.whereType<Map<String, dynamic>>().where(isUsableLibraryDocument).toList();
+        selection.removeWhere((type, id) => !documents.any((doc) => doc['_id'] == id));
+      }); }
+    });
+  }
+
+  @override
+  void dispose() {
+    _documentSub?.cancel();
+    super.dispose();
   }
 
   Future<void> load() async {
@@ -42,7 +59,7 @@ class _ApplicationDocumentsScreenState
       final result = await Future.wait([
         ApiClient.instance
             .get('/applications/${widget.applicationId}', token: token),
-        ApiClient.instance.get('/students/documents', token: token),
+        StudentRepository.instance.getDocuments(),
       ]);
       if (!mounted) return;
       setState(() {
@@ -66,11 +83,14 @@ class _ApplicationDocumentsScreenState
   }
 
   Future<void> upload(String type) async {
+    if (busy) return;
     setState(() {
       busy = true;
     });
     try {
-      if (await pickAndUploadDocument(context, type) && mounted) await load();
+      if (await pickAndUploadDocument(context, type) && mounted) {
+        await StudentRepository.instance.getDocuments(forceRefresh: true);
+      }
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/application_documents_screen.dart:72');
       if (mounted) {
         setState(() {
