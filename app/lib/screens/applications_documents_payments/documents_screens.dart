@@ -564,6 +564,8 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
                         style: AppTextStyles.caption),
                   if (d['expiresAt'] != null)
                     Text('انتهاء الصلاحية: ${'${d['expiresAt']}'.split('T').first}', style: AppTextStyles.caption),
+                  if (d['uploadStatus'] == 'unavailable')
+                    const Text('هذا المستند القديم يحتاج استعادة الملف أو رفع نسخة جديدة', style: AppTextStyles.caption),
                   if (needsAction)
                     Text(info.meaning,
                         maxLines: 2,

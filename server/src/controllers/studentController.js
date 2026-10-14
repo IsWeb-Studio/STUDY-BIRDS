@@ -224,7 +224,7 @@ const uploadDocument = asyncHandler(async (req, res) => {
 
   const response = (await Document.findById(document._id).lean());
   delete response.storage;
-  res.status(reused ? 200 : 201).json({ ...response, reused, statusInfo: documentStatusInfo(response) });
+  res.status(reused ? 200 : 201).json({ ...Document.clientView(response), reused, statusInfo: documentStatusInfo(response) });
 });
 
 // Translation state of a document (PRD 29): required by a reviewer, uploaded,
@@ -255,11 +255,11 @@ const getDocuments = asyncHandler(async (req, res) => {
     // Older versions, newest first, by following the replaces chain.
     const versions = [];
     for (let prior = byId.get(String(document.replaces || "")); prior && versions.length < 20; prior = byId.get(String(prior.replaces || ""))) {
-      versions.push({ _id: prior._id, fileName: prior.fileName, filePath: prior.filePath, createdAt: prior.createdAt, statusInfo: documentStatusInfo(prior) });
+      versions.push({ _id: prior._id, fileName: prior.fileName, filePath: `/api/documents/${prior._id}/access`, createdAt: prior.createdAt, statusInfo: documentStatusInfo(prior) });
     }
     const translations = translationsByOriginal.get(String(document._id)) || [];
     return {
-      ...document,
+        ...Document.clientView(document),
       reviewedBy: document.reviewedBy ? { name: document.reviewedBy.name } : undefined,
       statusInfo: documentStatusInfo(document),
       isLatest: !document.supersededBy,
@@ -365,7 +365,7 @@ const getDashboardOverview = asyncHandler(async (req, res) => {
     },
     latestNotification: notifications[0] || null,
     recentApplications: applications.slice(0, 5).map((application) => ({ ...application, statusInfo: applicationStatusInfo(application) })),
-    recentDocuments: documents.slice(0, 6).map((document) => ({ ...document, statusInfo: documentStatusInfo(document) })),
+    recentDocuments: documents.slice(0, 6).map((document) => ({ ...Document.clientView(document), statusInfo: documentStatusInfo(document) })),
     recognitions: recognitions.map((r) => ({ _id: r._id, title: r.title, image: r.image || '', link: r.link || '' })),
   });
 });

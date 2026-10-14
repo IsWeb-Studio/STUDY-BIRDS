@@ -42,7 +42,7 @@ const getStudentDocumentsAdmin = asyncHandler(async (req, res) => {
     .sort({ createdAt: -1 })
     .lean();
 
-  res.json(documents.map((document) => ({ ...document, statusInfo: documentStatusInfo(document) })));
+  res.json(documents.map((document) => ({ ...Document.clientView(document), statusInfo: documentStatusInfo(document) })));
 });
 
 const { documentLabel } = require("../constants/documentTypes");

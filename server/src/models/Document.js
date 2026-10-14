@@ -97,6 +97,19 @@ documentSchema.index({ student: 1, translationOf: 1 });
 documentSchema.index({ student: 1, type: 1, fileHash: 1, size: 1 });
 documentSchema.index({ student: 1, archivedAt: 1, createdAt: -1 });
 
+function clientDocument(document) {
+  const result = { ...document };
+  const privatePath = `/api/documents/${result._id}/access`;
+  if (result.filePath !== privatePath) result.uploadStatus = 'unavailable';
+  result.filePath = privatePath;
+  delete result.storage;
+  delete result.legacyFilePath;
+  return result;
+}
+documentSchema.statics.clientView = clientDocument;
+documentSchema.set('toJSON', { transform: (_, document) => clientDocument(document) });
+documentSchema.set('toObject', { transform: (_, document) => clientDocument(document) });
+
 documentSchema.statics.parsePassportReview = function (input) {
   if (typeof input !== "string" || input.length > 5000) throw new Error("Invalid passport review");
   const data = JSON.parse(input);

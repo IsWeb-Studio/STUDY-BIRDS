@@ -2,6 +2,15 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const { legacyAsset, privatizeLegacyDocument } = require('../src/utils/legacyDocumentStorage');
 
+test('legacy document responses never expose public storage URLs', () => {
+  const Document = require('../src/models/Document');
+  const legacy = Document.clientView({ _id: 'abc', filePath: 'https://res.cloudinary.com/owned/raw/upload/file.pdf',
+    storage: { publicId: 'internal' }, legacyFilePath: 'internal' });
+  assert.equal(legacy.filePath, '/api/documents/abc/access');
+  assert.equal(legacy.uploadStatus, 'unavailable');
+  assert.equal(legacy.storage, undefined); assert.equal(legacy.legacyFilePath, undefined);
+});
+
 test('legacy migration validates ownership of storage host and correctly parses raw/image identities', () => {
   assert.equal(legacyAsset('https://res.cloudinary.com/owned/raw/upload/v123/study-birds/file.pdf', 'owned').publicId, 'study-birds/file.pdf');
   assert.equal(legacyAsset('https://res.cloudinary.com/owned/image/upload/v123/study-birds/file.jpg', 'owned').publicId, 'study-birds/file');

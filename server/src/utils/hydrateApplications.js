@@ -99,7 +99,7 @@ const hydrateApplicationsWithStudentProfiles = async (applications) => {
         documents: plainApplication.documents.map((document) => {
           if (!document || typeof document !== "object" || !document.type) return document;
           const { reviewHistory, reviewedBy, ...visible } = document;
-          return { ...visible, statusInfo: documentStatusInfo(document) };
+          return { ...require('../models/Document').clientView(visible), statusInfo: documentStatusInfo(document) };
         }),
       } : {}),
       applicantProfile: buildApplicantProfile(plainApplication, studentProfile),

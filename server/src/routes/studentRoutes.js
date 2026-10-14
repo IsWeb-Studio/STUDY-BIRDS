@@ -53,14 +53,14 @@ router.post('/documents/lookup', require('../utils/asyncHandler')(async (req, re
   const document = await require('../models/Document').findOne({
     student: req.user._id, type, fileHash, size, translationOf: translationOf || null, archivedAt: null, supersededBy: null,
   }).sort({ createdAt: -1 }).lean();
-  res.json({ document: document ? { ...document, statusInfo: require('../constants/statusCatalog').documentStatusInfo(document) } : null });
+  res.json({ document: document ? { ...require('../models/Document').clientView(document), statusInfo: require('../constants/statusCatalog').documentStatusInfo(document) } : null });
 }));
 router.patch('/documents/:id/archive', require('../utils/asyncHandler')(async (req, res) => {
   if (!require('mongoose').isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Document not found' });
   const document = await require('../models/Document').findOneAndUpdate({ _id: req.params.id, student: req.user._id },
     { $set: { archivedAt: new Date() } }, { new: true }).lean();
   if (!document) return res.status(404).json({ message: 'Document not found' });
-  res.json(document);
+  res.json(require('../models/Document').clientView(document));
 }));
 router.get("/applications", getApplications);
 router.get("/notifications", getStudentNotifications);
