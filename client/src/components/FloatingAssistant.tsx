@@ -484,7 +484,8 @@ export const FloatingAssistant = () => {
     const elementWidth = floatingRect?.width || 172;
     const elementHeight = floatingRect?.height || 56;
     const maxX = Math.max(12, window.innerWidth - elementWidth - 12);
-    const maxY = Math.max(12, window.innerHeight - elementHeight - 12);
+    const bottomNavigationHeight = document.querySelector("[data-dashboard-bottom-nav]")?.getBoundingClientRect().height || 0;
+    const maxY = Math.max(12, window.innerHeight - elementHeight - bottomNavigationHeight - 12);
 
     return {
       x: Math.min(Math.max(12, position.x), maxX),
@@ -555,7 +556,7 @@ export const FloatingAssistant = () => {
     updateViewport();
     window.addEventListener("resize", updateViewport);
     return () => window.removeEventListener("resize", updateViewport);
-  }, []);
+  }, [pathname]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !buttonPosition) {

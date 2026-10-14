@@ -25,13 +25,11 @@
   Users,
   Users2,
   Video,
-  PanelLeftOpen,
   Image,
 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
-import { DashboardSidebar } from "../components/dashboard/DashboardSidebar";
+import { DashboardBottomNav } from "../components/dashboard/DashboardBottomNav";
 import { Seo } from "../components/seo/Seo";
 import { useAuth } from "../hooks/useAuth";
 import { useLanguage } from "../hooks/useLanguage";
@@ -40,18 +38,6 @@ import { dt } from "../utils/dashboardTranslations";
 import { employeeSections } from "../utils/employeeAccess";
 
 export const DashboardLayout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(() => {
-    if (window.matchMedia("(max-width: 1023px)").matches) return false;
-    try { return localStorage.getItem("dashboard-sidebar") !== "closed"; } catch { return true; }
-  });
-  useEffect(() => {
-    const desktop = window.matchMedia("(min-width: 1024px)");
-    const handleResize = () => {
-      if (!desktop.matches) setSidebarOpen(false);
-    };
-    desktop.addEventListener("change", handleResize);
-    return () => desktop.removeEventListener("change", handleResize);
-  }, []);
   const { user } = useAuth();
   const { t, language } = useLanguage();
   const location = useLocation();
@@ -206,39 +192,6 @@ export const DashboardLayout = () => {
   const navigationLinks = [...groupedSidebarLinks, ...sidebarLinks.filter((link) => !groupedSidebarLinks.some((item) => item.href === link.href))];
   const activeSection = sidebarLinks.filter((link) => location.pathname === link.href || location.pathname.startsWith(`${link.href}/`)).sort((a, b) => b.href.length - a.href.length)[0];
 
-  const sidebarSectionLabel =
-    user?.role === "admin"
-      ? dt(language, "controlCenter")
-      : isPartner
-        ? (language === "ar" ? "بوابة الوكيل" : "Agent Hub")
-        : isParent
-          ? (language === "ar" ? "بوابة ولي الأمر" : "Parent Hub")
-          : isUniversity
-            ? (language === "ar" ? "بوابة الجامعة" : "University Hub")
-            : dt(language, "profileHub");
-
-  const sidebarTitle =
-    user?.role === "admin"
-      ? dt(language, "adminTitle")
-      : isPartner
-        ? (language === "ar" ? "لوحة الوكيل" : "Agent Dashboard")
-        : isParent
-          ? (language === "ar" ? "لوحة ولي الأمر" : "Parent Dashboard")
-          : isUniversity
-            ? (language === "ar" ? "لوحة الجامعة" : "University Dashboard")
-            : (language === "ar" ? "لوحة الطالب" : "Student Dashboard");
-
-  const sidebarSubtitle =
-    user?.role === "admin"
-      ? dt(language, "manageUsersContent")
-      : isPartner
-        ? (language === "ar" ? "إدارة الطلاب والعمولات والتوثيق من مكان واحد." : "Manage students, earnings, and verification from one workspace.")
-        : isParent
-          ? (language === "ar" ? "تابع رحلة أبنائك الدراسية من مكان واحد." : "Follow your children's study journey from one workspace.")
-          : isUniversity
-            ? (language === "ar" ? "راجع الطلبات المرسلة لجامعتكم وحدّث حالتها." : "Review applications sent to your university and update their status.")
-            : (language === "ar" ? "تابع التقديم والمستندات والإشعارات والدعم من مساحة واحدة." : "Track applications, documents, notifications, and support from one workspace.");
-
   const seoTitle =
     user?.role === "admin"
       ? seoText(language, "Admin Dashboard", "لوحة الإدارة")
@@ -265,33 +218,13 @@ export const DashboardLayout = () => {
     <div className="dashboard-workspace min-h-screen bg-slate-50">
       <Seo title={user?.role === "employee" ? seoText(language, "Employee Dashboard", "لوحة الموظف") : seoTitle} description={seoDescription} noIndex />
       <Navbar />
-      <main className="mx-auto w-full max-w-[1800px] px-4 py-6 sm:px-6 lg:px-8">
+      <main className="mx-auto w-full max-w-[1800px] px-4 pt-6 pb-[calc(8rem+env(safe-area-inset-bottom))] sm:px-6 lg:px-8">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2 text-xs text-slate-500"><LayoutDashboard className="h-4 w-4 shrink-0" /><span>{language === "ar" ? "لوحة التحكم" : "Dashboard"}</span>{activeSection && <><span aria-hidden="true">/</span><span className="font-semibold text-slate-800">{activeSection.label}</span></>}</div>
-        {!sidebarOpen && <button type="button" aria-expanded={false} aria-controls="dashboard-navigation" aria-label={language === "ar" ? "إظهار القائمة الجانبية" : "Show sidebar"} title={language === "ar" ? "إظهار القائمة الجانبية" : "Show sidebar"} onClick={() => {
-          setSidebarOpen(true);
-          try { localStorage.setItem("dashboard-sidebar", "open"); } catch { /* Storage may be unavailable. */ }
-        }} className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500">
-          <PanelLeftOpen className="h-4 w-4" aria-hidden="true" />
-        </button>}
-        </div>
-        <div className={`grid items-start gap-6 ${sidebarOpen ? "lg:grid-cols-[260px_minmax(0,1fr)]" : "grid-cols-1"}`}>
-        <div id="dashboard-navigation" hidden={!sidebarOpen} className="dashboard-navigation max-h-[65vh] min-w-0 overflow-y-auto lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)]">
-        <DashboardSidebar
-          links={navigationLinks}
-          onClose={() => {
-            setSidebarOpen(false);
-            try { localStorage.setItem("dashboard-sidebar", "closed"); } catch { /* Storage may be unavailable. */ }
-          }}
-          onNavigate={() => { if (window.matchMedia("(max-width: 1023px)").matches) setSidebarOpen(false); }}
-          sectionLabel={user?.role === "employee" ? (language === "ar" ? "أقسام العمل" : "Your sections") : sidebarSectionLabel}
-          title={user?.role === "employee" ? (language === "ar" ? "لوحة الموظف" : "Employee dashboard") : sidebarTitle}
-          subtitle={user?.role === "employee" ? (language === "ar" ? "الأقسام المسموح لك بإدارتها." : "The sections you are allowed to manage.") : sidebarSubtitle}
-        />
         </div>
         <div className="dashboard-content min-w-0"><Outlet /></div>
-        </div>
       </main>
+      <DashboardBottomNav links={navigationLinks} />
     </div>
   );
 };
