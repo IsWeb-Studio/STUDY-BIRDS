@@ -35,6 +35,7 @@ const documentSchema = new mongoose.Schema(
     uploadStatus: { type: String, enum: ['uploaded'], default: 'uploaded' },
     version: { type: Number, default: 1 },
     archivedAt: Date,
+    legacyFilePath: { type: String, select: false },
     status: {
       type: String,
       enum: ["pending", "verified", "rejected"],

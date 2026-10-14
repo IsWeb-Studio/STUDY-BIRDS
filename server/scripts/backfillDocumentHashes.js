@@ -21,14 +21,31 @@ async function main() {
   if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is required');
   await mongoose.connect(process.env.MONGODB_URI);
   const apply = process.argv.includes('--apply');
-  const report = { mode: apply ? 'apply' : 'dry-run', candidates: 0, hashed: 0, needsPrivateStorageMigration: 0, failed: 0 };
-  for await (const document of Document.find({ fileHash: { $exists: false } }).select('+storage').cursor()) {
+  const migratePrivate = apply && process.argv.includes('--migrate-private');
+  const report = { mode: apply ? 'apply' : 'dry-run', candidates: 0, hashed: 0, privatized: 0, needsPrivateStorageMigration: 0, failed: 0 };
+  for await (const document of Document.find({ fileHash: { $exists: false } }).select('+storage +legacyFilePath').cursor()) {
     report.candidates++;
     if (!document.storage?.publicId || document.storage.deliveryType !== 'authenticated') {
-      report.needsPrivateStorageMigration++; continue;
+      if (!migratePrivate) { report.needsPrivateStorageMigration++; continue; }
+      try {
+        const oldPath = document.filePath;
+        const storage = await require('../src/utils/legacyDocumentStorage').privatizeLegacyDocument(document);
+        const filePath = `/api/documents/${document._id}/access`;
+        await Document.updateOne({ _id: document._id }, { $set: { storage, filePath, legacyFilePath: oldPath } });
+        document.storage = storage;
+        document.filePath = filePath;
+        document.legacyFilePath = oldPath;
+        report.privatized++;
+      } catch { report.failed++; report.needsPrivateStorageMigration++; continue; }
     }
     if (!apply) continue;
     try {
+      if (document.legacyFilePath) {
+        // Retriable reconciliation of embedded legacy service metadata.
+        await require('../src/models/ServiceRequest').updateMany({ student: document.student, 'documents.filePath': document.legacyFilePath },
+          { $set: { 'documents.$[item].filePath': document.filePath, 'documents.$[item].document': document._id } },
+          { arrayFilters: [{ 'item.filePath': document.legacyFilePath }] });
+      }
       const { url } = documentDownloadLink(document.storage);
       const buffer = await readBounded(await fetch(url, { signal: AbortSignal.timeout(30_000) }));
       // Metadata only; storage identity and original application references stay.
@@ -36,6 +53,7 @@ async function main() {
         { $set: { fileHash: hashFile(buffer), size: buffer.length, uploadStatus: 'uploaded' } });
       report.hashed++;
     } catch { report.failed++; }
+    if (report.candidates % 5 === 0) console.log(JSON.stringify({ progress: report }));
   }
   if (apply) await Document.createIndexes(); // Adds indexes; does not drop any.
   console.log(JSON.stringify(report)); // Counts only, never names or signed URLs.
