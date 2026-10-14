@@ -1,6 +1,7 @@
+import { DocumentPicker } from "./DocumentPicker";
 import { useState, type FormEvent } from "react";
 import { useLanguage } from "../../hooks/useLanguage";
-import { DOCUMENT_UPLOAD_ACCEPT, DOCUMENT_UPLOAD_HINT_AR, DOCUMENT_UPLOAD_HINT_EN } from "../../constants/upload";
+import { DOCUMENT_UPLOAD_HINT_AR, DOCUMENT_UPLOAD_HINT_EN } from "../../constants/upload";
 import { dt } from "../../utils/dashboardTranslations";
 
 export const FileUpload = ({
@@ -17,10 +18,6 @@ export const FileUpload = ({
     if (!file) return;
     await onUpload(file, type);
     setFile(null);
-    const input = event.currentTarget.querySelector('input[type="file"]') as HTMLInputElement | null;
-    if (input) {
-      input.value = "";
-    }
   };
 
   return (
@@ -41,7 +38,7 @@ export const FileUpload = ({
         <option value="recommendation-letter">{language === "ar" ? "خطاب توصية" : "Recommendation letter"}</option>
         <option value="personal-statement">{language === "ar" ? "خطاب الدافع" : "Personal statement"}</option>
       </select>
-      <input type="file" accept={DOCUMENT_UPLOAD_ACCEPT} onChange={(event) => setFile(event.target.files?.[0] || null)} className="w-full rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6" />
+      <DocumentPicker selectedName={file?.name || ""} onSelect={setFile} />
       <p className="text-xs text-slate-500">{language === "ar" ? DOCUMENT_UPLOAD_HINT_AR : DOCUMENT_UPLOAD_HINT_EN}</p>
       <button type="submit" disabled={!file} className="rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-slate-300">
         {t("uploadDocument")}

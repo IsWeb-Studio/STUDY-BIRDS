@@ -1,3 +1,4 @@
+import { DocumentPicker } from "../components/forms/DocumentPicker";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useLocation, useParams } from "react-router-dom";
 import { FormInput } from "../components/forms/FormInput";
@@ -472,13 +473,12 @@ export const ProgramDetailsPage = () => {
           </label>
 
           <div key={uploadKey} className="grid gap-4 md:grid-cols-2">
-            {requiredTypes.map(type => <label className="block" key={type}>
+            {requiredTypes.map(type => <div className="block" key={type}>
               <span className="mb-2 block text-sm font-medium text-slate-700">{documentLabels[type]?.[language === 'ar' ? 0 : 1] || type}</span>
-              <input type="file" required accept={type === 'biometric-photo' ? 'image/jpeg,image/png,image/webp' : DOCUMENT_UPLOAD_ACCEPT} onChange={event => {
-                const file = event.target.files?.[0];
-                setDocumentFiles(current => { const next = {...current}; if (file) next[type] = file; else delete next[type]; return next; });
-              }} className="w-full rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-4 text-sm" />
-            </label>)}
+              <DocumentPicker disabled={submitting} selectedName={documentFiles[type]?.name || ""} accept={type === 'biometric-photo' ? 'image/jpeg,image/png,image/webp' : DOCUMENT_UPLOAD_ACCEPT} onSelect={file => {
+                setDocumentFiles(current => ({...current, [type]: file}));
+              }} />
+            </div>)}
           </div>
 
           <button

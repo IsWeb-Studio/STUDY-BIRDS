@@ -1,3 +1,4 @@
+import { DocumentPicker } from "../../components/forms/DocumentPicker";
 import { DocumentFileLink } from '../../components/DocumentFileLink';
 import { StatusExplanation } from '../../components/StatusExplanation';
 import { useEffect, useRef, useState } from "react";
@@ -8,7 +9,7 @@ import { EmptyState } from "../../components/EmptyState";
 import { useLanguage } from "../../hooks/useLanguage";
 import { dt } from "../../utils/dashboardTranslations";
 import { getErrorMessage } from "../../utils/errors";
-import { DOCUMENT_UPLOAD_ACCEPT } from "../../constants/upload";
+
 
 type PendingUpload = { kind: "version" | "translation"; document: DocumentItem };
 
@@ -21,7 +22,7 @@ export const StudentDocumentsPage = () => {
   const [busy, setBusy] = useState(false);
   const [openHistory, setOpenHistory] = useState<string | null>(null);
   const pending = useRef<PendingUpload | null>(null);
-  const picker = useRef<HTMLInputElement>(null);
+  const [sourcePickerOpen, setSourcePickerOpen] = useState(false);
 
   const load = () => studentService
     .getDocuments()
@@ -42,11 +43,11 @@ export const StudentDocumentsPage = () => {
   // New version or certified translation of an existing document (PRD 29).
   const choose = (kind: PendingUpload["kind"], document: DocumentItem) => {
     pending.current = { kind, document };
-    picker.current?.click();
+    setSourcePickerOpen(true);
   };
   const onPicked = async (file: File | undefined) => {
     const target = pending.current;
-    if (picker.current) picker.current.value = "";
+    setSourcePickerOpen(false);
     if (!file || !target) return;
     setBusy(true); setFormError(""); setSuccess("");
     try {
@@ -98,7 +99,13 @@ export const StudentDocumentsPage = () => {
   return (
     <div className="space-y-6">
       <FileUpload onUpload={handleUpload} />
-      <input ref={picker} type="file" accept={DOCUMENT_UPLOAD_ACCEPT} className="hidden" onChange={(event) => void onPicked(event.target.files?.[0])} aria-hidden="true" tabIndex={-1} />
+      {sourcePickerOpen && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <section role="dialog" aria-modal="true" aria-label={isArabic ? "اختيار مصدر المستند" : "Choose document source"} className="w-full max-w-lg space-y-4 rounded-2xl bg-white p-5">
+          <h2 className="font-semibold">{isArabic ? "اختيار مصدر المستند" : "Choose document source"}</h2>
+          <DocumentPicker disabled={busy} onSelect={file => void onPicked(file)} />
+          <button type="button" onClick={() => setSourcePickerOpen(false)} className="min-h-11 px-4 text-sm">{isArabic ? "إلغاء" : "Cancel"}</button>
+        </section>
+      </div>}
       {formError ? <div role="alert" className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{formError}</div> : null}
       {success ? <div role="status" className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">{success}</div> : null}
       {current.length ? (

@@ -1,3 +1,4 @@
+import { DocumentPicker } from "./forms/DocumentPicker";
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { studentService } from '../services/studentService';
@@ -64,7 +65,7 @@ export function ApplicationDocumentUpdates({ applicationId, onUpdated }: { appli
             <option value="">{ar ? 'اختر من مستنداتك' : 'Choose from your documents'}</option>
             {choices.map(doc => <option key={doc._id} value={doc._id}>{doc.fileName}</option>)}
           </select>
-          <label className="block text-sm">{ar ? 'رفع مستند جديد' : 'Upload new document'}<input type="file" disabled={busy} accept=".pdf,.jpg,.jpeg,.png" className="mt-2 block w-full" onChange={e => { void upload(type, e.target.files?.[0]); e.target.value = ''; }} /></label>
+          <div className="space-y-2 text-sm"><p>{ar ? 'رفع مستند جديد' : 'Upload new document'}</p><DocumentPicker disabled={busy} accept=".pdf,.jpg,.jpeg,.png" onSelect={file => { void upload(type, file); }} /></div>
           {selected[type] && (confirmType === type ? <div className="rounded-xl bg-orange-50 p-3">
             <p className="text-sm">{ar ? 'سيُحفظ مرجع المستند السابق ويُرسل البديل للمراجعة. تأكيد الإرفاق؟' : 'The previous reference will be retained and the replacement sent for review. Confirm?'}</p>
             <button disabled={busy} onClick={() => void attach(type)} className="min-h-11 px-4 font-semibold">{ar ? 'تأكيد الإرفاق' : 'Confirm attachment'}</button>
