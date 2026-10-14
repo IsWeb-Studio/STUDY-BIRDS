@@ -16,6 +16,7 @@ import '../../core/services/analytics_service.dart';
 import 'dart:async';
 import '../../core/repositories/student_repository.dart';
 import '../../core/utils/document_eligibility.dart';
+import '../../core/utils/document_access.dart';
 import '../applications_documents_payments/documents_screens.dart';
 
 class ServicesCenterScreen extends StatefulWidget {
@@ -402,6 +403,21 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
                       ],
                       const SizedBox(height: 6),
                       Text(_formatDate(r['createdAt']), style: AppTextStyles.caption),
+                      for (final document in Json.list(r['documents']).whereType<Map>())
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          title: Text('${document['fileName'] ?? 'مستند مرفق'}', maxLines: 1, overflow: TextOverflow.ellipsis),
+                          trailing: const Icon(Icons.visibility_outlined),
+                          onTap: () async {
+                            try {
+                              final uri = await resolveDocumentDownload('${document['filePath']}');
+                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                            } catch (error) {
+                              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('تعذر فتح المستند. تحقق من الاتصال والصلاحيات.')));
+                            }
+                          },
+                        ),
                     ],
                   ),
                 );

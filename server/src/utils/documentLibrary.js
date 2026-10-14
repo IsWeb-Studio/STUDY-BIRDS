@@ -48,7 +48,7 @@ async function saveLibraryDocument({ student, file, type, previous, translationO
     const document = await Document.findOneAndUpdate({ _id: documentId }, { $setOnInsert: {
       student, type, fileHash, uploadStatus: 'uploaded', fileName: file.originalname,
       filePath: `/api/documents/${documentId}/access`, storage, mimeType: file.mimetype,
-      size: file.buffer.length, version: (previous?.version || 0) + 1,
+      size: file.buffer.length, version: previous ? (previous.version || 1) + 1 : 1,
       ...(previous ? { replaces: previous._id } : {}),
       ...(translationOf ? { translationOf } : {}),
       ...(passportReview ? { passportReview, expiresAt: new Date(passportReview.reviewed.expiry) } : {}),
