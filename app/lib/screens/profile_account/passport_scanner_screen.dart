@@ -142,6 +142,7 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
     } catch (_) {
       if (next != null && next != _camera) await next.dispose();
       if (mounted && generation == _generation) {
+        _line.stop();
         setState(() => _error =
             'تعذر فتح الكاميرا. اسمح باستخدامها من إعدادات الهاتف ثم أعد المحاولة.');
       }

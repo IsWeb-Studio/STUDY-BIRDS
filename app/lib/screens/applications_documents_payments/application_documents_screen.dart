@@ -239,7 +239,7 @@ class _ApplicationDocumentsScreenState
                                 TextButton.icon(
                                     onPressed: busy ? null : () => upload(type),
                                     icon: const Icon(Icons.upload_file),
-                                    label: const Text('رفع مستند جديد')),
+                                    label: const Text('تصوير أو رفع مستند')),
                                 if (selection[type] != null)
                                   FilledButton(
                                       onPressed:

@@ -288,7 +288,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
                             TextButton.icon(
                                 onPressed: busy ? null : () => upload(type),
                                 icon: const Icon(Icons.upload_file),
-                                label: const Text('رفع ملف جديد')),
+                                label: const Text('تصوير أو رفع مستند')),
                           ])),
                     if (error != null)
                       Padding(
