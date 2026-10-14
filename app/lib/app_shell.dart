@@ -38,8 +38,10 @@ class _StudentAppShellState extends State<StudentAppShell> {
 
   List<_NavItemData> _items(BuildContext context) => [
         _NavItemData(icon: Icons.home_rounded, label: context.l10n.tabHome),
-        _NavItemData(icon: Icons.timeline_rounded, label: context.l10n.tabJourney),
-        _NavItemData(icon: Icons.explore_outlined, label: context.l10n.tabExplore),
+        _NavItemData(
+            icon: Icons.timeline_rounded, label: context.l10n.tabJourney),
+        _NavItemData(
+            icon: Icons.explore_outlined, label: context.l10n.tabExplore),
         _NavItemData(
             icon: Icons.miscellaneous_services_outlined,
             label: context.l10n.tabServices),
@@ -71,51 +73,16 @@ class _StudentAppShellState extends State<StudentAppShell> {
     ];
 
     final content = IndexedStack(index: _index, children: tabs);
-    // Phones keep the bottom bar. Wider windows (tablets, iPad, split view)
-    // switch to a side rail — the row's start side, so it sits on the right
-    // in this RTL app — and the pages stay inside a readable max width.
-    final wide = !Responsive.isCompact(context);
-
     return Directionality(
       textDirection: appTextDirection,
       child: Scaffold(
-        body: wide
-            ? Row(
-                children: [
-                  SafeArea(
-                    child: NavigationRail(
-                      selectedIndex: _index,
-                      onDestinationSelected: (i) => setState(() => _index = i),
-                      labelType: NavigationRailLabelType.all,
-                      backgroundColor: Colors.white,
-                      indicatorColor: AppColors.orangeSoft,
-                      selectedIconTheme:
-                          const IconThemeData(color: AppColors.orange),
-                      selectedLabelTextStyle: const TextStyle(
-                          color: AppColors.orange,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12),
-                      unselectedLabelTextStyle: const TextStyle(
-                          color: AppColors.textSecondary, fontSize: 12),
-                      destinations: [
-                        for (final item in navItems)
-                          NavigationRailDestination(
-                              icon: Icon(item.icon), label: Text(item.label)),
-                      ],
-                    ),
-                  ),
-                  const VerticalDivider(width: 1),
-                  Expanded(child: MaxWidthBody(maxWidth: 960, child: content)),
-                ],
-              )
-            : Column(children: [Expanded(child: content)]),
-        bottomNavigationBar: wide
-            ? null
-            : _AnimatedBottomNav(
-                currentIndex: _index,
-                items: navItems,
-                onTap: (i) => setState(() => _index = i),
-              ),
+        body: MaxWidthBody(maxWidth: 960, child: content),
+        bottomNavigationBar: AdaptiveBottomBar(
+            child: _AnimatedBottomNav(
+          currentIndex: _index,
+          items: navItems,
+          onTap: (i) => setState(() => _index = i),
+        )),
       ),
     );
   }

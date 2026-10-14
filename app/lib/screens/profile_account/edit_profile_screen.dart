@@ -1,14 +1,11 @@
+import '../../core/utils/document_picker.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import '../../core/utils/app_error.dart';
-import 'package:camera/camera.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import '../../core/utils/passport_scan.dart';
-import 'passport_scanner_screen.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/repositories/student_repository.dart';
@@ -148,7 +145,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final data = await StudentRepository.instance.getProfile() ?? {};
       if (!mounted) return;
@@ -156,15 +156,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _loaded = true;
 
       // Basic fields
-      for (final key in ['englishFullName', 'nationality', 'address',
-          'passportNumber', 'dateOfBirth', 'currentEducation', 'gpa',
-          'intake', 'bio']) {
+      for (final key in [
+        'englishFullName',
+        'nationality',
+        'address',
+        'passportNumber',
+        'dateOfBirth',
+        'currentEducation',
+        'gpa',
+        'intake',
+        'bio'
+      ]) {
         final raw = data[key];
         _controllers[key]!.text = raw?.toString() ?? '';
       }
       final dob = DateTime.tryParse(_controllers['dateOfBirth']!.text);
       if (dob != null) {
-        _controllers['dateOfBirth']!.text = dob.toIso8601String().split('T').first;
+        _controllers['dateOfBirth']!.text =
+            dob.toIso8601String().split('T').first;
       }
 
       // Education level
@@ -191,7 +200,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       try {
         final c = kCountries.firstWhere((c) => c.nameAr == countryName);
         _residenceIso2 = c.iso2;
-      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/edit_profile_screen.dart:192');
+      } catch (swallowedError, swallowedStack) {
+        ErrorReporter.swallowed(swallowedError, swallowedStack,
+            'screens/profile_account/edit_profile_screen.dart:192');
         _residenceIso2 = '';
       }
 
@@ -270,12 +281,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           .where((d) => d['type'] == 'passport')
           .toList();
       if (passports.isNotEmpty) setState(() => _passportDoc = passports.last);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/edit_profile_screen.dart:271');}
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/profile_account/edit_profile_screen.dart:271');
+    }
   }
 
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
-    setState(() { _saving = true; _error = null; });
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
     try {
       final next = Map<String, dynamic>.from(_profile);
       final section = widget.section;
@@ -286,9 +303,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         // Phone — combine country code + local digits
         final localDigits =
             _controllers['phone']!.text.replaceAll(RegExp(r'[^0-9]'), '');
-        next['phone'] = localDigits.isEmpty
-            ? ''
-            : '+${_phoneCountry.dialCode}$localDigits';
+        next['phone'] =
+            localDigits.isEmpty ? '' : '+${_phoneCountry.dialCode}$localDigits';
 
         next['nationality'] = _controllers['nationality']!.text.trim();
         next['currentResidenceCountry'] =
@@ -314,7 +330,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         };
 
         // Emergency phone
-        final emergLocal = _controllers['emergencyPhone']!.text
+        final emergLocal = _controllers['emergencyPhone']!
+            .text
             .replaceAll(RegExp(r'[^0-9]'), '');
         final emergRel = _emergencyRelCustom
             ? _controllers['emergencyRelCustom']!.text.trim()
@@ -334,7 +351,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
       if (section == null || section == ProfileSection.academic) {
         next['currentEducationLevel'] = _level;
-        next['currentEducation'] = _controllers['currentEducation']!.text.trim();
+        next['currentEducation'] =
+            _controllers['currentEducation']!.text.trim();
         next['gpa'] = _controllers['gpa']!.text.trim();
       }
       if (section == null || section == ProfileSection.study) {
@@ -359,7 +377,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   @override
   void dispose() {
-    for (final c in _controllers.values) { c.dispose(); }
+    for (final c in _controllers.values) {
+      c.dispose();
+    }
     super.dispose();
   }
 
@@ -385,42 +405,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _pickAndUploadPassport() async {
-    final choice = await showPickSourceSheet(
-      context,
-      title: 'رفع جواز السفر',
-      cameraLabel: 'مسح ضوئي للجواز',
-      cameraIcon: Icons.document_scanner_rounded,
-    );
-    if (choice == null || !mounted) return;
-
-    Uint8List? bytes;
-    String? fileName;
-
-    if (choice == PickSource.camera) {
-      final xFile = await Navigator.of(context).push<XFile>(
-        MaterialPageRoute(builder: (_) => const PassportScannerScreen()),
-      );
-      if (xFile == null || !mounted) return;
-      bytes = await xFile.readAsBytes();
-      fileName = 'passport_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    } else {
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-        withData: true,
-      );
-      if (result == null || result.files.isEmpty) return;
-      final file = result.files.single;
-      if (file.bytes == null) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              AppSnackBar(content: Text('تعذر قراءة الملف')));
-        }
-        return;
-      }
-      bytes = file.bytes!;
-      fileName = file.name;
-    }
+    final file = await pickDocument(context, passport: true);
+    if (file == null || file.bytes == null || !mounted) return;
+    final bytes = file.bytes!;
+    final fileName = file.name;
 
     if (!mounted) return;
     if (bytes.length > 10 * 1024 * 1024) {
@@ -436,10 +424,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     } on PassportScanException catch (e) {
       if (!mounted) return;
       setState(() => _passportVerifying = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text(e.message), duration: const Duration(seconds: 5)));
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+          content: Text(e.message), duration: const Duration(seconds: 5)));
       return;
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/edit_profile_screen.dart:440');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/profile_account/edit_profile_screen.dart:440');
       // Unexpected error — allow upload
     } finally {
       if (mounted) setState(() => _passportVerifying = false);
@@ -477,8 +467,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            AppSnackBar(content: Text('تعذر رفع الجواز: ${AppError.message(e)}')));
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+            content: Text('تعذر رفع الجواز: ${AppError.message(e)}')));
       }
     } finally {
       if (mounted) setState(() => _passportUploading = false);
@@ -494,11 +484,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           enabled: !_saving,
           readOnly: key == 'dateOfBirth',
           onTap: key == 'dateOfBirth' ? _pickBirthDate : null,
-          textDirection:
-              ['englishFullName', 'passportNumber', 'gpa', 'dateOfBirth']
-                      .contains(key)
-                  ? TextDirection.ltr
-                  : null,
+          textDirection: [
+            'englishFullName',
+            'passportNumber',
+            'gpa',
+            'dateOfBirth'
+          ].contains(key)
+              ? TextDirection.ltr
+              : null,
           keyboardType: key == 'gpa'
               ? const TextInputType.numberWithOptions(decimal: true)
               : TextInputType.text,
@@ -657,8 +650,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               decoration: featureInput(_allLabels[dropdownKey]!),
               isExpanded: true,
               items: [
-                ...kRelationshipOptions.map((r) =>
-                    DropdownMenuItem(value: r, child: Text(r))),
+                ...kRelationshipOptions
+                    .map((r) => DropdownMenuItem(value: r, child: Text(r))),
                 const DropdownMenuItem(value: 'أخرى', child: Text('أخرى...')),
               ],
               onChanged: _saving
@@ -715,7 +708,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     side: BorderSide.none,
                     onPressed: () async {
                       final picked = await onAddTap();
-                      if (picked != null && !items.contains(picked) && mounted) {
+                      if (picked != null &&
+                          !items.contains(picked) &&
+                          mounted) {
                         setState(() => items.add(picked));
                       }
                     },
@@ -784,8 +779,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                   setState(() {
                                     _phoneCountry = picked;
                                     // Auto-fill nationality from chosen country
-                                    final nat =
-                                        kNationalityByIso2[picked.iso2];
+                                    final nat = kNationalityByIso2[picked.iso2];
                                     if (nat != null &&
                                         _controllers['nationality']!
                                             .text
@@ -803,14 +797,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               Padding(
                                 padding: const EdgeInsets.only(bottom: 18),
                                 child: TextFormField(
-                                  controller: _controllers[
-                                      'currentResidenceCountry'],
+                                  controller:
+                                      _controllers['currentResidenceCountry'],
                                   enabled: !_saving,
                                   decoration: featureInput(
                                     'بلد الإقامة',
-                                    suffix: IconButton(tooltip: 'عرض الخيارات', 
-                                      icon: Icon(
-                                          Icons.arrow_drop_down_rounded,
+                                    suffix: IconButton(
+                                      tooltip: 'عرض الخيارات',
+                                      icon: Icon(Icons.arrow_drop_down_rounded,
                                           size: 24,
                                           color: Colors.grey.shade500),
                                       onPressed: _saving
@@ -842,8 +836,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                               countryByIso2(_residenceIso2)
                                                       ?.flag ??
                                                   '',
-                                              style: const TextStyle(
-                                                  fontSize: 24),
+                                              style:
+                                                  const TextStyle(fontSize: 24),
                                             ),
                                           ),
                                   ),
@@ -867,8 +861,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     final picked = await showRegionPicker(
                                         context, _residenceIso2);
                                     if (picked != null && mounted) {
-                                      setState(() => _controllers[
-                                          'residenceRegion']!.text = picked);
+                                      setState(() =>
+                                          _controllers['residenceRegion']!
+                                              .text = picked);
                                     }
                                   },
                                 )
@@ -893,8 +888,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 () async {
                                   final picked = await showLanguagePicker(
                                       context,
-                                      current: _controllers['nativeLanguage']!
-                                          .text);
+                                      current:
+                                          _controllers['nativeLanguage']!.text);
                                   if (picked != null && mounted) {
                                     setState(() =>
                                         _controllers['nativeLanguage']!.text =
@@ -930,8 +925,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 dropdownKey: 'parentRelationship',
                                 customKey: 'parentRelCustom',
                                 isCustom: _parentRelCustom,
-                                onCustomChanged: (v) =>
-                                    _parentRelCustom = v,
+                                onCustomChanged: (v) => _parentRelCustom = v,
                               ),
                             ]),
                       ),
@@ -957,8 +951,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 dropdownKey: 'emergencyRelationship',
                                 customKey: 'emergencyRelCustom',
                                 isCustom: _emergencyRelCustom,
-                                onCustomChanged: (v) =>
-                                    _emergencyRelCustom = v,
+                                onCustomChanged: (v) => _emergencyRelCustom = v,
                               ),
                             ]),
                       ),
@@ -1001,11 +994,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                               DropdownMenuItem(
                                   value: 'high-school', child: Text('ثانوي')),
                               DropdownMenuItem(
-                                  value: 'bachelor',
-                                  child: Text('بكالوريوس')),
+                                  value: 'bachelor', child: Text('بكالوريوس')),
                               DropdownMenuItem(
-                                  value: 'master',
-                                  child: Text('ماجستير')),
+                                  value: 'master', child: Text('ماجستير')),
                               DropdownMenuItem(
                                   value: 'phd', child: Text('دكتوراه')),
                             ],
@@ -1157,8 +1148,8 @@ class _StatusBadge extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(
-            color: color, fontSize: 11, fontWeight: FontWeight.w700),
+        style:
+            TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w700),
       ),
     );
   }

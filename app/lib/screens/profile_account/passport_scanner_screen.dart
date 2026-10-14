@@ -28,8 +28,9 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _scanAnim = AnimationController(vsync: this, duration: const Duration(seconds: 2))
-      ..repeat(reverse: true);
+    _scanAnim =
+        AnimationController(vsync: this, duration: const Duration(seconds: 2))
+          ..repeat(reverse: true);
     _scanLine = CurvedAnimation(parent: _scanAnim, curve: Curves.easeInOut);
     _initCamera();
   }
@@ -45,11 +46,20 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
         (c) => c.lensDirection == CameraLensDirection.back,
         orElse: () => cameras.first,
       );
-      final ctrl = CameraController(cam, ResolutionPreset.high, enableAudio: false);
+      final ctrl =
+          CameraController(cam, ResolutionPreset.high, enableAudio: false);
       await ctrl.initialize();
-      if (!mounted) { ctrl.dispose(); return; }
-      setState(() { _ctrl = ctrl; _ready = true; });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/passport_scanner_screen.dart:51');
+      if (!mounted) {
+        ctrl.dispose();
+        return;
+      }
+      setState(() {
+        _ctrl = ctrl;
+        _ready = true;
+      });
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/profile_account/passport_scanner_screen.dart:51');
       if (mounted) setState(() => _error = 'تعذر فتح الكاميرا');
     }
   }
@@ -57,13 +67,15 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final ctrl = _ctrl;
+    if (state == AppLifecycleState.resumed) {
+      if (ctrl == null) _initCamera();
+      return;
+    }
     if (ctrl == null || !ctrl.value.isInitialized) return;
     if (state == AppLifecycleState.inactive) {
       ctrl.dispose();
       _ctrl = null;
       if (mounted) setState(() => _ready = false);
-    } else if (state == AppLifecycleState.resumed) {
-      _initCamera();
     }
   }
 
@@ -73,7 +85,9 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
     try {
       final img = await _ctrl!.takePicture();
       if (mounted) Navigator.of(context).pop(img);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/passport_scanner_screen.dart:75');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/profile_account/passport_scanner_screen.dart:75');
       if (mounted) {
         setState(() => _capturing = false);
         ScaffoldMessenger.of(context).showSnackBar(
@@ -98,12 +112,16 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
         backgroundColor: Colors.black,
         body: Center(
           child: Column(mainAxisSize: MainAxisSize.min, children: [
-            const Icon(Icons.camera_alt_outlined, color: Colors.white54, size: 56),
+            const Icon(Icons.camera_alt_outlined,
+                color: Colors.white54, size: 56),
             const SizedBox(height: 16),
-            Text(_error!, style: const TextStyle(color: Colors.white70, fontSize: 15)),
+            Text(_error!,
+                style: const TextStyle(color: Colors.white70, fontSize: 15)),
             const SizedBox(height: 20),
             OutlinedButton(
-              style: OutlinedButton.styleFrom(foregroundColor: Colors.white, side: const BorderSide(color: Colors.white38)),
+              style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white38)),
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('رجوع'),
             ),
@@ -230,14 +248,20 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
                     shape: BoxShape.circle,
                     color: _capturing ? Colors.grey.shade600 : Colors.white,
                     border: Border.all(color: Colors.white30, width: 4),
-                    boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.35), blurRadius: 8)],
+                    boxShadow: [
+                      BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.35),
+                          blurRadius: 8)
+                    ],
                   ),
                   child: _capturing
                       ? const Padding(
                           padding: EdgeInsets.all(18),
-                          child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black54),
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.black54),
                         )
-                      : const Icon(Icons.camera_alt_rounded, color: Colors.black87, size: 30),
+                      : const Icon(Icons.camera_alt_rounded,
+                          color: Colors.black87, size: 30),
                 ),
               ),
               const SizedBox(height: 10),
@@ -250,8 +274,10 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
           Positioned(
             top: MediaQuery.paddingOf(context).top + 4,
             left: 4,
-            child: IconButton(tooltip: 'رجوع', 
-              icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+            child: IconButton(
+              tooltip: 'رجوع',
+              icon:
+                  const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
               onPressed: () => Navigator.of(context).pop(),
             ),
           ),

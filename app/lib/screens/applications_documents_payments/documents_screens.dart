@@ -1,4 +1,5 @@
-﻿import '../../core/utils/json_safe.dart';
+import '../../core/utils/document_picker.dart';
+import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:study_birds/core/network/api_client.dart';
@@ -101,13 +102,10 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
   if (picked != null) {
     file = picked;
   } else {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.custom,
-      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
-      withData: true,
-    );
-    if (result == null || result.files.isEmpty) return false;
-    file = result.files.single;
+    final selected = await pickDocument(context,
+        passport: type == 'passport' && translationOf == null);
+    if (selected == null) return false;
+    file = selected;
   }
   if (file.bytes == null) {
     if (context.mounted)
@@ -125,53 +123,68 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
   if (!context.mounted) return false;
 
   final sizeKb = file.size ~/ 1024;
-  final sizeStr =
-      sizeKb >= 1024 ? '${(sizeKb / 1024).toStringAsFixed(1)} MB' : '$sizeKb KB';
+  final sizeStr = sizeKb >= 1024
+      ? '${(sizeKb / 1024).toStringAsFixed(1)} MB'
+      : '$sizeKb KB';
   final progressNotifier = ValueNotifier<double>(0.0);
-  final stageNotifier = ValueNotifier<String>(type == 'passport' && translationOf == null
-      ? 'جارٍ مسح الجواز والتحقق منه على جهازك...'
-      : 'جارٍ رفع المستند...');
+  final stageNotifier = ValueNotifier<String>(
+      type == 'passport' && translationOf == null
+          ? 'جارٍ مسح الجواز والتحقق منه على جهازك...'
+          : 'جارٍ رفع المستند...');
   final cancellation = UploadCancellation();
 
   showDialog(
     context: context,
     barrierDismissible: false,
-    builder: (_) => PopScope(canPop: false, child: AlertDialog(
-      actions: [TextButton(onPressed: cancellation.cancel, child: const Text('إلغاء الرفع'))],
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          ValueListenableBuilder<String>(valueListenable: stageNotifier,
-            builder: (_, stage, __) => Text(stage, style: AppTextStyles.cardTitle)),
-          const SizedBox(height: 10),
-          Text(file.name,
-              style: AppTextStyles.caption, overflow: TextOverflow.ellipsis),
-          Text(sizeStr, style: AppTextStyles.caption),
-          const SizedBox(height: 14),
-          ValueListenableBuilder<double>(
-            valueListenable: progressNotifier,
-            builder: (_, value, __) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                LinearProgressIndicator(
-                  value: value > 0 ? value : null,
-                  backgroundColor: AppColors.border,
-                  valueColor:
-                      const AlwaysStoppedAnimation<Color>(AppColors.navy),
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  value >= 1 ? 'جارٍ حفظ المستند...' : value > 0 ? '${(value * 100).round()}%' : 'يرجى الانتظار...',
+    builder: (_) => PopScope(
+        canPop: false,
+        child: AlertDialog(
+          actions: [
+            TextButton(
+                onPressed: cancellation.cancel,
+                child: const Text('إلغاء الرفع'))
+          ],
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ValueListenableBuilder<String>(
+                  valueListenable: stageNotifier,
+                  builder: (_, stage, __) =>
+                      Text(stage, style: AppTextStyles.cardTitle)),
+              const SizedBox(height: 10),
+              Text(file.name,
                   style: AppTextStyles.caption,
+                  overflow: TextOverflow.ellipsis),
+              Text(sizeStr, style: AppTextStyles.caption),
+              const SizedBox(height: 14),
+              ValueListenableBuilder<double>(
+                valueListenable: progressNotifier,
+                builder: (_, value, __) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    LinearProgressIndicator(
+                      value: value > 0 ? value : null,
+                      backgroundColor: AppColors.border,
+                      valueColor:
+                          const AlwaysStoppedAnimation<Color>(AppColors.navy),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      value >= 1
+                          ? 'جارٍ حفظ المستند...'
+                          : value > 0
+                              ? '${(value * 100).round()}%'
+                              : 'يرجى الانتظار...',
+                      style: AppTextStyles.caption,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
-    )),
+        )),
   );
 
   try {
@@ -182,7 +195,8 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
         replaces: replaces,
         translationOf: translationOf,
         cancellation: cancellation,
-        onPassportValidated: () => stageNotifier.value = 'تم فحص الجواز، جارٍ الرفع...',
+        onPassportValidated: () =>
+            stageNotifier.value = 'تم فحص الجواز، جارٍ الرفع...',
         onProgress: (p) => progressNotifier.value = p);
     if (context.mounted) {
       Navigator.of(context, rootNavigator: true).pop();
@@ -196,11 +210,17 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
     Navigator.of(context, rootNavigator: true).pop();
     if (error is ApiException && error.statusCode == 499) return false;
     if (error is PassportScanException) {
-      await showDialog<void>(context: context, builder: (ctx) => AlertDialog(
-        title: const Text('اختر صورة واضحة لجواز السفر'),
-        content: Text(error.message),
-        actions: [TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('حسنًا'))],
-      ));
+      await showDialog<void>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+                title: const Text('اختر صورة واضحة لجواز السفر'),
+                content: Text(error.message),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.of(ctx).pop(),
+                      child: const Text('حسنًا'))
+                ],
+              ));
       return false;
     }
     final retry = await showDialog<bool>(
@@ -218,8 +238,7 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
               onPressed: () => Navigator.of(ctx).pop(false),
               child: const Text('إلغاء')),
           ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.navy),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy),
               onPressed: () => Navigator.of(ctx).pop(true),
               child: const Text('إعادة المحاولة',
                   style: TextStyle(color: Colors.white))),
@@ -247,9 +266,15 @@ class _DocThumb extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = (document['fileName'] as String? ?? '').toLowerCase();
     final isPdf = name.endsWith('.pdf');
-    final isImg = name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png');
+    final isImg = name.endsWith('.jpg') ||
+        name.endsWith('.jpeg') ||
+        name.endsWith('.png');
     final thumbUrl = document['thumbnailUrl'] as String?;
-    final color = isPdf ? AppColors.danger : isImg ? AppColors.orange : AppColors.navy;
+    final color = isPdf
+        ? AppColors.danger
+        : isImg
+            ? AppColors.orange
+            : AppColors.navy;
     final icon = isPdf
         ? Icons.picture_as_pdf_outlined
         : isImg
@@ -301,10 +326,15 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
     _load();
     _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
       if (_uploading) return;
-      StudentRepository.instance
-          .getDocuments(forceRefresh: true)
-          .then((docs) { if (mounted) setState(() => _docs = docs.whereType<Map>().where((d) => d['isLatest'] != false && d['translationOf'] == null).toList()); })
-          .catchError(ErrorReporter.silent('screens/applications_documents_payments/documents_screens.dart:306'));
+      StudentRepository.instance.getDocuments(forceRefresh: true).then((docs) {
+        if (mounted)
+          setState(() => _docs = docs
+              .whereType<Map>()
+              .where(
+                  (d) => d['isLatest'] != false && d['translationOf'] == null)
+              .toList());
+      }).catchError(ErrorReporter.silent(
+          'screens/applications_documents_payments/documents_screens.dart:306'));
     });
   }
 
@@ -326,7 +356,8 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
       for (final d in docs) {
         final exp = DateTime.tryParse('${(Json.map(d))['expiresAt'] ?? ''}');
         final id = d['_id']?.toString();
-        final name = d['originalName']?.toString() ?? d['type']?.toString() ?? 'مستند';
+        final name =
+            d['originalName']?.toString() ?? d['type']?.toString() ?? 'مستند';
         if (exp != null && id != null && exp.isAfter(DateTime.now())) {
           NotificationScheduler.instance.scheduleDocumentExpiry(
               docId: id, docName: name, expiryDate: exp);
@@ -341,7 +372,9 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
             .toList();
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/documents_screens.dart:342');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/applications_documents_payments/documents_screens.dart:342');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل مستنداتك.';
@@ -389,7 +422,8 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
     return AppScaffold(
       title: 'مستنداتي',
       actions: [
-        IconButton(tooltip: 'رفع مستند', 
+        IconButton(
+          tooltip: 'رفع مستند',
           onPressed: _uploading ? null : _pickTypeAndUpload,
           icon: _uploading
               ? const SizedBox(
@@ -426,7 +460,9 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
     final now = DateTime.now();
     final expiringSoon = _docs.whereType<Map<String, dynamic>>().where((d) {
       final exp = DateTime.tryParse('${d['expiresAt'] ?? ''}');
-      return exp != null && exp.isAfter(now) && exp.difference(now).inDays <= 30;
+      return exp != null &&
+          exp.isAfter(now) &&
+          exp.difference(now).inDays <= 30;
     }).toList();
     final hasBanner = expiringSoon.isNotEmpty;
     return ListView.builder(
@@ -440,7 +476,8 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
             decoration: BoxDecoration(
               color: AppColors.warning.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(AppRadius.card),
-              border: Border.all(color: AppColors.warning.withValues(alpha: 0.5)),
+              border:
+                  Border.all(color: AppColors.warning.withValues(alpha: 0.5)),
             ),
             child: Row(
               children: [
@@ -462,12 +499,12 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
         final d = Json.map(_docs[docIndex]);
         final meta = docStatusMeta(d);
         final info = StatusInfo.of(d);
-        final needsAction = info != null &&
-            (info.tone == 'action' || info.tone == 'danger');
+        final needsAction =
+            info != null && (info.tone == 'action' || info.tone == 'danger');
         return AppCard(
           onTap: () async {
-            final changed = await Navigator.of(context)
-                .push<bool>(MaterialPageRoute(
+            final changed = await Navigator.of(context).push<bool>(
+                MaterialPageRoute(
                     builder: (_) => DocumentDetailScreen(document: d)));
             if (changed == true) _load();
           },
@@ -485,8 +522,8 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
                     Text(info.meaning,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: AppTextStyles.caption
-                            .copyWith(color: meta.color)),
+                        style:
+                            AppTextStyles.caption.copyWith(color: meta.color)),
                 ],
               )),
               const SizedBox(width: 8),
@@ -513,7 +550,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
 
   bool get _isImage {
     final name = (widget.document['fileName'] as String? ?? '').toLowerCase();
-    return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png');
+    return name.endsWith('.jpg') ||
+        name.endsWith('.jpeg') ||
+        name.endsWith('.png');
   }
 
   @override
@@ -525,9 +564,12 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
   Future<void> _loadPreview() async {
     setState(() => _loadingPreview = true);
     try {
-      final uri = await resolveDocumentDownload(widget.document['filePath'] as String);
+      final uri =
+          await resolveDocumentDownload(widget.document['filePath'] as String);
       if (mounted) setState(() => _previewUri = uri);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/documents_screens.dart:528');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/applications_documents_payments/documents_screens.dart:528');
     } finally {
       if (mounted) setState(() => _loadingPreview = false);
     }
@@ -545,8 +587,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
     final reviewer = document['reviewedBy'] is Map
         ? '${(Json.rawMap(document['reviewedBy']))['name'] ?? ''}'
         : '';
-    final translation =
-        document['translation'] is Map ? Json.rawMap(document['translation']) : null;
+    final translation = document['translation'] is Map
+        ? Json.rawMap(document['translation'])
+        : null;
     final translationStatus = translation?['status'] as String?;
     const translationLabels = {
       'required': 'مطلوبة',
@@ -592,12 +635,12 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         )
                       : Center(
                           child: Icon(
-                            _isImage
-                                ? Icons.image_outlined
-                                : Icons.description_outlined,
-                            size: 48,
-                            color: AppColors.textSecondary,
-                          )),
+                          _isImage
+                              ? Icons.image_outlined
+                              : Icons.description_outlined,
+                          size: 48,
+                          color: AppColors.textSecondary,
+                        )),
             ),
             const SizedBox(height: 16),
             AppCard(
@@ -684,7 +727,8 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 decoration: BoxDecoration(
                   color: AppColors.danger.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(AppRadius.card),
-                  border: Border.all(color: AppColors.danger.withValues(alpha: 0.3)),
+                  border: Border.all(
+                      color: AppColors.danger.withValues(alpha: 0.3)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -714,7 +758,9 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                       if (!await launchUrl(uri,
                           mode: LaunchMode.externalApplication))
                         throw Exception('Cannot open file');
-                    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/documents_screens.dart:715');
+                    } catch (swallowedError, swallowedStack) {
+                      ErrorReporter.swallowed(swallowedError, swallowedStack,
+                          'screens/applications_documents_payments/documents_screens.dart:715');
                       if (context.mounted)
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                             content: Text(

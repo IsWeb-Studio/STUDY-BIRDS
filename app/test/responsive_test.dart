@@ -45,7 +45,9 @@ void main() {
       setSize(tester, w, 900);
       await tester.pumpWidget(MaterialApp(
           home: AppScaffold(
-              title: 't', hideAiButton: true, body: SizedBox.expand(key: key))));
+              title: 't',
+              hideAiButton: true,
+              body: SizedBox.expand(key: key))));
       await tester.pump();
       return tester.getSize(find.byKey(key)).width;
     }
@@ -82,7 +84,7 @@ void main() {
     expect(find.text('PICK'), findsOneWidget);
   });
 
-  testWidgets('student shell: bottom bar on phones, side rail on tablets',
+  testWidgets('student shell: bottom bar on phones and tablets',
       (tester) async {
     setSize(tester, 390, 844);
     await tester.pumpWidget(
@@ -93,14 +95,9 @@ void main() {
 
     setSize(tester, 1024, 768);
     await tester.pump();
-    expect(find.byType(NavigationRail), findsOneWidget);
-    // Rail sits on the right (start side) in this RTL app.
-    final rail = tester.getTopLeft(find.byType(NavigationRail)).dx;
-    expect(rail, greaterThan(1024 / 2));
-
-    // Tapping a destination switches tabs without throwing.
-    await tester.tap(find.descendant(
-        of: find.byType(NavigationRail), matching: find.text('حسابي')));
+    expect(find.byType(NavigationRail), findsNothing);
+    expect(find.byType(AdaptiveBottomBar), findsOneWidget);
+    await tester.tap(find.text('حسابي').last);
     await tester.pump();
     expect(tester.takeException(), isNull);
   });
