@@ -1,6 +1,7 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../screens/profile_account/passport_scanner_screen.dart';
 
 Future<PlatformFile?> pickDocument(BuildContext context,
     {bool passport = false}) async {
@@ -33,15 +34,22 @@ Future<PlatformFile?> pickDocument(BuildContext context,
       ),
     );
     if (source == null || !context.mounted) return null;
+    if (passport && source == 'camera') {
+      return await Navigator.of(context).push<ReviewedPassportFile>(
+          MaterialPageRoute(builder: (_) => const PassportScannerScreen()));
+    }
     if (source == 'file') {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
         allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
         withData: true,
       );
-      return result == null || result.files.isEmpty
-          ? null
-          : result.files.single;
+      if (result == null || result.files.isEmpty) return null;
+      final file = result.files.single;
+      if (!passport || !context.mounted) return passport ? null : file;
+      return await Navigator.of(context).push<ReviewedPassportFile>(
+          MaterialPageRoute(
+              builder: (_) => PassportScannerScreen(initialFile: file)));
     }
     final image = await ImagePicker().pickImage(
       source: source == 'camera' ? ImageSource.camera : ImageSource.gallery,
@@ -49,7 +57,12 @@ Future<PlatformFile?> pickDocument(BuildContext context,
     );
     if (image == null) return null;
     final bytes = await image.readAsBytes();
-    return PlatformFile(name: image.name, size: bytes.length, bytes: bytes);
+    final file =
+        PlatformFile(name: image.name, size: bytes.length, bytes: bytes);
+    if (!passport || !context.mounted) return passport ? null : file;
+    return await Navigator.of(context).push<ReviewedPassportFile>(
+        MaterialPageRoute(
+            builder: (_) => PassportScannerScreen(initialFile: file)));
   } catch (_) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(

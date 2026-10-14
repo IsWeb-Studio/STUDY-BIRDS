@@ -5,7 +5,7 @@ import '../../core/widgets/app_notice.dart';
 import '../../core/utils/app_error.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../core/utils/passport_scan.dart';
+import 'passport_scanner_screen.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/repositories/student_repository.dart';
@@ -132,7 +132,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   // Passport
   bool _passportUploading = false;
-  bool _passportVerifying = false;
+  final bool _passportVerifying = false;
   Map<String, dynamic>? _passportDoc;
 
   @override
@@ -411,57 +411,34 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final fileName = file.name;
 
     if (!mounted) return;
-    if (bytes.length > 10 * 1024 * 1024) {
+    if (bytes.length > 5 * 1024 * 1024) {
       ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text('حجم الملف كبير جدًا (الحد 10 ميجابايت)')));
+          AppSnackBar(content: Text('حجم الملف كبير جدًا (الحد 5 ميجابايت)')));
       return;
     }
 
-    // OCR validation
-    setState(() => _passportVerifying = true);
-    try {
-      await PassportScan.validate(bytes);
-    } on PassportScanException catch (e) {
-      if (!mounted) return;
-      setState(() => _passportVerifying = false);
-      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-          content: Text(e.message), duration: const Duration(seconds: 5)));
-      return;
-    } catch (swallowedError, swallowedStack) {
-      ErrorReporter.swallowed(swallowedError, swallowedStack,
-          'screens/profile_account/edit_profile_screen.dart:440');
-      // Unexpected error — allow upload
-    } finally {
-      if (mounted) setState(() => _passportVerifying = false);
-    }
-
-    if (!mounted) return;
-
-    // Auto-fill passport data from MRZ before uploading
-    final extracted = await PassportScan.extractFromBytes(bytes);
-    if (mounted) {
-      setState(() {
-        if (extracted.passportNumber != null) {
-          _controllers['passportNumber']!.text = extracted.passportNumber!;
-        }
-        if (extracted.dateOfBirth != null) {
-          _controllers['dateOfBirth']!.text = extracted.dateOfBirth!;
-        }
-      });
-    }
-
+    if (file is! ReviewedPassportFile || !file.analysis.mrz.canSubmit) return;
+    final extracted = (
+      passportNumber: file.reviewedFields['number'],
+      dateOfBirth: file.reviewedFields['birth']
+    );
+    setState(() {
+      _controllers['passportNumber']!.text = extracted.passportNumber ?? '';
+      _controllers['dateOfBirth']!.text = extracted.dateOfBirth ?? '';
+    });
     setState(() => _passportUploading = true);
     try {
       final doc = await StudentRepository.instance.uploadDocument(
         fileBytes: bytes,
         fileName: fileName,
         type: 'passport',
+        passportReview: file.submissionMetadata,
       );
       if (mounted) {
         setState(() => _passportDoc = doc);
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: Text(extracted.passportNumber != null
-              ? 'تم رفع الجواز واستخراج البيانات تلقائيًا ✓'
+              ? 'تم رفع الجواز؛ اضغط حفظ لتحديث بيانات ملفك ✓'
               : 'تم رفع جواز السفر بنجاح ✓'),
         ));
       }

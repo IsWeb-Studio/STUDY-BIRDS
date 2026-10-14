@@ -1,5 +1,12 @@
 const mongoose = require("mongoose");
 
+// Client OCR and user edits are separate claims, never trusted identity checks.
+const passportFieldsSchema = new mongoose.Schema({
+  number: { type: String, maxlength: 9 }, name: { type: String, maxlength: 200 },
+  nationality: { type: String, maxlength: 3 }, birth: { type: String, maxlength: 10 },
+  expiry: { type: String, maxlength: 10 }, sex: { type: String, maxlength: 1 },
+}, { _id: false });
+
 const documentSchema = new mongoose.Schema(
   {
     student: {
@@ -70,12 +77,42 @@ const documentSchema = new mongoose.Schema(
     supersededBy: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
     // A certified translation uploaded for another document of the student.
     translationOf: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
+    passportReview: { type: new mongoose.Schema({
+      extracted: passportFieldsSchema, reviewed: passportFieldsSchema,
+      correctedFields: [String], clientReportedMrzChecksPassed: Boolean,
+      manualReviewRequired: { type: Boolean, default: true },
+      consentRecordedAt: Date,
+    }, { _id: false }) },
   },
   { timestamps: true }
 );
 
 documentSchema.index({ expiresAt: 1, detailedStatus: 1 });
 documentSchema.index({ student: 1, translationOf: 1 });
+
+documentSchema.statics.parsePassportReview = function (input) {
+  if (typeof input !== "string" || input.length > 5000) throw new Error("Invalid passport review");
+  const data = JSON.parse(input);
+  const readFields = (value) => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid passport fields");
+    const output = {};
+    for (const [key, pattern] of Object.entries({ number: /^[A-Z0-9]{1,9}$/, name: /^.{1,200}$/u,
+      nationality: /^[A-Z]{3}$/, birth: /^\d{4}-\d{2}-\d{2}$/, expiry: /^\d{4}-\d{2}-\d{2}$/, sex: /^[MF<]$/ })) {
+      if (typeof value[key] !== "string" || !pattern.test(value[key].trim())) throw new Error("Invalid passport field");
+      output[key] = value[key].trim();
+    }
+    for (const key of ["birth", "expiry"]) {
+      const date = new Date(`${output[key]}T00:00:00Z`);
+      if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== output[key]) throw new Error("Invalid passport date");
+    }
+    if (output.birth >= output.expiry || output.birth > new Date().toISOString().slice(0, 10)) throw new Error("Inconsistent dates");
+    return output;
+  };
+  const extracted = readFields(data.extracted), reviewed = readFields(data.reviewed);
+  return { extracted, reviewed, correctedFields: Object.keys(extracted).filter(key => extracted[key] !== reviewed[key]),
+    clientReportedMrzChecksPassed: data.clientReportedMrzChecksPassed === true,
+    manualReviewRequired: true, consentRecordedAt: new Date() };
+};
 
 const { DOCUMENT_DETAILED_TO_LEGACY_STATUS } = require("../constants/roles");
 

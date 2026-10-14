@@ -204,6 +204,15 @@ const uploadDocument = asyncHandler(async (req, res) => {
   const original = translationOf ? await Document.exists({ _id: translationOf, student: req.user._id }) : null;
   if (translationOf && !original) return res.status(404).json({ message: "Document to translate not found" });
 
+  let passportReview;
+  if (req.body.passportReview !== undefined) {
+    if (translationOf || (req.body.type || previous?.type) !== "passport") {
+      return res.status(400).json({ message: "Passport review requires a passport document" });
+    }
+    try { passportReview = Document.parsePassportReview(req.body.passportReview); }
+    catch { return res.status(400).json({ message: "Invalid passport review information" }); }
+  }
+
   const uploadResult = await uploadPrivateDocument(req.file);
   const documentId = new mongoose.Types.ObjectId();
 
@@ -218,6 +227,7 @@ const uploadDocument = asyncHandler(async (req, res) => {
     size: uploadResult.bytes || req.file.size,
     ...(previous ? { replaces: previous._id } : {}),
     ...(translationOf ? { translationOf } : {}),
+    ...(passportReview ? { passportReview } : {}),
   });
   if (previous) {
     // Guarded so two simultaneous re-uploads can't both claim the old version.

@@ -1,4 +1,5 @@
 import '../utils/json_safe.dart';
+import 'dart:convert';
 import '../services/error_reporter.dart';
 import '../services/secure_data_cache.dart';
 import '../network/api_client.dart';
@@ -158,32 +159,48 @@ class StudentRepository {
     return token;
   }
 
-  Future<dynamic> _loadSnapshot(String resource, {bool forceRefresh = false}) async {
+  Future<dynamic> _loadSnapshot(String resource,
+      {bool forceRefresh = false}) async {
     final owner = AuthSession.instance.currentUser?.id ?? '';
     final sessionToken = _token;
     try {
-      final data = await ApiClient.instance.get('/students/$resource', token: sessionToken);
+      final data = await ApiClient.instance
+          .get('/students/$resource', token: sessionToken);
       // A response from the account that just signed out must not refill its cache.
-      if (owner.isNotEmpty && AuthSession.instance.currentUser?.id == owner && AuthSession.instance.token != null) {
-        try { await SecureDataCache.write(owner, resource, data as Object); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/repositories/student_repository.dart:166');}
+      if (owner.isNotEmpty &&
+          AuthSession.instance.currentUser?.id == owner &&
+          AuthSession.instance.token != null) {
+        try {
+          await SecureDataCache.write(owner, resource, data as Object);
+        } catch (swallowedError, swallowedStack) {
+          ErrorReporter.swallowed(swallowedError, swallowedStack,
+              'core/repositories/student_repository.dart:166');
+        }
       }
       return data;
     } catch (error) {
-      if (error is ApiException && error.statusCode < 500 && error.statusCode != 0) rethrow;
+      if (error is ApiException &&
+          error.statusCode < 500 &&
+          error.statusCode != 0) rethrow;
       if (!forceRefresh && AuthSession.instance.currentUser?.id == owner) {
         try {
           final cached = await SecureDataCache.read(owner, resource);
           if (cached != null) return cached;
-        } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/repositories/student_repository.dart:175');}
+        } catch (swallowedError, swallowedStack) {
+          ErrorReporter.swallowed(swallowedError, swallowedStack,
+              'core/repositories/student_repository.dart:175');
+        }
       }
       rethrow;
     }
   }
 
   Future<DashboardOverview> getOverview({bool forceRefresh = false}) async =>
-      DashboardOverview.fromJson(Json.map(await _loadSnapshot('overview', forceRefresh: forceRefresh)));
+      DashboardOverview.fromJson(Json.map(
+          await _loadSnapshot('overview', forceRefresh: forceRefresh)));
 
-  Future<Map<String, dynamic>> getFinancials({bool forceRefresh = false}) async =>
+  Future<Map<String, dynamic>> getFinancials(
+          {bool forceRefresh = false}) async =>
       Json.map(await _loadSnapshot('financials', forceRefresh: forceRefresh));
 
   Future<void> clearOverviewCache() async {
@@ -227,11 +244,13 @@ class StudentRepository {
   }
 
   Future<List<dynamic>> getApplications({bool forceRefresh = false}) async {
-    return Json.list(await _loadSnapshot('applications', forceRefresh: forceRefresh));
+    return Json.list(
+        await _loadSnapshot('applications', forceRefresh: forceRefresh));
   }
 
   Future<List<dynamic>> getDocuments({bool forceRefresh = false}) async {
-    return Json.list(await _loadSnapshot('documents', forceRefresh: forceRefresh));
+    return Json.list(
+        await _loadSnapshot('documents', forceRefresh: forceRefresh));
   }
 
   /// Uploads a document — matches POST /api/students/documents
@@ -245,6 +264,7 @@ class StudentRepository {
     void Function(double)? onProgress,
     UploadCancellation? cancellation,
     void Function()? onPassportValidated,
+    Map<String, Object>? passportReview,
   }) async {
     if (type == 'passport' && translationOf == null) {
       await PassportScan.validate(fileBytes);
@@ -261,6 +281,8 @@ class StudentRepository {
         if (type.isNotEmpty) 'type': type,
         if (replaces != null) 'replaces': replaces,
         if (translationOf != null) 'translationOf': translationOf,
+        if (passportReview != null)
+          'passportReview': jsonEncode(passportReview),
       },
       token: _token,
       onProgress: onProgress,
@@ -334,14 +356,19 @@ class StudentRepository {
     required bool visaSupport,
   }) async {
     final body = _arrivalBody(
-      arrivalDate: arrivalDate, arrivalTime: arrivalTime,
-      flightNumber: flightNumber, airport: airport, notes: notes,
-      airportPickup: airportPickup, studentHousing: studentHousing,
-      residencePermitSupport: residencePermitSupport, visaSupport: visaSupport,
+      arrivalDate: arrivalDate,
+      arrivalTime: arrivalTime,
+      flightNumber: flightNumber,
+      airport: airport,
+      notes: notes,
+      airportPickup: airportPickup,
+      studentHousing: studentHousing,
+      residencePermitSupport: residencePermitSupport,
+      visaSupport: visaSupport,
     );
     if (applicationId != null) body['applicationId'] = applicationId;
-    final data = await ApiClient.instance.post('/students/arrival-services',
-        token: _token, body: body);
+    final data = await ApiClient.instance
+        .post('/students/arrival-services', token: _token, body: body);
     return Json.map(data);
   }
 
@@ -365,10 +392,15 @@ class StudentRepository {
     final data = await ApiClient.instance.put(path,
         token: _token,
         body: _arrivalBody(
-          arrivalDate: arrivalDate, arrivalTime: arrivalTime,
-          flightNumber: flightNumber, airport: airport, notes: notes,
-          airportPickup: airportPickup, studentHousing: studentHousing,
-          residencePermitSupport: residencePermitSupport, visaSupport: visaSupport,
+          arrivalDate: arrivalDate,
+          arrivalTime: arrivalTime,
+          flightNumber: flightNumber,
+          airport: airport,
+          notes: notes,
+          airportPickup: airportPickup,
+          studentHousing: studentHousing,
+          residencePermitSupport: residencePermitSupport,
+          visaSupport: visaSupport,
         ));
     return Json.map(data);
   }
@@ -523,15 +555,15 @@ class StudentRepository {
   }
 
   Future<Map<String, dynamic>?> getInsurance() async {
-    final data = await ApiClient.instance
-        .get('/students/insurance', token: _token);
+    final data =
+        await ApiClient.instance.get('/students/insurance', token: _token);
     if (data == null) return null;
     return Json.map(data);
   }
 
   Future<Map<String, dynamic>?> getEquivalency() async {
-    final data = await ApiClient.instance
-        .get('/students/equivalency', token: _token);
+    final data =
+        await ApiClient.instance.get('/students/equivalency', token: _token);
     if (data == null) return null;
     return Json.map(data);
   }

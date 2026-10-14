@@ -58,6 +58,8 @@ flutter {
 }
 
 dependencies {
+    implementation("org.opencv:opencv:4.10.0")
+    implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation("com.google.mlkit:text-recognition:16.0.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

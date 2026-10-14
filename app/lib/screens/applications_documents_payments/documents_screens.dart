@@ -1,4 +1,5 @@
 import '../../core/utils/document_picker.dart';
+import '../profile_account/passport_scanner_screen.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
@@ -194,6 +195,8 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
         type: type,
         replaces: replaces,
         translationOf: translationOf,
+        passportReview:
+            file is ReviewedPassportFile ? file.submissionMetadata : null,
         cancellation: cancellation,
         onPassportValidated: () =>
             stageNotifier.value = 'تم فحص الجواز، جارٍ الرفع...',
