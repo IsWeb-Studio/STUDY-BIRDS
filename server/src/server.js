@@ -9,6 +9,7 @@ let stopReminders;
 let stopAutomaticAssignment;
 let stopConsultationReminders;
 let stopEmailDelivery;
+let stopWinkGames;
 async function runStartupMigrations() {
   try {
     const OurService = require('./models/OurService');
@@ -27,6 +28,7 @@ async function runStartupMigrations() {
 const startDatabaseConnection = async () => {
   try {
     await connectDatabase();
+    if (!stopWinkGames) stopWinkGames = require('./games/winkStore').startWinkScheduler();
     await runStartupMigrations();
     if (!stopEmailDelivery) {
       stopEmailDelivery = require('./utils/applicationEmails').startEmailDeliveryScheduler();
