@@ -48,7 +48,7 @@ router.get('/:code', handle(async (req, res) => {
 }));
 router.post('/:code/actions', handle(async (req, res) => {
   const user = identity(req);
-  const { action, payload = {}, operationId } = req.body || {};
+  const { action, payload = {}, operationId, round } = req.body || {};
   if (typeof operationId !== 'string' || !/^[a-zA-Z0-9-]{8,100}$/.test(operationId)
     || typeof action !== 'string' || !payload || typeof payload !== 'object' || Array.isArray(payload)) engine.fail('invalid-action');
   const doc = await mutate(req.params.code, (state, now) => {
@@ -56,6 +56,7 @@ router.post('/:code/actions', handle(async (req, res) => {
     const key = `${user.id}:${operationId}`;
     if (!state.players.some((p) => p.id === user.id && !p.left)) engine.fail('not-member');
     if (state.receipts.includes(key)) return;
+    if (round !== undefined && (!Number.isInteger(round) || round !== state.round)) engine.fail('stale-round');
     engine.apply(state, user, action, payload, now);
     state.receipts = [...state.receipts.slice(-199), key];
   });

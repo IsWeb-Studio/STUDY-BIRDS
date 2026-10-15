@@ -10,18 +10,18 @@ function finish(room, winner, reason, now) {
   room.phase = 'finished'; room.winner = winner; room.reason = reason;
   room.pending = []; room.vote = null; event(room, 'finished', now);
 }
-function checkWin(room, now) {
+function checkWin(room, now, includeTimeout = true) {
   if (!['playing', 'voting'].includes(room.phase)) return;
   const living = alive(room);
   if (!living.some((p) => p.id === room.winker)) finish(room, 'players', 'winker-out', now);
   else if (living.length <= 2) finish(room, 'winker', 'last-two', now);
-  else if (now >= room.endsAt) finish(room, 'players', 'time', now);
+  else if (includeTimeout && now >= room.endsAt) finish(room, 'players', 'time', now);
 }
 function eliminate(room, id, now, type = 'eliminated') {
   const player = room.players.find((p) => p.id === id);
   if (!player || player.eliminated || player.left) return;
   player.eliminated = true; player.privateNotice = null;
-  event(room, type, now, id); checkWin(room, now);
+  event(room, type, now, id); checkWin(room, now, false);
 }
 function settlePending(room, now, all = false) {
   const pending = room.pending;
@@ -29,17 +29,25 @@ function settlePending(room, now, all = false) {
   for (const item of pending) {
     if ((all || item.at <= now) && ['playing', 'voting'].includes(room.phase)) eliminate(room, item.id, now);
   }
+  checkWin(room, now);
 }
 function leave(room, player, now) {
   player.left = true; player.privateNotice = null;
   room.pending = room.pending.filter((item) => item.id !== player.id);
   event(room, 'left', now, player.id);
   if (room.host === player.id) {
-    room.host = room.players.find((p) => !p.left && now - p.lastSeen < 60000)?.id
+    room.host = room.players.find((p) => !p.left && now - p.lastSeen < 10000)?.id
       || room.players.find((p) => !p.left)?.id || null;
   }
-  if (room.phase === 'reveal') reset(room, now);
+  if (room.phase === 'reveal') reset(room, now, 'player-left');
   checkWin(room, now);
+  if (room.phase === 'voting') {
+    if (room.vote.accused === player.id) {
+      room.vote = null; room.phase = 'playing'; event(room, 'vote-cancelled', now, player.id);
+    } else if (alive(room).filter((p) => p.id !== room.vote.accused).every((p) => room.vote.ballots[p.id])) {
+      resolveVote(room, now);
+    }
+  }
   if (!room.players.some((p) => !p.left)) room.phase = 'closed';
 }
 function resolveVote(room, now) {
@@ -52,7 +60,8 @@ function resolveVote(room, now) {
   if (yes > voters.length / 2) eliminate(room, vote.accused, now, 'accused-out');
   checkWin(room, now);
 }
-function reset(room, now) {
+function reset(room, now, reason = null) {
+  room.lobbyReason = reason;
   room.phase = 'lobby'; room.winker = null; room.pending = []; room.vote = null;
   room.endsAt = null; room.revealUntil = null; room.nextWinkAt = 0;
   room.winner = null; room.reason = null; room.events = [];
@@ -79,7 +88,7 @@ function advance(room, now) {
       const player = room.players.find((p) => p.id === item.id && !p.left);
       if (player) leave(room, player, item.at);
     } else if (item.type === 'reveal' && room.phase === 'reveal') {
-      reset(room, item.at); event(room, 'reveal-timeout', item.at);
+      reset(room, item.at, 'reveal-timeout'); event(room, 'reveal-timeout', item.at);
     } else if (item.type === 'wink' && room.phase === 'playing') settlePending(room, item.at);
     else if (item.type === 'vote' && room.phase === 'voting') resolveVote(room, item.at);
     else if (item.type === 'end') checkWin(room, item.at);
@@ -133,6 +142,7 @@ function apply(room, user, action, payload = {}, now = Date.now(), choose = rand
     if (members.length > 11) fail('room-full');
     if (members.length < 4 || members.some((p) => !p.ready || now - p.lastSeen > 10000)) fail('not-ready');
     room.round++; room.winker = members[choose(members.length)].id;
+    room.lobbyReason = null;
     // The eleven-card deck: unique numbers 1–10 plus the secret eye (11).
     const deck = Array.from({ length: 10 }, (_, i) => i + 1);
     for (let i = deck.length - 1; i > 0; i--) {
@@ -165,16 +175,19 @@ function apply(room, user, action, payload = {}, now = Date.now(), choose = rand
   }
   if (action === 'accuse') {
     if (room.phase !== 'playing') fail('vote-active');
+    if (player.accused) fail('cannot-accuse');
+    if (payload.target === player.id || !alive(room).some((p) => p.id === payload.target)) fail('invalid-target');
     // Flush accepted winks before determining who is eligible for a vote.
     settlePending(room, now, true);
     if (room.phase !== 'playing' || player.eliminated || player.accused) fail('cannot-accuse');
     if (payload.target === player.id || !alive(room).some((p) => p.id === payload.target)) fail('invalid-target');
     player.accused = true; room.phase = 'voting';
-    room.vote = { accused: payload.target, by: player.id, endsAt: now + room.settings.voteSeconds * 1000, ballots: {} };
+    room.vote = { id: randomBytes(8).toString('hex'), accused: payload.target, by: player.id, endsAt: now + room.settings.voteSeconds * 1000, ballots: {} };
     event(room, 'vote-started', now, payload.target); return;
   }
   if (action === 'vote') {
     if (room.phase !== 'voting' || room.vote.accused === player.id) fail('cannot-vote');
+    if (payload.voteId !== undefined && payload.voteId !== room.vote.id) fail('stale-vote');
     if (!['yes', 'no', 'abstain'].includes(payload.choice)) fail('invalid-vote');
     if (room.vote.ballots[player.id]) fail('already-voted');
     room.vote.ballots[player.id] = payload.choice;
@@ -188,12 +201,13 @@ function view(room, id, now = Date.now()) {
   const self = room.players.find((p) => p.id === id && !p.left);
   if (!self) fail('not-member');
   return { phase: room.phase, host: room.host, settings: room.settings, round: room.round,
+    lobbyReason: room.lobbyReason || null,
     serverNow: now, endsAt: room.endsAt, revealUntil: room.revealUntil,
     players: room.players.map((p) => ({ id: p.id, name: p.name, avatar: p.avatar,
       ready: p.ready, seen: p.seen, eliminated: p.eliminated, left: p.left,
       connected: !p.left && now - p.lastSeen < 10000,
       reconnectUntil: p.lastSeen + 60000 })),
-    events: room.events, vote: room.vote ? { accused: room.vote.accused, by: room.vote.by,
+    events: room.events, vote: room.vote ? { id: room.vote.id, accused: room.vote.accused, by: room.vote.by,
       endsAt: room.vote.endsAt, count: Object.keys(room.vote.ballots).length } : null,
     me: { id, role: ['reveal', 'playing', 'voting', 'finished'].includes(room.phase)
       ? (room.winker === id ? 'winker' : 'player') : null,

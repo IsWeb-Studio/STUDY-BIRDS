@@ -43,6 +43,8 @@ test('four authenticated players: rooms, CAS races, privacy, votes, reset and re
     for (const role of roles) { assert.equal(role.data.winker, undefined); assert.equal(role.data.pending, undefined); }
     assert.equal((await request(`/${code}/join`, 4, {})).data.code, 'already-started');
     await Promise.all([0, 1, 2, 3].map((i) => action(i, 'seen')));
+    const stale = await request(`/${code}/actions`, 0, { action: 'got-wink', round: 0, operationId: 'stale-round-001' });
+    assert.equal(stale.data.code, 'stale-round');
     const normals = [0, 1, 2, 3].filter((i) => i !== killer);
     const target = String(users[normals[0]]._id);
     const concurrent = await Promise.all([action(normals[0], 'got-wink', {}, 'duplicate-wink-01'), action(normals[0], 'got-wink', {}, 'duplicate-wink-01')]);
