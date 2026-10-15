@@ -57,7 +57,7 @@ function reset(room, now) {
   room.endsAt = null; room.revealUntil = null; room.nextWinkAt = 0;
   room.winner = null; room.reason = null; room.events = [];
   room.players = room.players.filter((p) => !p.left).map((p) => ({
-    ...p, eliminated: false, ready: false, seen: false, accused: false, privateNotice: null,
+    ...p, eliminated: false, ready: false, seen: false, accused: false, privateNotice: null, card: null,
   }));
   event(room, 'lobby', now);
 }
@@ -96,7 +96,7 @@ function join(room, user, now) {
   const existing = room.players.find((p) => p.id === user.id && !p.left);
   if (existing) { existing.lastSeen = now; return; }
   if (room.phase !== 'lobby') fail('already-started');
-  if (room.players.filter((p) => !p.left).length >= 12) fail('room-full');
+  if (room.players.filter((p) => !p.left).length >= 11) fail('room-full');
   room.players = room.players.filter((p) => p.id !== user.id && !p.left);
   room.players.push({ id: user.id, name: user.name, avatar: user.avatar || null,
     ready: false, seen: false, eliminated: false, accused: false, left: false, lastSeen: now });
@@ -130,8 +130,15 @@ function apply(room, user, action, payload = {}, now = Date.now(), choose = rand
   if (action === 'start') {
     if (room.host !== user.id || room.phase !== 'lobby') fail('host-lobby-only');
     const members = room.players.filter((p) => !p.left);
+    if (members.length > 11) fail('room-full');
     if (members.length < 4 || members.some((p) => !p.ready || now - p.lastSeen > 10000)) fail('not-ready');
     room.round++; room.winker = members[choose(members.length)].id;
+    // The eleven-card deck: unique numbers 1–10 plus the secret eye (11).
+    const deck = Array.from({ length: 10 }, (_, i) => i + 1);
+    for (let i = deck.length - 1; i > 0; i--) {
+      const j = randomInt(i + 1); [deck[i], deck[j]] = [deck[j], deck[i]];
+    }
+    for (const p of members) p.card = p.id === room.winker ? 11 : deck.pop();
     room.phase = 'reveal'; room.revealUntil = now + 60000;
     room.pending = []; room.vote = null; room.events = []; room.winner = null; room.reason = null;
     for (const p of members) { p.seen = false; p.eliminated = false; p.accused = false; p.privateNotice = null; }
@@ -195,6 +202,7 @@ function view(room, id, now = Date.now()) {
     me: { id, role: ['reveal', 'playing', 'voting', 'finished'].includes(room.phase)
       ? (room.winker === id ? 'winker' : 'player') : null,
       seen: self.seen, accused: self.accused, eliminated: self.eliminated,
+      card: ['reveal', 'playing', 'voting', 'finished'].includes(room.phase) ? self.card ?? null : null,
       notice: self.privateNotice || null,
       nextWinkAt: room.winker === id ? room.nextWinkAt : null,
       ballot: room.vote?.ballots[id] || null },

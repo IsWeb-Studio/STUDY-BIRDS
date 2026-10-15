@@ -4,7 +4,7 @@ const e = require('../src/games/winkEngine');
 test('room capacity, settings validation, outsiders and client-controlled role are rejected', () => {
   const host = { id: 'host', name: 'Host' };
   const room = e.newRoom(host, 1000);
-  for (let i = 1; i < 12; i++) e.join(room, { id: `player${i}`, name: `Player ${i}` }, 1000);
+  for (let i = 1; i < 11; i++) e.join(room, { id: `player${i}`, name: `Player ${i}` }, 1000);
   assert.throws(() => e.join(room, { id: 'extra' }, 1000), (err) => err.gameCode === 'room-full');
   assert.throws(() => e.apply(room, { id: 'extra' }, 'start', {}, 1000), (err) => err.gameCode === 'not-member');
   assert.throws(() => e.apply(room, { id: 'player1' }, 'settings', room.settings, 1000), (err) => err.gameCode === 'host-lobby-only');
