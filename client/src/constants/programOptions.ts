@@ -15,6 +15,23 @@ export const LEGACY_PROGRAM_DEGREE_LEVELS = [
   { value: "Diploma", translationKey: "degreeDiploma" },
 ] as const;
 
+// Public search groups related degrees without changing stored program details.
+export const PROGRAM_DEGREE_FILTERS = [
+  { value: "Technical Institute/Diploma", translationKey: "degreeTechnicalInstituteDiploma" },
+  { value: "Bachelor", translationKey: "degreeBachelor" },
+  { value: "Postgraduate Diploma", translationKey: "degreePostgraduateDiploma" },
+  { value: "Master", translationKey: "degreeMaster" },
+  { value: "Professional Doctorate", translationKey: "degreeProfessionalDoctorate" },
+  { value: "PhD", translationKey: "degreePhD" },
+  { value: "Postdoctoral", translationKey: "degreePostdoctoral" },
+] as const;
+
+export const normalizeProgramDegreeFilter = (value: string) => {
+  if (["Master", "Non-Thesis Master", "Thesis Master"].includes(value)) return "Master";
+  if (["Technical Institute", "Diploma", "Technical Institute/Diploma"].includes(value)) return "Technical Institute/Diploma";
+  return value;
+};
+
 export const PROGRAM_LANGUAGES = [
   { value: "Arabic", ar: "العربية", en: "Arabic" },
   { value: "Turkish", ar: "التركية", en: "Turkish" },

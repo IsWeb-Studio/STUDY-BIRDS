@@ -30,6 +30,7 @@ type TranslationKey =
   | "degreeDiploma"
   | "degreeMaster"
   | "degreeTechnicalInstitute"
+  | "degreeTechnicalInstituteDiploma"
   | "degreePostgraduateDiploma"
   | "degreeNonThesisMaster"
   | "degreeThesisMaster"
@@ -216,6 +217,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     degreeDiploma: "Diploma",
     degreeMaster: "Master",
     degreeTechnicalInstitute: "Technical institute",
+    degreeTechnicalInstituteDiploma: "Technical institute/Diploma",
     degreePostgraduateDiploma: "Postgraduate diploma",
     degreeNonThesisMaster: "Master without thesis",
     degreeThesisMaster: "Master with thesis",
@@ -411,6 +413,7 @@ const translations: Record<Language, Record<TranslationKey, string>> = {
     degreeDiploma: "دبلوم",
     degreeMaster: "ماجستير",
     degreeTechnicalInstitute: "معهد فني",
+    degreeTechnicalInstituteDiploma: "معهد فني/دبلوم",
     degreePostgraduateDiploma: "دبلوم عالي بعد البكالوريوس",
     degreeNonThesisMaster: "ماجستير بدون رسالة",
     degreeThesisMaster: "ماجستير برسالة",

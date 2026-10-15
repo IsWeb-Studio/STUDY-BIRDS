@@ -5,6 +5,8 @@ const asyncHandler = require("../utils/asyncHandler");
 const { buildPaginationMeta, parsePagination } = require("../utils/queryUtils");
 const { timedOperation } = require("../utils/perf");
 const { clearResponseCache } = require("../utils/responseCache");
+const { buildProgramDegreeFilter } = require("../utils/programDegreeFilter");
+const programLanguageAliases = require("../constants/programLanguageAliases.json");
 const { uploadFileToCloudinary } = require("../utils/uploadToCloudinary");
 
 const getPrograms = asyncHandler(async (req, res) => {
@@ -29,7 +31,13 @@ const getPrograms = asyncHandler(async (req, res) => {
   }
 
   if (req.query.degreeLevel) {
-    query.degreeLevel = req.query.degreeLevel;
+    query.degreeLevel = buildProgramDegreeFilter(req.query.degreeLevel);
+  }
+
+  if (typeof req.query.language === 'string' && req.query.language.trim()) {
+    const language = req.query.language.trim();
+    const canonical = Object.keys(programLanguageAliases).find(value => value.toLowerCase() === language.toLowerCase() || programLanguageAliases[value] === language) || language;
+    query.language = { $in: [...new Set([canonical, programLanguageAliases[canonical]].filter(Boolean))].map(value => new RegExp(`^${escapeSearch(value)}$`, 'i')) };
   }
 
   if (req.query.fieldOfStudy) {

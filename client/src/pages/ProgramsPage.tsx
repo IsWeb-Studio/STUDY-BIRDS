@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, ScrollText, Sparkles } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { ProgramCard } from "../components/marketing/ProgramCard";
 import { SearchFilter } from "../components/marketing/SearchFilter";
+import { normalizeProgramDegreeFilter } from "../constants/programOptions";
 import { EmptyState } from "../components/EmptyState";
 import { Seo } from "../components/seo/Seo";
 import { programService } from "../services/programService";
@@ -32,7 +33,8 @@ export const ProgramsPage = () => {
   const [filters, setFilters] = useState<Record<string, string>>(() => ({
     country: searchParams.get("country") || "",
     university: searchParams.get("university") || "",
-    degreeLevel: searchParams.get("degreeLevel") || "",
+    degreeLevel: normalizeProgramDegreeFilter(searchParams.get("degreeLevel") || ""),
+    language: searchParams.get("language") || "",
     fieldOfStudy: searchParams.get("fieldOfStudy") || "",
     tuitionMin: searchParams.get("tuitionMin") || "",
     tuitionMax: searchParams.get("tuitionMax") || "",

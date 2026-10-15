@@ -6,8 +6,8 @@ import { useContentTranslation } from "../../hooks/useContentTranslation";
 import { universityName } from "../../utils/localizedContent";
 import { PriceRangeFilter } from "./PriceRangeFilter";
 import {
-  PROGRAM_DEGREE_LEVELS,
-  LEGACY_PROGRAM_DEGREE_LEVELS,
+  PROGRAM_DEGREE_FILTERS,
+  PROGRAM_LANGUAGES,
 } from "../../constants/programOptions";
 
 interface SearchFilterProps {
@@ -53,14 +53,16 @@ export const SearchFilter = ({
   }, [filters.country, universities, universityQuery]);
 
   return (
-    <div className="program-search-filter panel grid w-full min-w-0 grid-cols-1 items-start gap-4 p-4 sm:p-5 lg:grid-cols-4">
+    <div className="program-search-filter panel grid w-full min-w-0 grid-cols-1 items-start gap-3 p-4 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_0.85fr_1fr]">
       <input
+        aria-label={t("searchKeyword")}
         value={keyword}
         onChange={(event) => onKeywordChange(event.target.value)}
         placeholder={t("searchKeyword")}
         className="rounded-2xl border border-slate-200 px-4 py-3 outline-none ring-brand-300 focus:ring"
       />
       <select
+        aria-label={t("allCountries")}
         value={filters.country}
         onChange={(event) => onFilterChange("country", event.target.value)}
         className="rounded-2xl border border-slate-200 px-4 py-3"
@@ -69,6 +71,19 @@ export const SearchFilter = ({
         {countries.map((country) => (
           <option key={country._id} value={country._id}>
             {tv(country.name)}
+          </option>
+        ))}
+      </select>
+      <select
+        aria-label={t("allDegreeLevels")}
+        value={filters.degreeLevel}
+        onChange={(event) => onFilterChange("degreeLevel", event.target.value)}
+        className="rounded-2xl border border-slate-200 px-4 py-3"
+      >
+        <option value="">{t("allDegreeLevels")}</option>
+        {PROGRAM_DEGREE_FILTERS.map((option) => (
+          <option key={option.value} value={option.value}>
+            {t(option.translationKey)}
           </option>
         ))}
       </select>
@@ -152,18 +167,7 @@ export const SearchFilter = ({
         ) : null}
       </div>
       <select
-        value={filters.degreeLevel}
-        onChange={(event) => onFilterChange("degreeLevel", event.target.value)}
-        className="rounded-2xl border border-slate-200 px-4 py-3"
-      >
-        <option value="">{t("allDegreeLevels")}</option>
-        {[...PROGRAM_DEGREE_LEVELS, ...LEGACY_PROGRAM_DEGREE_LEVELS].map((option) => (
-          <option key={option.value} value={option.value}>
-            {t(option.translationKey)}
-          </option>
-        ))}
-      </select>
-      <select
+        aria-label={t("allFields")}
         value={filters.fieldOfStudy}
         onChange={(event) => onFilterChange("fieldOfStudy", event.target.value)}
         className="rounded-2xl border border-slate-200 px-4 py-3"
@@ -175,14 +179,18 @@ export const SearchFilter = ({
           </option>
         ))}
       </select>
-      <PriceRangeFilter minimum={filters.tuitionMin || ""} maximum={filters.tuitionMax || ""} onChange={(minimum, maximum) => {
+      <select value={filters.language || ""} onChange={(event) => onFilterChange("language", event.target.value)} aria-label={language === "ar" ? "لغة الدراسة" : "Study language"} className="rounded-2xl border border-slate-200 px-4 py-3">
+        <option value="">{language === "ar" ? "كل اللغات" : "All languages"}</option>
+        {PROGRAM_LANGUAGES.map(option => <option key={option.value} value={option.value}>{language === "ar" ? option.ar : option.en}</option>)}
+      </select>
+      <div className="sm:col-span-2"><PriceRangeFilter minimum={filters.tuitionMin || ""} maximum={filters.tuitionMax || ""} onChange={(minimum, maximum) => {
         onFilterChange("tuitionMin", minimum);
         onFilterChange("tuitionMax", maximum);
-      }} />
+      }} /></div>
       <select
         value={filters.sortBy}
         onChange={(event) => onFilterChange("sortBy", event.target.value)}
-        className="rounded-2xl border border-slate-200 px-4 py-3 lg:col-span-4"
+        className="rounded-2xl border border-slate-200 px-4 py-3 sm:col-span-2 lg:col-span-4"
       >
         <option value="">{t("sortByFeatured")}</option>
         <option value="tuition">{t("tuition")}</option>
