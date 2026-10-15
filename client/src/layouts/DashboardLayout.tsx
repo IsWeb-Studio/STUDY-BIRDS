@@ -32,6 +32,7 @@ import { useEffect, useState } from "react";
 import { Outlet, useLocation } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
 import { DashboardSidebar } from "../components/dashboard/DashboardSidebar";
+import { StaffUnreadPanel } from "../components/admin/StaffUnreadPanel";
 import { Seo } from "../components/seo/Seo";
 import { useAuth } from "../hooks/useAuth";
 import { useLanguage } from "../hooks/useLanguage";
@@ -289,7 +290,7 @@ export const DashboardLayout = () => {
           subtitle={user?.role === "employee" ? (language === "ar" ? "الأقسام المسموح لك بإدارتها." : "The sections you are allowed to manage.") : sidebarSubtitle}
         />
         </div>
-        <div className="dashboard-content min-w-0"><Outlet /></div>
+        <div className="dashboard-content min-w-0"><StaffUnreadPanel key={location.pathname} /><Outlet /></div>
         </div>
       </main>
     </div>

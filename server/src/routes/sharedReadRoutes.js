@@ -9,6 +9,8 @@ router.use(protect, (req, res, next) => {
   next();
 });
 router.get('/', run(async (req, res) => res.json(await readState.summary(req.user, typeof req.query.resources === 'string' ? req.query.resources.split(',').filter(Boolean) : undefined))));
+router.get('/:resource/unread', run(async (req, res) => res.json(await readState.unread(req.user, req.params.resource))));
+router.get('/:resource/:id/detail', run(async (req, res) => res.json(await readState.detail(req.user, req.params.resource, req.params.id))));
 router.post('/:resource/states', run(async (req, res) => res.json(await readState.states(req.user, req.params.resource, req.body.ids))));
 router.post('/:resource/:id/read', run(async (req, res) => res.json(await readState.markRead(req.user, req.params.resource, req.params.id, req.body.version))));
 module.exports = router;

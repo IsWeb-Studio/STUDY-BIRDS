@@ -24,6 +24,13 @@ const {
 const ExhibitionArticle = require("./models/ExhibitionArticle");
 
 const app = express();
+// Short-lived count cache is separate from business data and invalidates after writes.
+app.use('/api', (req, res, next) => {
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(req.method) && !req.path.endsWith('/states')) {
+    res.on('finish', () => { if (res.statusCode >= 200 && res.statusCode < 300) require('./utils/readSummaryCache').clear(); });
+  }
+  next();
+});
 const { requestSafety, safeResponses } = require('./middleware/requestSafety');
 app.disable('x-powered-by');
 app.use(safeResponses);

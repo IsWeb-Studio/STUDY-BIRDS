@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 const registry = require('../constants/readableResources.json');
 const { hasSection } = require('../middleware/employeeAccess');
 const Receipt = require('../models/SharedReadReceipt');
+const countsCache = require('./readSummaryCache');
 const fail = (status, message) => Object.assign(new Error(message), { status });
 
 function definition(user, resource) {
@@ -71,8 +72,11 @@ async function markRead(user, resource, id, version) {
   // $max prevents a delayed acknowledgement from undoing a newer read.
   const filter = { resource: def.model, entity: id };
   const update = { $max: { revision: version }, $set: { readAt: new Date(), readBy: user._id } };
+  await Receipt.init();
   try { await Receipt.updateOne(filter, update, { upsert: true }); }
   catch (error) { if (error.code !== 11000) throw error; await Receipt.updateOne(filter, update); }
+  if (def.model === 'MobileMessage') await sourceModel(def).updateOne({ _id: id, recipient: user._id, readAt: null }, { $set: { readAt: new Date() } }, { timestamps: false });
+  countsCache.clear();
   return { ...state, unread: false };
 }
 async function summary(user, requested) {
@@ -84,16 +88,44 @@ async function summary(user, requested) {
   for (let offset = 0; offset < keys.length; offset += 4) await Promise.all(keys.slice(offset, offset + 4).map(async key => {
     try {
       const def = definition(user, key);
+      const match = await matchFor(def, user);
+      const cacheKey = JSON.stringify([key, match]), cached = countsCache.get(cacheKey), stamp = countsCache.generation();
+      if (cached) { resources[key] = cached; return; }
       const rows = await sourceModel(def).aggregate([
-        { $match: await matchFor(def, user) },
+        { $match: match },
         ...metadataStages(def),
         { $project: { version: revisionExpression(), sender: 1 } },
         { $lookup: { from: Receipt.collection.name, let: { entity: '$_id' }, pipeline: [{ $match: { resource: def.model, $expr: { $eq: ['$entity', '$$entity'] } } }, { $project: { revision: 1 } }], as: 'receipt' } },
         { $group: { _id: def.model === 'MobileMessage' ? '$sender' : null, total: { $sum: 1 }, unread: { $sum: { $cond: [{ $gt: ['$version', { $ifNull: [{ $arrayElemAt: ['$receipt.revision', 0] }, ''] }] }, 1, 0] } } } },
       ]);
       resources[key] = { canonical: def.model, total: rows.reduce((sum, row) => sum + row.total, 0), unread: rows.reduce((sum, row) => sum + row.unread, 0), ...(def.model === 'MobileMessage' ? { contacts: Object.fromEntries(rows.map(row => [String(row._id), row.unread])) } : {}) };
+      countsCache.set(cacheKey, resources[key], stamp);
     } catch (error) { errors[key] = 'تعذر تحديث عداد القسم'; }
   }));
   return { shared: true, resources, errors, checkedAt: new Date().toISOString() };
 }
-module.exports = { registry, definition, revision, states, markRead, summary };
+async function unread(user, resource) {
+  const def = definition(user, resource);
+  const items = await sourceModel(def).aggregate([
+    { $match: await matchFor(def, user) }, ...metadataStages(def),
+    { $project: { version: revisionExpression(), title: { $ifNull: ['$title', '$name', '$subject', '$invoiceNumber', { $toString: '$_id' }] } } },
+    { $lookup: { from: Receipt.collection.name, let: { entity: '$_id' }, pipeline: [{ $match: { resource: def.model, $expr: { $eq: ['$entity', '$$entity'] } } }], as: 'receipt' } },
+    { $match: { $expr: { $gt: ['$version', { $ifNull: [{ $arrayElemAt: ['$receipt.revision', 0] }, ''] }] } } },
+    { $sort: { _id: -1 } }, { $limit: 100 }, { $project: { title: 1, version: 1 } },
+  ]);
+  return { items, limit: 100 };
+}
+async function detail(user, resource, id) {
+  const def = definition(user, resource);
+  if (!/^[a-f0-9]{24}$/i.test(id)) throw fail(400, 'معرف غير صالح');
+  // Explicit safe display fields: no passwords, tokens, storage credentials or payroll.
+  const record = await sourceModel(def).findOne({ ...await matchFor(def, user), _id: id })
+    .select('name email role employeeRole isActive title subject description message body status detailedStatus amount invoiceNumber currency dueDate category notes adminNote reviewNote university program country language degreeLevel fieldOfStudy duration tuition partnerTuition summary overview code replies createdAt updatedAt __v').lean();
+  if (!record) throw fail(404, 'السجل غير موجود');
+  if (['students', 'agents'].includes(resource)) {
+    record.profile = await require('../models/StudentProfile').findOne({ user: id }).select('-__v -user').lean();
+    if (record.profile?.updatedAt > record.updatedAt) record.updatedAt = record.profile.updatedAt;
+  }
+  return { record, state: (await states(user, resource, [id]))[id] };
+}
+module.exports = { registry, definition, revision, states, markRead, summary, unread, detail };

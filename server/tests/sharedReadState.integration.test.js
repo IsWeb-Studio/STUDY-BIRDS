@@ -7,7 +7,7 @@ test('shared read receipts work across staff and resources without changing busi
   const mongoose = require('mongoose');
   await mongoose.connect(uri);
   try {
-    const { states, summary, markRead, registry } = require('../src/utils/sharedReadState');
+    const { states, summary, markRead, registry, unread, detail } = require('../src/utils/sharedReadState');
     const Receipt = require('../src/models/SharedReadReceipt');
     const User = require('../src/models/User');
     const Ticket = require('../src/models/SupportTicket');
@@ -26,9 +26,13 @@ test('shared read receipts work across staff and resources without changing busi
     await Promise.all([markRead(first, 'support', String(ticket._id), snapshot.version), markRead(second, 'support', String(ticket._id), snapshot.version)]);
     assert.equal((await states(second, 'support', [String(ticket._id)]))[ticket._id].unread, false);
     assert.equal((await summary(second, ['support'])).resources.support.unread, 0);
+    assert.equal((await unread(second, 'support')).items.length, 0);
+    assert.equal((await detail(first, 'students', String(student._id))).record.password, undefined);
     assert.equal((await Ticket.findById(ticket._id)).status, 'open');
     await Ticket.findByIdAndUpdate(ticket._id, { $push: { replies: { message: 'New reply', fromRole: 'student', user: student._id } }, $inc: { __v: 1 } });
+    require('../src/utils/readSummaryCache').clear(); // API mutation completion invalidates counters.
     assert.equal((await summary(first, ['support'])).resources.support.unread, 1);
+    assert.equal((await unread(second, 'support')).items.length, 1);
     await assert.rejects(markRead(first, 'support', String(ticket._id), snapshot.version), { status: 409 });
     const payment = (await states(first, 'paymentProofs', [String(proof._id)]))[proof._id];
     await markRead(first, 'paymentProofs', String(proof._id), payment.version);
@@ -38,6 +42,7 @@ test('shared read receipts work across staff and resources without changing busi
     const countryState = (await states(first, 'countries', [String(country._id)]))[country._id];
     await markRead(first, 'countries', String(country._id), countryState.version);
     await Country.deleteOne({ _id: country._id });
+    require('../src/utils/readSummaryCache').clear();
     assert.equal((await summary(first, ['countries'])).resources.countries.total, 0);
     const full = await summary(first);
     assert.deepEqual(full.errors, {}, 'Every registered resource must have a valid model and count pipeline');
@@ -48,6 +53,7 @@ test('shared read receipts work across staff and resources without changing busi
     await markRead(first, 'students', String(student._id), studentState.version);
     const Profile = require('../src/models/StudentProfile');
     await Profile.create({ user: student._id, phone: '123' });
+    require('../src/utils/readSummaryCache').clear();
     assert.equal((await states(first, 'students', [String(student._id)]))[student._id].unread, true, 'Separate profile updates must count as student updates');
     const { Message } = require('../src/models/MobileWorkspace');
     const incoming = await Message.create({ sender: student._id, recipient: first._id, body: 'Hello' });

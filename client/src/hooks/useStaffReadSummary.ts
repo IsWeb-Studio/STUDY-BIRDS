@@ -13,7 +13,7 @@ export function useStaffReadSummary() {
     const update = async () => {
       if (document.hidden || pending) return;
       pending = true;
-      try { const { data } = await api.get<ReadSummary>('/shared-read'); if (active) setSummary(data); }
+      try { const { data } = await api.get<ReadSummary>('/shared-read'); if (active) setSummary(previous => ({ ...data, resources: { ...Object.fromEntries(Object.entries(previous.resources).filter(([key]) => data.errors?.[key])), ...data.resources } })); }
       catch { /* Retain the last known counters; never turn an outage into zero unread. */ }
       finally { pending = false; }
     };
