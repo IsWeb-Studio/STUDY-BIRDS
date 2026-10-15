@@ -63,6 +63,7 @@ function reset(room, now) {
 }
 function advance(room, now) {
   if (room.phase === 'closed') return;
+  room.settings.mode = 'local';
   // Resolve overdue events in their actual order, including after a restart.
   // A wink due AFTER the round deadline must not change the winner.
   const due = room.players.filter((p) => !p.left).map((p) => ({ at: p.lastSeen + 60000, type: 'disconnect', id: p.id }));
@@ -87,7 +88,7 @@ function advance(room, now) {
 }
 function newRoom(user, now = Date.now()) {
   const room = { phase: 'lobby', host: user.id, players: [],
-    settings: { mode: 'online', roundSeconds: 300, voteSeconds: 20, cooldownSeconds: 15 },
+    settings: { mode: 'local', roundSeconds: 300, voteSeconds: 20, cooldownSeconds: 15 },
     round: 0, pending: [], events: [], receipts: [], winker: null, vote: null,
     endsAt: null, nextWinkAt: 0, winner: null, reason: null };
   join(room, user, now); return room;
@@ -110,12 +111,11 @@ function apply(room, user, action, payload = {}, now = Date.now(), choose = rand
   if (action === 'leave') { leave(room, player, now); return; }
   if (action === 'settings') {
     if (room.host !== user.id || room.phase !== 'lobby') fail('host-lobby-only');
-    if (!['online', 'local'].includes(payload.mode) || !Number.isInteger(payload.roundSeconds)
+    if (payload.mode !== 'local' || !Number.isInteger(payload.roundSeconds)
       || payload.roundSeconds < 60 || payload.roundSeconds > 900 || !Number.isInteger(payload.voteSeconds)
-      || payload.voteSeconds < 10 || payload.voteSeconds > 60 || !Number.isInteger(payload.cooldownSeconds)
-      || payload.cooldownSeconds < 5 || payload.cooldownSeconds > 60) fail('invalid-settings');
+      || payload.voteSeconds < 10 || payload.voteSeconds > 60) fail('invalid-settings');
     room.settings = { mode: payload.mode, roundSeconds: payload.roundSeconds,
-      voteSeconds: payload.voteSeconds, cooldownSeconds: payload.cooldownSeconds };
+      voteSeconds: payload.voteSeconds, cooldownSeconds: 15 };
     for (const p of room.players) p.ready = false;
     return;
   }
@@ -154,17 +154,13 @@ function apply(room, user, action, payload = {}, now = Date.now(), choose = rand
     return;
   }
   if (!['playing', 'voting'].includes(room.phase) || player.eliminated) fail('not-alive');
-  if (action === 'wink' || action === 'got-wink') {
+  if (action === 'wink') fail('digital-wink-disabled');
+  if (action === 'got-wink') {
     if (room.phase !== 'playing') fail('vote-active');
-    if (action === 'wink') {
-      if (room.settings.mode !== 'online' || room.winker !== player.id) fail('not-winker');
-      if (now < room.nextWinkAt) fail('cooldown');
-    } else if (room.settings.mode !== 'local' || room.winker === player.id) fail('local-only');
-    const target = action === 'got-wink' ? player : alive(room).find((p) => p.id === payload.target);
-    if (!target || target.id === room.winker || room.pending.some((p) => p.id === target.id)) fail('invalid-target');
-    room.pending.push({ id: target.id, at: now + 3000 + choose(4001) });
-    target.privateNotice = 'winked';
-    if (action === 'wink') room.nextWinkAt = now + room.settings.cooldownSeconds * 1000;
+    if (room.winker === player.id) fail('local-only');
+    if (room.pending.some((p) => p.id === player.id)) fail('invalid-target');
+    room.pending.push({ id: player.id, at: now + 3000 + choose(4001) });
+    player.privateNotice = 'winked';
     return;
   }
   if (action === 'accuse') {

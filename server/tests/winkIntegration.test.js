@@ -45,7 +45,7 @@ test('four authenticated players: rooms, CAS races, privacy, votes, reset and re
     await Promise.all([0, 1, 2, 3].map((i) => action(i, 'seen')));
     const normals = [0, 1, 2, 3].filter((i) => i !== killer);
     const target = String(users[normals[0]]._id);
-    const concurrent = await Promise.all([action(killer, 'wink', { target }, 'duplicate-wink-01'), action(killer, 'wink', { target }, 'duplicate-wink-01')]);
+    const concurrent = await Promise.all([action(normals[0], 'got-wink', {}, 'duplicate-wink-01'), action(normals[0], 'got-wink', {}, 'duplicate-wink-01')]);
     assert.ok(concurrent.every((r) => r.status === 200));
     let stored = await Room.findOne({ code }).select('+state').lean(); assert.equal(stored.state.pending.length, 1);
     // Accusation by the pending victim must settle their elimination, even if the accusation is rejected.

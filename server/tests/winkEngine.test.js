@@ -2,7 +2,7 @@ const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const e = require('../src/games/winkEngine');
 const users = Array.from({ length: 5 }, (_, i) => ({ id: `p${i}`, name: `Player ${i}` }));
-function setup(count = 4, mode = 'online') {
+function setup(count = 4, mode = 'local') {
   const room = e.newRoom(users[0], 1000);
   for (const user of users.slice(1, count)) e.join(room, user, 1000);
   room.settings.mode = mode;
@@ -10,7 +10,7 @@ function setup(count = 4, mode = 'online') {
   e.apply(room, users[0], 'start', {}, 1000, () => 0);
   return room;
 }
-function play(count = 4, mode = 'online') {
+function play(count = 4, mode = 'local') {
   const room = setup(count, mode);
   for (const user of users.slice(0, count)) e.apply(room, user, 'seen', {}, 1100);
   return room;
@@ -31,7 +31,7 @@ test('minimum, readiness, host authority, and all role confirmations required', 
 test('exactly one role and explicit public projection excludes secrets', () => {
   const room = play();
   assert.equal(users.slice(0, 4).filter((u) => e.view(room, u.id, 1100).me.role === 'winker').length, 1);
-  e.apply(room, users[0], 'wink', { target: 'p1' }, 1200, () => 0);
+  e.apply(room, users[1], 'got-wink', {}, 1200, () => 0);
   const bystander = e.view(room, 'p2', 1200);
   for (const key of ['winker', 'pending', 'receipts', 'nextWinkAt']) assert.equal(bystander[key], undefined);
   assert.equal(bystander.players.find((p) => p.id === 'p1').privateNotice, undefined);
@@ -40,22 +40,22 @@ test('exactly one role and explicit public projection excludes secrets', () => {
   assert.equal(e.view(room, 'p0', 1200).me.notice, null);
   throws(() => e.view(room, 'outsider', 1200), 'not-member');
 });
-test('random selection receives player count, wins after delayed kills and enforces cooldown', () => {
+test('random selection receives player count, wins after delayed reports and rejects duplicate reports', () => {
   const room = play();
-  throws(() => e.apply(room, users[1], 'wink', { target: 'p2' }, 1200), 'not-winker');
-  e.apply(room, users[0], 'wink', { target: 'p1' }, 1200, () => 0);
-  throws(() => e.apply(room, users[0], 'wink', { target: 'p2' }, 1201), 'cooldown');
+  throws(() => e.apply(room, users[1], 'wink', { target: 'p2' }, 1200), 'digital-wink-disabled');
+  e.apply(room, users[1], 'got-wink', {}, 1200, () => 0);
+  throws(() => e.apply(room, users[1], 'got-wink', {}, 1201), 'invalid-target');
   e.advance(room, 4199); assert.equal(room.players[1].eliminated, false);
   e.advance(room, 4200); assert.equal(room.players[1].eliminated, true);
   throws(() => e.apply(room, users[1], 'accuse', { target: 'p0' }, 4201), 'not-alive');
-  e.apply(room, users[0], 'wink', { target: 'p2' }, 16200, () => 0);
+  e.apply(room, users[2], 'got-wink', {}, 16200, () => 0);
   e.advance(room, 19200);
   assert.equal(room.winner, 'winker'); assert.equal(room.phase, 'finished');
 });
 test('a strict majority is required; abstention and silence never approve', () => {
   const room = play(5);
   e.apply(room, users[1], 'accuse', { target: 'p2' }, 1200);
-  throws(() => e.apply(room, users[0], 'wink', { target: 'p3' }, 1201), 'vote-active');
+  throws(() => e.apply(room, users[3], 'got-wink', {}, 1201), 'vote-active');
   throws(() => e.apply(room, users[2], 'vote', { choice: 'yes' }, 1201), 'cannot-vote');
   throws(() => e.apply(room, users[3], 'accuse', { target: 'p0' }, 1201), 'vote-active');
   e.apply(room, users[0], 'vote', { choice: 'yes' }, 1202);
@@ -81,20 +81,20 @@ test('approved guilty suspect ends round and reset clears all round state', () =
 });
 test('innocent elimination continues and pending wink is settled before accusation', () => {
   const room = play(5);
-  e.apply(room, users[0], 'wink', { target: 'p1' }, 1200, () => 0);
+  e.apply(room, users[1], 'got-wink', {}, 1200, () => 0);
   throws(() => e.apply(room, users[1], 'accuse', { target: 'p0' }, 1201), 'cannot-accuse');
   assert.equal(room.players[1].eliminated, true);
   e.apply(room, users[2], 'accuse', { target: 'p3' }, 1202);
   for (const index of [0, 2, 4]) e.apply(room, users[index], 'vote', { choice: 'yes' }, 1203);
   assert.equal(room.players[3].eliminated, true); assert.equal(room.phase, 'playing');
 });
-test('local mode accepts self-report only; online cannot self-eliminate', () => {
+test('face-to-face mode accepts self-report only and rejects digital winks', () => {
   const room = play(4, 'local');
-  throws(() => e.apply(room, users[0], 'wink', { target: 'p1' }, 1200), 'not-winker');
+  throws(() => e.apply(room, users[0], 'wink', { target: 'p1' }, 1200), 'digital-wink-disabled');
   throws(() => e.apply(room, users[0], 'got-wink', {}, 1200), 'local-only');
   e.apply(room, users[1], 'got-wink', {}, 1200, () => 0);
   assert.equal(room.pending[0].id, 'p1');
-  throws(() => e.apply(play(), users[1], 'got-wink', {}, 1200), 'local-only');
+  throws(() => e.apply(room, users[1], 'got-wink', {}, 1201), 'invalid-target');
 });
 test('disconnect and reconnect preserve round; timeout, host transfer, and empty close', () => {
   const room = play(); const endsAt = room.endsAt;
