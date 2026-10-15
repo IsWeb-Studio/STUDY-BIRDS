@@ -75,6 +75,24 @@ test('four authenticated players: rooms, CAS races, privacy, votes, reset and re
     finally { stop(); }
     stored = await Room.findOne({ code }).select('+state').lean();
     assert.notEqual(stored.state.host, String(users[0]._id));
+    const training = await request('/practice', 0, { role: 'player' });
+    assert.equal(training.status, 200); assert.equal(training.data.isPractice, true);
+    assert.equal(training.data.phase, 'reveal');
+    assert.equal(training.data.players.filter((p) => p.isBot).length, 3);
+    assert.equal(training.data.me.role, 'player');
+    assert.equal(training.data.practice, undefined);
+    assert.equal(await User.countDocuments(), 5, 'bots never create fake authenticated accounts');
+    const trainingCode = training.data.code;
+    assert.equal((await request(`/${trainingCode}/join`, 4, {})).data.code, 'practice-private');
+    assert.equal((await request(`/${trainingCode}`, 4, null, 'GET')).status, 403);
+    const trainingAction = (name, payload = {}) => request(`/${trainingCode}/actions`, 0,
+      { action: name, payload, operationId: `training-op-${++counter}`, round: 1 });
+    assert.equal((await trainingAction('seen')).data.phase, 'playing');
+    assert.equal((await trainingAction('practice-wink', { target: training.data.players.find((p) => p.isBot).id })).data.code, 'not-winker');
+    assert.equal((await request('/practice', 0, {})).data.code, trainingCode, 'retries recover the same practice room');
+    const realRoomTrainingAction = await request(`/${code}/actions`, 1,
+      { action: 'practice-restart', payload: { role: 'winker' }, operationId: 'no-practice-on-real' });
+    assert.equal(realRoomTrainingAction.data.code, 'practice-only');
   } finally {
     if (server) await new Promise((resolve) => server.close(resolve));
     await mongoose.disconnect(); await mongo.stop();

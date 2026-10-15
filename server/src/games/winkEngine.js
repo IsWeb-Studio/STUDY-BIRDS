@@ -201,9 +201,10 @@ function view(room, id, now = Date.now()) {
   const self = room.players.find((p) => p.id === id && !p.left);
   if (!self) fail('not-member');
   return { phase: room.phase, host: room.host, settings: room.settings, round: room.round,
+    isPractice: Boolean(room.practice),
     lobbyReason: room.lobbyReason || null,
     serverNow: now, endsAt: room.endsAt, revealUntil: room.revealUntil,
-    players: room.players.map((p) => ({ id: p.id, name: p.name, avatar: p.avatar,
+    players: room.players.map((p) => ({ id: p.id, name: p.name, avatar: p.avatar, isBot: p.bot === true,
       ready: p.ready, seen: p.seen, eliminated: p.eliminated, left: p.left,
       connected: !p.left && now - p.lastSeen < 10000,
       reconnectUntil: p.lastSeen + 60000 })),

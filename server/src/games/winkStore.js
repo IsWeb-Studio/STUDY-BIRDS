@@ -1,14 +1,15 @@
 const Room = require('../models/WinkRoom');
 const engine = require('./winkEngine');
+const practice = require('./winkPractice');
 
 async function mutate(code, update, attempts = 20) {
   for (let i = 0; i < attempts; i++) {
     const doc = await Room.findOne({ code, expiresAt: { $gt: new Date() } }).select('+state').lean();
     if (!doc) engine.fail('room-not-found');
     const now = Date.now();
-    engine.advance(doc.state, now);
+    practice.advance(doc.state, now);
     let actionError;
-    try { update(doc.state, now); } catch (error) {
+    try { update(doc.state, now); practice.advance(doc.state, now); } catch (error) {
       if (!error.gameCode) throw error;
       actionError = error;
     }
