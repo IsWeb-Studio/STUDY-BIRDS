@@ -49,11 +49,10 @@ function apply(room, user, action, payload, now = Date.now()) {
   if (action === 'practice-wink') {
     if (!room.practice || room.practice.owner !== user.id) engine.fail('practice-only');
     if (room.phase !== 'playing' || room.winker !== user.id || !living(room).some((p) => p.id === user.id)) engine.fail('not-winker');
-    if (now < room.nextWinkAt) engine.fail('cooldown');
     const victim = living(room).find((p) => p.id === payload.target && p.bot);
     if (!victim) engine.fail('invalid-target');
     engine.apply(room, victim, 'got-wink', {}, now);
-    room.nextWinkAt = now + 15000;
+    room.nextWinkAt = 0;
     return;
   }
   engine.apply(room, user, action, payload, now);

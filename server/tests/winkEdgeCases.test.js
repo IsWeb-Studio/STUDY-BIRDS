@@ -35,11 +35,11 @@ test('remaining completed ballots resolve when the final nonvoter leaves', () =>
   e.apply(room, users[4], 'leave', {}, 1202);
   assert.equal(room.phase, 'playing'); assert.equal(room.players[2].eliminated, true);
 });
-test('simultaneous due reports settle together before the round timeout', () => {
+test('simultaneous accepted reports settle together without a round timeout', () => {
   const room = play(4);
-  room.players.forEach((p) => { p.lastSeen = room.endsAt; });
-  room.pending = [{ id: 'p1', at: room.endsAt }, { id: 'p2', at: room.endsAt }];
-  e.advance(room, room.endsAt);
+  room.players.forEach((p) => { p.lastSeen = 5000; });
+  room.pending = [{ id: 'p1', at: 5000 }, { id: 'p2', at: 5000 }];
+  e.advance(room, 5000);
   assert.equal(room.winner, 'winker');
 });
 test('hosting transfers to a connected player before one still in reconnect grace', () => {
@@ -49,15 +49,28 @@ test('hosting transfers to a connected player before one still in reconnect grac
   e.apply(room, users[0], 'leave', {}, 20001);
   assert.equal(room.host, 'p2');
 });
-test('role-reveal timeout explains the reset and erases private cards', () => {
+test('role reveal waits for players and migrates old reveal deadlines', () => {
   const room = e.newRoom(users[0], 1000);
   for (const user of users.slice(1, 4)) e.join(room, user, 1000);
   for (const user of users.slice(0, 4)) e.apply(room, user, 'ready', { ready: true }, 1000);
   e.apply(room, users[0], 'start', {}, 1000, () => 0);
-  room.players.forEach((p) => { p.lastSeen = 50000; });
-  e.advance(room, 61001);
-  assert.equal(room.phase, 'lobby'); assert.equal(room.lobbyReason, 'reveal-timeout');
-  assert.ok(room.players.every((p) => p.card == null && !p.ready && !p.seen));
+  room.revealUntil = 61000;
+  room.players.forEach((p) => { p.lastSeen = 3600000; });
+  e.advance(room, 3600000);
+  assert.equal(room.phase, 'reveal'); assert.equal(room.revealUntil, null);
+  assert.ok(room.players.every((p) => p.card != null && p.ready && !p.seen));
+});
+
+test('voters can think for an hour, including rooms with old stored vote deadlines', () => {
+  const room = play();
+  e.apply(room, users[1], 'accuse', { target: 'p0' }, 1200);
+  room.vote.endsAt = 21200;
+  e.apply(room, users[1], 'vote', { choice: 'yes' }, 1300);
+  room.players.forEach((p) => { p.lastSeen = 3600000; });
+  e.advance(room, 3600000);
+  assert.equal(room.phase, 'voting'); assert.equal(room.vote.endsAt, null);
+  for (const index of [2, 3, 4]) e.apply(room, users[index], 'vote', { choice: 'yes' }, 3600001);
+  assert.equal(room.winner, 'players');
 });
 test('a stale ballot cannot be applied to another accusation in the same round', () => {
   const room = play();

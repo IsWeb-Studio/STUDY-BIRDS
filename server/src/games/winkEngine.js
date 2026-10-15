@@ -10,18 +10,17 @@ function finish(room, winner, reason, now) {
   room.phase = 'finished'; room.winner = winner; room.reason = reason;
   room.pending = []; room.vote = null; event(room, 'finished', now);
 }
-function checkWin(room, now, includeTimeout = true) {
+function checkWin(room, now) {
   if (!['playing', 'voting'].includes(room.phase)) return;
   const living = alive(room);
   if (!living.some((p) => p.id === room.winker)) finish(room, 'players', 'winker-out', now);
   else if (living.length <= 2) finish(room, 'winker', 'last-two', now);
-  else if (includeTimeout && now >= room.endsAt) finish(room, 'players', 'time', now);
 }
 function eliminate(room, id, now, type = 'eliminated') {
   const player = room.players.find((p) => p.id === id);
   if (!player || player.eliminated || player.left) return;
   player.eliminated = true; player.privateNotice = null;
-  event(room, type, now, id); checkWin(room, now, false);
+  event(room, type, now, id); checkWin(room, now);
 }
 function settlePending(room, now, all = false) {
   const pending = room.pending;
@@ -72,32 +71,27 @@ function reset(room, now, reason = null) {
 }
 function advance(room, now) {
   if (room.phase === 'closed') return;
-  room.settings.mode = 'local';
-  // Resolve overdue events in their actual order, including after a restart.
-  // A wink due AFTER the round deadline must not change the winner.
+  // Migrate existing rooms too: players decide when to reveal, wink and vote.
+  room.settings = { mode: 'local', roundSeconds: 0, voteSeconds: 0, cooldownSeconds: 0 };
+  room.endsAt = null; room.revealUntil = null; room.nextWinkAt = 0;
+  if (room.vote) room.vote.endsAt = null;
+  // Only presence grace and already accepted eliminations have deadlines.
   const due = room.players.filter((p) => !p.left).map((p) => ({ at: p.lastSeen + 60000, type: 'disconnect', id: p.id }));
-  if (room.phase === 'reveal') due.push({ at: room.revealUntil, type: 'reveal' });
   if (['playing', 'voting'].includes(room.phase)) {
     for (const item of room.pending) due.push({ at: item.at, type: 'wink' });
-    if (room.vote) due.push({ at: room.vote.endsAt, type: 'vote' });
-    due.push({ at: room.endsAt, type: 'end' });
   }
   for (const item of due.filter((item) => item.at <= now).sort((a, b) => a.at - b.at)) {
     if (room.phase === 'closed') break;
     if (item.type === 'disconnect') {
       const player = room.players.find((p) => p.id === item.id && !p.left);
       if (player) leave(room, player, item.at);
-    } else if (item.type === 'reveal' && room.phase === 'reveal') {
-      reset(room, item.at, 'reveal-timeout'); event(room, 'reveal-timeout', item.at);
     } else if (item.type === 'wink' && room.phase === 'playing') settlePending(room, item.at);
-    else if (item.type === 'vote' && room.phase === 'voting') resolveVote(room, item.at);
-    else if (item.type === 'end') checkWin(room, item.at);
   }
   checkWin(room, now);
 }
 function newRoom(user, now = Date.now()) {
   const room = { phase: 'lobby', host: user.id, players: [],
-    settings: { mode: 'local', roundSeconds: 300, voteSeconds: 20, cooldownSeconds: 15 },
+    settings: { mode: 'local', roundSeconds: 0, voteSeconds: 0, cooldownSeconds: 0 },
     round: 0, pending: [], events: [], receipts: [], winker: null, vote: null,
     endsAt: null, nextWinkAt: 0, winner: null, reason: null };
   join(room, user, now); return room;
@@ -120,11 +114,9 @@ function apply(room, user, action, payload = {}, now = Date.now(), choose = rand
   if (action === 'leave') { leave(room, player, now); return; }
   if (action === 'settings') {
     if (room.host !== user.id || room.phase !== 'lobby') fail('host-lobby-only');
-    if (payload.mode !== 'local' || !Number.isInteger(payload.roundSeconds)
-      || payload.roundSeconds < 60 || payload.roundSeconds > 900 || !Number.isInteger(payload.voteSeconds)
-      || payload.voteSeconds < 10 || payload.voteSeconds > 60) fail('invalid-settings');
-    room.settings = { mode: payload.mode, roundSeconds: payload.roundSeconds,
-      voteSeconds: payload.voteSeconds, cooldownSeconds: 15 };
+    if (payload.mode !== 'local') fail('invalid-settings');
+    // Older clients may send durations; they cannot re-enable game timers.
+    room.settings = { mode: 'local', roundSeconds: 0, voteSeconds: 0, cooldownSeconds: 0 };
     for (const p of room.players) p.ready = false;
     return;
   }
@@ -149,7 +141,7 @@ function apply(room, user, action, payload = {}, now = Date.now(), choose = rand
       const j = randomInt(i + 1); [deck[i], deck[j]] = [deck[j], deck[i]];
     }
     for (const p of members) p.card = p.id === room.winker ? 11 : deck.pop();
-    room.phase = 'reveal'; room.revealUntil = now + 60000;
+    room.phase = 'reveal'; room.revealUntil = null;
     room.pending = []; room.vote = null; room.events = []; room.winner = null; room.reason = null;
     for (const p of members) { p.seen = false; p.eliminated = false; p.accused = false; p.privateNotice = null; }
     return;
@@ -158,8 +150,8 @@ function apply(room, user, action, payload = {}, now = Date.now(), choose = rand
     if (room.phase !== 'reveal') fail('reveal-only');
     player.seen = true;
     if (room.players.filter((p) => !p.left).every((p) => p.seen)) {
-      room.phase = 'playing'; room.endsAt = now + room.settings.roundSeconds * 1000;
-      room.nextWinkAt = now; event(room, 'started', now);
+      room.phase = 'playing'; room.endsAt = null;
+      room.nextWinkAt = 0; event(room, 'started', now);
     }
     return;
   }
@@ -182,7 +174,7 @@ function apply(room, user, action, payload = {}, now = Date.now(), choose = rand
     if (room.phase !== 'playing' || player.eliminated || player.accused) fail('cannot-accuse');
     if (payload.target === player.id || !alive(room).some((p) => p.id === payload.target)) fail('invalid-target');
     player.accused = true; room.phase = 'voting';
-    room.vote = { id: randomBytes(8).toString('hex'), accused: payload.target, by: player.id, endsAt: now + room.settings.voteSeconds * 1000, ballots: {} };
+    room.vote = { id: randomBytes(8).toString('hex'), accused: payload.target, by: player.id, endsAt: null, ballots: {} };
     event(room, 'vote-started', now, payload.target); return;
   }
   if (action === 'vote') {

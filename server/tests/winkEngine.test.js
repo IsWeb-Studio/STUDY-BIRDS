@@ -25,8 +25,9 @@ test('minimum, readiness, host authority, and all role confirmations required', 
   e.apply(reveal, users[0], 'seen', {}, 1100);
   assert.equal(reveal.phase, 'reveal');
   throws(() => e.join(reveal, users[4], 1100), 'already-started');
+  reveal.players.forEach((p) => { p.lastSeen = 61001; });
   e.advance(reveal, 61001);
-  assert.ok(['lobby', 'closed'].includes(reveal.phase));
+  assert.equal(reveal.phase, 'reveal', 'revealing has no deadline');
 });
 test('exactly one role and explicit public projection excludes secrets', () => {
   const room = play();
@@ -63,6 +64,8 @@ test('a strict majority is required; abstention and silence never approve', () =
   e.apply(room, users[1], 'vote', { choice: 'yes' }, 1202);
   e.apply(room, users[3], 'vote', { choice: 'abstain' }, 1202);
   e.advance(room, 21200);
+  assert.equal(room.phase, 'voting', 'silence cannot end a vote');
+  e.apply(room, users[4], 'vote', { choice: 'no' }, 21200);
   assert.equal(room.players[2].eliminated, false); assert.equal(room.phase, 'playing');
   throws(() => e.apply(room, users[1], 'accuse', { target: 'p0' }, 21201), 'cannot-accuse');
 });
@@ -106,20 +109,25 @@ test('disconnect and reconnect preserve round; timeout, host transfer, and empty
   assert.equal(room.host, 'p1');
   e.advance(room, 180000); assert.equal(room.phase, 'closed');
 });
-test('explicit winker exit wins for players, normal exit rechecks last two, timer wins for players', () => {
+test('explicit exits determine winners; elapsed time never determines the winner', () => {
   const room = play(); e.apply(room, users[0], 'leave', {}, 1200);
   assert.equal(room.winner, 'players'); assert.equal(room.host, 'p1');
   const ordinary = play(); e.apply(ordinary, users[1], 'leave', {}, 1200); e.apply(ordinary, users[2], 'leave', {}, 1200);
   assert.equal(ordinary.winner, 'winker');
-  const timed = play(); timed.players.forEach((p) => { p.lastSeen = timed.endsAt; });
-  e.advance(timed, timed.endsAt); assert.equal(timed.winner, 'players');
+  const timed = play(); timed.players.forEach((p) => { p.lastSeen = 3600000; });
+  e.advance(timed, 3600000);
+  assert.equal(timed.winner, null); assert.equal(timed.phase, 'playing');
+  assert.equal(timed.endsAt, null);
 });
-test('server restart resolves round expiry before a later pending elimination', () => {
+test('old stored deadlines are migrated and cannot finish an active round', () => {
   const room = play();
   room.players[1].eliminated = true;
-  room.players.forEach((p) => { p.lastSeen = room.endsAt; });
-  room.pending = [{ id: 'p2', at: room.endsAt + 1000 }];
-  e.advance(room, room.endsAt + 2000);
-  assert.equal(room.winner, 'players');
-  assert.equal(room.players[2].eliminated, false);
+  room.endsAt = 300000;
+  room.settings.roundSeconds = 300;
+  room.players.forEach((p) => { p.lastSeen = 302000; });
+  room.pending = [{ id: 'p2', at: 301000 }];
+  e.advance(room, 302000);
+  assert.equal(room.winner, 'winker');
+  assert.equal(room.players[2].eliminated, true);
+  assert.equal(room.endsAt, null); assert.equal(room.settings.roundSeconds, 0);
 });

@@ -34,15 +34,15 @@ test('bot winker reports bot victims and bots cast automatic ballots', () => {
   practice.advance(room, 29000, () => 1);
   assert.equal(room.phase, 'finished'); assert.equal(room.winner, 'players');
 });
-test('human winker has a cooldown, wins against bots and restarts as player', () => {
+test('human winker can wink without a cooldown, wins against bots and restarts as player', () => {
   const room = play('winker');
   const bots = room.players.filter((p) => p.bot);
   practice.apply(room, user, 'practice-wink', { target: bots[0].id }, 3000);
-  assert.throws(() => practice.apply(room, user, 'practice-wink', { target: bots[1].id }, 3001), /cooldown/);
+  practice.apply(room, user, 'practice-wink', { target: bots[1].id }, 3001);
+  assert.equal(room.pending.length, 2);
+  assert.equal(room.nextWinkAt, 0);
   practice.advance(room, 11000, () => 1);
   assert.equal(bots[0].eliminated, true);
-  practice.apply(room, user, 'practice-wink', { target: bots[1].id }, 18000);
-  practice.advance(room, 26000, () => 1);
   assert.equal(room.phase, 'finished'); assert.equal(room.winner, 'winker');
   practice.apply(room, user, 'practice-restart', { role: 'player' }, 27000);
   practice.advance(room, 27000, () => 1);

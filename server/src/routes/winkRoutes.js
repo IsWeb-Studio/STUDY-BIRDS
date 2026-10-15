@@ -34,7 +34,12 @@ router.post('/', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: (req) =
   send(res, doc, user.id);
 }));
 router.param('code', (req, res, next, code) => {
-  if (!/^[A-F0-9]{8}$/.test(code)) return res.status(400).json({ code: 'invalid-code', message: 'كود الغرفة غير صحيح.' });
+  const normalized = code.replace(/[٠-٩۰-۹０-９]/g, (digit) => {
+    const value = digit.charCodeAt(0);
+    return String(value - (value >= 0xff10 ? 0xff10 : value >= 0x6f0 ? 0x6f0 : 0x660));
+  }).replace(/[\s\-\u200e\u200f\u061c]/g, '').toUpperCase();
+  if (!/^[A-F0-9]{8}$/.test(normalized)) return res.status(400).json({ code: 'invalid-code', message: 'كود الغرفة غير صحيح.' });
+  req.params.code = normalized;
   next();
 });
 router.post('/practice', handle(async (req, res) => {

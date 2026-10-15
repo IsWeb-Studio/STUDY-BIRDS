@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const { MongoMemoryServer } = require(path.join(process.env.STUDY_BIRDS_TEST_TOOLS, 'node_modules/mongodb-memory-server-core'));
 
-test('four authenticated players: rooms, CAS races, privacy, votes, reset and replay', async () => {
+test('host creates a code, three authenticated users join the same room; races, privacy and gameplay', async () => {
   process.env.JWT_SECRET = 'wink-integration-test-only';
   const mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
   let server;
@@ -30,9 +30,35 @@ test('four authenticated players: rooms, CAS races, privacy, votes, reset and re
     assert.equal((await request('', 0, {}, 'POST', false)).status, 401);
     const created = await request('', 0, {}); assert.equal(created.status, 200);
     const code = created.data.code;
+    assert.match(code, /^[A-F0-9]{8}$/);
+    const separate = await request('', 4, {});
+    assert.equal(separate.status, 200);
+    assert.notEqual(separate.data.code, code, 'a second host gets a different room code');
     assert.equal((await Room.findOne({ code }).lean()).state, undefined, 'stored secrets excluded by default');
     const action = (index, name, payload = {}, operationId = `operation-${++counter}`) => request(`/${code}/actions`, index, { action: name, payload, operationId });
-    await Promise.all([1, 2, 3].map((i) => request(`/${code}/join`, i, {})));
+    const arabicCode = code.replace(/[0-9]/g, (digit) => String.fromCharCode(0x660 + Number(digit)));
+    const persianCode = code.replace(/[0-9]/g, (digit) => String.fromCharCode(0x6f0 + Number(digit)));
+    const joined = await Promise.all([code.toLowerCase(), arabicCode, `${persianCode.slice(0, 4)}-${persianCode.slice(4)}`]
+      .map((entry, index) => request(`/${encodeURIComponent(entry)}/join`, index + 1, {})));
+    for (const response of joined) {
+      assert.equal(response.status, 200);
+      assert.equal(response.data.code, code);
+      assert.equal(response.data.host, String(users[0]._id));
+    }
+    const expectedPlayers = users.slice(0, 4).map((user) => String(user._id)).sort();
+    const roomViews = await Promise.all([0, 1, 2, 3].map((index) => request(`/${code}`, index, null, 'GET')));
+    for (const response of roomViews) {
+      assert.equal(response.status, 200);
+      assert.equal(response.data.code, code);
+      assert.deepEqual(response.data.players.map((player) => player.id).sort(), expectedPlayers);
+      assert.equal(response.data.host, String(users[0]._id));
+    }
+    const rejoined = await request(`/${code}/join`, 1, {});
+    assert.equal(rejoined.data.players.length, 4, 'rejoining cannot duplicate a player');
+    const separateView = await request(`/${separate.data.code}`, 4, null, 'GET');
+    assert.deepEqual(separateView.data.players.map((player) => player.id), [String(users[4]._id)]);
+    const missing = code === '00000000' || separate.data.code === '00000000' ? 'FFFFFFFF' : '00000000';
+    assert.equal((await request(`/${missing}/join`, 4, {})).data.code, 'room-not-found');
     assert.equal((await request(`/${code}`, 4, null, 'GET')).status, 403);
     await Promise.all([0, 1, 2, 3].map((i) => action(i, 'ready', { ready: true })));
     assert.equal((await action(0, 'start')).data.phase, 'reveal');
@@ -43,6 +69,9 @@ test('four authenticated players: rooms, CAS races, privacy, votes, reset and re
     for (const role of roles) { assert.equal(role.data.winker, undefined); assert.equal(role.data.pending, undefined); }
     assert.equal((await request(`/${code}/join`, 4, {})).data.code, 'already-started');
     await Promise.all([0, 1, 2, 3].map((i) => action(i, 'seen')));
+    const untimed = await request(`/${code}`, 0, null, 'GET');
+    assert.equal(untimed.data.endsAt, null);
+    assert.equal(untimed.data.settings.roundSeconds, 0);
     const stale = await request(`/${code}/actions`, 0, { action: 'got-wink', round: 0, operationId: 'stale-round-001' });
     assert.equal(stale.data.code, 'stale-round');
     const normals = [0, 1, 2, 3].filter((i) => i !== killer);
