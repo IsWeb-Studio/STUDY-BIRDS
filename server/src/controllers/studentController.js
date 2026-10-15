@@ -1,4 +1,5 @@
 const { studentJourneys } = require('../utils/studentJourney');
+const { notifySupport } = require('../utils/supportNotifications');
 const mongoose = require('mongoose');
 const { uploadPrivateDocument } = require('../utils/privateDocumentStorage');
 const { studentNextAction } = require("../utils/studentNextAction");
@@ -455,6 +456,7 @@ const getStudentSupportTickets = asyncHandler(async (req, res) => {
     $or: [{ user: req.user._id }, { agent: req.user._id }],
   })
     .populate("replies.user", "name email role")
+    .populate("assignedTo", "name")
     .sort({ updatedAt: -1 });
 
   res.json(
@@ -467,7 +469,7 @@ const getStudentSupportTickets = asyncHandler(async (req, res) => {
 const createStudentSupportTicket = asyncHandler(async (req, res) => {
   const { subject, message, category } = req.body;
 
-  if (!subject || !message) {
+  if (typeof subject !== 'string' || !subject.trim() || subject.length > 200 || typeof message !== 'string' || !message.trim() || message.length > 10000) {
     res.status(400);
     throw new Error("Subject and message are required");
   }
@@ -511,6 +513,7 @@ const createStudentSupportTicket = asyncHandler(async (req, res) => {
 
   const result = ticket.toObject();
   delete result.attachmentStorage;
+  await notifySupport(ticket, { recipient: 'staff', title: 'تذكرة دعم جديدة', message: `تذكرة جديدة: ${ticket.subject}` });
   res.status(201).json(result);
 });
 
@@ -856,13 +859,16 @@ const replyStudentSupportTicket = asyncHandler(async (req, res) => {
   }
 
   const message = String(req.body.message || '').trim();
-  if (!message) return res.status(400).json({ message: 'Reply message is required' });
+  if (!message || message.length > 10000) return res.status(400).json({ message: 'Reply message is required (maximum 10000 characters)' });
 
-  ticket.replies.push({ message, fromRole: 'student', user: req.user._id });
-  ticket.status = 'open';
-  await ticket.save();
-
-  res.json(ticket);
+  const updated = await SupportTicket.findOneAndUpdate(
+    { _id: ticket._id, status: { $ne: 'closed' }, $or: [{ user: req.user._id }, { agent: req.user._id }] },
+    { $push: { replies: { message, fromRole: 'student', user: req.user._id, displayName: req.user.name } }, $set: { status: 'open' }, $inc: { __v: 1 } },
+    { new: true, runValidators: true }
+  );
+  if (!updated) return res.status(409).json({ message: 'تغيرت التذكرة أو أُغلقت؛ حدّث الصفحة.' });
+  await notifySupport(updated, { recipient: 'staff', title: 'رد جديد من الطالب', message: `رد جديد على التذكرة: ${ticket.subject}` });
+  res.json(updated);
 });
 
 module.exports = {

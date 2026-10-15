@@ -61,6 +61,10 @@ export const studentService = {
     const { data } = await api.get<SupportTicketItem[]>("/students/support-tickets");
     return data;
   },
+  replySupportTicket: async (id: string, message: string) => {
+    const { data } = await api.patch<SupportTicketItem>(`/students/support-tickets/${id}/reply`, { message });
+    return data;
+  },
   createSupportTicket: async (payload: { subject: string; message: string; category: string; file?: File | null }) => {
     const formData = new FormData();
     formData.append("subject", payload.subject);

@@ -1,4 +1,6 @@
 const mongoose = require('mongoose');
+const { notifySupport } = require('../utils/supportNotifications');
+const { supportActor } = require('../utils/supportActor');
 const User = require("../models/User");
 const StudentProfile = require("../models/StudentProfile");
 const AgentStudent = require("../models/AgentStudent");
@@ -298,23 +300,19 @@ const replySupportTicketAdmin = asyncHandler(async (req, res) => {
   }
 
   const message = String(req.body.message || "").trim();
-  if (!message) {
+  if (!message || message.length > 10000) {
     res.status(400);
     throw new Error("Reply message is required");
   }
 
   const status=req.body.status || 'answered';
   if(!['open','in-progress','answered','closed'].includes(status))return res.status(400).json({message:'حالة التذكرة غير صالحة'});
+  const actor = supportActor(ticket._id, message, status, req.body.crmActor) || { displayName: req.user.name, source: 'website' };
   // Append atomically so two staff replies cannot overwrite each other.
-  const updated=await SupportTicket.findByIdAndUpdate(ticket._id,{$set:{status},$push:{replies:{message,fromRole:'admin',user:req.user._id}},$inc:{__v:1}},{new:true,runValidators:true});
+  const updated=await SupportTicket.findByIdAndUpdate(ticket._id,{$set:{status},$push:{replies:{message,fromRole:'admin',user:req.user._id,...actor}},$inc:{__v:1}},{new:true,runValidators:true});
   if(!updated)return res.status(404).json({message:'التذكرة غير موجودة'});
 
-  await Notification.create({
-    user: ticket.user || ticket.agent,
-    title: "رد جديد على تذكرة الدعم",
-    message: `وصل ردٌّ من فريق Study Birds على تذكرة الدعم الخاصة بك "${ticket.subject}". افتح التذكرة للاطلاع على الرد.`,
-    type: "info",
-  });
+  await notifySupport(updated, { recipient: 'owner', title: 'رد جديد على تذكرة الدعم', message: `وصل ردٌّ من فريق Study Birds على تذكرتك "${ticket.subject}".` });
 
   res.json(updated);
 });
@@ -335,6 +333,7 @@ const assignSupportTicketAdmin = asyncHandler(async (req, res) => {
     ticket.assignedTo = null;
   }
   await ticket.save();
+  if (ticket.assignedTo) await notifySupport(ticket, { recipient: 'staff', title: 'تم إسناد تذكرة إليك', message: `أُسندت إليك التذكرة: ${ticket.subject}` });
   res.json(ticket);
 });
 

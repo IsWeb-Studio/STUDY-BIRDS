@@ -13,6 +13,9 @@ const SUPPORT_TICKET_CATEGORIES = [
 
 const supportReplySchema = new mongoose.Schema(
   {
+    displayName: { type: String, maxlength: 160 },
+    source: { type: String, enum: ['website', 'crm'], default: 'website' },
+    crmActorId: String,
     message: {
       type: String,
       required: true,

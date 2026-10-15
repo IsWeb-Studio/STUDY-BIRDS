@@ -1,4 +1,6 @@
 import { useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
 import { SocialLinks } from "../components/SocialLinks";
 import { useSiteSettings } from "../hooks/useSiteSettings";
 import { Seo } from "../components/seo/Seo";
@@ -24,6 +26,7 @@ const emptyForm: ContactFormState = {
 };
 
 export const ContactPage = () => {
+  const { user } = useAuth();
   const { t, language } = useLanguage();
   const siteSettings = useSiteSettings();
   const supportHoursText = siteSettings.supportHours?.trim() || t("supportHours");
@@ -82,6 +85,7 @@ export const ContactPage = () => {
       <div className="panel border-t-4 border-t-accent-300 bg-white p-8">
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-700">{t("contact")}</p>
         <h1 className="mt-3 text-4xl font-semibold text-slate-900">{t("contactTitle")}</h1>
+        {user?.role === "student" && <p className="mt-4 text-sm text-slate-600">{isArabic ? "لمتابعة طلبك والحفاظ على سجل الردود، استخدم " : "To follow your application and keep the conversation history, use "}<Link to="/student/support" className="font-semibold text-brand-700 underline">{isArabic ? "تذاكر الدعم داخل حسابك" : "support tickets in your account"}</Link>.</p>}
         <p className="mt-4 text-slate-600">{t("contactBody")}</p>
       </div>
 

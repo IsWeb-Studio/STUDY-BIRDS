@@ -496,6 +496,8 @@ export interface VerificationOverview {
 }
 
 export interface SupportTicketReply {
+  displayName?: string;
+  source?: "website" | "crm";
   _id?: string;
   message: string;
   fromRole: "student" | "partner" | "admin";
@@ -504,6 +506,7 @@ export interface SupportTicketReply {
 }
 
 export interface SupportTicketItem {
+  assignedTo?: Pick<User, "_id" | "name" | "email">;
   _id: string;
   subject: string;
   message: string;
