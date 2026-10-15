@@ -13,7 +13,7 @@ test('four authenticated players: rooms, CAS races, privacy, votes, reset and re
     await mongoose.connect(mongo.getUri());
     const User = require('../src/models/User');
     const Room = require('../src/models/WinkRoom');
-    const { mutate } = require('../src/games/winkStore');
+    const { mutate, startWinkScheduler } = require('../src/games/winkStore');
     const users = await User.create(Array.from({ length: 5 }, (_, i) => ({ name: `Wink ${i}`, email: `wink${i}@example.test`, role: 'student' })));
     const app = require('../src/app');
     server = await new Promise((resolve) => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });
@@ -23,6 +23,7 @@ test('four authenticated players: rooms, CAS races, privacy, votes, reset and re
       const res = await fetch(base + route, { method, headers: {
         ...(auth ? { Authorization: `Bearer ${jwt.sign({ userId: users[index]._id }, process.env.JWT_SECRET)}` } : {}),
         'Content-Type': 'application/json',
+        ...(body?.operationId ? { 'Idempotency-Key': body.operationId } : {}),
       }, ...(body ? { body: JSON.stringify(body) } : {}) });
       return { status: res.status, data: await res.json() };
     }
@@ -63,9 +64,13 @@ test('four authenticated players: rooms, CAS races, privacy, votes, reset and re
     stored = await Room.findOne({ code }).select('+state').lean();
     assert.equal(stored.state.phase, 'lobby'); assert.equal(stored.state.winker, null);
     assert.ok(stored.state.players.every((p) => !p.seen && !p.ready && !p.accused && !p.eliminated));
+    assert.equal(await require('../src/models/IdempotencyRecord').countDocuments(), 0,
+      'private role responses must never enter the general response replay cache');
     // A server tick, without a host phone, handles a disconnected host.
     await mutate(code, (room, now) => { room.players[0].lastSeen = now - 60001; });
-    await mutate(code, () => {});
+    const stop = startWinkScheduler();
+    try { await new Promise((resolve) => setTimeout(resolve, 1500)); }
+    finally { stop(); }
     stored = await Room.findOne({ code }).select('+state').lean();
     assert.notEqual(stored.state.host, String(users[0]._id));
   } finally {
