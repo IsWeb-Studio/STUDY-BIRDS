@@ -48,6 +48,17 @@ textarea {
 .program-search-filter :where(input:not([type="range"]), select) {
   width: 100%;
   min-width: 0;
+  height: 44px;
+  padding-block: 0;
+  border-radius: 14px;
+  background-color: white;
+  font-size: 0.875rem;
+}
+
+.program-search-filter .price-range-compact {
+  height: 44px;
+  border-radius: 14px;
+  padding-block: 3px;
 }
 
 .price-range-input {
