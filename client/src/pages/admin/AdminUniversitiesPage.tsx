@@ -1,3 +1,4 @@
+import { markStaffRecord } from "../../lib/sharedReadState";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Building2, MapPin, PencilLine, Plus, Search, Trash2, X } from "lucide-react";
 import { ArticleContentFields } from "../../components/admin/ArticleContentFields";
@@ -84,6 +85,7 @@ export const AdminUniversitiesPage = () => {
   };
 
   const startEdit = (university: University) => {
+    void markStaffRecord("universities", university).catch(() => {});
     setFormError("");
     setEditorOpen(true);
     const articleItemCount = Math.max(1, university.articleHeadings?.length || 0, university.articleBodies?.length || 0);

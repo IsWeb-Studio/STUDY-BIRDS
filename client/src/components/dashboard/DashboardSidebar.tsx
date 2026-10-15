@@ -3,6 +3,8 @@ import { useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useLanguage } from "../../hooks/useLanguage";
 import { dt } from "../../utils/dashboardTranslations";
+import { useStaffReadSummary } from "../../hooks/useStaffReadSummary";
+import { countUnread, readResourcesForPage } from "../../lib/sharedReadState";
 
 export const DashboardSidebar = ({
   links,
@@ -20,6 +22,7 @@ export const DashboardSidebar = ({
   onClose?: () => void;
 }) => {
   const location = useLocation();
+  const readSummary = useStaffReadSummary();
   const { language } = useLanguage();
   const [query, setQuery] = useState("");
   const uniqueLinks = useMemo(() => links.filter((link, index) => links.findIndex((item) => item.href === link.href) === index), [links]);
@@ -73,6 +76,7 @@ export const DashboardSidebar = ({
               <div className="flex items-center gap-3">
                 {Icon ? <Icon className={`h-4 w-4 shrink-0 ${active ? "text-blue-600" : "text-slate-400"}`} /> : null}
                 <span className="min-w-0 flex-1 text-xs font-semibold leading-5">{link.label}</span>
+                {countUnread(readSummary, readResourcesForPage[link.href.split('/').pop() || ''] || []) > 0 && <span title={language === 'ar' ? 'غير مقروء — مشترك بين الموظفين' : 'Unread — shared by staff'} className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800">{countUnread(readSummary, readResourcesForPage[link.href.split('/').pop() || ''] || [])}</span>}
                 {active && <ChevronDown className="h-3 w-3 shrink-0 -rotate-90 rtl:rotate-90" />}
               </div>
             </Link>

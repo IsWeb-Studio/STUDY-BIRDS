@@ -98,3 +98,4 @@ router.get('/events', (req, res) => {
 });
 
 module.exports = router;
+module.exports.contactFilter = contactFilter;

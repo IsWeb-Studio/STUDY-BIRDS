@@ -1,0 +1,274 @@
+{
+  "applications": {
+    "model": "Application",
+    "section": "applications",
+    "filter": {}
+  },
+  "students": {
+    "model": "User",
+    "section": "students",
+    "filter": {
+      "role": "student"
+    }
+  },
+  "services": {
+    "model": "ServiceRequest",
+    "section": "services",
+    "filter": {}
+  },
+  "housing": {
+    "model": "AccommodationBooking",
+    "section": "housing",
+    "filter": {}
+  },
+  "arrival": {
+    "model": "ArrivalServiceRequest",
+    "section": "student-arrivals",
+    "filter": {}
+  },
+  "consultationSlots": {
+    "model": "ConsultationSlot",
+    "section": "consultations",
+    "filter": {}
+  },
+  "consultations": {
+    "model": "ConsultationBooking",
+    "section": "consultations",
+    "filter": {}
+  },
+  "scholarships": {
+    "model": "ScholarshipEntry",
+    "section": null,
+    "filter": {}
+  },
+  "support": {
+    "model": "SupportTicket",
+    "section": "support",
+    "filter": {}
+  },
+  "agencies": {
+    "model": "AgencyRequest",
+    "section": "agency-requests",
+    "filter": {}
+  },
+  "agents": {
+    "model": "User",
+    "section": "agents",
+    "filter": {
+      "role": "partner"
+    }
+  },
+  "agentStudents": {
+    "model": "AgentStudent",
+    "section": "partner-students",
+    "filter": {}
+  },
+  "verification": {
+    "model": "VerificationDocument",
+    "section": "verification",
+    "filter": {}
+  },
+  "payouts": {
+    "model": "PayoutRequest",
+    "section": "payouts",
+    "filter": {}
+  },
+  "financials": {
+    "model": "Invoice",
+    "section": "student-financials",
+    "filter": {}
+  },
+  "paymentProofs": {
+    "model": "PaymentProof",
+    "section": "student-financials",
+    "filter": {}
+  },
+  "documents": {
+    "model": "Document",
+    "section": "student-documents",
+    "filter": {}
+  },
+  "visaCases": {
+    "model": "Application",
+    "section": "visa",
+    "filter": {}
+  },
+  "housingListings": {
+    "model": "AccommodationListing",
+    "section": "housing",
+    "filter": {}
+  },
+  "events": {
+    "model": "EventRegistration",
+    "section": "events",
+    "filter": {}
+  },
+  "parents": {
+    "model": "ParentLink",
+    "section": "parent-links",
+    "filter": {}
+  },
+  "orientation": {
+    "model": "OrientationTestResult",
+    "section": "student-orientation",
+    "filter": {}
+  },
+  "favorites": {
+    "model": "FavoriteItem",
+    "section": "student-favorites",
+    "filter": {}
+  },
+  "community": {
+    "model": "CommunityReport",
+    "section": "community",
+    "filter": {}
+  },
+  "walletEntries": {
+    "model": "StudentWalletEntry",
+    "section": "student-financials",
+    "filter": {}
+  },
+  "studentOffers": {
+    "model": "StudentListing",
+    "section": "community",
+    "filter": {
+      "kind": "offer"
+    }
+  },
+  "studentOpportunities": {
+    "model": "StudentListing",
+    "section": "community",
+    "filter": {
+      "kind": "opportunity"
+    }
+  },
+  "rewardRules": {
+    "model": "StudentRewardRule",
+    "section": "student-financials",
+    "filter": {}
+  },
+  "communitySettings": {
+    "model": "CommunitySettings",
+    "section": "community",
+    "filter": {}
+  },
+  "communitySuspensions": {
+    "model": "CommunitySuspension",
+    "section": "community",
+    "filter": {}
+  },
+  "communityPosts": {
+    "model": "CommunityPost",
+    "section": "community",
+    "filter": {}
+  },
+  "moderationLog": {
+    "model": "CommunityModerationLog",
+    "section": "community",
+    "filter": {}
+  },
+  "universityAccounts": {
+    "model": "User",
+    "section": "university-accounts",
+    "filter": {
+      "role": "university"
+    }
+  },
+  "employees": {
+    "model": "User",
+    "section": null,
+    "filter": {
+      "role": "employee"
+    }
+  },
+  "websiteUsers": {
+    "model": "User",
+    "section": null,
+    "filter": {}
+  },
+  "marketingAssets": {
+    "model": "MarketingAsset",
+    "section": "marketing-assets",
+    "filter": {}
+  },
+  "studyFields": {
+    "model": "StudyField",
+    "section": "content",
+    "filter": {}
+  },
+  "testimonials": {
+    "model": "Testimonial",
+    "section": "testimonials",
+    "filter": {}
+  },
+  "recognitions": {
+    "model": "Recognition",
+    "section": "recognitions",
+    "filter": {}
+  },
+  "exhibitions": {
+    "model": "ExhibitionArticle",
+    "section": "exhibitions",
+    "filter": {}
+  },
+  "pastEvents": {
+    "model": "PastEvent",
+    "section": "events",
+    "filter": {}
+  },
+  "upcomingEvent": {
+    "model": "UpcomingEvent",
+    "section": "events",
+    "filter": {}
+  },
+  "ourStory": {
+    "model": "OurStory",
+    "section": "our-story",
+    "filter": {}
+  },
+  "siteSettings": {
+    "model": "SiteSettings",
+    "section": "site-settings",
+    "filter": {}
+  },
+  "countries": {
+    "model": "Country",
+    "section": "content",
+    "filter": {}
+  },
+  "universities": {
+    "model": "University",
+    "section": "universities",
+    "filter": {}
+  },
+  "programs": {
+    "model": "Program",
+    "section": "programs",
+    "filter": {}
+  },
+  "scholarshipCatalog": {
+    "model": "Scholarship",
+    "section": null,
+    "filter": {}
+  },
+  "contentServices": {
+    "model": "OurService",
+    "section": "services",
+    "filter": {}
+  },
+  "faqs": {
+    "model": "Faq",
+    "section": "faqs",
+    "filter": {}
+  },
+  "knowledge": {
+    "model": "KnowledgeBaseItem",
+    "section": "knowledge-base",
+    "filter": {}
+  },
+  "messaging": {
+    "model": "MobileMessage",
+    "section": "support",
+    "filter": {}
+  }
+}

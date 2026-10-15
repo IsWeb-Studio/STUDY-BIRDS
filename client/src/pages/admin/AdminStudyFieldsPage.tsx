@@ -1,3 +1,4 @@
+import { markStaffRecord } from "../../lib/sharedReadState";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { GraduationCap, PencilLine, Plus, Search, Trash2, X } from "lucide-react";
 
@@ -205,6 +206,7 @@ export const AdminStudyFieldsPage = () => {
                     onClick={() => {
                       setFormError("");
                       setEditorOpen(true);
+                      void markStaffRecord("studyFields", studyField).catch(() => {});
                       setEditingStudyFieldId(studyField._id);
                       setStudyFieldForm({
                         name: studyField.name,

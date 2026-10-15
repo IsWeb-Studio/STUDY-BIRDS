@@ -1,6 +1,7 @@
 import { isAxiosError } from "axios";
 import { createContext, useEffect, useRef, useState, type ReactNode } from "react";
 import { connectivity } from "../lib/connectivity";
+import { configureStaffReadTracking } from "../lib/sharedReadState";
 import { authService } from "../services/authService";
 import type { StudentProfile, User } from "../types";
 
@@ -23,6 +24,10 @@ export const AuthContext = createContext<AuthContextValue | undefined>(undefined
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  useEffect(() => {
+    configureStaffReadTracking(Boolean(user && ['admin', 'employee'].includes(user.role)));
+    return () => configureStaffReadTracking(false);
+  }, [user?._id, user?.role]);
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [token, setToken] = useState<string | null>(localStorage.getItem("studyBirdsToken"));
   const [loading, setLoading] = useState(true);

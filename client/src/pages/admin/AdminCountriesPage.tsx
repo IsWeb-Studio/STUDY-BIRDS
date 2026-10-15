@@ -1,3 +1,4 @@
+import { markStaffRecord } from "../../lib/sharedReadState";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Globe2, PencilLine, Plus, Search, Trash2, X } from "lucide-react";
 import { ArticleContentFields } from "../../components/admin/ArticleContentFields";
@@ -319,6 +320,7 @@ export const AdminCountriesPage = () => {
                       const articleItemCount = Math.max(1, country.articleHeadings?.length || 0, country.articleBodies?.length || 0);
                       setFormError("");
                       setEditorOpen(true);
+                      void markStaffRecord("countries", country).catch(() => {});
                       setEditingCountryId(country._id);
                       setCountryForm({
                         name: country.name,

@@ -1,4 +1,5 @@
 import { DocumentFileLink } from "../../components/DocumentFileLink";
+import { StaffReadReceipt } from "../../components/admin/StaffReadReceipt";
 import { useState } from "react";
 import { useSupportFeed } from "../../hooks/useSupportFeed";
 import { supportConversation } from "../../utils/supportConversation";
@@ -40,6 +41,7 @@ export const AdminSupportTicketsPage = () => {
         {loading && <p role="status">{isArabic ? "جارٍ تحميل التذاكر..." : "Loading tickets..."}</p>}
         {items.map((item) => (
           <article id={`ticket-${item._id}`} key={item._id} className="panel p-6">
+            <StaffReadReceipt resource="support" record={item} />
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold text-slate-900">{item.subject}</h2>

@@ -172,6 +172,7 @@ app.use('/api/push-tokens', requireDatabaseConnection, require('./routes/pushRou
 app.use('/api/community', requireDatabaseConnection, require('./routes/communityRoutes'));
 app.use("/api/admin", requireDatabaseConnection, adminRoutes);
 app.use('/api/crm', requireDatabaseConnection, require('./routes/crmRoutes'));
+app.use('/api/shared-read', requireDatabaseConnection, require('./routes/sharedReadRoutes'));
 app.use("/api/content", requireDatabaseConnection, contentRoutes);
 // NEW paths — brand new prefixes, cannot shadow or be shadowed by anything above.
 app.use("/api/parents", requireDatabaseConnection, parentRoutes);

@@ -1,3 +1,4 @@
+import { markStaffRecord } from "../../lib/sharedReadState";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { BookOpenText, Check, ChevronDown, PencilLine, Plus, Search, Trash2, X } from "lucide-react";
 import { ArticleContentFields } from "../../components/admin/ArticleContentFields";
@@ -174,6 +175,7 @@ export const AdminProgramsPage = () => {
     catch (issue) { setFormError(getErrorMessage(issue, "Unable to load program")); return; }
     const articleItemCount = Math.max(1, program.articleHeadings?.length || 0, program.articleBodies?.length || 0);
     const articleItemCountEn = Math.max(1, program.articleHeadingsEn?.length || 0, program.articleBodiesEn?.length || 0);
+    void markStaffRecord("programs", program).catch(() => {});
     setEditingId(program._id);
     setCustomLanguage(Boolean(program.language) && !findProgramLanguage(program.language || ""));
     setEditorOpen(true);
