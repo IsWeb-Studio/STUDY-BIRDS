@@ -126,7 +126,7 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
     );
     if (confirmed != true || !mounted) return;
 
-    await _doUpload(bytes!, fileName!, docType.label);
+    await _doUpload(bytes, fileName, docType.label);
   }
 
   // ── generic type: file picker only ─────────────────────────────────────
@@ -627,22 +627,6 @@ class _Divider extends StatelessWidget {
   const _Divider();
   @override
   Widget build(BuildContext context) => const Divider(height: 1, thickness: 0.5);
-}
-
-class _MiniRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _MiniRow({required this.label, required this.value});
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(label, style: AppTextStyles.caption),
-        Flexible(child: Text(value, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700), overflow: TextOverflow.ellipsis)),
-      ],
-    );
-  }
 }
 
 // ─── commissions screen (unchanged logic, kept here) ───────────────────────

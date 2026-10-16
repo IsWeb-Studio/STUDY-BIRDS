@@ -1049,8 +1049,7 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                                 onPressed: () async {
                                   final url = await resolveDocumentDownload(
                                       _data!['cardFileUrl'] as String);
-                                  if (url != null &&
-                                      !await launchUrl(url,
+                                  if (!await launchUrl(url,
                                           mode:
                                               LaunchMode.externalApplication)) {
                                     if (context.mounted) {
@@ -1350,8 +1349,7 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
                               onPressed: () async {
                                 final url = await resolveDocumentDownload(
                                     _data!['resultFileUrl'] as String);
-                                if (url != null &&
-                                    !await launchUrl(url,
+                                if (!await launchUrl(url,
                                         mode: LaunchMode.externalApplication)) {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(

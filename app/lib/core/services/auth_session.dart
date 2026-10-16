@@ -5,7 +5,6 @@ import '../utils/app_error.dart';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'analytics_service.dart';
-import 'error_reporter.dart';
 import 'push_notification_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -155,7 +154,9 @@ class AuthUser {
     final linked = json['linkedUniversity'];
 
     return AuthUser(
-      id: JsonSafe.optString(json['_id']) ?? JsonSafe.optString(json['id']) ?? '',
+      id: JsonSafe.optString(json['_id']) ??
+          JsonSafe.optString(json['id']) ??
+          '',
       name: JsonSafe.optString(json['name']) ?? '',
       email: JsonSafe.optString(json['email']) ?? '',
       role: role,
@@ -200,7 +201,8 @@ class AuthService {
 
   Future<AuthUser> _restoredUser(Map<String, dynamic> json) async {
     if (json['hasPassword'] is! bool) {
-      final cached = await const FlutterSecureStorage().read(key: 'cached_user');
+      final cached =
+          await const FlutterSecureStorage().read(key: 'cached_user');
       if (cached != null) {
         try {
           final saved = Json.map(jsonDecode(cached)['user']);
@@ -227,7 +229,9 @@ class AuthService {
   Future<AuthUser?> login(String email, String password) async {
     try {
       return (await loginOrThrow(email, password)).user;
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/auth_session.dart:228');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'core/services/auth_session.dart:228');
       return null;
     }
   }
@@ -245,7 +249,11 @@ class AuthService {
     });
     final user = AuthUser.fromJson(JsonSafe.object(data, 'user'));
     final token = JsonSafe.string(data, 'token');
-    return (user: user, token: token, refreshToken: JsonSafe.optString(data['refreshToken']));
+    return (
+      user: user,
+      token: token,
+      refreshToken: JsonSafe.optString(data['refreshToken'])
+    );
   }
 
   /// Public registration. Converts the app-side role key (e.g. 'agent') to
@@ -259,9 +267,8 @@ class AuthService {
   }) async {
     // The app uses enum names ('agent', 'employee') but the server stores wire
     // values ('partner', 'admin'). Convert before posting.
-    final wireRole = role != null
-        ? (UserRoleX.fromKey(role)?.wireValue ?? role)
-        : null;
+    final wireRole =
+        role != null ? (UserRoleX.fromKey(role)?.wireValue ?? role) : null;
     final data = await ApiClient.instance.post('/auth/register', body: {
       'name': name,
       'email': email.trim(),
@@ -272,25 +279,37 @@ class AuthService {
     });
     final user = AuthUser.fromJson(JsonSafe.object(data, 'user'));
     final token = JsonSafe.string(data, 'token');
-    return (user: user, token: token, refreshToken: JsonSafe.optString(data['refreshToken']));
+    return (
+      user: user,
+      token: token,
+      refreshToken: JsonSafe.optString(data['refreshToken'])
+    );
   }
 
   Future<void> requestEmailOtp(String email) async {
-    await ApiClient.instance.post('/auth/email-otp/request', body: {'email': email.trim()});
+    await ApiClient.instance
+        .post('/auth/email-otp/request', body: {'email': email.trim()});
   }
 
-  Future<({AuthUser user, String token, String? refreshToken})> verifyEmailOtp(String email, String code) async {
+  Future<({AuthUser user, String token, String? refreshToken})> verifyEmailOtp(
+      String email, String code) async {
     final data = await ApiClient.instance.post('/auth/email-otp/verify',
         body: {'email': email.trim(), 'code': code.trim()});
     final user = AuthUser.fromJson(JsonSafe.object(data, 'user'));
-    return (user: user, token: JsonSafe.string(data, 'token'), refreshToken: JsonSafe.optString(data['refreshToken']));
+    return (
+      user: user,
+      token: JsonSafe.string(data, 'token'),
+      refreshToken: JsonSafe.optString(data['refreshToken'])
+    );
   }
 
   /// Tries to get a fresh access token using the stored refresh token.
   /// Returns null if the refresh token is missing or invalid.
-  Future<({AuthUser user, String token, String? refreshToken})?> tryRefresh(String refreshToken) async {
+  Future<({AuthUser user, String token, String? refreshToken})?> tryRefresh(
+      String refreshToken) async {
     try {
-      final data = await ApiClient.instance.post('/auth/refresh', body: {'refreshToken': refreshToken});
+      final data = await ApiClient.instance
+          .post('/auth/refresh', body: {'refreshToken': refreshToken});
       final user = await _restoredUser(JsonSafe.object(data, 'user'));
       final token = JsonSafe.string(data, 'token');
       final newRefresh = JsonSafe.optString(data['refreshToken']);
@@ -326,6 +345,7 @@ class AuthSession extends ChangeNotifier {
   static final AuthSession instance = AuthSession._();
 
   AuthUser? currentUser;
+
   /// True when a saved session exists but could not be verified because the
   /// server was unreachable. The session is NOT cleared in that case.
   bool restoreNeedsNetwork = false;
@@ -354,10 +374,12 @@ class AuthSession extends ChangeNotifier {
     _lastAuthError = null;
     return value;
   }
+
   bool requiresGooglePasswordSetup = false;
   String? token;
   bool _restored = false;
   bool get isRestored => _restored;
+
   /// A completed account session returns to role selection, even if the
   /// onboarding flag came from an older installation.
   bool hasSignedOut = false;
@@ -367,22 +389,31 @@ class AuthSession extends ChangeNotifier {
     _restored = false;
     restoreNeedsNetwork = false;
   }
+
   int _revision = 0;
   String? _previousToken;
   Future<String?>? _refreshing;
 
   Future<void> _cacheUser(AuthUser user) async {
-    await const FlutterSecureStorage().write(key: 'cached_user', value: jsonEncode({
-      'user': user.toJson(), 'savedAt': DateTime.now().toUtc().toIso8601String(),
-    }));
+    await const FlutterSecureStorage().write(
+        key: 'cached_user',
+        value: jsonEncode({
+          'user': user.toJson(),
+          'savedAt': DateTime.now().toUtc().toIso8601String(),
+        }));
   }
 
   Future<String?> refreshAccessToken(String failedToken) async {
-    if (token != failedToken) return failedToken == _previousToken ? token : null;
+    if (token != failedToken)
+      return failedToken == _previousToken ? token : null;
     if (_refreshing != null) return _refreshing;
     final operation = _renew(failedToken);
     _refreshing = operation;
-    try { return await operation; } finally { _refreshing = null; }
+    try {
+      return await operation;
+    } finally {
+      _refreshing = null;
+    }
   }
 
   Future<String?> _renew(String failedToken) async {
@@ -402,10 +433,13 @@ class AuthSession extends ChangeNotifier {
       currentUser = result.user;
       await storage.write(key: 'active_session_token', value: result.token);
       await _cacheUser(result.user);
-      if (result.refreshToken != null) await storage.write(key: 'refresh_token', value: result.refreshToken);
+      if (result.refreshToken != null)
+        await storage.write(key: 'refresh_token', value: result.refreshToken);
       notifyListeners();
       return token;
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/auth_session.dart:403');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'core/services/auth_session.dart:403');
       // A transport failure must not erase a valid saved session.
       return null;
     }
@@ -415,7 +449,8 @@ class AuthSession extends ChangeNotifier {
     if (_restored && !restoreNeedsNetwork) return;
     restoreNeedsNetwork = false;
     final pendingGoogleSetup = await const FlutterSecureStorage()
-        .read(key: 'google_password_setup_required') == 'true';
+            .read(key: 'google_password_setup_required') ==
+        'true';
     if (pendingGoogleSetup) {
       // The email proof expires after ten minutes. A restored unfinished
       // setup must authenticate again rather than reopen an unusable form.
@@ -461,13 +496,17 @@ class AuthSession extends ChangeNotifier {
           // Access token expired — try refresh token before giving up.
           final storedRefresh = await storage.read(key: 'refresh_token');
           if (storedRefresh != null) {
-            final refreshed = await AuthService.instance.tryRefresh(storedRefresh);
+            final refreshed =
+                await AuthService.instance.tryRefresh(storedRefresh);
             if (refreshed != null) {
               currentUser = refreshed.user;
               token = refreshed.token;
-              await storage.write(key: 'active_session_token', value: refreshed.token);
+              await storage.write(
+                  key: 'active_session_token', value: refreshed.token);
               await _cacheUser(refreshed.user);
-              if (refreshed.refreshToken != null) await storage.write(key: 'refresh_token', value: refreshed.refreshToken);
+              if (refreshed.refreshToken != null)
+                await storage.write(
+                    key: 'refresh_token', value: refreshed.refreshToken);
             } else {
               await storage.delete(key: 'active_session_token');
               await storage.delete(key: 'refresh_token');
@@ -497,16 +536,24 @@ class AuthSession extends ChangeNotifier {
           try {
             final cached = Json.rawMap(jsonDecode(cachedRaw));
             final savedAt = DateTime.tryParse('${cached['savedAt']}');
-            final age = savedAt == null ? null : DateTime.now().difference(savedAt);
-            final user = AuthUser.fromJson(Map<String, dynamic>.from(Json.rawMap(cached['user'])));
+            final age =
+                savedAt == null ? null : DateTime.now().difference(savedAt);
+            final user = AuthUser.fromJson(
+                Map<String, dynamic>.from(Json.rawMap(cached['user'])));
             // Staff permissions must be verified online before opening tools.
             // Parents (read-only view) are safe to restore offline like students.
-            final offlineSafe = user.role == UserRole.student || user.role == UserRole.parent;
-            if (offlineSafe && age != null && !age.isNegative && age < const Duration(days: 7)) {
+            final offlineSafe =
+                user.role == UserRole.student || user.role == UserRole.parent;
+            if (offlineSafe &&
+                age != null &&
+                !age.isNegative &&
+                age < const Duration(days: 7)) {
               currentUser = user;
               token = storedToken;
             }
-          } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/auth_session.dart:494');
+          } catch (swallowedError, swallowedStack) {
+            ErrorReporter.swallowed(swallowedError, swallowedStack,
+                'core/services/auth_session.dart:494');
             // A missing/old snapshot is not proof that saved credentials were revoked.
             await storage.delete(key: 'cached_user');
           }
@@ -517,7 +564,9 @@ class AuthSession extends ChangeNotifier {
     // Saved login kept but unverifiable offline (staff, or no fresh snapshot):
     // the root screen shows a retry state instead of a misleading login form.
     restoreNeedsNetwork = networkFailed && currentUser == null;
-    if (currentUser != null && !currentUser!.hasPassword && currentUser!.authProvider != 'apple') {
+    if (currentUser != null &&
+        !currentUser!.hasPassword &&
+        currentUser!.authProvider != 'apple') {
       await logout(revoke: false);
     }
     final restoredUser = currentUser;
@@ -535,11 +584,18 @@ class AuthSession extends ChangeNotifier {
     final u = currentUser;
     if (u == null) return;
     currentUser = AuthUser(
-      id: u.id, name: u.name, email: u.email, role: u.role,
-      employeeRole: u.employeeRole, permissions: u.permissions,
-      linkedUniversityId: u.linkedUniversityId, avatar: u.avatar,
-      verifiedPhone: phone, emailVerified: u.emailVerified,
-      authProvider: u.authProvider, hasPassword: u.hasPassword,
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      employeeRole: u.employeeRole,
+      permissions: u.permissions,
+      linkedUniversityId: u.linkedUniversityId,
+      avatar: u.avatar,
+      verifiedPhone: phone,
+      emailVerified: u.emailVerified,
+      authProvider: u.authProvider,
+      hasPassword: u.hasPassword,
     );
     notifyListeners();
     refreshCurrentUser();
@@ -549,27 +605,42 @@ class AuthSession extends ChangeNotifier {
     final u = currentUser;
     if (u == null) return;
     currentUser = AuthUser(
-      id: u.id, name: u.name, email: u.email, role: u.role,
-      employeeRole: u.employeeRole, permissions: u.permissions,
-      linkedUniversityId: u.linkedUniversityId, avatar: u.avatar,
-      verifiedPhone: u.verifiedPhone, emailVerified: true,
-      authProvider: u.authProvider, hasPassword: u.hasPassword,
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      employeeRole: u.employeeRole,
+      permissions: u.permissions,
+      linkedUniversityId: u.linkedUniversityId,
+      avatar: u.avatar,
+      verifiedPhone: u.verifiedPhone,
+      emailVerified: true,
+      authProvider: u.authProvider,
+      hasPassword: u.hasPassword,
     );
     notifyListeners();
     refreshCurrentUser();
   }
 
   Future<void> patchHasPassword() async {
-    await const FlutterSecureStorage().delete(key: 'google_password_setup_required');
+    await const FlutterSecureStorage()
+        .delete(key: 'google_password_setup_required');
     requiresGooglePasswordSetup = false;
     final u = currentUser;
     if (u == null) return;
     currentUser = AuthUser(
-      id: u.id, name: u.name, email: u.email, role: u.role,
-      employeeRole: u.employeeRole, permissions: u.permissions,
-      linkedUniversityId: u.linkedUniversityId, avatar: u.avatar,
-      verifiedPhone: u.verifiedPhone, emailVerified: u.emailVerified,
-      authProvider: u.authProvider, hasPassword: true,
+      id: u.id,
+      name: u.name,
+      email: u.email,
+      role: u.role,
+      employeeRole: u.employeeRole,
+      permissions: u.permissions,
+      linkedUniversityId: u.linkedUniversityId,
+      avatar: u.avatar,
+      verifiedPhone: u.verifiedPhone,
+      emailVerified: u.emailVerified,
+      authProvider: u.authProvider,
+      hasPassword: true,
     );
     ApiClient.instance.clearCache();
     notifyListeners();
@@ -587,13 +658,21 @@ class AuthSession extends ChangeNotifier {
         await _cacheUser(user);
         notifyListeners();
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/auth_session.dart:574');}
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'core/services/auth_session.dart:574');
+    }
   }
 
-  Future<void> login(AuthUser user, {String? authToken, String? refreshToken, bool requireGooglePasswordSetup = false}) async {
+  Future<void> login(AuthUser user,
+      {String? authToken,
+      String? refreshToken,
+      bool requireGooglePasswordSetup = false}) async {
     ApiClient.instance.clearCache();
     requiresGooglePasswordSetup = requireGooglePasswordSetup;
-    await const FlutterSecureStorage().write(key: 'google_password_setup_required', value: requireGooglePasswordSetup.toString());
+    await const FlutterSecureStorage().write(
+        key: 'google_password_setup_required',
+        value: requireGooglePasswordSetup.toString());
     _revision++;
     _previousToken = null;
     final prefs = await SharedPreferences.getInstance();
@@ -614,11 +693,21 @@ class AuthSession extends ChangeNotifier {
     token = authToken;
     PushNotificationService.instance.setUser(user.id);
     ErrorReporter.setUser(user.id, role: user.role.key);
-    AnalyticsService.instance.identify(user.id, traits: {'role': user.role.name, 'name': user.name});
+    AnalyticsService.instance
+        .identify(user.id, traits: {'role': user.role.name, 'name': user.name});
     notifyListeners();
   }
 
   static const _pendingRevocationKey = 'pending_refresh_revocations';
+  Future<void> updateAccount(Map<String, dynamic> data) async {
+    final updated = AuthUser.fromJson(data);
+    if (updated.id != currentUser?.id) return;
+    currentUser = updated;
+    ApiClient.instance.clearCache();
+    await _cacheUser(updated);
+    notifyListeners();
+  }
+
   bool _flushingRevocations = false;
 
   Future<void> _queueRevocation(String refreshToken) async {
@@ -627,7 +716,8 @@ class AuthSession extends ChangeNotifier {
     final tokens = existing.isEmpty ? <String>[] : existing.split('\n');
     if (!tokens.contains(refreshToken)) tokens.add(refreshToken);
     // Keep the queue bounded; the newest tokens matter most.
-    final bounded = tokens.length > 5 ? tokens.sublist(tokens.length - 5) : tokens;
+    final bounded =
+        tokens.length > 5 ? tokens.sublist(tokens.length - 5) : tokens;
     await storage.write(key: _pendingRevocationKey, value: bounded.join('\n'));
   }
 
@@ -644,7 +734,8 @@ class AuthSession extends ChangeNotifier {
       final remaining = <String>[];
       for (final tokenValue in raw.split('\n').where((t) => t.isNotEmpty)) {
         try {
-          await ApiClient.instance.post('/auth/logout', body: {'refreshToken': tokenValue});
+          await ApiClient.instance
+              .post('/auth/logout', body: {'refreshToken': tokenValue});
         } on ApiException catch (e) {
           // 4xx: the server no longer accepts it, nothing left to revoke.
           if (e.statusCode == 0 || e.statusCode == 408 || e.statusCode >= 500) {
@@ -657,7 +748,8 @@ class AuthSession extends ChangeNotifier {
       if (remaining.isEmpty) {
         await storage.delete(key: _pendingRevocationKey);
       } else {
-        await storage.write(key: _pendingRevocationKey, value: remaining.join('\n'));
+        await storage.write(
+            key: _pendingRevocationKey, value: remaining.join('\n'));
       }
     } finally {
       _flushingRevocations = false;
@@ -668,7 +760,8 @@ class AuthSession extends ChangeNotifier {
     hasSignedOut = true;
     restoreNeedsNetwork = false;
     requiresGooglePasswordSetup = false;
-    await const FlutterSecureStorage().delete(key: 'google_password_setup_required');
+    await const FlutterSecureStorage()
+        .delete(key: 'google_password_setup_required');
     _revision++;
     _previousToken = null;
     final owner = currentUser?.id ?? '';
@@ -680,7 +773,8 @@ class AuthSession extends ChangeNotifier {
     final refresh = await storage.read(key: 'refresh_token');
     if (revoke && refresh != null) {
       try {
-        await ApiClient.instance.post('/auth/logout', body: {'refreshToken': refresh});
+        await ApiClient.instance
+            .post('/auth/logout', body: {'refreshToken': refresh});
       } catch (_) {
         // Offline or server down: the local session is already gone, but the
         // refresh token is still valid on the server. Queue its revocation so
@@ -692,7 +786,12 @@ class AuthSession extends ChangeNotifier {
     await NotificationScheduler.instance.cancelAll();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('session_token');
-    for (final key in ['sb_overview_cache', 'sb_apps_cache', 'sb_docs_cache', 'sb_financials_cache']) {
+    for (final key in [
+      'sb_overview_cache',
+      'sb_apps_cache',
+      'sb_docs_cache',
+      'sb_financials_cache'
+    ]) {
       await prefs.remove(key);
     }
     await storage.delete(key: 'active_session_token');
@@ -737,44 +836,7 @@ Widget getHomeRouteForUser(AuthUser user) {
   }
 }
 
-String _employeeRoleLabel(String? employeeRole) {
-  switch (employeeRole) {
-    case 'educational_consultant':
-      return 'مستشار تعليمي';
-    case 'sales':
-      return 'مبيعات (Sales)';
-    case 'admission':
-      return 'مسؤول قبول (Admission)';
-    case 'admission_manager':
-      return 'مدير قبول';
-    case 'visa_officer':
-      return 'مسؤول تأشيرات';
-    case 'travel_coordinator':
-      return 'منسق سفر';
-    case 'accommodation_officer':
-      return 'مسؤول سكن';
-    case 'finance':
-      return 'مالية (Finance)';
-    case 'customer_support':
-      return 'دعم فني (Customer Support)';
-    case 'branch_manager':
-      return 'مدير فرع';
-    case 'operations':
-      return 'عمليات';
-    case 'marketing':
-      return 'تسويق';
-    case 'university_relations':
-      return 'علاقات الجامعات';
-    case 'agent_manager':
-      return 'مدير الوكلاء';
-    case 'content_manager':
-      return 'مدير محتوى';
-    case 'super_admin':
-      return 'مدير النظام (Super Admin)';
-    default:
-      return 'موظف Study Birds (لم يُحدد دوره بعد)';
-  }
-}
+
 
 /// Maps the string key from the "Who Are You?" screen to a [UserRole] for
 /// comparison against the REAL authenticated role. This claimed value is

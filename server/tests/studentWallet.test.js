@@ -3,12 +3,12 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const { MongoMemoryServer } = require(path.join(process.env.STUDY_BIRDS_TEST_TOOLS, 'node_modules/mongodb-memory-server-core'));
+const { MongoMemoryReplSet } = require(path.join(process.env.STUDY_BIRDS_TEST_TOOLS, 'node_modules/mongodb-memory-server-core'));
 
 test('referrals qualify on a real first application, reward the referrer, and wallet credit redeems against an invoice', async () => {
   process.env.JWT_SECRET = 'student-wallet-isolated-test';
   process.env.STUDENT_REFERRAL_REWARD_AMOUNT = '20';
-  const mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+  const mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 }, instanceOpts: [{ ip: '127.0.0.1' }] });
   let server;
   try {
     await mongoose.connect(mongo.getUri());
@@ -32,7 +32,7 @@ test('referrals qualify on a real first application, reward the referrer, and wa
     }
 
     // Referrer registers and gets a code.
-    const referrerSignup = await call('POST', '/auth/register', null, { name: 'Referrer', email: 'referrer@example.test', password: 'password123' }, 201);
+    const referrerSignup = await call('POST', '/auth/register', null, { name: 'Referrer', email: 'referrer@example.test', password: 'TestPassword123!' }, 201);
     const referrer = { _id: referrerSignup.user._id };
     const wallet0 = await call('GET', '/students/wallet', referrer);
     assert.ok(wallet0.referralCode);
@@ -42,14 +42,14 @@ test('referrals qualify on a real first application, reward the referrer, and wa
     assert.equal((await call('GET', '/students/wallet', referrer)).referralCode, wallet0.referralCode);
 
     // Someone registers with that code; no reward yet — they haven't applied.
-    const referredSignup = await call('POST', '/auth/register', null, { name: 'Referred', email: 'referred@example.test', password: 'password123', referralCode: wallet0.referralCode }, 201);
+    const referredSignup = await call('POST', '/auth/register', null, { name: 'Referred', email: 'referred@example.test', password: 'TestPassword123!', referralCode: wallet0.referralCode }, 201);
     const referred = { _id: referredSignup.user._id };
     assert.equal((await call('GET', '/students/wallet', referrer)).balance, 0);
     const referralRow = await StudentReferral.findOne({ referredUser: referred._id }).lean();
     assert.equal(referralRow.status, 'pending');
 
     // An invalid/self-referral code is silently ignored, not an error.
-    await call('POST', '/auth/register', null, { name: 'SelfRef', email: 'selfref@example.test', password: 'password123', referralCode: 'DOES-NOT-EXIST' }, 201);
+    await call('POST', '/auth/register', null, { name: 'SelfRef', email: 'selfref@example.test', password: 'TestPassword123!', referralCode: 'DOES-NOT-EXIST' }, 201);
 
     // The referred student uploads a document and submits their first application — this is the real milestone.
     const document = await Document.create({ student: referred._id, type: 'passport', filePath: '/x', fileName: 'p.pdf' });

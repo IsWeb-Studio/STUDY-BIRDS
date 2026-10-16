@@ -361,6 +361,7 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
   bool _uploading = false;
   StreamSubscription<DateTime>? _syncSub;
   StreamSubscription<List<dynamic>>? _documentSub;
+  bool _refreshing = false;
 
   @override
   void initState() {
@@ -374,14 +375,33 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
       }
     });
     _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
-      if (_uploading) return;
-      StudentRepository.instance.getDocuments(forceRefresh: true).then((docs) {
-        if (mounted)
-          setState(() => _docs =
-              docs.whereType<Map>().where(isCurrentLibraryDocument).toList());
-      }).catchError(ErrorReporter.silent(
-          'screens/applications_documents_payments/documents_screens.dart:306'));
+      _refreshVisible();
     });
+  }
+
+  Future<void> _refreshVisible() async {
+    if (!mounted ||
+        _uploading ||
+        _loading ||
+        _refreshing ||
+        ModalRoute.of(context)?.isCurrent != true ||
+        !TickerMode.of(context) ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.paused ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.inactive ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.hidden)
+      return;
+    _refreshing = true;
+    try {
+      final docs =
+          await StudentRepository.instance.getDocuments(forceRefresh: true);
+      if (mounted)
+        setState(() => _docs =
+            docs.whereType<Map>().where(isCurrentLibraryDocument).toList());
+    } catch (error, stack) {
+      ErrorReporter.swallowed(error, stack, 'documents.refresh');
+    } finally {
+      _refreshing = false;
+    }
   }
 
   @override

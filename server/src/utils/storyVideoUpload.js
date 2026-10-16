@@ -23,6 +23,6 @@ async function uploadStoryVideo(file, owner) {
     await cloudinary.uploader.destroy(result.public_id, { resource_type: 'video' }).catch(() => {});
     throw bad('اختر فيديو لا تتجاوز مدته 60 ثانية.', 400);
   }
-  return { videoUrl: result.secure_url, duration: result.duration };
+  return { videoUrl: result.secure_url, duration: result.duration, publicId: result.public_id };
 }
 module.exports = { parseVideo, validateVideo, uploadStoryVideo, maxBytes };

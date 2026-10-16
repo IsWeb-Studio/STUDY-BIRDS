@@ -34,32 +34,35 @@ const redeemWalletCredit = asyncHandler(async (req, res) => {
   // invoice update run under the student's wallet lease, so two simultaneous
   // requests can't both spend the same balance.
   const result = await withLease(`wallet:${req.user._id}`, async () => {
-    const invoice = await Invoice.findOne({ _id: invoiceId, student: req.user._id });
-    if (!invoice) return { status: 404, body: { message: "Invoice not found" } };
-    if (invoice.stripeCheckoutExpiresAt > new Date()) return { status: 409, body: { message: 'توجد عملية دفع بالبطاقة قيد الانتظار؛ انتظر انتهاءها قبل استخدام الرصيد.' } };
-    if ((invoice.currency || 'USD').toUpperCase() !== 'USD') return { status: 400, body: { message: 'رصيد المحفظة بالدولار ويستخدم لفواتير الدولار فقط.' } };
-    if (invoice.status !== "unpaid") return { status: 409, body: { message: "This invoice can no longer accept credit" } };
-    const remaining = invoice.amount - invoice.walletCreditApplied - (invoice.crmPaidAmount || 0);
-    if (amount > remaining) return { status: 400, body: { message: "Amount exceeds what is still owed on this invoice" } };
-    const balance = await getWalletBalance(req.user._id);
-    if (amount > balance) return { status: 409, body: { message: "Insufficient wallet balance" } };
-
-    // Debit first: if the invoice update then fails, the debit is removed, so
-    // an invoice is never credited without a matching debit.
-    const debit = await StudentWalletEntry.create({ student: req.user._id, direction: "debit", kind: "redemption", amount, relatedInvoice: invoice._id, notes: `سداد جزئي/كامل لفاتورة ${invoice.invoiceNumber}` });
-    let updated = null;
+    const session = await mongoose.startSession();
     try {
-      updated = await Invoice.findOneAndUpdate(
-        { _id: invoice._id, status: "unpaid", walletCreditApplied: invoice.walletCreditApplied },
-        { $inc: { walletCreditApplied: amount }, $set: amount >= remaining ? { status: "paid", reviewedAt: new Date() } : {} },
-        { new: true }
-      );
-    } finally {
-      if (!updated) await StudentWalletEntry.deleteOne({ _id: debit._id });
-    }
-    if (!updated) return { status: 409, body: { message: "Invoice changed. Refresh and retry." } };
-    return { status: 200, body: { invoice: updated, balance: await getWalletBalance(req.user._id) } };
-  });
+      let outcome;
+      await session.withTransaction(async () => {
+        outcome = await (async () => {
+          const invoice = await Invoice.findOne({ _id: invoiceId, student: req.user._id }).session(session);
+          if (!invoice) return { status: 404, body: { message: "Invoice not found" } };
+          if (invoice.stripeCheckoutExpiresAt > new Date()) return { status: 409, body: { message: 'توجد عملية دفع بالبطاقة قيد الانتظار؛ انتظر انتهاءها قبل استخدام الرصيد.' } };
+          if ((invoice.currency || 'USD').toUpperCase() !== 'USD') return { status: 400, body: { message: 'رصيد المحفظة بالدولار ويستخدم لفواتير الدولار فقط.' } };
+          if (invoice.status !== "unpaid") return { status: 409, body: { message: "This invoice can no longer accept credit" } };
+          const remaining = invoice.amount - invoice.walletCreditApplied - (invoice.crmPaidAmount || 0);
+          if (amount > remaining) return { status: 400, body: { message: "Amount exceeds what is still owed on this invoice" } };
+          const balance = await getWalletBalance(req.user._id, session);
+          if (amount > balance) return { status: 409, body: { message: "Insufficient wallet balance" } };
+
+          // The transaction commits both writes together or rolls both back.
+          await StudentWalletEntry.create([{ student: req.user._id, direction: "debit", kind: "redemption", amount, relatedInvoice: invoice._id, notes: `سداد جزئي/كامل لفاتورة ${invoice.invoiceNumber}` }], { session });
+          const updated = await Invoice.findOneAndUpdate(
+              { _id: invoice._id, status: "unpaid", walletCreditApplied: invoice.walletCreditApplied },
+              { $inc: { walletCreditApplied: amount }, $set: amount >= remaining ? { status: "paid", reviewedAt: new Date() } : {} },
+              { new: true, session }
+            );
+          if (!updated) throw Object.assign(new Error('Invoice changed. Refresh and retry.'), { statusCode: 409 });
+          return { status: 200, body: { invoice: updated, balance: await getWalletBalance(req.user._id, session) } };
+        })();
+      });
+      return outcome;
+    } finally { await session.endSession(); }
+  }, { renew: true });
   res.status(result.status).json(result.body);
 });
 
@@ -86,7 +89,7 @@ const createWalletAdjustmentAdmin = asyncHandler(async (req, res) => {
   const entry = await withLease(`wallet:${studentId}`, async () => {
     if (direction === "debit" && amount > (await getWalletBalance(studentId))) return null;
     return StudentWalletEntry.create({ student: studentId, direction, kind: "adjustment", amount, notes: notes.trim(), createdBy: req.user._id });
-  });
+  }, { renew: true });
   if (!entry) return res.status(409).json({ message: "Adjustment would leave a negative balance" });
   res.status(201).json(entry);
 });

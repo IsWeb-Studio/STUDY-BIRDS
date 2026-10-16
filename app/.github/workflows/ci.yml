@@ -23,7 +23,7 @@ jobs:
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x'
+          flutter-version: '3.41.9'
           cache: true
 
       - name: Install dependencies
@@ -33,7 +33,7 @@ jobs:
         run: flutter analyze --no-fatal-infos
 
       - name: Run unit tests
-        run: flutter test --no-pub || true
+        run: flutter test --no-pub
 
       - name: Build APK (release — unsigned)
         run: flutter build apk --release --no-pub

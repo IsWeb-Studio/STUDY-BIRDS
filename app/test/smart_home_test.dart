@@ -5,7 +5,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:study_birds/core/services/auth_session.dart';
-import 'package:study_birds/screens/applications_documents_payments/documents_screens.dart';
 import 'package:study_birds/screens/home_journey/home_dashboard_screen.dart';
 
 http.Response reply(Object body) => http.Response(jsonEncode(body), 200,

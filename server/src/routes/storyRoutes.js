@@ -82,11 +82,13 @@ router.get('/', asyncHandler(async (req, res) => {
 router.post('/image', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => String(req.user._id) }), upload.single('file'), asyncHandler(async (req, res) => {
   if (!req.file || !['image/jpeg', 'image/png', 'image/webp'].includes(req.file.mimetype)) fail(415, 'Unsupported file type');
   const media = await uploadFileToCloudinary(req.file, `story-images/${req.user._id}`);
+  await require('../utils/mediaMaintenance').queueMedia(media, new Date(Date.now() + 86400000));
   res.json({ imageUrl: media.url });
 }));
 router.post('/video', rateLimit({ windowMs: 3600000, limit: 10, keyGenerator: req => String(req.user._id) }), parseVideo, asyncHandler(async (req, res) => {
   validateVideo(req.file);
   const media = await uploadStoryVideo(req.file, req.user._id);
+  await require('../utils/mediaMaintenance').queueMedia({ publicId: media.publicId, resourceType: 'video', url: media.videoUrl }, new Date(Date.now() + 86400000));
   await StoryVideo.create({ owner: req.user._id, url: media.videoUrl, duration: media.duration, expiresAt: new Date(Date.now() + 86400000) });
   res.json(media);
 }));

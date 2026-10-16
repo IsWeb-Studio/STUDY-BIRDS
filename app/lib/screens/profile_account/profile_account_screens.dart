@@ -3,6 +3,7 @@ import '../../core/widgets/gallery_access.dart';
 import '../../core/services/locale_controller.dart';
 import '../../core/widgets/language_tile.dart';
 import '../../core/utils/json_safe.dart';
+import '../../core/network/api_client.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import '../../core/utils/app_error.dart';
@@ -49,7 +50,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // صورة الملف الشخصي
   bool _avatarUploading = false;
 
-
   @override
   void initState() {
     super.initState();
@@ -88,6 +88,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _pickProfilePhoto() async {
+    if (_avatarUploading) return;
     final choice = await showPickSourceSheet(context, title: 'الصورة الشخصية');
     if (choice == null || !mounted) return;
 
@@ -101,8 +102,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       img = await ImagePicker().pickImage(source: source, imageQuality: 70);
     } catch (error) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text(mediaPickerError(error))));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(AppSnackBar(content: Text(mediaPickerError(error))));
       }
       return;
     }
@@ -115,16 +116,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _avatarUploading = true;
     });
 
-    // احفظ الصورة محلياً فوراً حتى لو فشل الرفع
     final ownerId = AuthSession.instance.currentUser?.id;
-    if (ownerId != null) await CurrentUserAvatar.save(ownerId, bytes);
 
     try {
-      await StudentRepository.instance.uploadDocument(
+      final result = await ApiClient.instance.postMultipart(
+        '/auth/avatar',
         fileBytes: bytes,
         fileName: img.name,
-        type: 'biometric-photo',
+        token: AuthSession.instance.token,
       );
+      if (ownerId != AuthSession.instance.currentUser?.id) return;
+      await AuthSession.instance
+          .updateAccount(Map<String, dynamic>.from(result['user']));
+      if (ownerId != null) await CurrentUserAvatar.save(ownerId, bytes);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           AppSnackBar(content: Text('تم رفع الصورة الشخصية بنجاح ✓')),

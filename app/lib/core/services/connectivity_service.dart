@@ -3,7 +3,6 @@ import 'dart:math';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/widgets.dart';
-import 'package:http/http.dart' as http;
 
 import '../network/api_client.dart';
 

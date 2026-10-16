@@ -27,11 +27,17 @@ jobs:
 
       - name: Lint (basic syntax check)
         working-directory: server
-        run: node --check src/server.js || true
+        run: node --check src/server.js
 
-      - name: Idempotency middleware tests (no database needed)
+      - name: Install isolated test tools
+        run: npm install --prefix "$RUNNER_TEMP/studybirds-test-tools" --no-save mongodb-memory-server-core@10.4.3
+
+      - name: Backend regression suite
         working-directory: server
-        run: node --test tests/idempotency.test.js
+        run: node tools/run-tests.cjs
+        env:
+          STUDY_BIRDS_TEST_TOOLS: ${{ runner.temp }}/studybirds-test-tools
+          MONGOMS_VERSION: '7.0.24'
 
       - name: Check for secrets in code
         run: |
@@ -55,4 +61,4 @@ jobs:
 
       - name: Run npm audit
         working-directory: server
-        run: npm audit --audit-level=high || true
+        run: npm audit --omit=dev --audit-level=high

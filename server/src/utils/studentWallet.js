@@ -60,11 +60,11 @@ async function qualifyReferral(referredUserId) {
   return referral;
 }
 
-async function getWalletBalance(studentId) {
+async function getWalletBalance(studentId, session = null) {
   const [result] = await StudentWalletEntry.aggregate([
     { $match: { student: new mongoose.Types.ObjectId(studentId) } },
     { $group: { _id: null, balance: { $sum: { $cond: [{ $eq: ["$direction", "credit"] }, "$amount", { $multiply: ["$amount", -1] }] } } } },
-  ]);
+  ]).session(session);
   return result?.balance || 0;
 }
 

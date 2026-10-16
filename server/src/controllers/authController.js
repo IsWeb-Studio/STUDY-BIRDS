@@ -160,7 +160,7 @@ const googleLogin = asyncHandler(async (req, res) => {
       email: normalizedEmail,
       googleId: payload.sub,
       authProvider: "google",
-      emailVerified: false,
+      emailVerified: true,
       avatar: payload.picture,
       role: "student",
     });
@@ -423,7 +423,7 @@ const verifyEmailOtp = asyncHandler(async (req, res) => {
 });
 
 const deleteAccount = asyncHandler(async (req, res) => {
-  const { password } = req.body;
+  const { password, emailCode } = req.body;
 
   const user = await User.findById(req.user._id);
   if (!user) {
@@ -441,14 +441,20 @@ const deleteAccount = asyncHandler(async (req, res) => {
       res.status(401);
       throw new Error('كلمة المرور غير صحيحة');
     }
+  } else {
+    await consume(user, 'delete-account', emailCode, res);
   }
 
-  // Remove associated data
-  await StudentProfile.deleteOne({ user: user._id });
-  await Challenge.deleteMany({ key: new RegExp(`:${user._id}`) });
-  await User.deleteOne({ _id: user._id });
+  await require('../utils/accountDeletion').deleteAccountData(user);
 
   res.json({ ok: true });
+});
+
+const requestAccountDeletion = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+  if (!user) return res.sendStatus(404);
+  if (!user.password) await sendCode(user, 'delete-account', res);
+  res.json({ requiresPassword: Boolean(user.password), sent: !user.password });
 });
 
 module.exports = {
@@ -467,4 +473,5 @@ module.exports = {
   refresh,
   logout,
   deleteAccount,
+  requestAccountDeletion,
 };

@@ -16,8 +16,8 @@ void main() {
     await http.runWithClient(() async {
       await tester.pumpWidget(const MaterialApp(home: HomeDashboardScreen()));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('عرض التفاصيل'));
-      await tester.tap(find.text('عرض التفاصيل'));
+      await tester.ensureVisible(find.text('متابعة الرحلة'));
+      await tester.tap(find.text('متابعة الرحلة'));
       await tester.pumpAndSettle();
       expect(find.byType(JourneyRequirementsView), findsOneWidget);
       expect(find.text('بانتظار فريق Study Birds'), findsOneWidget);

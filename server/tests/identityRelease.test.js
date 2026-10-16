@@ -56,6 +56,10 @@ test("identity: signed passkeys, Apple nonce, SMS ownership, scholarship workflo
     const emails = [];
     mailer.isMailerConfigured = () => true;
     mailer.sendContactEmail = async (mail) => emails.push(mail);
+    const sms = require('../src/utils/cashMisrSms');
+    sms.ready = () => true;
+    sms.generate = () => '123456';
+    sms.send = async () => { smsCalls++; };
     const app = require("../src/app");
     const User = require("../src/models/User");
     const {
@@ -294,7 +298,7 @@ test("identity: signed passkeys, Apple nonce, SMS ownership, scholarship workflo
       { code: "123456" },
       400,
     );
-    assert.equal(smsCalls, 3);
+    assert.equal(smsCalls, 1);
     process.env.CLIENT_URL = "https://example.test";
     const verifier = crypto.randomBytes(32).toString("base64url");
     const handoff = await call("POST", "/identity/mobile/start", null, {

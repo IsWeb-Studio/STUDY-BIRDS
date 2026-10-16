@@ -12,6 +12,7 @@ const {
   refresh,
   logout,
   deleteAccount,
+  requestAccountDeletion,
 } = require("../controllers/authController");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -35,5 +36,7 @@ router.post("/change-password", protect, changePassword);
 router.post("/refresh", refresh);
 router.post("/logout", logout);
 router.delete("/account", protect, deleteAccount);
+router.post('/account/verification', protect, requestAccountDeletion);
+router.post('/avatar', protect, require('../middleware/uploadMiddleware').single('file'), require('../controllers/avatarController'));
 
 module.exports = router;

@@ -79,7 +79,7 @@ const getMyRewards = run(async (req, res) => {
   ]);
   const totalPoints = totals[0]?.total || 0;
   const tier = loyaltyTier(totalPoints);
-  const nextTier = LOYALTY_TIERS.find(t => t.minPoints > totalPoints && t.minPoints > 0);
+  const nextTier = [...LOYALTY_TIERS].reverse().find(t => t.minPoints > totalPoints);
   res.json({
     totalPoints, tier,
     nextTier: nextTier ? { name: nextTier.name, pointsNeeded: nextTier.minPoints - totalPoints } : null,

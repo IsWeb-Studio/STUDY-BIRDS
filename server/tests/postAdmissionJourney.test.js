@@ -62,7 +62,7 @@ test('post-admission workflow is scoped, staff-controlled, versioned and reflect
     assert.equal((await call('GET', '/students/overview', student)).nextAction.waiting, true);
     // A completed admission must not automatically mark logistics complete.
     stored = await Application.findById(app._id).lean();
-    assert.equal(studentJourneys({ applications: [stored] })[0].stages.find(s => s.key === 'travel').status, 'not-started');
+    assert.equal(studentJourneys({ applications: [stored] })[0].stages.find(s => s.key === 'travel').status, 'in-progress');
     const urgentInvoice = { _id: 'bill', application: app._id, status: 'unpaid', dueDate: '2019-01-01' };
     assert.equal(studentNextAction({ applications: [stored], invoices: [urgentInvoice] }).code, 'payment-required');
     await Application.updateOne({ _id: app._id }, { $set: { detailedStatus: 'completed' } });

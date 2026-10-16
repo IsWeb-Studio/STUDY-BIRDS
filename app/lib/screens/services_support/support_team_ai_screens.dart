@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/utils/document_access.dart';
 import 'bird_ai_screen.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/services/analytics_service.dart';

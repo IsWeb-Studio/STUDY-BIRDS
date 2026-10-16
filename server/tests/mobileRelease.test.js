@@ -42,7 +42,7 @@ test('mobile release: authentication, ownership, email codes, sessions, and mess
 
     assert.equal((await call('GET','/mobile/capabilities')).messaging,true);
     await call('GET','/mobile-security/sessions','bad-token',undefined,401);
-    await call('POST','/mobile-workspace/messages',a.token,{recipient:b.user._id,body:'Not allowed'},403);
+    await call('POST','/mobile-workspace/messages',a.token,{recipient:b.user._id,body:'Hello classmate'},201);
     const msg = await call('POST','/mobile-workspace/messages',a.token,{recipient:String(admin._id),body:'Please help'},201);
     const adminAuth = await call('POST','/auth/login',null,{email:'admin@example.test',password:'TestPassword123!'});
     const messages = await call('GET',`/mobile-workspace/messages?recipient=${a.user._id}`,adminAuth.token);

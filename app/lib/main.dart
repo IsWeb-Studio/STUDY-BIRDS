@@ -102,9 +102,10 @@ Future<void> _initSentry() async {
           defaultValue: kReleaseMode ? 'production' : 'development');
       // Sampling kept low: profiling and tracing are costly on weak devices.
       options.tracesSampleRate = 0.05;
-      options.profilesSampleRate = 0.0;
       options.attachScreenshot = false;
       options.sendDefaultPii = false;
+      // Keep view contents out of telemetry, including experimental SDK capture.
+      // ignore: experimental_member_use
       options.attachViewHierarchy = false;
       options.maxBreadcrumbs = 60;
       options.beforeSend = (event, hint) {

@@ -27,8 +27,8 @@ test('application requirements, document ownership, and dashboard isolation', as
       assert.equal(response.status, expected, `${route}: ${JSON.stringify(result)}`);
       return result;
     }
-    const a = await call('POST', '/auth/register', null, { name: 'A', email: 'a@example.test', password: 'Password123!' }, 201);
-    const b = await call('POST', '/auth/register', null, { name: 'B', email: 'b@example.test', password: 'Password123!' }, 201);
+    const a = await call('POST', '/auth/register', null, { name: 'A', email: 'a@example.test', password: 'JourneyTest42!' }, 201);
+    const b = await call('POST', '/auth/register', null, { name: 'B', email: 'b@example.test', password: 'JourneyTest42!' }, 201);
     const country = await Country.create({ name: 'Test country', code: 'ZZ' });
     const university = await University.create({ name: 'Test university', country: country._id });
     const program = await Program.create({ title: 'Test degree', degreeLevel: 'Bachelor', fieldOfStudy: 'Engineering', university: university._id, requiredDocumentTypes: ['transcript'] });
@@ -42,8 +42,8 @@ test('application requirements, document ownership, and dashboard isolation', as
     assert.deepEqual(created.requiredDocumentTypes, ['transcript']);
     await call('POST', '/applications', a.token, { programId: program._id, documentIds: [doc._id] }, 400);
     assert.equal(await Application.countDocuments(), 1);
-    await User.create({ name: 'Admin', email: 'admin@example.test', password: 'Password123!', role: 'admin' });
-    const admin = await call('POST', '/auth/login', null, { email: 'admin@example.test', password: 'Password123!' });
+    await User.create({ name: 'Admin', email: 'admin@example.test', password: 'JourneyTest42!', role: 'admin' });
+    const admin = await call('POST', '/auth/login', null, { email: 'admin@example.test', password: 'JourneyTest42!' });
     await call('PUT', `/programs/${program._id}`, a.token, { requiredDocumentTypes: [] }, 403);
     await call('PUT', `/programs/${program._id}`, admin.token, { requiredDocumentTypes: ['transcript', 'transcript'] }, 400);
     await call('PUT', `/programs/${program._id}`, admin.token, { requiredDocumentTypes: [] });

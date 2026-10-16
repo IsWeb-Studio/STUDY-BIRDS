@@ -15,7 +15,12 @@ import '../applications_documents_payments/applications_screens.dart';
 import '../applications_documents_payments/documents_screens.dart';
 import '../applications_documents_payments/payments_screens.dart';
 import '../visa_travel_accommodation/accommodation_arrival_screens.dart';
-import '../visa_travel_accommodation/visa_travel_screens.dart' show InsuranceScreen, EquivalencyScreen, VisaCenterScreen, TravelCenterScreen;
+import '../visa_travel_accommodation/visa_travel_screens.dart'
+    show
+        InsuranceScreen,
+        EquivalencyScreen,
+        VisaCenterScreen,
+        TravelCenterScreen;
 import 'journey_tracker_screen.dart';
 
 /// Returns a short action label for a notification link, or null if no action.
@@ -25,17 +30,17 @@ String? notificationActionLabel(String? link) {
   if (dest.startsWith('messages/')) return 'فتح المحادثة';
   return switch (dest) {
     'documents' || 'upload-document' => 'رفع المستند الآن',
-    'payments'                       => 'عرض الفاتورة',
-    'applications'                   => 'عرض الطلب',
-    'support'                        => 'فتح الدعم',
-    'journey' || 'visa'              => 'متابعة الرحلة',
-    'travel' || 'accommodation'      => 'خدمات الوصول',
-    'services'                       => 'خدمات الوصول',
-    'university-registration'        => 'التسجيل الجامعي',
-    'insurance'                      => 'التأمين الصحي',
-    'equivalency'                    => 'معادلة الشهادة',
-    'consultations'                  => 'حجز استشارة',
-    _                                => null,
+    'payments' => 'عرض الفاتورة',
+    'applications' => 'عرض الطلب',
+    'support' => 'فتح الدعم',
+    'journey' || 'visa' => 'متابعة الرحلة',
+    'travel' || 'accommodation' => 'خدمات الوصول',
+    'services' => 'خدمات الوصول',
+    'university-registration' => 'التسجيل الجامعي',
+    'insurance' => 'التأمين الصحي',
+    'equivalency' => 'معادلة الشهادة',
+    'consultations' => 'حجز استشارة',
+    _ => null,
   };
 }
 
@@ -55,9 +60,9 @@ Widget? notificationScreenForLink(String? link) {
     return switch (base) {
       'messages' => ConversationThreadScreen(contactId: id),
       'applications' => _ApplicationById(id: id),
-      'documents'    => _DocumentById(id: id),
-      'payments'     => _PaymentById(id: id),
-      _              => null,
+      'documents' => _DocumentById(id: id),
+      'payments' => _PaymentById(id: id),
+      _ => null,
     };
   }
 
@@ -99,16 +104,27 @@ class _ApplicationByIdState extends State<_ApplicationById> {
   void initState() {
     super.initState();
     StudentRepository.instance.getApplications().then((list) {
-      final match = list.whereType<Map<String, dynamic>>().cast<Map<String, dynamic>?>()
+      final match = list
+          .whereType<Map<String, dynamic>>()
+          .cast<Map<String, dynamic>?>()
           .firstWhere((a) => (a?['_id'] ?? a?['id'])?.toString() == widget.id,
               orElse: () => null);
-      if (mounted) setState(() { _loading = false; _app = match; });
-    }).catchError((Object e_, StackTrace s_) { ErrorReporter.swallowed(e_, s_, 'screens/home_journey/notifications_screen.dart:102'); if (mounted) setState(() => _loading = false); });
+      if (mounted)
+        setState(() {
+          _loading = false;
+          _app = match;
+        });
+    }).catchError((Object e_, StackTrace s_) {
+      ErrorReporter.swallowed(
+          e_, s_, 'screens/home_journey/notifications_screen.dart:102');
+      if (mounted) setState(() => _loading = false);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_loading)
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     if (_app == null) return const ApplicationsListScreen();
     return ApplicationDetailScreen(application: _app!);
   }
@@ -129,16 +145,27 @@ class _DocumentByIdState extends State<_DocumentById> {
   void initState() {
     super.initState();
     StudentRepository.instance.getDocuments().then((list) {
-      final match = list.whereType<Map<String, dynamic>>().cast<Map<String, dynamic>?>()
+      final match = list
+          .whereType<Map<String, dynamic>>()
+          .cast<Map<String, dynamic>?>()
           .firstWhere((d) => (d?['_id'] ?? d?['id'])?.toString() == widget.id,
               orElse: () => null);
-      if (mounted) setState(() { _loading = false; _doc = match; });
-    }).catchError((Object e_, StackTrace s_) { ErrorReporter.swallowed(e_, s_, 'screens/home_journey/notifications_screen.dart:132'); if (mounted) setState(() => _loading = false); });
+      if (mounted)
+        setState(() {
+          _loading = false;
+          _doc = match;
+        });
+    }).catchError((Object e_, StackTrace s_) {
+      ErrorReporter.swallowed(
+          e_, s_, 'screens/home_journey/notifications_screen.dart:132');
+      if (mounted) setState(() => _loading = false);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_loading)
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     if (_doc == null) return const MyDocumentsScreen();
     return DocumentDetailScreen(document: _doc!);
   }
@@ -160,16 +187,28 @@ class _PaymentByIdState extends State<_PaymentById> {
     super.initState();
     StudentRepository.instance.getFinancials().then((fin) {
       final list = (Json.listOrNull(fin['invoices']) ?? []);
-      final match = list.whereType<Map<String, dynamic>>().cast<Map<String, dynamic>?>()
-          .firstWhere((inv) => (inv?['_id'] ?? inv?['id'])?.toString() == widget.id,
+      final match = list
+          .whereType<Map<String, dynamic>>()
+          .cast<Map<String, dynamic>?>()
+          .firstWhere(
+              (inv) => (inv?['_id'] ?? inv?['id'])?.toString() == widget.id,
               orElse: () => null);
-      if (mounted) setState(() { _loading = false; _invoice = match; });
-    }).catchError((Object e_, StackTrace s_) { ErrorReporter.swallowed(e_, s_, 'screens/home_journey/notifications_screen.dart:163'); if (mounted) setState(() => _loading = false); });
+      if (mounted)
+        setState(() {
+          _loading = false;
+          _invoice = match;
+        });
+    }).catchError((Object e_, StackTrace s_) {
+      ErrorReporter.swallowed(
+          e_, s_, 'screens/home_journey/notifications_screen.dart:163');
+      if (mounted) setState(() => _loading = false);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    if (_loading)
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     if (_invoice == null) return const PaymentsSummaryScreen();
     return PaymentDetailScreen(invoice: _invoice!);
   }
@@ -211,6 +250,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   bool _loading = true;
   String? _error;
   StreamSubscription<DateTime>? _syncSub;
+  bool _refreshing = false;
 
   @override
   void initState() {
@@ -218,10 +258,29 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     AnalyticsService.instance.screenView('notifications');
     _load();
     _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
-      StudentRepository.instance.getNotifications()
-          .then((data) { if (mounted) setState(() => _notifications = data); })
-          .catchError(ErrorReporter.silent('screens/home_journey/notifications_screen.dart:219'));
+      _refreshVisible();
     });
+  }
+
+  Future<void> _refreshVisible() async {
+    if (!mounted ||
+        _loading ||
+        _refreshing ||
+        ModalRoute.of(context)?.isCurrent != true ||
+        !TickerMode.of(context) ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.paused ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.inactive ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.hidden)
+      return;
+    _refreshing = true;
+    try {
+      final data = await StudentRepository.instance.getNotifications();
+      if (mounted) setState(() => _notifications = data);
+    } catch (error, stack) {
+      ErrorReporter.swallowed(error, stack, 'notifications.refresh');
+    } finally {
+      _refreshing = false;
+    }
   }
 
   @override
@@ -244,7 +303,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       });
       // Mark all as read in the background — user has seen them.
       _markAllReadSilent();
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/notifications_screen.dart:242');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/home_journey/notifications_screen.dart:242');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل الإشعارات.';
@@ -268,7 +329,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
     try {
       await StudentRepository.instance.markAllNotificationsRead();
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/notifications_screen.dart:266');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/home_journey/notifications_screen.dart:266');
       // Silent failure — unread dots are a convenience, not critical state.
     }
   }
@@ -278,7 +341,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     setState(() => n['isRead'] = true); // optimistic
     try {
       await StudentRepository.instance.markNotificationRead(n['_id'] as String);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/notifications_screen.dart:276');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/home_journey/notifications_screen.dart:276');
       if (!mounted) return;
       setState(() => n['isRead'] = false); // revert on failure
     }
@@ -306,8 +371,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ? ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: 6,
-                itemBuilder: (_, __) =>
-                    const Padding(padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
+                itemBuilder: (_, __) => const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: SkeletonCard()))
             : _error != null
                 ? ErrorState(message: _error!, onRetry: _load)
                 : _notifications.isEmpty
@@ -318,100 +384,110 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             'ستصلك هنا كل التحديثات المهمة المتعلقة برحلتك.',
                       )
                     : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _notifications.length,
-                      itemBuilder: (context, i) {
-                        final n = Json.map(_notifications[i]);
-                        final isRead = n['isRead'] == true;
-                        final color = _notificationColor(n['type'] as String?);
-                        final createdAt =
-                            (n['createdAt'] as String?)?.split('T').first ?? '';
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _notifications.length,
+                        itemBuilder: (context, i) {
+                          final n = Json.map(_notifications[i]);
+                          final isRead = n['isRead'] == true;
+                          final color =
+                              _notificationColor(n['type'] as String?);
+                          final createdAt =
+                              (n['createdAt'] as String?)?.split('T').first ??
+                                  '';
 
-                        final link = n['link'] as String?;
-                        final actionLabel = notificationActionLabel(link);
-                        final screen = notificationScreenForLink(link) ?? const JourneyTrackerScreen();
-                        void navigate() async {
-                          // Capture navigator before any await so it stays valid.
-                          final navigator = Navigator.of(context);
-                          await _markRead(n, i);
-                          await navigator.push(
-                              MaterialPageRoute(builder: (_) => screen));
-                        }
+                          final link = n['link'] as String?;
+                          final actionLabel = notificationActionLabel(link);
+                          final screen = notificationScreenForLink(link) ??
+                              const JourneyTrackerScreen();
+                          void navigate() async {
+                            // Capture navigator before any await so it stays valid.
+                            final navigator = Navigator.of(context);
+                            await _markRead(n, i);
+                            await navigator.push(
+                                MaterialPageRoute(builder: (_) => screen));
+                          }
 
-                        return AppCard(
-                          onTap: navigate,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  if (!isRead)
+                          return AppCard(
+                            onTap: navigate,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    if (!isRead)
+                                      Container(
+                                        margin: const EdgeInsets.only(
+                                            left: 6, top: 4),
+                                        width: 8,
+                                        height: 8,
+                                        decoration: const BoxDecoration(
+                                            color: AppColors.orange,
+                                            shape: BoxShape.circle),
+                                      ),
                                     Container(
-                                      margin: const EdgeInsets.only(left: 6, top: 4),
-                                      width: 8,
-                                      height: 8,
-                                      decoration: const BoxDecoration(
-                                          color: AppColors.orange,
+                                      width: 38,
+                                      height: 38,
+                                      decoration: BoxDecoration(
+                                          color: color.withValues(alpha: 0.12),
                                           shape: BoxShape.circle),
+                                      child: Icon(
+                                          _notificationIcon(
+                                              n['type'] as String?),
+                                          size: 18,
+                                          color: color),
                                     ),
-                                  Container(
-                                    width: 38,
-                                    height: 38,
-                                    decoration: BoxDecoration(
-                                        color: color.withValues(alpha: 0.12),
-                                        shape: BoxShape.circle),
-                                    child: Icon(
-                                        _notificationIcon(n['type'] as String?),
-                                        size: 18,
-                                        color: color),
-                                  ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(n['title'] as String? ?? '',
-                                            style: AppTextStyles.body.copyWith(
-                                                fontWeight: isRead
-                                                    ? FontWeight.w400
-                                                    : FontWeight.w700)),
-                                        const SizedBox(height: 2),
-                                        Text(n['message'] as String? ?? '',
-                                            style: AppTextStyles.caption),
-                                        const SizedBox(height: 4),
-                                        Text(createdAt,
-                                            style: AppTextStyles.caption),
-                                      ],
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(n['title'] as String? ?? '',
+                                              style: AppTextStyles.body
+                                                  .copyWith(
+                                                      fontWeight: isRead
+                                                          ? FontWeight.w400
+                                                          : FontWeight.w700)),
+                                          const SizedBox(height: 2),
+                                          Text(n['message'] as String? ?? '',
+                                              style: AppTextStyles.caption),
+                                          const SizedBox(height: 4),
+                                          Text(createdAt,
+                                              style: AppTextStyles.caption),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                if (actionLabel != null) ...[
+                                  const SizedBox(height: 10),
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: OutlinedButton(
+                                      onPressed: navigate,
+                                      style: OutlinedButton.styleFrom(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 10),
+                                        side: const BorderSide(
+                                            color: AppColors.navy),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                                AppRadius.button)),
+                                      ),
+                                      child: Text(actionLabel,
+                                          style: const TextStyle(
+                                              color: AppColors.navy,
+                                              fontWeight: FontWeight.w700,
+                                              fontSize: 13)),
                                     ),
                                   ),
                                 ],
-                              ),
-                              if (actionLabel != null) ...[
-                                const SizedBox(height: 10),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: OutlinedButton(
-                                    onPressed: navigate,
-                                    style: OutlinedButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(vertical: 10),
-                                      side: const BorderSide(color: AppColors.navy),
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(AppRadius.button)),
-                                    ),
-                                    child: Text(actionLabel,
-                                        style: const TextStyle(
-                                            color: AppColors.navy,
-                                            fontWeight: FontWeight.w700,
-                                            fontSize: 13)),
-                                  ),
-                                ),
                               ],
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                            ),
+                          );
+                        },
+                      ),
       ),
     );
   }

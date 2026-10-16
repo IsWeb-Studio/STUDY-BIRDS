@@ -7,6 +7,7 @@ const storySchema = new Schema({
   imageUrl: { type: String, default: '' },
   videoUrl: { type: String, default: '' },
   videoDuration: { type: Number, default: 0 },
+  mediaCleanupQueued: Boolean,
   loveCount: { type: Number, default: 0 },
   expiresAt: { type: Date, required: true },
 }, { timestamps: true });

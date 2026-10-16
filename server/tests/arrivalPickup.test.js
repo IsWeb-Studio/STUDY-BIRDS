@@ -50,12 +50,12 @@ test('staff can assign an airport driver and a travel alert; students see only t
 
     // The student reads their own request with the pickup and alert visible.
     const mine = await call('GET', '/students/arrival-services', student);
-    assert.equal(mine.pickup.status, 'arrived');
-    assert.equal(mine.travelAlert, 'الطقس ماطر، أحضر مظلة عند الوصول');
+    assert.equal(mine[0].pickup.status, 'arrived');
+    assert.equal(mine[0].travelAlert, 'الطقس ماطر، أحضر مظلة عند الوصول');
 
     // A different student has no request of their own and isn't affected.
     const othersRequest = await call('GET', '/students/arrival-services', other);
-    assert.equal(othersRequest, null);
+    assert.deepEqual(othersRequest, []);
   } finally {
     if (server) await new Promise(resolve => server.close(resolve));
     await mongoose.disconnect(); await mongo.stop();

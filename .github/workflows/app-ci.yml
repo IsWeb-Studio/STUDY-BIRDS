@@ -39,7 +39,7 @@ jobs:
 
       # Only real errors fail the build; the existing info/warning backlog does not.
       - name: Analyze
-        run: flutter analyze --no-fatal-infos --no-fatal-warnings
+        run: flutter analyze --no-fatal-infos
 
       - name: Error-message policy
         run: dart run tool/check_error_policy.dart

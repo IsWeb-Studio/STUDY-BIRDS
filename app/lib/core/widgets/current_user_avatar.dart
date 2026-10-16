@@ -50,15 +50,9 @@ class _CurrentUserAvatarState extends State<CurrentUserAvatar> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final key = 'profile_avatar_b64_$id';
-      var data = prefs.getString(key);
-      // Move the old single-account cache once, then use account-specific keys.
-      if (data == null) {
-        data = prefs.getString('profile_avatar_b64');
-        if (data != null) {
-          await prefs.setString(key, data);
-          await prefs.remove('profile_avatar_b64');
-        }
-      }
+      final data = prefs.getString(key);
+      // The legacy global photo has no trustworthy owner on shared devices.
+      await prefs.remove('profile_avatar_b64');
       if (data != null && !CurrentUserAvatar._photos.containsKey(id)) {
         CurrentUserAvatar._photos[id] = base64Decode(data);
       }
@@ -80,24 +74,31 @@ class _CurrentUserAvatarState extends State<CurrentUserAvatar> {
     final user = AuthSession.instance.currentUser;
     final bytes = CurrentUserAvatar._photos[user?.id];
     final url = user?.avatar;
-    final initial = user?.name.trim().characters.firstOrNull?.toUpperCase() ?? '؟';
+    final initial =
+        user?.name.trim().characters.firstOrNull?.toUpperCase() ?? '؟';
     return CircleAvatar(
       radius: widget.radius,
       backgroundColor: AppColors.navy,
-      child: ClipOval(child: SizedBox.square(
+      child: ClipOval(
+          child: SizedBox.square(
         dimension: widget.radius * 2,
-        child: bytes != null
-            ? Image.memory(bytes, fit: BoxFit.cover,
+        child: url != null && url.isNotEmpty
+            ? Image.network(url,
+                fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => _initial(initial))
-            : url != null && url.isNotEmpty
-                ? Image.network(url, fit: BoxFit.cover,
+            : bytes != null
+                ? Image.memory(bytes,
+                    fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => _initial(initial))
                 : _initial(initial),
       )),
     );
   }
 
-  Widget _initial(String initial) => Center(child: Text(initial,
-      style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700,
-          fontSize: widget.radius * .73)));
+  Widget _initial(String initial) => Center(
+      child: Text(initial,
+          style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+              fontSize: widget.radius * .73)));
 }

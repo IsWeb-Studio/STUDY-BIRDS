@@ -23,6 +23,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   final _formKey = GlobalKey<FormState>();
   final _passwordCtrl = TextEditingController();
   bool _busy = false;
+  bool _sendingCode = false;
+  bool get _hasPassword =>
+      AuthSession.instance.currentUser?.hasPassword ?? true;
   String? _error;
 
   @override
@@ -32,6 +35,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
   }
 
   Future<void> _submit() async {
+    if (_busy || _sendingCode) return;
     if (!(_formKey.currentState?.validate() ?? false)) return;
     final confirmed = await _showFinalConfirm();
     if (!confirmed || !mounted) return;
@@ -44,21 +48,43 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     try {
       await ApiClient.instance.deleteWithBody(
         '/auth/account',
-        body: {'password': _passwordCtrl.text},
+        body: {_hasPassword ? 'password' : 'emailCode': _passwordCtrl.text},
         token: AuthSession.instance.token,
       );
       await AuthSession.instance.logout();
       if (mounted) Navigator.of(context).popUntil((r) => r.isFirst);
     } on ApiException catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.statusCode == 401
-            ? 'كلمة المرور غير صحيحة. تحقق منها وحاول مجدداً.'
+            ? (_hasPassword ? 'كلمة المرور غير صحيحة. تحقق منها وحاول مجدداً.' : 'تعذر تأكيد هويتك. حاول مجدداً.')
             : e.message;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/delete_account_screen.dart:57');
-      setState(() => _error = 'تعذر الاتصال بالخادم. تحقق من الإنترنت وحاول مجدداً.');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/profile_account/delete_account_screen.dart:57');
+      if (!mounted) return;
+      setState(() =>
+          _error = 'تعذر الاتصال بالخادم. تحقق من الإنترنت وحاول مجدداً.');
     } finally {
       if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _sendCode() async {
+    if (_sendingCode || _busy) return;
+    setState(() => _sendingCode = true);
+    try {
+      await ApiClient.instance.post('/auth/account/verification',
+          token: AuthSession.instance.token);
+      if (mounted)
+        setState(() => _error = 'تم إرسال رمز التأكيد إلى بريد حسابك.');
+    } on ApiException catch (e) {
+      if (mounted) setState(() => _error = e.message);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'تعذر إرسال الرمز. حاول مجدداً.');
+    } finally {
+      if (mounted) setState(() => _sendingCode = false);
     }
   }
 
@@ -71,7 +97,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
             child: AlertDialog(
               title: const Text('تأكيد نهائي'),
               content: const Text(
-                'سيتم حذف حسابك وجميع بياناتك بشكل نهائي ولا يمكن التراجع عن هذه العملية.',
+                'سيتم حذف حسابك وبياناتك الشخصية. تُحتفظ سجلات المعاملات المالية اللازمة للمحاسبة دون ملفك الشخصي. لا يمكن التراجع عن الحذف.',
               ),
               actions: [
                 TextButton(
@@ -80,7 +106,8 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
                 ),
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  style: TextButton.styleFrom(foregroundColor: AppColors.danger),
+                  style:
+                      TextButton.styleFrom(foregroundColor: AppColors.danger),
                   child: const Text('نعم، احذف حسابي'),
                 ),
               ],
@@ -99,7 +126,7 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
           FeatureIntro(
             title: 'حذف الحساب نهائياً',
             subtitle:
-                'هذا الإجراء دائم ولا يمكن التراجع عنه. سيتم حذف حسابك وجميع بياناتك الشخصية والمستندات والطلبات المرتبطة به.',
+                'سيتم حذف الحساب والبيانات الشخصية والمستندات والطلبات المرتبطة به. تبقى سجلات المعاملات المالية اللازمة للمحاسبة، وتُعاد محاولة إزالة الملفات تلقائياً عند تعطل التخزين.',
             icon: Icons.delete_forever_rounded,
           ),
           const FeaturePanel(
@@ -108,28 +135,37 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
               children: [
                 _DangerPoint('لن تتمكن من استعادة حسابك بعد الحذف.'),
                 _DangerPoint('ستُحذف جميع طلباتك ومستنداتك ورسائلك.'),
-                _DangerPoint('سيتم إلغاء ربط أولياء الأمور وأي مستخدمين مرتبطين.'),
+                _DangerPoint(
+                    'سيتم إلغاء ربط أولياء الأمور وأي مستخدمين مرتبطين.'),
               ],
             ),
           ),
           FeaturePanel(
             title: 'تأكيد هويتك',
-            subtitle: 'أدخل كلمة مرورك الحالية للمتابعة.',
+            subtitle: _hasPassword
+                ? 'أدخل كلمة مرورك الحالية للمتابعة.'
+                : 'أكد هويتك برمز يُرسل إلى بريد حسابك.',
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  if (!_hasPassword)
+                    TextButton(
+                      onPressed: _sendingCode || _busy ? null : _sendCode,
+                      child: Text(_sendingCode
+                          ? 'جارٍ إرسال الرمز...'
+                          : 'إرسال رمز التأكيد'),
+                    ),
                   SecureTextField(
                     controller: _passwordCtrl,
-                    obscureText: true,
+                    obscureText: _hasPassword,
                     decoration: InputDecoration(
-                      labelText: 'كلمة المرور',
+                      labelText: _hasPassword ? 'كلمة المرور' : 'رمز التأكيد',
                       prefixIcon: const Icon(Icons.lock_outline_rounded),
-                      
                     ),
                     validator: (v) =>
-                        (v == null || v.isEmpty) ? 'كلمة المرور مطلوبة' : null,
+                        (v == null || v.isEmpty) ? 'أدخل بيانات التأكيد' : null,
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _busy ? null : _submit(),
                   ),

@@ -275,10 +275,10 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('University B'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('مقارنة (2)'));
+      await tester.tap(find.text('Compare (2)'));
       await tester.pumpAndSettle();
-      expect(find.text('قارن قبل أن تختار'), findsOneWidget);
-      expect(find.text('تعديل الاختيار'), findsOneWidget);
+      expect(find.text('Compare before you choose'), findsOneWidget);
+      expect(find.text('Edit selection'), findsOneWidget);
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getStringList('compare_universities_guest'), ['a', 'b']);
       expect(tester.takeException(), isNull);

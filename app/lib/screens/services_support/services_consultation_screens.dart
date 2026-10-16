@@ -11,7 +11,6 @@ import '../../core/config/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
 import '../../core/repositories/catalog_repository.dart';
-import '../../core/services/notification_scheduler.dart';
 import '../../core/services/analytics_service.dart';
 import 'dart:async';
 import '../../core/repositories/student_repository.dart';
@@ -609,17 +608,6 @@ class _ConsultationConfirmationScreenState
     super.initState();
     AnalyticsService.instance.consultationBooked(
         '${slot['advisor']?['_id'] ?? slot['advisorId'] ?? 'unknown'}');
-  }
-
-  void _scheduleReminder() {
-    final id = '${slot['_id'] ?? slot['bookingId'] ?? ''}';
-    final startsAt = DateTime.tryParse('${slot['startsAt'] ?? ''}');
-    if (id.isEmpty || startsAt == null) return;
-    NotificationScheduler.instance.scheduleConsultation(
-      id: id,
-      title: 'تذكير: استشارتك بعد ساعة',
-      at: startsAt,
-    );
   }
 
   String _formatDate(BuildContext ctx, dynamic raw) {

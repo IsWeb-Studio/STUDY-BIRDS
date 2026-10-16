@@ -1,7 +1,6 @@
 import '../../core/utils/json_safe.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';

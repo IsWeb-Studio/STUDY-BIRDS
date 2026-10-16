@@ -473,36 +473,6 @@ class _AlumniNetworkScreenState extends State<AlumniNetworkScreen> {
       ];
 }
 
-class _InfoCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String body;
-  const _InfoCard(
-      {required this.icon, required this.title, required this.body});
-  @override
-  Widget build(BuildContext context) => AppCard(
-        child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-                color: AppColors.navy.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(10)),
-            child: Icon(icon, color: AppColors.navy, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-              child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                Text(title, style: AppTextStyles.cardTitle),
-                const SizedBox(height: 4),
-                Text(body, style: AppTextStyles.body),
-              ])),
-        ]),
-      );
-}
-
 class _TappableInfoCard extends StatelessWidget {
   final IconData icon;
   final String title;
