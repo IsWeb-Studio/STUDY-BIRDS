@@ -1,3 +1,4 @@
+import '../../core/widgets/bird_points.dart';
 import '../community/student_profile_link.dart';
 import 'dart:async';
 import 'dart:typed_data';
@@ -233,26 +234,6 @@ class _StudentStoriesState extends State<StudentStories>
                 child: Text('يوميات الطلاب',
                     style:
                         TextStyle(fontWeight: FontWeight.bold, fontSize: 17))),
-            if (p != null)
-              TextButton.icon(
-                  onPressed: () => showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      showDragHandle: true,
-                      builder: (_) => StoryProgressSheet(
-                          progress: p,
-                          onPost: () {
-                            Navigator.pop(context);
-                            _compose();
-                          })),
-                  icon: Icon(
-                      p.state == 'ice_cold'
-                          ? Icons.ac_unit
-                          : Icons.local_fire_department,
-                      color: p.state == 'ice_cold'
-                          ? Colors.lightBlue
-                          : Colors.deepOrange),
-                  label: Text('${p.days}  •  ${p.points} نقطة')),
             IconButton(
                 onPressed: _refreshing ? null : () => _load(),
                 icon: const Icon(Icons.refresh),
@@ -402,7 +383,7 @@ class StoryProgressSheet extends StatelessWidget {
                           ? 'فتحت الحلقة البنفسجية 💜'
                           : p.points >= 10000
                               ? 'فتحت الحلقة البرتقالية 🟠'
-                              : 'اجمع 10,000 نقطة لفتح الحلقة البرتقالية',
+                              : 'اجمع 10,000 لفتح الحلقة البرتقالية',
                   textAlign: TextAlign.center),
               const SizedBox(height: 12),
               LinearProgressIndicator(
@@ -411,27 +392,34 @@ class StoryProgressSheet extends StatelessWidget {
                   borderRadius: BorderRadius.circular(10),
                   color: Colors.orange),
               const SizedBox(height: 10),
-              Text('${p.points} / 10,000',
-                  textDirection: TextDirection.ltr,
+              BirdPoints('${p.points} / 10,000',
                   style: const TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 18),
               if (p.points >= 10000)
                 Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: Text(
-                        p.points >= 200000
-                            ? 'شارة إنجاز شكلية للمميزين بالنقاط'
-                            : p.points >= 100000
-                                ? '${p.points} / 200,000 نقطة • الشارة الشكلية القادمة'
-                                : '${p.points} / 100,000 نقطة • الحلقة البنفسجية القادمة',
-                        textAlign: TextAlign.center)),
+                    child: Column(mainAxisSize: MainAxisSize.min, children: [
+                      if (p.points < 200000)
+                        BirdPoints(
+                            '${p.points} / ${p.points >= 100000 ? '200,000' : '100,000'}'),
+                      Text(
+                          p.points >= 200000
+                              ? 'شارة إنجاز شكلية للمميزين بالنقاط'
+                              : p.points >= 100000
+                                  ? 'الشارة الشكلية القادمة'
+                                  : 'الحلقة البنفسجية القادمة',
+                          textAlign: TextAlign.center)
+                    ])),
               ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(
                       p.posted ? Icons.check_circle : Icons.add_circle_outline,
                       color: Colors.blue),
                   title: const Text('انشر ستوري اليوم'),
-                  subtitle: const Text('+100 نقطة لأول ستوري فقط'),
+                  subtitle: const Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      children: [BirdPoints('+100'), Text('لأول ستوري فقط')]),
                   trailing: p.posted
                       ? const Text('تم ✓')
                       : TextButton(
@@ -440,25 +428,45 @@ class StoryProgressSheet extends StatelessWidget {
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.favorite, color: Colors.pink),
                   title: const Text('اعمل لاف لزمايلك'),
-                  subtitle: const Text('+5 لكل لاف • أول 10 يوميًا'),
+                  subtitle: const Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      children: [
+                        BirdPoints('+5'),
+                        Text('لكل لاف • أول 10 يوميًا')
+                      ]),
                   trailing: Text('${p.loves} / 10')),
               const ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(Icons.favorite_border, color: Colors.orange),
                   title: Text('استقبل لاف من زميل'),
-                  subtitle: Text('+50 لكل طالب مختلف على نفس الستوري')),
+                  subtitle: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      children: [
+                        BirdPoints('+50'),
+                        Text('لكل طالب مختلف على نفس الستوري')
+                      ])),
               ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.sports_esports,
                       color: Colors.deepPurple),
                   title: const Text('العب الغمّازة اليوم'),
-                  subtitle:
-                      const Text('+10 نقاط مرة واحدة يوميًا عند بدء اللعب'),
+                  subtitle: const Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      children: [
+                        BirdPoints('+10'),
+                        Text('مرة واحدة يوميًا عند بدء اللعب')
+                      ]),
                   trailing: Text(p.playedToday ? 'تم ✓' : '+10')),
               ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.emoji_events, color: Colors.orange),
-                  title: const Text('بونص الاستمرارية +300'),
+                  title: const Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      children: [Text('بونص الاستمرارية'), BirdPoints('+300')]),
                   subtitle: Text(
                       'كل 7 أيام متتالية • ${p.days % 7} / 7 للدورة القادمة')),
               const SizedBox(height: 8),

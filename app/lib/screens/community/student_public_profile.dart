@@ -1,3 +1,4 @@
+import '../../core/widgets/bird_points.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/repositories/friends_repository.dart';
@@ -149,15 +150,18 @@ class _StudentPublicProfileScreenState
     }
   }
 
-  Widget _stat(String value, String label) => Expanded(
+  Widget _stat(String value, String label, {Widget? icon}) => Expanded(
           child: Column(children: [
         SizedBox(
             height: 32,
             child: FittedBox(
                 fit: BoxFit.scaleDown,
-                child: Text(value,
-                    style: const TextStyle(
-                        fontSize: 23, fontWeight: FontWeight.bold)))),
+                child: Row(mainAxisSize: MainAxisSize.min, children: [
+                  if (icon != null) ...[icon, const SizedBox(width: 4)],
+                  Text(value,
+                      style: const TextStyle(
+                          fontSize: 23, fontWeight: FontWeight.bold))
+                ]))),
         const SizedBox(height: 3),
         Text(label,
             style: const TextStyle(fontSize: 12, color: Colors.blueGrey)),
@@ -274,8 +278,8 @@ class _StudentPublicProfileScreenState
                                       child: Chip(label: Text('ملفك العام'))),
                                 const SizedBox(height: 22),
                                 Row(children: [
-                                  _stat('${p['scoreEmoji'] ?? '🔥'} $points',
-                                      'النقاط'),
+                                  _stat('$points', 'السكور',
+                                      icon: const BirdPointsIcon()),
                                   _stat('${p['streak_days'] ?? 0}',
                                       'أيام متتالية'),
                                   _stat('${p['friendCount'] ?? 0}', 'الأصدقاء')

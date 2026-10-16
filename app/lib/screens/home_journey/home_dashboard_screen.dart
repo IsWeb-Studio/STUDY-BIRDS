@@ -38,7 +38,6 @@ import '../visa_travel_accommodation/visa_travel_screens.dart'
         TravelCenterScreen;
 import 'smart_home_sections.dart';
 import 'student_banner_carousel.dart';
-import '../stories/student_stories.dart';
 
 /// Real, live Home Dashboard — fetches GET /api/students/overview on load.
 class HomeDashboardScreen extends StatefulWidget {
@@ -608,8 +607,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         ),
 
         // ── Journey card(s) ───────────────────────────────────────────────────
-        StudentStories(isActive: widget.isActive),
-
         _buildJourneySection(context, overview, currentStage, journeyPathLabel,
             progress, homeStatus),
 

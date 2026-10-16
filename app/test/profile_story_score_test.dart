@@ -1,3 +1,5 @@
+import 'package:study_birds/core/widgets/bird_points.dart';
+import 'package:study_birds/screens/stories/student_stories.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -9,44 +11,38 @@ import 'package:study_birds/screens/profile_account/profile_story_score.dart';
 import 'package:study_birds/screens/profile_account/profile_account_screens.dart';
 
 void main() {
-  testWidgets('score emoji is saved to the account and restored when reopened',
+  testWidgets('fixed bird badge opens progress instead of an emoji selector',
       (tester) async {
     AuthSession.instance.token = 'score-test';
     addTearDown(() => AuthSession.instance.token = null);
-    var emoji = '🔥';
-    var saves = 0;
+    final writes = <String>[];
     await http.runWithClient(() async {
       await tester.pumpWidget(
           const MaterialApp(home: Scaffold(body: ProfileStoryScore())));
       await tester.pumpAndSettle();
       expect(find.text('6500'), findsOneWidget);
-      await tester.tap(find.text('🔥'));
+      expect(find.byType(BirdPointsIcon), findsOneWidget);
+      await tester.tap(find.byType(ProfileStoryScore));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('💎'));
-      await tester.pumpAndSettle();
-      expect(saves, 1);
-      expect(find.text('💎'), findsOneWidget);
-      await tester.pumpWidget(const SizedBox());
-      await tester.pumpWidget(
-          const MaterialApp(home: Scaffold(body: ProfileStoryScore())));
-      await tester.pumpAndSettle();
-      expect(find.text('💎'), findsOneWidget);
-      expect(find.text('6500'), findsOneWidget);
+      expect(find.byType(StoryProgressSheet), findsOneWidget);
+      expect(find.text('6500 / 10,000'), findsOneWidget);
+      expect(find.text('7'), findsOneWidget);
+      expect(find.byType(OutlinedButton), findsNothing);
+      expect(writes, isEmpty);
+      expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },
         () => MockClient((request) async {
-              if (request.method == 'PUT') {
-                expect(request.url.path, '/api/stories/preferences');
-                final body = jsonDecode(request.body) as Map;
-                expect(body.keys, ['scoreEmoji']);
-                emoji = body['scoreEmoji'] as String;
-                saves++;
-              }
+              if (request.method != 'GET') writes.add(request.url.path);
               return http.Response(
-                  jsonEncode({'total_points': 6500, 'scoreEmoji': emoji}), 200,
+                  jsonEncode({
+                    'total_points': 6500,
+                    'streak_days': 7,
+                    'scoreEmoji': '\u{1f48e}'
+                  }),
+                  200,
                   headers: {'content-type': 'application/json; charset=utf-8'});
             }));
-    expect(tester.takeException(), isNull);
   });
 
   testWidgets(
@@ -83,7 +79,7 @@ void main() {
     },
         () => MockClient((request) async => http.Response(
             jsonEncode(request.url.path.endsWith('/stories/progress')
-              ? {'total_points': 200000, 'scoreEmoji': '🔥'}
+                ? {'total_points': 200000, 'scoreEmoji': '🔥'}
                 : {'phone': '123', 'nationality': 'Turkey'}),
             200,
             headers: {'content-type': 'application/json; charset=utf-8'})));

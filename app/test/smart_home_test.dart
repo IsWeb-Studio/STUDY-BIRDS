@@ -1,3 +1,4 @@
+import 'package:study_birds/screens/stories/student_stories.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -140,14 +141,14 @@ void main() {
   setUp(() => AuthSession.instance.token = 'test');
   tearDown(() => AuthSession.instance.token = null);
 
-  testWidgets(
-      'smart home: greeting, journey, progress and next step',
+  testWidgets('smart home: greeting, journey, progress and next step',
       (tester) async {
     phone(tester);
     await http.runWithClient(() async {
       await tester.pumpWidget(
           const MaterialApp(home: HomeDashboardScreen(embedInShell: true)));
       await tester.pumpAndSettle();
+      expect(find.byType(StudentStories), findsNothing);
       expect(find.text('مرحباً أحمد'), findsOneWidget);
       expect(find.text('Turkey - Istanbul - Physiotherapy'), findsOneWidget);
       expect(find.text('47%'), findsOneWidget);
