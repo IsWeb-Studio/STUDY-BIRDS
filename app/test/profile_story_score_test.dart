@@ -11,6 +11,35 @@ import 'package:study_birds/screens/profile_account/profile_story_score.dart';
 import 'package:study_birds/screens/profile_account/profile_account_screens.dart';
 
 void main() {
+  testWidgets('profile back arrow returns to the page that opened it',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await http.runWithClient(() async {
+      await tester.pumpWidget(MaterialApp(
+        home: Builder(
+            builder: (context) => Scaffold(
+                  body: TextButton(
+                    onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) => const ProfileScreen())),
+                    child: const Text('Open profile'),
+                  ),
+                )),
+      ));
+      await tester.tap(find.text('Open profile'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BackButton), findsOneWidget);
+      await tester.tap(find.byType(BackButton));
+      await tester.pumpAndSettle();
+      expect(find.byType(ProfileScreen), findsNothing);
+      expect(find.text('Open profile'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+        () => MockClient((_) async => http.Response('{}', 200,
+            headers: {'content-type': 'application/json; charset=utf-8'})));
+  });
+
   testWidgets('fixed bird badge opens progress instead of an emoji selector',
       (tester) async {
     AuthSession.instance.token = 'score-test';

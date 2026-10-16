@@ -171,7 +171,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     return AppScaffold(
       title: 'الملف الشخصي',
-      showBackButton: false,
+      showBackButton: true,
       actions: [
         IconButton(
           tooltip: 'الإعدادات',
