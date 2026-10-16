@@ -53,10 +53,15 @@ test('stories: authorization, concurrent rewards, durable replay, seen, expiry a
     const extra = await Promise.all([post(), post()]);
     extra.forEach(r => assert.equal(r.status, 201));
     assert.equal((await call('GET', '/progress')).data.streak_days, 1);
-    assert.equal((await call('POST', `/${id}/love`, 0)).status, 403);
+    const selfLoves = await Promise.all(Array.from({ length: 4 }, () => call('POST', `/${id}/love`, 0)));
+    selfLoves.forEach(r => { assert.equal(r.status, 200); assert.equal(r.data.awarded, 0); });
+    assert.equal((await Story.findById(id)).loveCount, 1);
+    const selfProgress = (await call('GET', '/progress', 0)).data;
+    assert.equal(selfProgress.total_points, 100);
+    assert.equal(selfProgress.dailyLoveCount, 0);
     const loves = await Promise.all(Array.from({ length: 5 }, () => call('POST', `/${id}/love`, 1)));
     loves.forEach(r => assert.equal(r.status, 200, JSON.stringify(r)));
-    assert.equal((await Story.findById(id)).loveCount, 1);
+    assert.equal((await Story.findById(id)).loveCount, 2);
     assert.equal((await call('GET', '/progress', 0)).data.total_points, 150);
     assert.equal((await call('GET', '/progress', 1)).data.total_points, 5);
     const different = await Promise.all([2, 3, 4, 5].map(i => call('POST', `/${id}/love`, i)));

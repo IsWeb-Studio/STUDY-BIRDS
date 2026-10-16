@@ -9,6 +9,10 @@ import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/services/currency_service.dart';
+import '../../core/repositories/stories_repository.dart';
+import '../../core/services/realtime_sync_service.dart';
+import '../../core/widgets/bird_points.dart';
+import 'dart:async';
 
 // ─── بند 53: مكافآت الطالب ────────────────────────────────────────────────────
 
@@ -19,6 +23,10 @@ class StudentRewardsScreen extends StatefulWidget {
 }
 
 class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
+  StoryProgress? _storyProgress;
+  int? _pointsChange;
+  bool _syncing = false;
+  StreamSubscription<DateTime>? _subscription;
   int _totalPoints = 0;
   List<dynamic> _entries = [];
   bool _loading = true;
@@ -28,6 +36,38 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
   void initState() {
     super.initState();
     _load();
+    _loadStoryProgress();
+    _subscription = RealtimeSyncService.instance.onTick.listen((_) {
+      if (mounted && (ModalRoute.isCurrentOf(context) ?? true)) {
+        _loadStoryProgress();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadStoryProgress() async {
+    if (_syncing) return;
+    _syncing = true;
+    try {
+      final progress = await StoriesRepository.instance.progress();
+      if (!mounted) return;
+      setState(() {
+        if (_storyProgress != null &&
+            progress.points != _storyProgress!.points) {
+          _pointsChange = progress.points - _storyProgress!.points;
+        }
+        _storyProgress = progress;
+      });
+    } catch (_) {
+      // Keep the last confirmed balance while the network reconnects.
+    } finally {
+      _syncing = false;
+    }
   }
 
   Future<void> _load() async {
@@ -47,7 +87,9 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
         _entries = Json.listOrNull(map['entries']) ?? [];
       });
     } catch (e) {
-      if (mounted) setState(() => _error = 'تعذر تحميل المكافآت. أعد المحاولة.');
+      if (mounted) {
+        setState(() => _error = 'تعذر تحميل المكافآت. أعد المحاولة.');
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -57,7 +99,9 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
   Widget build(BuildContext context) => AppScaffold(
         title: 'مكافآتي',
         body: RefreshIndicator(
-          onRefresh: _load,
+          onRefresh: () async {
+            await Future.wait([_load(), _loadStoryProgress()]);
+          },
           color: AppColors.navy,
           child: _loading
               ? const LoadingState(message: 'جاري تحميل المكافآت...')
@@ -65,8 +109,33 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
                   ? ErrorState(message: _error!, onRetry: _load)
                   : ListView(
                       padding: const EdgeInsets.all(16),
-                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics()),
                       children: [
+                        AppCard(
+                            child: Column(children: [
+                          const Text('نقاط النشاط والستريك',
+                              style: AppTextStyles.cardTitle),
+                          const SizedBox(height: 12),
+                          if (_storyProgress == null)
+                            TextButton(
+                                onPressed: _loadStoryProgress,
+                                child: const Text('تحميل رصيد النشاط'))
+                          else ...[
+                            BirdPoints('${_storyProgress!.points}',
+                                style: const TextStyle(
+                                    fontSize: 36, fontWeight: FontWeight.bold)),
+                            Text('🔥 ${_storyProgress!.days} يوم متتالي'),
+                            if (_pointsChange != null)
+                              Text(
+                                  '${_pointsChange! > 0 ? '+' : ''}$_pointsChange',
+                                  style: TextStyle(
+                                      color: _pointsChange! > 0
+                                          ? AppColors.success
+                                          : Colors.red)),
+                          ],
+                        ])),
+                        const SizedBox(height: 16),
                         _PointsSummaryCard(totalPoints: _totalPoints),
                         const SizedBox(height: 20),
                         if (_entries.isEmpty)

@@ -133,14 +133,17 @@ router.post('/:id/love', asyncHandler(async (req, res) => {
     const story = await Story.findOne({ _id: req.params.id, expiresAt: { $gt: new Date(now) } }).session(session);
     if (!story) fail(404, 'Story expired');
     if (!await canReadStory(req.user._id, story.author, session)) fail(404, 'Story unavailable');
-    if (String(story.author) === String(req.user._id)) fail(403, 'Cannot love your own story');
+    const selfLove = String(story.author) === String(req.user._id);
     const edge = await StoryInteraction.findOneAndUpdate({ story: story._id, user: req.user._id }, { $setOnInsert: { story: story._id, user: req.user._id } }, { upsert: true, new: true, session });
     const giver = await statsFor(req.user._id, session);
     if (edge.lovedAt) return { loved: true, loveCount: story.loveCount, awarded: 0, progress: rules.progress(giver, now) };
     edge.lovedAt = new Date(now); await edge.save({ session });
-    const owner = await statsFor(story.author, session);
-    owner.total_points += 50; await owner.save({ session });
-    const awarded = rules.loveReward(giver, now); await giver.save({ session });
+    let awarded = 0;
+    if (!selfLove) {
+      const owner = await statsFor(story.author, session);
+      owner.total_points += 50; await owner.save({ session });
+      awarded = rules.loveReward(giver, now); await giver.save({ session });
+    }
     story.loveCount++; await story.save({ session });
     return { loved: true, loveCount: story.loveCount, awarded, progress: rules.progress(giver, now) };
   });

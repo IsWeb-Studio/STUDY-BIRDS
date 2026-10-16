@@ -515,21 +515,17 @@ class _StoryComposerState extends State<StoryComposer> {
     super.dispose();
   }
 
-  Future<void> _pick({bool video = false}) async {
+  Future<void> _pick() async {
     if (_picking || _busy) return;
     setState(() => _picking = true);
     VideoPlayerController? candidate;
     try {
-      final image = video
-          ? await ImagePicker().pickVideo(
-              source: ImageSource.gallery,
-              maxDuration: const Duration(seconds: 60))
-          : await ImagePicker().pickImage(
-              source: ImageSource.gallery,
-              maxWidth: 1600,
-              maxHeight: 2000,
-              imageQuality: 85);
+      final image = await ImagePicker()
+          .pickMedia(maxWidth: 1600, maxHeight: 2000, imageQuality: 85);
       if (image == null) return;
+      final video = (image.mimeType ?? '').startsWith('video/') ||
+          RegExp(r'\.(mp4|mov|m4v|webm|3gp|mkv|avi)$', caseSensitive: false)
+              .hasMatch(image.name);
       if (await image.length() > (video ? 25 : 5) * 1024 * 1024) {
         throw Exception(video
             ? 'حجم الفيديو أكبر من 25 ميجابايت'
@@ -652,11 +648,7 @@ class _StoryComposerState extends State<StoryComposer> {
           OutlinedButton.icon(
               onPressed: _busy || _picking ? null : () => _pick(),
               icon: const Icon(Icons.photo_library_outlined),
-              label: const Text('اختيار صورة')),
-          OutlinedButton.icon(
-              onPressed: _busy || _picking ? null : () => _pick(video: true),
-              icon: const Icon(Icons.video_library_outlined),
-              label: const Text('اختيار فيديو')),
+              label: const Text('اختيار صورة أو فيديو')),
           const Text('فيديو MP4 أو MOV • حتى دقيقة واحدة و25 ميجابايت',
               textAlign: TextAlign.center),
           if (_picking) const LinearProgressIndicator(),

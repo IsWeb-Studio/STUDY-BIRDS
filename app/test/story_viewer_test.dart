@@ -54,6 +54,28 @@ void main() {
     expect(StoryViewer(stories: [story('a')], onSeen: (_) {}).storyDuration,
         const Duration(seconds: 5));
   });
+  testWidgets('own story accepts a love through the same wide button',
+      (tester) async {
+    final previous = AuthSession.instance.currentUser;
+    AuthSession.instance.currentUser = const AuthUser(
+        id: 'other', name: 'Me', email: 'me@example.test', role: UserRole.student);
+    addTearDown(() => AuthSession.instance.currentUser = previous);
+    var calls = 0;
+    await http.runWithClient(() async {
+      await open(tester, [story('self')]);
+      await tester.tap(find.byKey(const ValueKey('story-love-button')));
+      await tester.pump();
+      expect(calls, 1);
+      expect(find.byIcon(Icons.favorite), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    }, () => MockClient((req) async {
+      if (req.url.path.endsWith('/love')) {
+        calls++;
+        return json({'loveCount': 1, 'awarded': 0});
+      }
+      return json({'seen': true});
+    }));
+  });
   testWidgets(
       'double tap sends one love without advancing and keeps a small icon with a wide target',
       (tester) async {

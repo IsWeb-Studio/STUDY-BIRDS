@@ -4,7 +4,6 @@ import 'dart:math' show max;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../../core/repositories/stories_repository.dart';
-import '../../core/services/auth_session.dart';
 
 class StoryViewer extends StatefulWidget {
   final List<StudentStory> stories;
@@ -241,8 +240,7 @@ class _StoryViewerState extends State<StoryViewer>
     if (_busy ||
         !story.expiresAt.isAfter(DateTime.now()) ||
         story.loved ||
-        _loved.contains(story.id) ||
-        story.authorId == AuthSession.instance.currentUser?.id) {
+        _loved.contains(story.id)) {
       return;
     }
     final previous = _counts[story.id] ?? story.loveCount;
@@ -406,13 +404,7 @@ class _StoryViewerState extends State<StoryViewer>
                                   horizontal: 36, vertical: 22),
                               backgroundColor:
                                   Colors.pinkAccent.withValues(alpha: .14)),
-                          onPressed: expired ||
-                                  loved ||
-                                  _busy ||
-                                  story.authorId ==
-                                      AuthSession.instance.currentUser?.id
-                              ? null
-                              : _love,
+                          onPressed: expired || loved || _busy ? null : _love,
                           icon: Icon(
                               loved ? Icons.favorite : Icons.favorite_border,
                               color: Colors.pinkAccent,
