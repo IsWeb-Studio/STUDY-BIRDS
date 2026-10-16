@@ -7,7 +7,7 @@ import 'screens/home_journey/home_dashboard_screen.dart';
 import 'screens/home_journey/journey_tracker_screen.dart';
 import 'screens/universities_programs_countries/explore_hub_screen.dart';
 import 'screens/services_support/services_consultation_screens.dart';
-import 'screens/profile_account/profile_account_screens.dart';
+import 'screens/community/student_community_hub.dart';
 import 'screens/games/wink_screen.dart';
 import 'screens/games/wink_style.dart';
 
@@ -16,7 +16,7 @@ const int kTabHome = 0;
 const int kTabJourney = 1;
 const int kTabExplore = 2;
 const int kTabServices = 3;
-const int kTabProfile = 4;
+const int kTabCommunity = 4;
 const int kTabGame = 5;
 
 /// Switch the main bottom nav to [index] from anywhere in the app.
@@ -52,7 +52,10 @@ class _StudentAppShellState extends State<StudentAppShell> {
             icon: Icons.miscellaneous_services_outlined,
             label: context.l10n.tabServices),
         _NavItemData(
-            icon: Icons.person_outline_rounded, label: context.l10n.tabProfile),
+            icon: Icons.forum_outlined,
+            label: Localizations.localeOf(context).languageCode == 'ar'
+                ? 'مجتمع الطلاب'
+                : 'Community'),
         _NavItemData(
             icon: Icons.sports_esports_outlined,
             label: Localizations.localeOf(context).languageCode == 'ar'
@@ -80,7 +83,7 @@ class _StudentAppShellState extends State<StudentAppShell> {
       JourneyTrackerScreen(isActive: _index == kTabJourney),
       const ExploreHubScreen(),
       const ServicesCenterScreen(),
-      ProfileScreen(isActive: _index == kTabProfile),
+      StudentCommunityHub(isActive: _index == kTabCommunity),
       WinkScreen(
           isActive: _index == kTabGame,
           embedInShell: true,
@@ -213,7 +216,7 @@ class _AnimatedBottomNav extends StatelessWidget {
                                         : AppColors.textSecondary,
                                   ),
                                   child: Text(item.label,
-                                      maxLines: 1,
+                                      maxLines: i == kTabCommunity ? 2 : 1,
                                       overflow: TextOverflow.ellipsis,
                                       textAlign: TextAlign.center),
                                 ),
@@ -281,7 +284,7 @@ class _AnimatedBottomNav extends StatelessWidget {
                                               size: 23)),
                                       const SizedBox(height: 3),
                                       Text(item.label,
-                                          maxLines: 1,
+                                          maxLines: i == kTabCommunity ? 2 : 1,
                                           overflow: TextOverflow.ellipsis,
                                           style: TextStyle(
                                               fontSize: 10,

@@ -94,7 +94,7 @@ void main() {
     await tester.pump();
     expect(find.byType(NavigationRail), findsNothing);
     expect(find.byType(AdaptiveBottomBar), findsOneWidget);
-    await tester.tap(find.text('حسابي').last);
+    await tester.tap(find.byKey(const ValueKey('main-tab-4')));
     await tester.pump();
     expect(tester.takeException(), isNull);
   });

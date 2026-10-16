@@ -607,20 +607,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         ),
 
         // ── Journey card(s) ───────────────────────────────────────────────────
-        Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Card(
-                child: ListTile(
-                    leading:
-                        const Icon(Icons.forum_outlined, color: AppColors.navy),
-                    title: const Text(
-                        '\u0645\u062c\u062a\u0645\u0639 \u0627\u0644\u0637\u0644\u0627\u0628',
-                        style: TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: const Text(
-                        '\u0627\u0644\u0633\u062a\u0648\u0631\u064a\u0627\u062a \u0648\u0627\u0644\u0645\u062d\u0627\u062f\u062b\u0627\u062a'),
-                    trailing: const Icon(Icons.chevron_left),
-                    onTap: () => _openDestination('community')))),
-
         _buildJourneySection(context, overview, currentStage, journeyPathLabel,
             progress, homeStatus),
 

@@ -97,7 +97,8 @@ class _CommunityEntryState extends State<CommunityEntry> {
 }
 
 class StudentCommunityHub extends StatefulWidget {
-  const StudentCommunityHub({super.key});
+  final bool isActive;
+  const StudentCommunityHub({super.key, this.isActive = true});
   @override
   State<StudentCommunityHub> createState() => _StudentCommunityHubState();
 }
@@ -108,10 +109,12 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
   String? _cursor;
   bool _busy = false, _loading = true, _opening = false;
   bool _mutating = false;
+  bool _activated = false;
   int _revision = 0;
   String? _error;
   Timer? _timer;
   bool get _visible =>
+      widget.isActive &&
       (ModalRoute.isCurrentOf(context) ?? true) &&
       (WidgetsBinding.instance.lifecycleState == null ||
           WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed);
@@ -119,7 +122,8 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _load();
+    _activated = widget.isActive;
+    if (widget.isActive) _load();
     _timer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (_visible) _load(quiet: true);
     });
@@ -133,12 +137,25 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
   }
 
   @override
+  void didUpdateWidget(covariant StudentCommunityHub oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive && !oldWidget.isActive) {
+      _activated = true;
+      _load();
+    }
+  }
+
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) _load(quiet: true);
+    if (state == AppLifecycleState.resumed && widget.isActive) {
+      _load(quiet: true);
+    }
   }
 
   Future<void> _load({bool quiet = false, bool more = false}) async {
-    if (_busy || _mutating || (more && _cursor == null)) return;
+    if (!widget.isActive || _busy || _mutating || (more && _cursor == null)) {
+      return;
+    }
     final revision = _revision;
     _busy = true;
     try {
@@ -340,87 +357,94 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-      appBar: AppBar(title: const Text('المجتمع'), actions: [
-        IconButton(
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const StudentCommunityScreen())),
-            icon: const Icon(Icons.feed_outlined),
-            tooltip: 'المنشورات'),
-        IconButton(
-            onPressed: _newChat,
-            icon: const Icon(Icons.edit_square),
-            tooltip: 'محادثة جديدة')
-      ]),
-      body: RefreshIndicator(
-          onRefresh: () => _load(),
-          child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              children: [
-                const StudentStories(showCommunityButton: false),
-                Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(children: [
-                      const Expanded(
-                          child: Text('المحادثات',
+  Widget build(BuildContext context) => !_activated
+      ? const SizedBox.shrink()
+      : Scaffold(
+          appBar: AppBar(title: const Text('المجتمع'), actions: [
+            IconButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const StudentCommunityScreen())),
+                icon: const Icon(Icons.feed_outlined),
+                tooltip: 'المنشورات'),
+            IconButton(
+                onPressed: _newChat,
+                icon: const Icon(Icons.edit_square),
+                tooltip: 'محادثة جديدة')
+          ]),
+          body: RefreshIndicator(
+              onRefresh: () => _load(),
+              child: ListView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  children: [
+                    StudentStories(
+                        showCommunityButton: false, isActive: widget.isActive),
+                    Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(children: [
+                          const Expanded(
+                              child: Text('المحادثات',
+                                  style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold))),
+                          TextButton.icon(
+                              onPressed: _newChat,
+                              icon: const Icon(Icons.add_comment_outlined),
+                              label: const Text('محادثة جديدة'))
+                        ])),
+                    if (_loading) const LinearProgressIndicator(),
+                    if (_error != null)
+                      TextButton(
+                          onPressed: () => _load(), child: Text(_error!)),
+                    if (!_loading && _error == null && _rows.isEmpty)
+                      const Padding(
+                          padding: EdgeInsets.all(32),
+                          child: Text(
+                              'لا توجد محادثات بعد. ابحث عن طالب وابدأ محادثة معه.',
+                              textAlign: TextAlign.center)),
+                    for (final row in _rows)
+                      ListTile(
+                          onTap: () => _open(row['contact']),
+                          onLongPress: () => _options(row),
+                          leading: StudentProfileLink(
+                              studentId: '${row['contact']['_id']}',
+                              child: CircleAvatar(
+                                  backgroundImage:
+                                      '${row['contact']['avatar'] ?? ''}'
+                                              .isEmpty
+                                          ? null
+                                          : NetworkImage(
+                                              '${row['contact']['avatar']}'),
+                                  child: '${row['contact']['avatar'] ?? ''}'
+                                          .isEmpty
+                                      ? const Icon(Icons.person_outline)
+                                      : null)),
+                          title: Text('${row['contact']['name']}',
                               style: TextStyle(
-                                  fontSize: 20, fontWeight: FontWeight.bold))),
-                      TextButton.icon(
-                          onPressed: _newChat,
-                          icon: const Icon(Icons.add_comment_outlined),
-                          label: const Text('محادثة جديدة'))
-                    ])),
-                if (_loading) const LinearProgressIndicator(),
-                if (_error != null)
-                  TextButton(onPressed: () => _load(), child: Text(_error!)),
-                if (!_loading && _error == null && _rows.isEmpty)
-                  const Padding(
-                      padding: EdgeInsets.all(32),
-                      child: Text(
-                          'لا توجد محادثات بعد. ابحث عن طالب وابدأ محادثة معه.',
-                          textAlign: TextAlign.center)),
-                for (final row in _rows)
-                  ListTile(
-                      onTap: () => _open(row['contact']),
-                      onLongPress: () => _options(row),
-                      leading: StudentProfileLink(
-                          studentId: '${row['contact']['_id']}',
-                          child: CircleAvatar(
-                              backgroundImage:
-                                  '${row['contact']['avatar'] ?? ''}'.isEmpty
-                                      ? null
-                                      : NetworkImage(
-                                          '${row['contact']['avatar']}'),
-                              child: '${row['contact']['avatar'] ?? ''}'.isEmpty
-                                  ? const Icon(Icons.person_outline)
-                                  : null)),
-                      title: Text('${row['contact']['name']}',
-                          style: TextStyle(
-                              fontWeight: (row['unreadCount'] as num) > 0
-                                  ? FontWeight.bold
-                                  : FontWeight.normal)),
-                      subtitle: Text(
-                          row['lastMessage']['deletedAt'] != null
-                              ? 'تم حذف الرسالة'
-                              : row['lastMessage']['imagePath'] != null
-                                  ? '📷 صورة'
-                                  : '${row['lastMessage']['body']}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis),
-                      trailing: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (row['muted'] == true)
-                              const Icon(Icons.notifications_off_outlined,
-                                  size: 15, color: Colors.blueGrey),
-                            Text(_time(row['lastMessage']['createdAt']),
-                                style: const TextStyle(fontSize: 11)),
-                            if ((row['unreadCount'] as num) > 0)
-                              Badge(label: Text('${row['unreadCount']}'))
-                          ])),
-                if (_cursor != null)
-                  TextButton(
-                      onPressed: () => _load(more: true),
-                      child: const Text('محادثات أقدم')),
-              ])));
+                                  fontWeight: (row['unreadCount'] as num) > 0
+                                      ? FontWeight.bold
+                                      : FontWeight.normal)),
+                          subtitle: Text(
+                              row['lastMessage']['deletedAt'] != null
+                                  ? 'تم حذف الرسالة'
+                                  : row['lastMessage']['imagePath'] != null
+                                      ? '📷 صورة'
+                                      : '${row['lastMessage']['body']}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis),
+                          trailing: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                if (row['muted'] == true)
+                                  const Icon(Icons.notifications_off_outlined,
+                                      size: 15, color: Colors.blueGrey),
+                                Text(_time(row['lastMessage']['createdAt']),
+                                    style: const TextStyle(fontSize: 11)),
+                                if ((row['unreadCount'] as num) > 0)
+                                  Badge(label: Text('${row['unreadCount']}'))
+                              ])),
+                    if (_cursor != null)
+                      TextButton(
+                          onPressed: () => _load(more: true),
+                          child: const Text('محادثات أقدم')),
+                  ])));
 }
