@@ -5,6 +5,8 @@ const storySchema = new Schema({
   operationId: { type: String, required: true },
   text: { type: String, maxlength: 1000, default: '' },
   imageUrl: { type: String, default: '' },
+  videoUrl: { type: String, default: '' },
+  videoDuration: { type: Number, default: 0 },
   loveCount: { type: Number, default: 0 },
   expiresAt: { type: Date, required: true },
 }, { timestamps: true });

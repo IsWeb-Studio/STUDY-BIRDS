@@ -8,6 +8,8 @@ const rules = require('../utils/storyRules');
 const upload = require('../middleware/uploadMiddleware');
 const { uploadFileToCloudinary } = require('../utils/uploadToCloudinary');
 const { friendIds, canReadStory } = require('../utils/storyAudience');
+const StoryVideo = require('../models/StoryVideo');
+const { parseVideo, validateVideo, uploadStoryVideo } = require('../utils/storyVideoUpload');
 router.use(protect, authorize('student'));
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 router.use(rateLimit({ windowMs: 60000, limit: 120, keyGenerator: req => String(req.user._id), standardHeaders: 'draft-7', legacyHeaders: false }));
@@ -64,7 +66,7 @@ router.get('/', asyncHandler(async (req, res) => {
   const balances = new Map(stats.map(s => [String(s.user), s.total_points]));
   const interactions = new Map(edges.map(e => [String(e.story), e]));
   res.json({ stories: page.filter(s => s.author).map(s => ({
-    id: String(s._id), text: s.text, imageUrl: s.imageUrl, createdAt: s.createdAt, expiresAt: s.expiresAt,
+    id: String(s._id), text: s.text, imageUrl: s.imageUrl, videoUrl: s.videoUrl || '', videoDuration: s.videoDuration || 0, createdAt: s.createdAt, expiresAt: s.expiresAt,
     loveCount: s.loveCount, seen: !!interactions.get(String(s._id))?.seenAt,
     loved: !!interactions.get(String(s._id))?.lovedAt,
     author: { id: String(s.author._id), name: s.author.name, avatar: s.author.avatar || '', total_points: balances.get(String(s.author._id)) || 0 },
@@ -75,9 +77,15 @@ router.post('/image', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: re
   const media = await uploadFileToCloudinary(req.file, `story-images/${req.user._id}`);
   res.json({ imageUrl: media.url });
 }));
+router.post('/video', rateLimit({ windowMs: 3600000, limit: 10, keyGenerator: req => String(req.user._id) }), parseVideo, asyncHandler(async (req, res) => {
+  validateVideo(req.file);
+  const media = await uploadStoryVideo(req.file, req.user._id);
+  await StoryVideo.create({ owner: req.user._id, url: media.videoUrl, duration: media.duration, expiresAt: new Date(Date.now() + 86400000) });
+  res.json(media);
+}));
 router.post('/', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => String(req.user._id) }), asyncHandler(async (req, res) => {
-  const { text = '', imageUrl = '', operationId } = req.body || {};
-  if (typeof operationId !== 'string' || !/^[A-Za-z0-9-]{8,100}$/.test(operationId) || typeof text !== 'string' || text.length > 1000 || typeof imageUrl !== 'string' || (!text.trim() && !imageUrl)) fail(400, 'Invalid story');
+  const { text = '', imageUrl = '', videoUrl = '', operationId } = req.body || {};
+  if (typeof operationId !== 'string' || !/^[A-Za-z0-9-]{8,100}$/.test(operationId) || typeof text !== 'string' || text.length > 1000 || typeof imageUrl !== 'string' || typeof videoUrl !== 'string' || (imageUrl && videoUrl) || (!text.trim() && !imageUrl && !videoUrl)) fail(400, 'Invalid story');
   if (imageUrl) {
     // Only accept this student's own uploaded Cloudinary images, never arbitrary URLs.
     let url; try { url = new URL(imageUrl); } catch { fail(400, 'Invalid image'); }
@@ -87,10 +95,13 @@ router.post('/', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => 
     const now = Date.now();
     const existing = await Story.findOne({ author: req.user._id, operationId }).session(session);
     if (existing) return { id: existing.id, progress: rules.progress(await statsFor(req.user._id, session), now), awarded: 0 };
+    const video = videoUrl ? await StoryVideo.findOne({ owner: req.user._id, url: videoUrl, expiresAt: { $gt: new Date(now) } }).session(session) : null;
+    if (videoUrl && !video) fail(400, 'Upload your own video first');
     const stats = await statsFor(req.user._id, session);
     const awarded = rules.postReward(stats, now);
     await stats.save({ session });
-    const [story] = await Story.create([{ author: req.user._id, operationId, text: text.trim(), imageUrl, expiresAt: new Date(now + 24 * rules.HOUR) }], { session });
+    const [story] = await Story.create([{ author: req.user._id, operationId, text: text.trim(), imageUrl, videoUrl,
+      videoDuration: video?.duration || 0, expiresAt: new Date(now + 24 * rules.HOUR) }], { session });
     return { id: story.id, progress: rules.progress(stats, now), awarded };
   });
   res.status(201).json(result);
