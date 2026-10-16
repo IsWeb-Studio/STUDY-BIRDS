@@ -19,7 +19,7 @@ const { REPORT_REASONS } = CommunityReport;
 const STUDENT_POST_FIELDS = "-moderationNote -moderatedBy -reportCount";
 const validId = (value) => typeof value === "string" && mongoose.isValidObjectId(value);
 const populatePost = (query) => query
-  .populate("author", "name").populate("country", "name").populate("university", "name").populate("studyField", "name");
+  .populate("author", "name avatar").populate("country", "name").populate("university", "name").populate("studyField", "name");
 
 // Suspended students can still read, but not post, comment or report.
 async function rejectIfSuspended(req, res) {
@@ -89,7 +89,7 @@ const getPost = asyncHandler(async (req, res) => {
   const post = await populatePost(CommunityPost.findOne({ _id: req.params.id, status: "published" }).select(STUDENT_POST_FIELDS)).lean();
   if (!post) return res.status(404).json({ message: "Post not found" });
   const comments = await CommunityComment.find({ post: post._id, status: "published" })
-    .select("-moderationNote -moderatedBy -reportCount").populate("author", "name").sort({ createdAt: 1 }).lean();
+    .select("-moderationNote -moderatedBy -reportCount").populate("author", "name avatar").sort({ createdAt: 1 }).lean();
   res.json({ post, comments });
 });
 
@@ -111,7 +111,7 @@ const createComment = asyncHandler(async (req, res) => {
   if (await rejectIfSuspended(req, res) || await rejectIfBlocked(res, body)) return;
   const comment = await CommunityComment.create({ post: post._id, author: req.user._id, body: body.trim() });
   await CommunityPost.updateOne({ _id: post._id }, { $inc: { commentCount: 1 } });
-  res.status(201).json(await CommunityComment.findById(comment._id).select("-moderationNote -moderatedBy -reportCount").populate("author", "name").lean());
+  res.status(201).json(await CommunityComment.findById(comment._id).select("-moderationNote -moderatedBy -reportCount").populate("author", "name avatar").lean());
 });
 
 const deleteOwnComment = asyncHandler(async (req, res) => {

@@ -24,7 +24,7 @@ test('community inbox is private, ordered by latest message, and tracks bounded 
       return { status: response.status, data: await response.json() };
     }
     const send = (from, to, body) => call('POST', '/messages', from, { recipient: users[to].id, body });
-    assert.equal((await send(0, 1, 'blocked')).status, 403);
+    assert.equal((await call('GET', `/contacts/${users[1].id}`)).status, 200, 'students can start conversations without friendship');
     for (const i of [1, 2]) await Friendship.create({ _id: Friendship.pair(users[0]._id, users[i]._id), requester: users[0]._id, recipient: users[i]._id, status: 'accepted' });
     const first = await send(1, 0, 'first'); assert.equal(first.status, 201);
     await send(0, 2, 'second');
@@ -36,7 +36,7 @@ test('community inbox is private, ordered by latest message, and tracks bounded 
     assert.equal(inbox.conversations[0].unreadCount, 2);
     assert.equal(inbox.unreadTotal, 2);
     assert.equal((await call('GET', '/conversations', 3)).data.conversations.length, 0);
-    assert.equal((await call('GET', `/messages?recipient=${users[1].id}`, 3)).status, 403);
+    assert.deepEqual((await call('GET', `/messages?recipient=${users[1].id}`, 3)).data, [], 'third parties never see another pair history');
     assert.equal((await call('GET', '/conversations?before=invalid')).status, 400);
     assert.equal((await call('GET', `/contacts/${users[1].id}`)).data.name, users[1].name);
     assert.ok(await Notification.exists({ user: users[0]._id, link: `/student/messages/${users[1].id}` }));
@@ -45,8 +45,8 @@ test('community inbox is private, ordered by latest message, and tracks bounded 
     await call('POST', '/messages/read', 0, { sender: users[1].id, through: latest.data._id });
     assert.equal((await call('GET', '/conversations?summary=1')).data.unreadTotal, 0);
     await Friendship.deleteMany({});
-    assert.equal((await send(1, 0, 'revoked')).status, 403);
-    assert.equal((await call('GET', '/conversations')).data.conversations.length, 0);
+    assert.equal((await send(1, 0, 'still allowed')).status, 201);
+    assert.equal((await call('GET', '/conversations')).data.conversations.length, 2, 'chat history persists after unfriending');
   } finally {
     if (server) await new Promise(resolve => server.close(resolve));
     await mongoose.disconnect(); await mongo.stop();

@@ -8,7 +8,6 @@ const Application = require('../models/Application');
 const Notification = require('../models/Notification');
 const { Message } = require('../models/MobileWorkspace');
 const sse = require('../utils/sseClients');
-const { friendIds } = require('../utils/storyAudience');
 const ChatPreference = require('../models/ChatPreference');
 const chatImages = require('../utils/chatImages');
 const upload = require('../middleware/uploadMiddleware');
@@ -24,7 +23,6 @@ async function contactFilter(user) {
     ids.push(...links.map(link => link.student));
   }
   if (user.role === 'student') {
-    ids.push(...await friendIds(user._id));
     const links = await ParentLink.find({ student: user._id, status: 'approved' }).select('parent').lean();
     ids.push(...links.map(link => link.parent));
     const universities = await Application.distinct('university', { student: user._id });
@@ -34,17 +32,17 @@ async function contactFilter(user) {
   if (user.role === 'university' && user.linkedUniversity) {
     ids.push(...await Application.distinct('student', { university: user.linkedUniversity }));
   }
-  return { isActive: true, _id: { $ne: user._id }, $or: [{ role: 'admin' }, { _id: { $in: ids } }] };
+  return { isActive: true, _id: { $ne: user._id }, $or: [{ role: 'admin' }, ...(user.role === 'student' ? [{ role: 'student' }] : []), { _id: { $in: ids } }] };
 }
 async function requireContact(user, recipient, res) {
   if (!mongoose.isValidObjectId(recipient)) { res.status(400); throw new Error('Invalid recipient'); }
   const filter = await contactFilter(user);
-  const contact = await User.findOne({ $and: [filter, { _id: recipient }] }).select('_id name role');
+  const contact = await User.findOne({ $and: [filter, { _id: recipient }] }).select('_id name role avatar');
   if (!contact) { res.status(403); throw new Error('This contact is unavailable'); }
   return contact;
 }
 router.get('/contacts', run(async (req, res) => {
-  res.json(await User.find(await contactFilter(req.user)).select('name role').sort({ name: 1 }).limit(200).lean());
+  res.json(await User.find(await contactFilter(req.user)).select('name role avatar').sort({ name: 1 }).limit(200).lean());
 }));
 router.get('/contacts/:id', run(async (req, res) => {
   res.set('Cache-Control', 'no-store').json(await requireContact(req.user, req.params.id, res));
@@ -75,7 +73,10 @@ async function permittedMessage(req, res) {
 }
 router.get('/conversations', run(async (req, res) => {
   if (req.user.role !== 'student') fail(403, 'Students only');
-  const peers = await User.find({ _id: { $in: await friendIds(req.user._id) }, role: 'student', isActive: true }).select('name').lean();
+  const [senders, recipients] = await Promise.all([
+    Message.distinct('sender', { recipient: req.user._id }), Message.distinct('recipient', { sender: req.user._id }),
+  ]);
+  const peers = await User.find({ _id: { $in: [...senders, ...recipients] }, role: 'student', isActive: true }).select('name avatar').lean();
   const ids = peers.map(p => p._id);
   const prefs = await ChatPreference.find({ user: req.user._id, contact: { $in: ids } }).lean();
   const byPeer = new Map(prefs.map(p => [String(p.contact), p]));

@@ -4,7 +4,8 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 const Friendship = require('../models/Friendship');
 const User = require('../models/User');
-const { StoryStats } = require('../models/Stories');
+const { StoryStats, Story, StoryInteraction } = require('../models/Stories');
+const rules = require('../utils/storyRules');
 router.use(protect, authorize('student'));
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 router.use(rateLimit({ windowMs: 60000, limit: 100, keyGenerator: req => String(req.user._id), standardHeaders: 'draft-7', legacyHeaders: false }));
@@ -55,6 +56,35 @@ router.get('/', asyncHandler(async (req, res) => {
   const counts = await Promise.all(Object.values(filters).map(f => Friendship.countDocuments(f)));
   res.json({ people: await people(ordered, page, me), nextCursor: rows.length > 30 ? page.at(-1)._id : null,
     counts: Object.fromEntries(Object.keys(filters).map((k, i) => [k, counts[i]])) });
+}));
+// A public student profile is deliberately separate from private account/CRM data.
+router.get('/:profileId/profile', asyncHandler(async (req, res) => {
+  const id = req.params.profileId;
+  if (!/^[a-f0-9]{24}$/i.test(id)) fail(400, 'Invalid student');
+  if (req.query.before && !/^[a-f0-9]{24}$/i.test(req.query.before)) fail(400, 'Invalid cursor');
+  const user = await User.findOne({ _id: id, role: 'student', isActive: true }).select('_id name avatar createdAt').lean();
+  if (!user) fail(404, 'Student unavailable');
+  const self = String(user._id) === String(req.user._id);
+  const edge = self ? null : await Friendship.findById(Friendship.pair(req.user._id, user._id)).lean();
+  const relationship = self ? 'self' : relation(edge, req.user._id);
+  const canViewStories = self || relationship === 'friends';
+  const stats = rules.progress(await StoryStats.findOne({ user: user._id }).lean() || {});
+  const friendCount = await Friendship.countDocuments({ status: 'accepted', $or: [{ requester: user._id }, { recipient: user._id }] });
+  const filter = { author: user._id, expiresAt: { $gt: new Date() } };
+  const storyCount = canViewStories ? await Story.countDocuments(filter) : null;
+  if (req.query.before) filter._id = { $lt: req.query.before };
+  const rows = canViewStories ? await Story.find(filter).sort({ _id: -1 }).limit(31).lean() : [];
+  const page = rows.slice(0, 30);
+  const edges = await StoryInteraction.find({ story: { $in: page.map(s => s._id) }, user: req.user._id }).select('story lovedAt seenAt').lean();
+  const byStory = new Map(edges.map(e => [String(e.story), e]));
+  const author = { id: String(user._id), name: user.name, avatar: user.avatar || '', total_points: stats.total_points };
+  res.json({ id: String(user._id), name: user.name, avatar: user.avatar || '', joinedAt: user.createdAt,
+    total_points: stats.total_points, streak_days: stats.streak_days, scoreEmoji: stats.scoreEmoji,
+    friendCount, relation: relationship, canMessage: !self, canViewStories, storyCount,
+    stories: page.map(s => ({ id: String(s._id), author, text: s.text, imageUrl: s.imageUrl || '', videoUrl: s.videoUrl || '',
+      videoDuration: s.videoDuration || 0, expiresAt: s.expiresAt, createdAt: s.createdAt, loveCount: s.loveCount,
+      loved: !!byStory.get(String(s._id))?.lovedAt, seen: !!byStory.get(String(s._id))?.seenAt })),
+    nextStoriesCursor: rows.length > 30 ? String(page.at(-1)._id) : null });
 }));
 router.param('userId', (req, res, next, id) => /^[a-f0-9]{24}$/i.test(id) && id.toLowerCase() !== String(req.user._id) ? next() : res.status(400).json({ message: 'Invalid student' }));
 router.post('/:userId/request', rateLimit({ windowMs: 86400000, limit: 50, keyGenerator: req => String(req.user._id) }), asyncHandler(async (req, res) => {

@@ -42,7 +42,7 @@ test('chat images, unsend, private deletion and muting enforce participant owner
       data.set('operationId', 'photo-retry-123');
       data.set('file', new Blob([new Uint8Array(bytes)], { type }), filename); return data;
     };
-    assert.equal((await call('POST', '/messages/image', 2, form(users[1].id))).status, 403);
+    assert.equal((await call('POST', '/messages/image', 2, form(users[2].id))).status, 403);
     assert.equal(uploads, 0, 'unauthorized uploads never reach storage');
     assert.equal((await call('POST', '/messages/image', 0, form(users[1].id, 'image/jpeg', 'photo.jpg', [1, 2, 3]))).status, 415);
     assert.equal((await call('POST', '/messages/image', 0, form(users[1].id, 'text/plain', 'file.txt', [65, 66]))).status, 415);
