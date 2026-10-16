@@ -122,6 +122,19 @@ test('stories: authorization, concurrent rewards, durable replay, seen, expiry a
     assert.equal((await call('GET', '/progress', 9)).data.scoreEmoji, '🔥');
     assert.equal((await call('PUT', '/preferences', 8, { scoreEmoji: '<script>' })).status, 400);
     assert.equal((await call('PUT', '/preferences', 12, { scoreEmoji: '⭐' })).status, 403);
+    // Only the owner can delete; the tombstone prevents reward replay and keeps balances.
+    const photoId = photo.data.id;
+    assert.equal((await call('DELETE', `/${photoId}`, 9)).status, 404);
+    assert.equal((await call('DELETE', `/${photoId}`, 8)).status, 200);
+    assert.equal((await call('DELETE', `/${photoId}`, 8)).status, 200);
+    assert.equal((await call('GET', '', 9)).data.stories.some(s => s.id === photoId), false);
+    assert.equal((await call('POST', `/${photoId}/love`, 9)).status, 404);
+    assert.equal((await call('POST', `/${photoId}/seen`, 9)).status, 404);
+    assert.equal((await call('GET', `/updates?ids=${photoId}`, 9)).data.updates.length, 0);
+    assert.ok((await Story.findById(photoId)).deletedAt);
+    assert.ok(await require('../src/models/MaintenanceJob').exists({ publicId: `story-images/${users[8]._id}/photo` }));
+    assert.equal((await call('POST', '', 8, { operationId: 'photo-story-test', text: 'Replay' })).data.awarded, 0);
+    assert.equal((await call('GET', '/progress', 8)).data.total_points, balance);
   } finally {
     media.uploadFileToCloudinary = originalUpload;
     if (server) await new Promise(resolve => server.close(resolve));

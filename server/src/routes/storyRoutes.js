@@ -116,6 +116,22 @@ router.post('/', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => 
   res.status(201).json(result);
 }));
 router.param('id', (req, res, next, id) => /^[a-f0-9]{24}$/i.test(id) ? next() : res.status(400).json({ message: 'Invalid story' }));
+router.delete('/:id', asyncHandler(async (req, res) => {
+  await atomic(async session => {
+    const story = await Story.findOne({ _id: req.params.id, author: req.user._id }).session(session);
+    if (!story) fail(404, 'Story unavailable');
+    if (story.deletedAt) return;
+    const { queueMedia, mediaFromUrl } = require('../utils/mediaMaintenance');
+    for (const url of [story.imageUrl, story.videoUrl]) await queueMedia(mediaFromUrl(url), new Date(), session);
+    if (story.videoUrl) await StoryVideo.deleteMany({ owner: req.user._id, url: story.videoUrl }).session(session);
+    // Keep the operation id and awarded points: deleting and reposting cannot farm rewards.
+    story.deletedAt = new Date(); story.expiresAt = story.deletedAt;
+    story.text = ''; story.imageUrl = ''; story.videoUrl = ''; story.mediaCleanupQueued = true;
+    await story.save({ session });
+    await StoryInteraction.deleteMany({ story: story._id }).session(session);
+  });
+  res.json({ deleted: true });
+}));
 router.post('/:id/seen', asyncHandler(async (req, res) => {
   const story = await Story.findOne({ _id: req.params.id, expiresAt: { $gt: new Date() } }).select('author').lean();
   if (!story || !await canReadStory(req.user._id, story.author)) fail(404, 'Story unavailable');

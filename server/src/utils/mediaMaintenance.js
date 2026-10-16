@@ -3,14 +3,14 @@ const { Story } = require('../models/Stories');
 const { cloudinary, ensureCloudinaryConfigured } = require('../config/cloudinary');
 const { withLease } = require('./leaseLock');
 
-async function queueMedia(media, dueAt = new Date()) {
+async function queueMedia(media, dueAt = new Date(), session = null) {
   if (!media?.publicId) return;
   const resourceType = media.resourceType || 'image';
   const deliveryType = media.deliveryType || 'upload';
   await Job.updateOne({ key: `media:${resourceType}:${deliveryType}:${media.publicId}` }, {
     $set: { kind: 'media', publicId: media.publicId, resourceType, deliveryType,
       url: media.url || '', dueAt },
-  }, { upsert: true });
+  }, { upsert: true, session });
 }
 // Only our Cloudinary originals, with an explicitly allowed folder, may be deleted.
 function mediaFromUrl(value, folders = ['story-images/', 'story-videos/', 'avatars/']) {

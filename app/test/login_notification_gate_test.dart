@@ -12,10 +12,12 @@ class Access implements NotificationAccess {
   @override
   bool permissionGranted = false;
   bool grantOnRequest = true;
+  bool failInit = false;
   int requests = 0, enabled = 0, disabled = 0;
   Completer<void>? initializing;
   @override
   Future<void> init() async {
+    if (failInit) throw StateError('Notification SDK unavailable');
     await initializing?.future;
   }
 
@@ -47,6 +49,16 @@ Future<void> open(WidgetTester tester, Access access) async {
 
 void main() {
   setUp(() => SharedPreferences.setMockInitialValues({}));
+  testWidgets('notification SDK errors do not block account access',
+      (tester) async {
+    final access = Access()..failInit = true;
+    await open(tester, access);
+    await tester.pumpAndSettle();
+    expect(find.text('Dashboard'), findsOneWidget);
+    expect(access.enabled, 0);
+    expect(access.disabled, 1);
+    await tester.pumpWidget(const SizedBox());
+  });
   testWidgets('dashboard waits for rationale and native permission approval',
       (tester) async {
     final access = Access();
@@ -61,7 +73,7 @@ void main() {
     expect(find.text('Dashboard'), findsOneWidget);
   });
   testWidgets(
-      'declining keeps dashboard closed and delivery disabled without repeating sheet',
+      'declining opens dashboard and delivery disabled without repeating sheet',
       (tester) async {
     final access = Access();
     await open(tester, access);
@@ -71,19 +83,19 @@ void main() {
     expect(access.requests, 0);
     expect(access.enabled, 0);
     expect(access.disabled, 1);
-    expect(find.text('Dashboard'), findsNothing);
+    expect(find.text('Dashboard'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
     await open(tester, access);
     expect(find.byType(NotificationPermissionSheet), findsNothing);
-    expect(find.text('Dashboard'), findsNothing);
+    expect(find.text('Dashboard'), findsOneWidget);
   });
-  testWidgets('native refusal also keeps dashboard closed', (tester) async {
+  testWidgets('native refusal still opens dashboard', (tester) async {
     final access = Access()..grantOnRequest = false;
     await open(tester, access);
     await tester.ensureVisible(find.text('تفعيل الإشعارات'));
     await tester.tap(find.text('تفعيل الإشعارات'));
     await tester.pumpAndSettle();
-    expect(find.text('Dashboard'), findsNothing);
+    expect(find.text('Dashboard'), findsOneWidget);
     expect(access.enabled, 0);
     expect(access.disabled, 1);
   });

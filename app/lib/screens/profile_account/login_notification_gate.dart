@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../core/services/push_notification_service.dart';
-import '../../core/services/auth_session.dart';
 import '../../core/services/notification_scheduler.dart';
 import 'notification_permission_sheet.dart';
 
@@ -17,7 +16,7 @@ class LoginNotificationGate extends StatefulWidget {
 
 class _LoginNotificationGateState extends State<LoginNotificationGate>
     with WidgetsBindingObserver {
-  bool _checking = true, _allowed = false, _busy = false;
+  bool _checking = true, _busy = false;
 
   @override
   void initState() {
@@ -37,22 +36,22 @@ class _LoginNotificationGateState extends State<LoginNotificationGate>
     if (state == AppLifecycleState.resumed && !_busy) _check();
   }
 
-  Future<void> _check({bool retry = false}) async {
+  Future<void> _check() async {
     if (_busy) return;
     _busy = true;
     try {
       final push = widget.access ?? PushNotificationService.instance;
-      await push.init();
+      await push.init().timeout(const Duration(seconds: 8));
       if (!mounted) return;
       var allowed = !push.supported || push.permissionGranted;
       final prefs = await SharedPreferences.getInstance();
-      if (!allowed && (retry || prefs.getBool('_notif_sheet_shown') != true)) {
+      if (!allowed && prefs.getBool('_notif_sheet_shown') != true) {
         await prefs.setBool('_notif_sheet_shown', true);
         if (!mounted) return;
         final accept = await showModalBottomSheet<bool>(
           context: context,
-          isDismissible: false,
-          enableDrag: false,
+          isDismissible: true,
+          enableDrag: true,
           useSafeArea: true,
           isScrollControlled: true,
           backgroundColor: Colors.transparent,
@@ -62,22 +61,35 @@ class _LoginNotificationGateState extends State<LoginNotificationGate>
         allowed = push.permissionGranted;
       }
       if (allowed) {
-        await push.enableForCurrentUser();
+        await push.enableForCurrentUser().timeout(const Duration(seconds: 8));
       } else {
-        await push.disableDelivery();
-        await NotificationScheduler.instance.cancelAll();
+        await push.disableDelivery().timeout(const Duration(seconds: 3));
+        await NotificationScheduler.instance
+            .cancelAll()
+            .timeout(const Duration(seconds: 3));
       }
       if (mounted) {
         setState(() {
-          _allowed = allowed;
           _checking = false;
         });
       }
     } catch (_) {
-      await (widget.access ?? PushNotificationService.instance).disableDelivery();
+      try {
+        await (widget.access ?? PushNotificationService.instance)
+            .disableDelivery()
+            .timeout(const Duration(seconds: 3));
+      } catch (_) {
+        /* Notification SDK failure must not block account access. */
+      }
+      try {
+        await NotificationScheduler.instance
+            .cancelAll()
+            .timeout(const Duration(seconds: 3));
+      } catch (_) {
+        /* Keep account access available if the local plugin fails. */
+      }
       if (mounted) {
         setState(() {
-          _allowed = false;
           _checking = false;
         });
       }
@@ -91,29 +103,6 @@ class _LoginNotificationGateState extends State<LoginNotificationGate>
     if (_checking) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    if (_allowed) return widget.homeBuilder(context);
-    return Scaffold(
-        body: SafeArea(
-            child: Center(
-                child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(mainAxisSize: MainAxisSize.min, children: [
-        const Icon(Icons.notifications_off_outlined, size: 56),
-        const SizedBox(height: 20),
-        const Text('فعّل الإشعارات للمتابعة إلى حسابك',
-            textAlign: TextAlign.center),
-        const SizedBox(height: 12),
-        const Text(
-            'لم يتم تفعيل الإشعارات. يمكنك الموافقة الآن أو الرجوع لتسجيل الدخول.',
-            textAlign: TextAlign.center),
-        const SizedBox(height: 20),
-        FilledButton(
-            onPressed: () => _check(retry: true),
-            child: const Text('تفعيل الإشعارات والمتابعة')),
-        TextButton(
-            onPressed: () => AuthSession.instance.logout(),
-            child: const Text('تسجيل الخروج')),
-      ]),
-    ))));
+    return widget.homeBuilder(context);
   }
 }

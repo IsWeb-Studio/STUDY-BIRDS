@@ -30,7 +30,7 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: StudentCommunityHub()));
       await tester.pumpAndSettle();
       expect(find.byType(StudentStories), findsOneWidget);
-      expect(find.text('المجتمع'), findsOneWidget,
+      expect(find.text('مجتمع الطلاب'), findsOneWidget,
           reason: 'no nested community entry');
       expect(tester.getTopLeft(find.text('Sara')).dy,
           lessThan(tester.getTopLeft(find.text('Omar')).dy));

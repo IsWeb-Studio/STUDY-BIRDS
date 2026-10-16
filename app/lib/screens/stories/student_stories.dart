@@ -16,7 +16,6 @@ import 'friends_screen.dart';
 import '../community/student_community_hub.dart';
 import '../../core/repositories/friends_repository.dart';
 import 'story_viewer.dart';
-import 'all_student_stories.dart';
 export 'story_viewer.dart' show StoryViewer;
 
 /// The outer achievement ring is independent from the inner viewing ring.
@@ -249,14 +248,6 @@ class StudentStoriesState extends State<StudentStories>
                 child: Text('الستوريات المنشورة',
                     style:
                         TextStyle(fontWeight: FontWeight.bold, fontSize: 17))),
-            TextButton(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const AllStudentStoriesScreen())),
-                child: const Text('عرض الكل')),
-            IconButton(
-                onPressed: _refreshing ? null : () => _load(),
-                icon: const Icon(Icons.refresh),
-                tooltip: 'تحديث'),
           ]),
           if (!_loading && _error == null && _stories.isEmpty)
             const Padding(
@@ -546,7 +537,8 @@ class _StoryComposerState extends State<StoryComposer> {
       final video = (image.mimeType ?? '').startsWith('video/') ||
           RegExp(r'\.(mp4|mov|m4v|webm|3gp|mkv|avi)$', caseSensitive: false)
               .hasMatch(image.name);
-      if (video && !RegExp(r'\.(mp4|mov)$', caseSensitive: false).hasMatch(image.name)) {
+      if (video &&
+          !RegExp(r'\.(mp4|mov)$', caseSensitive: false).hasMatch(image.name)) {
         throw Exception('اختر فيديو بصيغة MP4 أو MOV');
       }
       if (await image.length() > (video ? 25 : 5) * 1024 * 1024) {

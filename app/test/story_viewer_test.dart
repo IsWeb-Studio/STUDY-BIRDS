@@ -44,6 +44,79 @@ Future<void> open(WidgetTester tester, List<StudentStory> stories,
 }
 
 void main() {
+  testWidgets(
+      'heart responds on pointer down and a slow love does not block the next story',
+      (tester) async {
+    final pending = Completer<http.Response>();
+    final calls = <String>[];
+    await http.runWithClient(() async {
+      await open(tester, [story('a'), story('b')]);
+      final button =
+          tester.getRect(find.byKey(const ValueKey('story-love-button')));
+      final touch =
+          await tester.startGesture(Offset(button.left + 12, button.center.dy));
+      await tester.pump();
+      expect(calls, ['/stories/a/love']);
+      expect(find.byIcon(Icons.favorite), findsOneWidget);
+      await touch.up();
+      await tester.pump();
+      final content =
+          tester.getRect(find.byKey(const ValueKey('story-content')));
+      await tester.tapAt(Offset(content.left + 25, content.center.dy));
+      await tester.pump(const Duration(milliseconds: 400));
+      await tester.pump();
+      expect(find.text('Story b'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('story-love-button')));
+      await tester.pump();
+      expect(calls, ['/stories/a/love', '/stories/b/love']);
+      pending.complete(json({'loveCount': 1}));
+      await tester.pump();
+      await tester.pumpWidget(const SizedBox());
+    },
+        () => MockClient((request) async {
+              if (request.url.path.endsWith('/love')) {
+        calls.add(request.url.path.replaceFirst('/api', ''));
+                if (request.url.path.endsWith('/a/love')) return pending.future;
+                return json({'loveCount': 1});
+              }
+              return json({'seen': true});
+            }));
+  });
+  testWidgets(
+      'owner can confirm deletion and return to community on a narrow screen',
+      (tester) async {
+    final previous = AuthSession.instance.currentUser;
+    AuthSession.instance.currentUser = const AuthUser(
+        id: 'other',
+        name: 'Me',
+        email: 'me@example.test',
+        role: UserRole.student);
+    addTearDown(() => AuthSession.instance.currentUser = previous);
+    tester.view.physicalSize = const Size(360, 740);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    var removed = 0;
+    await http.runWithClient(() async {
+      await open(tester, [story('mine')]);
+      await tester.tap(find.byTooltip('حذف الستوري'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('حذف'));
+      await tester.pumpAndSettle();
+      expect(removed, 1);
+      expect(find.byType(StoryViewer), findsNothing);
+      expect(find.text('Open'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+        () => MockClient((request) async {
+              if (request.method == 'DELETE') {
+                removed++;
+                return json({'deleted': true});
+              }
+              return json({'seen': true});
+            }));
+  });
   setUp(() {
     AuthSession.instance.token = 'story-viewer-test';
   });
@@ -54,7 +127,8 @@ void main() {
     expect(StoryViewer(stories: [story('a')], onSeen: (_) {}).storyDuration,
         const Duration(seconds: 5));
   });
-  testWidgets('downward swipe dismisses the viewer back to its origin', (tester) async {
+  testWidgets('downward swipe dismisses the viewer back to its origin',
+      (tester) async {
     await http.runWithClient(() async {
       await open(tester, [story('dismiss')]);
       await tester.drag(find.text('Story dismiss'), const Offset(0, 170));
@@ -65,17 +139,27 @@ void main() {
     }, () => MockClient((_) async => json({'seen': true})));
   });
 
-  testWidgets('short vertical drag keeps the story open and resumes its timer', (tester) async {
+  testWidgets('short vertical drag keeps the story open and resumes its timer',
+      (tester) async {
     await http.runWithClient(() async {
       await open(tester, [story('keep')]);
-      final content = tester.getRect(find.byKey(const ValueKey('story-content')));
-      await tester.timedDragFrom(Offset(content.left + 35, content.top + 35), const Offset(0, 45),
-          const Duration(seconds: 1));
+      final content =
+          tester.getRect(find.byKey(const ValueKey('story-content')));
+      await tester.timedDragFrom(Offset(content.left + 35, content.top + 35),
+          const Offset(0, 45), const Duration(seconds: 1));
       await tester.pump(const Duration(milliseconds: 100));
       expect(find.byType(StoryViewer), findsOneWidget);
-      final timer = tester.widget<LinearProgressIndicator>(find.byKey(const ValueKey('story-timer-0'))).value!;
+      final timer = tester
+          .widget<LinearProgressIndicator>(
+              find.byKey(const ValueKey('story-timer-0')))
+          .value!;
       await tester.pump(const Duration(milliseconds: 300));
-      expect(tester.widget<LinearProgressIndicator>(find.byKey(const ValueKey('story-timer-0'))).value!, greaterThan(timer));
+      expect(
+          tester
+              .widget<LinearProgressIndicator>(
+                  find.byKey(const ValueKey('story-timer-0')))
+              .value!,
+          greaterThan(timer));
       await tester.pumpWidget(const SizedBox());
     }, () => MockClient((_) async => json({'seen': true})));
   });
@@ -83,7 +167,10 @@ void main() {
       (tester) async {
     final previous = AuthSession.instance.currentUser;
     AuthSession.instance.currentUser = const AuthUser(
-        id: 'other', name: 'Me', email: 'me@example.test', role: UserRole.student);
+        id: 'other',
+        name: 'Me',
+        email: 'me@example.test',
+        role: UserRole.student);
     addTearDown(() => AuthSession.instance.currentUser = previous);
     var calls = 0;
     await http.runWithClient(() async {
@@ -93,13 +180,14 @@ void main() {
       expect(calls, 1);
       expect(find.byIcon(Icons.favorite), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
-    }, () => MockClient((req) async {
-      if (req.url.path.endsWith('/love')) {
-        calls++;
-        return json({'loveCount': 1, 'awarded': 0});
-      }
-      return json({'seen': true});
-    }));
+    },
+        () => MockClient((req) async {
+              if (req.url.path.endsWith('/love')) {
+                calls++;
+                return json({'loveCount': 1, 'awarded': 0});
+              }
+              return json({'seen': true});
+            }));
   });
   testWidgets(
       'double tap sends one love without advancing and keeps a small icon with a wide target',
@@ -144,7 +232,8 @@ void main() {
       await open(tester, [story('a'), story('b')]);
       expect(find.byIcon(Icons.arrow_forward), findsNothing);
       expect(find.byTooltip('السابقة'), findsNothing);
-      final content = tester.getRect(find.byKey(const ValueKey('story-content')));
+      final content =
+          tester.getRect(find.byKey(const ValueKey('story-content')));
       // Use physical screen coordinates, independent of Arabic/English layout.
       await tester.tapAt(Offset(content.left + 30, content.center.dy));
       await tester.pump(const Duration(milliseconds: 400));

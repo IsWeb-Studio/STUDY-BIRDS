@@ -4,6 +4,7 @@ import 'dart:math' show max;
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../../core/repositories/stories_repository.dart';
+import '../../core/services/auth_session.dart';
 
 class StoryViewer extends StatefulWidget {
   final List<StudentStory> stories;
@@ -22,12 +23,14 @@ class StoryViewer extends StatefulWidget {
 class _StoryViewerState extends State<StoryViewer>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   int _index = 0;
-  bool _busy = false,
-      _closing = false,
-      _ready = false,
-      _held = false,
-      _polling = false;
+  bool _closing = false, _ready = false, _held = false, _polling = false;
   bool _foreground = true;
+  bool _attached = true;
+  bool _deleting = false, _confirmingDelete = false, _showHeart = false;
+  final _pendingLoves = <String>{};
+  final _deleted = <String>{};
+  Timer? _heartTimer;
+  String? _pressedLoveId;
   double _dragOffset = 0;
 
   void _dragStart(DragStartDetails details) {
@@ -51,6 +54,7 @@ class _StoryViewerState extends State<StoryViewer>
   }
 
   void _cancelDrag() {
+    if (!mounted || !_attached || _closing) return;
     setState(() => _dragOffset = 0);
     _held = false;
     _resume();
@@ -98,16 +102,31 @@ class _StoryViewerState extends State<StoryViewer>
   }
 
   @override
+  void deactivate() {
+    _attached = false;
+    _clock.stop();
+    if (_video != null) unawaited(_video!.pause());
+    super.deactivate();
+  }
+
+  @override
+  void activate() {
+    super.activate();
+    _attached = true;
+  }
+
+  @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _liveTimer?.cancel();
+    _heartTimer?.cancel();
     _disposeVideo();
     _clock.dispose();
     super.dispose();
   }
 
   void _resume() {
-    if (!mounted || _closing) return;
+    if (!mounted || !_attached || _closing) return;
     if (_ready && !_held && _visible) {
       if (_video != null && !_videoFailed) {
         unawaited(_video!.play());
@@ -219,19 +238,20 @@ class _StoryViewerState extends State<StoryViewer>
   }
 
   Future<void> _refreshLive() async {
-    if (!mounted || _closing || !_visible || _polling) return;
+    if (!mounted || _closing || !_visible || _polling || _deleting) return;
     _polling = true;
     final id = _story.id;
     final revision = _loveRevision;
     try {
       final data = await StoriesRepository.instance.updates([id]);
-      if (!mounted || _closing || _story.id != id) return;
+      if (!mounted || _closing || !_visible || _deleting || _story.id != id)
+        return;
       final updates = data['updates'] as List;
       if (updates.isEmpty) {
         _move(1);
         return;
       }
-      if (!_busy && revision == _loveRevision) {
+      if (!_pendingLoves.contains(id) && revision == _loveRevision) {
         final update = updates.first as Map;
         setState(() {
           _counts[id] = max(_counts[id] ?? _story.loveCount,
@@ -246,7 +266,12 @@ class _StoryViewerState extends State<StoryViewer>
 
   void _move(int step) {
     if (_closing) return;
-    final next = _index + step;
+    var next = _index + step;
+    while (next >= 0 &&
+        next < widget.stories.length &&
+        _deleted.contains(widget.stories[next].id)) {
+      next += step;
+    }
     if (next >= widget.stories.length) {
       _closing = true;
       _clock.stop();
@@ -258,6 +283,7 @@ class _StoryViewerState extends State<StoryViewer>
     if (next < 0) return;
     setState(() {
       _index = next;
+      _showHeart = false;
       _error = null;
       _begin();
     });
@@ -265,7 +291,8 @@ class _StoryViewerState extends State<StoryViewer>
 
   Future<void> _love() async {
     final story = _story;
-    if (_busy ||
+    if (_pendingLoves.contains(story.id) ||
+        _deleting ||
         !story.expiresAt.isAfter(DateTime.now()) ||
         story.loved ||
         _loved.contains(story.id)) {
@@ -274,10 +301,15 @@ class _StoryViewerState extends State<StoryViewer>
     final previous = _counts[story.id] ?? story.loveCount;
     _loveRevision++;
     setState(() {
-      _busy = true;
+      _pendingLoves.add(story.id);
+      _showHeart = true;
       _error = null;
       _loved.add(story.id);
       _counts[story.id] = previous + 1;
+    });
+    _heartTimer?.cancel();
+    _heartTimer = Timer(const Duration(milliseconds: 600), () {
+      if (mounted) setState(() => _showHeart = false);
     });
     try {
       final result = await StoriesRepository.instance.love(story.id);
@@ -295,7 +327,52 @@ class _StoryViewerState extends State<StoryViewer>
       }
     } finally {
       _loveRevision++;
-      if (mounted) setState(() => _busy = false);
+      if (mounted) setState(() => _pendingLoves.remove(story.id));
+    }
+  }
+
+  Future<void> _deleteStory() async {
+    if (_deleting ||
+        _confirmingDelete ||
+        _story.authorId != AuthSession.instance.currentUser?.id) return;
+    _confirmingDelete = true;
+    _held = true;
+    _clock.stop();
+    final id = _story.id;
+    try {
+      await _video?.pause();
+      if (!mounted) return;
+      final confirm = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+                title: const Text('حذف الستوري؟'),
+                content: const Text(
+                    'ستختفي الستوري من عند الجميع. نقاطك المكتسبة ستبقى محفوظة.'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('إلغاء')),
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('حذف')),
+                ],
+              ));
+      if (confirm != true || !mounted) return;
+      setState(() => _deleting = true);
+      await StoriesRepository.instance.deleteStory(id);
+      if (!mounted) return;
+      _deleted.add(id);
+      _move(1);
+    } catch (_) {
+      if (mounted) setState(() => _error = 'تعذر حذف الستوري. حاول مجدداً.');
+    } finally {
+      _deleting = false;
+      _confirmingDelete = false;
+      _held = false;
+      if (mounted && !_closing) {
+        setState(() {});
+        _resume();
+      }
     }
   }
 
@@ -324,15 +401,15 @@ class _StoryViewerState extends State<StoryViewer>
         return Center(
             child: ConstrainedBox(
           constraints:
-              BoxConstraints(maxWidth: 430, maxHeight: bounds.maxHeight * .92),
+              BoxConstraints(maxWidth: 430, maxHeight: bounds.maxHeight * .96),
           child: Container(
             key: const ValueKey('story-card'),
             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(6),
             decoration: BoxDecoration(
-                color: const Color(0xFF1B2D47),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: Colors.white12)),
+              color: const Color(0xFF121820),
+              borderRadius: BorderRadius.circular(24),
+            ),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               if (expired)
                 const Padding(
@@ -389,12 +466,28 @@ class _StoryViewerState extends State<StoryViewer>
     final loved = story.loved || _loved.contains(story.id);
     final expired = !story.expiresAt.isAfter(DateTime.now());
     return Scaffold(
-      backgroundColor: const Color(0xFF11213A),
+      backgroundColor: const Color(0xFF080C12),
       appBar: AppBar(
-          backgroundColor: const Color(0xFF11213A),
+          backgroundColor: const Color(0xFF080C12),
           foregroundColor: Colors.white,
           title: StudentIdentity(
-              id: story.authorId, name: story.name, avatar: story.avatar)),
+              id: story.authorId, name: story.name, avatar: story.avatar),
+          actions: [
+            if (story.authorId == AuthSession.instance.currentUser?.id)
+              IconButton(
+                  tooltip: 'حذف الستوري',
+                  onPressed: _deleting ? null : _deleteStory,
+                  icon: _deleting
+                      ? const SizedBox.square(
+                          dimension: 20,
+                          child: CircularProgressIndicator(
+                              strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.delete_outline_rounded)),
+            IconButton(
+                tooltip: 'إغلاق',
+                onPressed: () => Navigator.pop(context),
+                icon: const Icon(Icons.close_rounded)),
+          ]),
       body: GestureDetector(
           onVerticalDragStart: _dragStart,
           onVerticalDragUpdate: _dragUpdate,
@@ -450,7 +543,25 @@ class _StoryViewerState extends State<StoryViewer>
                                 },
                                 onHorizontalDragEnd: (d) => _move(
                                     (d.primaryVelocity ?? 0) < 0 ? 1 : -1),
-                                child: _storyCard(story, expired)))),
+                                child: Stack(
+                                    alignment: Alignment.center,
+                                    children: [
+                                      _storyCard(story, expired),
+                                      IgnorePointer(
+                                          child: AnimatedOpacity(
+                                              opacity: _showHeart ? 1 : 0,
+                                              duration: const Duration(
+                                                  milliseconds: 120),
+                                              child: AnimatedScale(
+                                                  scale: _showHeart ? 1 : .6,
+                                                  duration: const Duration(
+                                                      milliseconds: 180),
+                                                  child: const Icon(
+                                                      Icons.favorite_rounded,
+                                                      size: 82,
+                                                      color:
+                                                          Colors.pinkAccent)))),
+                                    ])))),
                     if (_error != null)
                       Text(_error!,
                           textAlign: TextAlign.center,
@@ -463,29 +574,43 @@ class _StoryViewerState extends State<StoryViewer>
                               Tooltip(
                                   message:
                                       loved ? 'أعجبك هذا الستوري' : 'إرسال لاف',
-                                  child: TextButton.icon(
-                                      key: const ValueKey('story-love-button'),
-                                      style: TextButton.styleFrom(
-                                          minimumSize: const Size(144, 72),
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 36, vertical: 22),
-                                          backgroundColor: Colors.pinkAccent
-                                              .withValues(alpha: .14)),
-                                      onPressed: expired || loved || _busy
-                                          ? null
-                                          : _love,
-                                      icon: Icon(
-                                          loved
-                                              ? Icons.favorite
-                                              : Icons.favorite_border,
-                                          color: Colors.pinkAccent,
-                                          size: 20),
-                                      label: Text(
-                                          '${_counts[story.id] ?? story.loveCount}',
-                                          style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.bold)))),
+                                  child: Listener(
+                                      onPointerDown: (_) {
+                                        _pressedLoveId = story.id;
+                                        _love();
+                                      },
+                                      onPointerCancel: (_) =>
+                                          _pressedLoveId = null,
+                                      onPointerUp: (_) => scheduleMicrotask(
+                                          () => _pressedLoveId = null),
+                                      child: TextButton.icon(
+                                          key: const ValueKey(
+                                              'story-love-button'),
+                                          style: TextButton.styleFrom(
+                                              minimumSize: const Size(144, 72),
+                                              padding: const EdgeInsets.symmetric(
+                                                  horizontal: 36, vertical: 22),
+                                              backgroundColor: Colors.pinkAccent
+                                                  .withValues(alpha: .14)),
+                                          onPressed: expired ||
+                                                  loved ||
+                                                  _pendingLoves
+                                                      .contains(story.id) ||
+                                                  _deleting
+                                              ? null
+                                              : () {
+                                                  if (_pressedLoveId ==
+                                                      story.id) return;
+                                                  _love();
+                                                },
+                                          icon: Icon(loved ? Icons.favorite : Icons.favorite_border,
+                                              color: Colors.pinkAccent,
+                                              size: 20),
+                                          label: Text('${_counts[story.id] ?? story.loveCount}',
+                                              style: const TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 18,
+                                                  fontWeight: FontWeight.bold))))),
                             ])),
                     const Padding(
                         padding: EdgeInsets.only(bottom: 8),

@@ -413,16 +413,12 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
   Widget build(BuildContext context) => !_activated
       ? const SizedBox.shrink()
       : Scaffold(
-          appBar: AppBar(title: const Text('المجتمع'), actions: [
+          appBar: AppBar(title: const Text('مجتمع الطلاب'), actions: [
             IconButton(
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const StudentCommunityScreen())),
                 icon: const Icon(Icons.feed_outlined),
                 tooltip: 'المنشورات'),
-            IconButton(
-                onPressed: _newChat,
-                icon: const Icon(Icons.edit_square),
-                tooltip: 'محادثة جديدة')
           ]),
           body: RefreshIndicator(
               color: AppColors.navy,

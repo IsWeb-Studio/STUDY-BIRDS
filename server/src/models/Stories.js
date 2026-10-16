@@ -8,6 +8,7 @@ const storySchema = new Schema({
   videoUrl: { type: String, default: '' },
   videoDuration: { type: Number, default: 0 },
   mediaCleanupQueued: Boolean,
+  deletedAt: Date,
   loveCount: { type: Number, default: 0 },
   expiresAt: { type: Date, required: true },
 }, { timestamps: true });

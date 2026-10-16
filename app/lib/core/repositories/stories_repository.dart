@@ -118,6 +118,10 @@ class StoriesRepository {
     await _api.post('/stories/$id/seen', token: _token);
   }
 
+  Future<void> deleteStory(String id) async {
+    await _api.delete('/stories/$id', token: _token);
+  }
+
   Future<Map<String, dynamic>> love(String id) async =>
       Map<String, dynamic>.from(
           await _api.post('/stories/$id/love', token: _token));
