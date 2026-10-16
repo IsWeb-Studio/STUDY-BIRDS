@@ -306,6 +306,7 @@ class _PostCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               StudentIdentity(
+                  linkToProfile: false,
                   id: _id(post['author']),
                   name: _name(post['author']),
                   avatar: post['author'] is Map

@@ -6,6 +6,7 @@ import 'package:http/testing.dart';
 import 'package:study_birds/core/network/api_client.dart';
 import 'package:study_birds/core/services/auth_session.dart';
 import 'package:study_birds/screens/services_support/community_screen.dart';
+import 'package:study_birds/screens/community/student_public_profile.dart';
 
 http.Response reply(Object body, [int status = 200]) =>
     http.Response(jsonEncode(body), status,
@@ -54,6 +55,28 @@ void phone(WidgetTester tester) {
 }
 
 void main() {
+  testWidgets('feed author avatar opens the topic; thread avatar opens profile', (tester) async {
+    phone(tester);
+    await http.runWithClient(() async {
+      await tester.pumpWidget(const MaterialApp(home: StudentCommunityScreen()));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(CircleAvatar).first);
+      await tester.pumpAndSettle();
+      expect(find.byType(CommunityThreadScreen), findsOneWidget);
+      expect(find.byType(StudentPublicProfileScreen), findsNothing);
+      await tester.tap(find.byType(CircleAvatar).first);
+      await tester.pumpAndSettle();
+      expect(find.byType(StudentPublicProfileScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    }, () => MockClient((r) async {
+      if (lookups.containsKey(r.url.path)) return reply(lookups[r.url.path]!);
+      if (r.url.path.endsWith('/community/status')) return reply({'suspended': false});
+      if (r.url.path.endsWith('/community/posts/p1')) return reply({'post': publicPost, 'comments': []});
+      if (r.url.path.contains('/friends/')) return reply({'id': 'other', 'name': 'Lina', 'stories': []});
+      return reply([publicPost]);
+    }));
+  });
   setUp(() {
     AuthSession.instance.token = 'test-session';
     AuthSession.instance.currentUser = const AuthUser(

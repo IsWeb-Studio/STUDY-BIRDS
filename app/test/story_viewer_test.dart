@@ -54,6 +54,31 @@ void main() {
     expect(StoryViewer(stories: [story('a')], onSeen: (_) {}).storyDuration,
         const Duration(seconds: 5));
   });
+  testWidgets('downward swipe dismisses the viewer back to its origin', (tester) async {
+    await http.runWithClient(() async {
+      await open(tester, [story('dismiss')]);
+      await tester.drag(find.text('Story dismiss'), const Offset(0, 170));
+      await tester.pumpAndSettle();
+      expect(find.byType(StoryViewer), findsNothing);
+      expect(find.text('Open'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }, () => MockClient((_) async => json({'seen': true})));
+  });
+
+  testWidgets('short vertical drag keeps the story open and resumes its timer', (tester) async {
+    await http.runWithClient(() async {
+      await open(tester, [story('keep')]);
+      final content = tester.getRect(find.byKey(const ValueKey('story-content')));
+      await tester.timedDragFrom(Offset(content.left + 35, content.top + 35), const Offset(0, 45),
+          const Duration(seconds: 1));
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.byType(StoryViewer), findsOneWidget);
+      final timer = tester.widget<LinearProgressIndicator>(find.byKey(const ValueKey('story-timer-0'))).value!;
+      await tester.pump(const Duration(milliseconds: 300));
+      expect(tester.widget<LinearProgressIndicator>(find.byKey(const ValueKey('story-timer-0'))).value!, greaterThan(timer));
+      await tester.pumpWidget(const SizedBox());
+    }, () => MockClient((_) async => json({'seen': true})));
+  });
   testWidgets('own story accepts a love through the same wide button',
       (tester) async {
     final previous = AuthSession.instance.currentUser;

@@ -28,6 +28,34 @@ class _StoryViewerState extends State<StoryViewer>
       _held = false,
       _polling = false;
   bool _foreground = true;
+  double _dragOffset = 0;
+
+  void _dragStart(DragStartDetails details) {
+    _held = true;
+    _clock.stop();
+    if (_video != null) unawaited(_video!.pause());
+  }
+
+  void _dragUpdate(DragUpdateDetails details) {
+    setState(() => _dragOffset = max(0, _dragOffset + details.delta.dy));
+  }
+
+  void _dragEnd(DragEndDetails details) {
+    if (_dragOffset > 100 ||
+        (_dragOffset > 20 && (details.primaryVelocity ?? 0) > 650)) {
+      _closing = true;
+      Navigator.of(context).pop();
+      return;
+    }
+    _cancelDrag();
+  }
+
+  void _cancelDrag() {
+    setState(() => _dragOffset = 0);
+    _held = false;
+    _resume();
+  }
+
   int _loveRevision = 0;
   late final AnimationController _clock;
   Timer? _liveTimer;
@@ -290,6 +318,71 @@ class _StoryViewerState extends State<StoryViewer>
             child: Icon(Icons.broken_image_outlined,
                 color: Colors.white, size: 64));
       });
+  Widget _storyCard(StudentStory story, bool expired) =>
+      LayoutBuilder(builder: (context, bounds) {
+        final hasMedia = story.imageUrl.isNotEmpty || story.videoUrl.isNotEmpty;
+        return Center(
+            child: ConstrainedBox(
+          constraints:
+              BoxConstraints(maxWidth: 430, maxHeight: bounds.maxHeight * .92),
+          child: Container(
+            key: const ValueKey('story-card'),
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+                color: const Color(0xFF1B2D47),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: Colors.white12)),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              if (expired)
+                const Padding(
+                    padding: EdgeInsets.all(24),
+                    child: Text('انتهت صلاحية الستوري',
+                        style: TextStyle(color: Colors.white))),
+              if (!expired && hasMedia)
+                Flexible(
+                    flex: 3,
+                    child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: SizedBox(
+                            width: double.infinity,
+                            child: story.imageUrl.isNotEmpty
+                                ? _image(story)
+                                : _videoFailed
+                                    ? const Padding(
+                                        padding: EdgeInsets.all(24),
+                                        child: Text('تعذر تشغيل الفيديو',
+                                            style:
+                                                TextStyle(color: Colors.white)))
+                                    : _video?.value.isInitialized == true
+                                        ? FittedBox(
+                                            fit: BoxFit.contain,
+                                            child: SizedBox(
+                                                width: _video!.value.size.width,
+                                                height:
+                                                    _video!.value.size.height,
+                                                child: VideoPlayer(_video!)))
+                                        : const Padding(
+                                            padding: EdgeInsets.all(32),
+                                            child: CircularProgressIndicator(
+                                                color: Colors.pinkAccent))))),
+              if (!expired && story.text.isNotEmpty)
+                Flexible(
+                    child: Padding(
+                        padding:
+                            EdgeInsets.only(top: hasMedia ? 12 : 8, bottom: 8),
+                        child: SingleChildScrollView(
+                            child: Text(story.text,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                    fontSize: 20,
+                                    height: 1.5,
+                                    color: Colors.white))))),
+            ]),
+          ),
+        ));
+      });
+
   @override
   Widget build(BuildContext context) {
     final story = _story;
@@ -302,120 +395,103 @@ class _StoryViewerState extends State<StoryViewer>
           foregroundColor: Colors.white,
           title: StudentIdentity(
               id: story.authorId, name: story.name, avatar: story.avatar)),
-      body: SafeArea(
-          child: Column(children: [
-        Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: AnimatedBuilder(
-                animation: _clock,
-                builder: (_, __) => Row(
-                    children: List.generate(
-                        widget.stories.length,
-                        (i) => Expanded(
-                            child: Padding(
-                                padding: const EdgeInsets.all(2),
-                                child: LinearProgressIndicator(
-                                    key: ValueKey('story-timer-$i'),
-                                    value: i < _index
+      body: GestureDetector(
+          onVerticalDragStart: _dragStart,
+          onVerticalDragUpdate: _dragUpdate,
+          onVerticalDragEnd: _dragEnd,
+          onVerticalDragCancel: _cancelDrag,
+          behavior: HitTestBehavior.opaque,
+          child: SafeArea(
+              child: Transform.translate(
+                  offset: Offset(0, _dragOffset),
+                  child: Column(children: [
+                    Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: AnimatedBuilder(
+                            animation: _clock,
+                            builder: (_, __) => Row(
+                                children: List.generate(
+                                    widget.stories.length,
+                                    (i) => Expanded(
+                                        child: Padding(
+                                            padding: const EdgeInsets.all(2),
+                                            child: LinearProgressIndicator(
+                                                key: ValueKey('story-timer-$i'),
+                                                value: i < _index
+                                                    ? 1
+                                                    : i == _index
+                                                        ? _clock.value
+                                                        : 0,
+                                                minHeight: 5,
+                                                borderRadius:
+                                                    BorderRadius.circular(6),
+                                                backgroundColor: Colors.white24,
+                                                color: Colors.pinkAccent))))))),
+                    Expanded(
+                        child: LayoutBuilder(
+                            builder: (context, bounds) => GestureDetector(
+                                key: const ValueKey('story-content'),
+                                behavior: HitTestBehavior.opaque,
+                                onTapUp: (tap) => _move(
+                                    tap.localPosition.dx < bounds.maxWidth / 2
                                         ? 1
-                                        : i == _index
-                                            ? _clock.value
-                                            : 0,
-                                    minHeight: 5,
-                                    borderRadius: BorderRadius.circular(6),
-                                    backgroundColor: Colors.white24,
-                                    color: Colors.pinkAccent))))))),
-        Expanded(
-            child: LayoutBuilder(
-                builder: (context, bounds) => GestureDetector(
-                    key: const ValueKey('story-content'),
-                    behavior: HitTestBehavior.opaque,
-                    onTapUp: (tap) => _move(
-                        tap.localPosition.dx < bounds.maxWidth / 2 ? 1 : -1),
-                    onDoubleTap: _love,
-                    onLongPressStart: (_) {
-                      _held = true;
-                      _clock.stop();
-                      if (_video != null) unawaited(_video!.pause());
-                    },
-                    onLongPressEnd: (_) {
-                      _held = false;
-                      _resume();
-                    },
-                    onHorizontalDragEnd: (d) =>
-                        _move((d.primaryVelocity ?? 0) < 0 ? 1 : -1),
-                    child: SizedBox.expand(
-                        child: Center(
-                            child: SingleChildScrollView(
-                                padding: const EdgeInsets.all(20),
-                                child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      if (expired)
-                                        const Text('انتهت صلاحية الستوري',
-                                            style:
-                                                TextStyle(color: Colors.white)),
-                                      if (!expired && story.imageUrl.isNotEmpty)
-                                        _image(story),
-                                      if (!expired && story.videoUrl.isNotEmpty)
-                                        if (_videoFailed)
-                                          const Padding(
-                                              padding: EdgeInsets.all(24),
-                                              child: Text('تعذر تشغيل الفيديو',
-                                                  style: TextStyle(
-                                                      color: Colors.white)))
-                                        else if (_video?.value.isInitialized ==
-                                            true)
-                                          AspectRatio(
-                                              aspectRatio:
-                                                  _video!.value.aspectRatio,
-                                              child: VideoPlayer(_video!))
-                                        else
-                                          const Padding(
-                                              padding: EdgeInsets.all(32),
-                                              child: CircularProgressIndicator(
-                                                  color: Colors.pinkAccent)),
-                                      if (!expired && story.text.isNotEmpty)
-                                        Padding(
-                                            padding:
-                                                const EdgeInsets.only(top: 20),
-                                            child: Text(story.text,
-                                                textAlign: TextAlign.center,
-                                                style: const TextStyle(
-                                                    fontSize: 24,
-                                                    color: Colors.white))),
-                                    ]))))))),
-        if (_error != null)
-          Text(_error!,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.orange)),
-        Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Tooltip(
-                      message: loved ? 'أعجبك هذا الستوري' : 'إرسال لاف',
-                      child: TextButton.icon(
-                          key: const ValueKey('story-love-button'),
-                          style: TextButton.styleFrom(
-                              minimumSize: const Size(144, 72),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 36, vertical: 22),
-                              backgroundColor:
-                                  Colors.pinkAccent.withValues(alpha: .14)),
-                          onPressed: expired || loved || _busy ? null : _love,
-                          icon: Icon(
-                              loved ? Icons.favorite : Icons.favorite_border,
-                              color: Colors.pinkAccent,
-                              size: 20),
-                          label: Text('${_counts[story.id] ?? story.loveCount}',
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold)))),
-                ])),
-      ])),
+                                        : -1),
+                                onDoubleTap: _love,
+                                onLongPressStart: (_) {
+                                  _held = true;
+                                  _clock.stop();
+                                  if (_video != null) {
+                                    unawaited(_video!.pause());
+                                  }
+                                },
+                                onLongPressEnd: (_) {
+                                  _held = false;
+                                  _resume();
+                                },
+                                onHorizontalDragEnd: (d) => _move(
+                                    (d.primaryVelocity ?? 0) < 0 ? 1 : -1),
+                                child: _storyCard(story, expired)))),
+                    if (_error != null)
+                      Text(_error!,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(color: Colors.orange)),
+                    Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceAround,
+                            children: [
+                              Tooltip(
+                                  message:
+                                      loved ? 'أعجبك هذا الستوري' : 'إرسال لاف',
+                                  child: TextButton.icon(
+                                      key: const ValueKey('story-love-button'),
+                                      style: TextButton.styleFrom(
+                                          minimumSize: const Size(144, 72),
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 36, vertical: 22),
+                                          backgroundColor: Colors.pinkAccent
+                                              .withValues(alpha: .14)),
+                                      onPressed: expired || loved || _busy
+                                          ? null
+                                          : _love,
+                                      icon: Icon(
+                                          loved
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color: Colors.pinkAccent,
+                                          size: 20),
+                                      label: Text(
+                                          '${_counts[story.id] ?? story.loveCount}',
+                                          style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold)))),
+                            ])),
+                    const Padding(
+                        padding: EdgeInsets.only(bottom: 8),
+                        child: Icon(Icons.keyboard_arrow_down_rounded,
+                            color: Colors.white54, size: 22)),
+                  ])))),
     );
   }
 }
