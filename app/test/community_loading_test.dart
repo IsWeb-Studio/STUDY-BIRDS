@@ -8,6 +8,7 @@ import 'package:study_birds/core/network/api_client.dart';
 import 'package:study_birds/core/services/auth_session.dart';
 import 'package:study_birds/screens/community/student_community_hub.dart';
 import 'package:study_birds/screens/stories/student_stories.dart';
+import 'package:study_birds/core/widgets/state_widgets.dart';
 
 http.Response reply(Object data) => http.Response(jsonEncode(data), 200,
     headers: {'content-type': 'application/json; charset=utf-8'});
@@ -44,6 +45,71 @@ void main() {
   tearDown(() {
     AuthSession.instance.token = null;
     ApiClient.instance.clearCache();
+  });
+
+  testWidgets('initial community skeleton matches story circles and inbox rows',
+      (tester) async {
+    final feed = Completer<http.Response>(), chats = Completer<http.Response>();
+    await http.runWithClient(() async {
+      await tester.pumpWidget(const MaterialApp(home: StudentCommunityHub()));
+      await tester.pump();
+      expect(find.byType(LinearProgressIndicator), findsNothing);
+      final placeholders =
+          tester.widgetList<SkeletonBox>(find.byType(SkeletonBox));
+      expect(placeholders.any((s) => s.width == 66 && s.borderRadius == 33),
+          isTrue);
+      expect(placeholders.any((s) => s.width == 44 && s.borderRadius == 22),
+          isTrue);
+      feed.complete(reply(stories('Loaded story')));
+      chats.complete(reply(inbox('Loaded chat')));
+      await tester.pumpAndSettle();
+      expect(find.byType(SkeletonBox), findsNothing);
+      expect(find.text('Loaded story'), findsOneWidget);
+      expect(find.text('Loaded chat'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+        () => MockClient((r) =>
+            r.url.path.endsWith('/stories') ? feed.future : chats.future));
+  });
+
+  testWidgets('one page refresh updates stories and chats and waits for both',
+      (tester) async {
+    var refresh = false, finished = false;
+    var feedRequests = 0, inboxRequests = 0;
+    final feed = Completer<http.Response>(), chats = Completer<http.Response>();
+    await http.runWithClient(() async {
+      await tester.pumpWidget(const MaterialApp(home: StudentCommunityHub()));
+      await tester.pumpAndSettle();
+      refresh = true;
+      final state =
+          tester.state<RefreshIndicatorState>(find.byType(RefreshIndicator));
+      final refreshing = state.show().then((_) => finished = true);
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 500));
+      expect(feedRequests, 2);
+      expect(inboxRequests, 2);
+      expect(find.text('Old story'), findsOneWidget);
+      expect(find.text('Old chat'), findsOneWidget);
+      feed.complete(reply(stories('New story')));
+      await tester.pump();
+      expect(finished, isFalse);
+      chats.complete(reply(inbox('New chat')));
+      await tester.pumpAndSettle();
+      await refreshing;
+      expect(finished, isTrue);
+      expect(find.text('New story'), findsOneWidget);
+      expect(find.text('New chat'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+        () => MockClient((r) async {
+              if (r.url.path.endsWith('/stories')) {
+                feedRequests++;
+                return refresh ? await feed.future : reply(stories('Old story'));
+              }
+              inboxRequests++;
+              return refresh ? await chats.future : reply(inbox('Old chat'));
+            }));
   });
 
   testWidgets('stories render without waiting for a separate points request',

@@ -1,4 +1,6 @@
 import '../../core/repositories/stories_repository.dart';
+import '../../core/widgets/state_widgets.dart';
+import '../../core/config/app_theme.dart';
 import 'student_profile_link.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -129,6 +131,16 @@ class StudentCommunityHub extends StatefulWidget {
 
 class _StudentCommunityHubState extends State<StudentCommunityHub>
     with WidgetsBindingObserver {
+  final _storiesKey = GlobalKey<StudentStoriesState>();
+  Completer<void>? _loadDone;
+
+  Future<void> _refreshPage() async {
+    await Future.wait([
+      _load(),
+      _storiesKey.currentState?.refresh() ?? Future<void>.value(),
+    ]);
+  }
+
   List<Map<String, dynamic>> _rows = [];
   String? _cursor;
   bool _busy = false, _loading = true, _opening = false;
@@ -187,11 +199,16 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
   }
 
   Future<void> _load({bool quiet = false, bool more = false}) async {
-    if (!widget.isActive || _busy || _mutating || (more && _cursor == null)) {
+    if (_busy) {
+      await _loadDone?.future;
+      return;
+    }
+    if (!widget.isActive || _mutating || (more && _cursor == null)) {
       return;
     }
     final revision = _revision;
     _busy = true;
+    _loadDone = Completer<void>();
     try {
       final data = await communityInbox(before: more ? _cursor : null);
       if (!mounted || revision != _revision) return;
@@ -241,6 +258,8 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
       }
     } finally {
       _busy = false;
+      _loadDone?.complete();
+      _loadDone = null;
     }
   }
 
@@ -406,12 +425,15 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
                 tooltip: 'محادثة جديدة')
           ]),
           body: RefreshIndicator(
-              onRefresh: () => _load(),
+              color: AppColors.navy,
+              onRefresh: _refreshPage,
               child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
                     StudentStories(
-                        showCommunityButton: false, isActive: widget.isActive),
+                        key: _storiesKey,
+                        showCommunityButton: false,
+                        isActive: widget.isActive),
                     Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(children: [
@@ -425,7 +447,28 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
                               icon: const Icon(Icons.add_comment_outlined),
                               label: const Text('محادثة جديدة'))
                         ])),
-                    if (_loading) const LinearProgressIndicator(),
+                    if (_loading)
+                      for (var i = 0; i < 6; i++)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Row(children: [
+                            SkeletonBox(
+                                width: 44, height: 44, borderRadius: 22),
+                            SizedBox(width: 12),
+                            Expanded(
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                  SkeletonBox(width: 120, height: 12),
+                                  SizedBox(height: 9),
+                                  SkeletonBox(height: 10),
+                                ])),
+                            SizedBox(width: 20),
+                            SkeletonBox(width: 30, height: 8),
+                          ]),
+                        ),
                     if (_error != null)
                       TextButton(
                           onPressed: () => _load(), child: Text(_error!)),

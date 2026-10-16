@@ -1,4 +1,5 @@
 import '../../core/widgets/bird_points.dart';
+import '../../core/widgets/state_widgets.dart';
 import '../community/student_profile_link.dart';
 import 'dart:async';
 import 'dart:typed_data';
@@ -64,16 +65,18 @@ class StudentStories extends StatefulWidget {
   const StudentStories(
       {super.key, this.isActive = true, this.showCommunityButton = true});
   @override
-  State<StudentStories> createState() => _StudentStoriesState();
+  State<StudentStories> createState() => StudentStoriesState();
 }
 
-class _StudentStoriesState extends State<StudentStories>
+class StudentStoriesState extends State<StudentStories>
     with WidgetsBindingObserver {
   final _repo = StoriesRepository.instance;
   StoryProgress? _progress;
   List<StudentStory> _stories = [];
   String? _cursor, _error;
   bool _loading = true, _refreshing = false;
+  Completer<void>? _loadDone;
+  Future<void> refresh() => _load();
   final _seen = <String>{};
   Timer? _timer;
   Timer? _liveTimer;
@@ -166,10 +169,15 @@ class _StudentStoriesState extends State<StudentStories>
   }
 
   Future<void> _load({bool quiet = false, bool more = false}) async {
-    if (_refreshing || (quiet && !_visible)) {
+    if (_refreshing) {
+      await _loadDone?.future;
+      return;
+    }
+    if (quiet && !_visible) {
       return;
     }
     _refreshing = true;
+    _loadDone = Completer<void>();
     try {
       // The feed already contains author scores; do not wait for a profile call.
       final page = await _repo.feed(more ? _cursor : null);
@@ -195,6 +203,8 @@ class _StudentStoriesState extends State<StudentStories>
       }
     } finally {
       _refreshing = false;
+      _loadDone?.complete();
+      _loadDone = null;
       if (_reloadAfterFriends && mounted) {
         _reloadAfterFriends = false;
         unawaited(_load());
@@ -247,7 +257,6 @@ class _StudentStoriesState extends State<StudentStories>
                 icon: const Icon(Icons.refresh),
                 tooltip: 'تحديث'),
           ]),
-          if (_loading) const LinearProgressIndicator(),
           if (!_loading && _error == null && _stories.isEmpty)
             const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8),
@@ -293,6 +302,15 @@ class _StudentStoriesState extends State<StudentStories>
                         ]))),
                 if (widget.showCommunityButton)
                   CommunityEntry(isActive: widget.isActive),
+                if (_loading)
+                  for (var i = 0; i < 4; i++)
+                    const SizedBox(
+                        width: 78,
+                        child: Column(children: [
+                          SkeletonBox(width: 66, height: 66, borderRadius: 33),
+                          SizedBox(height: 9),
+                          SkeletonBox(width: 48, height: 10),
+                        ])),
                 for (final stories in groups.values)
                   SizedBox(
                       width: 78,
