@@ -1,3 +1,4 @@
+import '../../core/widgets/current_user_avatar.dart';
 import 'home_journey_summary_card.dart';
 import 'journey_preview_card.dart';
 import '../../core/network/api_client.dart';
@@ -130,10 +131,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         }
 
         final user = AuthSession.instance.currentUser;
-        final initials = (user?.name.trim().isNotEmpty == true)
-            ? user!.name.trim()[0].toUpperCase()
-            : '؟';
-
         // 2-column grid tile
         Widget gridTile(IconData icon, String label, VoidCallback onTap) {
           return Material(
@@ -224,20 +221,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
                     child: Row(
                       children: [
-                        CircleAvatar(
-                          radius: 22,
-                          backgroundColor: AppColors.navy,
-                          backgroundImage: (user.avatar?.isNotEmpty == true)
-                              ? NetworkImage(user.avatar!)
-                              : null,
-                          child: (user.avatar == null || user.avatar!.isEmpty)
-                              ? Text(initials,
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 16))
-                              : null,
-                        ),
+                        const CurrentUserAvatar(),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(

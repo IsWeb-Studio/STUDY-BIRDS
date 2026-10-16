@@ -1,15 +1,14 @@
+import '../../core/widgets/current_user_avatar.dart';
 import '../../core/services/locale_controller.dart';
 import '../../core/widgets/language_tile.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import '../../core/utils/app_error.dart';
-import 'dart:convert';
 import 'package:url_launcher/url_launcher.dart';
 import 'notification_preferences_screen.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../applications_documents_payments/payments_screens.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
@@ -47,40 +46,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _openingFriends = false;
 
   // صورة الملف الشخصي
-  Uint8List? _avatarBytes;
   bool _avatarUploading = false;
 
-  static const _avatarPrefKey = 'profile_avatar_b64';
 
   @override
   void initState() {
     super.initState();
     AnalyticsService.instance.screenView('profile');
     _load();
-    _loadCachedAvatar();
-  }
-
-  Future<void> _loadCachedAvatar() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final b64 = prefs.getString(_avatarPrefKey);
-      if (b64 != null && b64.isNotEmpty && mounted) {
-        setState(() => _avatarBytes = base64Decode(b64));
-      }
-    } catch (swallowedError, swallowedStack) {
-      ErrorReporter.swallowed(swallowedError, swallowedStack,
-          'screens/profile_account/profile_account_screens.dart:57');
-    }
-  }
-
-  Future<void> _cacheAvatar(Uint8List bytes) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_avatarPrefKey, base64Encode(bytes));
-    } catch (swallowedError, swallowedStack) {
-      ErrorReporter.swallowed(swallowedError, swallowedStack,
-          'screens/profile_account/profile_account_screens.dart:64');
-    }
   }
 
   Future<void> _load() async {
@@ -127,12 +100,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
 
     setState(() {
-      _avatarBytes = bytes;
       _avatarUploading = true;
     });
 
     // احفظ الصورة محلياً فوراً حتى لو فشل الرفع
-    await _cacheAvatar(bytes);
+    final ownerId = AuthSession.instance.currentUser?.id;
+    if (ownerId != null) await CurrentUserAvatar.save(ownerId, bytes);
 
     try {
       await StudentRepository.instance.uploadDocument(
@@ -276,17 +249,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           color: studentAchievementRing(
                                               _storyProgress?.points ?? 0)!,
                                           width: 3)),
-                              child: CircleAvatar(
-                                radius: 30,
-                                backgroundColor: AppColors.border,
-                                backgroundImage: _avatarBytes != null
-                                    ? MemoryImage(_avatarBytes!)
-                                    : null,
-                                child: _avatarBytes == null
-                                    ? const Icon(Icons.person_rounded,
-                                        color: AppColors.navy, size: 28)
-                                    : null,
-                              )),
+                              child: const CurrentUserAvatar(radius: 30)),
                           Positioned(
                             right: 0,
                             bottom: 0,
