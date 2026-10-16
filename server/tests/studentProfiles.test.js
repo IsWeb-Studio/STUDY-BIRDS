@@ -6,7 +6,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { MongoMemoryReplSet } = require(path.join(process.env.STUDY_BIRDS_TEST_TOOLS, 'node_modules/mongodb-memory-server-core'));
 
-test('public student profiles expose only public fields, friend-only stories, and direct student messaging', async () => {
+test('public student profiles expose only public fields, published community stories, and direct student messaging', async () => {
   process.env.JWT_SECRET = 'student-profiles-test-only';
   const mongo = await MongoMemoryReplSet.create({ replSet: { count: 1, storageEngine: 'wiredTiger', ip: '127.0.0.1' } });
   let server;
@@ -41,7 +41,7 @@ test('public student profiles expose only public fields, friend-only stories, an
     assert.equal(publicProfile.name, users[1].name);
     assert.equal(publicProfile.relation, 'none'); assert.equal(publicProfile.canMessage, true);
     assert.equal(publicProfile.total_points, 200000); assert.equal(publicProfile.streak_days, 0, 'expired streak is calculated on read');
-    assert.deepEqual(publicProfile.stories, []); assert.equal(publicProfile.storyCount, null); assert.equal(publicProfile.canViewStories, false);
+    assert.equal(publicProfile.stories.length, 30); assert.equal(publicProfile.storyCount, 34); assert.equal(publicProfile.canViewStories, true);
     assert.ok(!JSON.stringify(publicProfile).includes('private-'), 'email, phone and CRM fields never leave the server');
     const own = (await call('GET', `/friends/${users[0].id}/profile`)).data;
     assert.equal(own.relation, 'self'); assert.equal(own.canMessage, false); assert.equal(own.canViewStories, true);
@@ -54,7 +54,7 @@ test('public student profiles expose only public fields, friend-only stories, an
     await call('POST', `/friends/${users[1].id}/request`);
     assert.equal((await call('GET', profile)).data.relation, 'outgoing');
     assert.equal((await call('GET', `/friends/${users[0].id}/profile`, 1)).data.relation, 'incoming');
-    assert.equal((await call('GET', profile)).data.canViewStories, false);
+    assert.equal((await call('GET', profile)).data.canViewStories, true);
     await call('POST', `/friends/${users[0].id}/accept`, 1);
     const friend = (await call('GET', profile)).data;
     assert.equal(friend.relation, 'friends'); assert.equal(friend.friendCount, 1);
@@ -65,8 +65,8 @@ test('public student profiles expose only public fields, friend-only stories, an
     assert.equal(next.stories.length, 4); assert.equal(next.nextStoriesCursor, null);
     assert.ok(next.stories.every(s => !friend.stories.some(old => old.id === s.id)));
     await call('DELETE', `/friends/${users[1].id}`);
-    assert.equal((await call('GET', profile)).data.canViewStories, false);
-    assert.equal((await call('GET', `${profile}?before=${friend.nextStoriesCursor}`)).data.stories.length, 0, 'pagination never bypasses story privacy');
+    assert.equal((await call('GET', profile)).data.canViewStories, true);
+    assert.equal((await call('GET', `${profile}?before=${friend.nextStoriesCursor}`)).data.stories.length, 4, 'published stories remain available after unfriending');
     assert.equal((await call('POST', '/chat/messages', 0, { recipient: users[1].id, body: 'still a conversation' })).status, 201);
     await User.updateOne({ _id: users[1]._id }, { $set: { isActive: false } });
     assert.equal((await call('GET', profile)).status, 404);

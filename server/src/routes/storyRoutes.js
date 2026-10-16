@@ -7,7 +7,8 @@ const { Story, StoryStats, StoryInteraction } = require('../models/Stories');
 const rules = require('../utils/storyRules');
 const upload = require('../middleware/uploadMiddleware');
 const { uploadFileToCloudinary } = require('../utils/uploadToCloudinary');
-const { friendIds, canReadStory } = require('../utils/storyAudience');
+const { canReadStory } = require('../utils/storyAudience');
+const User = require('../models/User');
 const StoryVideo = require('../models/StoryVideo');
 const { parseVideo, validateVideo, uploadStoryVideo } = require('../utils/storyVideoUpload');
 router.use(protect, authorize('student'));
@@ -41,8 +42,7 @@ router.put('/preferences', asyncHandler(async (req, res) => {
 router.get('/updates', asyncHandler(async (req, res) => {
   const ids = typeof req.query.ids === 'string' ? [...new Set(req.query.ids.split(','))] : [];
   if (!ids.length || ids.length > 120 || ids.some(id => !/^[a-f0-9]{24}$/i.test(id))) fail(400, 'Invalid stories');
-  const stories = await Story.find({ _id: { $in: ids }, expiresAt: { $gt: new Date() },
-    author: { $in: [req.user._id, ...await friendIds(req.user._id)] } }).select('_id author loveCount')
+  const stories = await Story.find({ _id: { $in: ids }, expiresAt: { $gt: new Date() } }).select('_id author loveCount')
     .populate({ path: 'author', select: '_id', match: { isActive: true, role: 'student' } }).lean();
   const readable = stories.filter(s => s.author);
   const edges = await StoryInteraction.find({ story: { $in: readable.map(s => s._id) }, user: req.user._id }).select('story lovedAt seenAt').lean();
@@ -54,7 +54,7 @@ router.get('/updates', asyncHandler(async (req, res) => {
   })) });
 }));
 router.get('/', asyncHandler(async (req, res) => {
-  const filter = { expiresAt: { $gt: new Date() }, author: { $in: [req.user._id, ...await friendIds(req.user._id)] } };
+  const filter = { expiresAt: { $gt: new Date() }, author: { $in: await User.distinct('_id', { role: 'student', isActive: true }) } };
   if (req.query.before) {
     if (!/^[a-f0-9]{24}$/i.test(req.query.before)) fail(400, 'Invalid cursor');
     filter._id = { $lt: new mongoose.Types.ObjectId(req.query.before) };

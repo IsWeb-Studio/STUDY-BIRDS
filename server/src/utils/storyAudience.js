@@ -5,9 +5,6 @@ async function friendIds(user) {
   return rows.map(r => String(r.requester) === String(user) ? r.recipient : r.requester);
 }
 async function canReadStory(user, author, session = null) {
-  if (String(user) === String(author)) return true;
-  const relationship = await Friendship.exists({ _id: Friendship.pair(user, author), status: 'accepted' }).session(session);
-  if (!relationship) return false;
   return !!await User.exists({ _id: author, role: 'student', isActive: true }).session(session);
 }
 module.exports = { friendIds, canReadStory };

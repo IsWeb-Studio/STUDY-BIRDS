@@ -120,8 +120,8 @@ class _FriendsScreenState extends State<FriendsScreen> {
         context: context,
         builder: (dialog) => AlertDialog(
                 title: const Text('إزالة الصديق؟'),
-                content:
-                    Text('بعد إزالة ${person.name} لن تظهر يومياتكما لبعضكما.'),
+                content: Text(
+                    'سيتم إزالة ${person.name} من أصدقائك. تظل الستوريات المنشورة والمراسلة متاحة.'),
                 actions: [
                   TextButton(
                       onPressed: () => Navigator.pop(dialog, false),
@@ -206,7 +206,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
           const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               child: Text(
-                  'بعد قبول طلب الصداقة تقدروا تشوفوا يوميات بعض وتتفاعلوا معها.',
+                  'أضف زملاءك كأصدقاء وتواصل معهم. الستوريات المنشورة متاحة لطلاب المجتمع.',
                   textAlign: TextAlign.center)),
           SingleChildScrollView(
               scrollDirection: Axis.horizontal,

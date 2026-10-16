@@ -88,7 +88,7 @@ class _StudentPublicProfileScreenState
           builder: (ctx) => AlertDialog(
                   title: const Text('إزالة الصديق؟'),
                   content: const Text(
-                      'لن تظهر يومياتكما لبعضكما بعد الإزالة. يمكنكما متابعة المراسلة.'),
+                      'سيتم إزالة الطالب من أصدقائك. تظل الستوريات المنشورة والمراسلة متاحة.'),
                   actions: [
                     TextButton(
                         onPressed: () => Navigator.pop(ctx, false),

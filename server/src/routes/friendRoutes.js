@@ -67,7 +67,7 @@ router.get('/:profileId/profile', asyncHandler(async (req, res) => {
   const self = String(user._id) === String(req.user._id);
   const edge = self ? null : await Friendship.findById(Friendship.pair(req.user._id, user._id)).lean();
   const relationship = self ? 'self' : relation(edge, req.user._id);
-  const canViewStories = self || relationship === 'friends';
+  const canViewStories = true;
   const stats = rules.progress(await StoryStats.findOne({ user: user._id }).lean() || {});
   const friendCount = await Friendship.countDocuments({ status: 'accepted', $or: [{ requester: user._id }, { recipient: user._id }] });
   const filter = { author: user._id, expiresAt: { $gt: new Date() } };

@@ -14,6 +14,7 @@ import 'friends_screen.dart';
 import '../community/student_community_hub.dart';
 import '../../core/repositories/friends_repository.dart';
 import 'story_viewer.dart';
+import 'all_student_stories.dart';
 export 'story_viewer.dart' show StoryViewer;
 
 /// The outer achievement ring is independent from the inner viewing ring.
@@ -231,15 +232,24 @@ class _StudentStoriesState extends State<StudentStories>
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             const Expanded(
-                child: Text('يوميات الطلاب',
+                child: Text('الستوريات المنشورة',
                     style:
                         TextStyle(fontWeight: FontWeight.bold, fontSize: 17))),
+            TextButton(
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const AllStudentStoriesScreen())),
+                child: const Text('عرض الكل')),
             IconButton(
                 onPressed: _refreshing ? null : () => _load(),
                 icon: const Icon(Icons.refresh),
                 tooltip: 'تحديث'),
           ]),
           if (_loading) const LinearProgressIndicator(),
+          if (!_loading && _error == null && _stories.isEmpty)
+            const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Text('لا توجد ستوريات منشورة حاليًا. انشر أول ستوري!',
+                    style: TextStyle(color: Colors.blueGrey))),
           Align(
               alignment: AlignmentDirectional.centerEnd,
               child: TextButton.icon(
