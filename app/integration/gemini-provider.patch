@@ -1,0 +1,120 @@
+diff --git a/server/.env.example b/server/.env.example
+index 8ce00e7..3aa840c 100644
+--- a/server/.env.example
++++ b/server/.env.example
+@@ -91,6 +91,12 @@ AI_API_KEY=
+ AI_MODEL=
+ AI_DAILY_LIMIT=20
+ 
++# Birds AI: credentials belong on the server, never in Flutter or web builds.
++# Set AI_PROVIDER=gemini to select Google's native Gemini API.
++AI_PROVIDER=
++GEMINI_API_KEY=
++GEMINI_MODEL=gemini-3.5-flash-lite
++
+ # ترجمة محتوى الجامعات والبرامج تلقائيًا عند اختيار الإنجليزية (تستخدم إعدادات AI_* أعلاه).
+ # أقصى عدد دفعات ترجمة جديدة يوميًا؛ النتائج تُخزَّن فلا تُترجم النصوص نفسها مرتين.
+ TRANSLATE_DAILY_LIMIT=400
+diff --git a/server/src/utils/assistantProvider.js b/server/src/utils/assistantProvider.js
+index 5ed4f55..2f80406 100644
+--- a/server/src/utils/assistantProvider.js
++++ b/server/src/utils/assistantProvider.js
+@@ -1,6 +1,12 @@
+ // Provider credentials stay on the server; only normalized replies reach clients.
+ function configuration(env = process.env) {
+-  const provider = env.AI_PROVIDER || (env.ANTHROPIC_API_KEY ? 'anthropic' : 'openai');
++  const provider = env.AI_PROVIDER || (env.GEMINI_API_KEY ? 'gemini' : env.ANTHROPIC_API_KEY ? 'anthropic' : 'openai');
++  if (provider === 'gemini') {
++    const model = env.GEMINI_MODEL || 'gemini-3.5-flash-lite';
++    if (!/^[a-zA-Z0-9._-]+$/.test(model)) return null;
++    return { provider, key: env.GEMINI_API_KEY, model,
++      endpoint: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent` };
++  }
+   if (provider === 'anthropic') {
+     return { provider, key: env.ANTHROPIC_API_KEY,
+       model: env.ANTHROPIC_MODEL || 'claude-haiku-5-5',
+@@ -22,13 +28,20 @@ function ready() {
+ async function generateReply(messages, { config = configuration(), fetchImpl = fetch } = {}) {
+   if (!config?.key || !config?.model) throw new Error('Assistant is not configured');
+   const anthropic = config.provider === 'anthropic';
+-  const payload = anthropic ? {
++  const gemini = config.provider === 'gemini';
++  const payload = gemini ? {
++    systemInstruction: { parts: [{ text: messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n') }] },
++    contents: messages.filter(m => m.role === 'user' || m.role === 'assistant').map(m => ({
++      role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }],
++    })),
++    generationConfig: { maxOutputTokens: 2048 },
++  } : anthropic ? {
+     model: config.model,
+     max_tokens: 800,
+     system: messages.filter(m => m.role === 'system').map(m => m.content).join('\n\n'),
+     messages: messages.filter(m => m.role === 'user' || m.role === 'assistant'),
+   } : { model: config.model, max_completion_tokens: 800, messages };
+-  const headers = anthropic ? {
++  const headers = gemini ? { 'x-goog-api-key': config.key, 'Content-Type': 'application/json' } : anthropic ? {
+     'x-api-key': config.key,
+     'anthropic-version': '2023-06-01',
+     'Content-Type': 'application/json',
+@@ -40,16 +53,19 @@ async function generateReply(messages, { config = configuration(), fetchImpl = f
+   // Never include provider bodies or credentials in application errors.
+   if (!response.ok) throw new Error('Assistant provider request failed');
+   const data = await response.json();
+-  const text = anthropic
++  const text = gemini
++    ? (Array.isArray(data.candidates?.[0]?.content?.parts) ? data.candidates[0].content.parts : [])
++        .filter(part => !part.thought && typeof part.text === 'string').map(part => part.text).join('\n')
++    : anthropic
+     ? (Array.isArray(data.content) ? data.content : [])
+         .filter(block => block.type === 'text' && typeof block.text === 'string')
+         .map(block => block.text).join('\n')
+     : data.choices?.[0]?.message?.content;
+   if (typeof text !== 'string' || !text.trim()) throw new Error('Assistant returned no text');
+   return {
+-    text: text.trim().slice(0, 12000), model: data.model || config.model,
+-    inputTokens: (anthropic ? data.usage?.input_tokens : data.usage?.prompt_tokens) || 0,
+-    outputTokens: (anthropic ? data.usage?.output_tokens : data.usage?.completion_tokens) || 0,
++    text: text.trim().slice(0, 12000), model: (gemini ? data.modelVersion : data.model) || config.model,
++    inputTokens: (gemini ? data.usageMetadata?.promptTokenCount : anthropic ? data.usage?.input_tokens : data.usage?.prompt_tokens) || 0,
++    outputTokens: (gemini ? (data.usageMetadata?.candidatesTokenCount || 0) + (data.usageMetadata?.thoughtsTokenCount || 0) : anthropic ? data.usage?.output_tokens : data.usage?.completion_tokens) || 0,
+   };
+ }
+ 
+diff --git a/server/tests/assistantProvider.test.js b/server/tests/assistantProvider.test.js
+index 05b9327..05ca1c5 100644
+--- a/server/tests/assistantProvider.test.js
++++ b/server/tests/assistantProvider.test.js
+@@ -2,6 +2,33 @@ const { test } = require('node:test');
+ const assert = require('node:assert/strict');
+ const { configuration, generateReply } = require('../src/utils/assistantProvider');
+ 
++test('Gemini preserves system guidance, private reference context and conversation roles', async () => {
++  const config = configuration({ AI_PROVIDER: 'gemini', GEMINI_API_KEY: 'gemini-test-secret' });
++  const reply = await generateReply([
++    { role: 'system', content: 'Birds guidance' }, { role: 'system', content: 'Reference data' },
++    { role: 'user', content: 'Previous' }, { role: 'assistant', content: 'Previous answer' },
++    { role: 'user', content: 'Current question' },
++  ], { config, fetchImpl: async (url, options) => {
++    assert.equal(url, 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent');
++    assert.ok(!url.includes('secret'));
++    assert.equal(options.headers['x-goog-api-key'], 'gemini-test-secret');
++    assert.equal(options.headers.Authorization, undefined);
++    const body = JSON.parse(options.body);
++    assert.equal(body.systemInstruction.parts[0].text, 'Birds guidance\n\nReference data');
++    assert.deepEqual(body.contents.map(m => m.role), ['user', 'model', 'user']);
++    assert.equal(body.generationConfig.maxOutputTokens, 2048);
++    return Response.json({ modelVersion: 'gemini-3.5-flash-lite', candidates: [{ content: { parts: [
++      { thought: true, text: 'Internal reasoning' }, { text: 'Student answer' }, { text: 'Follow-up' },
++    ] } }], usageMetadata: { promptTokenCount: 20, candidatesTokenCount: 8, thoughtsTokenCount: 4 } });
++  } });
++  assert.equal(reply.text, 'Student answer\nFollow-up');
++  assert.equal(reply.inputTokens, 20); assert.equal(reply.outputTokens, 12);
++  assert.equal(configuration({ GEMINI_API_KEY: 'test' }).provider, 'gemini');
++  assert.equal(configuration({ AI_PROVIDER: 'gemini', GEMINI_MODEL: '../invalid?key=bad' }), null);
++  await assert.rejects(generateReply([], { config, fetchImpl: async () => Response.json({ candidates: [] }) }), /no text/);
++  await assert.rejects(generateReply([], { config, fetchImpl: async () => new Response('secret', { status: 403 }) }), /Assistant provider request failed/);
++});
++
+ test('Claude messages preserve guidance, reference context and conversation history', async () => {
+   const config = configuration({ ANTHROPIC_API_KEY: 'test-secret' });
+   const reply = await generateReply([
