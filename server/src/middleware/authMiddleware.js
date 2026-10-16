@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const crypto = require('node:crypto');
 const User = require("../models/User");
 const asyncHandler = require("../utils/asyncHandler");
+const {authenticateCrmService} = require('../utils/crmServiceAuth');
 
 const protect = asyncHandler(async (req, res, next) => {
   const header = req.headers.authorization;
@@ -12,6 +13,14 @@ const protect = asyncHandler(async (req, res, next) => {
   }
 
   const token = header.split(" ")[1];
+  try {
+    const serviceUser = await authenticateCrmService(req, token, process.env,
+      id => User.findById(id).select('-password'));
+    if (serviceUser) { req.user = serviceUser; return next(); }
+  } catch (error) {
+    res.status(error.status || 401);
+    throw error;
+  }
   let decoded;
   try {
     decoded = jwt.verify(token, process.env.JWT_SECRET);
