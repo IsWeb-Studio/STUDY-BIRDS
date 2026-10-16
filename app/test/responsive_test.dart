@@ -44,10 +44,7 @@ void main() {
     Future<double> bodyWidth(double w) async {
       setSize(tester, w, 900);
       await tester.pumpWidget(MaterialApp(
-          home: AppScaffold(
-              title: 't',
-              hideAiButton: true,
-              body: SizedBox.expand(key: key))));
+          home: AppScaffold(title: 't', body: SizedBox.expand(key: key))));
       await tester.pump();
       return tester.getSize(find.byKey(key)).width;
     }

@@ -49,14 +49,7 @@ void main() {
     });
   });
 
-  // The throwaway server certificate is generated here, at test time, with
-  // openssl: no key material is ever stored in the repository.
-  final openssl = _findOpenssl();
-
-  group('enforcement against a real TLS handshake',
-      skip: openssl == null ? 'openssl is not available' : null, () {
-    late Directory tmp;
-    late String certPath;
+  group('enforcement against a real TLS handshake', () {
     late HttpServer server;
     late String url;
     HttpOverrides? previousOverrides;
@@ -65,22 +58,9 @@ void main() {
       // flutter_test replaces HttpClient with a stub; we need real sockets here.
       previousOverrides = HttpOverrides.current;
       HttpOverrides.global = null;
-      tmp = Directory.systemTemp.createTempSync('pin_test_');
-      certPath = '${tmp.path}/cert.pem';
-      final keyPath = '${tmp.path}/key.pem';
-      final made = Process.runSync(
-          openssl!,
-          [
-            'req', '-x509', '-newkey', 'rsa:2048', '-nodes',
-            '-keyout', keyPath, '-out', certPath, '-days', '2',
-            '-subj', '/CN=localhost',
-            '-addext', 'subjectAltName=DNS:localhost,IP:127.0.0.1',
-          ],
-          environment: {'MSYS_NO_PATHCONV': '1'});
-      expect(made.exitCode, 0, reason: '${made.stderr}');
       final ctx = SecurityContext()
-        ..useCertificateChain(certPath)
-        ..usePrivateKey(keyPath);
+        ..useCertificateChain('test/fixtures/selfsigned_cert.pem')
+        ..usePrivateKey('test/fixtures/selfsigned_key.pem');
       server = await HttpServer.bindSecure('127.0.0.1', 0, ctx);
       server.listen((request) {
         request.response
@@ -95,7 +75,6 @@ void main() {
 
     tearDown(() async {
       await server.close(force: true);
-      tmp.deleteSync(recursive: true);
       PinnedHttp.reset();
       HttpOverrides.global = previousOverrides;
     });
@@ -111,7 +90,7 @@ void main() {
 
     test('the same server IS accepted when its certificate is the pinned one',
         () async {
-      final fixture = File(certPath).readAsBytesSync();
+      final fixture = File('test/fixtures/selfsigned_cert.pem').readAsBytesSync();
       PinnedHttp.loadBundle = () async => fixture;
       final client = PinnedClient(baseUrl: url);
       addTearDown(client.close);
@@ -138,17 +117,4 @@ void main() {
       expect(context, isNull);
     });
   });
-}
-
-/// Path of an openssl executable, or null when none is installed.
-String? _findOpenssl() {
-  for (final candidate in const [
-    'openssl',
-    r'C:\Program Files\Git\usr\bin\openssl.exe',
-  ]) {
-    try {
-      if (Process.runSync(candidate, ['version']).exitCode == 0) return candidate;
-    } catch (_) {}
-  }
-  return null;
 }

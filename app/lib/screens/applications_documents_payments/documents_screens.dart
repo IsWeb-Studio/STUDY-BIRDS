@@ -101,22 +101,35 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
     {String? replaces, String? translationOf, PlatformFile? picked}) async {
   if (replaces == null && translationOf == null && picked == null) {
     final library = await StudentRepository.instance.getDocuments();
-    final matches = library.whereType<Map>().where((doc) =>
-        doc['type'] == type && isCurrentLibraryDocument(doc)).toList();
+    final matches = library
+        .whereType<Map>()
+        .where((doc) => doc['type'] == type && isCurrentLibraryDocument(doc))
+        .toList();
     if (!context.mounted) return false;
     if (matches.isNotEmpty) {
       final existing = matches.first;
-      final choice = await showDialog<String>(context: context, builder: (ctx) => AlertDialog(
-        title: Text('${docTypeLabel(type)} موجود في مستنداتك'),
-        content: const Text('يمكنك استخدام المستند الحالي أو رفع نسخة جديدة. الطلبات السابقة تحتفظ بمستنداتها.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('إلغاء')),
-          TextButton(onPressed: () => Navigator.pop(ctx, 'keep'), child: const Text('إضافة مستند آخر')),
-          TextButton(onPressed: () => Navigator.pop(ctx, 'replace'), child: const Text('استبدال المستند')),
-          if (isUsableLibraryDocument(existing))
-            FilledButton(onPressed: () => Navigator.pop(ctx, 'reuse'), child: const Text('استخدام المستند الموجود')),
-        ],
-      ));
+      final choice = await showDialog<String>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+                title: Text('${docTypeLabel(type)} موجود في مستنداتك'),
+                content: const Text(
+                    'يمكنك استخدام المستند الحالي أو رفع نسخة جديدة. الطلبات السابقة تحتفظ بمستنداتها.'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('إلغاء')),
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx, 'keep'),
+                      child: const Text('إضافة مستند آخر')),
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx, 'replace'),
+                      child: const Text('استبدال المستند')),
+                  if (isUsableLibraryDocument(existing))
+                    FilledButton(
+                        onPressed: () => Navigator.pop(ctx, 'reuse'),
+                        child: const Text('استخدام المستند الموجود')),
+                ],
+              ));
       if (choice == null || !context.mounted) return false;
       if (choice == 'reuse') return true;
       if (choice == 'replace') replaces = '${existing['_id']}';
@@ -228,7 +241,9 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
     if (context.mounted) {
       Navigator.of(context, rootNavigator: true).pop();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text(result['reused'] == true ? 'المستند موجود بالفعل؛ تم استخدامه بدون رفع نسخة أخرى' : 'تم رفع المستند بنجاح'),
+          content: Text(result['reused'] == true
+              ? 'المستند موجود بالفعل؛ تم استخدامه بدون رفع نسخة أخرى'
+              : 'تم رفع المستند بنجاح'),
           backgroundColor: AppColors.success));
     }
     return true;
@@ -353,18 +368,17 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
     AnalyticsService.instance.screenView('my_documents');
     _load();
     _documentSub = StudentRepository.instance.documentChanges.listen((docs) {
-      if (mounted) { setState(() => _docs = docs.whereType<Map>()
-          .where(isCurrentLibraryDocument).toList()); }
+      if (mounted) {
+        setState(() => _docs =
+            docs.whereType<Map>().where(isCurrentLibraryDocument).toList());
+      }
     });
     _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
       if (_uploading) return;
       StudentRepository.instance.getDocuments(forceRefresh: true).then((docs) {
         if (mounted)
-          setState(() => _docs = docs
-              .whereType<Map>()
-              .where(
-                  isCurrentLibraryDocument)
-              .toList());
+          setState(() => _docs =
+              docs.whereType<Map>().where(isCurrentLibraryDocument).toList());
       }).catchError(ErrorReporter.silent(
           'screens/applications_documents_payments/documents_screens.dart:306'));
     });
@@ -399,10 +413,7 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
       setState(() {
         // Current files only: older versions and translations live inside
         // their document's detail screen (PRD 29).
-        _docs = docs
-            .whereType<Map>()
-            .where(isCurrentLibraryDocument)
-            .toList();
+        _docs = docs.whereType<Map>().where(isCurrentLibraryDocument).toList();
         _loading = false;
       });
     } catch (swallowedError, swallowedStack) {
@@ -448,8 +459,9 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
     if (!mounted) return;
     setState(() => _uploading = false);
     if (success) {
-      StudentRepository.instance.getDocuments(forceRefresh: true)
-          .catchError(ErrorReporter.fallback('documents.refresh.after-upload', <dynamic>[]));
+      StudentRepository.instance.getDocuments(forceRefresh: true).catchError(
+          ErrorReporter.fallback(
+              'documents.refresh.after-upload', <dynamic>[]));
     }
   }
 
@@ -490,6 +502,44 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
                     : _buildDocsList(),
       ),
     );
+  }
+
+  final Set<String> _deleting = {};
+
+  Future<void> _deleteDocument(Map<String, dynamic> doc) async {
+    final id = '${doc['_id']}';
+    if (!_deleting.add(id)) return;
+    try {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('حذف المستند من مستنداتي؟'),
+          content: Text(
+              'هل تريد حذف ${docTypeLabel(doc['type'] as String?)} من مكتبتك؟ لن يظهر للطلبات الجديدة. تبقى النسخ المرفقة بالطلبات السابقة محفوظة.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('إلغاء')),
+            TextButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('حذف',
+                    style: TextStyle(color: AppColors.danger))),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
+      await StudentRepository.instance.archiveDocument(id);
+      if (!mounted) return;
+      setState(() => _docs.removeWhere((d) => d['_id'] == id));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم حذف المستند من مستنداتي')));
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(AppError.message(error))));
+    } finally {
+      _deleting.remove(id);
+    }
   }
 
   Widget _buildDocsList() {
@@ -537,48 +587,76 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
         final info = StatusInfo.of(d);
         final needsAction =
             info != null && (info.tone == 'action' || info.tone == 'danger');
-        return AppCard(
-          onTap: () async {
-            final changed = await Navigator.of(context).push<bool>(
-                MaterialPageRoute(
-                    builder: (_) => DocumentDetailScreen(document: d)));
-            if (changed == true) {
-              StudentRepository.instance.getDocuments(forceRefresh: true)
-                  .catchError(ErrorReporter.fallback('documents.refresh.after-change', <dynamic>[]));
-            }
-          },
-          child: Row(
-            children: [
-              _DocThumb(document: d),
-              const SizedBox(width: 12),
-              Expanded(
-                  child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(docTypeLabel(d['type'] as String?),
-                      style: AppTextStyles.cardTitle),
-                  Text('${d['fileName'] ?? ''}', maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.caption),
-                  if (d['updatedAt'] != null || d['createdAt'] != null)
-                    Text('آخر تحديث: ${'${d['updatedAt'] ?? d['createdAt']}'.split('T').first}',
-                        style: AppTextStyles.caption),
-                  if (d['expiresAt'] != null)
-                    Text('انتهاء الصلاحية: ${'${d['expiresAt']}'.split('T').first}', style: AppTextStyles.caption),
-                  if (d['uploadStatus'] == 'unavailable')
-                    const Text('هذا المستند القديم يحتاج استعادة الملف أو رفع نسخة جديدة', style: AppTextStyles.caption),
-                  if (needsAction)
-                    Text(info.meaning,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style:
-                            AppTextStyles.caption.copyWith(color: meta.color)),
-                ],
-              )),
-              const SizedBox(width: 8),
-              StatusBadge(label: meta.label, color: meta.color),
-            ],
-          ),
-        );
+        return Dismissible(
+            key: ValueKey('document-${d['_id']}'),
+            direction: DismissDirection.horizontal,
+            background: Container(
+                color: AppColors.danger,
+                alignment: Alignment.centerLeft,
+                padding: const EdgeInsets.all(20),
+                child: const Icon(Icons.delete_outline, color: Colors.white)),
+            secondaryBackground: Container(
+                color: AppColors.danger,
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.all(20),
+                child: const Icon(Icons.delete_outline, color: Colors.white)),
+            confirmDismiss: (_) async {
+              await _deleteDocument(d);
+              return false;
+            },
+            child: GestureDetector(
+                onLongPress: () => _deleteDocument(d),
+                child: AppCard(
+                  onTap: () async {
+                    final changed = await Navigator.of(context).push<bool>(
+                        MaterialPageRoute(
+                            builder: (_) => DocumentDetailScreen(document: d)));
+                    if (changed == true) {
+                      StudentRepository.instance
+                          .getDocuments(forceRefresh: true)
+                          .catchError(ErrorReporter.fallback(
+                              'documents.refresh.after-change', <dynamic>[]));
+                    }
+                  },
+                  child: Row(
+                    children: [
+                      _DocThumb(document: d),
+                      const SizedBox(width: 12),
+                      Expanded(
+                          child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(docTypeLabel(d['type'] as String?),
+                              style: AppTextStyles.cardTitle),
+                          Text('${d['fileName'] ?? ''}',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: AppTextStyles.caption),
+                          if (d['updatedAt'] != null || d['createdAt'] != null)
+                            Text(
+                                'آخر تحديث: ${'${d['updatedAt'] ?? d['createdAt']}'.split('T').first}',
+                                style: AppTextStyles.caption),
+                          if (d['expiresAt'] != null)
+                            Text(
+                                'انتهاء الصلاحية: ${'${d['expiresAt']}'.split('T').first}',
+                                style: AppTextStyles.caption),
+                          if (d['uploadStatus'] == 'unavailable')
+                            const Text(
+                                'هذا المستند القديم يحتاج استعادة الملف أو رفع نسخة جديدة',
+                                style: AppTextStyles.caption),
+                          if (needsAction)
+                            Text(info.meaning,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: AppTextStyles.caption
+                                    .copyWith(color: meta.color)),
+                        ],
+                      )),
+                      const SizedBox(width: 8),
+                      StatusBadge(label: meta.label, color: meta.color),
+                    ],
+                  ),
+                )));
       },
     );
   }
@@ -831,18 +909,30 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                 icon: const Icon(Icons.remove_circle_outline),
                 label: const Text('إزالة من مستنداتي'),
                 onPressed: () async {
-                  final confirmed = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-                    title: const Text('إزالة من مكتبة المستندات؟'),
-                    content: const Text('لن يظهر في الطلبات الجديدة. الطلبات السابقة تحتفظ بالمستند المرفق ولا يُحذف الملف.'),
-                    actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
-                      FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('إزالة'))],
-                  ));
+                  final confirmed = await showDialog<bool>(
+                      context: context,
+                      builder: (ctx) => AlertDialog(
+                            title: const Text('إزالة من مكتبة المستندات؟'),
+                            content: const Text(
+                                'لن يظهر في الطلبات الجديدة. الطلبات السابقة تحتفظ بالمستند المرفق ولا يُحذف الملف.'),
+                            actions: [
+                              TextButton(
+                                  onPressed: () => Navigator.pop(ctx, false),
+                                  child: const Text('إلغاء')),
+                              FilledButton(
+                                  onPressed: () => Navigator.pop(ctx, true),
+                                  child: const Text('إزالة'))
+                            ],
+                          ));
                   if (confirmed != true) return;
                   try {
-                    await StudentRepository.instance.archiveDocument('${document['_id']}');
+                    await StudentRepository.instance
+                        .archiveDocument('${document['_id']}');
                     if (context.mounted) Navigator.pop(context, true);
                   } catch (error) {
-                    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppError.message(error))));
+                    if (context.mounted)
+                      ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(AppError.message(error))));
                   }
                 },
               ),

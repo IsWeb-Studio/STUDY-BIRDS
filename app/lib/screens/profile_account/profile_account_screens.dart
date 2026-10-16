@@ -19,14 +19,21 @@ import '../../core/repositories/student_repository.dart';
 import 'security_settings_screen.dart';
 import 'edit_profile_screen.dart';
 import 'delete_account_screen.dart';
-import '../services_support/support_team_ai_screens.dart' show SupportCenterScreen;
+import '../services_support/support_team_ai_screens.dart'
+    show SupportCenterScreen;
 import '../universities_programs_countries/explore_hub_screen.dart';
 import 'student_rewards_currency_screens.dart';
+import 'profile_story_score.dart';
+import '../../core/repositories/stories_repository.dart';
+import '../../core/widgets/student_achievements.dart';
+import '../stories/friends_screen.dart';
 import '../services_support/student_life_alumni_screens.dart';
-import '../services_support/knowledge_base_screen.dart' show ExhibitionArticleScreen;
+import '../services_support/knowledge_base_screen.dart'
+    show ExhibitionArticleScreen;
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  final bool isActive;
+  const ProfileScreen({super.key, this.isActive = true});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -36,6 +43,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Map<String, dynamic>? _profile;
   bool _loading = true;
   String? _error;
+  StoryProgress? _storyProgress;
+  bool _openingFriends = false;
 
   // صورة الملف الشخصي
   Uint8List? _avatarBytes;
@@ -58,14 +67,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (b64 != null && b64.isNotEmpty && mounted) {
         setState(() => _avatarBytes = base64Decode(b64));
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/profile_account_screens.dart:57');}
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/profile_account/profile_account_screens.dart:57');
+    }
   }
 
   Future<void> _cacheAvatar(Uint8List bytes) async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(_avatarPrefKey, base64Encode(bytes));
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/profile_account_screens.dart:64');}
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/profile_account/profile_account_screens.dart:64');
+    }
   }
 
   Future<void> _load() async {
@@ -80,7 +95,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         _profile = profile;
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/profile_account_screens.dart:79');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/profile_account/profile_account_screens.dart:79');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل ملفك الشخصي.';
@@ -101,7 +118,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (choice == null || !mounted) return;
 
     // كلا الخيارين عبر image_picker لتجنب مشاكل file_picker مع المعرض
-    final source = choice == PickSource.camera ? ImageSource.camera : ImageSource.gallery;
+    final source =
+        choice == PickSource.camera ? ImageSource.camera : ImageSource.gallery;
     final img = await ImagePicker().pickImage(source: source, imageQuality: 70);
     if (img == null || !mounted) return;
 
@@ -155,7 +173,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       title: 'الملف الشخصي',
       showBackButton: false,
       actions: [
-        IconButton(tooltip: 'الإعدادات', 
+        IconButton(
+          tooltip: 'الإعدادات',
           icon: const Icon(Icons.settings_outlined, color: Colors.white),
           onPressed: () => Navigator.of(context)
               .push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
@@ -181,7 +200,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildContent(BuildContext context, AuthUser? user) {
-    final personalComplete = _str('phone') != null && _str('nationality') != null;
+    final personalComplete =
+        _str('phone') != null && _str('nationality') != null;
     final academicComplete = _str('currentEducationLevel') != null;
     final passportComplete = _str('passportNumber') != null;
     final studyComplete = _str('intake') != null;
@@ -190,9 +210,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       (
         label: 'المعلومات الشخصية',
         icon: Icons.person_outline_rounded,
-        value: [_str('nationality'), _str('currentResidenceCountry'), _str('phone')]
-            .where((e) => e != null)
-            .join(' • '),
+        value: [
+          _str('nationality'),
+          _str('currentResidenceCountry'),
+          _str('phone')
+        ].where((e) => e != null).join(' • '),
         complete: personalComplete,
         section: ProfileSection.personal,
       ),
@@ -222,7 +244,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     ];
 
     final completedCount = sections.where((s) => s.complete).length;
-    final completion = sections.isEmpty ? 0.0 : completedCount / sections.length;
+    final completion =
+        sections.isEmpty ? 0.0 : completedCount / sections.length;
     final missingLabels =
         sections.where((s) => !s.complete).map((s) => s.label).join('، ');
 
@@ -231,74 +254,128 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         // --- بطاقة المستخدم مع الصورة ---
         AppCard(
-          child: Row(
-            children: [
-              GestureDetector(
-                onTap: _pickProfilePhoto,
-                child: Stack(
+          child: Stack(children: [
+            Padding(
+                padding: EdgeInsets.only(
+                    left: user?.role == UserRole.student ? 84 : 0),
+                child: Row(
                   children: [
-                    CircleAvatar(
-                      radius: 30,
-                      backgroundColor: AppColors.border,
-                      backgroundImage: _avatarBytes != null
-                          ? MemoryImage(_avatarBytes!)
-                          : null,
-                      child: _avatarBytes == null
-                          ? const Icon(Icons.person_rounded, color: AppColors.navy, size: 28)
-                          : null,
-                    ),
-                    Positioned(
-                      right: 0,
-                      bottom: 0,
-                      child: _avatarUploading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : Container(
-                              width: 22,
-                              height: 22,
-                              decoration: const BoxDecoration(
-                                color: AppColors.orange,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.camera_alt_rounded,
-                                color: Colors.white,
-                                size: 12,
-                              ),
-                            ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(user?.name ?? '—', style: AppTextStyles.cardTitle),
-                    Text(user?.email ?? '', style: AppTextStyles.caption),
-                    const SizedBox(height: 2),
                     GestureDetector(
                       onTap: _pickProfilePhoto,
-                      child: const Text(
-                        'تغيير الصورة الشخصية',
-                        style: TextStyle(
-                          color: AppColors.orange,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+                      child: Stack(
+                        children: [
+                          Container(
+                              padding: const EdgeInsets.all(3),
+                              decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: studentAchievementRing(
+                                              _storyProgress?.points ?? 0) ==
+                                          null
+                                      ? null
+                                      : Border.all(
+                                          color: studentAchievementRing(
+                                              _storyProgress?.points ?? 0)!,
+                                          width: 3)),
+                              child: CircleAvatar(
+                                radius: 30,
+                                backgroundColor: AppColors.border,
+                                backgroundImage: _avatarBytes != null
+                                    ? MemoryImage(_avatarBytes!)
+                                    : null,
+                                child: _avatarBytes == null
+                                    ? const Icon(Icons.person_rounded,
+                                        color: AppColors.navy, size: 28)
+                                    : null,
+                              )),
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: _avatarUploading
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2),
+                                  )
+                                : Container(
+                                    width: 22,
+                                    height: 22,
+                                    decoration: const BoxDecoration(
+                                      color: AppColors.orange,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(
+                                      Icons.camera_alt_rounded,
+                                      color: Colors.white,
+                                      size: 12,
+                                    ),
+                                  ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(children: [
+                            Expanded(
+                                child: Text(user?.name ?? '—',
+                                    style: AppTextStyles.cardTitle)),
+                            if ((_storyProgress?.points ?? 0) >= 200000)
+                              StudentAchievementMark(
+                                  points: _storyProgress!.points),
+                          ]),
+                          Text(user?.email ?? '', style: AppTextStyles.caption),
+                          const SizedBox(height: 2),
+                          GestureDetector(
+                            onTap: _pickProfilePhoto,
+                            child: const Text(
+                              'تغيير الصورة الشخصية',
+                              style: TextStyle(
+                                color: AppColors.orange,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ),
-              ),
-            ],
-          ),
+                )),
+            if (user?.role == UserRole.student)
+              Positioned(
+                  left: 0,
+                  top: 0,
+                  child: ProfileStoryScore(
+                      isActive: widget.isActive,
+                      onProgress: (progress) {
+                        if (mounted) setState(() => _storyProgress = progress);
+                      })),
+          ]),
         ),
 
+        if (user?.role == UserRole.student)
+          AppCard(
+              child: ListTile(
+            contentPadding: EdgeInsets.zero,
+            leading: const Icon(Icons.people_outline, color: AppColors.navy),
+            title: const Text('الأصدقاء'),
+            subtitle: const Text('إضافة زملاء ومتابعة يومياتهم وطلبات الصداقة'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              if (_openingFriends) return;
+              _openingFriends = true;
+              try {
+                await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const FriendsScreen()));
+              } finally {
+                _openingFriends = false;
+              }
+            },
+          )),
         // --- شريط الاكتمال ---
         AppCard(
           child: Column(
@@ -306,7 +383,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('اكتمال الملف الشخصي', style: AppTextStyles.caption),
+                  const Text('اكتمال الملف الشخصي',
+                      style: AppTextStyles.caption),
                   Text(
                     '${(completion * 100).round()}%',
                     style: const TextStyle(
@@ -330,7 +408,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 const SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Text('الناقص: $missingLabels', style: AppTextStyles.caption),
+                  child: Text('الناقص: $missingLabels',
+                      style: AppTextStyles.caption),
                 ),
               ],
             ],
@@ -378,7 +457,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Row(children: const [
             Icon(Icons.card_giftcard_rounded, color: AppColors.navy),
             SizedBox(width: 12),
-            Expanded(child: Text('برنامج الإحالة', style: AppTextStyles.cardTitle)),
+            Expanded(
+                child: Text('برنامج الإحالة', style: AppTextStyles.cardTitle)),
             Icon(Icons.arrow_back_ios_new_rounded,
                 size: 14, color: AppColors.textSecondary),
           ]),
@@ -401,7 +481,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Icon(Icons.account_balance_wallet_rounded, color: AppColors.navy),
             SizedBox(width: 12),
             Expanded(
-                child: Text('محفظتي الإلكترونية', style: AppTextStyles.cardTitle)),
+                child:
+                    Text('محفظتي الإلكترونية', style: AppTextStyles.cardTitle)),
             Icon(Icons.arrow_back_ios_new_rounded,
                 size: 14, color: AppColors.textSecondary),
           ]),
@@ -413,7 +494,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Icon(Icons.account_balance_wallet_outlined, color: AppColors.navy),
             SizedBox(width: 12),
             Expanded(
-                child: Text('الفواتير والمدفوعات', style: AppTextStyles.cardTitle)),
+                child: Text('الفواتير والمدفوعات',
+                    style: AppTextStyles.cardTitle)),
             Icon(Icons.arrow_back_ios_new_rounded,
                 size: 14, color: AppColors.textSecondary),
           ]),
@@ -556,7 +638,8 @@ class SettingsScreen extends StatelessWidget {
                 Icon(Icons.currency_exchange_rounded, color: AppColors.navy),
                 SizedBox(width: 12),
                 Expanded(
-                    child: Text('تحويل العملات', style: AppTextStyles.cardTitle)),
+                    child:
+                        Text('تحويل العملات', style: AppTextStyles.cardTitle)),
                 Icon(Icons.arrow_back_ios_new_rounded,
                     size: 14, color: AppColors.textSecondary),
               ],
@@ -579,7 +662,8 @@ class SettingsScreen extends StatelessWidget {
                 }
               }
             },
-            icon: const Icon(Icons.logout_rounded, color: AppColors.danger, size: 18),
+            icon: const Icon(Icons.logout_rounded,
+                color: AppColors.danger, size: 18),
             label: const Text('تسجيل الخروج',
                 style: TextStyle(color: AppColors.danger)),
             style: OutlinedButton.styleFrom(
@@ -621,7 +705,8 @@ class _ReferralProgramScreenState extends State<ReferralProgramScreen> {
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done)
               return const Center(
-                  child: SkeletonBox(width: 200, height: 120, borderRadius: 16));
+                  child:
+                      SkeletonBox(width: 200, height: 120, borderRadius: 16));
             if (snapshot.hasError)
               return ErrorState(
                   message: 'تعذر تحميل رمز الإحالة',
@@ -662,8 +747,7 @@ class _ReferralProgramScreenState extends State<ReferralProgramScreen> {
                           mode: LaunchMode.externalApplication)) {
                         if (context.mounted)
                           ScaffoldMessenger.of(context).showSnackBar(
-                              AppSnackBar(
-                                  content: Text('تعذر فتح واتساب')));
+                              AppSnackBar(content: Text('تعذر فتح واتساب')));
                       }
                     },
                     style: OutlinedButton.styleFrom(
@@ -714,7 +798,9 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         _favorites = data;
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/profile_account_screens.dart:712');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/profile_account/profile_account_screens.dart:712');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل المفضلة.';
@@ -727,9 +813,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     try {
       await StudentRepository.instance.removeFavorite(id);
       if (mounted)
-        setState(() => _favorites
-            .removeWhere((f) => (Json.map(f))['_id'] == id));
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/profile_account_screens.dart:727');
+        setState(
+            () => _favorites.removeWhere((f) => (Json.map(f))['_id'] == id));
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/profile_account/profile_account_screens.dart:727');
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
             AppSnackBar(content: Text('تعذر إزالة العنصر من المفضلة')));
@@ -755,9 +843,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       message:
                           'احفظ الجامعات والبرامج اللي تعجبك عشان ترجعلها بسهولة.',
                       ctaLabel: 'استكشف الجامعات',
-                      onCta: () => Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => const ExploreHubScreen())),
+                      onCta: () => Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) => const ExploreHubScreen())),
                     )
                   : RefreshIndicator(
                       onRefresh: _load,
@@ -771,10 +858,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                               fav['itemType'] as String? ?? 'university';
                           final isUniversity = itemType == 'university';
                           final isArticle = itemType == 'article';
-                          final university =
-                              Json.mapOrNull(fav['university']);
-                          final program =
-                              Json.mapOrNull(fav['program']);
+                          final university = Json.mapOrNull(fav['university']);
+                          final program = Json.mapOrNull(fav['program']);
                           final String label;
                           final String? subtitle;
                           final IconData icon;
@@ -788,7 +873,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                             icon = Icons.article_outlined;
                           } else {
                             label = program?['title'] as String? ?? '—';
-                            subtitle = (Json.mapOrNull(program?['university']))?['name'] as String?;
+                            subtitle = (Json.mapOrNull(
+                                program?['university']))?['name'] as String?;
                             icon = Icons.menu_book_rounded;
                           }
 
@@ -819,7 +905,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                     ],
                                   ),
                                 ),
-                                IconButton(tooltip: 'المفضلة', 
+                                IconButton(
+                                  tooltip: 'المفضلة',
                                   icon: const Icon(Icons.favorite_rounded,
                                       color: AppColors.orange, size: 20),
                                   onPressed: () =>

@@ -9,7 +9,8 @@ import '../../core/services/realtime_sync_service.dart';
 import '../../core/utils/notification_links.dart';
 import '../services_support/services_consultation_screens.dart';
 import '../services_support/support_team_ai_screens.dart';
-import '../services_support/community_screen.dart';
+import '../community/student_community_hub.dart';
+import '../services_support/messaging_and_emergency_screens.dart';
 import '../applications_documents_payments/applications_screens.dart';
 import '../applications_documents_payments/documents_screens.dart';
 import '../applications_documents_payments/payments_screens.dart';
@@ -21,6 +22,7 @@ import 'journey_tracker_screen.dart';
 String? notificationActionLabel(String? link) {
   if (link == null || !link.startsWith('/student/')) return null;
   final dest = link.replaceFirst('/student/', '');
+  if (dest.startsWith('messages/')) return 'فتح المحادثة';
   return switch (dest) {
     'documents' || 'upload-document' => 'رفع المستند الآن',
     'payments'                       => 'عرض الفاتورة',
@@ -51,6 +53,7 @@ Widget? notificationScreenForLink(String? link) {
   // Deep link to a specific record by ID.
   if (id != null) {
     return switch (base) {
+      'messages' => ConversationThreadScreen(contactId: id),
       'applications' => _ApplicationById(id: id),
       'documents'    => _DocumentById(id: id),
       'payments'     => _PaymentById(id: id),
@@ -73,7 +76,7 @@ Widget? notificationScreenForLink(String? link) {
     'payments' => const PaymentsSummaryScreen(),
     'applications' => const ApplicationsListScreen(),
     'support' => const SupportCenterScreen(),
-    'community' => const StudentCommunityScreen(),
+    'community' || 'messages' => const StudentCommunityHub(),
     'bird-ai' => const BirdAIChatScreen(),
     _ => null,
   };

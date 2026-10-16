@@ -75,8 +75,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
       if (mounted) setState(() => data = result);
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/catalog_detail.dart:74');
       if (mounted) {
-        setState(() => error =
-            cl('تعذر تحميل التفاصيل الكاملة. اسحب للتحديث أو أعد المحاولة.', 'Could not load the full details. Pull to refresh or retry.'));
+        setState(() => error = 'load');
       }
     } finally {
       if (mounted) setState(() => loading = false);
@@ -126,7 +125,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
             ? loading
                 ? const LoadingState()
                 : ErrorState(
-                    message: error ?? cl('تعذر تحميل التفاصيل', 'Could not load the details'), onRetry: load)
+                    message: cl('تعذر تحميل التفاصيل', 'Could not load the details'), onRetry: load)
             : Column(children: [
                 if (loading) const LinearProgressIndicator(minHeight: 2),
                 if (widget.university)
@@ -163,7 +162,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                             if (error != null)
                               AppCard(
                                   child: Column(children: [
-                                InlineNotice(error!, error: true),
+                                InlineNotice(cl('تعذر تحميل التفاصيل الكاملة. اسحب للتحديث أو أعد المحاولة.', 'Could not load the full details. Pull to refresh or retry.'), error: true),
                                 TextButton(
                                     onPressed: load,
                                     child: Text(cl('إعادة المحاولة', 'Retry')))
@@ -224,7 +223,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                                                     const SizedBox(width: 8),
                                                     Expanded(
                                                         child: _ArticleText(
-                                                            CatalogLanguage.instance.tr('$item'))),
+                                                            catalogValue('$item'))),
                                                   ])),
                                       ])),
                             // PRD 21: careers, same program elsewhere, related programs.
@@ -428,7 +427,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
             cl('مجالات العمل بعد التخرج', 'Career opportunities'),
             Wrap(spacing: 8, runSpacing: 8, children: [
               for (final career in careers)
-                StatusBadge(label: CatalogLanguage.instance.tr(career), color: AppColors.navy)
+                StatusBadge(label: catalogValue(career), color: AppColors.navy)
             ])),
       if (offeredAt.isNotEmpty)
         _section(
@@ -439,11 +438,11 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                     item,
                     catalogName(catalogMap(item['university']), 'name'),
                     [
-                      catalogMap(item['university'])['city'],
+                      catalogValue(catalogText(catalogMap(item['university'])['city'])),
                       catalogCountryName(catalogMap(
                           catalogMap(item['university'])['country'])),
 
-                    ].where((e) => e != null && '$e'.isNotEmpty).join(cl('، ', ', ')))
+                    ].where((e) => e.isNotEmpty).join(cl('، ', ', ')))
             ])),
       if (related.isNotEmpty)
         _section(

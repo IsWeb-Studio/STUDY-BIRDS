@@ -12,7 +12,10 @@ import 'package:http_parser/http_parser.dart';
 class UploadCancellation {
   bool cancelled = false;
   void Function()? _abort;
-  void cancel() { cancelled = true; _abort?.call(); }
+  void cancel() {
+    cancelled = true;
+    _abort?.call();
+  }
 }
 
 class _ProgressUpload extends http.MultipartRequest {
@@ -34,6 +37,7 @@ class _ProgressUpload extends http.MultipartRequest {
 class ApiException implements Exception, UserFacingFailure {
   final int statusCode;
   final String _rawMessage;
+
   /// Extra fields from the error response body (e.g. requiresTwoFactor).
   final Map<String, dynamic> data;
   const ApiException(this.statusCode, this._rawMessage, [this.data = const {}]);
@@ -53,7 +57,8 @@ class ApiClient {
   ApiClient.forTesting(http.Client client) : _fixed = client;
   static final ApiClient instance = ApiClient._();
 
-  static const String baseUrl = String.fromEnvironment('API_BASE_URL', defaultValue: 'https://study-birds1.onrender.com/api');
+  static const String baseUrl = String.fromEnvironment('API_BASE_URL',
+      defaultValue: 'https://study-birds1.onrender.com/api');
 
   /// Reused across all requests — avoids TCP+TLS setup per call.
   final http.Client? _fixed;
@@ -62,10 +67,12 @@ class ApiClient {
   /// Under `flutter test`, `http.runWithClient` supplies a different fake client
   /// per test, so a process-wide cached client would keep serving the first
   /// test's fake. Production keeps one pooled client.
-  static final bool _perCallClient = Platform.environment.containsKey('FLUTTER_TEST');
+  static final bool _perCallClient =
+      Platform.environment.containsKey('FLUTTER_TEST');
 
   http.Client get _http =>
-      _fixed ?? (_perCallClient ? http.Client() : (_shared ??= createTransport()));
+      _fixed ??
+      (_perCallClient ? http.Client() : (_shared ??= createTransport()));
 
   /// The transport used for API traffic: certificate-pinned in production,
   /// the zone's fake client under `flutter test`.
@@ -89,20 +96,25 @@ class ApiClient {
 
   Future<http.Response> _authorized(
       String? token, Future<http.Response> Function(String?) send,
-      {bool mayChangeData = false}) async {
+      {bool mayChangeData = false,
+      Duration requestTimeout = const Duration(seconds: 30)}) async {
     final connectivity = ConnectivityService.instance;
     try {
-      var response = await send(token).timeout(const Duration(seconds: 30));
-      if (response.statusCode == 401 && token != null && refreshSession != null) {
+      var response = await send(token).timeout(requestTimeout);
+      if (response.statusCode == 401 &&
+          token != null &&
+          refreshSession != null) {
         final replacement = await refreshSession!(token);
-        if (replacement != null) response = await send(replacement).timeout(const Duration(seconds: 30));
+        if (replacement != null)
+          response = await send(replacement).timeout(requestTimeout);
       }
       connectivity.reportSuccess();
       return response;
     } on TimeoutException catch (e, s) {
       AppError.log('api', e, s);
       connectivity.reportFailure();
-      throw ApiException(408, mayChangeData ? AppError.uncertain : AppError.timeout);
+      throw ApiException(
+          408, mayChangeData ? AppError.uncertain : AppError.timeout);
     } on IOException catch (e, s) {
       // SocketException (DNS/no route/reset), HandshakeException, HttpException…
       AppError.log('api', e, s);
@@ -125,7 +137,9 @@ class ApiClient {
       '${DateTime.now().microsecondsSinceEpoch.toRadixString(36)}-${_random.nextInt(1 << 32).toRadixString(36)}';
 
   Future<dynamic> _request(String method, String path,
-      {String? token, Map<String, dynamic>? body, String? idempotencyKey}) async {
+      {String? token,
+      Map<String, dynamic>? body,
+      String? idempotencyKey}) async {
     final mutating = method != 'GET';
     final operationId = mutating ? (idempotencyKey ?? _newOperationId()) : null;
     final response = await _authorized(token, (credential) async {
@@ -155,7 +169,8 @@ class ApiClient {
             ConnectivityService.instance.status != NetworkStatus.offline;
         if (!canRetry) rethrow;
         final backoff = 400 * (1 << attempt);
-        await Future<void>.delayed(Duration(milliseconds: backoff + _random.nextInt(backoff)));
+        await Future<void>.delayed(
+            Duration(milliseconds: backoff + _random.nextInt(backoff)));
       }
     }
   }
@@ -187,17 +202,30 @@ class ApiClient {
   /// [idempotencyKey]: reuse the same key when the user re-sends the SAME
   /// draft after an uncertain failure, so a supporting server can de-duplicate.
   Future<dynamic> post(String path,
-          {Map<String, dynamic>? body, String? token, String? idempotencyKey}) =>
+          {Map<String, dynamic>? body,
+          String? token,
+          String? idempotencyKey}) =>
       _request('POST', path,
           body: body, token: token, idempotencyKey: idempotencyKey);
-  Future<dynamic> put(String path, {Map<String, dynamic>? body, String? token}) => _request('PUT', path, body: body, token: token);
-  Future<dynamic> patch(String path, {Map<String, dynamic>? body, String? token}) => _request('PATCH', path, body: body, token: token);
-  Future<dynamic> delete(String path, {String? token}) => _request('DELETE', path, token: token);
-  Future<dynamic> deleteWithBody(String path, {required Map<String, dynamic> body, String? token}) => _request('DELETE', path, body: body, token: token);
+  Future<dynamic> put(String path,
+          {Map<String, dynamic>? body, String? token}) =>
+      _request('PUT', path, body: body, token: token);
+  Future<dynamic> patch(String path,
+          {Map<String, dynamic>? body, String? token}) =>
+      _request('PATCH', path, body: body, token: token);
+  Future<dynamic> delete(String path, {String? token}) =>
+      _request('DELETE', path, token: token);
+  Future<dynamic> deleteWithBody(String path,
+          {required Map<String, dynamic> body, String? token}) =>
+      _request('DELETE', path, body: body, token: token);
 
   Future<List<int>> download(String path, {String? token}) async {
-    final response = await _authorized(token, (credential) => _http.get(Uri.parse('$baseUrl$path'), headers: _headers(credential)));
-    if (response.statusCode < 200 || response.statusCode >= 300) _decode(response);
+    final response = await _authorized(
+        token,
+        (credential) => _http.get(Uri.parse('$baseUrl$path'),
+            headers: _headers(credential)));
+    if (response.statusCode < 200 || response.statusCode >= 300)
+      _decode(response);
     return response.bodyBytes;
   }
 
@@ -211,20 +239,41 @@ class ApiClient {
   static MediaType _mimeTypeFor(String fileName) {
     final ext = fileName.split('.').last.toLowerCase();
     switch (ext) {
-      case 'pdf': return MediaType('application', 'pdf');
-      case 'doc': return MediaType('application', 'msword');
-      case 'docx': return MediaType('application', 'vnd.openxmlformats-officedocument.wordprocessingml.document');
-      case 'xls': return MediaType('application', 'vnd.ms-excel');
-      case 'xlsx': return MediaType('application', 'vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      case 'ppt': return MediaType('application', 'vnd.ms-powerpoint');
-      case 'pptx': return MediaType('application', 'vnd.openxmlformats-officedocument.presentationml.presentation');
-      case 'txt': return MediaType('text', 'plain');
-      case 'zip': return MediaType('application', 'zip');
+      case 'pdf':
+        return MediaType('application', 'pdf');
+      case 'doc':
+        return MediaType('application', 'msword');
+      case 'docx':
+        return MediaType('application',
+            'vnd.openxmlformats-officedocument.wordprocessingml.document');
+      case 'xls':
+        return MediaType('application', 'vnd.ms-excel');
+      case 'xlsx':
+        return MediaType('application',
+            'vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      case 'ppt':
+        return MediaType('application', 'vnd.ms-powerpoint');
+      case 'pptx':
+        return MediaType('application',
+            'vnd.openxmlformats-officedocument.presentationml.presentation');
+      case 'txt':
+        return MediaType('text', 'plain');
+      case 'zip':
+        return MediaType('application', 'zip');
       case 'jpg':
-      case 'jpeg': return MediaType('image', 'jpeg');
-      case 'png': return MediaType('image', 'png');
-      case 'webp': return MediaType('image', 'webp');
-      default: return MediaType('application', 'octet-stream'); // will still be rejected — matches an unsupported type on purpose
+      case 'jpeg':
+        return MediaType('image', 'jpeg');
+      case 'png':
+        return MediaType('image', 'png');
+      case 'webp':
+        return MediaType('image', 'webp');
+      case 'mp4':
+        return MediaType('video', 'mp4');
+      case 'mov':
+        return MediaType('video', 'quicktime');
+      default:
+        return MediaType('application',
+            'octet-stream'); // will still be rejected — matches an unsupported type on purpose
     }
   }
 
@@ -242,29 +291,47 @@ class ApiClient {
     void Function(double)? onProgress,
     UploadCancellation? cancellation,
   }) async {
-    if (fileBytes.isEmpty) throw const ApiException(400, 'الملف فارغ. اختر ملفًا آخر.');
-    if (fileBytes.length > 5 * 1024 * 1024) throw const ApiException(413, 'اختر ملفًا لا يتجاوز 5 ميجابايت.');
-    if (_mimeTypeFor(fileName).mimeType == 'application/octet-stream') throw const ApiException(415, 'نوع الملف غير مدعوم.');
+    if (fileBytes.isEmpty)
+      throw const ApiException(400, 'الملف فارغ. اختر ملفًا آخر.');
+    final storyVideo = path == '/stories/video';
+    if (fileBytes.length > (storyVideo ? 25 : 5) * 1024 * 1024) {
+      throw ApiException(
+          413,
+          storyVideo
+              ? 'اختر فيديو لا يتجاوز 25 ميجابايت.'
+              : 'اختر ملفًا لا يتجاوز 5 ميجابايت.');
+    }
+    if (_mimeTypeFor(fileName).mimeType == 'application/octet-stream')
+      throw const ApiException(415, 'نوع الملف غير مدعوم.');
     final response = await _authorized(token, (credential) async {
-      if (cancellation?.cancelled == true) throw const ApiException(499, 'تم إلغاء الرفع');
-      final request = _ProgressUpload('POST', Uri.parse('$baseUrl$path'), onProgress);
-      if (credential != null) request.headers['Authorization'] = 'Bearer $credential';
+      if (cancellation?.cancelled == true)
+        throw const ApiException(499, 'تم إلغاء الرفع');
+      final request =
+          _ProgressUpload('POST', Uri.parse('$baseUrl$path'), onProgress);
+      if (credential != null)
+        request.headers['Authorization'] = 'Bearer $credential';
       request.headers['X-Study-Birds-Client'] = 'mobile';
       if (fields != null) request.fields.addAll(fields);
-      request.files.add(http.MultipartFile.fromBytes(fileFieldName, fileBytes, filename: fileName, contentType: _mimeTypeFor(fileName)));
+      request.files.add(http.MultipartFile.fromBytes(fileFieldName, fileBytes,
+          filename: fileName, contentType: _mimeTypeFor(fileName)));
       final client = createTransport();
       if (cancellation != null) cancellation._abort = client.close;
       try {
         final streamed = await client.send(request);
         return await http.Response.fromStream(streamed);
-      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/network/api_client.dart:253');
-        if (cancellation?.cancelled == true) throw const ApiException(499, 'تم إلغاء الرفع');
+      } catch (swallowedError, swallowedStack) {
+        ErrorReporter.swallowed(
+            swallowedError, swallowedStack, 'core/network/api_client.dart:253');
+        if (cancellation?.cancelled == true)
+          throw const ApiException(499, 'تم إلغاء الرفع');
         rethrow;
       } finally {
         if (cancellation != null) cancellation._abort = null;
         client.close();
       }
-    }, mayChangeData: true);
+    },
+        mayChangeData: true,
+        requestTimeout: Duration(seconds: storyVideo ? 120 : 30));
     return _decodeReporting(response, 'POST', path);
   }
 
@@ -284,7 +351,9 @@ class ApiClient {
     late final dynamic decoded;
     try {
       decoded = jsonDecode(bodyText);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/network/api_client.dart:280');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(
+          swallowedError, swallowedStack, 'core/network/api_client.dart:280');
       if (response.statusCode >= 200 && response.statusCode < 300) {
         throw const ApiException(502, AppError.unavailable);
       }
@@ -298,7 +367,8 @@ class ApiClient {
     final message = (decoded is Map && decoded['message'] is String)
         ? decoded['message'] as String
         : '';
-    final data = decoded is Map<String, dynamic> ? decoded : const <String, dynamic>{};
+    final data =
+        decoded is Map<String, dynamic> ? decoded : const <String, dynamic>{};
     throw ApiException(response.statusCode, message, data);
   }
 }

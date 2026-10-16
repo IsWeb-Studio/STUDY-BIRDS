@@ -1,13 +1,11 @@
 # Study Birds — التطبيق المتصل
 
-تطبيق Flutter مرتبط بنفس حسابات وبيانات الموقع والسيرفر الموجودين في هذا المستودع (`../server` و`../client`).
-
-> وثائق المراجعة والتدقيق القديمة للتطبيق موجودة في [`docs/`](docs/) داخل هذا المجلد.
+تطبيق Flutter مرتبط بنفس حسابات وبيانات موقع `D:\work\Study-birds`.
 
 ## التشغيل
 
-1. شغّل الباك إند من مجلد `../server` بالأمر `npm run dev`، مع إعداد `MONGODB_URI` و`JWT_SECRET` كما في [`../docs/PLATFORM_SETUP.md`](../docs/PLATFORM_SETUP.md). رفع الملفات يحتاج إعدادات Cloudinary الموجودة هناك.
-2. شغّل واجهة الموقع من `../client` بالأمر `npm run dev`.
+1. شغّل الباك إند من `D:\work\Study-birds\server` بالأمر `npm run dev`، مع إعداد `MONGODB_URI` و`JWT_SECRET` كما في دليل الموقع. رفع الملفات يحتاج إعدادات Cloudinary الموجودة بالموقع.
+2. شغّل واجهة الموقع من `D:\work\Study-birds\client` بالأمر `npm run dev`.
 3. سجّل الدخول بحساب إدارة الموقع ثم افتح `/admin/mobile`، أو اضغط **لوحة تحكم التطبيق** أعلى لوحة الإدارة.
 4. لتشغيل التطبيق على محاكي Android مع الباك إند المحلي:
 
@@ -24,15 +22,17 @@ flutter build apk --release --dart-define=API_BASE_URL=https://YOUR_API_HOST/api
 
 التشغيل الافتراضي في وضع debug على محاكي Android يتصل بـ `http://10.0.2.2:5000/api`، وعلى المنصات الأخرى بـ `http://localhost:5000/api`. يوجد إعداد تشغيل جاهز في VS Code باسم `Study Birds - Local Android Emulator`. أوقف التشغيل السابق ثم شغّل التطبيق مجدداً بعد تغيير إعداد الاتصال؛ Hot Reload وحده لا يغيّر قيم `--dart-define`.
 
-العنوان الافتراضي لبناء release/profile هو `https://study-birds1.onrender.com/api` (معرّف في `lib/core/network/api_client.dart`). يمكنك تجاوز أي عنوان افتراضي باستخدام `--dart-define=API_BASE_URL=...`. يجب نشر تعديلات السيرفر الجديدة قبل استخدام السيرفر المنشور؛ تعديل الملفات المحلية لا ينشر الموقع تلقائياً. إعداد توقيع إصدار Android ما زال إعداد المشروع الأصلي، ويحتاج مفتاح نشر خاصاً قبل رفع التطبيق إلى المتجر.
+العنوان الافتراضي لبناء release/profile هو `https://study-birds-api.onrender.com/api`، مطابق لإعداد الموقع الحالي. يمكنك تجاوز أي عنوان افتراضي باستخدام `--dart-define=API_BASE_URL=...`. يجب نشر تعديلات السيرفر الجديدة قبل استخدام السيرفر المنشور؛ تعديل الملفات المحلية لا ينشر الموقع تلقائياً. إعداد توقيع إصدار Android ما زال إعداد المشروع الأصلي، ويحتاج مفتاح نشر خاصاً قبل رفع التطبيق إلى المتجر.
 
-القرص C على جهاز التطوير ممتلئ. جرى تجهيز ذاكرة Gradle بديلة على D؛ لإعادة البناء على هذا الجهاز استخدم في جلسة PowerShell:
+على جهاز التطوير الحالي امتلأ القرص D. نُقل مجلد `build` إلى `C:\Users\Abood\studybirds-build-output\app-main-build` ووُضع رابط Junction في مساره الأصلي داخل المشروع، لتبقى أوامر Flutter ومسارات APK كما هي. لا تحذف المجلد الهدف إذا أردت الاحتفاظ بالبناء الحالي. بعد `flutter clean` تحقق من الرابط؛ إذا حُذف الرابط فسيعود البناء إلى القرص D.
+
+استخدم ذاكرة Gradle والمؤقتات على C، وتحقق من المساحة قبل البناء:
 
 ```powershell
-$env:GRADLE_USER_HOME = 'D:\Temp\study-birds-gradle'
-$env:TEMP = 'D:\Temp\study-birds-tmp'
+$env:GRADLE_USER_HOME = Join-Path $env:USERPROFILE '.gradle'
+$env:TEMP = Join-Path $env:LOCALAPPDATA 'Temp'
 $env:TMP = $env:TEMP
-flutter build apk --debug --target-platform android-arm64
+flutter build apk --debug
 ```
 
 ## ما يمكن إدارته
@@ -118,3 +118,6 @@ node integration/mobile-live.test.cjs
 ```
 
 نجح اختبار التكامل بتسعة سيناريوهات تشمل حفظ الإعدادات والمحتوى، طلبات الخدمات، رفع المستندات ومراجعتها، التقديم والقبول والمفضلة، صلاحيات مراحل الرحلة، الفواتير وإثباتات الدفع، الدعم والإشعارات وعمليات الوكيل. هذا يثبت التكامل مع MongoDB المحلية، ولا يثبت اتصال قاعدة الإنتاج أو حساب Cloudinary الفعلي. لم تُستخدم بيانات الموقع الحقيقية في الاختبارات، ولم تُنشر التعديلات إلى الاستضافة.
+#   f s f s  
+ #   f s f s  
+ 

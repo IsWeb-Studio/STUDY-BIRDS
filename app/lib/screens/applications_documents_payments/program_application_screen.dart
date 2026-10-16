@@ -1,3 +1,4 @@
+import '../../core/services/realtime_sync_service.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
@@ -185,6 +186,7 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
             key: fields[key]!.text.trim()
         },
       });
+      RealtimeSyncService.instance.forceSync();
       if (!mounted) return;
       Navigator.of(context).pushReplacement(MaterialPageRoute(
           builder: (_) => ApplicationDetailScreen(

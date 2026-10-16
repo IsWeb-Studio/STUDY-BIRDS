@@ -1,3 +1,4 @@
+import 'catalog_language.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 
@@ -38,21 +39,21 @@ class _UniversityComparisonGridState extends State<UniversityComparisonGrid> {
 
   @override
   Widget build(BuildContext context) {
-    const fields = {
-      'country': 'الدولة',
-      'city': 'المدينة',
-      'language': 'لغة الدراسة',
-      'ranking': 'التصنيف',
-      'tuitionRange': 'نطاق الرسوم',
+    final fields = {
+      'country': cl('الدولة', 'Country'),
+      'city': cl('المدينة', 'City'),
+      'language': cl('لغة الدراسة', 'Study language'),
+      'ranking': cl('التصنيف', 'Ranking'),
+      'tuitionRange': cl('نطاق الرسوم', 'Tuition range'),
     };
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      const Padding(
+      Padding(
           padding: EdgeInsets.only(bottom: 12),
           child: Row(children: [
             Icon(Icons.swipe_rounded, size: 18, color: AppColors.orange),
             SizedBox(width: 8),
             Expanded(
-                child: Text('اسحب الجدول أفقيًا لعرض جميع الجامعات',
+                child: Text(cl('اسحب الجدول أفقيًا لعرض جميع الجامعات', 'Swipe the table horizontally to see all universities'),
                     style: AppTextStyles.caption)),
           ])),
       LayoutBuilder(builder: (context, constraints) {
@@ -86,7 +87,7 @@ class _UniversityComparisonGridState extends State<UniversityComparisonGrid> {
                           decoration:
                               const BoxDecoration(color: AppColors.navy),
                           children: [
-                            cell('وجه المقارنة', header: true),
+                            cell(cl('وجه المقارنة', 'Comparison'), header: true),
                             for (final university in widget.universities)
                               Padding(
                                   padding: const EdgeInsets.symmetric(
@@ -104,7 +105,7 @@ class _UniversityComparisonGridState extends State<UniversityComparisonGrid> {
                                             color: AppColors.orange,
                                             size: 23)),
                                     const SizedBox(height: 10),
-                                    Text('${university['name']}',
+                                    Text(catalogName(university, 'name'),
                                         textAlign: TextAlign.center,
                                         style: AppTextStyles.cardTitle.copyWith(
                                             color: Colors.white, height: 1.5)),

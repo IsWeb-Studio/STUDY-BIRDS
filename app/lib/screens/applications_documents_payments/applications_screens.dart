@@ -96,10 +96,11 @@ class _ApplicationsListScreenState extends State<ApplicationsListScreen>
     AnalyticsService.instance.screenView('applications');
     _load();
     _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
-      StudentRepository.instance
-          .getApplications(forceRefresh: true)
-          .then((data) { if (mounted) setState(() => _apps = data); })
-          .catchError(ErrorReporter.silent('screens/applications_documents_payments/applications_screens.dart:101'));
+      StudentRepository.instance.getApplications(forceRefresh: true).then<void>(
+          (data) {
+        if (mounted) setState(() => _apps = data);
+      }).catchError(ErrorReporter.silent(
+          'screens/applications_documents_payments/applications_screens.dart:101'));
     });
   }
 
@@ -122,7 +123,9 @@ class _ApplicationsListScreenState extends State<ApplicationsListScreen>
         _apps = apps;
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/applications_screens.dart:123');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/applications_documents_payments/applications_screens.dart:123');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل طلباتك، تحقق من الاتصال وحاول مرة أخرى.';
@@ -218,9 +221,8 @@ class _UniversityApplicationsTab extends StatelessWidget {
           final meta = appStatusMeta(a);
 
           return AppCard(
-            onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(
-                    builder: (_) => ApplicationDetailScreen(application: a))),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => ApplicationDetailScreen(application: a))),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -228,7 +230,8 @@ class _UniversityApplicationsTab extends StatelessWidget {
                   children: [
                     Expanded(
                         child: Text(
-                            university?['name'] as String? ?? 'جامعة غير معروفة',
+                            university?['name'] as String? ??
+                                'جامعة غير معروفة',
                             style: AppTextStyles.cardTitle)),
                     StatusBadge(label: meta.label, color: meta.color),
                   ],
@@ -291,7 +294,8 @@ class _ServiceRequestsTabState extends State<_ServiceRequestsTab> {
           return const Center(child: CircularProgressIndicator());
         }
         if (snap.hasError) {
-          return ErrorState(message: 'تعذر تحميل طلبات الخدمات', onRetry: _reload);
+          return ErrorState(
+              message: 'تعذر تحميل طلبات الخدمات', onRetry: _reload);
         }
         final rows = (snap.data ?? []).whereType<Map>().toList();
         if (rows.isEmpty) {
@@ -311,7 +315,8 @@ class _ServiceRequestsTabState extends State<_ServiceRequestsTab> {
             itemBuilder: (_, i) {
               final r = Map<String, dynamic>.from(rows[i]);
               final title = (r['serviceTitle'] as String?) ??
-                  (r['service'] is Map ? r['service']['title'] : '') ?? '';
+                  (r['service'] is Map ? r['service']['title'] : '') ??
+                  '';
               final status = r['status'] as String? ?? 'pending';
               final assignedTo = r['assignedTo'] is Map
                   ? r['assignedTo']['name'] as String?
@@ -396,7 +401,8 @@ class _ServiceRequestsTabState extends State<_ServiceRequestsTab> {
                     const SizedBox(height: 4),
                     Text(
                       _fmtDate(r['createdAt']),
-                      style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
+                      style: AppTextStyles.caption
+                          .copyWith(color: AppColors.textSecondary),
                     ),
                   ],
                 ),
@@ -419,7 +425,12 @@ class _ServiceRequestsTabState extends State<_ServiceRequestsTab> {
 
 class ApplicationDetailScreen extends StatefulWidget {
   final Map<String, dynamic> application;
-  const ApplicationDetailScreen({super.key, required this.application});
+  final String? applicationId;
+  const ApplicationDetailScreen({super.key, required this.application})
+      : applicationId = null;
+  const ApplicationDetailScreen.byId({super.key, required this.applicationId})
+      : assert(applicationId != null),
+        application = const {};
 
   @override
   State<ApplicationDetailScreen> createState() =>
@@ -429,6 +440,8 @@ class ApplicationDetailScreen extends StatefulWidget {
 class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
   StreamSubscription<DateTime>? _syncSub;
   bool _refreshing = false;
+  Object? _loadError;
+  bool _openingDocuments = false;
 
   @override
   void initState() {
@@ -439,19 +452,26 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
 
   Future<void> _refresh() async {
     if (_refreshing) return;
-    final id = widget.application['_id'];
+    final id = widget.applicationId ?? widget.application['_id'];
     if (id == null) return;
-    _refreshing = true;
+    setState(() {
+      _refreshing = true;
+      _loadError = null;
+    });
     try {
       final data = await ApiClient.instance.get('/applications/$id',
           token: AuthSession.instance.token, cached: false);
-      if (mounted && data is Map<String, dynamic>) {
+      if (data is! Map<String, dynamic> || data.isEmpty) {
+        throw const ApiException(502, 'Invalid application response');
+      }
+      if (mounted) {
         setState(() => _updatedApplication = data);
       }
     } catch (error, stack) {
       ErrorReporter.swallowed(error, stack, 'application_detail.refresh');
+      if (mounted) setState(() => _loadError = error);
     } finally {
-      _refreshing = false;
+      if (mounted) setState(() => _refreshing = false);
     }
   }
 
@@ -467,6 +487,15 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_updatedApplication == null && widget.application.isEmpty) {
+      return AppScaffold(
+        title: 'تفاصيل الطلب',
+        body: _loadError != null
+            ? ErrorState(
+                message: 'تعذر تحميل الطلب. أعد المحاولة.', onRetry: _refresh)
+            : const LoadingState(),
+      );
+    }
     final a = _updatedApplication ?? widget.application;
     final program = Json.mapOrNull(a['program']);
     final university = Json.mapOrNull(program?['university']);
@@ -481,22 +510,31 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
         IconButton(
           tooltip: 'تحديث حالة الطلب',
           icon: const Icon(Icons.refresh, color: Colors.white),
-          onPressed: _refresh,
+          onPressed: _refreshing ? null : _refresh,
         ),
         if (AuthSession.instance.currentUser?.role == UserRole.student)
           IconButton(
               icon: const Icon(Icons.upload_file, color: Colors.white),
               tooltip: 'استكمال مستندات الطلب',
-              onPressed: () async {
-                final updated = await Navigator.of(context)
-                    .push<Map<String, dynamic>>(MaterialPageRoute(
-                        builder: (_) => ApplicationDocumentsScreen(
-                            applicationId: a['_id'] as String)));
-                if (updated != null && mounted)
-                  setState(() {
-                    _updatedApplication = updated;
-                  });
-              }),
+              onPressed: _openingDocuments
+                  ? null
+                  : () async {
+                      if (_openingDocuments) return;
+                      setState(() => _openingDocuments = true);
+                      try {
+                        final updated = await Navigator.of(context)
+                            .push<Map<String, dynamic>>(MaterialPageRoute(
+                                builder: (_) => ApplicationDocumentsScreen(
+                                    applicationId: a['_id'] as String)));
+                        if (updated != null && mounted) {
+                          setState(() {
+                            _updatedApplication = updated;
+                          });
+                        }
+                      } finally {
+                        if (mounted) setState(() => _openingDocuments = false);
+                      }
+                    }),
         IconButton(
           icon: const Icon(Icons.chat_bubble_outline_rounded,
               color: Colors.white),

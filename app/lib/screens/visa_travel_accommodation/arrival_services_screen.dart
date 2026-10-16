@@ -16,6 +16,7 @@ class ArrivalServicesScreen extends StatefulWidget {
 
 class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
   bool _loading = true;
+  bool _opening = false;
   String? _loadError;
   List<Map<String, dynamic>> _requests = [];
 
@@ -26,7 +27,10 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _loadError = null; });
+    setState(() {
+      _loading = true;
+      _loadError = null;
+    });
     try {
       final data = await StudentRepository.instance.getArrivalServices();
       if (!mounted) return;
@@ -44,47 +48,56 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
   }
 
   Future<void> _openNew() async {
-    // Fetch all applications, filter out those already linked to an arrival service.
-    List<Map<String, dynamic>> applications = [];
+    if (_opening) return;
+    setState(() => _opening = true);
     try {
-      final data = await StudentRepository.instance.getApplications();
-      applications = data.whereType<Map<String, dynamic>>().toList();
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/arrival_services_screen.dart:50');}
+      // Fetch all applications, filter out those already linked to an arrival service.
+      List<Map<String, dynamic>> applications = [];
+      try {
+        final data = await StudentRepository.instance.getApplications();
+        applications = data.whereType<Map<String, dynamic>>().toList();
+      } catch (swallowedError, swallowedStack) {
+        ErrorReporter.swallowed(swallowedError, swallowedStack,
+            'screens/visa_travel_accommodation/arrival_services_screen.dart:50');
+      }
 
-    final usedAppIds = _requests
-        .map((r) {
-          final app = r['application'];
-          if (app is Map) return app['_id']?.toString();
-          return app?.toString();
-        })
-        .whereType<String>()
-        .toSet();
+      final usedAppIds = _requests
+          .map((r) {
+            final app = r['application'];
+            if (app is Map) return app['_id']?.toString();
+            return app?.toString();
+          })
+          .whereType<String>()
+          .toSet();
 
-    final available = applications
-        .where((a) => !usedAppIds.contains(a['_id']?.toString()))
-        .toList();
+      final available = applications
+          .where((a) => !usedAppIds.contains(a['_id']?.toString()))
+          .toList();
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    // Show picker — always includes "standalone airport pickup" option.
-    final picked = await showModalBottomSheet<Map<String, dynamic>?>(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => _ApplicationPickerSheet(applications: available),
-    );
-    // null means modal dismissed; _noApp sentinel means standalone
-    if (!mounted) return;
-    if (picked == _noApp || picked != null) {
-      final result = await Navigator.of(context).push<bool>(
-        MaterialPageRoute(
-          builder: (_) => _ArrivalFormScreen(
-            application: picked == _noApp ? null : picked,
-          ),
-        ),
+      // Show picker — always includes "standalone airport pickup" option.
+      final picked = await showModalBottomSheet<Map<String, dynamic>?>(
+        context: context,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+        builder: (_) => _ApplicationPickerSheet(applications: available),
       );
-      if (result == true) _load();
+      // null means modal dismissed; _noApp sentinel means standalone
+      if (!mounted) return;
+      if (picked == _noApp || picked != null) {
+        final result = await Navigator.of(context).push<bool>(
+          MaterialPageRoute(
+            builder: (_) => _ArrivalFormScreen(
+              application: picked == _noApp ? null : picked,
+            ),
+          ),
+        );
+        if (result == true && mounted) await _load();
+      }
+    } finally {
+      if (mounted) setState(() => _opening = false);
     }
   }
 
@@ -92,23 +105,29 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
   static final _noApp = <String, dynamic>{'__noApp': true};
 
   Future<void> _openEdit(Map<String, dynamic> req) async {
-    final result = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => _ArrivalFormScreen(existing: req)),
-    );
-    if (result == true) _load();
+    if (_opening) return;
+    setState(() => _opening = true);
+    try {
+      final result = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => _ArrivalFormScreen(existing: req)),
+      );
+      if (result == true && mounted) await _load();
+    } finally {
+      if (mounted) setState(() => _opening = false);
+    }
   }
 
   String _statusLabel(String? s) => switch (s) {
-    'completed' => 'مكتمل',
-    'in-progress' => 'قيد التنفيذ',
-    _ => 'مُقدَّم',
-  };
+        'completed' => 'مكتمل',
+        'in-progress' => 'قيد التنفيذ',
+        _ => 'مُقدَّم',
+      };
 
   Color _statusColor(String? s) => switch (s) {
-    'completed' => AppColors.success,
-    'in-progress' => AppColors.orange,
-    _ => AppColors.info,
-  };
+        'completed' => AppColors.success,
+        'in-progress' => AppColors.orange,
+        _ => AppColors.info,
+      };
 
   String _programTitle(Map<String, dynamic> req) {
     final app = req['application'];
@@ -136,11 +155,11 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
       floatingActionButton: _loading || _loadError != null
           ? null
           : FloatingActionButton.extended(
-              onPressed: _openNew,
+              onPressed: _opening ? null : _openNew,
               backgroundColor: AppColors.navy,
               foregroundColor: Colors.white,
               icon: const Icon(Icons.add),
-              label: const Text('رحلة جديدة'),
+              label: Text(_opening ? 'جارٍ الفتح…' : 'رحلة جديدة'),
             ),
     );
   }
@@ -185,9 +204,12 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(programName, style: AppTextStyles.cardTitle, overflow: TextOverflow.ellipsis),
+                        Text(programName,
+                            style: AppTextStyles.cardTitle,
+                            overflow: TextOverflow.ellipsis),
                         if ((req['flightNumber'] as String? ?? '').isNotEmpty)
-                          Text('رقم الرحلة: ${req['flightNumber']}', style: AppTextStyles.caption),
+                          Text('رقم الرحلة: ${req['flightNumber']}',
+                              style: AppTextStyles.caption),
                       ],
                     ),
                   ),
@@ -215,18 +237,23 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
                   spacing: 6,
                   children: tags
                       .map((t) => Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: AppColors.navy.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(20),
                             ),
-                            child: Text(t, style: AppTextStyles.caption.copyWith(fontSize: 11)),
+                            child: Text(t,
+                                style: AppTextStyles.caption
+                                    .copyWith(fontSize: 11)),
                           ))
                       .toList(),
                 ),
               ],
               const SizedBox(height: 6),
-              Text('اضغط للتعديل', style: AppTextStyles.caption.copyWith(color: AppColors.navy, fontWeight: FontWeight.w600)),
+              Text('اضغط للتعديل',
+                  style: AppTextStyles.caption.copyWith(
+                      color: AppColors.navy, fontWeight: FontWeight.w600)),
             ],
           ),
         );
@@ -243,8 +270,11 @@ class _ApplicationPickerSheet extends StatelessWidget {
 
   String _label(Map<String, dynamic> app) {
     final prog = app['program'];
-    final title = (prog is Map ? prog['title'] : null) as String? ?? 'برنامج دراسي';
-    final uni = prog is Map ? (prog['university'] is Map ? prog['university']['name'] : null) : null;
+    final title =
+        (prog is Map ? prog['title'] : null) as String? ?? 'برنامج دراسي';
+    final uni = prog is Map
+        ? (prog['university'] is Map ? prog['university']['name'] : null)
+        : null;
     return uni != null ? '$title — $uni' : title;
   }
 
@@ -259,42 +289,54 @@ class _ApplicationPickerSheet extends StatelessWidget {
           children: [
             const Text('نوع الطلب', style: AppTextStyles.sectionLabel),
             const SizedBox(height: 4),
-            const Text('اختر الرحلة الدراسية لربط طلب الوصول بها، أو أضف طلب استقبال مستقل.',
+            const Text(
+                'اختر الرحلة الدراسية لربط طلب الوصول بها، أو أضف طلب استقبال مستقل.',
                 style: AppTextStyles.caption),
             const SizedBox(height: 16),
             // Standalone (airport pickup without university application)
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Container(
-                width: 42, height: 42,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                   color: AppColors.orange.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.flight_land_rounded, size: 20, color: AppColors.orange),
+                child: const Icon(Icons.flight_land_rounded,
+                    size: 20, color: AppColors.orange),
               ),
-              title: const Text('استقبال من المطار (بدون رحلة دراسية)', style: AppTextStyles.body),
-              subtitle: const Text('للطلاب القادمين دون تقديم جامعي حالي', style: AppTextStyles.caption),
-              trailing: const Icon(Icons.chevron_left_rounded, color: AppColors.orange),
-              onTap: () => Navigator.of(context).pop(_ArrivalServicesScreenState._noApp),
+              title: const Text('استقبال من المطار (بدون رحلة دراسية)',
+                  style: AppTextStyles.body),
+              subtitle: const Text('للطلاب القادمين دون تقديم جامعي حالي',
+                  style: AppTextStyles.caption),
+              trailing: const Icon(Icons.chevron_left_rounded,
+                  color: AppColors.orange),
+              onTap: () =>
+                  Navigator.of(context).pop(_ArrivalServicesScreenState._noApp),
             ),
             if (applications.isNotEmpty) ...[
               const Divider(height: 24),
-              const Text('ربط برحلة دراسية موجودة', style: AppTextStyles.caption),
+              const Text('ربط برحلة دراسية موجودة',
+                  style: AppTextStyles.caption),
               const SizedBox(height: 8),
               ...applications.map((app) => ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: Container(
-                      width: 42, height: 42,
+                      width: 42,
+                      height: 42,
                       decoration: BoxDecoration(
                         color: AppColors.navy.withValues(alpha: 0.08),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.school_outlined, size: 20, color: AppColors.navy),
+                      child: const Icon(Icons.school_outlined,
+                          size: 20, color: AppColors.navy),
                     ),
                     title: Text(_label(app), style: AppTextStyles.body),
-                    subtitle: Text(_statusAr(app['status'] as String?), style: AppTextStyles.caption),
-                    trailing: const Icon(Icons.chevron_left_rounded, color: AppColors.navy),
+                    subtitle: Text(_statusAr(app['status'] as String?),
+                        style: AppTextStyles.caption),
+                    trailing: const Icon(Icons.chevron_left_rounded,
+                        color: AppColors.navy),
                     onTap: () => Navigator.of(context).pop(app),
                   )),
             ],
@@ -305,12 +347,12 @@ class _ApplicationPickerSheet extends StatelessWidget {
   }
 
   String _statusAr(String? s) => switch (s) {
-    'accepted' || 'final-admission' => 'مقبول',
-    'visa-preparation' => 'قيد التحضير للتأشيرة',
-    'completed' => 'مكتمل',
-    'submitted' => 'قيد المراجعة',
-    _ => 'جارٍ',
-  };
+        'accepted' || 'final-admission' => 'مقبول',
+        'visa-preparation' => 'قيد التحضير للتأشيرة',
+        'completed' => 'مكتمل',
+        'submitted' => 'قيد المراجعة',
+        _ => 'جارٍ',
+      };
 }
 
 // ── Form screen ───────────────────────────────────────────────────────────────
@@ -351,13 +393,15 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
   String get _programLabel {
     if (widget.application != null) {
       final prog = widget.application!['program'];
-      return (prog is Map ? prog['title'] : null) as String? ?? 'البرنامج المختار';
+      return (prog is Map ? prog['title'] : null) as String? ??
+          'البرنامج المختار';
     }
     if (widget.existing != null) {
       final app = widget.existing!['application'];
       if (app is Map) {
         final prog = app['program'];
-        return (prog is Map ? prog['title'] : null) as String? ?? 'البرنامج الدراسي';
+        return (prog is Map ? prog['title'] : null) as String? ??
+            'البرنامج الدراسي';
       }
     }
     return _isStandalone ? 'استقبال من المطار' : 'البرنامج الدراسي';
@@ -402,7 +446,10 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
   }
 
   Future<void> _submit() async {
-    setState(() { _saving = true; _saveError = null; });
+    setState(() {
+      _saving = true;
+      _saveError = null;
+    });
     try {
       if (_isEditing) {
         await StudentRepository.instance.upsertArrivalServices(
@@ -434,13 +481,15 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-        content: Text(_isEditing ? 'تم تحديث الطلب بنجاح' : 'تم إرسال طلبك بنجاح'),
+        content:
+            Text(_isEditing ? 'تم تحديث الطلب بنجاح' : 'تم إرسال طلبك بنجاح'),
         backgroundColor: AppColors.success,
       ));
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
-      setState(() => _saveError = e is ApiException ? e.message : 'تعذر إرسال الطلب.');
+      setState(() =>
+          _saveError = e is ApiException ? e.message : 'تعذر إرسال الطلب.');
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -461,20 +510,28 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: (_isStandalone ? AppColors.orange : AppColors.navy).withValues(alpha: 0.07),
+                color: (_isStandalone ? AppColors.orange : AppColors.navy)
+                    .withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(AppRadius.button),
-                border: Border.all(color: (_isStandalone ? AppColors.orange : AppColors.navy).withValues(alpha: 0.18)),
+                border: Border.all(
+                    color: (_isStandalone ? AppColors.orange : AppColors.navy)
+                        .withValues(alpha: 0.18)),
               ),
               child: Row(
                 children: [
-                  Icon(_isStandalone ? Icons.flight_land_rounded : Icons.school_outlined,
-                      size: 18, color: _isStandalone ? AppColors.orange : AppColors.navy),
+                  Icon(
+                      _isStandalone
+                          ? Icons.flight_land_rounded
+                          : Icons.school_outlined,
+                      size: 18,
+                      color: _isStandalone ? AppColors.orange : AppColors.navy),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       _programLabel,
                       style: AppTextStyles.body.copyWith(
-                          color: _isStandalone ? AppColors.orange : AppColors.navy,
+                          color:
+                              _isStandalone ? AppColors.orange : AppColors.navy,
                           fontWeight: FontWeight.w700),
                     ),
                   ),
@@ -492,10 +549,11 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('تاريخ الوصول', style: AppTextStyles.caption),
+                        const Text('تاريخ الوصول',
+                            style: AppTextStyles.caption),
                         Text(
                           _arrivalDate != null
-                              ? '${_arrivalDate!.year}-${_arrivalDate!.month.toString().padLeft(2,'0')}-${_arrivalDate!.day.toString().padLeft(2,'0')}'
+                              ? '${_arrivalDate!.year}-${_arrivalDate!.month.toString().padLeft(2, '0')}-${_arrivalDate!.day.toString().padLeft(2, '0')}'
                               : 'اختر تاريخًا',
                           style: AppTextStyles.body,
                         ),
@@ -517,10 +575,14 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
             AppCard(
               child: Column(
                 children: [
-                  _svc('استقبال من المطار', _airportPickup, (v) => setState(() => _airportPickup = v)),
-                  _svc('سكن طلابي', _studentHousing, (v) => setState(() => _studentHousing = v)),
-                  _svc('دعم الإقامة (تصريح الإقامة)', _residencePermitSupport, (v) => setState(() => _residencePermitSupport = v)),
-                  _svc('دعم التأشيرة', _visaSupport, (v) => setState(() => _visaSupport = v)),
+                  _svc('استقبال من المطار', _airportPickup,
+                      (v) => setState(() => _airportPickup = v)),
+                  _svc('سكن طلابي', _studentHousing,
+                      (v) => setState(() => _studentHousing = v)),
+                  _svc('دعم الإقامة (تصريح الإقامة)', _residencePermitSupport,
+                      (v) => setState(() => _residencePermitSupport = v)),
+                  _svc('دعم التأشيرة', _visaSupport,
+                      (v) => setState(() => _visaSupport = v)),
                 ],
               ),
             ),
@@ -537,20 +599,26 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
                 controller: _notes,
                 maxLines: 3,
                 textAlign: TextAlign.right,
-                decoration: const InputDecoration(border: InputBorder.none, contentPadding: EdgeInsets.all(12)),
+                decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.all(12)),
               ),
             ),
             if (_saveError != null) ...[
               const SizedBox(height: 10),
               Container(
                 padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(color: AppColors.warning.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+                decoration: BoxDecoration(
+                    color: AppColors.warning.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(10)),
                 child: InlineNotice(_saveError!, error: true),
               ),
             ],
             const SizedBox(height: 20),
             PrimaryButton(
-              label: _saving ? 'جاري الإرسال...' : (_isEditing ? 'حفظ التعديلات' : 'إرسال الطلب'),
+              label: _saving
+                  ? 'جاري الإرسال...'
+                  : (_isEditing ? 'حفظ التعديلات' : 'إرسال الطلب'),
               onPressed: _saving ? null : _submit,
             ),
           ],
@@ -565,7 +633,11 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
           Text(label, style: AppTextStyles.caption),
           SizedBox(
             width: 180,
-            child: TextField(controller: controller, textAlign: TextAlign.right, decoration: const InputDecoration(border: InputBorder.none, isDense: true)),
+            child: TextField(
+                controller: controller,
+                textAlign: TextAlign.right,
+                decoration: const InputDecoration(
+                    border: InputBorder.none, isDense: true)),
           ),
         ],
       );
@@ -573,7 +645,10 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
   Widget _svc(String label, bool value, ValueChanged<bool> onChanged) => Row(
         children: [
           Expanded(child: Text(label, style: AppTextStyles.body)),
-          Switch(value: value, activeThumbColor: AppColors.orange, onChanged: onChanged),
+          Switch(
+              value: value,
+              activeThumbColor: AppColors.orange,
+              onChanged: onChanged),
         ],
       );
 }

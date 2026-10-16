@@ -1,3 +1,4 @@
+import 'catalog_language.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
@@ -44,7 +45,7 @@ class _CompareListScreenState extends State<CompareListScreen> {
           .where((id) => universities.any((u) => u['_id'] == id))
           .take(3));
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/compare_list_screen.dart:45');
-      error = 'تعذر تحميل الجامعات';
+      error = cl('تعذر تحميل الجامعات', 'Could not load universities');
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -53,7 +54,7 @@ class _CompareListScreenState extends State<CompareListScreen> {
   Future<void> toggle(String id, bool value) async {
     if (value && selected.length >= 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text('اختر ثلاث جامعات كحد أقصى')));
+          AppSnackBar(content: Text(cl('اختر ثلاث جامعات كحد أقصى', 'Select up to three universities'))));
       return;
     }
     setState(() {
@@ -73,22 +74,26 @@ class _CompareListScreenState extends State<CompareListScreen> {
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/compare_list_screen.dart:72');
       if (mounted)
         ScaffoldMessenger.of(context).showSnackBar(
-            AppSnackBar(content: Text('تعذر حفظ الاختيار على الجهاز')));
+            AppSnackBar(content: Text(cl('تعذر حفظ الاختيار على الجهاز', 'Could not save your selection on this device'))));
     }
   }
 
   String cell(Map<String, dynamic> u, String field) {
     final value = u[field];
-    if (value == null) return 'غير محدد';
+    if (value == null) return cl('غير محدد', 'Not specified');
     if (field == 'country' && value is Map)
-      return '${value['name'] ?? 'غير محدد'}';
+      return catalogCountryName(Map<String, dynamic>.from(value));
     if (field == 'tuitionRange' && value is Map)
       return '${value['min'] ?? '—'} – ${value['max'] ?? '—'}';
-    return value.toString();
+    return catalogValue(value.toString());
   }
 
   @override
   Widget build(BuildContext context) {
+    return CatalogLanguageBuilder(builder: _buildPage);
+  }
+
+  Widget _buildPage(BuildContext context) {
     final chosen =
         universities.where((u) => selected.contains(u['_id'])).toList();
     final filtered = universities
@@ -97,10 +102,12 @@ class _CompareListScreenState extends State<CompareListScreen> {
             .contains(query.trim().toLowerCase()))
         .toList();
     return AppScaffold(
-      title: 'مقارنة الجامعات',
+      textDirection: CatalogLanguage.instance.direction,
+      title: cl('مقارنة الجامعات', 'Compare universities'),
       actions: [
+        const CatalogLanguageToggle(),
         IconButton(
-            onPressed: load, tooltip: 'تحديث', icon: const Icon(Icons.refresh))
+            onPressed: load, tooltip: cl('تحديث', 'Refresh'), icon: const Icon(Icons.refresh))
       ],
       bottomBar: loading || error != null
           ? null
@@ -112,8 +119,8 @@ class _CompareListScreenState extends State<CompareListScreen> {
                       const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
                   child: PrimaryButton(
                     label: comparing
-                        ? 'تعديل الاختيار'
-                        : 'مقارنة (${chosen.length})',
+                        ? cl('تعديل الاختيار', 'Edit selection')
+                        : cl('مقارنة (${chosen.length})', 'Compare (${chosen.length})'),
                     icon:
                         comparing ? Icons.edit_outlined : Icons.compare_arrows,
                     onPressed: comparing
@@ -128,19 +135,19 @@ class _CompareListScreenState extends State<CompareListScreen> {
         child: loading
             ? const LoadingState()
             : error != null
-                ? ErrorState(message: error!, onRetry: load)
+                ? ErrorState(message: catalogValue(error!), onRetry: load)
                 : FeatureBody(children: [
                   FeatureIntro(
                       title:
-                          comparing ? 'قارن قبل أن تختار' : 'أي جامعة تناسبك؟',
+                          comparing ? cl('قارن قبل أن تختار', 'Compare before you choose') : cl('أي جامعة تناسبك؟', 'Which university suits you?'),
                       subtitle: comparing
-                          ? 'اطّلع على الفروق بين الجامعات التي اخترتها.'
-                          : 'اختر جامعتين أو ثلاثًا. نحتفظ باختياراتك على هذا الجهاز.',
+                          ? cl('اطّلع على الفروق بين الجامعات التي اخترتها.', 'See how your selected universities compare.')
+                          : cl('اختر جامعتين أو ثلاثًا. نحتفظ باختياراتك على هذا الجهاز.', 'Select two or three universities. Your selection is saved on this device.'),
                       icon: Icons.account_balance_outlined),
                   if (!comparing) ...[
                     TextField(
-                        decoration: featureInput('البحث عن جامعة',
-                            hint: 'اسم الجامعة أو الدولة', icon: Icons.search),
+                        decoration: featureInput(cl('البحث عن جامعة', 'Search universities'),
+                            hint: cl('اسم الجامعة أو الدولة', 'University or country name'), icon: Icons.search),
                         onChanged: (v) => setState(() => query = v)),
                     const SizedBox(height: 16),
                     if (chosen.isNotEmpty)
@@ -157,7 +164,7 @@ class _CompareListScreenState extends State<CompareListScreen> {
                                   onDeleted: () => toggle('${u['_id']}', false))
                           ])),
                     if (filtered.isEmpty)
-                      const InlineNotice('لا توجد جامعات مطابقة للبحث.'),
+                      InlineNotice(cl('لا توجد جامعات مطابقة للبحث.', 'No universities match your search.')),
                     for (final u in filtered)
                       Container(
                           margin: const EdgeInsets.only(bottom: 10),
@@ -175,7 +182,7 @@ class _CompareListScreenState extends State<CompareListScreen> {
                                 shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16)),
                                 activeColor: AppColors.navy,
-                                title: Text('${u['name']}',
+                                title: Text(catalogName(u, 'name'),
                                     style: AppTextStyles.cardTitle),
                                 subtitle: Text(
                                     '${cell(u, 'country')} • ${cell(u, 'city')}',
@@ -189,8 +196,8 @@ class _CompareListScreenState extends State<CompareListScreen> {
                   ] else ...[
                     UniversityComparisonGrid(universities: chosen, value: cell),
                     const SizedBox(height: 20),
-                    const InlineNotice(
-                        'الرسوم كما وردت في بيانات الجامعة. راجع البرنامج لمعرفة رسومه النهائية.'),
+                    InlineNotice(
+                        cl('الرسوم كما وردت في بيانات الجامعة. راجع البرنامج لمعرفة رسومه النهائية.', 'Fees are as published by the university. Check the program for its final tuition fees.')),
                   ],
                 ]),
         ),

@@ -1,3 +1,4 @@
+import '../community/student_profile_link.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
@@ -70,13 +71,18 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen> {
     try {
       final status = await repo.status();
       if (mounted) setState(() => suspension = status);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/community_screen.dart:71');/* Reading still works; the server enforces on write. */}
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/community_screen.dart:71'); /* Reading still works; the server enforces on write. */
+    }
   }
 
   Future<void> loadLookups() async {
     Future<List<Map<String, dynamic>>> safe(
             Future<List<Map<String, dynamic>>> Function() call) =>
-        call().catchError(ErrorReporter.fallback('screens/services_support/community_screen.dart:78', <Map<String, dynamic>>[]));
+        call().catchError(ErrorReporter.fallback(
+            'screens/services_support/community_screen.dart:78',
+            <Map<String, dynamic>>[]));
     final results = await Future.wait([
       safe(repo.countries),
       safe(repo.universities),
@@ -143,7 +149,7 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen> {
     if (created == true) {
       if (!mounted) return;
       ScaffoldMessenger.of(context)
-          .showSnackBar(AppSnackBar(content: Text('تم نشر موضوعك')));
+          .showSnackBar(AppSnackBar(content: const Text('تم نشر موضوعك')));
       load();
     } else {
       loadStatus();
@@ -255,7 +261,8 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen> {
       onRefresh: load,
       color: AppColors.navy,
       child: ListView.separated(
-        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+        physics: const BouncingScrollPhysics(
+            parent: AlwaysScrollableScrollPhysics()),
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         itemCount: posts.length,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
@@ -298,6 +305,12 @@ class _PostCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              StudentIdentity(
+                  id: _id(post['author']),
+                  name: _name(post['author']),
+                  avatar: post['author'] is Map
+                      ? '${post['author']['avatar'] ?? ''}'
+                      : ''),
               Text('${post['title'] ?? ''}', style: AppTextStyles.cardTitle),
               const SizedBox(height: 4),
               Text('${post['body'] ?? ''}',
@@ -307,7 +320,6 @@ class _PostCard extends StatelessWidget {
               const SizedBox(height: 8),
               Text(
                   [
-                    _name(post['author']),
                     '${post['commentCount'] ?? 0} تعليق',
                     _postMeta(post),
                   ].where((p) => p.isNotEmpty).join(' · '),
@@ -634,8 +646,8 @@ class _CommunityThreadScreenState extends State<CommunityThreadScreen> {
     }
   }
 
-  void toast(String text) =>
-      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(text)));
+  void toast(String text) => ScaffoldMessenger.of(context)
+      .showSnackBar(AppSnackBar(content: Text(text)));
 
   Future<void> run(Future<void> Function() action, String done, String failed,
       {bool reload = true}) async {
@@ -731,14 +743,21 @@ class _CommunityThreadScreenState extends State<CommunityThreadScreen> {
                         onRefresh: load,
                         color: AppColors.navy,
                         child: ListView(
-                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                          physics: const BouncingScrollPhysics(
+                              parent: AlwaysScrollableScrollPhysics()),
                           padding: const EdgeInsets.all(16),
                           children: [
                             Text('${post!['title'] ?? ''}',
                                 style: AppTextStyles.screenTitle),
                             const SizedBox(height: 4),
+                            StudentIdentity(
+                                id: _id(post!['author']),
+                                name: _name(post!['author']),
+                                avatar: post!['author'] is Map
+                                    ? '${post!['author']['avatar'] ?? ''}'
+                                    : ''),
                             Text(
-                                [_name(post!['author']), _postMeta(post!)]
+                                [_postMeta(post!)]
                                     .where((p) => p.isNotEmpty)
                                     .join(' · '),
                                 style: AppTextStyles.caption),
@@ -768,9 +787,12 @@ class _CommunityThreadScreenState extends State<CommunityThreadScreen> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(_name(comment['author']),
-                                        style: AppTextStyles.body.copyWith(
-                                            fontWeight: FontWeight.w600)),
+                                    StudentIdentity(
+                                        id: _id(comment['author']),
+                                        name: _name(comment['author']),
+                                        avatar: comment['author'] is Map
+                                            ? '${comment['author']['avatar'] ?? ''}'
+                                            : ''),
                                     const SizedBox(height: 2),
                                     Text('${comment['body'] ?? ''}',
                                         style: AppTextStyles.body),

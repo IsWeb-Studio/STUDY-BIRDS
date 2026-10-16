@@ -39,7 +39,10 @@ class _ServicesCenterScreenState extends State<ServicesCenterScreen> {
     setState(() => future = next);
     try {
       await next;
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/services_consultation_screens.dart:35');/* The FutureBuilder presents the retry state. */}
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/services_consultation_screens.dart:35'); /* The FutureBuilder presents the retry state. */
+    }
   }
 
   @override
@@ -52,13 +55,17 @@ class _ServicesCenterScreenState extends State<ServicesCenterScreen> {
               return ListView(
                 padding: const EdgeInsets.all(16),
                 children: const [
-                  SkeletonBox(width: double.infinity, height: 260, borderRadius: 26),
+                  SkeletonBox(
+                      width: double.infinity, height: 260, borderRadius: 26),
                   SizedBox(height: 24),
-                  SkeletonBox(width: double.infinity, height: 52, borderRadius: 16),
+                  SkeletonBox(
+                      width: double.infinity, height: 52, borderRadius: 16),
                   SizedBox(height: 18),
-                  SkeletonBox(width: double.infinity, height: 180, borderRadius: 22),
+                  SkeletonBox(
+                      width: double.infinity, height: 180, borderRadius: 22),
                   SizedBox(height: 14),
-                  SkeletonBox(width: double.infinity, height: 180, borderRadius: 22),
+                  SkeletonBox(
+                      width: double.infinity, height: 180, borderRadius: 22),
                 ],
               );
             }
@@ -74,16 +81,17 @@ class _ServicesCenterScreenState extends State<ServicesCenterScreen> {
                   message: 'ستظهر الخدمات التي ينشرها الفريق هنا.');
             }
             return ServicesCenterView(
-              services: rows.map((row) => Map<String, dynamic>.from(row)).toList(),
+              services:
+                  rows.map((row) => Map<String, dynamic>.from(row)).toList(),
               onRefresh: refresh,
               iconFor: _serviceIcon,
               onRequests: () => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => const MyServiceRequestsScreen())),
               onOpen: (row) => Navigator.of(context).push(MaterialPageRoute(
                   builder: (_) => ServiceDetailScreen(service: {
-                    ...row,
-                    'name': row['title']?.toString() ?? '',
-                  }))),
+                        ...row,
+                        'name': row['title']?.toString() ?? '',
+                      }))),
             );
           },
         ),
@@ -155,24 +163,37 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _documentSub = StudentRepository.instance.documentChanges.listen(_setDocuments);
+    _documentSub =
+        StudentRepository.instance.documentChanges.listen(_setDocuments);
     _loadDocuments();
   }
 
   void _setDocuments(List<dynamic> data) {
     if (!mounted) return;
     setState(() {
-      _documents = data.whereType<Map<String, dynamic>>().where(isUsableLibraryDocument).toList();
-      _selectedDocuments.removeWhere((id) => !_documents.any((doc) => doc['_id'] == id));
+      _documents = data
+          .whereType<Map<String, dynamic>>()
+          .where(isUsableLibraryDocument)
+          .toList();
+      _selectedDocuments
+          .removeWhere((id) => !_documents.any((doc) => doc['_id'] == id));
       _loadingDocuments = false;
       _documentError = null;
     });
   }
 
   Future<void> _loadDocuments() async {
-    try { _setDocuments(await StudentRepository.instance.getDocuments()); }
-    catch (_) { if (mounted) setState(() { _loadingDocuments = false; _documentError = 'تعذر تحميل المستندات'; }); }
+    try {
+      _setDocuments(await StudentRepository.instance.getDocuments());
+    } catch (_) {
+      if (mounted)
+        setState(() {
+          _loadingDocuments = false;
+          _documentError = 'تعذر تحميل المستندات';
+        });
+    }
   }
+
   bool _submitting = false;
   final _notesCtrl = TextEditingController();
 
@@ -188,7 +209,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     final confirmed = await showAppConfirmDialog(
       context,
       title: 'تأكيد طلب الخدمة',
-      message: 'سيتم إرسال طلبك للفريق وستصلك إشعارات عند تحديث الحالة. متابعة؟',
+      message:
+          'سيتم إرسال طلبك للفريق وستصلك إشعارات عند تحديث الحالة. متابعة؟',
     );
     if (confirmed != true || !mounted) return;
 
@@ -209,7 +231,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-          content: Text(e is ApiException ? e.message : 'تعذر إرسال الطلب، حاول مرة أخرى')));
+          content: Text(e is ApiException
+              ? e.message
+              : 'تعذر إرسال الطلب، حاول مرة أخرى')));
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -219,12 +243,14 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   Widget build(BuildContext context) {
     final service = widget.service;
     return AppScaffold(
-      title: service['name'] as String? ?? service['title'] as String? ?? 'الخدمة',
+      title:
+          service['name'] as String? ?? service['title'] as String? ?? 'الخدمة',
       actions: [
         TextButton.icon(
           icon: const Icon(Icons.list_alt_rounded, size: 18),
           label: const Text('طلباتي'),
-          onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyServiceRequestsScreen())),
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const MyServiceRequestsScreen())),
         ),
       ],
       body: SingleChildScrollView(
@@ -238,17 +264,26 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                 children: [
                   if ((service['detailBody'] as String? ?? '').isNotEmpty)
                     Text(
-                        (service['detailBody'] as String).replaceAll(RegExp(r'<[^>]*>'), ''),
+                        (service['detailBody'] as String)
+                            .replaceAll(RegExp(r'<[^>]*>'), ''),
                         style: AppTextStyles.body),
                   const SizedBox(height: 12),
-                  _Row(label: 'السعر', value: (service['priceDescription']?.toString().trim().isNotEmpty ?? false)
-                      ? '${service['priceDescription']}' : 'يحدد بعد مراجعة الطلب'),
+                  _Row(
+                      label: 'السعر',
+                      value: (service['priceDescription']
+                                  ?.toString()
+                                  .trim()
+                                  .isNotEmpty ??
+                              false)
+                          ? '${service['priceDescription']}'
+                          : 'يحدد بعد مراجعة الطلب'),
                   for (final field in const {
                     'estimatedDuration': 'الوقت التقديري للتنفيذ',
                     'requirementsText': 'متطلبات التقديم',
                     'documentsText': 'المستندات اللازمة',
                   }.entries)
-                    if (service[field.key]?.toString().trim().isNotEmpty ?? false) ...[
+                    if (service[field.key]?.toString().trim().isNotEmpty ??
+                        false) ...[
                       const SizedBox(height: 12),
                       Text(field.value, style: AppTextStyles.sectionLabel),
                       Text('${service[field.key]}', style: AppTextStyles.body),
@@ -264,7 +299,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               decoration: InputDecoration(
                 labelText: 'ملاحظات إضافية (اختياري)',
                 hintText: 'أي تفاصيل تريد إضافتها للفريق...',
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.button)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.button)),
                 filled: true,
                 fillColor: Colors.grey.shade50,
               ),
@@ -275,22 +311,34 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               style: AppTextStyles.caption,
             ),
             const SizedBox(height: 20),
-            const Text('استخدام مستندات محفوظة (اختياري)', style: AppTextStyles.sectionLabel),
-            const Text('اختر فقط المستندات التي توافق على إرفاقها بهذه الخدمة.'),
+            const Text('استخدام مستندات محفوظة (اختياري)',
+                style: AppTextStyles.sectionLabel),
+            const Text(
+                'اختر فقط المستندات التي توافق على إرفاقها بهذه الخدمة.'),
             if (_loadingDocuments) const LinearProgressIndicator(),
-            if (_documentError != null) TextButton(onPressed: _loadDocuments, child: Text(_documentError!)),
+            if (_documentError != null)
+              TextButton(
+                  onPressed: _loadDocuments, child: Text(_documentError!)),
             for (final doc in _documents)
               CheckboxListTile(
                 title: Text(docTypeLabel(doc['type'] as String?)),
                 subtitle: Text('${doc['fileName']}'),
                 value: _selectedDocuments.contains(doc['_id']),
-                onChanged: _submitting ? null : (selected) => setState(() {
-                  if (selected == true) { _selectedDocuments.add('${doc['_id']}'); }
-                  else { _selectedDocuments.remove(doc['_id']); }
-                }),
+                onChanged: _submitting
+                    ? null
+                    : (selected) => setState(() {
+                          if (selected == true) {
+                            _selectedDocuments.add('${doc['_id']}');
+                          } else {
+                            _selectedDocuments.remove(doc['_id']);
+                          }
+                        }),
               ),
-            TextButton.icon(icon: const Icon(Icons.folder_outlined), label: const Text('مكتبة المستندات'),
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyDocumentsScreen()))),
+            TextButton.icon(
+                icon: const Icon(Icons.folder_outlined),
+                label: const Text('مكتبة المستندات'),
+                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => const MyDocumentsScreen()))),
             PrimaryButton(
               label: _submitting ? 'جاري الإرسال...' : 'طلب الخدمة',
               onPressed: _submitting ? null : _requestService,
@@ -306,7 +354,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
 class MyServiceRequestsScreen extends StatefulWidget {
   const MyServiceRequestsScreen({super.key});
   @override
-  State<MyServiceRequestsScreen> createState() => _MyServiceRequestsScreenState();
+  State<MyServiceRequestsScreen> createState() =>
+      _MyServiceRequestsScreenState();
 }
 
 class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
@@ -315,12 +364,21 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
   @override
   void initState() {
     super.initState();
-    _future = ApiClient.instance.get('/service-requests/mine', token: AuthSession.instance.token).then((d) => d is List ? d : []);
+    _future = ApiClient.instance
+        .get('/service-requests/mine', token: AuthSession.instance.token)
+        .then((d) => d is List ? d : []);
   }
 
   Future<void> _refresh() async {
-    setState(() => _future = ApiClient.instance.get('/service-requests/mine', token: AuthSession.instance.token).then((d) => d is List ? d : []));
-    try { await _future; } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/services_consultation_screens.dart:270');}
+    setState(() => _future = ApiClient.instance
+        .get('/service-requests/mine', token: AuthSession.instance.token)
+        .then((d) => d is List ? d : []));
+    try {
+      await _future;
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/services_consultation_screens.dart:270');
+    }
   }
 
   @override
@@ -333,10 +391,14 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
           if (snap.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snap.hasError) return ErrorState(message: 'تعذر تحميل الطلبات', onRetry: _refresh);
+          if (snap.hasError)
+            return ErrorState(message: 'تعذر تحميل الطلبات', onRetry: _refresh);
           final rows = (snap.data ?? []).whereType<Map>().toList();
           if (rows.isEmpty) {
-            return const EmptyState(icon: Icons.assignment_outlined, title: 'لا توجد طلبات بعد', message: 'اطلب خدمة من مركز الخدمات وستظهر هنا.');
+            return const EmptyState(
+                icon: Icons.assignment_outlined,
+                title: 'لا توجد طلبات بعد',
+                message: 'اطلب خدمة من مركز الخدمات وستظهر هنا.');
           }
           return RefreshIndicator(
             onRefresh: _refresh,
@@ -347,12 +409,19 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
               itemCount: rows.length,
               itemBuilder: (_, i) {
                 final r = Map<String, dynamic>.from(rows[i]);
-                final title = (r['serviceTitle'] as String?) ?? (r['service'] is Map ? r['service']['title'] : '') ?? '';
+                final title = (r['serviceTitle'] as String?) ??
+                    (r['service'] is Map ? r['service']['title'] : '') ??
+                    '';
                 final status = r['status'] as String? ?? 'pending';
-                final assignedTo = r['assignedTo'] is Map ? r['assignedTo']['name'] as String? : null;
+                final assignedTo = r['assignedTo'] is Map
+                    ? r['assignedTo']['name'] as String?
+                    : null;
                 final staffNote = r['staffNote'] as String? ?? '';
-                final driver = r['driverDetails'] is Map ? Map<String, dynamic>.from(Json.rawMap(r['driverDetails'])) : null;
-                final showDriver = status == 'en-route' && driver != null &&
+                final driver = r['driverDetails'] is Map
+                    ? Map<String, dynamic>.from(Json.rawMap(r['driverDetails']))
+                    : null;
+                final showDriver = status == 'en-route' &&
+                    driver != null &&
                     (driver['name'] as String? ?? '').isNotEmpty;
                 return AppCard(
                   child: Column(
@@ -360,13 +429,17 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
                     children: [
                       Row(
                         children: [
-                          Expanded(child: Text(title, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700))),
+                          Expanded(
+                              child: Text(title,
+                                  style: AppTextStyles.body
+                                      .copyWith(fontWeight: FontWeight.w700))),
                           _StatusChip(status),
                         ],
                       ),
                       if (assignedTo != null) ...[
                         const SizedBox(height: 6),
-                        Text('الموظف المسؤول: $assignedTo', style: AppTextStyles.caption),
+                        Text('الموظف المسؤول: $assignedTo',
+                            style: AppTextStyles.caption),
                       ],
                       if (showDriver) ...[
                         const SizedBox(height: 10),
@@ -375,46 +448,70 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
                           decoration: BoxDecoration(
                             color: AppColors.navy.withValues(alpha: 0.06),
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: AppColors.navy.withValues(alpha: 0.2)),
+                            border: Border.all(
+                                color: AppColors.navy.withValues(alpha: 0.2)),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Row(children: [
-                                const Icon(Icons.directions_car_rounded, size: 16, color: AppColors.navy),
+                                const Icon(Icons.directions_car_rounded,
+                                    size: 16, color: AppColors.navy),
                                 const SizedBox(width: 6),
-                                Text('السائق في الطريق إليك', style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w700, color: AppColors.navy)),
+                                Text('السائق في الطريق إليك',
+                                    style: AppTextStyles.caption.copyWith(
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.navy)),
                               ]),
                               const SizedBox(height: 6),
-                              Text('الاسم: ${driver['name'] ?? ''}', style: AppTextStyles.caption),
+                              Text('الاسم: ${driver['name'] ?? ''}',
+                                  style: AppTextStyles.caption),
                               if ((driver['phone'] as String? ?? '').isNotEmpty)
-                                Text('الهاتف: ${driver['phone']}', style: AppTextStyles.caption),
-                              if ((driver['vehicleType'] as String? ?? '').isNotEmpty)
-                                Text('المركبة: ${driver['vehicleType']}${(driver['vehicleNumber'] as String? ?? '').isNotEmpty ? ' — ${driver['vehicleNumber']}' : ''}', style: AppTextStyles.caption),
+                                Text('الهاتف: ${driver['phone']}',
+                                    style: AppTextStyles.caption),
+                              if ((driver['vehicleType'] as String? ?? '')
+                                  .isNotEmpty)
+                                Text(
+                                    'المركبة: ${driver['vehicleType']}${(driver['vehicleNumber'] as String? ?? '').isNotEmpty ? ' — ${driver['vehicleNumber']}' : ''}',
+                                    style: AppTextStyles.caption),
                               if (driver['etaMinutes'] != null)
-                                Text('الوصول المتوقع: ${driver['etaMinutes']} دقيقة', style: AppTextStyles.caption.copyWith(color: AppColors.orange, fontWeight: FontWeight.w600)),
+                                Text(
+                                    'الوصول المتوقع: ${driver['etaMinutes']} دقيقة',
+                                    style: AppTextStyles.caption.copyWith(
+                                        color: AppColors.orange,
+                                        fontWeight: FontWeight.w600)),
                             ],
                           ),
                         ),
                       ],
                       if (staffNote.isNotEmpty) ...[
                         const SizedBox(height: 6),
-                        Text('ملاحظة: $staffNote', style: AppTextStyles.caption.copyWith(color: AppColors.navy)),
+                        Text('ملاحظة: $staffNote',
+                            style: AppTextStyles.caption
+                                .copyWith(color: AppColors.navy)),
                       ],
                       const SizedBox(height: 6),
-                      Text(_formatDate(r['createdAt']), style: AppTextStyles.caption),
-                      for (final document in Json.list(r['documents']).whereType<Map>())
+                      Text(_formatDate(r['createdAt']),
+                          style: AppTextStyles.caption),
+                      for (final document
+                          in Json.list(r['documents']).whereType<Map>())
                         ListTile(
                           contentPadding: EdgeInsets.zero,
-                          title: Text('${document['fileName'] ?? 'مستند مرفق'}', maxLines: 1, overflow: TextOverflow.ellipsis),
+                          title: Text('${document['fileName'] ?? 'مستند مرفق'}',
+                              maxLines: 1, overflow: TextOverflow.ellipsis),
                           trailing: const Icon(Icons.visibility_outlined),
                           onTap: () async {
                             try {
-                              final uri = await resolveDocumentDownload('${document['filePath']}');
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              final uri = await resolveDocumentDownload(
+                                  '${document['filePath']}');
+                              await launchUrl(uri,
+                                  mode: LaunchMode.externalApplication);
                             } catch (error) {
-                              if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('تعذر فتح المستند. تحقق من الاتصال والصلاحيات.')));
+                              if (context.mounted)
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'تعذر فتح المستند. تحقق من الاتصال والصلاحيات.')));
                             }
                           },
                         ),
@@ -443,18 +540,22 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'pending'     => ('في الانتظار', Colors.orange),
-      'assigned'    => ('تم التعيين', Colors.blue),
+      'pending' => ('في الانتظار', Colors.orange),
+      'assigned' => ('تم التعيين', Colors.blue),
       'in-progress' => ('قيد التنفيذ', AppColors.navy),
-      'en-route'    => ('السائق في الطريق', AppColors.orange),
-      'completed'   => ('مكتمل', AppColors.success),
-      'cancelled'   => ('ملغى', Colors.red),
-      _             => (status, Colors.grey),
+      'en-route' => ('السائق في الطريق', AppColors.orange),
+      'completed' => ('مكتمل', AppColors.success),
+      'cancelled' => ('ملغى', Colors.red),
+      _ => (status, Colors.grey),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(20)),
-      child: Text(label, style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.w600)),
+      decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.12),
+          borderRadius: BorderRadius.circular(20)),
+      child: Text(label,
+          style: TextStyle(
+              color: color, fontSize: 11, fontWeight: FontWeight.w600)),
     );
   }
 }
@@ -536,7 +637,9 @@ class _ConsultationConfirmationScreenState
           !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         throw StateError('unavailable');
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/services_consultation_screens.dart:471');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/services_consultation_screens.dart:471');
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
             AppSnackBar(content: Text('تعذر فتح رابط الاجتماع.')));
@@ -567,7 +670,9 @@ class _ConsultationConfirmationScreenState
       if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         throw StateError('unavailable');
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/services_consultation_screens.dart:502');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/services_consultation_screens.dart:502');
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
             AppSnackBar(content: Text('تعذر فتح تطبيق التقويم.')));
@@ -580,9 +685,16 @@ class _ConsultationConfirmationScreenState
     if (bookingId.isEmpty) return;
     // Download .ics from server and open with the system handler (iOS opens in Calendar)
     try {
-      final bytes = await ApiClient.instance.download('/consultations/bookings/$bookingId/ics', token: AuthSession.instance.token);
-      await FilePicker.platform.saveFile(dialogTitle: 'حفظ موعد التقويم', fileName: 'consultation-$bookingId.ics', bytes: Uint8List.fromList(bytes));
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/services_consultation_screens.dart:517');
+      final bytes = await ApiClient.instance.download(
+          '/consultations/bookings/$bookingId/ics',
+          token: AuthSession.instance.token);
+      await FilePicker.platform.saveFile(
+          dialogTitle: 'حفظ موعد التقويم',
+          fileName: 'consultation-$bookingId.ics',
+          bytes: Uint8List.fromList(bytes));
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/services_consultation_screens.dart:517');
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
             AppSnackBar(content: Text('تعذر تحميل ملف التقويم.')));
@@ -593,26 +705,41 @@ class _ConsultationConfirmationScreenState
   Future<void> _showCalendarOptions(BuildContext ctx) async {
     await showModalBottomSheet<void>(
       context: ctx,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (_) => SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(vertical: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Container(width: 40, height: 4, decoration: BoxDecoration(color: Colors.grey.shade300, borderRadius: BorderRadius.circular(2))),
+              Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                      color: Colors.grey.shade300,
+                      borderRadius: BorderRadius.circular(2))),
               const SizedBox(height: 16),
-              const Text('أضف للتقويم', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+              const Text('أضف للتقويم',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
               const SizedBox(height: 12),
               ListTile(
-                leading: const Icon(Icons.calendar_month, color: Color(0xFF4285F4)),
+                leading:
+                    const Icon(Icons.calendar_month, color: Color(0xFF4285F4)),
                 title: const Text('Google Calendar'),
-                onTap: () { Navigator.pop(ctx); _addToGoogleCalendar(ctx); },
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _addToGoogleCalendar(ctx);
+                },
               ),
               ListTile(
-                leading: const Icon(Icons.calendar_today, color: Colors.black87),
+                leading:
+                    const Icon(Icons.calendar_today, color: Colors.black87),
                 title: const Text('تصدير ملف التقويم (Apple / iCal)'),
-                onTap: () { Navigator.pop(ctx); _addToAppleCalendar(ctx); },
+                onTap: () {
+                  Navigator.pop(ctx);
+                  _addToAppleCalendar(ctx);
+                },
               ),
             ],
           ),
@@ -624,7 +751,8 @@ class _ConsultationConfirmationScreenState
   @override
   Widget build(BuildContext context) {
     final meetingUrl = '${slot['meetingUrl'] ?? ''}';
-    final hasUrl = slot['mode'] == 'online' && meetingUrl.startsWith('https://');
+    final hasUrl =
+        slot['mode'] == 'online' && meetingUrl.startsWith('https://');
     return AppScaffold(
       title: 'تأكيد الموعد',
       body: Padding(
@@ -652,8 +780,8 @@ class _ConsultationConfirmationScreenState
                   const Divider(height: 20),
                   _Row(
                       label: 'نوع الاستشارة',
-                      value:
-                          kConsultationModes[slot['mode']] ?? '${slot['mode']}'),
+                      value: kConsultationModes[slot['mode']] ??
+                          '${slot['mode']}'),
                   const Divider(height: 20),
                   _Row(
                       label: 'المستشار',
@@ -680,12 +808,15 @@ class _ConsultationConfirmationScreenState
                 style: AppTextStyles.caption),
             const SizedBox(height: 20),
             OutlinedButton.icon(
-              icon: const Icon(Icons.calendar_today_rounded, size: 18, color: AppColors.navy),
-              label: const Text('أضف للتقويم', style: TextStyle(color: AppColors.navy)),
+              icon: const Icon(Icons.calendar_today_rounded,
+                  size: 18, color: AppColors.navy),
+              label: const Text('أضف للتقويم',
+                  style: TextStyle(color: AppColors.navy)),
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(double.infinity, 44),
                 side: const BorderSide(color: AppColors.navy),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppRadius.button)),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(AppRadius.button)),
               ),
               onPressed: () => _showCalendarOptions(context),
             ),

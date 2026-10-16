@@ -1,3 +1,5 @@
+import 'dart:async';
+import '../../core/services/realtime_sync_service.dart';
 import '../../core/services/error_reporter.dart';
 import 'journey_requirements_view.dart';
 import 'package:flutter/material.dart';
@@ -48,6 +50,7 @@ class JourneyTrackerScreen extends StatelessWidget {
   /// the backend, e.g. 'university-review') — pass this from real data.
   /// When null, the current account's progress is fetched from the server.
   final bool useServer;
+  final bool isActive;
   final String? currentStageKey;
   final String journeyPathLabel;
   /// When set, only the journey matching this application ID is shown.
@@ -57,6 +60,7 @@ class JourneyTrackerScreen extends StatelessWidget {
       {super.key,
       this.currentStageKey,
       this.useServer = true,
+      this.isActive = true,
       this.applicationId,
       this.journeyPathLabel = 'رحلتك الدراسية'});
 
@@ -78,7 +82,7 @@ class JourneyTrackerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (useServer) return LiveJourneyScreen(applicationId: applicationId);
+    if (useServer) return LiveJourneyScreen(applicationId: applicationId, isActive: isActive);
     final stages = _buildStages();
     final completed =
         stages.where((stage) => stage.status == StageStatus.completed).length;
@@ -127,37 +131,93 @@ class JourneyTrackerScreen extends StatelessWidget {
 class LiveJourneyScreen extends StatefulWidget {
   /// When set, only the journey matching this application ID is shown.
   final String? applicationId;
-  const LiveJourneyScreen({super.key, this.applicationId});
+  final bool isActive;
+  const LiveJourneyScreen({super.key, this.applicationId, this.isActive = true});
   @override
   State<LiveJourneyScreen> createState() => _LiveJourneyScreenState();
 }
 
-class _LiveJourneyScreenState extends State<LiveJourneyScreen> {
-  late Future<DashboardOverview> future =
-      StudentRepository.instance.getOverview();
+class _LiveJourneyScreenState extends State<LiveJourneyScreen> with WidgetsBindingObserver {
+  StreamSubscription<DateTime>? _syncSub;
+  DashboardOverview? _overview;
+  Object? _error;
+  Future<void>? _refreshing;
+  bool _visible = false;
+  bool _foreground = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _foreground = WidgetsBinding.instance.lifecycleState == null ||
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed;
     AnalyticsService.instance.screenView('journey_tracker');
+    _syncSub = RealtimeSyncService.instance.onTick.listen((_) => refresh());
   }
 
-  void refresh() =>
-      setState(() => future = StudentRepository.instance.getOverview());
   @override
-  Widget build(BuildContext context) => FutureBuilder<DashboardOverview>(
-        future: future,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState != ConnectionState.done) {
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _updateVisibility();
+  }
+
+  @override
+  void didUpdateWidget(covariant LiveJourneyScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _updateVisibility();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _foreground = state == AppLifecycleState.resumed;
+    _updateVisibility();
+  }
+
+  void _updateVisibility() {
+    final visible = widget.isActive && _foreground &&
+        (ModalRoute.isCurrentOf(context) ?? true);
+    final becameVisible = visible && !_visible;
+    _visible = visible;
+    if (becameVisible) unawaited(refresh());
+  }
+
+  @override
+  void dispose() {
+    _syncSub?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  Future<void> refresh() {
+    if (!mounted || !_visible) return Future.value();
+    return _refreshing ??= _load().whenComplete(() => _refreshing = null);
+  }
+
+  Future<void> _load() async {
+    try {
+      final overview = await StudentRepository.instance.getOverview(forceRefresh: true);
+      if (!mounted) return;
+      setState(() {
+        _overview = overview;
+        _error = null;
+      });
+    } catch (error, stack) {
+      ErrorReporter.swallowed(error, stack, 'journey.refresh');
+      if (mounted) setState(() => _error = error);
+    }
+  }
+  @override
+  Widget build(BuildContext context) {
+          if (_overview == null && _error == null) {
             return const AppScaffold(title: 'رحلتي', body: LoadingState());
           }
-          if (snapshot.hasError) {
+          if (_overview == null && _error != null) {
             return AppScaffold(
                 title: 'رحلتي',
                 body:
                     ErrorState(message: 'تعذر تحميل رحلتك', onRetry: refresh));
           }
-          final overview = snapshot.data!;
+          final overview = _overview!;
           if (overview.journeys != null) {
             var journeys = overview.journeys!;
             final filterId = widget.applicationId;
@@ -165,21 +225,22 @@ class _LiveJourneyScreenState extends State<LiveJourneyScreen> {
               final filtered = journeys
                   .where((j) => j['applicationId']?.toString() == filterId)
                   .toList();
-              if (filtered.isNotEmpty) journeys = filtered;
+              journeys = filtered;
             }
             return JourneyRequirementsView(
                 journeys: journeys,
+                applications: overview.recentApplications.whereType<Map<String, dynamic>>().toList(),
+                detailBuilder: (journey) => LiveJourneyScreen(
+                    applicationId: journey['applicationId']?.toString()),
                 onRefresh: () async {
-                  refresh();
-                  try { await future; } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/journey_tracker_screen.dart:173');}
+                  await refresh();
                 });
           }
           final stage = overview.journeyStage;
           if (stage == null || stage.isEmpty) {
             return JourneyRequirementsView(
               onRefresh: () async {
-                refresh();
-                try { await future; } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/journey_tracker_screen.dart:181');}
+                await refresh();
               },
               journeys: overview.stages.isEmpty
                   ? []
@@ -204,12 +265,10 @@ class _LiveJourneyScreenState extends State<LiveJourneyScreen> {
           }
           return RefreshIndicator(
               onRefresh: () async {
-                refresh();
-                try { await future; } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/journey_tracker_screen.dart:207');}
+                await refresh();
               },
               color: AppColors.navy,
               child: JourneyTrackerScreen(
                   currentStageKey: stage, useServer: false));
-        },
-      );
+  }
 }

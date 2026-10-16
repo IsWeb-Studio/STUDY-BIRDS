@@ -306,9 +306,9 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
           }
           if (user == null) {
             // Onboarding (splash + intro) shows only once ever.
-            // Returning logged-out users go directly to login.
-            return _onboardingDone
-                ? const _DirectLoginEntry()
+            // Returning logged-out users choose their role before logging in.
+            return _onboardingDone || AuthSession.instance.hasSignedOut
+                ? const AccountTypeEntry()
                 : const ConnectedPrototypeEntry();
           }
           if (AuthSession.instance.requiresGooglePasswordSetup || !user.hasPassword) return const SetPasswordScreen();
@@ -531,29 +531,13 @@ class ConnectedPrototypeEntry extends StatelessWidget {
 }
 
 /// Shown to returning users (onboarding already seen) who are not logged in.
-/// Navigates directly to the login screen on the first frame — no splash, no onboarding.
-class _DirectLoginEntry extends StatefulWidget {
-  const _DirectLoginEntry();
-
+/// Returning users choose their account type before opening role-aware login.
+class AccountTypeEntry extends StatelessWidget {
+  const AccountTypeEntry({super.key});
   @override
-  State<_DirectLoginEntry> createState() => _DirectLoginEntryState();
-}
-
-class _DirectLoginEntryState extends State<_DirectLoginEntry> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      // replaceAll clears any stale routes left over after logout.
-      ConnectedPrototypeEntry._goLogin(context, replaceAll: true);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return const Scaffold(backgroundColor: AppColors.background);
-  }
+  Widget build(BuildContext context) => AccountTypeSelectionScreen(
+      onSelected: (type) => ConnectedPrototypeEntry._goLogin(
+          context, selectedRole: type));
 }
 
 /// A simple gallery so you (or a reviewer) can open any screen instantly

@@ -1,3 +1,7 @@
+import 'home_journey_summary_card.dart';
+import 'journey_preview_card.dart';
+import '../../core/network/api_client.dart';
+import '../../core/utils/status_info.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
@@ -22,20 +26,28 @@ import '../universities_programs_countries/universities_screens.dart';
 import '../universities_programs_countries/countries_scholarships_screens.dart';
 import '../services_support/services_consultation_screens.dart';
 import '../services_support/support_team_ai_screens.dart';
-import '../services_support/community_screen.dart';
+import '../community/student_community_hub.dart';
 import '../universities_programs_countries/programs_screens.dart';
 import '../universities_programs_countries/explore_hub_screen.dart';
 import '../visa_travel_accommodation/accommodation_arrival_screens.dart';
-import '../visa_travel_accommodation/visa_travel_screens.dart' show InsuranceScreen, EquivalencyScreen, VisaCenterScreen, TravelCenterScreen;
+import '../visa_travel_accommodation/visa_travel_screens.dart'
+    show
+        InsuranceScreen,
+        EquivalencyScreen,
+        VisaCenterScreen,
+        TravelCenterScreen;
 import 'smart_home_sections.dart';
 import 'student_banner_carousel.dart';
+import '../stories/student_stories.dart';
 
 /// Real, live Home Dashboard — fetches GET /api/students/overview on load.
 class HomeDashboardScreen extends StatefulWidget {
   /// When true (used inside StudentAppShell), this screen has no Scaffold/
   /// bottom-nav of its own — the shell provides one shared bar instead.
   final bool embedInShell;
-  const HomeDashboardScreen({super.key, this.embedInShell = false});
+  final bool isActive;
+  const HomeDashboardScreen(
+      {super.key, this.embedInShell = false, this.isActive = true});
 
   @override
   State<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
@@ -51,27 +63,29 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   // Quick-access items shown in the horizontal strip.
   static const List<Map<String, dynamic>> _quickActions = [
-    {'label': 'طلباتي',   'icon': Icons.description_outlined},
+    {'label': 'طلباتي', 'icon': Icons.description_outlined},
     {'label': 'الجامعات', 'icon': Icons.account_balance_outlined},
     {'label': 'مستنداتي', 'icon': Icons.folder_open_outlined},
     {'label': 'المدفوعات', 'icon': Icons.payments_outlined},
-    {'label': 'Bird AI',   'icon': null},
-    {'label': 'استشارة',  'icon': Icons.support_agent_outlined},
-    {'label': 'الدعم',    'icon': Icons.headset_mic_outlined},
-    {'label': 'المجتمع',  'icon': Icons.forum_outlined},
+    {'label': 'Bird AI', 'icon': null},
+    {'label': 'استشارة', 'icon': Icons.support_agent_outlined},
+    {'label': 'الدعم', 'icon': Icons.headset_mic_outlined},
+    {'label': 'المجتمع', 'icon': Icons.forum_outlined},
   ];
 
   @override
   void initState() {
     super.initState();
-    _journeyPageController = PageController();
+    _journeyPageController = PageController(viewportFraction: .92);
     _load();
     AnalyticsService.instance.screenView('home_dashboard');
     _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
       StudentRepository.instance
           .getOverview(forceRefresh: true)
-          .then((data) { if (mounted) setState(() => _overview = data); })
-          .catchError(ErrorReporter.silent('screens/home_journey/home_dashboard_screen.dart:72'));
+          .then<void>((data) {
+        if (mounted) setState(() => _overview = data);
+      }).catchError(ErrorReporter.silent(
+              'screens/home_journey/home_dashboard_screen.dart:72'));
     });
   }
 
@@ -135,7 +149,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(color: AppColors.border),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Row(
                   children: [
                     Container(
@@ -284,7 +299,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                         listTile(Icons.headset_mic_outlined, 'مركز الدعم',
                             () => go(const SupportCenterScreen())),
                         listTile(Icons.forum_outlined, 'المجتمع',
-                            () => go(const StudentCommunityScreen())),
+                            () => go(const StudentCommunityHub())),
 
                         const Divider(height: 8),
 
@@ -333,39 +348,39 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       return;
     }
     final Widget screen = switch (destination) {
-      'journey'                  => const JourneyTrackerScreen(),
-      'visa'                     => const VisaCenterScreen(),
-      'travel'                   => const TravelCenterScreen(),
-      'accommodation'            => const AccommodationScreen(),
-      'university-registration'  => const UniversityRegistrationScreen(),
-      'insurance'                => const InsuranceScreen(),
-      'equivalency'              => const EquivalencyScreen(),
-      'programs' || 'catalog'    => const ProgramsExplorerScreen(),
-      'universities'             => const UniversitiesExplorerScreen(),
-      'scholarships'             => const ScholarshipsScreen(),
+      'journey' => const JourneyTrackerScreen(),
+      'visa' => const VisaCenterScreen(),
+      'travel' => const TravelCenterScreen(),
+      'accommodation' => const AccommodationScreen(),
+      'university-registration' => const UniversityRegistrationScreen(),
+      'insurance' => const InsuranceScreen(),
+      'equivalency' => const EquivalencyScreen(),
+      'programs' || 'catalog' => const ProgramsExplorerScreen(),
+      'universities' => const UniversitiesExplorerScreen(),
+      'scholarships' => const ScholarshipsScreen(),
       'documents' || 'upload-document' => const MyDocumentsScreen(),
-      'payments'                 => const PaymentsSummaryScreen(),
-      'support'                  => const SupportCenterScreen(),
-      'notifications'            => const NotificationsScreen(),
-      'bird-ai'                  => const BirdAIChatScreen(),
-      'community'                => const StudentCommunityScreen(),
-      _                          => const ApplicationsListScreen(),
+      'payments' => const PaymentsSummaryScreen(),
+      'support' => const SupportCenterScreen(),
+      'notifications' => const NotificationsScreen(),
+      'bird-ai' => const BirdAIChatScreen(),
+      'community' => const StudentCommunityHub(),
+      _ => const ApplicationsListScreen(),
     };
     Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
   }
 
   static const Map<String, IconData> _quickActionIcons = {
-    'programs':       Icons.menu_book_outlined,
-    'universities':   Icons.account_balance_outlined,
-    'applications':   Icons.description_outlined,
+    'programs': Icons.menu_book_outlined,
+    'universities': Icons.account_balance_outlined,
+    'applications': Icons.description_outlined,
     'upload-document': Icons.upload_file_outlined,
-    'consultation':   Icons.support_agent_outlined,
-    'visa':           Icons.badge_outlined,
-    'travel':         Icons.flight_takeoff_outlined,
-    'accommodation':  Icons.home_work_outlined,
-    'payments':       Icons.payments_outlined,
-    'support':        Icons.headset_mic_outlined,
-    'community':      Icons.forum_outlined,
+    'consultation': Icons.support_agent_outlined,
+    'visa': Icons.badge_outlined,
+    'travel': Icons.flight_takeoff_outlined,
+    'accommodation': Icons.home_work_outlined,
+    'payments': Icons.payments_outlined,
+    'support': Icons.headset_mic_outlined,
+    'community': Icons.forum_outlined,
   };
 
   List<Map<String, dynamic>> _visibleQuickActions(Map<String, dynamic>? home) {
@@ -379,13 +394,13 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       actions = [
         for (final item in server.whereType<Map>())
           {
-            'label':       '${item['labelAr'] ?? item['key']}',
-            'icon':        _quickActionIcons[item['key']],
+            'label': '${item['labelAr'] ?? item['key']}',
+            'icon': _quickActionIcons[item['key']],
             'destination': '${item['destination'] ?? item['key']}',
           },
         {
-          'label':       'المجتمع',
-          'icon':        Icons.forum_outlined,
+          'label': 'المجتمع',
+          'icon': Icons.forum_outlined,
           'destination': 'community',
         },
       ];
@@ -394,14 +409,14 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   }
 
   static const Map<String, String> _legacyDestinations = {
-    'طلباتي':   'applications',
+    'طلباتي': 'applications',
     'الجامعات': 'universities',
     'مستنداتي': 'documents',
     'المدفوعات': 'payments',
-    'Bird AI':   'bird-ai',
-    'استشارة':  'consultation',
-    'الدعم':    'support',
-    'المجتمع':  'community',
+    'Bird AI': 'bird-ai',
+    'استشارة': 'consultation',
+    'الدعم': 'support',
+    'المجتمع': 'community',
   };
 
   @override
@@ -593,8 +608,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         ),
 
         // ── Journey card(s) ───────────────────────────────────────────────────
-        _buildJourneySection(
-            context, overview, currentStage, journeyPathLabel, progress, homeStatus),
+        StudentStories(isActive: widget.isActive),
+
+        _buildJourneySection(context, overview, currentStage, journeyPathLabel,
+            progress, homeStatus),
 
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
@@ -608,7 +625,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             padding: EdgeInsets.symmetric(horizontal: 16),
             child: Align(
               alignment: Alignment.centerRight,
-              child: Text('الشهادات والاعترافات', style: AppTextStyles.sectionLabel),
+              child: Text('الشهادات والاعترافات',
+                  style: AppTextStyles.sectionLabel),
             ),
           ),
           const SizedBox(height: 10),
@@ -624,14 +642,16 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 final title = rec['title'] as String? ?? '';
                 final link = rec['link'] as String? ?? '';
                 final card = Container(
-                  margin: EdgeInsets.only(left: i < overview.recognitions.length - 1 ? 10 : 0),
+                  margin: EdgeInsets.only(
+                      left: i < overview.recognitions.length - 1 ? 10 : 0),
                   width: 130,
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(color: AppColors.border),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -648,7 +668,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                           ),
                         )
                       else
-                        const Icon(Icons.verified_outlined, color: AppColors.orange, size: 24),
+                        const Icon(Icons.verified_outlined,
+                            color: AppColors.orange, size: 24),
                       const SizedBox(height: 4),
                       Text(
                         title,
@@ -669,7 +690,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 return GestureDetector(
                   onTap: () async {
                     final uri = Uri.tryParse(link);
-                    if (uri != null) await launchUrl(uri, mode: LaunchMode.externalApplication);
+                    if (uri != null) {
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication);
+                    }
                   },
                   child: card,
                 );
@@ -793,8 +817,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               child: const ListTile(
                   leading: Icon(Icons.school_outlined),
                   title: Text('استكشف المنح المنشورة'),
-                  subtitle:
-                      Text('اطّلع على الشروط وقدّم طلبك وتابع حالته.'))),
+                  subtitle: Text('اطّلع على الشروط وقدّم طلبك وتابع حالته.'))),
         ),
 
         // ── Latest notification ───────────────────────────────────────────────
@@ -848,9 +871,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     double progress,
     Map<String, dynamic>? homeStatus,
   ) {
-    var apps = overview.recentApplications
-        .whereType<Map<String, dynamic>>()
-        .toList();
+    var apps =
+        overview.recentApplications.whereType<Map<String, dynamic>>().toList();
 
     // Reorder to match tracker screen (overview.journeys order)
     if (overview.journeys?.isNotEmpty == true) {
@@ -873,8 +895,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         offset: const Offset(0, -20),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _buildMainJourneyCard(
-              context, overview, currentStage, journeyPathLabel, progress, homeStatus),
+          child: _buildMainJourneyCard(context, overview, currentStage,
+              journeyPathLabel, progress, homeStatus),
         ),
       );
     }
@@ -885,21 +907,21 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       child: Column(
         children: [
           SizedBox(
-            height: 248,
+            height: JourneyPreviewCard.heightFor(context),
             child: PageView.builder(
               controller: _journeyPageController,
               itemCount: apps.length,
-              onPageChanged: (i) =>
-                  setState(() => _selectedJourneyIndex = i),
+              onPageChanged: (i) => setState(() => _selectedJourneyIndex = i),
               itemBuilder: (context, i) => Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
+                padding: const EdgeInsets.fromLTRB(6, 2, 6, 8),
                 child: _buildCompactJourneyCard(
                   context,
                   overview,
                   i,
                   apps[i],
                   _labelFromApp(apps[i]),
-                  _realProgressFromJourneys(overview, apps[i]['_id'] as String?),
+                  _realProgressFromJourneys(
+                      overview, apps[i]['_id'] as String?),
                   homeStatus,
                 ),
               ),
@@ -917,7 +939,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 height: 6,
                 decoration: BoxDecoration(
                   color: _selectedJourneyIndex == i
-                      ? AppColors.navy
+                      ? AppColors.orange
                       : AppColors.border,
                   borderRadius: BorderRadius.circular(3),
                 ),
@@ -938,121 +960,38 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     double progress,
     Map<String, dynamic>? homeStatus,
   ) {
-    return AppCard(
-      margin: EdgeInsets.zero,
+    final app = overview.recentApplications
+        .whereType<Map<String, dynamic>>()
+        .firstOrNull;
+    if (app != null) {
+      return SizedBox(
+        height: JourneyPreviewCard.heightFor(context),
+        child: _buildCompactJourneyCard(
+            context,
+            overview,
+            0,
+            app,
+            _labelFromApp(app),
+            _realProgressFromJourneys(overview, app['_id']?.toString()),
+            homeStatus),
+      );
+    }
+    return HomeJourneySummaryCard(
+      path: journeyPathLabel,
+      stepLabel: overview.nextAction?['waiting'] == true
+          ? 'متابعة الفريق'
+          : 'الخطوة القادمة',
+      step:
+          '${homeStatus?['nextStepAr'] ?? overview.nextAction?['titleAr'] ?? ''}',
+      description: overview.nextAction?['descriptionAr'] as String? ??
+          currentStage.descriptionAr,
+      progress: progress,
+      applications: overview.stats.currentApplications,
+      documents: overview.stats.acceptedDocuments,
       onTap: () => Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => JourneyTrackerScreen(
-            currentStageKey: overview.journeyStage,
-            journeyPathLabel: journeyPathLabel),
-      )),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('رحلتك الحالية',
-                        style: AppTextStyles.sectionLabel),
-                    const SizedBox(height: 4),
-                    Text(journeyPathLabel, style: AppTextStyles.body),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              SizedBox(
-                width: 44,
-                height: 44,
-                child: AnimatedProgressRing(
-                  value: progress,
-                  size: 44,
-                  strokeWidth: 4,
-                  centerBuilder: (v) => Text('${(v * 100).round()}%',
-                      style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          fontSize: 10.5,
-                          color: AppColors.navy)),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          IntrinsicHeight(
-            child: Row(
-              children: [
-                Container(
-                    width: 3,
-                    decoration: BoxDecoration(
-                        color: AppColors.orange,
-                        borderRadius: BorderRadius.circular(2))),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                          overview.nextAction?['waiting'] == true
-                              ? 'متابعة الفريق'
-                              : 'الخطوة القادمة',
-                          style: AppTextStyles.caption),
-                      const SizedBox(height: 2),
-                      if ('${homeStatus?['nextStepAr'] ?? ''}'.isNotEmpty)
-                        Text('${homeStatus!['nextStepAr']}',
-                            style: AppTextStyles.body.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.navy)),
-                      Text(
-                          overview.nextAction?['descriptionAr'] as String? ??
-                              currentStage.descriptionAr,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              color: AppColors.textPrimary)),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 8),
-                PrimaryButton(
-                  label: overview.nextAction == null
-                      ? 'تفاصيل الرحلة'
-                      : 'عرض التفاصيل',
-                  expand: false,
-                  onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) => JourneyTrackerScreen(
-                            currentStageKey: overview.journeyStage,
-                            journeyPathLabel: journeyPathLabel)));
-                  },
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          const Divider(height: 1, color: AppColors.border),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _InlineStat(
-                  icon: Icons.description_outlined,
-                  value: '${overview.stats.currentApplications}',
-                  label: 'الطلبات النشطة',
-                ),
-              ),
-              Container(width: 1, height: 32, color: AppColors.border),
-              Expanded(
-                child: _InlineStat(
-                  icon: Icons.verified_outlined,
-                  value: '${overview.stats.acceptedDocuments}',
-                  label: 'مستندات مقبولة',
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
+          builder: (_) => JourneyTrackerScreen(
+              currentStageKey: overview.journeyStage,
+              journeyPathLabel: journeyPathLabel))),
     );
   }
 
@@ -1069,7 +1008,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
   ) {
     final status = app['status'] as String? ?? 'submitted';
     final ringValue = progress;
-    final bottomText = _appStatusLabel(status);
+    final bottomText = StatusInfo.of(app)?.label ?? _appStatusLabel(status);
 
     void openDetail() {
       final appId = app['_id'] as String?;
@@ -1078,75 +1017,56 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       ));
     }
 
-    return AppCard(
-      margin: EdgeInsets.zero,
+    final program = Json.mapOrNull(app['program']) ?? {};
+    final university = Json.mapOrNull(program['university']) ?? {};
+    final country = Json.mapOrNull(university['country']) ?? {};
+    final journey = overview.journeys
+        ?.where((j) => j['applicationId']?.toString() == app['_id']?.toString())
+        .firstOrNull;
+    final stages = (Json.listOrNull(journey?['stages']) ?? [])
+        .whereType<Map>()
+        .where((stage) => stage['status'] != 'not-required')
+        .toList();
+    final completed =
+        stages.where((stage) => stage['status'] == 'completed').length;
+    final current =
+        stages.where((stage) => stage['status'] != 'completed').firstOrNull;
+    final campus = Json.listOrNull(university['campusImages']) ?? [];
+    final rawImage =
+        country['heroImage'] ?? campus.firstOrNull ?? program['coverImage'];
+    final uri = rawImage is String && rawImage.trim().isNotEmpty
+        ? Uri.tryParse(rawImage.trim())
+        : null;
+    final image = uri == null
+        ? null
+        : Uri.parse(ApiClient.baseUrl)
+            .replace(path: '/', query: null, fragment: null)
+            .resolveUri(uri);
+    return JourneyPreviewCard(
+      title: '${program['title'] ?? program['name'] ?? label}',
+      university: '${university['name'] ?? ''}',
+      location: [country['nameAr'] ?? country['name'], university['city']]
+          .where((v) => v != null && '$v'.trim().isNotEmpty)
+          .join(' · '),
+      status: bottomText,
+      imageUrl: image != null && ['https', 'http'].contains(image.scheme)
+          ? image.toString()
+          : null,
+      countryCode: country['code']?.toString(),
+      currentStage: journey?['closed'] == true
+          ? 'انتهت الرحلة'
+          : current?['titleAr']?.toString() ??
+              (stages.isNotEmpty ? 'اكتملت الرحلة' : bottomText),
+      completedStages: completed,
+      totalStages: stages.length,
+      number: index + 1,
+      total: overview.recentApplications.length,
+      progress: ringValue,
       onTap: openDetail,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('رحلة دراسية',
-                        style: AppTextStyles.sectionLabel),
-                    const SizedBox(height: 4),
-                    Text(label,
-                        style:
-                            AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 12),
-              SizedBox(
-                width: 44,
-                height: 44,
-                child: AnimatedProgressRing(
-                  value: ringValue,
-                  size: 44,
-                  strokeWidth: 4,
-                  centerBuilder: (v) => Text(
-                    '${(v * 100).round()}%',
-                    style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 10.5,
-                        color: AppColors.navy),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          const Divider(height: 1, color: AppColors.border),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  bottomText,
-                  style: AppTextStyles.caption,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              PrimaryButton(
-                label: 'تفاصيل الرحلة',
-                expand: false,
-                onPressed: openDetail,
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 
-String _labelFromApp(Map<String, dynamic> app) {
+  String _labelFromApp(Map<String, dynamic> app) {
     final program = Json.mapOrNull(app['program']);
     final university = Json.mapOrNull(program?['university']);
     final parts = <String>[
@@ -1164,7 +1084,8 @@ String _labelFromApp(Map<String, dynamic> app) {
         .toList();
     if (matches.isEmpty) return 0.0;
     final journey = matches.first;
-    final stages = (Json.listOrNull(journey['stages']) ?? []).whereType<Map>().toList();
+    final stages =
+        (Json.listOrNull(journey['stages']) ?? []).whereType<Map>().toList();
     final active = stages.where((s) => s['status'] != 'not-required').toList();
     if (active.isEmpty) return 0.0;
     final done = active.where((s) => s['status'] == 'completed').length;
@@ -1172,12 +1093,16 @@ String _labelFromApp(Map<String, dynamic> app) {
   }
 
   String _appStatusLabel(String status) => switch (status) {
-        'submitted'                           => 'مُقدَّم',
-        'under_review' || 'in_review' || 'reviewing' => 'قيد المراجعة',
-        'accepted' || 'approved'              => 'مقبول',
-        'rejected'                            => 'مرفوض',
-        'pending' || 'pending_docs'           => 'معلّق',
-        _                                     => status,
+        'submitted' => 'قيد الانتظار',
+        'under-review' ||
+        'under_review' ||
+        'in_review' ||
+        'reviewing' =>
+          'قيد المراجعة',
+        'accepted' || 'approved' => 'مقبول',
+        'rejected' => 'مرفوض',
+        'pending' || 'pending_docs' => 'معلّق',
+        _ => status,
       };
 }
 
@@ -1214,8 +1139,8 @@ class _HeroIconButton extends StatelessWidget {
             top: 4,
             child: badgeCount > 0
                 ? Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 5, vertical: 1),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                     decoration: BoxDecoration(
                         color: AppColors.orange,
                         borderRadius: BorderRadius.circular(10)),
@@ -1233,32 +1158,6 @@ class _HeroIconButton extends StatelessWidget {
                     decoration: const BoxDecoration(
                         color: AppColors.orange, shape: BoxShape.circle)),
           ),
-      ],
-    );
-  }
-}
-
-
-/// Calm inline stat — icon, value, label, no border/box around it.
-class _InlineStat extends StatelessWidget {
-  final IconData icon;
-  final String value;
-  final String label;
-  const _InlineStat(
-      {required this.icon, required this.value, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        Icon(icon, size: 16, color: AppColors.textSecondary),
-        const SizedBox(width: 6),
-        Text(value, style: AppTextStyles.cardTitle.copyWith(fontSize: 15)),
-        const SizedBox(width: 4),
-        Flexible(
-            child: Text(label,
-                style: AppTextStyles.caption, overflow: TextOverflow.ellipsis)),
       ],
     );
   }

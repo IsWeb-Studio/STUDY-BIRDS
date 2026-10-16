@@ -1,0 +1,91 @@
+import 'dart:convert';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:study_birds/core/services/auth_session.dart';
+import 'package:study_birds/screens/profile_account/profile_story_score.dart';
+import 'package:study_birds/screens/profile_account/profile_account_screens.dart';
+
+void main() {
+  testWidgets('score emoji is saved to the account and restored when reopened',
+      (tester) async {
+    AuthSession.instance.token = 'score-test';
+    addTearDown(() => AuthSession.instance.token = null);
+    var emoji = '🔥';
+    var saves = 0;
+    await http.runWithClient(() async {
+      await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: ProfileStoryScore())));
+      await tester.pumpAndSettle();
+      expect(find.text('6500'), findsOneWidget);
+      await tester.tap(find.text('🔥'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('💎'));
+      await tester.pumpAndSettle();
+      expect(saves, 1);
+      expect(find.text('💎'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+      await tester.pumpWidget(
+          const MaterialApp(home: Scaffold(body: ProfileStoryScore())));
+      await tester.pumpAndSettle();
+      expect(find.text('💎'), findsOneWidget);
+      expect(find.text('6500'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+        () => MockClient((request) async {
+              if (request.method == 'PUT') {
+                expect(request.url.path, '/api/stories/preferences');
+                final body = jsonDecode(request.body) as Map;
+                expect(body.keys, ['scoreEmoji']);
+                emoji = body['scoreEmoji'] as String;
+                saves++;
+              }
+              return http.Response(
+                  jsonEncode({'total_points': 6500, 'scoreEmoji': emoji}), 200,
+                  headers: {'content-type': 'application/json; charset=utf-8'});
+            }));
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+      'profile score is physically left of the avatar in both directions',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    AuthSession.instance.token = 'profile-placement-test';
+    final previous = AuthSession.instance.currentUser;
+    AuthSession.instance.currentUser = const AuthUser(
+        id: 'student',
+        name: 'Student',
+        email: 'student@example.test',
+        role: UserRole.student);
+    addTearDown(() {
+      AuthSession.instance.token = null;
+      AuthSession.instance.currentUser = previous;
+    });
+    await http.runWithClient(() async {
+      for (final direction in [TextDirection.rtl, TextDirection.ltr]) {
+        await tester.pumpWidget(MaterialApp(
+            home: Directionality(
+                textDirection: direction, child: const ProfileScreen())));
+        await tester.pumpAndSettle();
+        final score = tester.getRect(find.byType(ProfileStoryScore));
+        final avatar = tester.getRect(find.byType(CircleAvatar).first);
+        final changePhoto = tester.getRect(find.text('تغيير الصورة الشخصية'));
+        expect(score.right, lessThan(avatar.left));
+        expect(score.right, lessThan(changePhoto.left));
+        expect(find.text('200000'), findsOneWidget);
+        expect(find.byIcon(Icons.verified_rounded), findsOneWidget);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      }
+    },
+        () => MockClient((request) async => http.Response(
+            jsonEncode(request.url.path.endsWith('/stories/progress')
+              ? {'total_points': 200000, 'scoreEmoji': '🔥'}
+                : {'phone': '123', 'nationality': 'Turkey'}),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'})));
+  });
+}

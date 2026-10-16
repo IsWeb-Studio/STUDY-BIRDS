@@ -358,6 +358,9 @@ class AuthSession extends ChangeNotifier {
   String? token;
   bool _restored = false;
   bool get isRestored => _restored;
+  /// A completed account session returns to role selection, even if the
+  /// onboarding flag came from an older installation.
+  bool hasSignedOut = false;
 
   @visibleForTesting
   void debugResetRestore() {
@@ -662,6 +665,8 @@ class AuthSession extends ChangeNotifier {
   }
 
   Future<void> logout({bool revoke = true}) async {
+    hasSignedOut = true;
+    restoreNeedsNetwork = false;
     requiresGooglePasswordSetup = false;
     await const FlutterSecureStorage().delete(key: 'google_password_setup_required');
     _revision++;

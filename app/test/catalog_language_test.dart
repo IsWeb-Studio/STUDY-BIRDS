@@ -50,7 +50,7 @@ void translationFlow() {
       var notified = 0;
       lang.addListener(() => notified++);
       final row = {'name': 'جامعة أنقرة'};
-      expect(catalogName(row, 'name'), 'جامعة أنقرة'); // original until it arrives
+      expect(catalogName(row, 'name'), row['name']);
       await Future<void>.delayed(const Duration(milliseconds: 400));
       expect(catalogName(row, 'name'), 'Ankara University');
       expect(notified, greaterThan(0));
@@ -58,16 +58,19 @@ void translationFlow() {
       catalogName(row, 'name'); // cached: no second request
       await Future<void>.delayed(const Duration(milliseconds: 300));
       expect(requests, hasLength(1));
-    }, () => MockClient((request) async {
-          final body = jsonDecode(request.body) as Map<String, dynamic>;
-          requests.add(body);
-          return http.Response(
-              jsonEncode({
-                'translations': [for (final _ in body['texts']) 'Ankara University']
-              }),
-              200,
-              headers: {'content-type': 'application/json'});
-        }));
+    },
+        () => MockClient((request) async {
+              final body = jsonDecode(request.body) as Map<String, dynamic>;
+              requests.add(body);
+              return http.Response(
+                  jsonEncode({
+                    'translations': [
+                      for (final _ in body['texts']) 'Ankara University'
+                    ]
+                  }),
+                  200,
+                  headers: {'content-type': 'application/json'});
+            }));
     CatalogLanguage.translationEnabled = false;
   });
 }

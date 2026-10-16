@@ -10,10 +10,32 @@ String catalogText(dynamic value) => value is String ? value.trim() : '';
 Map<String, dynamic> catalogMap(dynamic value) =>
     value is Map ? Map<String, dynamic>.from(value) : {};
 
+String catalogFilterLabel(String key) => switch (key) {
+  'country' => cl('الدولة', 'Country'),
+  'university' => cl('الجامعة', 'University'),
+  'city' => cl('المدينة', 'City'),
+  'fieldOfStudy' => cl('التخصص', 'Field of study'),
+  'degreeLevel' => cl('الدرجة العلمية', 'Degree level'),
+  'language' => cl('لغة الدراسة', 'Study language'),
+  'intake' => cl('موعد الالتحاق', 'Intake'),
+  _ => catalogValue(key),
+};
+
+String catalogOptionLabel(String key, String value,
+    List<Map<String, dynamic>> countries, List<Map<String, dynamic>> universities) {
+  final source = key == 'country' ? countries : key == 'university' ? universities : const <Map<String, dynamic>>[];
+  for (final row in source) {
+    if (catalogText(row['name']) == value) {
+      return key == 'country' ? catalogCountryName(row) : catalogName(row, 'name');
+    }
+  }
+  return catalogValue(value);
+}
+
 String catalogFacet(Map<String, dynamic> row, String key, bool universities) {
   final uni = universities ? row : catalogMap(row['university']);
-  if (key == 'country') return catalogCountryName(catalogMap(uni['country']));
-  if (key == 'university') return catalogName(uni, 'name');
+  if (key == 'country') return catalogText(catalogMap(uni['country'])['name']);
+  if (key == 'university') return catalogText(uni['name']);
   if (key == 'city') return catalogText(uni['city']);
   return catalogText(row[key]);
 }
@@ -99,7 +121,7 @@ List<String> catalogFacetOptions(
     bool isUniversityList) {
   if (key == 'country') {
     return ({
-      for (final c in countries) catalogCountryName(c),
+      for (final c in countries) catalogText(c['name']),
       for (final row in rows) catalogFacet(row, 'country', isUniversityList)
     }..remove(''))
         .toList()
@@ -163,25 +185,10 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
     super.dispose();
   }
 
-  // Country / university facet values are names in the current language, so a
-  // language switch invalidates them.
-  bool _seenEnglish = CatalogLanguage.instance.english;
   void _languageChanged() {
     if (!mounted) return;
-    final switched = _seenEnglish != CatalogLanguage.instance.english;
-    _seenEnglish = CatalogLanguage.instance.english;
     setState(() {
-      if (switched &&
-          (selection.facets.containsKey('country') ||
-              selection.facets.containsKey('university'))) {
-        selection = CatalogSelection(
-            facets: Map.of(selection.facets)
-              ..remove('country')
-              ..remove('university'),
-            maxTuition: selection.maxTuition,
-            partnerOnly: selection.partnerOnly,
-            sort: selection.sort);
-      }
+      // Filter keys remain in their stored form when the display language changes.
     });
   }
 
@@ -220,7 +227,7 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
               countries.where((c) => c['_id'] == widget.countryId).firstOrNull;
           if (country != null) {
             selection = CatalogSelection(
-                facets: {'country': catalogCountryName(country)});
+                facets: {'country': catalogText(country['name'])});
           }
         }
         initializedCountry = true;
@@ -255,14 +262,14 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (_) => _CatalogFilterSheet(
+      builder: (_) => CatalogLanguageBuilder(builder: (_) => _CatalogFilterSheet(
           rows: rows,
           countries: countries,
           universityOptions: universityOptions,
           labels: labels,
           universities: widget.universities,
           selection: selection,
-          query: search.text),
+          query: search.text)),
     );
     if (result != null && mounted) {
       setState(() => selection = result);
@@ -370,10 +377,8 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
                       Padding(
                           padding: const EdgeInsetsDirectional.only(end: 6),
                           child: InputChip(
-                              label: Text(entry.key == 'country' ||
-                                      entry.key == 'university'
-                                  ? entry.value
-                                  : catalogValue(entry.value)),
+                              label: Text(catalogOptionLabel(entry.key, entry.value,
+                                  countries, universityOptions)),
                               onDeleted: () => setState(() => selection =
                                   CatalogSelection(
                                       facets: Map.of(selection.facets)
@@ -526,6 +531,9 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
                         Expanded(
                             child: Text(cl('تصفية النتائج', 'Filter results'),
                                 style: AppTextStyles.sectionLabel)),
+                        const ColoredBox(
+                            color: AppColors.navy,
+                            child: CatalogLanguageToggle()),
                         IconButton(
                             tooltip: cl('إغلاق الفلاتر', 'Close filters'),
                             onPressed: () => Navigator.pop(context),
@@ -561,7 +569,7 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
                                                 : '',
                                         isExpanded: true,
                                         decoration: InputDecoration(
-                                            labelText: entry.value,
+                                            labelText: catalogFilterLabel(entry.key),
                                             filled: true,
                                             fillColor: AppColors.background,
                                             border: OutlineInputBorder(
@@ -575,7 +583,8 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
                                           for (final option in sorted)
                                             DropdownMenuItem(
                                                 value: option,
-                                                child: Text(entry.key == 'country' || entry.key == 'university' ? option : catalogValue(option),
+                                                child: Text(catalogOptionLabel(entry.key, option,
+                                                    widget.countries, widget.universityOptions),
                                                     maxLines: 1,
                                                     overflow:
                                                         TextOverflow.ellipsis))
@@ -735,8 +744,8 @@ class _CatalogCardState extends State<_CatalogCard> {
     final logo = catalogText(uni['logo']);
     final fee = catalogTuition(row, universities);
     final location = [
-      catalogFacet(row, 'city', universities),
-      catalogFacet(row, 'country', universities)
+      catalogValue(catalogFacet(row, 'city', universities)),
+      catalogCountryName(catalogMap(uni['country']))
     ].where((v) => v.isNotEmpty).join(cl('، ', ', '));
     return AppCard(
         onTap: widget.onTap,

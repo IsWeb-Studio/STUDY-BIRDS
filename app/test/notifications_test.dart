@@ -9,7 +9,8 @@ import 'package:study_birds/screens/applications_documents_payments/applications
 import 'package:study_birds/screens/visa_travel_accommodation/visa_travel_screens.dart';
 import 'package:study_birds/screens/visa_travel_accommodation/accommodation_arrival_screens.dart';
 import 'package:study_birds/screens/services_support/support_team_ai_screens.dart';
-import 'package:study_birds/screens/services_support/community_screen.dart';
+import 'package:study_birds/screens/community/student_community_hub.dart';
+import 'package:study_birds/screens/services_support/messaging_and_emergency_screens.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -89,9 +90,15 @@ void main() {
           isA<SupportCenterScreen>());
     });
 
-    test('/student/community → StudentCommunityScreen', () {
+    test('message notifications open the specific sender conversation', () {
+      final screen = notificationScreenForLink('/student/messages/abc123') as ConversationThreadScreen;
+      expect(screen.contactId, 'abc123');
+      expect(notificationActionLabel('/student/messages/abc123'), isNotNull);
+    });
+
+    test('/student/community → StudentCommunityHub', () {
       expect(notificationScreenForLink('/student/community'),
-          isA<StudentCommunityScreen>());
+          isA<StudentCommunityHub>());
     });
 
     test('/student/bird-ai → BirdAIChatScreen', () {

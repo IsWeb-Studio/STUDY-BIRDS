@@ -78,7 +78,7 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
   // Step 3 — preferences
   String _degree = 'بكالوريوس';
   String _language = 'الإنجليزية';
-  String _studyStyle = 'متوازن';
+  String _studyStyle = 'متوازن (نظري وعملي)';
 
   // Step 4 — budget & country
   final _budgetCtrl = TextEditingController();
@@ -127,14 +127,17 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    return CatalogLanguageBuilder(builder: _buildPage);
+  }
+
+  Widget _buildPage(BuildContext context) {
     return AppScaffold(
-      title: 'مكتشف التخصص',
+      textDirection: CatalogLanguage.instance.direction,
+      title: cl('مكتشف التخصص', 'Find your field of study'),
       showBackButton: _step == 0,
-      actions: _step > 0
-          ? [TextButton(
+      actions: [const CatalogLanguageToggle(), if (_step > 0) TextButton(
               onPressed: () => setState(() => _step--),
-              child: const Text('السابق', style: TextStyle(color: Colors.white)))]
-          : null,
+              child: Text(cl('السابق', 'Previous'), style: TextStyle(color: Colors.white)))],
       body: Column(
         children: [
           // Progress bar
@@ -158,9 +161,9 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text('الخطوة ${_step + 1} من ${_steps.length}',
+                Text(cl('الخطوة ${_step + 1} من ${_steps.length}', 'Step ${_step + 1} of ${_steps.length}'),
                     style: AppTextStyles.caption),
-                Text(_steps[_step],
+                Text(catalogValue(_steps[_step]),
                     style: AppTextStyles.caption.copyWith(color: AppColors.orange)),
               ],
             ),
@@ -178,12 +181,12 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
                 if (_error != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: InlineNotice(_error!, error: true),
+                    child: InlineNotice(catalogValue(_error!), error: true),
                   ),
                 PrimaryButton(
                   label: _step < _steps.length - 1
-                      ? 'التالي'
-                      : _submitting ? 'جاري البحث...' : 'اعرض التخصصات المناسبة',
+                      ? cl('التالي', 'Next')
+                      : _submitting ? cl('جاري البحث...', 'Searching...') : cl('اعرض التخصصات المناسبة', 'Show matching fields'),
                   onPressed: (!_canNext || _submitting)
                       ? null
                       : () {
@@ -195,7 +198,7 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
                         },
                 ),
                 const SizedBox(height: 6),
-                const Text('النتائج استرشادية وليست قرارًا نهائيًا.',
+                Text(cl('النتائج استرشادية وليست قرارًا نهائيًا.', 'Results are guidance, not a final decision.'),
                     style: AppTextStyles.caption, textAlign: TextAlign.center),
               ],
             ),
@@ -218,10 +221,10 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
   Widget _stepInterests() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text('ما المجالات التي تشغل اهتمامك؟',
+      Text(cl('ما المجالات التي تشغل اهتمامك؟', 'Which fields interest you?'),
           style: AppTextStyles.cardTitle),
       const SizedBox(height: 4),
-      const Text('اختر كل ما ينطبق عليك (اختيار واحد على الأقل)',
+      Text(cl('اختر كل ما ينطبق عليك (اختيار واحد على الأقل)', 'Select all that apply (at least one)'),
           style: AppTextStyles.caption),
       const SizedBox(height: 16),
       _chips(_interestOptions, _interests),
@@ -231,10 +234,10 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
   Widget _stepWorkEnv() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text('كيف تتخيل يوم عملك المستقبلي؟',
+      Text(cl('كيف تتخيل يوم عملك المستقبلي؟', 'How do you imagine your future workday?'),
           style: AppTextStyles.cardTitle),
       const SizedBox(height: 4),
-      const Text('اختر البيئات التي تجذبك', style: AppTextStyles.caption),
+      Text(cl('اختر البيئات التي تجذبك', 'Select the work environments that appeal to you'), style: AppTextStyles.caption),
       const SizedBox(height: 16),
       _chips(_workEnvOptions, _workEnvs),
     ],
@@ -243,17 +246,17 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
   Widget _stepPreferences() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text('تفضيلاتك الدراسية', style: AppTextStyles.cardTitle),
+      Text(cl('تفضيلاتك الدراسية', 'Your study preferences'), style: AppTextStyles.cardTitle),
       const SizedBox(height: 16),
-      _dropdown('الدرجة العلمية', _degree,
+      _dropdown(cl('الدرجة العلمية', 'Degree level'), _degree,
           ['بكالوريوس', 'ماجستير', 'دكتوراه', 'دبلوم'],
           (v) => setState(() => _degree = v)),
       const SizedBox(height: 12),
-      _dropdown('لغة الدراسة المفضلة', _language,
+      _dropdown(cl('لغة الدراسة المفضلة', 'Preferred study language'), _language,
           ['الإنجليزية', 'العربية', 'التركية', 'أي لغة'],
           (v) => setState(() => _language = v)),
       const SizedBox(height: 12),
-      _dropdown('نمط التعلم المفضل', _studyStyle,
+      _dropdown(cl('نمط التعلم المفضل', 'Preferred learning style'), _studyStyle,
           ['متوازن (نظري وعملي)', 'عملي بالدرجة الأولى', 'نظري وبحثي'],
           (v) => setState(() => _studyStyle = v)),
     ],
@@ -262,15 +265,15 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
   Widget _stepBudget() => Column(
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
-      const Text('الميزانية والوجهة', style: AppTextStyles.cardTitle),
+      Text(cl('الميزانية والوجهة', 'Budget and destination'), style: AppTextStyles.cardTitle),
       const SizedBox(height: 4),
-      const Text('هذه المعلومات تساعدنا في تضييق الخيارات',
+      Text(cl('هذه المعلومات تساعدنا في تضييق الخيارات', 'These details help us narrow down your options'),
           style: AppTextStyles.caption),
       const SizedBox(height: 16),
-      _field('الميزانية السنوية التقريبية', 'مثال: 5,000\$ أو 20,000\$',
+      _field(cl('الميزانية السنوية التقريبية', 'Approximate annual budget'), cl('مثال: 5,000 USD أو 20,000 USD', 'For example: 5,000 USD or 20,000 USD'),
           _budgetCtrl, TextInputType.text),
       const SizedBox(height: 12),
-      _field('الدولة المفضلة (اختياري)', 'مثال: تركيا، ماليزيا...',
+      _field(cl('الدولة المفضلة (اختياري)', 'Preferred country (optional)'), cl('مثال: تركيا، ماليزيا...', 'For example: Turkey, Malaysia...'),
           _countryCtrl, TextInputType.text),
     ],
   );
@@ -303,7 +306,7 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
                     size: 13, color: AppColors.orange),
                 const SizedBox(width: 4),
               ],
-              Text(o,
+              Flexible(child: Text(catalogValue(o),
                   style: TextStyle(
                       color: isSelected
                           ? AppColors.orange
@@ -311,7 +314,7 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
                       fontSize: 13,
                       fontWeight: isSelected
                           ? FontWeight.w700
-                          : FontWeight.w500)),
+                          : FontWeight.w500))),
             ],
           ),
         ),
@@ -324,9 +327,10 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTextStyles.caption),
+          Text(catalogValue(label), style: AppTextStyles.caption),
           const SizedBox(height: 6),
           DropdownButtonFormField<String>(
+            isExpanded: true,
             initialValue: value,
             decoration: const InputDecoration(
               filled: true,
@@ -336,7 +340,7 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
                   EdgeInsets.symmetric(horizontal: 12, vertical: 10),
             ),
             items: options
-                .map((o) => DropdownMenuItem(value: o, child: Text(o)))
+                .map((o) => DropdownMenuItem(value: o, child: Text(catalogValue(o))))
                 .toList(),
             onChanged: (v) { if (v != null) onChanged(v); },
           ),
@@ -348,7 +352,7 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
       Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: AppTextStyles.caption),
+          Text(catalogValue(label), style: AppTextStyles.caption),
           const SizedBox(height: 6),
           Container(
             decoration: BoxDecoration(
@@ -376,6 +380,10 @@ class ProgramFinderResultsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return CatalogLanguageBuilder(builder: _buildPage);
+  }
+
+  Widget _buildPage(BuildContext context) {
     final suggestedFields =
         (Json.listOrNull(result['suggestedFields']) ?? []).cast<String>();
     final suggestedCountries =
@@ -383,38 +391,40 @@ class ProgramFinderResultsScreen extends StatelessWidget {
     final summary = result['recommendationSummary'] as String?;
 
     return AppScaffold(
-      title: 'الاقتراحات المناسبة لك',
+      textDirection: CatalogLanguage.instance.direction,
+      actions: const [CatalogLanguageToggle()],
+      title: cl('الاقتراحات المناسبة لك', 'Your recommendations'),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           if (summary != null) ...[
-            AppCard(child: Text(summary, style: AppTextStyles.body)),
+            AppCard(child: Text(catalogValue(summary), style: AppTextStyles.body)),
             const SizedBox(height: 12),
           ],
           if (suggestedFields.isNotEmpty) ...[
-            const Text('مجالات مقترحة', style: AppTextStyles.sectionLabel),
+            Text(cl('مجالات مقترحة', 'Suggested fields'), style: AppTextStyles.sectionLabel),
             const SizedBox(height: 8),
             Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: suggestedFields
-                    .map((f) => StatusBadge(label: f, color: AppColors.orange))
+                    .map((f) => StatusBadge(label: catalogValue(f), color: AppColors.orange))
                     .toList()),
             const SizedBox(height: 16),
           ],
           if (suggestedCountries.isNotEmpty) ...[
-            const Text('دول مقترحة', style: AppTextStyles.sectionLabel),
+            Text(cl('دول مقترحة', 'Suggested countries'), style: AppTextStyles.sectionLabel),
             const SizedBox(height: 8),
             Wrap(
                 spacing: 8,
                 runSpacing: 8,
                 children: suggestedCountries
-                    .map((c) => StatusBadge(label: c, color: AppColors.info))
+                    .map((c) => StatusBadge(label: catalogValue(c), color: AppColors.info))
                     .toList()),
           ],
           const SizedBox(height: 16),
-          const Text(
-            'دي نتيجة استرشادية بناءً على إجاباتك. تصفّح البرامج والجامعات المرتبطة بالمجالات دي من قسم الاستكشاف.',
+          Text(
+            cl('دي نتيجة استرشادية بناءً على إجاباتك. تصفّح البرامج والجامعات المرتبطة بالمجالات دي من قسم الاستكشاف.', 'These recommendations are based on your answers. Explore related programs and universities in the Explore section.'),
             style: AppTextStyles.caption,
           ),
         ],

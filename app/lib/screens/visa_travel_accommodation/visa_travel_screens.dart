@@ -83,8 +83,13 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
     AnalyticsService.instance.screenView('visa_center');
     _load();
     _documentSub = StudentRepository.instance.documentChanges.listen((docs) {
-      if (mounted) { setState(() => _uploadedDocKeys = docs.whereType<Map>()
-          .where(isUsableLibraryDocument).map((doc) => '${doc['type']}').toSet()); }
+      if (mounted) {
+        setState(() => _uploadedDocKeys = docs
+            .whereType<Map>()
+            .where(isUsableLibraryDocument)
+            .map((doc) => '${doc['type']}')
+            .toSet());
+      }
     });
   }
 
@@ -111,7 +116,8 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
       final profile = Json.mapOrNull(results[2]);
       final countries = Json.list(results[3]);
 
-      final targetCountries = (Json.listOrNull(profile?['targetCountries']))?.cast<String>() ?? [];
+      final targetCountries =
+          (Json.listOrNull(profile?['targetCountries']))?.cast<String>() ?? [];
       Map<String, dynamic>? matchedCountry;
       if (targetCountries.isNotEmpty) {
         final target = targetCountries.first.toLowerCase();
@@ -119,7 +125,10 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
           final map = Json.map(c);
           final name = (map['name'] as String? ?? '').toLowerCase();
           final slug = (map['slug'] as String? ?? '').toLowerCase();
-          if (name == target || slug == target || name.contains(target) || target.contains(name)) {
+          if (name == target ||
+              slug == target ||
+              name.contains(target) ||
+              target.contains(name)) {
             matchedCountry = map;
             break;
           }
@@ -144,8 +153,11 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
       if (!mounted) return;
       setState(() {
         _currentStage = overview.currentStage;
-        _uploadedDocKeys =
-            docs.whereType<Map>().where(isUsableLibraryDocument).map((d) => '${d['type']}').toSet();
+        _uploadedDocKeys = docs
+            .whereType<Map>()
+            .where(isUsableLibraryDocument)
+            .map((d) => '${d['type']}')
+            .toSet();
         _requirements = reqs;
         _countryData = matchedCountry;
         _loading = false;
@@ -156,7 +168,9 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
         _error = e.message;
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/visa_travel_screens.dart:143');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/visa_travel_accommodation/visa_travel_screens.dart:143');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل بيانات التأشيرة. تحقق من الإنترنت وحاول مجدداً.';
@@ -167,7 +181,10 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const AppScaffold(title: 'مركز التأشيرة', body: LoadingState(message: 'جاري التحميل...'));
+    if (_loading)
+      return const AppScaffold(
+          title: 'مركز التأشيرة',
+          body: LoadingState(message: 'جاري التحميل...'));
     if (_error != null) {
       return AppScaffold(
         title: 'مركز التأشيرة',
@@ -176,24 +193,26 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
     }
 
     final badge = visaBadgeFromJourneyStage(_currentStage);
-    final stageLabel = kJourneyStageOrder
-        .firstWhere((s) => s['key'] == _currentStage,
+    final stageLabel = kJourneyStageOrder.firstWhere(
+            (s) => s['key'] == _currentStage,
             orElse: () => {'title': _currentStage})['title'] ??
         _currentStage;
 
     final countryName = _countryData?['name'] as String?;
-    final processingDays = (_countryData?['processingDays'] as num?)?.toInt() ?? 0;
+    final processingDays =
+        (_countryData?['processingDays'] as num?)?.toInt() ?? 0;
     final visaFeeUsd = (_countryData?['visaFeeUsd'] as num?)?.toInt() ?? 0;
-    final langReqs = (Json.listOrNull(_countryData?['languageRequirements']))?.cast<String>() ?? [];
-    final notesList = (Json.listOrNull(_countryData?['visaNotesList']))?.cast<String>() ?? [];
+    final langReqs = (Json.listOrNull(_countryData?['languageRequirements']))
+            ?.cast<String>() ??
+        [];
+    final notesList =
+        (Json.listOrNull(_countryData?['visaNotesList']))?.cast<String>() ?? [];
 
     return AppScaffold(
       title: 'مركز التأشيرة',
       actions: [
         IconButton(
-            onPressed: _load,
-            tooltip: 'تحديث',
-            icon: const Icon(Icons.refresh))
+            onPressed: _load, tooltip: 'تحديث', icon: const Icon(Icons.refresh))
       ],
       body: RefreshIndicator(
         onRefresh: _load,
@@ -204,141 +223,164 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: StatusBadge(label: badge.label, color: badge.color),
-          ),
-          const SizedBox(height: 8),
-          AppCard(
-            child: Row(
-              children: [
-                const Icon(Icons.route_rounded, color: AppColors.navy, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('المرحلة الحالية', style: AppTextStyles.caption),
-                      Text(stageLabel, style: AppTextStyles.cardTitle),
-                    ],
+            ),
+            const SizedBox(height: 8),
+            AppCard(
+              child: Row(
+                children: [
+                  const Icon(Icons.route_rounded,
+                      color: AppColors.navy, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('المرحلة الحالية',
+                            style: AppTextStyles.caption),
+                        Text(stageLabel, style: AppTextStyles.cardTitle),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          if (countryName != null) ...[
-            const SizedBox(height: 12),
-            AppCard(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    const Icon(Icons.flag_rounded, color: AppColors.navy, size: 18),
-                    const SizedBox(width: 8),
-                    Text(countryName, style: AppTextStyles.cardTitle),
-                  ]),
-                  if (processingDays > 0 || visaFeeUsd > 0) ...[
-                    const SizedBox(height: 10),
-                    const Divider(height: 1),
-                    const SizedBox(height: 10),
+            if (countryName != null) ...[
+              const SizedBox(height: 12),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
                     Row(children: [
-                      if (processingDays > 0) ...[
-                        const Icon(Icons.schedule_rounded, size: 15, color: AppColors.textSecondary),
-                        const SizedBox(width: 4),
-                        Text('$processingDays يوم معالجة', style: AppTextStyles.caption),
-                        const SizedBox(width: 16),
-                      ],
-                      if (visaFeeUsd > 0) ...[
-                        const Icon(Icons.attach_money_rounded, size: 15, color: AppColors.textSecondary),
-                        const SizedBox(width: 4),
-                        Text('$visaFeeUsd \$', style: AppTextStyles.caption),
-                      ],
+                      const Icon(Icons.flag_rounded,
+                          color: AppColors.navy, size: 18),
+                      const SizedBox(width: 8),
+                      Text(countryName, style: AppTextStyles.cardTitle),
                     ]),
-                  ],
-                  if (langReqs.isNotEmpty) ...[
-                    const SizedBox(height: 10),
-                    const Divider(height: 1),
-                    const SizedBox(height: 8),
-                    Text('متطلبات اللغة', style: AppTextStyles.caption),
-                    const SizedBox(height: 6),
-                    ...langReqs.map((r) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(children: [
-                        const Icon(Icons.translate_rounded, size: 14, color: AppColors.info),
-                        const SizedBox(width: 6),
-                        Expanded(child: Text(r, style: AppTextStyles.body)),
-                      ]),
-                    )),
-                  ],
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          const Text('المستندات المطلوبة للتأشيرة', style: AppTextStyles.sectionLabel),
-          const SizedBox(height: 10),
-          AppCard(
-            child: Column(
-              children: _requirements
-                  .map((req) {
-                    final done = _uploadedDocKeys.contains(req.docKey);
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(
-                        children: [
-                          Icon(
-                            done
-                                ? Icons.check_circle_rounded
-                                : Icons.radio_button_unchecked_rounded,
-                            size: 20,
-                            color: done ? AppColors.success : AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(child: Text(req.label, style: AppTextStyles.body)),
-                          TextButton(
-                            child: Text(done ? 'موجود في مستنداتك' : 'تصوير أو رفع'),
-                            onPressed: () async {
-                              if (done) {
-                                final docs = await StudentRepository.instance.getDocuments();
-                                final matches = docs.whereType<Map<String, dynamic>>().where((doc) =>
-                                    doc['type'] == req.docKey && isUsableLibraryDocument(doc));
-                                if (context.mounted && matches.isNotEmpty) {
-                                  await Navigator.of(context).push(MaterialPageRoute(builder: (_) =>
-                                      DocumentDetailScreen(document: matches.first)));
-                                }
-                              } else {
-                                await pickAndUploadDocument(context, req.docKey);
-                              }
-                            },
-                          ),
+                    if (processingDays > 0 || visaFeeUsd > 0) ...[
+                      const SizedBox(height: 10),
+                      const Divider(height: 1),
+                      const SizedBox(height: 10),
+                      Row(children: [
+                        if (processingDays > 0) ...[
+                          const Icon(Icons.schedule_rounded,
+                              size: 15, color: AppColors.textSecondary),
+                          const SizedBox(width: 4),
+                          Text('$processingDays يوم معالجة',
+                              style: AppTextStyles.caption),
+                          const SizedBox(width: 16),
                         ],
-                      ),
-                    );
-                  })
-                  .toList(),
-            ),
-          ),
-          if (notesList.isNotEmpty) ...[
-            const SizedBox(height: 12),
+                        if (visaFeeUsd > 0) ...[
+                          const Icon(Icons.attach_money_rounded,
+                              size: 15, color: AppColors.textSecondary),
+                          const SizedBox(width: 4),
+                          Text('$visaFeeUsd \$', style: AppTextStyles.caption),
+                        ],
+                      ]),
+                    ],
+                    if (langReqs.isNotEmpty) ...[
+                      const SizedBox(height: 10),
+                      const Divider(height: 1),
+                      const SizedBox(height: 8),
+                      Text('متطلبات اللغة', style: AppTextStyles.caption),
+                      const SizedBox(height: 6),
+                      ...langReqs.map((r) => Padding(
+                            padding: const EdgeInsets.only(bottom: 4),
+                            child: Row(children: [
+                              const Icon(Icons.translate_rounded,
+                                  size: 14, color: AppColors.info),
+                              const SizedBox(width: 6),
+                              Expanded(
+                                  child: Text(r, style: AppTextStyles.body)),
+                            ]),
+                          )),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 16),
+            const Text('المستندات المطلوبة للتأشيرة',
+                style: AppTextStyles.sectionLabel),
+            const SizedBox(height: 10),
             AppCard(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('ملاحظات التأشيرة', style: AppTextStyles.sectionLabel),
-                  const SizedBox(height: 8),
-                  ...notesList.map((note) => Padding(
-                    padding: const EdgeInsets.only(bottom: 6),
-                    child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      const Icon(Icons.info_outline_rounded, size: 15, color: AppColors.info),
-                      const SizedBox(width: 6),
-                      Expanded(child: Text(note, style: AppTextStyles.body)),
-                    ]),
-                  )),
-                ],
+                children: _requirements.map((req) {
+                  final done = _uploadedDocKeys.contains(req.docKey);
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 6),
+                    child: Row(
+                      children: [
+                        Icon(
+                          done
+                              ? Icons.check_circle_rounded
+                              : Icons.radio_button_unchecked_rounded,
+                          size: 20,
+                          color: done
+                              ? AppColors.success
+                              : AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                            child: Text(req.label, style: AppTextStyles.body)),
+                        TextButton(
+                          child:
+                              Text(done ? 'موجود في مستنداتك' : 'تصوير أو رفع'),
+                          onPressed: () async {
+                            if (done) {
+                              final docs = await StudentRepository.instance
+                                  .getDocuments();
+                              final matches = docs
+                                  .whereType<Map<String, dynamic>>()
+                                  .where((doc) =>
+                                      doc['type'] == req.docKey &&
+                                      isUsableLibraryDocument(doc));
+                              if (context.mounted && matches.isNotEmpty) {
+                                await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                        builder: (_) => DocumentDetailScreen(
+                                            document: matches.first)));
+                              }
+                            } else {
+                              await pickAndUploadDocument(context, req.docKey);
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ),
             ),
+            if (notesList.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              AppCard(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('ملاحظات التأشيرة',
+                        style: AppTextStyles.sectionLabel),
+                    const SizedBox(height: 8),
+                    ...notesList.map((note) => Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Icon(Icons.info_outline_rounded,
+                                    size: 15, color: AppColors.info),
+                                const SizedBox(width: 6),
+                                Expanded(
+                                    child:
+                                        Text(note, style: AppTextStyles.body)),
+                              ]),
+                        )),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: 8),
+            const InlineNotice(
+                'الموعد الدقيق لمقابلة القنصلية يُحدَّد من قِبل فريق Study Birds وسيتم إبلاغك عبر الإشعارات.'),
           ],
-          const SizedBox(height: 8),
-          const InlineNotice(
-              'الموعد الدقيق لمقابلة القنصلية يُحدَّد من قِبل فريق Study Birds وسيتم إبلاغك عبر الإشعارات.'),
-        ],
         ),
       ),
     );
@@ -392,7 +434,9 @@ class _VisaStepsScreenState extends State<VisaStepsScreen> {
         _error = e.message;
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/visa_travel_screens.dart:365');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/visa_travel_accommodation/visa_travel_screens.dart:365');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل مراحل التأشيرة.';
@@ -403,11 +447,15 @@ class _VisaStepsScreenState extends State<VisaStepsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return AppScaffold(title: 'مراحل التأشيرة', body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: 4,
-        itemBuilder: (_, __) => const Padding(
-            padding: EdgeInsets.only(bottom: 12), child: SkeletonCard())));
+    if (_loading)
+      return AppScaffold(
+          title: 'مراحل التأشيرة',
+          body: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: 4,
+              itemBuilder: (_, __) => const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: SkeletonCard())));
     if (_error != null) {
       return AppScaffold(
         title: 'مراحل التأشيرة',
@@ -418,7 +466,8 @@ class _VisaStepsScreenState extends State<VisaStepsScreen> {
     return AppScaffold(
       title: 'مراحل التأشيرة',
       actions: [
-        IconButton(onPressed: _load, tooltip: 'تحديث', icon: const Icon(Icons.refresh))
+        IconButton(
+            onPressed: _load, tooltip: 'تحديث', icon: const Icon(Icons.refresh))
       ],
       body: RefreshIndicator(
         onRefresh: _load,
@@ -430,52 +479,59 @@ class _VisaStepsScreenState extends State<VisaStepsScreen> {
             final done = i < _currentStep;
             final active = i == _currentStep;
             final isLast = i == _visaStages.length - 1;
-          return IntrinsicHeight(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Column(
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        color: done
-                            ? AppColors.success
-                            : (active ? AppColors.orange : Colors.white),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                            color: done
-                                ? AppColors.success
-                                : (active ? AppColors.orange : AppColors.border),
-                            width: 2),
+            return IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Column(
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: done
+                              ? AppColors.success
+                              : (active ? AppColors.orange : Colors.white),
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                              color: done
+                                  ? AppColors.success
+                                  : (active
+                                      ? AppColors.orange
+                                      : AppColors.border),
+                              width: 2),
+                        ),
+                        child: done
+                            ? const Icon(Icons.check_rounded,
+                                size: 15, color: Colors.white)
+                            : (active
+                                ? const Icon(Icons.circle,
+                                    size: 8, color: Colors.white)
+                                : null),
                       ),
-                      child: done
-                          ? const Icon(Icons.check_rounded, size: 15, color: Colors.white)
-                          : (active
-                              ? const Icon(Icons.circle, size: 8, color: Colors.white)
-                              : null),
-                    ),
-                    if (!isLast)
-                      Expanded(
-                          child: Container(
-                              width: 2,
-                              color: done ? AppColors.success : AppColors.border)),
-                  ],
-                ),
-                const SizedBox(width: 14),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 28, top: 4),
-                  child: Text(
-                    _visaStages[i],
-                    style: active
-                        ? AppTextStyles.cardTitle.copyWith(color: AppColors.orange)
-                        : AppTextStyles.body,
+                      if (!isLast)
+                        Expanded(
+                            child: Container(
+                                width: 2,
+                                color: done
+                                    ? AppColors.success
+                                    : AppColors.border)),
+                    ],
                   ),
-                ),
-              ],
-            ),
-          );
+                  const SizedBox(width: 14),
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 28, top: 4),
+                    child: Text(
+                      _visaStages[i],
+                      style: active
+                          ? AppTextStyles.cardTitle
+                              .copyWith(color: AppColors.orange)
+                          : AppTextStyles.body,
+                    ),
+                  ),
+                ],
+              ),
+            );
           },
         ),
       ),
@@ -494,6 +550,7 @@ class TravelCenterScreen extends StatefulWidget {
 
 class _TravelCenterScreenState extends State<TravelCenterScreen> {
   bool _loading = true;
+  bool _opening = false;
   String? _error;
   Map<String, dynamic>? _data;
 
@@ -522,7 +579,9 @@ class _TravelCenterScreenState extends State<TravelCenterScreen> {
         _error = e.message;
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/visa_travel_screens.dart:495');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/visa_travel_accommodation/visa_travel_screens.dart:495');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل بيانات السفر.';
@@ -533,7 +592,9 @@ class _TravelCenterScreenState extends State<TravelCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return const AppScaffold(title: 'مركز السفر', body: LoadingState(message: 'جاري التحميل...'));
+    if (_loading)
+      return const AppScaffold(
+          title: 'مركز السفر', body: LoadingState(message: 'جاري التحميل...'));
     if (_error != null) {
       return AppScaffold(
         title: 'مركز السفر',
@@ -544,7 +605,8 @@ class _TravelCenterScreenState extends State<TravelCenterScreen> {
     return AppScaffold(
       title: 'مركز السفر',
       actions: [
-        IconButton(onPressed: _load, tooltip: 'تحديث', icon: const Icon(Icons.refresh))
+        IconButton(
+            onPressed: _load, tooltip: 'تحديث', icon: const Icon(Icons.refresh))
       ],
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -561,7 +623,8 @@ class _TravelCenterScreenState extends State<TravelCenterScreen> {
               AppCard(
                 child: Row(
                   children: [
-                    const Icon(Icons.calendar_today_rounded, color: AppColors.navy),
+                    const Icon(Icons.calendar_today_rounded,
+                        color: AppColors.navy),
                     const SizedBox(width: 10),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -569,7 +632,9 @@ class _TravelCenterScreenState extends State<TravelCenterScreen> {
                         const Text('تاريخ السفر', style: AppTextStyles.caption),
                         Text(
                           _data!['arrivalDate'] != null
-                              ? (_data!['arrivalDate'] as String).split('T').first
+                              ? (_data!['arrivalDate'] as String)
+                                  .split('T')
+                                  .first
                               : 'غير محدد',
                           style: AppTextStyles.cardTitle,
                         ),
@@ -582,15 +647,25 @@ class _TravelCenterScreenState extends State<TravelCenterScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('معلومات الرحلة', style: AppTextStyles.sectionLabel),
+                    const Text('معلومات الرحلة',
+                        style: AppTextStyles.sectionLabel),
                     const SizedBox(height: 10),
-                    _KV(label: 'رقم الرحلة', value: _data!['flightNumber']?.toString() ?? 'غير محدد'),
+                    _KV(
+                        label: 'رقم الرحلة',
+                        value:
+                            _data!['flightNumber']?.toString() ?? 'غير محدد'),
                     const SizedBox(height: 6),
-                    _KV(label: 'وقت الوصول', value: _data!['arrivalTime']?.toString() ?? 'غير محدد'),
+                    _KV(
+                        label: 'وقت الوصول',
+                        value: _data!['arrivalTime']?.toString() ?? 'غير محدد'),
                     const SizedBox(height: 6),
-                    _KV(label: 'المطار', value: _data!['airport']?.toString() ?? 'غير محدد'),
+                    _KV(
+                        label: 'المطار',
+                        value: _data!['airport']?.toString() ?? 'غير محدد'),
                     const SizedBox(height: 6),
-                    _KV(label: 'حالة الطلب', value: _data!['status']?.toString() ?? 'submitted'),
+                    _KV(
+                        label: 'حالة الطلب',
+                        value: _data!['status']?.toString() ?? 'submitted'),
                   ],
                 ),
               ),
@@ -599,9 +674,15 @@ class _TravelCenterScreenState extends State<TravelCenterScreen> {
             PrimaryButton(
               label: _data == null ? 'تقديم بيانات السفر' : 'تعديل البيانات',
               onPressed: () async {
-                await Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ArrivalServicesScreen()));
-                if (mounted) _load();
+                if (_opening) return;
+                _opening = true;
+                try {
+                  await Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const ArrivalServicesScreen()));
+                  if (mounted) await _load();
+                } finally {
+                  _opening = false;
+                }
               },
               icon: Icons.flight_takeoff_rounded,
             ),
@@ -650,7 +731,9 @@ class _AirportPickupScreenState extends State<AirportPickupScreen> {
         _error = e.message;
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/visa_travel_screens.dart:623');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/visa_travel_accommodation/visa_travel_screens.dart:623');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل بيانات الاستقبال.';
@@ -661,11 +744,15 @@ class _AirportPickupScreenState extends State<AirportPickupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return AppScaffold(title: 'استقبال المطار', body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: 3,
-        itemBuilder: (_, __) => const Padding(
-            padding: EdgeInsets.only(bottom: 12), child: SkeletonCard())));
+    if (_loading)
+      return AppScaffold(
+          title: 'استقبال المطار',
+          body: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: 3,
+              itemBuilder: (_, __) => const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: SkeletonCard())));
     if (_error != null) {
       return AppScaffold(
         title: 'استقبال المطار',
@@ -673,14 +760,16 @@ class _AirportPickupScreenState extends State<AirportPickupScreen> {
       );
     }
 
-    final services = (Json.rawMapOrNull(_data?['services']))?.cast<String, dynamic>() ?? {};
+    final services =
+        (Json.rawMapOrNull(_data?['services']))?.cast<String, dynamic>() ?? {};
     final pickupRequested = services['airportPickup'] == true;
     final status = _data?['status']?.toString() ?? '';
 
     return AppScaffold(
       title: 'استقبال المطار',
       actions: [
-        IconButton(onPressed: _load, tooltip: 'تحديث', icon: const Icon(Icons.refresh))
+        IconButton(
+            onPressed: _load, tooltip: 'تحديث', icon: const Icon(Icons.refresh))
       ],
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -697,8 +786,8 @@ class _AirportPickupScreenState extends State<AirportPickupScreen> {
               PrimaryButton(
                 label: 'تقديم طلب الاستقبال',
                 onPressed: () async {
-                  await Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ArrivalServicesScreen()));
+                  await Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const ArrivalServicesScreen()));
                   if (mounted) _load();
                 },
                 icon: Icons.add_rounded,
@@ -728,9 +817,14 @@ class _AirportPickupScreenState extends State<AirportPickupScreen> {
                           : 'غير محدد',
                     ),
                     const SizedBox(height: 6),
-                    _KV(label: 'رقم الرحلة', value: _data!['flightNumber']?.toString() ?? 'غير محدد'),
+                    _KV(
+                        label: 'رقم الرحلة',
+                        value:
+                            _data!['flightNumber']?.toString() ?? 'غير محدد'),
                     const SizedBox(height: 6),
-                    _KV(label: 'المطار', value: _data!['airport']?.toString() ?? 'غير محدد'),
+                    _KV(
+                        label: 'المطار',
+                        value: _data!['airport']?.toString() ?? 'غير محدد'),
                   ],
                 ),
               ),
@@ -740,8 +834,8 @@ class _AirportPickupScreenState extends State<AirportPickupScreen> {
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: () async {
-                  await Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const ArrivalServicesScreen()));
+                  await Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const ArrivalServicesScreen()));
                   if (mounted) _load();
                 },
                 icon: const Icon(Icons.edit_outlined, size: 16),
@@ -822,28 +916,47 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final d = await StudentRepository.instance.getInsurance();
-      if (mounted) setState(() { _data = d; _loading = false; });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/visa_travel_screens.dart:799');
-      if (mounted) setState(() { _error = 'تعذر تحميل بيانات التأمين.'; _loading = false; });
+      if (mounted)
+        setState(() {
+          _data = d;
+          _loading = false;
+        });
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/visa_travel_accommodation/visa_travel_screens.dart:799');
+      if (mounted)
+        setState(() {
+          _error = 'تعذر تحميل بيانات التأمين.';
+          _loading = false;
+        });
     }
   }
 
   String _statusLabel(String? s) {
     switch (s) {
-      case 'active': return 'ساري';
-      case 'expired': return 'منتهي';
-      default: return 'في الانتظار';
+      case 'active':
+        return 'ساري';
+      case 'expired':
+        return 'منتهي';
+      default:
+        return 'في الانتظار';
     }
   }
 
   Color _statusColor(String? s) {
     switch (s) {
-      case 'active': return AppColors.success;
-      case 'expired': return AppColors.danger;
-      default: return AppColors.warning;
+      case 'active':
+        return AppColors.success;
+      case 'expired':
+        return AppColors.danger;
+      default:
+        return AppColors.warning;
     }
   }
 
@@ -864,57 +977,87 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                   padding: const EdgeInsets.all(16),
                   itemCount: 3,
                   itemBuilder: (_, __) => const Padding(
-                      padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: SkeletonCard()))
               : _error != null
                   ? ErrorState(message: _error!, onRetry: _load)
                   : _data == null
                       ? const EmptyState(
                           icon: Icons.health_and_safety_outlined,
                           title: 'لا تتوفر بيانات التأمين بعد',
-                          message: 'سيقوم الفريق بإضافة تفاصيل وثيقة تأمينك الصحي هنا.')
+                          message:
+                              'سيقوم الفريق بإضافة تفاصيل وثيقة تأمينك الصحي هنا.')
                       : ListView(
                           padding: const EdgeInsets.all(16),
-                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                          physics: const BouncingScrollPhysics(
+                              parent: AlwaysScrollableScrollPhysics()),
                           children: [
-                            _InsuranceStatusCard(data: _data!, statusLabel: _statusLabel(_data!['status'] as String?), statusColor: _statusColor(_data!['status'] as String?)),
+                            _InsuranceStatusCard(
+                                data: _data!,
+                                statusLabel:
+                                    _statusLabel(_data!['status'] as String?),
+                                statusColor:
+                                    _statusColor(_data!['status'] as String?)),
                             const SizedBox(height: 16),
                             AppCard(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('تفاصيل الوثيقة', style: AppTextStyles.sectionLabel),
+                                  Text('تفاصيل الوثيقة',
+                                      style: AppTextStyles.sectionLabel),
                                   const SizedBox(height: 12),
-                                  _InfoRow('مزود التأمين', _data!['provider']?.toString() ?? '—'),
+                                  _InfoRow('مزود التأمين',
+                                      _data!['provider']?.toString() ?? '—'),
                                   const Divider(height: 20),
-                                  _InfoRow('رقم الوثيقة', _data!['policyNumber']?.toString() ?? '—'),
+                                  _InfoRow(
+                                      'رقم الوثيقة',
+                                      _data!['policyNumber']?.toString() ??
+                                          '—'),
                                   const Divider(height: 20),
-                                  _InfoRow('نطاق التغطية', _data!['coverage']?.toString() ?? '—'),
+                                  _InfoRow('نطاق التغطية',
+                                      _data!['coverage']?.toString() ?? '—'),
                                   const Divider(height: 20),
-                                  _InfoRow('تاريخ البداية', _fmtDate(_data!['startDate'])),
+                                  _InfoRow('تاريخ البداية',
+                                      _fmtDate(_data!['startDate'])),
                                   const Divider(height: 20),
-                                  _InfoRow('تاريخ الانتهاء', _fmtDate(_data!['endDate'])),
+                                  _InfoRow('تاريخ الانتهاء',
+                                      _fmtDate(_data!['endDate'])),
                                 ],
                               ),
                             ),
-                            if ((_data!['notes'] as String?)?.isNotEmpty == true) ...[
+                            if ((_data!['notes'] as String?)?.isNotEmpty ==
+                                true) ...[
                               const SizedBox(height: 12),
                               AppCard(
-                                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                  Text('ملاحظات', style: AppTextStyles.sectionLabel),
-                                  const SizedBox(height: 8),
-                                  Text(_data!['notes'] as String, style: AppTextStyles.body),
-                                ]),
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text('ملاحظات',
+                                          style: AppTextStyles.sectionLabel),
+                                      const SizedBox(height: 8),
+                                      Text(_data!['notes'] as String,
+                                          style: AppTextStyles.body),
+                                    ]),
                               ),
                             ],
-                            if ((_data!['cardFileUrl'] as String?)?.isNotEmpty == true) ...[
+                            if ((_data!['cardFileUrl'] as String?)
+                                    ?.isNotEmpty ==
+                                true) ...[
                               const SizedBox(height: 16),
                               PrimaryButton(
                                 onPressed: () async {
-                                  final url = await resolveDocumentDownload(_data!['cardFileUrl'] as String);
-                                  if (url != null && !await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                                  final url = await resolveDocumentDownload(
+                                      _data!['cardFileUrl'] as String);
+                                  if (url != null &&
+                                      !await launchUrl(url,
+                                          mode:
+                                              LaunchMode.externalApplication)) {
                                     if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                          AppSnackBar(content: Text('تعذر فتح بطاقة التأمين.')));
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(AppSnackBar(
+                                              content: Text(
+                                                  'تعذر فتح بطاقة التأمين.')));
                                     }
                                   }
                                 },
@@ -932,7 +1075,10 @@ class _InsuranceStatusCard extends StatelessWidget {
   final Map<String, dynamic> data;
   final String statusLabel;
   final Color statusColor;
-  const _InsuranceStatusCard({required this.data, required this.statusLabel, required this.statusColor});
+  const _InsuranceStatusCard(
+      {required this.data,
+      required this.statusLabel,
+      required this.statusColor});
 
   @override
   Widget build(BuildContext context) => AppCard(
@@ -943,11 +1089,13 @@ class _InsuranceStatusCard extends StatelessWidget {
             decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(14)),
-            child: const Icon(Icons.health_and_safety_rounded, color: AppColors.success, size: 28),
+            child: const Icon(Icons.health_and_safety_rounded,
+                color: AppColors.success, size: 28),
           ),
           const SizedBox(width: 14),
           Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('التأمين الصحي', style: AppTextStyles.cardTitle),
               const SizedBox(height: 4),
               Container(
@@ -956,7 +1104,10 @@ class _InsuranceStatusCard extends StatelessWidget {
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6)),
                 child: Text(statusLabel,
-                    style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w700)),
+                    style: TextStyle(
+                        color: statusColor,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700)),
               ),
             ]),
           ),
@@ -975,7 +1126,11 @@ class _InfoRow extends StatelessWidget {
         children: [
           Text(label, style: AppTextStyles.caption),
           const SizedBox(width: 16),
-          Flexible(child: Text(value, style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600), textAlign: TextAlign.end)),
+          Flexible(
+              child: Text(value,
+                  style:
+                      AppTextStyles.body.copyWith(fontWeight: FontWeight.w600),
+                  textAlign: TextAlign.end)),
         ],
       );
 }
@@ -1000,12 +1155,25 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final d = await StudentRepository.instance.getEquivalency();
-      if (mounted) setState(() { _data = d; _loading = false; });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/visa_travel_screens.dart:977');
-      if (mounted) setState(() { _error = 'تعذر تحميل بيانات المعادلة.'; _loading = false; });
+      if (mounted)
+        setState(() {
+          _data = d;
+          _loading = false;
+        });
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/visa_travel_accommodation/visa_travel_screens.dart:977');
+      if (mounted)
+        setState(() {
+          _error = 'تعذر تحميل بيانات المعادلة.';
+          _loading = false;
+        });
     }
   }
 
@@ -1038,7 +1206,8 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
     final status = _data?['status'] as String? ?? 'not-started';
     final statusLabel = _statusLabels[status] ?? status;
     final statusColor = _statusColors[status] ?? AppColors.textSecondary;
-    final docs = (Json.listOrNull(_data?['requiredDocuments']))?.cast<String>() ?? [];
+    final docs =
+        (Json.listOrNull(_data?['requiredDocuments']))?.cast<String>() ?? [];
 
     return AppScaffold(
       title: 'معادلة الشهادة',
@@ -1050,17 +1219,20 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
                 padding: const EdgeInsets.all(16),
                 itemCount: 3,
                 itemBuilder: (_, __) => const Padding(
-                    padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: SkeletonCard()))
             : _error != null
                 ? ErrorState(message: _error!, onRetry: _load)
                 : _data == null
                     ? const EmptyState(
                         icon: Icons.verified_outlined,
                         title: 'لا تتوفر بيانات المعادلة بعد',
-                        message: 'سيقوم الفريق بإضافة تفاصيل إجراءات معادلة شهادتك هنا.')
+                        message:
+                            'سيقوم الفريق بإضافة تفاصيل إجراءات معادلة شهادتك هنا.')
                     : ListView(
                         padding: const EdgeInsets.all(16),
-                        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                        physics: const BouncingScrollPhysics(
+                            parent: AlwaysScrollableScrollPhysics()),
                         children: [
                           AppCard(
                             child: Row(children: [
@@ -1070,76 +1242,121 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
                                 decoration: BoxDecoration(
                                     color: statusColor.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(14)),
-                                child: Icon(Icons.verified_rounded, color: statusColor, size: 28),
+                                child: Icon(Icons.verified_rounded,
+                                    color: statusColor, size: 28),
                               ),
                               const SizedBox(width: 14),
-                              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Text('معادلة الشهادة', style: AppTextStyles.cardTitle),
-                                const SizedBox(height: 4),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                      color: statusColor.withValues(alpha: 0.1),
-                                      borderRadius: BorderRadius.circular(6)),
-                                  child: Text(statusLabel,
-                                      style: TextStyle(color: statusColor, fontSize: 12, fontWeight: FontWeight.w700)),
-                                ),
-                              ])),
+                              Expanded(
+                                  child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                    Text('معادلة الشهادة',
+                                        style: AppTextStyles.cardTitle),
+                                    const SizedBox(height: 4),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                          color: statusColor.withValues(
+                                              alpha: 0.1),
+                                          borderRadius:
+                                              BorderRadius.circular(6)),
+                                      child: Text(statusLabel,
+                                          style: TextStyle(
+                                              color: statusColor,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w700)),
+                                    ),
+                                  ])),
                             ]),
                           ),
                           const SizedBox(height: 16),
                           AppCard(
-                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Text('تفاصيل الطلب', style: AppTextStyles.sectionLabel),
-                              const SizedBox(height: 12),
-                              _InfoRow('الجهة المختصة', _data!['authority']?.toString() ?? '—'),
-                              const Divider(height: 20),
-                              _InfoRow('رقم الطلب', _data!['applicationNumber']?.toString() ?? '—'),
-                              const Divider(height: 20),
-                              _InfoRow('تاريخ التقديم', _fmtDate(_data!['submittedAt'])),
-                              const Divider(height: 20),
-                              _InfoRow('الموعد المتوقع للانتهاء', _fmtDate(_data!['expectedCompletionDate'])),
-                              const Divider(height: 20),
-                              _InfoRow('الرسوم', _data!['fees']?.toString() ?? '—'),
-                            ]),
+                            child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('تفاصيل الطلب',
+                                      style: AppTextStyles.sectionLabel),
+                                  const SizedBox(height: 12),
+                                  _InfoRow('الجهة المختصة',
+                                      _data!['authority']?.toString() ?? '—'),
+                                  const Divider(height: 20),
+                                  _InfoRow(
+                                      'رقم الطلب',
+                                      _data!['applicationNumber']?.toString() ??
+                                          '—'),
+                                  const Divider(height: 20),
+                                  _InfoRow('تاريخ التقديم',
+                                      _fmtDate(_data!['submittedAt'])),
+                                  const Divider(height: 20),
+                                  _InfoRow(
+                                      'الموعد المتوقع للانتهاء',
+                                      _fmtDate(
+                                          _data!['expectedCompletionDate'])),
+                                  const Divider(height: 20),
+                                  _InfoRow('الرسوم',
+                                      _data!['fees']?.toString() ?? '—'),
+                                ]),
                           ),
                           if (docs.isNotEmpty) ...[
                             const SizedBox(height: 16),
                             AppCard(
-                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Text('المستندات المطلوبة', style: AppTextStyles.sectionLabel),
-                                const SizedBox(height: 10),
-                                for (final doc in docs)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 8),
-                                    child: Row(children: [
-                                      const Icon(Icons.check_circle_outline_rounded, color: AppColors.navy, size: 18),
-                                      const SizedBox(width: 8),
-                                      Expanded(child: Text(doc, style: AppTextStyles.body)),
-                                    ]),
-                                  ),
-                              ]),
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('المستندات المطلوبة',
+                                        style: AppTextStyles.sectionLabel),
+                                    const SizedBox(height: 10),
+                                    for (final doc in docs)
+                                      Padding(
+                                        padding:
+                                            const EdgeInsets.only(bottom: 8),
+                                        child: Row(children: [
+                                          const Icon(
+                                              Icons
+                                                  .check_circle_outline_rounded,
+                                              color: AppColors.navy,
+                                              size: 18),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                              child: Text(doc,
+                                                  style: AppTextStyles.body)),
+                                        ]),
+                                      ),
+                                  ]),
                             ),
                           ],
-                          if ((_data!['notes'] as String?)?.isNotEmpty == true) ...[
+                          if ((_data!['notes'] as String?)?.isNotEmpty ==
+                              true) ...[
                             const SizedBox(height: 12),
                             AppCard(
-                              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Text('ملاحظات', style: AppTextStyles.sectionLabel),
-                                const SizedBox(height: 8),
-                                Text(_data!['notes'] as String, style: AppTextStyles.body),
-                              ]),
+                              child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text('ملاحظات',
+                                        style: AppTextStyles.sectionLabel),
+                                    const SizedBox(height: 8),
+                                    Text(_data!['notes'] as String,
+                                        style: AppTextStyles.body),
+                                  ]),
                             ),
                           ],
-                          if ((_data!['resultFileUrl'] as String?)?.isNotEmpty == true) ...[
+                          if ((_data!['resultFileUrl'] as String?)
+                                  ?.isNotEmpty ==
+                              true) ...[
                             const SizedBox(height: 16),
                             PrimaryButton(
                               onPressed: () async {
-                                final url = await resolveDocumentDownload(_data!['resultFileUrl'] as String);
-                                if (url != null && !await launchUrl(url, mode: LaunchMode.externalApplication)) {
+                                final url = await resolveDocumentDownload(
+                                    _data!['resultFileUrl'] as String);
+                                if (url != null &&
+                                    !await launchUrl(url,
+                                        mode: LaunchMode.externalApplication)) {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                        AppSnackBar(content: Text('تعذر فتح الملف.')));
+                                        AppSnackBar(
+                                            content: Text('تعذر فتح الملف.')));
                                   }
                                 }
                               },

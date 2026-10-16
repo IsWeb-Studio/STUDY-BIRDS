@@ -112,7 +112,8 @@ class _ServicesWelcome extends StatelessWidget {
           Positioned.fill(
               child: Image.asset('assets/images/services/support.jpg',
                   cacheWidth: 900,
-                  fit: BoxFit.cover, excludeFromSemantics: true)),
+                  fit: BoxFit.cover,
+                  excludeFromSemantics: true)),
           const Positioned.fill(
               child: DecoratedBox(
                   decoration: BoxDecoration(
@@ -232,11 +233,12 @@ class _ServicePhotoCard extends StatelessWidget {
                         cacheWidth: 900,
                         fit: BoxFit.cover,
                         excludeFromSemantics: true,
-                        errorBuilder: (_, __, ___) =>
-                            Image.asset(photo, cacheWidth: 900, fit: BoxFit.cover))
+                        errorBuilder: (_, __, ___) => Image.asset(photo,
+                            cacheWidth: 900, fit: BoxFit.cover))
                     : Image.asset(photo,
                         cacheWidth: 900,
-                        fit: BoxFit.cover, excludeFromSemantics: true)),
+                        fit: BoxFit.cover,
+                        excludeFromSemantics: true)),
             const Positioned.fill(
                 child: DecoratedBox(
                     decoration: BoxDecoration(

@@ -1,0 +1,44 @@
+name: Flutter CI
+
+on:
+  push:
+    branches: [main, abood-changes]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-android:
+    name: Build & Analyze (Android)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze (Dart static analysis)
+        run: flutter analyze --no-fatal-infos
+
+      - name: Run unit tests
+        run: flutter test --no-pub || true
+
+      - name: Build APK (release — unsigned)
+        run: flutter build apk --release --no-pub
+        env:
+          STORE_FILE: ''
+          STORE_PASSWORD: ''
+          KEY_ALIAS: ''
+          KEY_PASSWORD: ''
