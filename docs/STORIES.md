@@ -12,6 +12,10 @@ The Flutter home dashboard uses `/api/stories`. All endpoints require an active 
 
 The first story on each local calendar day earns 100 points and increments the streak once. Every post refreshes the activity deadline. At 24 hours without a post, the streak becomes `ice_cold`; at 36 hours it resets. A post during grace preserves continuity. Each completed block of seven consecutive posting days awards 300 points. At 10,000 points, the orange achievement ring remains unlocked independently of view state or streak expiry.
 
+At 100,000 points the outer ring becomes purple; at 200,000 a cosmetic achievement check appears beside the profile name and on story avatars. The inner seen/unseen ring stays independent. These levels use total points, not consecutive posting days.
+
+Winker awards an active student 10 points once per local calendar day when a server-authorized room response is in actual `playing`/`voting` state. Multiplayer and private practice share the same daily cap. Opening the game, waiting in the lobby, revealing cards, spectators, bots and revisiting finished results do not earn points. The atomic, unique-user conditional update survives concurrent requests and retries. Gameplay never changes posting streak days or their deadlines. `GET /progress` includes `playedToday`, `ringTier` and `cosmeticVerified`; Winker room responses include `pointsAwarded`.
+
 `STORY_TIME_ZONE` defaults to `Europe/Istanbul` (use an IANA time zone). Existing Cloudinary environment variables enable image uploads. The database must support transactions (MongoDB Atlas or a replica set). Story, interaction and statistics indexes must be enabled/created; normal Mongoose index initialization creates them. Transactions commit stories, interactions and balances together, and retry conflicts. Story records remain stored after their display expiry for durable replay protection.
 
 Validation:

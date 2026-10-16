@@ -5,6 +5,7 @@ const Room = require('../models/WinkRoom');
 const engine = require('../games/winkEngine');
 const practice = require('../games/winkPractice');
 const { mutate } = require('../games/winkStore');
+const { awardDailyGame } = require('../games/winkRewards');
 
 router.use(protect);
 router.use(rateLimit({ windowMs: 60000, limit: 150, keyGenerator: (req) => String(req.user._id),
@@ -18,7 +19,11 @@ const handle = (fn) => async (req, res, next) => {
     else next(error);
   }
 };
-const send = (res, doc, id) => res.json({ code: doc.code, revision: doc.revision, ...engine.view(doc.state, id) });
+const send = async (res, doc, id) => {
+  const view = engine.view(doc.state, id);
+  const pointsAwarded = await awardDailyGame(res.req.user, doc.state);
+  return res.json({ code: doc.code, revision: doc.revision, ...view, pointsAwarded });
+};
 router.get('/current', handle(async (req, res) => {
   const id = identity(req).id;
   const room = await Room.findOne({ 'state.players': { $elemMatch: { id, left: false } },
@@ -31,7 +36,7 @@ router.post('/', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: (req) =
     'state.phase': { $ne: 'closed' }, expiresAt: { $gt: new Date() } });
   if (existing) engine.fail('already-in-room');
   const doc = await Room.create({ code: engine.code(), state: engine.newRoom(user), expiresAt: new Date(Date.now() + 86400000) });
-  send(res, doc, user.id);
+  return send(res, doc, user.id);
 }));
 router.param('code', (req, res, next, code) => {
   const normalized = code.replace(/[٠-٩۰-۹０-９]/g, (digit) => {
@@ -53,7 +58,7 @@ router.post('/practice', handle(async (req, res) => {
   }
   const state = practice.create(user, req.body?.role || 'player');
   const doc = await Room.create({ code: engine.code(), state, expiresAt: new Date(Date.now() + 86400000) });
-  send(res, doc, user.id);
+  return send(res, doc, user.id);
 }));
 router.post('/:code/join', handle(async (req, res) => {
   const user = identity(req);
@@ -61,12 +66,12 @@ router.post('/:code/join', handle(async (req, res) => {
     if (state.practice) engine.fail('practice-private');
     engine.join(state, user, now);
   });
-  send(res, doc, user.id);
+  return send(res, doc, user.id);
 }));
 router.get('/:code', handle(async (req, res) => {
   const user = identity(req);
   const doc = await mutate(req.params.code, (state, now) => engine.apply(state, user, 'heartbeat', {}, now));
-  send(res, doc, user.id);
+  return send(res, doc, user.id);
 }));
 router.post('/:code/actions', handle(async (req, res) => {
   const user = identity(req);
@@ -83,6 +88,6 @@ router.post('/:code/actions', handle(async (req, res) => {
     state.receipts = [...state.receipts.slice(-199), key];
   });
   if (action === 'leave') return res.json({ left: true });
-  send(res, doc, user.id);
+  return send(res, doc, user.id);
 }));
 module.exports = router;

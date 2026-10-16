@@ -10,6 +10,9 @@ function progress(stats = {}, now = Date.now()) {
   return {
     total_points: points, streak_days: streak,
     scoreEmoji: SCORE_EMOJIS.includes(stats.scoreEmoji) ? stats.scoreEmoji : '🔥',
+    ringTier: points >= 100000 ? 'elite' : points >= 10000 ? 'orange' : 'basic',
+    cosmeticVerified: points >= 200000,
+    playedToday: stats.dailyGameDay === dayKey(now),
     state: streak === 0 ? 'inactive' : age >= 24 * HOUR ? 'ice_cold' : 'active',
     freezesAt: streak ? new Date(+new Date(stats.lastStoryAt) + 24 * HOUR) : null,
     resetsAt: streak ? new Date(+new Date(stats.lastStoryAt) + 36 * HOUR) : null,

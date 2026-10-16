@@ -18,6 +18,7 @@ const statsSchema = new Schema({
   streak_days: { type: Number, default: 0 },
   lastStoryAt: Date,
   lastPostDay: String,
+  dailyGameDay: String,
   dailyLoveDay: String,
   dailyLoveCount: { type: Number, default: 0 },
 });
