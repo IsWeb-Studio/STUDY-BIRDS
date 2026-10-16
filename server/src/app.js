@@ -179,6 +179,7 @@ app.use('/api/accommodation', requireDatabaseConnection, require('./routes/accom
 app.use('/api/push-tokens', requireDatabaseConnection, require('./routes/pushRoutes'));
 app.use('/api/community', requireDatabaseConnection, require('./routes/communityRoutes'));
 app.use('/api/stories', requireDatabaseConnection, require('./routes/storyRoutes'));
+app.use('/api/friends', requireDatabaseConnection, require('./routes/friendRoutes'));
 app.use("/api/admin", requireDatabaseConnection, adminRoutes);
 app.use('/api/crm', requireDatabaseConnection, require('./routes/crmRoutes'));
 app.use('/api/shared-read', requireDatabaseConnection, require('./routes/sharedReadRoutes'));

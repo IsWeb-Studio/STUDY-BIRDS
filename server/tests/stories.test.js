@@ -22,8 +22,12 @@ test('stories: authorization, concurrent rewards, durable replay, seen, expiry a
     const User = require('../src/models/User');
     const { Story, StoryStats, StoryInteraction } = require('../src/models/Stories');
     const { Session } = require('../src/models/MobileWorkspace');
-    await Promise.all([User.init(), Story.init(), StoryStats.init(), StoryInteraction.init(), Session.init()]);
+    const Friendship = require('../src/models/Friendship');
+    await Promise.all([User.init(), Story.init(), StoryStats.init(), StoryInteraction.init(), Session.init(), Friendship.init()]);
     const users = await User.create(Array.from({ length: 13 }, (_, i) => ({ name: `Student ${i}`, email: `story${i}@example.test`, role: i === 12 ? 'parent' : 'student' })));
+    const friends = [];
+    for (let a = 0; a < 12; a++) for (let b = a + 1; b < 12; b++) friends.push({ _id: Friendship.pair(users[a]._id, users[b]._id), requester: users[a]._id, recipient: users[b]._id, status: 'accepted' });
+    await Friendship.insertMany(friends);
     const app = express(); app.use(express.json()); app.use('/stories', require('../src/routes/storyRoutes'));
     app.use(require('../src/middleware/errorMiddleware').errorHandler);
     server = await new Promise(resolve => { const s = app.listen(0, '127.0.0.1', () => resolve(s)); });

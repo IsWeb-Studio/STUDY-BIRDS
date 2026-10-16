@@ -2,6 +2,20 @@
 
 The Flutter home dashboard uses `/api/stories`. All endpoints require an active student session. Points belong to `StoryStats`, independently of other reward systems.
 
+## Friends and story audience
+
+Stories appear to their author and accepted friends. Pending requests do not grant access. Feed filtering, seen events and love rewards all enforce this relationship on the server; removal revokes subsequent API access without deleting previously earned points. Existing students start with no friendships; existing stories are not automatically shared with every student.
+
+Authenticated active students use `/api/friends`:
+
+- `GET /?kind=friends|incoming|outgoing&before=<cursor>`: 30 people per page, list counts and `nextCursor`.
+- `GET /search?q=<name>&before=<cursor>`: literal name search, 2–60 characters, 30 results per page. Responses contain only public name, avatar, id, points and relationship state; no email or phone.
+- `POST /:userId/request`: send a request, capped at 50 actions per day. Duplicate and crossed requests retain a single relationship and never implicitly accept.
+- `POST /:userId/accept`: only the recipient can accept; repeat acceptance is safe.
+- `DELETE /:userId`: remove a friend, cancel an outgoing request or decline an incoming request. A caller can modify only their own relationship with this student.
+
+The app exposes friends from the dashboard stories section and the profile. Friendship changes refresh the local story feed. Search is debounced and ignores old responses after a query changes.
+
 - `GET /progress`: balance, effective streak, freeze/reset deadlines, daily task completion, ring threshold and business time zone. Expired streaks are persisted lazily with a conditional update; total points never reset.
 - `PUT /preferences`: `{scoreEmoji}` saves one of the supported score emojis on the authenticated student's account. Balances cannot be edited with this endpoint. The selected emoji is returned by `/progress` and defaults to fire.
 - `GET /?before=<story ObjectId>`: newest active stories, 60 per page, with author points and per-viewer seen/love state. `nextCursor` loads the next page. Stories expire after 24 hours.

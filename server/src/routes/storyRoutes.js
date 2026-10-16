@@ -7,6 +7,7 @@ const { Story, StoryStats, StoryInteraction } = require('../models/Stories');
 const rules = require('../utils/storyRules');
 const upload = require('../middleware/uploadMiddleware');
 const { uploadFileToCloudinary } = require('../utils/uploadToCloudinary');
+const { friendIds, canReadStory } = require('../utils/storyAudience');
 router.use(protect, authorize('student'));
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 router.use(rateLimit({ windowMs: 60000, limit: 120, keyGenerator: req => String(req.user._id), standardHeaders: 'draft-7', legacyHeaders: false }));
@@ -35,7 +36,7 @@ router.put('/preferences', asyncHandler(async (req, res) => {
   res.json(rules.progress(stats));
 }));
 router.get('/', asyncHandler(async (req, res) => {
-  const filter = { expiresAt: { $gt: new Date() } };
+  const filter = { expiresAt: { $gt: new Date() }, author: { $in: [req.user._id, ...await friendIds(req.user._id)] } };
   if (req.query.before) {
     if (!/^[a-f0-9]{24}$/i.test(req.query.before)) fail(400, 'Invalid cursor');
     filter._id = { $lt: new mongoose.Types.ObjectId(req.query.before) };
@@ -80,7 +81,8 @@ router.post('/', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => 
 }));
 router.param('id', (req, res, next, id) => /^[a-f0-9]{24}$/i.test(id) ? next() : res.status(400).json({ message: 'Invalid story' }));
 router.post('/:id/seen', asyncHandler(async (req, res) => {
-  if (!await Story.exists({ _id: req.params.id, expiresAt: { $gt: new Date() } })) fail(404, 'Story expired');
+  const story = await Story.findOne({ _id: req.params.id, expiresAt: { $gt: new Date() } }).select('author').lean();
+  if (!story || !await canReadStory(req.user._id, story.author)) fail(404, 'Story unavailable');
   const filter = { story: req.params.id, user: req.user._id };
   const update = { $set: { seenAt: new Date() } };
   try { await StoryInteraction.updateOne(filter, update, { upsert: true }); }
@@ -96,6 +98,7 @@ router.post('/:id/love', asyncHandler(async (req, res) => {
     const now = Date.now();
     const story = await Story.findOne({ _id: req.params.id, expiresAt: { $gt: new Date(now) } }).session(session);
     if (!story) fail(404, 'Story expired');
+    if (!await canReadStory(req.user._id, story.author, session)) fail(404, 'Story unavailable');
     if (String(story.author) === String(req.user._id)) fail(403, 'Cannot love your own story');
     const edge = await StoryInteraction.findOneAndUpdate({ story: story._id, user: req.user._id }, { $setOnInsert: { story: story._id, user: req.user._id } }, { upsert: true, new: true, session });
     const giver = await statsFor(req.user._id, session);
