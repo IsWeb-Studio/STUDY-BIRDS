@@ -517,7 +517,7 @@ class AuthSession extends ChangeNotifier {
     // Saved login kept but unverifiable offline (staff, or no fresh snapshot):
     // the root screen shows a retry state instead of a misleading login form.
     restoreNeedsNetwork = networkFailed && currentUser == null;
-    if (currentUser != null && !currentUser!.hasPassword) {
+    if (currentUser != null && !currentUser!.hasPassword && currentUser!.authProvider != 'apple') {
       await logout(revoke: false);
     }
     final restoredUser = currentUser;

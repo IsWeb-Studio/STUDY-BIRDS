@@ -33,6 +33,7 @@ const origins = () =>
     .map((v) => v.trim())
     .filter(Boolean);
 const phoneReady = () => sms.ready();
+router.use('/apple/native', require('./nativeAppleRoutes'));
 router.get("/config", (req, res) =>
   res.json({
     passkeys: Boolean(rpID() && origins().length),

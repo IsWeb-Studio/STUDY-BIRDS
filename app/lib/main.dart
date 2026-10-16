@@ -273,7 +273,7 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
                 ? const AccountTypeEntry()
                 : const ConnectedPrototypeEntry();
           }
-          if (AuthSession.instance.requiresGooglePasswordSetup || !user.hasPassword) return const SetPasswordScreen();
+          if (AuthSession.instance.requiresGooglePasswordSetup || (!user.hasPassword && user.authProvider != 'apple')) return const SetPasswordScreen();
           // GATE DISABLED — re-enable when needed
           // if (user.verifiedPhone == null || user.verifiedPhone!.isEmpty) {
           //   return _PhoneVerificationGate(user: user);

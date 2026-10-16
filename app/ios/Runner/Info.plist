@@ -55,7 +55,11 @@
 			</array>
 		</dict>
 	</dict>
-	<!-- Google Sign-In: reversed web client ID as URL scheme for OAuth redirect -->
+	<key>GIDClientID</key>
+	<string>$(GOOGLE_IOS_CLIENT_ID)</string>
+	<key>GIDServerClientID</key>
+	<string>495236497658-q78f4513t3rj6neonktm49h2h3tlickf.apps.googleusercontent.com</string>
+	<!-- OAuth redirect must use the reversed iOS client ID, not the web ID. -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -63,7 +67,7 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.495236497658-q78f4513t3rj6neonktm49h2h3tlickf</string>
+				<string>$(GOOGLE_IOS_REVERSED_CLIENT_ID)</string>
 			</array>
 		</dict>
 	</array>

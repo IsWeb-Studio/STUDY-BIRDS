@@ -1,6 +1,7 @@
 import '../utils/json_safe.dart';
 import 'error_reporter.dart';
-import 'package:flutter/foundation.dart' show kDebugMode;
+import 'package:flutter/foundation.dart'
+    show kDebugMode, defaultTargetPlatform, TargetPlatform;
 import 'package:google_sign_in/google_sign_in.dart';
 import '../network/api_client.dart';
 import 'auth_session.dart';
@@ -29,6 +30,10 @@ class GoogleSignInService {
   Future<void> _runInit() async {
     try {
       await GoogleSignIn.instance.initialize(
+        clientId: defaultTargetPlatform == TargetPlatform.iOS &&
+                AppConfig.googleIosClientId.isNotEmpty
+            ? AppConfig.googleIosClientId
+            : null,
         serverClientId: AppConfig.googleWebClientId,
       );
       _initialized = true;
@@ -47,8 +52,10 @@ class GoogleSignInService {
     if (!_initialized) {
       // Surface the real init error so developers can diagnose the issue
       final reason = _initError ?? 'لم يتم تهيئة Google Sign-In';
-      if (kDebugMode) print('[GoogleSignIn] not available, init error: $reason');
-      throw const ApiException(503, 'تسجيل الدخول عبر Google غير متاح حاليًا. حاول لاحقًا.');
+      if (kDebugMode)
+        print('[GoogleSignIn] not available, init error: $reason');
+      throw const ApiException(
+          503, 'تسجيل الدخول عبر Google غير متاح حاليًا. حاول لاحقًا.');
     }
     try {
       final account = await GoogleSignIn.instance.authenticate();
@@ -61,11 +68,13 @@ class GoogleSignInService {
     } on GoogleSignInException catch (e) {
       if (e.code == GoogleSignInExceptionCode.canceled) return false;
       if (kDebugMode) print('[GoogleSignIn] error: ${e.code} ${e.description}');
-      throw const ApiException(401, 'تعذّر تسجيل الدخول عبر Google. أعد اختيار الحساب وحاول مجددًا.');
+      throw const ApiException(401,
+          'تعذّر تسجيل الدخول عبر Google. أعد اختيار الحساب وحاول مجددًا.');
     } catch (e) {
       if (e is ApiException) rethrow;
       if (kDebugMode) print('[GoogleSignIn] unexpected: $e');
-      throw const ApiException(500, 'تعذّر تسجيل الدخول عبر Google. حاول مجددًا بعد قليل.');
+      throw const ApiException(
+          500, 'تعذّر تسجيل الدخول عبر Google. حاول مجددًا بعد قليل.');
     }
   }
 
@@ -86,7 +95,8 @@ class GoogleSignInService {
     final token = data['token'] as String;
     await AuthSession.instance.login(user,
         requireGooglePasswordSetup: !user.hasPassword,
-        authToken: token, refreshToken: data['refreshToken'] as String?);
+        authToken: token,
+        refreshToken: data['refreshToken'] as String?);
     AnalyticsService.instance.loginCompleted(user.role.name);
     _pendingIdToken = null;
   }
@@ -113,7 +123,12 @@ class GoogleSignInService {
 
   Future<void> signOut() async {
     _pendingIdToken = null;
-    try { await GoogleSignIn.instance.signOut(); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/google_sign_in_service.dart:114');}
+    try {
+      await GoogleSignIn.instance.signOut();
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'core/services/google_sign_in_service.dart:114');
+    }
   }
 
   bool get isAvailable =>

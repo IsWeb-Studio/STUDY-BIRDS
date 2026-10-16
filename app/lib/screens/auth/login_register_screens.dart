@@ -5,7 +5,7 @@ import '../../core/utils/app_error.dart';
 import '../../core/widgets/security_fields.dart';
 import 'email_challenge_screen.dart';
 import 'dart:io' show Platform;
-import 'browser_sign_in_screen.dart';
+import '../../core/services/apple_sign_in_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/config/app_theme.dart';
@@ -120,6 +120,36 @@ class _LoginScreenState extends State<LoginScreen>
   final _passwordController = TextEditingController();
   bool _loading = false;
   bool _googleLoading = false;
+
+  bool _appleLoading = false;
+  Future<void> _appleSignIn() async {
+    if (_loading || _googleLoading || _appleLoading) return;
+    setState(() { _appleLoading = true; _error = null; });
+    try {
+      final ok = await AppleSignInService.instance.signIn();
+      if (ok && mounted) widget.onGoogleSignInSuccess?.call();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (e.statusCode == 428) {
+        final confirmed = await Navigator.of(context).push<bool>(MaterialPageRoute(
+          builder: (_) => EmailChallengeScreen(
+            confirm: AppleSignInService.instance.confirmEmail,
+            resend: AppleSignInService.instance.resendEmailCode,
+            title: 'تأكيد الدخول',
+            introTitle: 'أدخل رمز التحقق الثنائي',
+            subtitle: 'أدخل الرمز المرسل إلى بريدك.',
+          )));
+        if (confirmed == true && mounted) widget.onGoogleSignInSuccess?.call();
+      } else {
+        setState(() => _error = AppError.message(e));
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = AppError.message(e));
+    } finally {
+      if (mounted) setState(() => _appleLoading = false);
+    }
+  }
+
   String? _error;
 
   // OTP tab state
@@ -324,7 +354,7 @@ class _LoginScreenState extends State<LoginScreen>
           PrimaryButton(
               label: _loading ? 'جاري الدخول...' : 'تسجيل الدخول',
               icon: Icons.arrow_forward_rounded,
-              onPressed: (_loading || _googleLoading) ? null : _submit),
+              onPressed: (_loading || _googleLoading || _appleLoading) ? null : _submit),
         ],
       ),
     );
@@ -475,7 +505,7 @@ class _LoginScreenState extends State<LoginScreen>
                     const SizedBox(height: 16),
                     OutlinedButton.icon(
                       onPressed:
-                          (_loading || _googleLoading) ? null : _googleSignIn,
+                          (_loading || _googleLoading || _appleLoading) ? null : _googleSignIn,
                       icon: _googleLoading
                           ? const SizedBox(
                               width: 20,
@@ -498,10 +528,10 @@ class _LoginScreenState extends State<LoginScreen>
                     if (Platform.isIOS) ...[
                       const SizedBox(height: 10),
                       OutlinedButton.icon(
-                        onPressed: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (_) => const BrowserSignInScreen())),
-                        icon: const Icon(Icons.apple_rounded, size: 20),
+                        onPressed: (_loading || _googleLoading || _appleLoading) ? null : _appleSignIn,
+                        icon: _appleLoading
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.apple_rounded, size: 20),
                         label: const Text('المتابعة عبر Apple'),
                         style: OutlinedButton.styleFrom(
                           minimumSize: const Size(double.infinity, 48),
@@ -570,6 +600,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _referralController = TextEditingController();
   bool _loading = false;
   bool _googleLoading = false;
+
+  bool _appleLoading = false;
+  Future<void> _appleSignIn() async {
+    if (_loading || _googleLoading || _appleLoading) return;
+    setState(() { _appleLoading = true; _error = null; });
+    try {
+      final ok = await AppleSignInService.instance.signIn();
+      if (ok && mounted) widget.onGoogleSignInSuccess?.call();
+    } on ApiException catch (e) {
+      if (!mounted) return;
+      if (e.statusCode == 428) {
+        final confirmed = await Navigator.of(context).push<bool>(MaterialPageRoute(
+          builder: (_) => EmailChallengeScreen(
+            confirm: AppleSignInService.instance.confirmEmail,
+            resend: AppleSignInService.instance.resendEmailCode,
+            title: 'تأكيد الدخول',
+            introTitle: 'أدخل رمز التحقق الثنائي',
+            subtitle: 'أدخل الرمز المرسل إلى بريدك.',
+          )));
+        if (confirmed == true && mounted) widget.onGoogleSignInSuccess?.call();
+      } else {
+        setState(() => _error = AppError.message(e));
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = AppError.message(e));
+    } finally {
+      if (mounted) setState(() => _appleLoading = false);
+    }
+  }
+
   String? _error;
 
   Future<void> _googleSignIn() async {
@@ -718,7 +778,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               const SizedBox(height: 20),
               PrimaryButton(
                   label: _loading ? 'جاري الإنشاء...' : 'إنشاء الحساب',
-                  onPressed: (_loading || _googleLoading) ? null : _submit),
+                  onPressed: (_loading || _googleLoading || _appleLoading) ? null : _submit),
               const SizedBox(height: 12),
               const Row(children: [
                 Expanded(child: Divider()),
@@ -729,7 +789,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ]),
               const SizedBox(height: 12),
               OutlinedButton.icon(
-                onPressed: (_loading || _googleLoading) ? null : _googleSignIn,
+                onPressed: (_loading || _googleLoading || _appleLoading) ? null : _googleSignIn,
                 icon: _googleLoading
                     ? const SizedBox(
                         width: 18,
@@ -745,6 +805,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
               ),
               const SizedBox(height: 16),
+              if (Platform.isIOS) ...[
+                OutlinedButton.icon(
+                  onPressed: (_loading || _googleLoading || _appleLoading) ? null : _appleSignIn,
+                  icon: _appleLoading
+                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                      : const Icon(Icons.apple_rounded),
+                  label: const Text('المتابعة عبر Apple'),
+                  style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 48)),
+                ),
+                const SizedBox(height: 16),
+              ],
               Center(
                 child: TextButton(
                   onPressed: widget.onGoLogin,

@@ -16,4 +16,5 @@ class AppConfig {
   // Required on Android (no google-services.json).
   // Also add this value to GOOGLE_CLIENT_ID env var on Render.
   static const googleWebClientId = '495236497658-q78f4513t3rj6neonktm49h2h3tlickf.apps.googleusercontent.com';
+  static const googleIosClientId = String.fromEnvironment('GOOGLE_IOS_CLIENT_ID');
 }
