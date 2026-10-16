@@ -17,7 +17,8 @@ flutter build ipa
 This writes `ios/Flutter/GoogleSignIn.xcconfig`, which both Xcode configurations
 include. `GIDClientID` and the reversed callback scheme use the iOS ID;
 `GIDServerClientID` remains the web ID accepted by the backend. No client secret
-belongs in the app. The actual iOS client ID has not been supplied yet.
+belongs in the app. The supplied iOS client ID is configured in the xcconfig;
+rebuild the signed iOS app for it to take effect.
 
 ## Apple
 

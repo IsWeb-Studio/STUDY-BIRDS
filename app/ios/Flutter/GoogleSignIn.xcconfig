@@ -1,4 +1,3 @@
-// Configure using: python tools/configure_ios_google.py --client-id IOS_CLIENT_ID
-// The iOS OAuth client must be registered for com.studybirds.studyBirds.
-GOOGLE_IOS_CLIENT_ID =
-GOOGLE_IOS_REVERSED_CLIENT_ID =
+// iOS OAuth client for com.studybirds.studyBirds
+GOOGLE_IOS_CLIENT_ID = 495236497658-m4s51fl171r2bmqoucidc02b6s9ofc2s.apps.googleusercontent.com
+GOOGLE_IOS_REVERSED_CLIENT_ID = com.googleusercontent.apps.495236497658-m4s51fl171r2bmqoucidc02b6s9ofc2s
