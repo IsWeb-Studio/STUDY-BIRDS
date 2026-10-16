@@ -1,0 +1,25 @@
+# Student stories
+
+The Flutter home dashboard uses `/api/stories`. All endpoints require an active student session. Points belong to `StoryStats`, independently of other reward systems.
+
+- `GET /progress`: balance, effective streak, freeze/reset deadlines, daily task completion, ring threshold and business time zone. Expired streaks are persisted lazily with a conditional update; total points never reset.
+- `PUT /preferences`: `{scoreEmoji}` saves one of the supported score emojis on the authenticated student's account. Balances cannot be edited with this endpoint. The selected emoji is returned by `/progress` and defaults to fire.
+- `GET /?before=<story ObjectId>`: newest active stories, 60 per page, with author points and per-viewer seen/love state. `nextCursor` loads the next page. Stories expire after 24 hours.
+- `POST /image`: JPEG/PNG/WebP multipart `file`, up to 5 MB, uploaded to the student's Cloudinary folder.
+- `POST /`: `{text, imageUrl, operationId}`. Text (up to 1,000 characters), image, or both. A stable operation ID prevents duplicated posts and rewards after retries. Image URLs must belong to the student's upload folder in the configured Cloudinary account.
+- `POST /:id/seen`: idempotent viewer state.
+- `POST /:id/love`: permanent love; no self-loves. Unique `(story,user)` awards the author 50 once, and the giver 5 for their first 10 distinct loves per local calendar day. Further loves still work and reward the author.
+
+The first story on each local calendar day earns 100 points and increments the streak once. Every post refreshes the activity deadline. At 24 hours without a post, the streak becomes `ice_cold`; at 36 hours it resets. A post during grace preserves continuity. Each completed block of seven consecutive posting days awards 300 points. At 10,000 points, the orange achievement ring remains unlocked independently of view state or streak expiry.
+
+`STORY_TIME_ZONE` defaults to `Europe/Istanbul` (use an IANA time zone). Existing Cloudinary environment variables enable image uploads. The database must support transactions (MongoDB Atlas or a replica set). Story, interaction and statistics indexes must be enabled/created; normal Mongoose index initialization creates them. Transactions commit stories, interactions and balances together, and retry conflicts. Story records remain stored after their display expiry for durable replay protection.
+
+Validation:
+
+```powershell
+$env:STUDY_BIRDS_TEST_TOOLS = '<directory containing node_modules/mongodb-memory-server-core>'
+# Optional: point MONGOMS_SYSTEM_BINARY at an existing local mongod executable.
+node --test tests/storyRules.test.js tests/stories.test.js
+```
+
+In the Flutter project, run `flutter test --no-pub test/story_widgets_test.dart`. Integration tests use an isolated local replica set and never connect to production.

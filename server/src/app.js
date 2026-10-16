@@ -178,6 +178,7 @@ app.use('/api/consultations', requireDatabaseConnection, require('./routes/consu
 app.use('/api/accommodation', requireDatabaseConnection, require('./routes/accommodationRoutes'));
 app.use('/api/push-tokens', requireDatabaseConnection, require('./routes/pushRoutes'));
 app.use('/api/community', requireDatabaseConnection, require('./routes/communityRoutes'));
+app.use('/api/stories', requireDatabaseConnection, require('./routes/storyRoutes'));
 app.use("/api/admin", requireDatabaseConnection, adminRoutes);
 app.use('/api/crm', requireDatabaseConnection, require('./routes/crmRoutes'));
 app.use('/api/shared-read', requireDatabaseConnection, require('./routes/sharedReadRoutes'));
