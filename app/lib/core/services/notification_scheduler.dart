@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'deep_link_service.dart';
+import 'push_notification_service.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -115,7 +116,7 @@ class NotificationScheduler {
     DateTime at,
     String path,
   ) async {
-    if (!_ready) return;
+    if (!_ready || !PushNotificationService.instance.deliveryAllowed) return;
     final when = tz.TZDateTime.from(at, tz.local);
     if (when.isBefore(tz.TZDateTime.now(tz.local))) return;
 

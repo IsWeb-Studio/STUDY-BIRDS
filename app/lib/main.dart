@@ -5,9 +5,8 @@ import 'core/services/connectivity_service.dart';
 import 'core/services/app_update_service.dart';
 import 'core/widgets/update_gate.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
-import 'core/widgets/app_notice.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'screens/profile_account/notification_permission_sheet.dart';
+import 'screens/profile_account/login_notification_gate.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import 'core/services/analytics_service.dart';
@@ -174,44 +173,7 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
     // Sign-outs that happened offline are finished once the server is reachable.
     _reconnectSub = ConnectivityService.instance.onReconnected
         .listen((_) => AuthSession.instance.flushPendingRevocations());
-    // Show the notification rationale sheet only once, ever.
-    // We persist a flag in SharedPreferences so the sheet never re-appears
-    // after the user has interacted with it — even if OneSignal.permission
-    // returns false transiently on startup while the SDK is still loading.
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
-      if (!PushNotificationService.instance.supported) return;
-      final prefs = await SharedPreferences.getInstance();
-      if (prefs.getBool('_notif_sheet_shown') == true) return;
-      // Already granted before we ever showed the sheet — just record it.
-      if (PushNotificationService.instance.permissionGranted) {
-        await prefs.setBool('_notif_sheet_shown', true);
-        return;
-      }
-      if (!mounted) return;
-      final navigatorContext = rootNavigatorKey.currentContext;
-      if (navigatorContext == null) return;
-      // Mark shown regardless of the user's choice so we never show again.
-      await prefs.setBool('_notif_sheet_shown', true);
-      final allow = await showModalBottomSheet<bool>(
-        context: navigatorContext,
-        useRootNavigator: true,
-        useSafeArea: true,
-        backgroundColor: Colors.transparent,
-        isScrollControlled: true,
-        builder: (_) => const NotificationPermissionSheet(),
-      );
-      if (allow == true) {
-        try {
-          await PushNotificationService.instance.requestPermission();
-        } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'main.dart:199');
-          rootScaffoldMessengerKey.currentState?.showSnackBar(
-            AppSnackBar(
-                content: Text(
-                    'تعذر تفعيل الإشعارات. حاول مجددًا من إعدادات الإشعارات.')),
-          );
-        }
-      }
-    });
+
   }
 
   void _onPushTap(String screen, Map<String, dynamic> data) {
@@ -316,7 +278,9 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
           // if (user.verifiedPhone == null || user.verifiedPhone!.isEmpty) {
           //   return _PhoneVerificationGate(user: user);
           // }
-          return getHomeRouteForUser(user);
+          return LoginNotificationGate(
+              key: ValueKey(user.id),
+              homeBuilder: (_) => getHomeRouteForUser(user));
         });
   }
 }
