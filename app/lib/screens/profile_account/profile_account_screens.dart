@@ -1,4 +1,5 @@
 import '../../core/widgets/current_user_avatar.dart';
+import '../../core/widgets/gallery_access.dart';
 import '../../core/services/locale_controller.dart';
 import '../../core/widgets/language_tile.dart';
 import '../../core/utils/json_safe.dart';
@@ -93,7 +94,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
     // كلا الخيارين عبر image_picker لتجنب مشاكل file_picker مع المعرض
     final source =
         choice == PickSource.camera ? ImageSource.camera : ImageSource.gallery;
-    final img = await ImagePicker().pickImage(source: source, imageQuality: 70);
+    if (source == ImageSource.gallery &&
+        (!await confirmGalleryAccess(context) || !mounted)) return;
+    final XFile? img;
+    try {
+      img = await ImagePicker().pickImage(source: source, imageQuality: 70);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          AppSnackBar(content: Text(mediaPickerError(error))));
+      }
+      return;
+    }
     if (img == null || !mounted) return;
 
     final bytes = await img.readAsBytes();

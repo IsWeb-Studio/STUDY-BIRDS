@@ -29,7 +29,7 @@
 	<key>NSCameraUsageDescription</key>
 	<string>نستخدم الكاميرا لالتقاط صور المستندات ورفعها</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>نستخدم مكتبة الصور لاختيار المستندات ورفعها</string>
+	<string>نستخدم المعرض لاختيار صور وفيديوهات الستوريات والصورة الشخصية والمستندات التي تريد رفعها</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>نحتاج الإذن لحفظ ملف ICS في مكتبتك</string>
 	<key>NSFaceIDUsageDescription</key>

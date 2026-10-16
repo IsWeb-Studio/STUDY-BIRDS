@@ -1,4 +1,5 @@
 import '../../core/widgets/bird_points.dart';
+import '../../core/widgets/gallery_access.dart';
 import '../../core/widgets/state_widgets.dart';
 import '../community/student_profile_link.dart';
 import 'dart:async';
@@ -538,12 +539,16 @@ class _StoryComposerState extends State<StoryComposer> {
     setState(() => _picking = true);
     VideoPlayerController? candidate;
     try {
+      if (!await confirmGalleryAccess(context) || !mounted) return;
       final image = await ImagePicker()
           .pickMedia(maxWidth: 1600, maxHeight: 2000, imageQuality: 85);
       if (image == null) return;
       final video = (image.mimeType ?? '').startsWith('video/') ||
           RegExp(r'\.(mp4|mov|m4v|webm|3gp|mkv|avi)$', caseSensitive: false)
               .hasMatch(image.name);
+      if (video && !RegExp(r'\.(mp4|mov)$', caseSensitive: false).hasMatch(image.name)) {
+        throw Exception('اختر فيديو بصيغة MP4 أو MOV');
+      }
       if (await image.length() > (video ? 25 : 5) * 1024 * 1024) {
         throw Exception(video
             ? 'حجم الفيديو أكبر من 25 ميجابايت'
@@ -574,7 +579,7 @@ class _StoryComposerState extends State<StoryComposer> {
         await old?.dispose();
       }
     } catch (e) {
-      if (mounted) setState(() => _error = e.toString());
+      if (mounted) setState(() => _error = mediaPickerError(e));
     } finally {
       await candidate?.dispose();
       if (mounted) setState(() => _picking = false);
