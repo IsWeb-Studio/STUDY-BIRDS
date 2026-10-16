@@ -8,6 +8,7 @@ const Application = require('../models/Application');
 const Notification = require('../models/Notification');
 const { Message } = require('../models/MobileWorkspace');
 const sse = require('../utils/sseClients');
+const { friendIds } = require('../utils/storyAudience');
 const router = express.Router();
 router.use(protect);
 
@@ -19,6 +20,7 @@ async function contactFilter(user) {
     ids.push(...links.map(link => link.student));
   }
   if (user.role === 'student') {
+    ids.push(...await friendIds(user._id));
     const links = await ParentLink.find({ student: user._id, status: 'approved' }).select('parent').lean();
     ids.push(...links.map(link => link.parent));
     const universities = await Application.distinct('university', { student: user._id });
@@ -39,6 +41,33 @@ async function requireContact(user, recipient, res) {
 }
 router.get('/contacts', run(async (req, res) => {
   res.json(await User.find(await contactFilter(req.user)).select('name role').sort({ name: 1 }).limit(200).lean());
+}));
+router.get('/contacts/:id', run(async (req, res) => {
+  res.set('Cache-Control', 'no-store').json(await requireContact(req.user, req.params.id, res));
+}));
+router.get('/conversations', run(async (req, res) => {
+  if (req.user.role !== 'student') { res.status(403); throw new Error('Students only'); }
+  const peers = await User.find({ _id: { $in: await friendIds(req.user._id) }, role: 'student', isActive: true }).select('name').lean();
+  const ids = peers.map(p => p._id);
+  const unreadTotal = await Message.countDocuments({ recipient: req.user._id, sender: { $in: ids }, readAt: null });
+  if (req.query.summary === '1') return res.set('Cache-Control', 'no-store').json({ unreadTotal });
+  let cursor;
+  if (req.query.before) {
+    const [date, id] = String(req.query.before).split('|');
+    if (!mongoose.isValidObjectId(id) || !Number.isFinite(Date.parse(date))) { res.status(400); throw new Error('Invalid cursor'); }
+    cursor = { date: new Date(date), id: new mongoose.Types.ObjectId(id) };
+  }
+  const rows = await Message.aggregate([
+    { $match: { $or: [{ sender: req.user._id, recipient: { $in: ids } }, { recipient: req.user._id, sender: { $in: ids } }] } },
+    { $sort: { createdAt: -1, _id: -1 } },
+    { $group: { _id: { $cond: [{ $eq: ['$sender', req.user._id] }, '$recipient', '$sender'] }, lastMessage: { $first: '$$ROOT' }, unreadCount: { $sum: { $cond: [{ $and: [{ $eq: ['$recipient', req.user._id] }, { $eq: [{ $ifNull: ['$readAt', null] }, null] }] }, 1, 0] } } } },
+    ...(cursor ? [{ $match: { $or: [{ 'lastMessage.createdAt': { $lt: cursor.date } }, { 'lastMessage.createdAt': cursor.date, 'lastMessage._id': { $lt: cursor.id } }] } }] : []),
+    { $sort: { 'lastMessage.createdAt': -1, 'lastMessage._id': -1 } }, { $limit: 31 },
+  ]);
+  const page = rows.slice(0, 30), last = page.at(-1)?.lastMessage;
+  res.set('Cache-Control', 'no-store').json({ unreadTotal, nextCursor: rows.length > 30 ? `${last.createdAt.toISOString()}|${last._id}` : null,
+    conversations: page.map(row => ({ contact: peers.find(p => String(p._id) === String(row._id)), unreadCount: row.unreadCount,
+      lastMessage: { _id: row.lastMessage._id, sender: row.lastMessage.sender, body: row.lastMessage.body, createdAt: row.lastMessage.createdAt } })) });
 }));
 router.get('/messages', run(async (req, res) => {
   const recipient = req.query.recipient;
@@ -62,15 +91,17 @@ router.post('/messages', run(async (req, res) => {
   // Push real-time event to recipient via SSE (non-blocking)
   const messageData = { _id: message._id, sender: req.user._id, recipient: contact._id, body: message.body, createdAt: message.createdAt };
   sse.push(contact._id, 'message', messageData);
+  sse.push(req.user._id, 'message', messageData);
   // Notification failure must never report a successfully saved message as unsent.
   try {
-    await Notification.create({ user: contact._id, title: 'رسالة جديدة', message: `لديك رسالة من ${req.user.name}`, type: 'info' });
+    await Notification.create({ user: contact._id, title: 'رسالة جديدة', message: `لديك رسالة من ${req.user.name}`, type: 'info', link: `/student/messages/${req.user._id}` });
   } catch (error) { console.error('Message notification creation failed:', error.name); }
   res.status(201).json(message);
 }));
 router.post('/messages/read', run(async (req, res) => {
   await requireContact(req.user, req.body.sender, res);
-  await Message.updateMany({ sender: req.body.sender, recipient: req.user._id, readAt: null }, { $set: { readAt: new Date() } });
+  if (req.body.through && !mongoose.isValidObjectId(req.body.through)) { res.status(400); throw new Error('Invalid message'); }
+  await Message.updateMany({ sender: req.body.sender, recipient: req.user._id, readAt: null, ...(req.body.through ? { _id: { $lte: req.body.through } } : {}) }, { $set: { readAt: new Date() } });
   res.json({ read: true });
 }));
 // GET /api/messaging/events — SSE stream for real-time message delivery

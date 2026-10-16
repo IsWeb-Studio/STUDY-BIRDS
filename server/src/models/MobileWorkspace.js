@@ -11,10 +11,13 @@ const Task = mongoose.model('MobileTask', new mongoose.Schema({
   priority: { type: String, enum: ['normal', 'urgent'], default: 'normal' }, dueDate: Date,
   createdBy: id('User'),
 }, { timestamps: true }));
-const Message = mongoose.model('MobileMessage', new mongoose.Schema({
+const messageSchema = new mongoose.Schema({
   sender: { ...id('User'), required: true, index: true }, recipient: { ...id('User'), required: true, index: true },
   body: { type: String, required: true, maxlength: 4000 }, readAt: Date,
-}, { timestamps: true }));
+}, { timestamps: true });
+messageSchema.index({ recipient: 1, sender: 1, readAt: 1 });
+messageSchema.index({ sender: 1, recipient: 1, createdAt: -1, _id: -1 });
+const Message = mongoose.model('MobileMessage', messageSchema);
 const Decision = mongoose.model('MobileDecision', new mongoose.Schema({
   application: { ...id('Application'), required: true, index: true },
   author: { ...id('User'), required: true }, kind: { type: String, enum: ['document-request', 'admission-letter'], required: true },
