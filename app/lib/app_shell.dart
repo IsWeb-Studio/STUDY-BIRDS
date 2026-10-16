@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'core/services/auth_session.dart';
 import 'l10n/l10n.dart';
 import 'screens/ai/birds_ai_screen.dart';
 import 'package:flutter/material.dart';
@@ -41,6 +43,7 @@ class _StudentAppShellState extends State<StudentAppShell> {
   }
 
   int _index = 0;
+  Timer? _communityWarmup;
 
   List<_NavItemData> _items(BuildContext context) => [
         _NavItemData(icon: Icons.home_rounded, label: context.l10n.tabHome),
@@ -67,10 +70,22 @@ class _StudentAppShellState extends State<StudentAppShell> {
   void initState() {
     super.initState();
     _instance = this;
+    _communityWarmup = Timer(const Duration(seconds: 2), () {
+      if (mounted &&
+          _index == kTabHome &&
+          AuthSession.instance.token != null &&
+          (ModalRoute.isCurrentOf(context) ?? true) &&
+          (WidgetsBinding.instance.lifecycleState == null ||
+              WidgetsBinding.instance.lifecycleState ==
+                  AppLifecycleState.resumed)) {
+        unawaited(warmCommunity());
+      }
+    });
   }
 
   @override
   void dispose() {
+    _communityWarmup?.cancel();
     if (_instance == this) _instance = null;
     super.dispose();
   }

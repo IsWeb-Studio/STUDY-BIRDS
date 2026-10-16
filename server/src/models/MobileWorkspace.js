@@ -20,6 +20,8 @@ const messageSchema = new mongoose.Schema({
   operationId: String,
 }, { timestamps: true });
 messageSchema.index({ recipient: 1, sender: 1, readAt: 1 });
+messageSchema.index({ recipient: 1, createdAt: -1, _id: -1 });
+messageSchema.index({ sender: 1, createdAt: -1, _id: -1 });
 messageSchema.index({ sender: 1, recipient: 1, createdAt: -1, _id: -1 });
 messageSchema.index({ sender: 1, operationId: 1 }, { unique: true, partialFilterExpression: { operationId: { $type: 'string' } } });
 const Message = mongoose.model('MobileMessage', messageSchema);

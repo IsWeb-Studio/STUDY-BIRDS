@@ -84,7 +84,37 @@ class ApiClient {
   final _cache = <String, ({DateTime at, dynamic data})>{};
   static const _cacheTtl = Duration(minutes: 3);
 
-  void clearCache() => _cache.clear();
+  final _snapshots = <String, ({DateTime at, dynamic data})>{};
+
+  int _snapshotVersion = 0;
+  int get snapshotVersion => _snapshotVersion;
+
+  /// Recent screen data can render synchronously while an uncached refresh runs.
+  dynamic snapshot(String path, {String? token}) {
+    if (token == null) return null;
+    final hit = _snapshots['$token:$path'];
+    if (hit == null ||
+        DateTime.now().difference(hit.at) > const Duration(minutes: 2)) {
+      return null;
+    }
+    return jsonDecode(jsonEncode(hit.data));
+  }
+
+  void rememberSnapshot(String path, dynamic data,
+      {String? token, int? version}) {
+    if (token == null || (version != null && version != _snapshotVersion)) {
+      return;
+    }
+    if (_snapshots.length >= 20) _snapshots.remove(_snapshots.keys.first);
+    _snapshots['$token:$path'] =
+        (at: DateTime.now(), data: jsonDecode(jsonEncode(data)));
+  }
+
+  void clearCache() {
+    _cache.clear();
+    _snapshots.clear();
+    _snapshotVersion++;
+  }
 
   Future<String?> Function(String failedToken)? refreshSession;
 
@@ -105,8 +135,9 @@ class ApiClient {
           token != null &&
           refreshSession != null) {
         final replacement = await refreshSession!(token);
-        if (replacement != null)
+        if (replacement != null) {
           response = await send(replacement).timeout(requestTimeout);
+        }
       }
       connectivity.reportSuccess();
       return response;
@@ -195,7 +226,7 @@ class ApiClient {
       if (cached) _cache[key] = (at: DateTime.now(), data: data);
       return data;
     } finally {
-      _inflight.remove(key);
+      if (identical(_inflight[key], future)) _inflight.remove(key);
     }
   }
 
@@ -224,8 +255,9 @@ class ApiClient {
         token,
         (credential) => _http.get(Uri.parse('$baseUrl$path'),
             headers: _headers(credential)));
-    if (response.statusCode < 200 || response.statusCode >= 300)
+    if (response.statusCode < 200 || response.statusCode >= 300) {
       _decode(response);
+    }
     return response.bodyBytes;
   }
 
@@ -291,8 +323,9 @@ class ApiClient {
     void Function(double)? onProgress,
     UploadCancellation? cancellation,
   }) async {
-    if (fileBytes.isEmpty)
+    if (fileBytes.isEmpty) {
       throw const ApiException(400, 'الملف فارغ. اختر ملفًا آخر.');
+    }
     final storyVideo = path == '/stories/video';
     if (fileBytes.length > (storyVideo ? 25 : 5) * 1024 * 1024) {
       throw ApiException(
@@ -301,15 +334,18 @@ class ApiClient {
               ? 'اختر فيديو لا يتجاوز 25 ميجابايت.'
               : 'اختر ملفًا لا يتجاوز 5 ميجابايت.');
     }
-    if (_mimeTypeFor(fileName).mimeType == 'application/octet-stream')
+    if (_mimeTypeFor(fileName).mimeType == 'application/octet-stream') {
       throw const ApiException(415, 'نوع الملف غير مدعوم.');
+    }
     final response = await _authorized(token, (credential) async {
-      if (cancellation?.cancelled == true)
+      if (cancellation?.cancelled == true) {
         throw const ApiException(499, 'تم إلغاء الرفع');
+      }
       final request =
           _ProgressUpload('POST', Uri.parse('$baseUrl$path'), onProgress);
-      if (credential != null)
+      if (credential != null) {
         request.headers['Authorization'] = 'Bearer $credential';
+      }
       request.headers['X-Study-Birds-Client'] = 'mobile';
       if (fields != null) request.fields.addAll(fields);
       request.files.add(http.MultipartFile.fromBytes(fileFieldName, fileBytes,
@@ -322,8 +358,9 @@ class ApiClient {
       } catch (swallowedError, swallowedStack) {
         ErrorReporter.swallowed(
             swallowedError, swallowedStack, 'core/network/api_client.dart:253');
-        if (cancellation?.cancelled == true)
+        if (cancellation?.cancelled == true) {
           throw const ApiException(499, 'تم إلغاء الرفع');
+        }
         rethrow;
       } finally {
         if (cancellation != null) cancellation._abort = null;
@@ -339,7 +376,23 @@ class ApiClient {
   /// server-side faults (5xx, unparseable 2xx) become de-duplicated Sentry events.
   dynamic _decodeReporting(http.Response response, String method, String path) {
     try {
-      return _decode(response);
+      final data = _decode(response);
+      if (method != 'GET') {
+        if (path.startsWith('/mobile-workspace/messages') ||
+            path.startsWith('/mobile-workspace/conversations')) {
+          _snapshotVersion++;
+          _inflight.removeWhere(
+              (key, value) => key.contains(':/mobile-workspace/conversations'));
+          _snapshots.removeWhere(
+              (key, value) => key.endsWith(':/mobile-workspace/conversations'));
+        }
+        if (path.startsWith('/stories')) {
+          _snapshotVersion++;
+          _inflight.removeWhere((key, value) => key.contains(':/stories'));
+          _snapshots.removeWhere((key, value) => key.endsWith(':/stories'));
+        }
+      }
+      return data;
     } on ApiException catch (e) {
       ErrorReporter.apiFailure(method, path, e.statusCode, error: e);
       rethrow;

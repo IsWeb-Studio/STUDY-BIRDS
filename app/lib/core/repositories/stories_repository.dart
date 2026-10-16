@@ -89,17 +89,30 @@ class StoriesRepository {
           body: {'scoreEmoji': emoji})));
   Future<({List<StudentStory> stories, String? nextCursor})> feed(
       [String? before]) async {
+    final token = _token;
+    final version = _api.snapshotVersion;
     final j = await _api.get(
         '/stories${before == null ? '' : '?before=$before'}',
-        token: _token,
+        token: token,
         cached: false);
-    return (
-      stories: (j['stories'] as List)
-          .map((e) => StudentStory.fromJson(Map<String, dynamic>.from(e)))
-          .toList(),
-      nextCursor: j['nextCursor'] as String?
-    );
+    if (before == null) {
+      _api.rememberSnapshot('/stories', j, token: token, version: version);
+    }
+    return _feedPage(j);
   }
+
+  ({List<StudentStory> stories, String? nextCursor})? cachedFeed() {
+    final j = _api.snapshot('/stories', token: _token);
+    return j == null ? null : _feedPage(j);
+  }
+
+  ({List<StudentStory> stories, String? nextCursor}) _feedPage(dynamic j) => (
+        stories: (j['stories'] as List)
+            .map((e) => StudentStory.fromJson(Map<String, dynamic>.from(e)))
+            .where((s) => s.expiresAt.isAfter(DateTime.now()))
+            .toList(),
+        nextCursor: j['nextCursor'] as String?
+      );
 
   Future<void> seen(String id) async {
     await _api.post('/stories/$id/seen', token: _token);

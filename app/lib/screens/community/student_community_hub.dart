@@ -1,3 +1,4 @@
+import '../../core/repositories/stories_repository.dart';
 import 'student_profile_link.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -10,14 +11,37 @@ import '../services_support/messaging_and_emergency_screens.dart';
 import '../services_support/community_screen.dart';
 
 Future<Map<String, dynamic>> communityInbox(
-        {String? before, bool summary = false}) async =>
-    Map<String, dynamic>.from(await ApiClient.instance.get(
-        Uri(path: '/mobile-workspace/conversations', queryParameters: {
-          if (before != null) 'before': before,
-          if (summary) 'summary': '1',
-        }).toString(),
-        token: AuthSession.instance.token,
-        cached: false));
+    {String? before, bool summary = false}) async {
+  final token = AuthSession.instance.token;
+  final version = ApiClient.instance.snapshotVersion;
+  final data = Map<String, dynamic>.from(await ApiClient.instance.get(
+      Uri(path: '/mobile-workspace/conversations', queryParameters: {
+        if (before != null) 'before': before,
+        if (summary) 'summary': '1',
+      }).toString(),
+      token: token,
+      cached: false));
+  if (before == null && !summary) {
+    ApiClient.instance.rememberSnapshot('/mobile-workspace/conversations', data,
+        token: token, version: version);
+  }
+  return data;
+}
+
+Future<void> warmCommunity() async {
+  try {
+    await Future.wait<dynamic>([
+      if (ApiClient.instance.snapshot('/mobile-workspace/conversations',
+              token: AuthSession.instance.token) ==
+          null)
+        communityInbox(),
+      if (StoriesRepository.instance.cachedFeed() == null)
+        StoriesRepository.instance.feed(),
+    ]);
+  } catch (_) {
+    /* First visible refresh handles errors; warming never blocks home. */
+  }
+}
 
 class CommunityEntry extends StatefulWidget {
   final bool isActive;
@@ -123,6 +147,16 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _activated = widget.isActive;
+    final cached = ApiClient.instance.snapshot(
+        '/mobile-workspace/conversations',
+        token: AuthSession.instance.token);
+    if (cached is Map && cached['conversations'] is List) {
+      _rows = (cached['conversations'] as List)
+          .map((r) => Map<String, dynamic>.from(r))
+          .toList();
+      _cursor = cached['nextCursor'] as String?;
+      _loading = false;
+    }
     if (widget.isActive) _load();
     _timer = Timer.periodic(const Duration(seconds: 2), (_) {
       if (_visible) _load(quiet: true);

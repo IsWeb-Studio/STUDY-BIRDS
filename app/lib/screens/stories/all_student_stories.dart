@@ -17,6 +17,12 @@ class _AllStudentStoriesScreenState extends State<AllStudentStoriesScreen> {
   @override
   void initState() {
     super.initState();
+    final cached = StoriesRepository.instance.cachedFeed();
+    if (cached != null) {
+      _stories = cached.stories;
+      _cursor = cached.nextCursor;
+      _loading = false;
+    }
     _load();
   }
 

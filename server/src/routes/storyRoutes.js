@@ -54,15 +54,22 @@ router.get('/updates', asyncHandler(async (req, res) => {
   })) });
 }));
 router.get('/', asyncHandler(async (req, res) => {
-  const filter = { expiresAt: { $gt: new Date() }, author: { $in: await User.distinct('_id', { role: 'student', isActive: true }) } };
+  const filter = { expiresAt: { $gt: new Date() } };
   if (req.query.before) {
     if (!/^[a-f0-9]{24}$/i.test(req.query.before)) fail(400, 'Invalid cursor');
     filter._id = { $lt: new mongoose.Types.ObjectId(req.query.before) };
   }
-  const rows = await Story.find(filter).sort({ _id: -1 }).limit(61).populate({ path: 'author', select: 'name avatar', match: { isActive: true, role: 'student' } }).lean();
+  const rows = await Story.aggregate([
+    { $match: filter }, { $sort: { _id: -1 } },
+    { $lookup: { from: User.collection.name, localField: 'author', foreignField: '_id',
+      pipeline: [{ $match: { isActive: true, role: 'student' } }, { $project: { name: 1, avatar: 1 } }], as: 'author' } },
+    { $unwind: '$author' }, { $limit: 61 },
+  ]);
   const page = rows.slice(0, 60);
-  const edges = await StoryInteraction.find({ story: { $in: page.map(s => s._id) }, user: req.user._id }).lean();
-  const stats = await StoryStats.find({ user: { $in: page.filter(s => s.author).map(s => s.author._id) } }).lean();
+  const [edges, stats] = await Promise.all([
+    StoryInteraction.find({ story: { $in: page.map(s => s._id) }, user: req.user._id }).select('story seenAt lovedAt').lean(),
+    StoryStats.find({ user: { $in: page.map(s => s.author._id) } }).select('user total_points').lean(),
+  ]);
   const balances = new Map(stats.map(s => [String(s.user), s.total_points]));
   const interactions = new Map(edges.map(e => [String(e.story), e]));
   res.json({ stories: page.filter(s => s.author).map(s => ({

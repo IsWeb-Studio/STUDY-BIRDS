@@ -86,6 +86,12 @@ class _StudentStoriesState extends State<StudentStories>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    final cached = _repo.cachedFeed();
+    if (cached != null) {
+      _stories = cached.stories;
+      _cursor = cached.nextCursor;
+      _loading = false;
+    }
     _load();
     _friendsSub = FriendsRepository.instance.changes.listen((_) {
       if (_refreshing) {
@@ -165,13 +171,10 @@ class _StudentStoriesState extends State<StudentStories>
     }
     _refreshing = true;
     try {
-      final results = await Future.wait<dynamic>(
-          [_repo.progress(), _repo.feed(more ? _cursor : null)]);
-      final page =
-          results[1] as ({List<StudentStory> stories, String? nextCursor});
+      // The feed already contains author scores; do not wait for a profile call.
+      final page = await _repo.feed(more ? _cursor : null);
       if (!mounted) return;
       setState(() {
-        _progress = results[0] as StoryProgress;
         _stories = more
             ? [
                 ..._stories,

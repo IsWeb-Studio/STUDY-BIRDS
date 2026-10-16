@@ -73,38 +73,52 @@ async function permittedMessage(req, res) {
 }
 router.get('/conversations', run(async (req, res) => {
   if (req.user.role !== 'student') fail(403, 'Students only');
-  const [senders, recipients] = await Promise.all([
-    Message.distinct('sender', { recipient: req.user._id }), Message.distinct('recipient', { sender: req.user._id }),
-  ]);
-  const peers = await User.find({ _id: { $in: [...senders, ...recipients] }, role: 'student', isActive: true }).select('name avatar').lean();
-  const ids = peers.map(p => p._id);
-  const prefs = await ChatPreference.find({ user: req.user._id, contact: { $in: ids } }).lean();
-  const byPeer = new Map(prefs.map(p => [String(p.contact), p]));
-  const exclusions = prefs.filter(p => p.clearedAt).map(p => ({ $and: [
-    { createdAt: { $lte: p.clearedAt } }, { $or: [{ sender: p.contact }, { recipient: p.contact }] },
-  ] }));
-  const match = { ...visible(req.user._id), ...(exclusions.length ? { $nor: exclusions } : {}),
-    $or: [{ sender: req.user._id, recipient: { $in: ids } }, { recipient: req.user._id, sender: { $in: ids } }] };
-  const unread = { ...match, sender: { $in: ids.filter(id => !byPeer.get(String(id))?.muted) }, recipient: req.user._id, readAt: null, deletedAt: null };
-  const unreadTotal = await Message.countDocuments(unread);
-  if (req.query.summary === '1') return res.set('Cache-Control', 'no-store').json({ unreadTotal });
   let cursor;
   if (req.query.before) {
     const [date, id] = String(req.query.before).split('|');
     if (!mongoose.isValidObjectId(id) || !Number.isFinite(Date.parse(date))) fail(400, 'Invalid cursor');
     cursor = { date: new Date(date), id: userId(id) };
   }
-  const rows = await Message.aggregate([
+  const prefs = await ChatPreference.find({ user: req.user._id }).select('contact muted clearedAt').lean();
+  const byPeer = new Map(prefs.map(p => [String(p.contact), p]));
+  const mutedIds = prefs.filter(p => p.muted).map(p => p.contact);
+  const exclusions = prefs.filter(p => p.clearedAt).map(p => ({ $and: [
+    { createdAt: { $lte: p.clearedAt } }, { $or: [{ sender: p.contact }, { recipient: p.contact }] },
+  ] }));
+  const match = { ...visible(req.user._id), ...(exclusions.length ? { $nor: exclusions } : {}),
+    $or: [{ sender: req.user._id }, { recipient: req.user._id }] };
+  const activeContact = [
+    { $lookup: { from: User.collection.name, localField: '_id', foreignField: '_id',
+      pipeline: [{ $match: { role: 'student', isActive: true } }, { $project: { name: 1, avatar: 1 } }], as: 'contact' } },
+    { $unwind: '$contact' },
+  ];
+  if (req.query.summary === '1') {
+    const totals = await Message.aggregate([
+      { $match: { ...match, recipient: req.user._id, readAt: null, deletedAt: null, sender: { $nin: mutedIds } } },
+      { $group: { _id: '$sender', count: { $sum: 1 } } }, ...activeContact,
+      { $group: { _id: null, unreadTotal: { $sum: '$count' } } },
+    ]);
+    return res.set('Cache-Control', 'no-store').json({ unreadTotal: totals[0]?.unreadTotal || 0 });
+  }
+  const [result] = await Message.aggregate([
     { $match: match }, { $sort: { createdAt: -1, _id: -1 } },
     { $group: { _id: { $cond: [{ $eq: ['$sender', req.user._id] }, '$recipient', '$sender'] }, lastMessage: { $first: '$$ROOT' },
       unreadCount: { $sum: { $cond: [{ $and: [{ $eq: ['$recipient', req.user._id] }, { $eq: [{ $ifNull: ['$readAt', null] }, null] }, { $eq: [{ $ifNull: ['$deletedAt', null] }, null] }] }, 1, 0] } } } },
-    ...(cursor ? [{ $match: { $or: [{ 'lastMessage.createdAt': { $lt: cursor.date } }, { 'lastMessage.createdAt': cursor.date, 'lastMessage._id': { $lt: cursor.id } }] } }] : []),
-    { $sort: { 'lastMessage.createdAt': -1, 'lastMessage._id': -1 } }, { $limit: 31 },
+    ...activeContact,
+    { $facet: {
+      totals: [{ $group: { _id: null, unreadTotal: { $sum: { $cond: [{ $in: ['$_id', mutedIds] }, 0, '$unreadCount'] } } } }],
+      page: [
+        ...(cursor ? [{ $match: { $or: [{ 'lastMessage.createdAt': { $lt: cursor.date } }, { 'lastMessage.createdAt': cursor.date, 'lastMessage._id': { $lt: cursor.id } }] } }] : []),
+        { $sort: { 'lastMessage.createdAt': -1, 'lastMessage._id': -1 } }, { $limit: 31 },
+      ],
+    } },
   ]);
-  const page = rows.slice(0, 30), last = page.at(-1)?.lastMessage;
-  res.set('Cache-Control', 'no-store').json({ unreadTotal, nextCursor: rows.length > 30 ? `${last.createdAt.toISOString()}|${last._id}` : null,
-    conversations: page.map(row => ({ contact: peers.find(p => String(p._id) === String(row._id)), unreadCount: row.unreadCount,
-      muted: !!byPeer.get(String(row._id))?.muted, lastMessage: present(row.lastMessage) })) });
+  const rows = result?.page || [], page = rows.slice(0, 30), last = page.at(-1)?.lastMessage;
+  res.set('Cache-Control', 'no-store').json({ unreadTotal: result?.totals[0]?.unreadTotal || 0,
+    nextCursor: rows.length > 30 ? `${last.createdAt.toISOString()}|${last._id}` : null,
+    conversations: page.map(row => ({ contact: row.contact, unreadCount: row.unreadCount,
+      muted: !!byPeer.get(String(row._id))?.muted,
+      lastMessage: { ...present(row.lastMessage), body: row.lastMessage.deletedAt ? '' : (row.lastMessage.body || '').slice(0, 160) } })) });
 }));
 router.get('/conversations/:contact', run(async (req, res) => {
   await requireContact(req.user, req.params.contact, res);
