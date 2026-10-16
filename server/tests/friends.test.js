@@ -45,6 +45,7 @@ test('friend requests are mutual and private; story access requires acceptance a
     assert.equal((await call('GET', '/stories', 0)).data.stories.length, 1);
     assert.equal((await call('POST', `/stories/${story.id}/seen`, 1)).status, 404);
     assert.equal((await call('POST', `/stories/${story.id}/love`, 1)).status, 404);
+    assert.equal((await call('GET', `/stories/updates?ids=${story.id}`, 1)).data.updates.length, 0);
     assert.equal(await StoryInteraction.countDocuments(), 0);
     const requests = await Promise.all(Array.from({ length: 5 }, () => call('POST', `${to(1)}/request`, 0)));
     requests.forEach(r => assert.equal(r.status, 200));
@@ -61,11 +62,18 @@ test('friend requests are mutual and private; story access requires acceptance a
     assert.equal((await call('GET', '/stories', 1)).data.stories[0].id, story.id);
     assert.equal((await call('POST', `/stories/${story.id}/seen`, 1)).status, 200);
     assert.equal((await call('POST', `/stories/${story.id}/love`, 1)).status, 200);
+    const live = await call('GET', `/stories/updates?ids=${story.id}`, 0);
+    assert.equal(live.status, 200);
+    assert.equal(live.data.updates[0].loveCount, 1);
+    assert.equal(live.data.progress.total_points, 50);
+    assert.equal((await call('GET', `/stories/updates?ids=${story.id}`, 1)).data.updates[0].loved, true);
+    assert.equal((await call('GET', '/stories/updates?ids=invalid', 1)).status, 400);
     assert.equal((await StoryStats.findOne({ user: users[0]._id })).total_points, 50);
     assert.equal((await call('POST', `/stories/${story.id}/love`, 2)).status, 404, 'guessed id still private');
     await call('DELETE', to(1), 2); // Third party deletion cannot affect their friendship.
     assert.equal((await call('GET', '/stories', 1)).data.stories.length, 1);
     await call('DELETE', to(0), 1);
+    assert.equal((await call('GET', `/stories/updates?ids=${story.id}`, 1)).data.updates.length, 0);
     assert.equal((await call('GET', '/stories', 1)).data.stories.length, 0);
     assert.equal((await call('POST', `/stories/${story.id}/seen`, 1)).status, 404);
     assert.equal((await call('POST', `/stories/${story.id}/love`, 1)).status, 404);

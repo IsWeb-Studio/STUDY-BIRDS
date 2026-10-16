@@ -17,6 +17,7 @@ Authenticated active students use `/api/friends`:
 The app exposes friends from the dashboard stories section and the profile. Friendship changes refresh the local story feed. Search is debounced and ignores old responses after a query changes.
 
 - `GET /progress`: balance, effective streak, freeze/reset deadlines, daily task completion, ring threshold and business time zone. Expired streaks are persisted lazily with a conditional update; total points never reset.
+- `GET /updates?ids=<comma-separated story ids>`: uncached lightweight love/view states plus the caller's progress, for up to 120 ids. Expired or inaccessible stories are omitted using the same accepted-friend access checks as the feed. Active story viewers poll every two seconds; the visible dashboard polls every three seconds without downloading media again. Polls do not overlap and stop in the background/hidden tabs.
 - `PUT /preferences`: `{scoreEmoji}` saves one of the supported score emojis on the authenticated student's account. Balances cannot be edited with this endpoint. The selected emoji is returned by `/progress` and defaults to fire.
 - `GET /?before=<story ObjectId>`: newest active stories, 60 per page, with author points and per-viewer seen/love state. `nextCursor` loads the next page. Stories expire after 24 hours.
 - `POST /image`: JPEG/PNG/WebP multipart `file`, up to 5 MB, uploaded to the student's Cloudinary folder.
@@ -41,3 +42,5 @@ node --test tests/storyRules.test.js tests/stories.test.js
 ```
 
 In the Flutter project, run `flutter test --no-pub test/story_widgets_test.dart`. Integration tests use an isolated local replica set and never connect to production.
+
+The Flutter viewer uses an eight-second pink playback bar for each story, starting only after the image has rendered. Holding the story or backgrounding the app pauses playback. Completing the bar advances to the next story and closes the viewer after the last one. This display timer is independent of the story's 24-hour lifetime. Love taps have a 116×64 minimum target and a 36px heart; optimistic UI is reconciled with the server and rolled back on failure.

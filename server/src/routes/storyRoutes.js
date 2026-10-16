@@ -35,6 +35,22 @@ router.put('/preferences', asyncHandler(async (req, res) => {
     { $set: { scoreEmoji: emoji } }, { upsert: true, new: true, runValidators: true });
   res.json(rules.progress(stats));
 }));
+// Small uncached snapshot for active screens; never reload images or the full feed.
+router.get('/updates', asyncHandler(async (req, res) => {
+  const ids = typeof req.query.ids === 'string' ? [...new Set(req.query.ids.split(','))] : [];
+  if (!ids.length || ids.length > 120 || ids.some(id => !/^[a-f0-9]{24}$/i.test(id))) fail(400, 'Invalid stories');
+  const stories = await Story.find({ _id: { $in: ids }, expiresAt: { $gt: new Date() },
+    author: { $in: [req.user._id, ...await friendIds(req.user._id)] } }).select('_id author loveCount')
+    .populate({ path: 'author', select: '_id', match: { isActive: true, role: 'student' } }).lean();
+  const readable = stories.filter(s => s.author);
+  const edges = await StoryInteraction.find({ story: { $in: readable.map(s => s._id) }, user: req.user._id }).select('story lovedAt seenAt').lean();
+  const byId = new Map(edges.map(e => [String(e.story), e]));
+  const stats = await StoryStats.findOne({ user: req.user._id }).lean();
+  res.json({ progress: rules.progress(stats || {}), updates: readable.map(s => ({
+    id: String(s._id), loveCount: s.loveCount,
+    loved: !!byId.get(String(s._id))?.lovedAt, seen: !!byId.get(String(s._id))?.seenAt,
+  })) });
+}));
 router.get('/', asyncHandler(async (req, res) => {
   const filter = { expiresAt: { $gt: new Date() }, author: { $in: [req.user._id, ...await friendIds(req.user._id)] } };
   if (req.query.before) {
