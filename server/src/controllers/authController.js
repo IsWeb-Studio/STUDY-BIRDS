@@ -305,9 +305,16 @@ const changePassword = asyncHandler(async (req, res) => {
   }
 
   user.password = newPassword;
+  user.passwordChangedAt = new Date();
+  // Atomic increment: concurrent password changes must never reuse a version.
+  user.$inc('tokenVersion', 1);
+  user.refreshTokenHash = undefined;
+  user.refreshTokenExpiry = undefined;
   await user.save();
 
-  res.json({ message: "Password updated successfully" });
+  // Replace this client's credentials; every previously issued JWT is invalid.
+  const tokens = await issueTokenPair(user);
+  res.json({ message: "Password updated successfully", ...tokens, user: serializeUser(user) });
 });
 
 const REFRESH_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
@@ -322,32 +329,72 @@ function hashToken(token) {
 
 async function issueTokenPair(user, claims = {}) {
   const refresh = makeRefreshToken();
-  user.refreshTokenHash = hashToken(refresh);
-  user.refreshTokenExpiry = new Date(Date.now() + REFRESH_TTL_MS);
-  await user.save();
-  return { token: generateToken(user._id, user.tokenVersion, claims), refreshToken: refresh };
+  // Do not resurrect credentials after concurrent logout/password revocation.
+  const version = user.tokenVersion || 0;
+  const account = await User.findOneAndUpdate({
+    _id: user._id, isActive: true,
+    $or: [{ tokenVersion: version }, ...(version === 0 ? [{ tokenVersion: { $exists: false } }] : [])],
+  }, { $set: {
+    refreshTokenHash: hashToken(refresh),
+    refreshTokenExpiry: new Date(Date.now() + REFRESH_TTL_MS),
+  } }, { new: true });
+  if (!account) {
+    const error = new Error('Session changed. Please sign in again.');
+    error.statusCode = 401;
+    throw error;
+  }
+  return { token: generateToken(account._id, account.tokenVersion, claims), refreshToken: refresh };
 }
 
 const refresh = asyncHandler(async (req, res) => {
   const raw = req.body.refreshToken;
-  if (typeof raw !== 'string' || !raw.trim()) {
+  if (typeof raw !== 'string' || !/^[a-f0-9]{64}$/.test(raw.trim())) {
     res.status(400);
-    throw new Error('refreshToken required');
+    throw new Error('Invalid refresh token');
   }
-  const hash = hashToken(raw.trim());
-  const user = await User.findOne({ refreshTokenHash: hash, refreshTokenExpiry: { $gt: new Date() } }).select('+refreshTokenHash');
-  if (!user || !user.isActive) {
+  const nextRefresh = makeRefreshToken();
+  // Compare-and-swap consumes the old token exactly once, even concurrently.
+  const user = await User.findOneAndUpdate({
+    refreshTokenHash: hashToken(raw.trim()),
+    refreshTokenExpiry: { $gt: new Date() },
+    isActive: true,
+  }, { $set: {
+    refreshTokenHash: hashToken(nextRefresh),
+    refreshTokenExpiry: new Date(Date.now() + REFRESH_TTL_MS),
+  } }, { new: true });
+  if (!user) {
     res.status(401);
     throw new Error('Invalid or expired refresh token');
   }
-  const tokens = await issueTokenPair(user);
-  res.json({ ...tokens, user: serializeUser(user) });
+  res.json({
+    token: generateToken(user._id, user.tokenVersion),
+    refreshToken: nextRefresh,
+    user: serializeUser(user),
+  });
 });
 
 const logout = asyncHandler(async (req, res) => {
   const raw = req.body.refreshToken;
-  if (typeof raw === 'string' && raw.trim()) {
-    await User.updateOne({ refreshTokenHash: hashToken(raw.trim()) }, { $unset: { refreshTokenHash: 1, refreshTokenExpiry: 1 } });
+  // Web clients authenticate with protect; offline mobile revocations may carry
+  // only a refresh token. Scope the update to the supplied credential's owner.
+  let filter;
+  if (req.user) {
+    const version = req.user.tokenVersion || 0;
+    filter = { _id: req.user._id,
+      $or: [{ tokenVersion: version }, ...(version === 0 ? [{ tokenVersion: { $exists: false } }] : [])] };
+  } else if (typeof raw === 'string' && /^[a-f0-9]{64}$/.test(raw.trim())) {
+    filter = { refreshTokenHash: hashToken(raw.trim()), refreshTokenExpiry: { $gt: new Date() } };
+  } else {
+    res.status(401);
+    throw new Error('A valid session is required');
+  }
+  const result = await User.updateOne(filter, {
+    $inc: { tokenVersion: 1 },
+    $unset: { refreshTokenHash: 1, refreshTokenExpiry: 1 },
+  });
+  if (!result.matchedCount) {
+    res.status(401);
+    throw new Error('Invalid or expired session');
   }
   res.json({ ok: true });
 });
@@ -357,6 +404,11 @@ const requestOtp = asyncHandler(async (req, res) => {
   if (!sms.ready()) return res.status(503).json({ message: 'Phone login is not configured' });
   const phone = String(req.body.phone || '').trim();
   if (!/^\+[1-9]\d{7,14}$/.test(phone)) return res.status(400).json({ message: 'أدخل رقمًا دوليًا يبدأ بـ + ورمز الدولة' });
+  const account = await User.findOne({ verifiedPhone: phone });
+  if (account?.twoFactorEnabled) return res.status(403).json({
+    message: 'Use your password or identity provider and complete two-factor verification.',
+    requiresTwoFactor: true,
+  });
   const key = `otp-login:${phone}`;
   const existing = await Challenge.findOne({ key, purpose: 'otp-login', expiresAt: { $gt: new Date(Date.now() + 9 * 60 * 1000) } });
   if (existing) return res.status(429).json({ message: 'انتظر دقيقة قبل طلب رمز جديد' });
@@ -385,6 +437,10 @@ const verifyOtp = asyncHandler(async (req, res) => {
     await ensureStudentProfile(user._id);
   }
   if (!user.isActive) return res.status(403).json({ message: 'الحساب موقوف' });
+  if (user.twoFactorEnabled) return res.status(403).json({
+    message: 'Use your password or identity provider and complete two-factor verification.',
+    requiresTwoFactor: true,
+  });
   user.verifiedPhone = phone;
   user.lastLoginAt = new Date();
   await user.save();
@@ -401,6 +457,10 @@ const requestEmailOtp = asyncHandler(async (req, res) => {
     res.status(400); throw new Error('أدخل بريدًا إلكترونيًا صحيحًا');
   }
   const user = await User.findOne({ email, isActive: true });
+  if (user?.twoFactorEnabled) return res.status(403).json({
+    message: 'Use your password or identity provider and complete two-factor verification.',
+    requiresTwoFactor: true,
+  });
   if (user) await sendCode(user, 'emaillogin', res);
   res.json({ sent: true });
 });
@@ -413,6 +473,10 @@ const verifyEmailOtp = asyncHandler(async (req, res) => {
     res.status(400); throw new Error('بريد إلكتروني أو رمز غير صحيح');
   }
   const user = await User.findOne({ email, isActive: true });
+  if (user?.twoFactorEnabled) return res.status(403).json({
+    message: 'Use your password or identity provider and complete two-factor verification.',
+    requiresTwoFactor: true,
+  });
   await consume(user, 'emaillogin', code, res);
   if (user.role === 'student') await ensureStudentProfile(user._id);
   user.emailVerified = true;

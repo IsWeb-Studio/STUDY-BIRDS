@@ -10,6 +10,21 @@ import 'package:study_birds/core/services/secure_data_cache.dart';
 
 void main() {
   setUp(() => FlutterSecureStorage.setMockInitialValues({}));
+  test('Office and ZIP uploads are rejected locally before any request', () async {
+    var requests = 0;
+    await http.runWithClient(() async {
+      for (final extension in ['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'zip']) {
+        await expectLater(
+            ApiClient.instance.postMultipart('/test-upload',
+                fileBytes: [80, 75, 3, 4], fileName: 'file.$extension'),
+            throwsA(isA<ApiException>().having((error) => error.statusCode, 'status', 415)));
+      }
+    }, () => MockClient((request) async {
+      requests++;
+      return http.Response('{}', 200);
+    }));
+    expect(requests, 0);
+  });
   test('upload reports outgoing bytes and preserves Arabic response', () async {
     final progress = <double>[];
     await http.runWithClient(() async {

@@ -905,12 +905,21 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
       _error = null;
     });
     try {
-      await ApiClient.instance.post('/auth/change-password',
-          token: AuthSession.instance.token,
+      final token = AuthSession.instance.token;
+      final credentials = await ApiClient.instance.post('/auth/change-password',
+          token: token,
           body: {
             'newPassword': p,
             'passwordSetup': AuthSession.instance.requiresGooglePasswordSetup,
           });
+      final session = AuthSession.instance;
+      if (session.token != token || session.currentUser == null) {
+        return;
+      }
+      await session.login(
+          AuthUser.fromJson(credentials['user'] as Map<String, dynamic>),
+          authToken: credentials['token'] as String,
+          refreshToken: credentials['refreshToken'] as String);
       await AuthSession.instance.patchHasPassword();
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);

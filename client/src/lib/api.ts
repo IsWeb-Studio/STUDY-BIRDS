@@ -1,6 +1,7 @@
 import axios from "axios";
 import { configureConnectivity, connectivity } from "./connectivity";
 import { installResilience } from "./apiResilience";
+import { broadcastLogout, sessionStore } from './sessionStore';
 
 const resolveApiUrl = () => {
   const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
@@ -25,15 +26,31 @@ const API_ORIGIN = API_URL.replace(/\/api\/?$/, "");
 
 export const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true,
 });
 
 configureConnectivity(API_ORIGIN);
 installResilience(api, connectivity);
 
+// Serialize cookie rotations/login/logout, including across tabs when Web Locks is available.
+const sessionAdapter = axios.getAdapter(api.defaults.adapter);
+let authQueue: Promise<unknown> = Promise.resolve();
+api.defaults.adapter = (config) => {
+  if (!/^\/(auth|identity)\//.test(config.url || '') || config.method === 'get') return sessionAdapter(config);
+  const execute = async () => navigator.locks
+    ? navigator.locks.request('studyBirdsAuth', async () => await sessionAdapter(config))
+    : sessionAdapter(config);
+  const request = authQueue.then(execute, execute);
+  authQueue = request.catch(() => undefined);
+  return request;
+};
+
 api.interceptors.request.use((config) => {
   config.headers["X-Study-Birds-Client"] = "web";
-  const token = localStorage.getItem("studyBirdsToken");
-  if (token) {
+  const target = new URL(config.url || '', `${API_URL.replace(/\/$/, '')}/`);
+  if (target.origin !== new URL(API_URL).origin) throw new Error('External API origin rejected');
+  const token = sessionStore.get().token;
+  if (token && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
@@ -72,7 +89,7 @@ export const getDownloadableAssetUrl = (path?: string) => {
   return assetUrl;
 };
 
-export const privateDocumentId = (path?: string) => path?.match(/^\/api\/(?:documents|payment-proofs|support-attachments)\/([a-f0-9]{24})\/access$/i)?.[1];
+export const privateDocumentId = (path?: string) => path?.match(/^\/api\/(?:documents|payment-proofs|support-attachments|verification-documents)\/([a-f0-9]{24})\/access$/i)?.[1];
 
 export const downloadApiAsset = async (path?: string, fileName?: string) => {
   const documentId = privateDocumentId(path);
@@ -108,3 +125,22 @@ export const downloadApiAsset = async (path?: string, fileName?: string) => {
   link.remove();
   window.URL.revokeObjectURL(blobUrl);
 };
+
+// Password changes replace the current session and invalidate all older tokens.
+api.interceptors.response.use((response) => {
+  if (response.config.url === '/auth/change-password' && response.data?.token &&
+      response.config.headers.Authorization === `Bearer ${sessionStore.get().token}`) {
+    sessionStore.rotate(response.data.token, response.data.user);
+    broadcastLogout();
+  }
+  return response;
+}, (error) => {
+  const token = sessionStore.get().token;
+  if (error.response?.status === 401 && token &&
+      error.config?.headers?.Authorization === `Bearer ${token}` &&
+      (!/^\/(auth|identity)\//.test(error.config?.url || '') ||
+       /^\/auth\/(me|change-password|account)$/.test(error.config?.url || ''))) {
+    sessionStore.clear(); broadcastLogout();
+  }
+  return Promise.reject(error);
+});

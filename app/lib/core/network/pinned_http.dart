@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'package:flutter/foundation.dart' show visibleForTesting, kReleaseMode;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:http/io_client.dart';
@@ -22,16 +22,14 @@ import '../services/error_reporter.dart';
 /// certificate renews every ~60 days and intermediates rotate, but the root
 /// stays - so this survives routine renewals without an app update.
 ///
-/// Safety valves, so pinning can never brick the app by accident:
-///  * only https URLs are pinned (local dev over http is untouched);
-///  * `--dart-define=API_PINNING=false` turns it off at build time;
-///  * if the bundle cannot be loaded, the app falls back to normal validation
-///    and reports the problem (certificate *mismatches* still fail closed).
+/// Release builds require HTTPS and pinning. Missing or invalid trust bundles
+/// fail closed. Only development builds may disable pinning for local testing.
 class PinnedHttp {
   PinnedHttp._();
 
   static const assetPath = 'assets/certs/trusted_roots.pem';
-  static const _enabledFlag = bool.fromEnvironment('API_PINNING', defaultValue: true);
+  static const _enabledFlag =
+      bool.fromEnvironment('API_PINNING', defaultValue: true);
 
   /// Replaced in tests.
   static Future<Uint8List> Function() loadBundle = _loadAsset;
@@ -45,16 +43,19 @@ class PinnedHttp {
   static Future<Uint8List> _loadAsset() async =>
       (await rootBundle.load(assetPath)).buffer.asUint8List();
 
-  /// The pinned context, or null when pinning is off / unavailable.
+  /// The pinned context, or null when explicitly disabled in development.
   static Future<SecurityContext?> context() => _context ??= _build();
 
   static Future<SecurityContext?> _build() async {
+    if (kReleaseMode && !isEnabled()) {
+      throw const HandshakeException('Certificate pinning is required');
+    }
     if (!isEnabled()) return null;
     try {
       return contextFromPem(await loadBundle());
     } catch (error, stack) {
       ErrorReporter.swallowed(error, stack, 'pinned_http.build');
-      return null; // fall back to normal validation, never lock the app
+      throw const HandshakeException('Certificate trust bundle unavailable');
     }
   }
 
@@ -77,7 +78,11 @@ class PinnedHttp {
 
   /// A `dart:io` client for code that needs one directly (streaming/SSE).
   static Future<HttpClient> newHttpClient({String? forUrl}) async {
-    final pinned = (forUrl == null || appliesTo(forUrl)) ? await context() : null;
+    if (kReleaseMode && forUrl != null && !appliesTo(forUrl)) {
+      throw const HandshakeException('HTTPS is required');
+    }
+    final pinned =
+        (forUrl == null || appliesTo(forUrl)) ? await context() : null;
     return pinned == null ? HttpClient() : HttpClient(context: pinned);
   }
 }
@@ -99,6 +104,9 @@ class PinnedClient extends http.BaseClient {
   bool _closed = false;
 
   Future<http.Client> _create() async {
+    if (kReleaseMode && _baseUrl != null && !PinnedHttp.appliesTo(_baseUrl!)) {
+      throw const HandshakeException('HTTPS is required');
+    }
     final pinned = (_baseUrl == null || PinnedHttp.appliesTo(_baseUrl!))
         ? await PinnedHttp.context()
         : null;
@@ -110,6 +118,9 @@ class PinnedClient extends http.BaseClient {
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     if (_closed) throw http.ClientException('Client is closed', request.url);
+    if (kReleaseMode && request.url.scheme != 'https') {
+      throw const HandshakeException('HTTPS is required');
+    }
     final client = await (_inner ??= _create());
     return client.send(request);
   }
@@ -117,6 +128,7 @@ class PinnedClient extends http.BaseClient {
   @override
   void close() {
     _closed = true;
-    _inner?.then((client) => client.close());
+    _inner?.then<void>((client) => client.close(),
+        onError: (Object _, StackTrace __) {});
   }
 }

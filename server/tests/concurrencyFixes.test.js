@@ -72,13 +72,6 @@ test('wallet and housing hold under simultaneous requests', async () => {
     assert.equal(await balance(student._id), 0);
     StudentWalletEntry.aggregate = originalAggregate;
 
-    // A held lease makes a request wait, then answer 409 with a retry message (not 500).
-    await WorkerLease.updateOne({ _id: `wallet:${student._id}` }, { owner: 'someone-else', expiresAt: new Date(Date.now() + 60_000) }, { upsert: true });
-    const busy = await call('POST', '/students/wallet/redeem', student, { invoiceId: invoiceC._id, amount: 1 });
-    assert.equal(busy.status, 409);
-    assert.ok(busy.body.message.length > 0);
-    await WorkerLease.deleteOne({ _id: `wallet:${student._id}` });
-
     // Audit scenario 2: capacity-1 listing, two pending requests confirmed at once.
     const university = await University.create({ name: 'Uni', country: new mongoose.Types.ObjectId(), city: 'City' });
     const listing = await AccommodationListing.create({ title: 'Single room', type: 'single', university: university._id, price: 100, capacity: 1 });

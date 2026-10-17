@@ -115,7 +115,7 @@ const getPartnerDetailsAdmin = asyncHandler(async (req, res) => {
     students,
     payoutRequests,
     supportTickets,
-    verificationDocuments,
+    verificationDocuments: verificationDocuments.map(VerificationDocument.clientView),
     walletEntries,
     notifications,
   });

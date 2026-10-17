@@ -8,8 +8,8 @@ const { Credential, Challenge } = require("../models/IdentityCredential");
 const {
   serializeUser,
   ensureStudentProfile,
+  issueTokenPair,
 } = require("../controllers/authController");
-const generateToken = require("../utils/generateToken");
 const { sendCode, consume } = require("../utils/mobileEmailCodes");
 const sms = require("../utils/cashMisrSms");
 const router = express.Router();
@@ -85,7 +85,7 @@ async function signIn(user, req, res) {
   user.lastLoginAt = new Date();
   await user.save();
   res.json({
-    token: generateToken(user._id, user.tokenVersion),
+    ...(await issueTokenPair(user)),
     user: serializeUser(user),
   });
 }
@@ -438,7 +438,7 @@ router.post(
     const user = await User.findById(saved.user);
     if (!user?.isActive) fail(res, 401, "Unable to sign in");
     res.json({
-      token: generateToken(user._id, user.tokenVersion),
+      ...(await issueTokenPair(user)),
       user: serializeUser(user),
     });
   }),

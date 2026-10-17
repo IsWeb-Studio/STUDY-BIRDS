@@ -5,7 +5,8 @@ const StudentReferral = require("../models/StudentReferral");
 const StudentWalletEntry = require("../models/StudentWalletEntry");
 const Invoice = require("../models/Invoice");
 const { ensureReferralCode, getWalletBalance } = require("../utils/studentWallet");
-const { withLease } = require("../utils/leaseLock");
+const { financialTransaction } = require('../utils/financialTransaction');
+const { minorUnits, operationKey, outstandingMinor, hasCardAttempt, fail } = require('../utils/financialPolicy');
 
 // ---- Student: their own wallet ------------------------------------------
 
@@ -30,39 +31,35 @@ const redeemWalletCredit = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(invoiceId) || typeof amount !== "number" || !Number.isFinite(amount) || amount <= 0) {
     return res.status(400).json({ message: "Invalid redemption request" });
   }
-  // One redemption at a time per student: the balance check, the debit and the
-  // invoice update run under the student's wallet lease, so two simultaneous
-  // requests can't both spend the same balance.
-  const result = await withLease(`wallet:${req.user._id}`, async () => {
-    const session = await mongoose.startSession();
-    try {
-      let outcome;
-      await session.withTransaction(async () => {
-        outcome = await (async () => {
-          const invoice = await Invoice.findOne({ _id: invoiceId, student: req.user._id }).session(session);
-          if (!invoice) return { status: 404, body: { message: "Invoice not found" } };
-          if (invoice.stripeCheckoutExpiresAt > new Date()) return { status: 409, body: { message: 'توجد عملية دفع بالبطاقة قيد الانتظار؛ انتظر انتهاءها قبل استخدام الرصيد.' } };
-          if ((invoice.currency || 'USD').toUpperCase() !== 'USD') return { status: 400, body: { message: 'رصيد المحفظة بالدولار ويستخدم لفواتير الدولار فقط.' } };
-          if (invoice.status !== "unpaid") return { status: 409, body: { message: "This invoice can no longer accept credit" } };
-          const remaining = invoice.amount - invoice.walletCreditApplied - (invoice.crmPaidAmount || 0);
-          if (amount > remaining) return { status: 400, body: { message: "Amount exceeds what is still owed on this invoice" } };
-          const balance = await getWalletBalance(req.user._id, session);
-          if (amount > balance) return { status: 409, body: { message: "Insufficient wallet balance" } };
-
-          // The transaction commits both writes together or rolls both back.
-          await StudentWalletEntry.create([{ student: req.user._id, direction: "debit", kind: "redemption", amount, relatedInvoice: invoice._id, notes: `سداد جزئي/كامل لفاتورة ${invoice.invoiceNumber}` }], { session });
-          const updated = await Invoice.findOneAndUpdate(
-              { _id: invoice._id, status: "unpaid", walletCreditApplied: invoice.walletCreditApplied },
-              { $inc: { walletCreditApplied: amount }, $set: amount >= remaining ? { status: "paid", reviewedAt: new Date() } : {} },
-              { new: true, session }
-            );
-          if (!updated) throw Object.assign(new Error('Invoice changed. Refresh and retry.'), { statusCode: 409 });
-          return { status: 200, body: { invoice: updated, balance: await getWalletBalance(req.user._id, session) } };
-        })();
-      });
-      return outcome;
-    } finally { await session.endSession(); }
-  }, { renew: true });
+  const cents = minorUnits(amount);
+  if (!cents) return res.status(400).json({ message: 'Invalid redemption amount' });
+  const key = operationKey(req, `redemption:${req.user._id}`);
+  const result = await financialTransaction([`wallet:${req.user._id}`, `invoice:${invoiceId}`], async session => {
+    const invoice = await Invoice.findOne({ _id: invoiceId, student: req.user._id }).session(session);
+    if (!invoice) return { status: 404, body: { message: 'Invoice not found' } };
+    const replay = await StudentWalletEntry.findOne({ operationKey: key }).session(session);
+    if (replay) {
+      if (String(replay.relatedInvoice) !== String(invoice._id) || replay.amount !== amount) fail(409, 'Idempotency key has different financial data');
+      return { status: 200, body: { invoice, balance: await getWalletBalance(req.user._id, session) } };
+    }
+    if (hasCardAttempt(invoice)) return { status: 409, body: { message: 'Resolve the card payment attempt before using wallet credit' } };
+    if ((invoice.currency || 'USD').toUpperCase() !== 'USD') return { status: 400, body: { message: 'Wallet credit is USD only' } };
+    if (invoice.status !== 'unpaid') return { status: 409, body: { message: 'This invoice can no longer accept credit' } };
+    const remaining = outstandingMinor(invoice);
+    if (cents > remaining) return { status: 400, body: { message: 'Amount exceeds the outstanding invoice balance' } };
+    const balance = await getWalletBalance(req.user._id, session);
+    if (cents > minorUnits(Math.max(0, balance))) return { status: 409, body: { message: 'Insufficient wallet balance' } };
+    await StudentWalletEntry.create([{
+      student: req.user._id, direction: 'debit', kind: 'redemption', amount,
+      relatedInvoice: invoice._id, operationKey: key, notes: `Invoice ${invoice.invoiceNumber}`,
+    }], { session });
+    // All writers conflict on this invoice; no independent compensation on errors.
+    invoice.walletCreditApplied = (minorUnits(invoice.walletCreditApplied || 0) + cents) / 100;
+    if (cents === remaining) { invoice.status = 'paid'; invoice.reviewedAt = new Date(); }
+    invoice.increment();
+    await invoice.save({ session });
+    return { status: 200, body: { invoice, balance: await getWalletBalance(req.user._id, session) } };
+  });
   res.status(result.status).json(result.body);
 });
 
@@ -84,13 +81,22 @@ const createWalletAdjustmentAdmin = asyncHandler(async (req, res) => {
     || typeof notes !== "string" || !notes.trim() || notes.length > 500) {
     return res.status(400).json({ message: "Invalid wallet adjustment" });
   }
-  // Same lease as student redemptions, so a staff debit and a redemption can't
-  // both pass the balance check.
-  const entry = await withLease(`wallet:${studentId}`, async () => {
-    if (direction === "debit" && amount > (await getWalletBalance(studentId))) return null;
-    return StudentWalletEntry.create({ student: studentId, direction, kind: "adjustment", amount, notes: notes.trim(), createdBy: req.user._id });
-  }, { renew: true });
-  if (!entry) return res.status(409).json({ message: "Adjustment would leave a negative balance" });
+  if (!minorUnits(amount)) return res.status(400).json({ message: 'Invalid wallet amount' });
+  if (!await require('../models/User').exists({ _id: studentId, role: 'student' })) return res.status(404).json({ message: 'Student not found' });
+  const key = operationKey(req, `adjustment:${studentId}:${req.user._id}`);
+  const entry = await financialTransaction([`wallet:${studentId}`], async session => {
+    const replay = await StudentWalletEntry.findOne({ operationKey: key }).session(session);
+    if (replay) {
+      if (replay.direction !== direction || replay.amount !== amount || replay.notes !== notes.trim()) fail(409, 'Idempotency key has different financial data');
+      return replay;
+    }
+    if (direction === 'debit' && amount > await getWalletBalance(studentId, session)) fail(409, 'Adjustment would leave a negative balance');
+    const [created] = await StudentWalletEntry.create([{
+      student: studentId, direction, kind: 'adjustment', amount, notes: notes.trim(),
+      createdBy: req.user._id, operationKey: key,
+    }], { session });
+    return created;
+  });
   res.status(201).json(entry);
 });
 

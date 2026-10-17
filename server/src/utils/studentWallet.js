@@ -5,9 +5,11 @@ const mongoose = require("mongoose");
 const User = require("../models/User");
 const StudentReferral = require("../models/StudentReferral");
 const StudentWalletEntry = require("../models/StudentWalletEntry");
-const Notification = require("../models/Notification");
+const { financialTransaction } = require('./financialTransaction');
+const { minorUnits } = require('./financialPolicy');
+const { enqueueFinancialNotice, drainFinancialOutbox } = require('./financialOutbox');
 
-const REFERRAL_REWARD_AMOUNT = Math.max(0, Number(process.env.STUDENT_REFERRAL_REWARD_AMOUNT) || 15);
+const REFERRAL_REWARD_AMOUNT = process.env.STUDENT_REFERRAL_REWARD_AMOUNT === undefined ? 15 : Number(process.env.STUDENT_REFERRAL_REWARD_AMOUNT);
 
 async function ensureReferralCode(userId) {
   const current = await User.findById(userId).select("name referralCode").lean();
@@ -43,29 +45,59 @@ async function recordReferralSignup(referredUserId, code) {
 // Called after a student's first-ever application is created. Awards the
 // referrer once the referred student takes this real step, not at signup.
 async function qualifyReferral(referredUserId) {
-  const referral = await StudentReferral.findOneAndUpdate(
-    { referredUser: referredUserId, status: "pending" },
-    { $set: { status: "qualified", qualifiedAt: new Date() } },
-    { new: true }
-  );
-  if (!referral) return null;
-  await StudentWalletEntry.create({
-    student: referral.referrer, direction: "credit", kind: "referral-reward", amount: REFERRAL_REWARD_AMOUNT,
-    notes: "مكافأة إحالة طالب قدّم أول طلب له", relatedReferral: referral._id,
+  const candidate = await StudentReferral.findOne({ referredUser: referredUserId }).lean();
+  if (!candidate) return null;
+  const reward = minorUnits(REFERRAL_REWARD_AMOUNT) / 100;
+  const result = await financialTransaction([`wallet:${candidate.referrer}`], async session => {
+    const referral = await StudentReferral.findById(candidate._id).session(session);
+    if (!referral || !await require('../models/Application').exists({ student: referredUserId }).session(session)) return null;
+    const existing = await StudentWalletEntry.findOne({ relatedReferral: referral._id, kind: 'referral-reward' }).session(session);
+    if (!existing) {
+      await StudentWalletEntry.create([{
+        student: referral.referrer, direction: 'credit', kind: 'referral-reward', amount: reward,
+        relatedReferral: referral._id, operationKey: `referral:${referral._id}`, notes: 'Referral application reward',
+      }], { session });
+      await enqueueFinancialNotice(`referral:${referral._id}`, {
+        user: referral.referrer, title: 'Referral reward', message: `Referral credit: ${reward} USD`, link: '/student/wallet',
+      }, session);
+    }
+    referral.status = 'qualified';
+    referral.qualifiedAt = referral.qualifiedAt || new Date();
+    await referral.save({ session });
+    return referral;
   });
-  await Notification.create({
-    user: referral.referrer, title: "مكافأة إحالة", type: "success", link: "/student/wallet",
-    message: `حصلت على رصيد ${REFERRAL_REWARD_AMOUNT} في محفظتك لأن طالبًا أحلته قدّم أول طلب له.`,
-  });
-  return referral;
+  await drainFinancialOutbox().catch(() => {});
+  return result;
+}
+
+// Also repairs legacy qualified referrals whose ledger write failed. Candidate
+// filtering prevents old successful referrals from starving the retry queue.
+async function reconcileReferralRewards() {
+  const rows = await StudentReferral.aggregate([
+    { $lookup: { from: StudentWalletEntry.collection.name, localField: '_id', foreignField: 'relatedReferral', as: 'rewards' } },
+    { $match: { 'rewards.0': { $exists: false } } },
+    { $lookup: { from: 'applications', localField: 'referredUser', foreignField: 'student', as: 'applications' } },
+    { $match: { 'applications.0': { $exists: true } } }, { $limit: 50 },
+    { $project: { referredUser: 1 } },
+  ]);
+  for (const row of rows) await qualifyReferral(row.referredUser);
 }
 
 async function getWalletBalance(studentId, session = null) {
   const [result] = await StudentWalletEntry.aggregate([
     { $match: { student: new mongoose.Types.ObjectId(studentId) } },
-    { $group: { _id: null, balance: { $sum: { $cond: [{ $eq: ["$direction", "credit"] }, "$amount", { $multiply: ["$amount", -1] }] } } } },
+    { $project: { direction: 1, scaled: { $multiply: ['$amount', 100] } } },
+    { $project: { direction: 1, cents: { $round: ['$scaled', 0] },
+      invalid: { $gt: [{ $abs: { $subtract: ['$scaled', { $round: ['$scaled', 0] }] } }, 0.000001] } } },
+    { $group: { _id: null,
+      balance: { $sum: { $cond: [{ $eq: ['$direction', 'credit'] }, '$cents', { $multiply: ['$cents', -1] }] } },
+      invalid: { $sum: { $cond: ['$invalid', 1, 0] } },
+    } },
   ]).session(session);
-  return result?.balance || 0;
+  if (result && (result.invalid || !Number.isSafeInteger(result.balance))) {
+    throw Object.assign(new Error('Wallet history requires financial reconciliation'), { statusCode: 503 });
+  }
+  return (result?.balance || 0) / 100;
 }
 
-module.exports = { REFERRAL_REWARD_AMOUNT, ensureReferralCode, recordReferralSignup, qualifyReferral, getWalletBalance };
+module.exports = { REFERRAL_REWARD_AMOUNT, ensureReferralCode, recordReferralSignup, qualifyReferral, reconcileReferralRewards, getWalletBalance };

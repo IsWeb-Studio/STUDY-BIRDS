@@ -1,3 +1,4 @@
+import { sessionStore } from '../../lib/sessionStore';
 import { useEffect, useState } from "react";
 import { startAuthentication } from "@simplewebauthn/browser";
 import { isAxiosError } from "axios";
@@ -72,6 +73,8 @@ export const IdentityLogin = () => {
     };
   }, []);
   const signIn = async (provider: "apple" | "passkeys") => {
+    if (localStorage.getItem("studyBirdsLogoutPending")) return;
+    const generation = sessionStore.begin();
     setBusy(true);
     setError("");
     try {
@@ -81,6 +84,7 @@ export const IdentityLogin = () => {
         const credential = await startAuthentication({
           optionsJSON: data.options,
         });
+        if (generation !== sessionStore.generation()) return;
         response = await api.post("/identity/passkeys/login/verify", {
           challengeId: data.challengeId,
           response: credential,
@@ -100,6 +104,7 @@ export const IdentityLogin = () => {
         const result = await sdk.auth.signIn();
         if (result.authorization.state !== data.state)
           throw new Error("Invalid Apple state");
+        if (generation !== sessionStore.generation()) return;
         response = await api.post("/identity/apple/verify", {
           challengeId: data.state,
           identityToken: result.authorization.id_token,
@@ -110,6 +115,7 @@ export const IdentityLogin = () => {
               .join(" ") || undefined,
         });
       }
+      if (generation !== sessionStore.generation()) return;
       const user = await acceptIdentity(response.data);
       navigate(
         sessionStorage.getItem("mobileSignInRequest")

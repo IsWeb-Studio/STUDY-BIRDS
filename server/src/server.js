@@ -11,6 +11,7 @@ let stopConsultationReminders;
 let stopEmailDelivery;
 let stopWinkGames;
 let stopMaintenance;
+let stopFinancialOutbox;
 async function runStartupMigrations() {
   try {
     const OurService = require('./models/OurService');
@@ -30,6 +31,7 @@ const startDatabaseConnection = async () => {
   try {
     await connectDatabase();
     if (!stopMaintenance) stopMaintenance = require('./utils/mediaMaintenance').startMaintenance();
+    if (!stopFinancialOutbox) stopFinancialOutbox = require("./utils/financialOutbox").startFinancialOutbox();
     if (!stopWinkGames) stopWinkGames = require('./games/winkStore').startWinkScheduler();
     await runStartupMigrations();
     if (!stopEmailDelivery) {

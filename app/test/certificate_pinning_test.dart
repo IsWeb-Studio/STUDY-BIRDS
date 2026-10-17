@@ -9,18 +9,27 @@ import 'package:study_birds/core/network/pinned_http.dart';
 /// SHA-256 fingerprints (of the DER bytes) of the roots we intend to trust.
 /// Taken from each CA's own publication; a change here is a deliberate act.
 const expectedRoots = {
-  'GTS Root R1': 'd947432abde7b7fa90fc2e6b59101b1280e0e1c7e4e40fa3c6887fff57a7f4cf',
-  'GTS Root R2': '8d25cd97229dbf70356bda4eb3cc734031e24cf00fafcfd32dc76eb5841c7ea8',
-  'GTS Root R3': '34d8a73ee208d9bcdb0d956520934b4e40e69482596e8b6f73c8426b010a6f48',
-  'GTS Root R4': '349dfa4058c5e263123b398ae795573c4e1313c83fe68f93556cd5e8031b3c7d',
-  'GlobalSign Root CA': 'ebd41040e4bb3ec742c9e381d31ef2a41a48b6685c96e7cef3c1df6cd4331c99',
-  'ISRG Root X1': '96bcec06264976f37460779acf28c5a7cfe8a3c0aae11a8ffcee05c0bddf08c6',
-  'ISRG Root X2': '69729b8e15a86efc177a57afb7171dfc64add28c2fca8cf1507e34453ccb1470',
-  'DigiCert Global Root G2': 'cb3ccbb76031e5e0138f8dd39a23f9de47ffc35e43c1144cea27d46a5ab1cb5f',
+  'GTS Root R1':
+      'd947432abde7b7fa90fc2e6b59101b1280e0e1c7e4e40fa3c6887fff57a7f4cf',
+  'GTS Root R2':
+      '8d25cd97229dbf70356bda4eb3cc734031e24cf00fafcfd32dc76eb5841c7ea8',
+  'GTS Root R3':
+      '34d8a73ee208d9bcdb0d956520934b4e40e69482596e8b6f73c8426b010a6f48',
+  'GTS Root R4':
+      '349dfa4058c5e263123b398ae795573c4e1313c83fe68f93556cd5e8031b3c7d',
+  'GlobalSign Root CA':
+      'ebd41040e4bb3ec742c9e381d31ef2a41a48b6685c96e7cef3c1df6cd4331c99',
+  'ISRG Root X1':
+      '96bcec06264976f37460779acf28c5a7cfe8a3c0aae11a8ffcee05c0bddf08c6',
+  'ISRG Root X2':
+      '69729b8e15a86efc177a57afb7171dfc64add28c2fca8cf1507e34453ccb1470',
+  'DigiCert Global Root G2':
+      'cb3ccbb76031e5e0138f8dd39a23f9de47ffc35e43c1144cea27d46a5ab1cb5f',
 };
 
 List<Uint8List> pemToDer(String pem) {
-  final re = RegExp(r'-----BEGIN CERTIFICATE-----([^-]+)-----END CERTIFICATE-----');
+  final re =
+      RegExp(r'-----BEGIN CERTIFICATE-----([^-]+)-----END CERTIFICATE-----');
   return re
       .allMatches(pem)
       .map((m) => base64.decode(m.group(1)!.replaceAll(RegExp(r'\s'), '')))
@@ -28,6 +37,22 @@ List<Uint8List> pemToDer(String pem) {
 }
 
 void main() {
+  late Directory fixtureDirectory;
+  late String certificatePath;
+  late String privateKeyPath;
+  setUpAll(() async {
+    fixtureDirectory = await Directory.systemTemp.createTemp('studybirds-tls-test-');
+    certificatePath = '${fixtureDirectory.path}/certificate.pem';
+    privateKeyPath = '${fixtureDirectory.path}/key.pem';
+    final result = await Process.run('openssl', [
+      'req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1',
+      '-subj', '/CN=localhost', '-addext', 'subjectAltName=DNS:localhost',
+      '-keyout', privateKeyPath, '-out', certificatePath,
+    ]);
+    if (result.exitCode != 0) throw StateError('Unable to generate local TLS test certificate');
+  });
+  tearDownAll(() async => fixtureDirectory.delete(recursive: true));
+
   final bundle = File('assets/certs/trusted_roots.pem').readAsBytesSync();
 
   group('trusted root bundle', () {
@@ -44,7 +69,8 @@ void main() {
     });
 
     test('only https URLs are pinned (local http dev is untouched)', () {
-      expect(PinnedHttp.appliesTo('https://study-birds1.onrender.com/api'), isTrue);
+      expect(PinnedHttp.appliesTo('https://study-birds1.onrender.com/api'),
+          isTrue);
       expect(PinnedHttp.appliesTo('http://10.0.2.2:5000/api'), isFalse);
     });
   });
@@ -59,8 +85,8 @@ void main() {
       previousOverrides = HttpOverrides.current;
       HttpOverrides.global = null;
       final ctx = SecurityContext()
-        ..useCertificateChain('test/fixtures/selfsigned_cert.pem')
-        ..usePrivateKey('test/fixtures/selfsigned_key.pem');
+        ..useCertificateChain(certificatePath)
+        ..usePrivateKey(privateKeyPath);
       server = await HttpServer.bindSecure('127.0.0.1', 0, ctx);
       server.listen((request) {
         request.response
@@ -79,7 +105,8 @@ void main() {
       HttpOverrides.global = previousOverrides;
     });
 
-    test('a server whose certificate does not chain to a pinned root is REFUSED',
+    test(
+        'a server whose certificate does not chain to a pinned root is REFUSED',
         () async {
       PinnedHttp.loadBundle = () async => bundle; // the real allow-list
       final client = PinnedClient(baseUrl: url);
@@ -90,7 +117,8 @@ void main() {
 
     test('the same server IS accepted when its certificate is the pinned one',
         () async {
-      final fixture = File('test/fixtures/selfsigned_cert.pem').readAsBytesSync();
+      final fixture =
+          File(certificatePath).readAsBytesSync();
       PinnedHttp.loadBundle = () async => fixture;
       final client = PinnedClient(baseUrl: url);
       addTearDown(client.close);
@@ -110,11 +138,10 @@ void main() {
       await expectLater(client.get(Uri.parse('$url/')), throwsA(anything));
     });
 
-    test('an unreadable bundle falls back to normal validation (never bricks)',
-        () async {
+    test('an unreadable bundle fails closed', () async {
       PinnedHttp.loadBundle = () async => throw StateError('asset missing');
-      final context = await PinnedHttp.context();
-      expect(context, isNull);
+      await expectLater(
+          PinnedHttp.context(), throwsA(isA<HandshakeException>()));
     });
   });
 }

@@ -1,5 +1,7 @@
 import { isAxiosError } from "axios";
-import { createContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { createContext, useEffect, useRef, type ReactNode } from "react";
+import { api } from '../lib/api';
+import { broadcastLogout, sessionStore, useSession } from '../lib/sessionStore';
 import { connectivity } from "../lib/connectivity";
 import { configureStaffReadTracking } from "../lib/sharedReadState";
 import { authService } from "../services/authService";
@@ -23,134 +25,124 @@ interface AuthContextValue {
 export const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const session = useSession();
   useEffect(() => {
-    configureStaffReadTracking(Boolean(user && ['admin', 'employee'].includes(user.role)));
+    configureStaffReadTracking(Boolean(session.user && ['admin', 'employee'].includes(session.user.role)));
     return () => configureStaffReadTracking(false);
-  }, [user?._id, user?.role]);
-  const [profile, setProfile] = useState<StudentProfile | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem("studyBirdsToken"));
-  const [loading, setLoading] = useState(true);
-  // True when a saved login exists but the server could not be reached to verify
-  // it. The saved token is kept (no logout); routes show a retry state.
-  const [sessionUnverified, setSessionUnverified] = useState(false);
+  }, [session.user?._id, session.user?.role]);
 
-  const persistAuth = (nextToken: string, nextUser: User) => {
-    localStorage.setItem("studyBirdsToken", nextToken);
-    setToken(nextToken);
-    setUser(nextUser);
+  const refreshPending = useRef<Promise<void> | null>(null);
+  const sessionGeneration = useRef(sessionStore.generation());
+  const captureGeneration = () => (sessionGeneration.current = sessionStore.generation());
+  const isCurrentGeneration = (generation: number) =>
+    generation === sessionGeneration.current && generation === sessionStore.generation();
+  const beginSession = () => (sessionGeneration.current = sessionStore.begin());
+  const cleanupSession = () => {
+    sessionStore.clear();
+    sessionGeneration.current = sessionStore.generation();
+    refreshPending.current = null;
   };
 
-  const refreshSession = async () => {
-    const storedToken = localStorage.getItem("studyBirdsToken");
-    if (!storedToken) {
-      setLoading(false);
-      return;
-    }
 
-    try {
-      const data = await authService.me();
-      setUser(data.user);
-      setProfile(data.profile ?? null);
-      setSessionUnverified(false);
-    } catch (error) {
-      if (!isAxiosError(error) || ![401, 403].includes(error.response?.status ?? 0)) {
-        setSessionUnverified(true);
-        throw error;
+  const refreshSession = () => {
+    if (refreshPending.current) return refreshPending.current;
+    const generation = captureGeneration();
+    const run = async () => {
+      try {
+        if (localStorage.getItem('studyBirdsLogoutPending')) {
+          await api.post('/auth/logout', {}).catch(error => {
+            if (!isAxiosError(error) || ![400, 401].includes(error.response?.status ?? 0)) throw error;
+          });
+          localStorage.removeItem('studyBirdsLogoutPending');
+          if (isCurrentGeneration(generation)) cleanupSession();
+          return;
+        }
+        let token = sessionStore.get().token;
+        if (!token) {
+          const { data } = await api.post('/auth/refresh', {});
+          if (!sessionStore.update(generation, { token: data.token, user: data.user, profile: null })) return;
+          token = data.token;
+        }
+        const { data } = await api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+        sessionStore.update(generation, { user: data.user, profile: data.profile ?? null, loading: false, sessionUnverified: false });
+      } catch (error) {
+        if (!isCurrentGeneration(generation)) return;
+        if (isAxiosError(error) && [400, 401, 403].includes(error.response?.status ?? 0)) cleanupSession();
+        else sessionStore.update(generation, { loading: false, sessionUnverified: true });
       }
-      setSessionUnverified(false);
-      localStorage.removeItem("studyBirdsToken");
-      setToken(null);
-      setUser(null);
-      setProfile(null);
-    } finally {
-      setLoading(false);
-    }
+    };
+    const pending = run().finally(() => { if (refreshPending.current === pending) refreshPending.current = null; });
+    refreshPending.current = pending;
+    return pending;
   };
 
   useEffect(() => {
-    void refreshSession().catch(() => setLoading(false));
+    void refreshSession();
+    const unsubscribe = connectivity.onReconnected(() => {
+      if (sessionStore.get().sessionUnverified || localStorage.getItem('studyBirdsLogoutPending')) void refreshSession();
+    });
+    return unsubscribe;
   }, []);
 
-  // When verified connectivity returns, re-check a session that could not be
-  // verified (once per reconnect, never in a loop).
-  const unverifiedRef = useRef(false);
-  unverifiedRef.current = sessionUnverified;
-  useEffect(
-    () =>
-      connectivity.onReconnected(() => {
-        if (unverifiedRef.current) void refreshSession().catch(() => undefined);
-      }),
-    []
-  );
-
-  const login = async (email: string, password: string, twoFactorCode?: string) => {
-    const data = await authService.login({ email, password, twoFactorCode });
-    persistAuth(data.token, data.user);
-    const session = await authService.me();
-    setProfile(session.profile ?? null);
-    return data.user;
-  };
-
-  const acceptIdentity = async (response: { token: string; user: User }) => {
-    persistAuth(response.token, response.user);
-    const session = await authService.me();
-    setProfile(session.profile ?? null);
+  const accept = async (response: { token: string; user: User }, generation: number) => {
+    if (!sessionStore.update(generation, { token: response.token, user: response.user, profile: null, loading: false, sessionUnverified: false })) {
+      throw new Error('Session changed');
+    }
+    broadcastLogout();
+    try {
+      const { data } = await api.get('/auth/me', { headers: { Authorization: `Bearer ${response.token}` } });
+      if (!sessionStore.update(generation, { user: data.user, profile: data.profile ?? null })) throw new Error('Session changed');
+    } catch (error) {
+      if (isCurrentGeneration(generation)) {
+        if (isAxiosError(error) && [401, 403].includes(error.response?.status ?? 0)) cleanupSession();
+        else sessionStore.update(generation, { sessionUnverified: true });
+      }
+      throw error;
+    }
     return response.user;
   };
-
-  const googleLogin = async (credential: string, emailCode?: string) => {
-    const data = await authService.googleLogin({ credential, emailCode });
-    persistAuth(data.token, data.user);
-    const session = await authService.me();
-    setProfile(session.profile ?? null);
-    return data.user;
+  const authenticate = async (request: () => Promise<{ token: string; user: User }>) => {
+    // Do not let a delayed offline logout revoke a newly created session.
+    if (localStorage.getItem('studyBirdsLogoutPending')) await refreshSession();
+    if (localStorage.getItem('studyBirdsLogoutPending')) throw new Error('Connect to finish signing out first');
+    const generation = beginSession();
+    sessionStore.update(generation, { token: null, user: null, profile: null, sessionUnverified: false });
+    return accept(await request(), generation);
   };
-
-  const emailOtpLogin = async (email: string, code: string) => {
-    const data = await authService.verifyEmailOtp(email, code);
-    persistAuth(data.token, data.user);
-    const session = await authService.me();
-    setProfile(session.profile ?? null);
-    return data.user;
-  };
-
-  const register = async (payload: { name: string; email: string; password: string; referralCode?: string }) => {
-    const data = await authService.register(payload);
-    persistAuth(data.token, data.user);
-    const session = await authService.me();
-    setProfile(session.profile ?? null);
-    return data.user;
-  };
-
+  const login = (email: string, password: string, twoFactorCode?: string) => authenticate(() => authService.login({ email, password, twoFactorCode }));
+  const googleLogin = (credential: string, emailCode?: string) => authenticate(() => authService.googleLogin({ credential, emailCode }));
+  const emailOtpLogin = (email: string, code: string) => authenticate(() => authService.verifyEmailOtp(email, code));
+  const register = (payload: { name: string; email: string; password: string; referralCode?: string }) => authenticate(() => authService.register(payload));
+  const acceptIdentity = (response: { token: string; user: User }) => accept(response, beginSession());
   const logout = () => {
-    localStorage.removeItem("studyBirdsToken");
-    if (window.google?.accounts?.id) {
-      window.google.accounts.id.disableAutoSelect();
-    }
-    setToken(null);
-    setUser(null);
-    setProfile(null);
+    cleanupSession();
+    const generation = captureGeneration();
+    localStorage.setItem('studyBirdsLogoutPending', '1');
+    broadcastLogout();
+    // Cookie logout can revoke even an expired access token. Serialized after pending authentication.
+    void api.post('/auth/logout', {}).then(() => localStorage.removeItem('studyBirdsLogoutPending')).catch(error => {
+      if (isAxiosError(error) && [400, 401].includes(error.response?.status ?? 0)) localStorage.removeItem('studyBirdsLogoutPending');
+      else sessionStore.update(generation, { sessionUnverified: true });
+    });
+    window.google?.accounts?.id?.disableAutoSelect();
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        profile,
-        token,
-        loading,
-        login,
-        googleLogin,
-        emailOtpLogin,
-        acceptIdentity,
-        register,
-        logout,
-        refreshSession,
-        sessionUnverified,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  // Rotate before the short-lived access token expires. Requests are serialized across tabs.
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      if (!sessionStore.get().token) return;
+      const generation = captureGeneration();
+      void api.post('/auth/refresh', {}).then(({ data }) => {
+        if (isCurrentGeneration(generation)) {
+          sessionStore.rotate(data.token, data.user);
+          void refreshSession();
+        }
+      }).catch(error => {
+        if (isCurrentGeneration(generation) && isAxiosError(error) && [400, 401, 403].includes(error.response?.status ?? 0)) cleanupSession();
+      });
+    }, 10 * 60 * 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  return <AuthContext.Provider value={{ ...session, login, googleLogin, emailOtpLogin, register, acceptIdentity, logout, refreshSession }}>{children}</AuthContext.Provider>;
 };

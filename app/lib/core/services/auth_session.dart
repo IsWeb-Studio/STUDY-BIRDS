@@ -390,6 +390,22 @@ class AuthSession extends ChangeNotifier {
     restoreNeedsNetwork = false;
   }
 
+  // All credential/cache writes share one queue. Network refreshes commit only
+  // if the session generation that started them still owns the result.
+  Future<void>? _sessionTail;
+  Future<T> _serializeSession<T>(Future<T> Function() action) {
+    final previous = _sessionTail;
+    final pending = previous == null
+        ? Future<T>.sync(action)
+        : previous.then((_) => action());
+    final tail =
+        pending.then<void>((_) {}, onError: (Object _, StackTrace __) {});
+    _sessionTail = tail;
+    return pending.whenComplete(() {
+      if (identical(_sessionTail, tail)) _sessionTail = null;
+    });
+  }
+
   int _revision = 0;
   String? _previousToken;
   Future<String?>? _refreshing;
@@ -404,15 +420,16 @@ class AuthSession extends ChangeNotifier {
   }
 
   Future<String?> refreshAccessToken(String failedToken) async {
-    if (token != failedToken)
+    if (token != failedToken) {
       return failedToken == _previousToken ? token : null;
+    }
     if (_refreshing != null) return _refreshing;
     final operation = _renew(failedToken);
     _refreshing = operation;
     try {
       return await operation;
     } finally {
-      _refreshing = null;
+      if (identical(_refreshing, operation)) _refreshing = null;
     }
   }
 
@@ -428,15 +445,20 @@ class AuthSession extends ChangeNotifier {
         await logout(revoke: false);
         return null;
       }
-      _previousToken = failedToken;
-      token = result.token;
-      currentUser = result.user;
-      await storage.write(key: 'active_session_token', value: result.token);
-      await _cacheUser(result.user);
-      if (result.refreshToken != null)
-        await storage.write(key: 'refresh_token', value: result.refreshToken);
-      notifyListeners();
-      return token;
+      return await _serializeSession(() async {
+        if (revision != _revision || token != failedToken) return null;
+        _previousToken = failedToken;
+        token = result.token;
+        currentUser = result.user;
+        await storage.write(key: 'active_session_token', value: result.token);
+        await _cacheUser(result.user);
+        if (result.refreshToken != null) {
+          await storage.write(key: 'refresh_token', value: result.refreshToken);
+        }
+        if (revision != _revision) return null;
+        notifyListeners();
+        return token;
+      });
     } catch (swallowedError, swallowedStack) {
       ErrorReporter.swallowed(swallowedError, swallowedStack,
           'core/services/auth_session.dart:403');
@@ -447,135 +469,139 @@ class AuthSession extends ChangeNotifier {
 
   Future<void> restore() async {
     if (_restored && !restoreNeedsNetwork) return;
-    restoreNeedsNetwork = false;
-    final pendingGoogleSetup = await const FlutterSecureStorage()
-            .read(key: 'google_password_setup_required') ==
-        'true';
-    if (pendingGoogleSetup) {
-      // The email proof expires after ten minutes. A restored unfinished
-      // setup must authenticate again rather than reopen an unusable form.
+    final revision = _revision;
+    const storage = FlutterSecureStorage();
+    final snapshot = await _serializeSession(() async {
+      if (revision != _revision) return null;
+      final prefs = await SharedPreferences.getInstance();
+      final pending = await storage.read(key: 'google_password_setup_required');
+      var access = await storage.read(key: 'active_session_token');
+      final legacy = prefs.getString('session_token');
+      if (access == null && legacy != null) {
+        access = legacy;
+        await storage.write(key: 'active_session_token', value: legacy);
+      }
+      await prefs.remove('session_token');
+      for (final key in [
+        'sb_overview_cache',
+        'sb_apps_cache',
+        'sb_docs_cache',
+        'sb_financials_cache'
+      ]) {
+        await prefs.remove(key);
+      }
+      return (
+        access: access,
+        refresh: await storage.read(key: 'refresh_token'),
+        cached: await storage.read(key: 'cached_user'),
+        pending: pending == 'true'
+      );
+    });
+    if (snapshot == null || revision != _revision) return;
+    if (snapshot.pending) {
       await logout(revoke: false);
       _restored = true;
-      notifyListeners();
       return;
     }
-    requiresGooglePasswordSetup = false;
-    final prefs = await SharedPreferences.getInstance();
-    const storage = FlutterSecureStorage();
-    var storedToken = await storage.read(key: 'active_session_token');
-    final legacy = prefs.getString('session_token');
-    if (storedToken == null && legacy != null) {
-      await storage.write(key: 'active_session_token', value: legacy);
-      storedToken = legacy;
-    }
-    await prefs.remove('session_token');
-    // Legacy plain-text caches from older versions: never keep account data
-    // in SharedPreferences.
-    for (final key in [
-      'sb_overview_cache',
-      'sb_apps_cache',
-      'sb_docs_cache',
-      'sb_financials_cache'
-    ]) {
-      await prefs.remove(key);
-    }
-
+    AuthUser? restoredUser;
+    var access = snapshot.access;
+    String? replacementRefresh;
+    var invalid = false;
     var networkFailed = false;
-    if (storedToken != null) {
+    if (access != null) {
       try {
-        // Bounded: a dead network must not keep the splash up for 30s+.
-        // A timeout lands in the offline branch below and never logs out.
-        final user = await AuthService.instance
-            .fetchCurrentUser(storedToken)
+        restoredUser = await AuthService.instance
+            .fetchCurrentUser(access)
             .timeout(const Duration(seconds: 10));
-        if (user != null) {
-          currentUser = user;
-          token = storedToken;
-          await _cacheUser(user);
-        } else {
-          // Access token expired — try refresh token before giving up.
-          final storedRefresh = await storage.read(key: 'refresh_token');
-          if (storedRefresh != null) {
-            final refreshed =
-                await AuthService.instance.tryRefresh(storedRefresh);
-            if (refreshed != null) {
-              currentUser = refreshed.user;
-              token = refreshed.token;
-              await storage.write(
-                  key: 'active_session_token', value: refreshed.token);
-              await _cacheUser(refreshed.user);
-              if (refreshed.refreshToken != null)
-                await storage.write(
-                    key: 'refresh_token', value: refreshed.refreshToken);
+        if (revision != _revision) return;
+        if (restoredUser == null) {
+          if (snapshot.refresh != null) {
+            final result =
+                await AuthService.instance.tryRefresh(snapshot.refresh!);
+            if (revision != _revision) return;
+            if (result != null) {
+              restoredUser = result.user;
+              access = result.token;
+              replacementRefresh = result.refreshToken;
             } else {
-              await storage.delete(key: 'active_session_token');
-              await storage.delete(key: 'refresh_token');
-              await storage.delete(key: 'cached_user');
+              invalid = true;
             }
           } else {
-            await storage.delete(key: 'active_session_token');
-            await storage.delete(key: 'cached_user');
+            invalid = true;
           }
+        } else if (token != null && currentUser?.id == restoredUser.id) {
+          // ApiClient may already have renewed the access token after a 401.
+          access = token;
         }
       } catch (error) {
-        if (error is ApiException &&
-            (error.statusCode == 401 || error.statusCode == 403)) {
-          await storage.delete(key: 'active_session_token');
-          await storage.delete(key: 'refresh_token');
-          await storage.delete(key: 'cached_user');
-          _restored = true;
-          notifyListeners();
-          return;
-        }
-        networkFailed = true;
-        // Network or transport error — restore from cached user snapshot so
-        // the app can work offline with stale data; the next successful request
-        // will re-validate the token via the 401 refresh path.
-        final cachedRaw = await storage.read(key: 'cached_user');
-        if (cachedRaw != null) {
+        if (revision != _revision) return;
+        invalid =
+            error is ApiException && [401, 403].contains(error.statusCode);
+        networkFailed = !invalid;
+        if (networkFailed && snapshot.cached != null) {
           try {
-            final cached = Json.rawMap(jsonDecode(cachedRaw));
+            final cached = Json.rawMap(jsonDecode(snapshot.cached!));
             final savedAt = DateTime.tryParse('${cached['savedAt']}');
             final age =
                 savedAt == null ? null : DateTime.now().difference(savedAt);
             final user = AuthUser.fromJson(
                 Map<String, dynamic>.from(Json.rawMap(cached['user'])));
-            // Staff permissions must be verified online before opening tools.
-            // Parents (read-only view) are safe to restore offline like students.
             final offlineSafe =
                 user.role == UserRole.student || user.role == UserRole.parent;
             if (offlineSafe &&
                 age != null &&
                 !age.isNegative &&
                 age < const Duration(days: 7)) {
-              currentUser = user;
-              token = storedToken;
+              restoredUser = user;
             }
-          } catch (swallowedError, swallowedStack) {
-            ErrorReporter.swallowed(swallowedError, swallowedStack,
-                'core/services/auth_session.dart:494');
-            // A missing/old snapshot is not proof that saved credentials were revoked.
-            await storage.delete(key: 'cached_user');
+          } catch (error, stack) {
+            ErrorReporter.swallowed(error, stack, 'auth.restore.cache');
           }
         }
       }
     }
-
-    // Saved login kept but unverifiable offline (staff, or no fresh snapshot):
-    // the root screen shows a retry state instead of a misleading login form.
-    restoreNeedsNetwork = networkFailed && currentUser == null;
+    await _serializeSession(() async {
+      if (revision != _revision) return;
+      requiresGooglePasswordSetup = false;
+      if (invalid) {
+        currentUser = null;
+        token = null;
+        ApiClient.instance.clearCache();
+        for (final key in [
+          'active_session_token',
+          'refresh_token',
+          'cached_user'
+        ]) {
+          await storage.delete(key: key);
+        }
+      } else if (restoredUser != null) {
+        currentUser = restoredUser;
+        token = access;
+        if (!networkFailed) {
+          await storage.write(key: 'active_session_token', value: access);
+          if (replacementRefresh != null) {
+            await storage.write(
+                key: 'refresh_token', value: replacementRefresh);
+          }
+          await _cacheUser(restoredUser!);
+        }
+      }
+      if (revision != _revision) return;
+      restoreNeedsNetwork = networkFailed && currentUser == null;
+      _restored = true;
+      final user = currentUser;
+      if (user != null) {
+        PushNotificationService.instance.setUser(user.id);
+        ErrorReporter.setUser(user.id, role: user.role.key);
+      }
+      notifyListeners();
+    });
+    if (revision != _revision) return;
     if (currentUser != null &&
         !currentUser!.hasPassword &&
         currentUser!.authProvider != 'apple') {
       await logout(revoke: false);
     }
-    final restoredUser = currentUser;
-    if (restoredUser != null) {
-      PushNotificationService.instance.setUser(restoredUser.id);
-      ErrorReporter.setUser(restoredUser.id, role: restoredUser.role.key);
-    }
-    _restored = true;
-    notifyListeners();
     unawaited(flushPendingRevocations());
   }
 
@@ -623,41 +649,48 @@ class AuthSession extends ChangeNotifier {
   }
 
   Future<void> patchHasPassword() async {
-    await const FlutterSecureStorage()
-        .delete(key: 'google_password_setup_required');
-    requiresGooglePasswordSetup = false;
-    final u = currentUser;
-    if (u == null) return;
-    currentUser = AuthUser(
-      id: u.id,
-      name: u.name,
-      email: u.email,
-      role: u.role,
-      employeeRole: u.employeeRole,
-      permissions: u.permissions,
-      linkedUniversityId: u.linkedUniversityId,
-      avatar: u.avatar,
-      verifiedPhone: u.verifiedPhone,
-      emailVerified: u.emailVerified,
-      authProvider: u.authProvider,
-      hasPassword: true,
-    );
-    ApiClient.instance.clearCache();
-    notifyListeners();
-    await _cacheUser(currentUser!);
+    final revision = _revision;
+    await _serializeSession(() async {
+      if (revision != _revision) return;
+      await const FlutterSecureStorage()
+          .delete(key: 'google_password_setup_required');
+      if (revision != _revision) return;
+      requiresGooglePasswordSetup = false;
+      final u = currentUser;
+      if (u == null) return;
+      currentUser = AuthUser(
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        employeeRole: u.employeeRole,
+        permissions: u.permissions,
+        linkedUniversityId: u.linkedUniversityId,
+        avatar: u.avatar,
+        verifiedPhone: u.verifiedPhone,
+        emailVerified: u.emailVerified,
+        authProvider: u.authProvider,
+        hasPassword: true,
+      );
+      ApiClient.instance.clearCache();
+      notifyListeners();
+      await _cacheUser(currentUser!);
+    });
   }
 
   /// Fetches fresh user data from /auth/me and updates the session in-place.
   Future<void> refreshCurrentUser() async {
+    final revision = _revision;
     final t = token;
     if (t == null) return;
     try {
       final user = await AuthService.instance.fetchCurrentUser(t);
-      if (user != null) {
+      await _serializeSession(() async {
+        if (revision != _revision || token != t || user == null) return;
         currentUser = user;
         await _cacheUser(user);
-        notifyListeners();
-      }
+        if (revision == _revision) notifyListeners();
+      });
     } catch (swallowedError, swallowedStack) {
       ErrorReporter.swallowed(swallowedError, swallowedStack,
           'core/services/auth_session.dart:574');
@@ -668,44 +701,56 @@ class AuthSession extends ChangeNotifier {
       {String? authToken,
       String? refreshToken,
       bool requireGooglePasswordSetup = false}) async {
-    ApiClient.instance.clearCache();
-    requiresGooglePasswordSetup = requireGooglePasswordSetup;
-    await const FlutterSecureStorage().write(
-        key: 'google_password_setup_required',
-        value: requireGooglePasswordSetup.toString());
-    _revision++;
+    final revision = ++_revision;
     _previousToken = null;
-    final prefs = await SharedPreferences.getInstance();
-    final storage = const FlutterSecureStorage();
-    if (authToken != null) {
-      await storage.write(key: 'active_session_token', value: authToken);
-    } else {
-      await storage.delete(key: 'active_session_token');
-    }
-    if (refreshToken != null) {
-      await storage.write(key: 'refresh_token', value: refreshToken);
-    } else {
-      await storage.delete(key: 'refresh_token');
-    }
-    await _cacheUser(user);
-    await prefs.remove('session_token');
-    currentUser = user;
-    token = authToken;
-    PushNotificationService.instance.setUser(user.id);
-    ErrorReporter.setUser(user.id, role: user.role.key);
-    AnalyticsService.instance
-        .identify(user.id, traits: {'role': user.role.name, 'name': user.name});
-    notifyListeners();
+    _refreshing = null;
+    currentUser = null;
+    token = null;
+    ApiClient.instance.clearCache();
+    await _serializeSession(() async {
+      if (revision != _revision) return;
+      ApiClient.instance.clearCache();
+      requiresGooglePasswordSetup = requireGooglePasswordSetup;
+      await const FlutterSecureStorage().write(
+          key: 'google_password_setup_required',
+          value: requireGooglePasswordSetup.toString());
+      _previousToken = null;
+      final prefs = await SharedPreferences.getInstance();
+      const storage = FlutterSecureStorage();
+      if (authToken != null) {
+        await storage.write(key: 'active_session_token', value: authToken);
+      } else {
+        await storage.delete(key: 'active_session_token');
+      }
+      if (refreshToken != null) {
+        await storage.write(key: 'refresh_token', value: refreshToken);
+      } else {
+        await storage.delete(key: 'refresh_token');
+      }
+      await _cacheUser(user);
+      await prefs.remove('session_token');
+      if (revision != _revision) return;
+      currentUser = user;
+      token = authToken;
+      PushNotificationService.instance.setUser(user.id);
+      ErrorReporter.setUser(user.id, role: user.role.key);
+      AnalyticsService.instance.identify(user.id,
+          traits: {'role': user.role.name, 'name': user.name});
+      notifyListeners();
+    });
   }
 
   static const _pendingRevocationKey = 'pending_refresh_revocations';
   Future<void> updateAccount(Map<String, dynamic> data) async {
+    final revision = _revision;
     final updated = AuthUser.fromJson(data);
-    if (updated.id != currentUser?.id) return;
-    currentUser = updated;
-    ApiClient.instance.clearCache();
-    await _cacheUser(updated);
-    notifyListeners();
+    await _serializeSession(() async {
+      if (revision != _revision || updated.id != currentUser?.id) return;
+      currentUser = updated;
+      ApiClient.instance.clearCache();
+      await _cacheUser(updated);
+      if (revision == _revision) notifyListeners();
+    });
   }
 
   bool _flushingRevocations = false;
@@ -757,31 +802,35 @@ class AuthSession extends ChangeNotifier {
   }
 
   Future<void> logout({bool revoke = true}) async {
+    final owner = currentUser?.id ?? '';
+    final accessToken = token;
     hasSignedOut = true;
     restoreNeedsNetwork = false;
     requiresGooglePasswordSetup = false;
-    await const FlutterSecureStorage()
-        .delete(key: 'google_password_setup_required');
     _revision++;
     _previousToken = null;
-    final owner = currentUser?.id ?? '';
+    _refreshing = null;
     currentUser = null;
     token = null;
     ApiClient.instance.clearCache();
     notifyListeners();
+    return _serializeSession(() =>
+        _logoutStorage(revoke: revoke, owner: owner, accessToken: accessToken));
+  }
+
+  Future<void> _logoutStorage(
+      {bool revoke = false, String owner = '', String? accessToken}) async {
+    if (!revoke) {
+      currentUser = null;
+      token = null;
+      ApiClient.instance.clearCache();
+    }
+    await const FlutterSecureStorage()
+        .delete(key: 'google_password_setup_required');
     const storage = FlutterSecureStorage();
     final refresh = await storage.read(key: 'refresh_token');
-    if (revoke && refresh != null) {
-      try {
-        await ApiClient.instance
-            .post('/auth/logout', body: {'refreshToken': refresh});
-      } catch (_) {
-        // Offline or server down: the local session is already gone, but the
-        // refresh token is still valid on the server. Queue its revocation so
-        // it is invalidated as soon as we can reach the server.
-        await _queueRevocation(refresh);
-      }
-    }
+    // Persist retry intent, then erase local credentials before network I/O.
+    if (revoke && refresh != null) await _queueRevocation(refresh);
     await SecureDataCache.clear(owner);
     await NotificationScheduler.instance.cancelAll();
     final prefs = await SharedPreferences.getInstance();
@@ -801,6 +850,32 @@ class AuthSession extends ChangeNotifier {
     ErrorReporter.setUser(null);
     AnalyticsService.instance.reset();
     notifyListeners();
+    if (revoke && refresh != null) {
+      try {
+        try {
+          await ApiClient.instance.post('/auth/logout',
+              token: accessToken, body: {'refreshToken': refresh});
+        } on ApiException catch (error) {
+          // An expired access token can still have a valid refresh credential.
+          if (error.statusCode != 401 || accessToken == null) rethrow;
+          await ApiClient.instance
+              .post('/auth/logout', body: {'refreshToken': refresh});
+        }
+        final pending = await storage.read(key: _pendingRevocationKey);
+        final remaining = (pending ?? '')
+            .split('\n')
+            .where((value) => value.isNotEmpty && value != refresh)
+            .toList();
+        if (remaining.isEmpty) {
+          await storage.delete(key: _pendingRevocationKey);
+        } else {
+          await storage.write(
+              key: _pendingRevocationKey, value: remaining.join('\n'));
+        }
+      } catch (_) {
+        // The revocation was queued before credentials were erased.
+      }
+    }
   }
 }
 

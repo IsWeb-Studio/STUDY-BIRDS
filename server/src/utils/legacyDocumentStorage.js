@@ -9,6 +9,7 @@ function legacyAsset(url, cloudName) {
       parts[0] !== cloudName || !['image', 'raw', 'video'].includes(parts[1]) ||
       !['upload', 'private', 'authenticated'].includes(parts[2])) throw new Error('Unsupported legacy storage');
   let start = 3;
+  if (/^s--[A-Za-z0-9_-]+--$/.test(parts[start])) start++;
   if (/^v\d+$/.test(parts[start])) start++;
   const source = decodeURIComponent(parts.slice(start).join('/'));
   if (!source || source.includes('..') || /[\x00-\x1f]/.test(source)) throw new Error('Invalid legacy identity');

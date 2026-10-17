@@ -76,6 +76,9 @@ app.use(express.json({ limit: '100kb', verify: (req, res, buffer) => {
   if (req.originalUrl.split('?')[0] === '/api/payments/stripe/webhook') req.rawBody = Buffer.from(buffer);
 } }));
 app.use(express.urlencoded({ extended: true, limit: '100kb', parameterLimit: 1000, depth: 16 }));
+const webSession = require('./middleware/webSession')(allowedOrigins);
+app.use('/api/auth', webSession);
+app.use('/api/identity', webSession);
 app.use('/api', requestSafety);
 // Safe retries for writes: honoured only when the client sends Idempotency-Key.
 const { createIdempotency, mongoStore } = require('./middleware/idempotency');
@@ -169,6 +172,7 @@ app.use("/api/auth", requireDatabaseConnection, authRoutes);
 app.use("/api/support-attachments", requireDatabaseConnection, require("./routes/supportAttachmentAccessRoutes"));
 app.use("/api/payment-proofs", requireDatabaseConnection, require("./routes/paymentProofAccessRoutes"));
 app.use("/api/documents", requireDatabaseConnection, require("./routes/documentAccessRoutes"));
+app.use('/api/verification-documents', requireDatabaseConnection, require('./routes/verificationDocumentAccessRoutes'));
 app.use("/api/students", requireDatabaseConnection, studentRoutes);
 app.use("/api/partners", requireDatabaseConnection, partnerRoutes);
 app.use("/api/universities", requireDatabaseConnection, universityRoutes);

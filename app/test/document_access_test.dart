@@ -62,6 +62,22 @@ void main() {
                   200);
             }));
   });
+  test('verification document requests an authenticated temporary link', () async {
+    AuthSession.instance.token = 'verification-session';
+    addTearDown(() => AuthSession.instance.token = null);
+    await http.runWithClient(() async {
+      await resolveDocumentDownload(
+          '/api/verification-documents/012345678901234567890123/access');
+    }, () => MockClient((request) async {
+      expect(request.method, 'POST');
+      expect(request.url.path,
+          '/api/verification-documents/012345678901234567890123/access');
+      expect(request.headers['authorization'], 'Bearer verification-session');
+      return http.Response(jsonEncode({
+        'url': 'https://api.cloudinary.com/v1_1/test/raw/download?signature=test'
+      }), 200);
+    }));
+  });
   test('private URL fails closed for an unexpected download host', () async {
     await http.runWithClient(() async {
       await expectLater(

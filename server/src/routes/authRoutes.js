@@ -34,7 +34,11 @@ router.post("/email-otp/verify", verifyEmailOtp);
 router.get("/me", protect, me);
 router.post("/change-password", protect, changePassword);
 router.post("/refresh", refresh);
-router.post("/logout", logout);
+router.post("/logout", (req, res, next) => {
+  // Refresh-only revocations remain supported for offline mobile logout.
+  if (req.headers.authorization) return protect(req, res, next);
+  next();
+}, logout);
 router.delete("/account", protect, deleteAccount);
 router.post('/account/verification', protect, requestAccountDeletion);
 router.post('/avatar', protect, require('../middleware/uploadMiddleware').single('file'), require('../controllers/avatarController'));

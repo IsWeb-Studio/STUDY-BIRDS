@@ -145,9 +145,17 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
     try {
       final token = AuthSession.instance.token;
       if (token == null) throw const ApiException(401, 'يرجى تسجيل الدخول');
-      await ApiClient.instance.post('/auth/change-password',
+      final credentials = await ApiClient.instance.post('/auth/change-password',
           token: token,
           body: {'currentPassword': current.text, 'newPassword': next.text});
+      final session = AuthSession.instance;
+      if (session.token != token || session.currentUser == null) {
+        return;
+      }
+      await session.login(
+          AuthUser.fromJson(credentials['user'] as Map<String, dynamic>),
+          authToken: credentials['token'] as String,
+          refreshToken: credentials['refreshToken'] as String);
       if (!mounted) return;
       ScaffoldMessenger.of(context)
           .showSnackBar(AppSnackBar(content: Text('تم تغيير كلمة المرور')));

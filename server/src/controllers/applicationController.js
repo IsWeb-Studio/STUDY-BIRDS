@@ -80,7 +80,7 @@ const createApplication = asyncHandler(async (req, res) => {
     link: `/student/applications`,
   });
 
-  if ((await Application.countDocuments({ student: req.user._id })) === 1) {
+  { // Qualification is idempotent and retriable even after concurrent applications.
     await qualifyReferral(req.user._id).catch((error) => console.error("Referral qualification failed", error.message));
   }
 

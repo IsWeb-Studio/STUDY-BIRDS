@@ -252,6 +252,10 @@ router.patch("/student-financials/invoices/:id", updateStudentInvoiceAdmin);
 router.delete("/student-financials/invoices/:id", deleteStudentInvoiceAdmin);
 router.patch("/student-financials/payment-proofs/:id", reviewPaymentProofAdmin);
 router.get("/student-financials/wallet-entries", getWalletEntriesAdmin);
+router.get('/student-financials/stripe-receipts', require('../utils/asyncHandler')(async (req, res) => {
+  const receipts = await require('../models/StripePaymentReceipt').find({ state: 'reconciliation' }).sort({ createdAt: -1 }).limit(100).lean();
+  res.set('Cache-Control', 'no-store'); res.json(receipts);
+}));
 const rewardRules = require('../controllers/studentRewardsController');
 router.get('/student-financials/reward-rules', rewardRules.listRules);
 const studentListings = require('../controllers/studentListingsController');
