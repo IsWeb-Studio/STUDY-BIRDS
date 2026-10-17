@@ -50,6 +50,7 @@ export const AdminUniversitiesPage = () => {
   const [countries, setCountries] = useState<Country[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyUniversityForm);
+  const [editingVersion, setEditingVersion] = useState<number>(0);
   const [formError, setFormError] = useState("");
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
@@ -91,6 +92,7 @@ export const AdminUniversitiesPage = () => {
     const articleItemCount = Math.max(1, university.articleHeadings?.length || 0, university.articleBodies?.length || 0);
     const articleItemCountEn = Math.max(1, university.articleHeadingsEn?.length || 0, university.articleBodiesEn?.length || 0);
     setEditingId(university._id);
+    setEditingVersion(university.__v ?? 0);
     setForm({
       name: university.name || "",
       nameEn: university.nameEn || "",
@@ -186,7 +188,7 @@ export const AdminUniversitiesPage = () => {
 
     try {
       if (editingId) {
-        await universityService.update(editingId, payload);
+        await universityService.update(editingId, { ...payload, expectedVersion: editingVersion });
       } else {
         await universityService.create(payload);
       }
@@ -203,7 +205,7 @@ export const AdminUniversitiesPage = () => {
   const handleDelete = async (id: string) => {
     setFormError("");
     try {
-      await universityService.remove(id);
+      await universityService.remove(id, universities.find(row => row._id === id)?.__v ?? 0);
       setUniversities((current) => current.filter((item) => item._id !== id));
       if (editingId === id) {
         resetForm();

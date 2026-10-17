@@ -1,3 +1,4 @@
+const { updateCatalog, deleteCatalog } = require('../utils/catalogRevision');
 const User = require("../models/User");
 const { validPermissions, hasSection } = require("../middleware/employeeAccess");
 const StudentProfile = require("../models/StudentProfile");
@@ -580,7 +581,7 @@ const uploadCountryHeroImage = asyncHandler(async (req, res) => {
 });
 
 const updateCountry = asyncHandler(async (req, res) => {
-  const country = await Country.findByIdAndUpdate(req.params.id, buildCountryPayload(req.body), { new: true, runValidators: true });
+  const country = await updateCatalog(Country, req.params.id, req.body, buildCountryPayload(req.body));
 
   if (!country) {
     res.status(404);
@@ -593,7 +594,7 @@ const updateCountry = asyncHandler(async (req, res) => {
 
 const deleteCountry = asyncHandler(async (req, res) => {
   if(await University.exists({country:req.params.id})){res.status(409);throw new Error('Country has universities and cannot be deleted');}
-  const country = await Country.findByIdAndDelete(req.params.id);
+  const country = await deleteCatalog(Country, req.params.id, req.body);
 
   if (!country) {
     res.status(404);

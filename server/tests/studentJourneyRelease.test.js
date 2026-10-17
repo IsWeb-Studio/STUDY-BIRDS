@@ -45,8 +45,8 @@ test('application requirements, document ownership, and dashboard isolation', as
     await User.create({ name: 'Admin', email: 'admin@example.test', password: 'JourneyTest42!', role: 'admin' });
     const admin = await call('POST', '/auth/login', null, { email: 'admin@example.test', password: 'JourneyTest42!' });
     await call('PUT', `/programs/${program._id}`, a.token, { requiredDocumentTypes: [] }, 403);
-    await call('PUT', `/programs/${program._id}`, admin.token, { requiredDocumentTypes: ['transcript', 'transcript'] }, 400);
-    await call('PUT', `/programs/${program._id}`, admin.token, { requiredDocumentTypes: [] });
+    await call('PUT', `/programs/${program._id}`, admin.token, { requiredDocumentTypes: ['transcript', 'transcript'], expectedVersion: 0 }, 400);
+    await call('PUT', `/programs/${program._id}`, admin.token, { requiredDocumentTypes: [], expectedVersion: 0 });
     assert.deepEqual((await call('GET', `/programs/${program._id}`)).requiredDocumentTypes, []);
     assert.deepEqual((await Application.findById(created._id)).requiredDocumentTypes.toObject(), ['transcript']);
 

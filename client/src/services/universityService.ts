@@ -2,6 +2,7 @@ import { api } from "../lib/api";
 import type { PaginatedResponse, University } from "../types";
 
 type UniversityPayload = {
+  expectedVersion?: number;
   name?: string;
   country?: string;
   city?: string;
@@ -37,8 +38,8 @@ export const universityService = {
     const { data } = await api.put<University>(`/universities/${id}`, payload);
     return data;
   },
-  remove: async (id: string) => {
-    const { data } = await api.delete(`/universities/${id}`);
+  remove: async (id: string, expectedVersion?: number) => {
+    const { data } = await api.delete(`/universities/${id}`, { data: { expectedVersion } });
     return data;
   },
   uploadImages: async (files: File[]) => {

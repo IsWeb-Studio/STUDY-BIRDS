@@ -1,3 +1,4 @@
+const { updateCatalog, deleteCatalog } = require('../utils/catalogRevision');
 const StudyField = require("../models/StudyField");
 const asyncHandler = require("../utils/asyncHandler");
 const { clearResponseCache } = require("../utils/responseCache");
@@ -24,16 +25,15 @@ const createStudyField = asyncHandler(async (req, res) => {
 });
 
 const updateStudyField = asyncHandler(async (req, res) => {
-  const studyField = await StudyField.findByIdAndUpdate(
-    req.params.id,
+  const studyField = await updateCatalog(
+    StudyField, req.params.id, req.body,
     {
       name: req.body.name,
       description: req.body.description || "",
       image: req.body.image || "",
       featured: Boolean(req.body.featured),
       sortOrder: Number.isFinite(Number(req.body.sortOrder)) ? Number(req.body.sortOrder) : 0,
-    },
-    { new: true, runValidators: true }
+    }
   );
 
   if (!studyField) {
@@ -48,7 +48,7 @@ const updateStudyField = asyncHandler(async (req, res) => {
 const deleteStudyField = asyncHandler(async (req, res) => {
   const existing=await StudyField.findById(req.params.id);
   if(existing && (await require('../models/Program').exists({$or:[{fieldOfStudy:existing.name},{fieldsOfStudy:existing.name}]}) || await require('../models/CommunityPost').exists({studyField:existing._id}))){res.status(409);throw new Error('Study field is in use and cannot be deleted');}
-  const studyField = await StudyField.findByIdAndDelete(req.params.id);
+  const studyField = await deleteCatalog(StudyField, req.params.id, req.body);
 
   if (!studyField) {
     res.status(404);

@@ -24,6 +24,7 @@ export const AdminStudyFieldsPage = () => {
   const [studyFields, setStudyFields] = useState<StudyField[]>([]);
   const [studyFieldForm, setStudyFieldForm] = useState(emptyStudyFieldForm);
   const [editingStudyFieldId, setEditingStudyFieldId] = useState<string | null>(null);
+  const [editingVersion, setEditingVersion] = useState<number>(0);
   const [formError, setFormError] = useState("");
   const [uploadingStudyFieldImage, setUploadingStudyFieldImage] = useState(false);
   const [search, setSearch] = useState("");
@@ -62,7 +63,7 @@ export const AdminStudyFieldsPage = () => {
 
     try {
       if (editingStudyFieldId) {
-        await adminService.updateStudyField(editingStudyFieldId, payload);
+        await adminService.updateStudyField(editingStudyFieldId, { ...payload, expectedVersion: editingVersion });
       } else {
         await adminService.createStudyField(payload);
       }
@@ -97,7 +98,7 @@ export const AdminStudyFieldsPage = () => {
     if (saving || uploadingStudyFieldImage || !window.confirm(language === "ar" ? "هل تريد حذف هذا السجل؟" : "Delete this record?")) return;
     setSaving(true); setFormError("");
     try {
-      await adminService.removeStudyField(id);
+      await adminService.removeStudyField(id, studyFields.find(row => row._id === id)?.__v ?? 0);
       setStudyFields(current => current.filter(row => row._id !== id));
       if(editingStudyFieldId === id) { resetStudyFieldForm(); setEditorOpen(false); }
     } catch(error) { setFormError(getErrorMessage(error, dt(language,"saveContentFailed"))); }
@@ -208,6 +209,7 @@ export const AdminStudyFieldsPage = () => {
                       setEditorOpen(true);
                       void markStaffRecord("studyFields", studyField).catch(() => {});
                       setEditingStudyFieldId(studyField._id);
+    setEditingVersion(studyField.__v ?? 0);
                       setStudyFieldForm({
                         name: studyField.name,
                         description: studyField.description || "",

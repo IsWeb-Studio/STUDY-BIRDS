@@ -1,3 +1,4 @@
+const { updateCatalog, deleteCatalog } = require('../utils/catalogRevision');
 const { escapeSearch } = require('../middleware/requestSafety');
 const Program = require("../models/Program");
 const University = require("../models/University");
@@ -68,7 +69,7 @@ const getPrograms = asyncHandler(async (req, res) => {
   };
 
   const listQuery = Program.find(query)
-    .select("title titleEn slug degreeLevel fieldOfStudy fieldsOfStudy language duration tuition partnerTuition applicationDeadline intake summary summaryEn popularity coverImage university featured createdAt")
+    .select("title titleEn slug degreeLevel fieldOfStudy fieldsOfStudy language duration tuition partnerTuition applicationDeadline intake summary summaryEn popularity coverImage university featured createdAt updatedAt __v")
     .populate({
       path: "university",
       select: "name nameEn slug city language ranking logo tuitionRange country featured isPartnerInstitution",
@@ -152,10 +153,7 @@ const createProgram = asyncHandler(async (req, res) => {
 });
 
 const updateProgram = asyncHandler(async (req, res) => {
-  const program = await Program.findByIdAndUpdate(req.params.id, req.body, {
-    new: true,
-    runValidators: true,
-  }).catch(handleProgramWriteError(res));
+  const program = await updateCatalog(Program, req.params.id, req.body).catch(handleProgramWriteError(res));
 
   if (!program) {
     res.status(404);
@@ -170,7 +168,7 @@ const deleteProgram = asyncHandler(async (req, res) => {
   if (await require('../models/Application').exists({program:req.params.id})) {
     res.status(409); throw new Error('Program has applications and cannot be deleted');
   }
-  const program = await Program.findByIdAndDelete(req.params.id);
+  const program = await deleteCatalog(Program, req.params.id, req.body);
 
   if (!program) {
     res.status(404);

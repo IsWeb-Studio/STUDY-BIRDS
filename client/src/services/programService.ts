@@ -2,6 +2,7 @@ import { api } from "../lib/api";
 import type { PaginatedResponse, Program } from "../types";
 
 type ProgramPayload = {
+  expectedVersion?: number;
   university?: string;
   title?: string;
   degreeLevel?: string;
@@ -51,8 +52,8 @@ export const programService = {
     });
     return data.url;
   },
-  remove: async (id: string) => {
-    const { data } = await api.delete(`/programs/${id}`);
+  remove: async (id: string, expectedVersion?: number) => {
+    const { data } = await api.delete(`/programs/${id}`, { data: { expectedVersion } });
     return data;
   },
 };

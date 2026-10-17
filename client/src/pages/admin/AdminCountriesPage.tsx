@@ -42,6 +42,7 @@ export const AdminCountriesPage = () => {
   const [countries, setCountries] = useState<Country[]>([]);
   const [countryForm, setCountryForm] = useState(emptyCountryForm);
   const [editingCountryId, setEditingCountryId] = useState<string | null>(null);
+  const [editingVersion, setEditingVersion] = useState<number>(0);
   const [formError, setFormError] = useState("");
   const [uploadingCountryImage, setUploadingCountryImage] = useState(false);
   const [search, setSearch] = useState("");
@@ -90,7 +91,7 @@ export const AdminCountriesPage = () => {
       };
 
       if (editingCountryId) {
-        await adminService.updateCountry(editingCountryId, payload);
+        await adminService.updateCountry(editingCountryId, { ...payload, expectedVersion: editingVersion });
       } else {
         await adminService.createCountry(payload);
       }
@@ -125,7 +126,7 @@ export const AdminCountriesPage = () => {
     if (saving || uploadingCountryImage || !window.confirm(language === "ar" ? "هل تريد حذف هذا السجل؟" : "Delete this record?")) return;
     setSaving(true); setFormError("");
     try {
-      await adminService.removeCountry(id);
+      await adminService.removeCountry(id, countries.find(row => row._id === id)?.__v ?? 0);
       setCountries(current => current.filter(row => row._id !== id));
       if(editingCountryId === id) { resetCountryForm(); setEditorOpen(false); }
     } catch(error) { setFormError(getErrorMessage(error, dt(language,"saveContentFailed"))); }
@@ -322,6 +323,7 @@ export const AdminCountriesPage = () => {
                       setEditorOpen(true);
                       void markStaffRecord("countries", country).catch(() => {});
                       setEditingCountryId(country._id);
+    setEditingVersion(country.__v ?? 0);
                       setCountryForm({
                         name: country.name,
                         code: country.code,

@@ -138,6 +138,7 @@ export const AdminProgramsPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyProgramForm);
   const [programSearch, setProgramSearch] = useState("");
+  const [editingVersion, setEditingVersion] = useState<number>(0);
   const [formError, setFormError] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -177,6 +178,7 @@ export const AdminProgramsPage = () => {
     const articleItemCountEn = Math.max(1, program.articleHeadingsEn?.length || 0, program.articleBodiesEn?.length || 0);
     void markStaffRecord("programs", program).catch(() => {});
     setEditingId(program._id);
+    setEditingVersion(program.__v ?? 0);
     setCustomLanguage(Boolean(program.language) && !findProgramLanguage(program.language || ""));
     setEditorOpen(true);
     setForm({
@@ -249,7 +251,7 @@ export const AdminProgramsPage = () => {
 
     try {
       if (editingId) {
-        await programService.update(editingId, payload);
+        await programService.update(editingId, { ...payload, expectedVersion: editingVersion });
       } else {
         await programService.create(payload);
       }
@@ -266,7 +268,7 @@ export const AdminProgramsPage = () => {
   const handleDelete = async (id: string) => {
     setFormError("");
     try {
-      await programService.remove(id);
+      await programService.remove(id, programs.find(row => row._id === id)?.__v ?? 0);
       setPrograms((current) => current.filter((item) => item._id !== id));
       if (editingId === id) {
         resetForm();

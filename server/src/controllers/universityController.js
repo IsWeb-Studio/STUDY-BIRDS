@@ -1,3 +1,4 @@
+const { updateCatalog, deleteCatalog } = require('../utils/catalogRevision');
 const University = require("../models/University");
 const asyncHandler = require("../utils/asyncHandler");
 const { buildPaginationMeta, parsePagination } = require("../utils/queryUtils");
@@ -53,7 +54,7 @@ const getUniversities = asyncHandler(async (req, res) => {
 
   const listQuery = University.find(query)
     .select(
-      "name nameEn slug city language studentCount specialtyCount overview overviewEn ranking tuitionRange logo campusImages articleTitle articleTitleColor articleHeadingColor articleBodyColor articleHeadings articleBodies articleTitleEn articleHeadingsEn articleBodiesEn featured isPartnerInstitution country createdAt"
+      "name nameEn slug city language studentCount specialtyCount overview overviewEn ranking tuitionRange logo campusImages articleTitle articleTitleColor articleHeadingColor articleBodyColor articleHeadings articleBodies articleTitleEn articleHeadingsEn articleBodiesEn featured isPartnerInstitution country createdAt updatedAt __v"
     )
     .populate("country", "name nameAr slug code heroImage featured")
     .sort({ featured: -1, name: 1 });
@@ -98,10 +99,7 @@ const createUniversity = asyncHandler(async (req, res) => {
 });
 
 const updateUniversity = asyncHandler(async (req, res) => {
-  const university = await University.findByIdAndUpdate(req.params.id, buildUniversityPayload(req.body), {
-    new: true,
-    runValidators: true,
-  });
+  const university = await updateCatalog(University, req.params.id, req.body, buildUniversityPayload(req.body));
 
   if (!university) {
     res.status(404);
@@ -116,7 +114,7 @@ const deleteUniversity = asyncHandler(async (req, res) => {
   if (await require('../models/Program').exists({university:req.params.id}) || await require('../models/Application').exists({university:req.params.id})) {
     res.status(409); throw new Error('University has programs or applications and cannot be deleted');
   }
-  const university = await University.findByIdAndDelete(req.params.id);
+  const university = await deleteCatalog(University, req.params.id, req.body);
 
   if (!university) {
     res.status(404);

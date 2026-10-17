@@ -87,6 +87,8 @@ export interface ParentChildOverview {
 
 export interface Country extends ArticleContent {
   _id: string;
+  __v?: number;
+  expectedVersion?: number;
   name: string;
   nameAr?: string;
   slug: string;
@@ -182,6 +184,8 @@ export interface EventRegistration {
 
 export interface StudyField {
   _id: string;
+  __v?: number;
+  expectedVersion?: number;
   name: string;
   slug?: string;
   titleColor?: string;
@@ -194,6 +198,8 @@ export interface StudyField {
 
 export interface University extends ArticleContent {
   _id: string;
+  __v?: number;
+  expectedVersion?: number;
   name: string;
   nameEn?: string;
   slug: string;
@@ -232,6 +238,8 @@ export interface FavoriteItem {
 export interface Program extends ArticleContent {
   requiredDocumentTypes?: string[];
   _id: string;
+  __v?: number;
+  expectedVersion?: number;
   title: string;
   titleEn?: string;
   slug: string;

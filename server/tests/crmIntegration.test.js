@@ -133,8 +133,8 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
     assert.equal((await request(`/partners/${partner._id}`,'PATCH',{profile:{verificationStatus:'verified'}})).status,400);
     assert.equal((await request(`/partners/${partner._id}`,'PATCH',{name:'Forbidden'},employee)).status,403);
     const university=await require('../src/models/University').create({name:'Website University',country:new mongoose.Types.ObjectId()});
-    const universityFields=await request(`/guarded-universities/${university._id}`,'PATCH',{name:university.name,country:String(university.country),requiredDocuments:['Passport'],accreditations:[{name:'QA Accreditation',logo:'https://example.test/logo.png'}]});assert.equal(universityFields.status,200);assert.deepEqual(universityFields.body.requiredDocuments,['Passport']);assert.equal(universityFields.body.accreditations[0].name,'QA Accreditation');
-    const preserveUniversity=await request(`/guarded-universities/${university._id}`,'PATCH',{name:university.name,country:String(university.country),city:'Updated city'});assert.equal(preserveUniversity.status,200);assert.deepEqual(preserveUniversity.body.requiredDocuments,['Passport']);assert.equal(preserveUniversity.body.accreditations[0].name,'QA Accreditation');
+    const universityFields=await request(`/guarded-universities/${university._id}`,'PATCH',{expectedVersion:0,name:university.name,country:String(university.country),requiredDocuments:['Passport'],accreditations:[{name:'QA Accreditation',logo:'https://example.test/logo.png'}]});assert.equal(universityFields.status,200);assert.deepEqual(universityFields.body.requiredDocuments,['Passport']);assert.equal(universityFields.body.accreditations[0].name,'QA Accreditation');
+    const preserveUniversity=await request(`/guarded-universities/${university._id}`,'PATCH',{expectedVersion:1,name:university.name,country:String(university.country),city:'Updated city'});assert.equal(preserveUniversity.status,200);assert.deepEqual(preserveUniversity.body.requiredDocuments,['Passport']);assert.equal(preserveUniversity.body.accreditations[0].name,'QA Accreditation');
     assert.equal((await request(`/guarded-universities/${university._id}`,'PATCH',{name:'Forbidden'},employee)).status,403);
     const program=await require('../src/models/Program').create({university:university._id,title:'Engineering',degreeLevel:'Bachelor',fieldOfStudy:'Engineering',requiredDocumentTypes:[]});
     const Booking=require('../src/models/AccommodationBooking');
@@ -185,24 +185,24 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
       assert.equal((await request(`/service-requests/${service._id}/documents/${new mongoose.Types.ObjectId()}/access`,'POST')).status,404);
       const countryCreated=await request('/catalog-countries','POST',{name:'QA Catalog Country',code:'QA'});assert.equal(countryCreated.status,201);
     const cid=countryCreated.body._id;
-    assert.equal((await request(`/catalog-countries/${cid}`,'PUT',{name:'Updated Catalog Country',code:'QA'})).status,200);
+    assert.equal((await request(`/catalog-countries/${cid}`,'PUT',{name:'Updated Catalog Country',code:'QA',expectedVersion:0})).status,200);
     const fieldCreated=await request('/catalog-fields','POST',{name:'QA Catalog Field',featured:true});assert.equal(fieldCreated.status,201);
     const fid=fieldCreated.body._id;
-    assert.equal((await request(`/catalog-fields/${fid}`,'PUT',{name:'QA Catalog Field',description:'Updated',featured:true})).status,200);
+    assert.equal((await request(`/catalog-fields/${fid}`,'PUT',{name:'QA Catalog Field',description:'Updated',featured:true,expectedVersion:0})).status,200);
     const uniCreated=await request('/catalog-universities','POST',{name:'QA Catalog University',country:cid,city:'QA City'});assert.equal(uniCreated.status,201);
     const uid=uniCreated.body._id;
-    assert.equal((await request(`/catalog-universities/${uid}`,'PUT',{name:'Updated Catalog University',country:cid,city:'Updated City'})).status,200);
+    assert.equal((await request(`/catalog-universities/${uid}`,'PUT',{name:'Updated Catalog University',country:cid,city:'Updated City',expectedVersion:0})).status,200);
     const programBody={title:'QA Program',university:uid,degreeLevel:'Bachelor',fieldOfStudy:'QA Catalog Field',language:'English',tuition:100};
     const programCreated=await request('/catalog-programs','POST',programBody);assert.equal(programCreated.status,201);const pid=programCreated.body._id;
-    assert.equal((await request(`/catalog-programs/${pid}`,'PUT',{...programBody,title:'Updated QA Program',tuition:200})).status,200);
-    assert.equal((await request(`/catalog-countries/${cid}`,'DELETE')).status,409);
-    assert.equal((await request(`/catalog-universities/${uid}`,'DELETE')).status,409);
-    assert.equal((await request(`/catalog-fields/${fid}`,'DELETE')).status,409);
+    assert.equal((await request(`/catalog-programs/${pid}`,'PUT',{...programBody,title:'Updated QA Program',tuition:200,expectedVersion:0})).status,200);
+    assert.equal((await request(`/catalog-countries/${cid}`,'DELETE',{expectedVersion:1})).status,409);
+    assert.equal((await request(`/catalog-universities/${uid}`,'DELETE',{expectedVersion:1})).status,409);
+    assert.equal((await request(`/catalog-fields/${fid}`,'DELETE',{expectedVersion:1})).status,409);
     assert.equal((await request('/catalog-countries','POST',{name:'Forbidden',code:'XX'},employee)).status,403);
-    assert.equal((await request(`/catalog-programs/${pid}`,'DELETE')).status,200);
-    assert.equal((await request(`/catalog-fields/${fid}`,'DELETE')).status,200);
-    assert.equal((await request(`/catalog-universities/${uid}`,'DELETE')).status,200);
-    assert.equal((await request(`/catalog-countries/${cid}`,'DELETE')).status,200);
+    assert.equal((await request(`/catalog-programs/${pid}`,'DELETE',{expectedVersion:1})).status,200);
+    assert.equal((await request(`/catalog-fields/${fid}`,'DELETE',{expectedVersion:1})).status,200);
+    assert.equal((await request(`/catalog-universities/${uid}`,'DELETE',{expectedVersion:1})).status,200);
+    assert.equal((await request(`/catalog-countries/${cid}`,'DELETE',{expectedVersion:1})).status,200);
   }finally{storage.uploadPrivateDocument=originalUpload;}
     {
     const serviceCreated=await request('/catalog-services','POST',{title:'QA Service',price:250,durationDays:3,journeyStage:'arrival'});

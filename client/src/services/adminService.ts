@@ -272,12 +272,12 @@ export const adminService = {
     const { data } = await api.put<StudyField>(`/admin/study-fields/${id}`, payload);
     return data;
   },
-  removeStudyField: async (id: string) => {
-    const { data } = await api.delete(`/admin/study-fields/${id}`);
+  removeStudyField: async (id: string, expectedVersion?: number) => {
+    const { data } = await api.delete(`/admin/study-fields/${id}`, { data: { expectedVersion } });
     return data;
   },
-  removeCountry: async (id: string) => {
-    const { data } = await api.delete(`/admin/countries/${id}`);
+  removeCountry: async (id: string, expectedVersion?: number) => {
+    const { data } = await api.delete(`/admin/countries/${id}`, { data: { expectedVersion } });
     return data;
   },
   getTestimonials: async () => {
