@@ -195,11 +195,15 @@ export class ConnectivityManager {
 
   private async doVerify() {
     let ok = await this.safeProbe();
+    if (!this.started) return;
     if (!ok) {
       // One failed probe is not an outage.
       await new Promise((resolve) => setTimeout(resolve, this.confirmDelayMs));
       ok = await this.safeProbe();
     }
+    if (!this.started) return;
+    this.hasInterface = this.isNavigatorOnline();
+    if (!this.hasInterface) ok = false;
     this.lastVerifyAt = Date.now();
     if (ok) {
       this.recoveryAttempt = 0;

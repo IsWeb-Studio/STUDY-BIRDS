@@ -144,7 +144,7 @@ test('creating a valid journey queues its confirmation before returning success'
     '../utils/asyncHandler': (fn) => fn,
     '../constants/roles': {}, '../constants/statusCatalog': {},
     '../utils/hydrateApplications': { hydrateApplicationsWithStudentProfiles: async (value) => value },
-    '../utils/studentWallet': {},
+    '../utils/studentWallet': { qualifyReferral: async () => {} },
     '../utils/applicationEmails': { enqueueApplicationEmail: async (...args) => queued.push(args) },
   };
   const sandbox = { module: { exports: {} }, require: (name) => {

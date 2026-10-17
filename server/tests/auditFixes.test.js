@@ -59,10 +59,10 @@ test('audit regressions: verified Google, deletion, avatars, media retry and wal
     await t.test('wallet transaction aborts debit when invoice write throws', async () => {
       await Entry.create({ student: google.user._id, direction: 'credit', kind: 'adjustment', amount: 20 });
       const invoice = await Invoice.create({ student: google.user._id, invoiceNumber: 'AUDIT-ROLLBACK', description: 'Test', amount: 10 });
-      const original = Invoice.findOneAndUpdate;
-      Invoice.findOneAndUpdate = () => { throw new Error('Injected invoice write failure'); };
+      const original = Invoice.prototype.save;
+      Invoice.prototype.save = function(...args) { if (String(this._id) === invoice.id) throw new Error('Injected invoice write failure'); return original.apply(this, args); };
       try { await call('POST', '/students/wallet/redeem', google.token, { invoiceId: invoice.id, amount: 10 }, 500); }
-      finally { Invoice.findOneAndUpdate = original; }
+      finally { Invoice.prototype.save = original; }
       assert.equal(await Entry.countDocuments({ direction: 'debit', relatedInvoice: invoice._id }), 0);
       assert.equal((await Invoice.findById(invoice._id)).walletCreditApplied, 0);
     });

@@ -410,7 +410,8 @@ class AuthSession extends ChangeNotifier {
   String? _previousToken;
   Future<String?>? _refreshing;
 
-  Future<void> _cacheUser(AuthUser user) async {
+  Future<void> _cacheUser(AuthUser? user) async {
+    if (user == null) return;
     await const FlutterSecureStorage().write(
         key: 'cached_user',
         value: jsonEncode({
@@ -583,7 +584,7 @@ class AuthSession extends ChangeNotifier {
             await storage.write(
                 key: 'refresh_token', value: replacementRefresh);
           }
-          await _cacheUser(restoredUser!);
+          await _cacheUser(restoredUser);
         }
       }
       if (revision != _revision) return;

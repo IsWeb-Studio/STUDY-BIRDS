@@ -4,7 +4,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
-const { MongoMemoryServer } = require(path.join(process.env.STUDY_BIRDS_TEST_TOOLS, 'node_modules/mongodb-memory-server-core'));
+const { MongoMemoryReplSet } = require(path.join(process.env.STUDY_BIRDS_TEST_TOOLS, 'node_modules/mongodb-memory-server-core'));
 
 test('mobile audit: service isolation, profile persistence, insurance and signed payments', async () => {
   process.env.JWT_SECRET = 'isolated-mobile-audit';
@@ -12,7 +12,7 @@ test('mobile audit: service isolation, profile persistence, insurance and signed
   process.env.STRIPE_WEBHOOK_SECRET = 'whsec_local_only';
   delete process.env.ONESIGNAL_REST_API_KEY;
   const originalFetch = global.fetch;
-  const mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
+  const mongo = await MongoMemoryReplSet.create({ replSet: { count: 1 }, instanceOpts: [{ ip: '127.0.0.1' }] });
   let server;
   try {
     await mongoose.connect(mongo.getUri());
@@ -134,7 +134,7 @@ test('mobile audit: service isolation, profile persistence, insurance and signed
         const params = new URLSearchParams(init.body);
         assert.equal(params.get('line_items[0][price_data][currency]'), 'eur');
         assert.equal(params.get('line_items[0][price_data][unit_amount]'), '1234');
-        return new Response(JSON.stringify({ id: 'cs_audit', url: 'https://checkout.stripe.com/c/pay/cs_audit' }));
+        return new Response(JSON.stringify({ id: `cs_audit_${stripeCalls}`, url: `https://checkout.stripe.com/c/pay/cs_audit_${stripeCalls}` }));
       }
       return originalFetch(url, init);
     };
@@ -142,7 +142,7 @@ test('mobile audit: service isolation, profile persistence, insurance and signed
     await call('POST', '/payments/stripe/checkout', student, { invoiceId: invoice._id });
     await call('POST', '/payments/stripe/checkout', student, { invoiceId: invoice._id });
     assert.equal(stripeCalls, 1);
-    const event = { type: 'checkout.session.completed', data: { object: { id: 'cs_audit', payment_status: 'paid', amount_total: 1234, currency: 'eur', metadata: { invoiceId: String(invoice._id), studentId: String(student._id) } } } };
+    const event = { id: 'evt_audit', type: 'checkout.session.completed', data: { object: { id: 'cs_audit_1', payment_status: 'paid', amount_total: 1234, currency: 'eur', metadata: { invoiceId: String(invoice._id), studentId: String(student._id), checkoutKey: (await Invoice.findById(invoice._id)).stripeCheckoutKey } } } };
     async function webhook(value, signature = true, expected = 200) {
       // Preserve whitespace deliberately: JSON reserialization cannot verify this signature.
       const raw = JSON.stringify(value, null, 2);
@@ -156,9 +156,15 @@ test('mobile audit: service isolation, profile persistence, insurance and signed
     assert.equal((await Invoice.findById(invoice._id)).status, 'unpaid');
     await webhook(event);
     await webhook(event);
-    assert.equal((await Invoice.findById(invoice._id)).status, 'paid');
+    assert.equal((await Invoice.findById(invoice._id)).status, 'unpaid');
+    assert.equal((await Invoice.findById(invoice._id)).stripeReconciliationRequired, true);
+    const validInvoice = await Invoice.create({ student: student._id, invoiceNumber: 'AUDIT-2', description: 'Tuition', amount: 12.34, currency: 'EUR' });
+    await call('POST', '/payments/stripe/checkout', student, { invoiceId: validInvoice._id });
+    const validEvent = { ...event, id: 'evt_audit_2', data: { object: { ...event.data.object, id: 'cs_audit_2', metadata: { invoiceId: String(validInvoice._id), studentId: String(student._id), checkoutKey: (await Invoice.findById(validInvoice._id)).stripeCheckoutKey } } } };
+    await webhook(validEvent); await webhook(validEvent);
+    assert.equal((await Invoice.findById(validInvoice._id)).status, 'paid');
     const Notification = require('../src/models/Notification');
-    assert.equal(await Notification.countDocuments({ user: student._id, title: 'تم استلام الدفع بنجاح' }), 1);
+    assert.equal(await Notification.countDocuments({ user: student._id, title: 'Payment received' }), 1);
   } finally {
     global.fetch = originalFetch;
     if (server) await new Promise(resolve => server.close(resolve));
