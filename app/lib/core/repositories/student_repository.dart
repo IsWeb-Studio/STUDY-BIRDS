@@ -552,6 +552,11 @@ class StudentRepository {
     return Json.map(data);
   }
 
+  Future<List<Map<String, dynamic>>> getSupportTeam() async {
+    final data = await ApiClient.instance.get('/students/support-team', token: _token);
+    return Json.list(data).map(Json.map).toList();
+  }
+
   Future<List<dynamic>> getSupportTickets() async {
     final data = await ApiClient.instance
         .get('/students/support-tickets', token: _token);
@@ -561,6 +566,7 @@ class StudentRepository {
   /// Categories accepted by the backend (STUDENT_SUPPORT_CATEGORIES in
   /// studentController.js) — free text is rejected with a 400.
   static const List<Map<String, String>> supportCategories = [
+    {'key': 'technical-issue', 'label': 'مشكلة في التطبيق'},
     {'key': 'documents', 'label': 'المستندات'},
     {'key': 'application-status', 'label': 'حالة الطلب'},
     {'key': 'payment', 'label': 'الدفعات'},

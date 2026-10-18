@@ -33,6 +33,7 @@ const {
 } = require("../utils/hydrateApplications");
 
 const STUDENT_SUPPORT_CATEGORIES = [
+  "technical-issue",
   "documents",
   "application-status",
   "payment",

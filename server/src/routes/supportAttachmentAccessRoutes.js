@@ -11,7 +11,7 @@ router.post('/:id/access', protect, asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Support attachment not found' });
   const ticket = await SupportTicket.findById(req.params.id).select('+attachmentStorage').lean();
   if (!ticket) return res.status(404).json({ message: 'Support attachment not found' });
-  const allowed = String(ticket.user) === String(req.user._id) || hasSection(req.user, 'support');
+  const allowed = String(ticket.user) === String(req.user._id) || await require('../utils/studentSupportTeam').canReadTicket(req.user, ticket);
   if (!allowed) return res.status(404).json({ message: 'Support attachment not found' });
   if (!ticket.attachmentStorage?.publicId || ticket.attachmentStorage.deliveryType !== 'authenticated') return res.status(409).json({ message: 'This legacy attachment has not been migrated to private storage' });
   res.json(documentDownloadLink(ticket.attachmentStorage));

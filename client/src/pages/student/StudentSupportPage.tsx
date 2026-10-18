@@ -77,6 +77,7 @@ export const StudentSupportPage = () => {
               <option value="application-status">{isArabic ? "حالة الطلب" : "Application Status"}</option>
               <option value="payment">{isArabic ? "الدفع" : "Payment"}</option>
               <option value="arrival-services">{isArabic ? "خدمات الوصول" : "Arrival Services"}</option>
+              <option value="technical-issue">{isArabic ? "مشكلة في التطبيق" : "App issue"}</option>
               <option value="other">{isArabic ? "أخرى" : "Other"}</option>
             </select>
           </label>

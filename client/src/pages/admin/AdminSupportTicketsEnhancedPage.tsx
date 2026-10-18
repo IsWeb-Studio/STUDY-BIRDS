@@ -42,7 +42,7 @@ export const AdminSupportTicketsEnhancedPage = () => {
       const matchesStatus = filter === "all" || item.status === filter;
       const matchesQuery =
         !normalizedQuery ||
-        [item.subject, item.message, item.agent?.name || "", item.agent?.email || "", item.category].join(" ").toLowerCase().includes(normalizedQuery);
+        [item.subject, item.message, item.user?.name || item.agent?.name || "", item.user?.email || item.agent?.email || "", item.category].join(" ").toLowerCase().includes(normalizedQuery);
       return matchesStatus && matchesQuery;
     });
   }, [filter, items, query]);
@@ -125,7 +125,7 @@ export const AdminSupportTicketsEnhancedPage = () => {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2 className="text-xl font-semibold text-slate-900">{item.subject}</h2>
-                <p className="mt-1 text-sm text-slate-500">{item.agent?.name || "--"} • {item.agent?.email || "--"}</p>
+                <p className="mt-1 text-sm text-slate-500">{item.user?.name || item.agent?.name || "--"} • {item.user?.email || item.agent?.email || "--"}</p>
               </div>
               <div className="text-right">
                 <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{item.status}</span>
@@ -139,7 +139,7 @@ export const AdminSupportTicketsEnhancedPage = () => {
                 {item.replies.map((reply) => (
                   <div key={reply._id || `${item._id}-${reply.createdAt}`} className="rounded-2xl bg-white px-4 py-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{reply.fromRole}</div>
+                      <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{reply.displayName || reply.user?.name || reply.fromRole}</div>
                       <div className="text-xs text-slate-400">{formatDate(reply.createdAt)}</div>
                     </div>
                     <div className="mt-2 text-sm text-slate-700">{reply.message}</div>

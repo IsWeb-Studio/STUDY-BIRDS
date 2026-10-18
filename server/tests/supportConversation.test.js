@@ -4,12 +4,16 @@ const { createHmac } = require('node:crypto');
 const Ticket = require('../src/models/SupportTicket');
 const User = require('../src/models/User');
 const Notification = require('../src/models/Notification');
+const Team = require('../src/models/StudentSupportTeam');
+const originalTeamFind = Team.findOne;
+afterEach(() => { Team.findOne = originalTeamFind; });
 const { replyStudentSupportTicket, createStudentSupportTicket } = require('../src/controllers/studentController');
 const { replySupportTicketAdmin, assignSupportTicketAdmin } = require('../src/controllers/adminAgentController');
 const { supportActor } = require('../src/utils/supportActor');
 const ticketId = 'a'.repeat(24), studentId = 'b'.repeat(24), staffId = 'c'.repeat(24);
 let original, ticket, notices, writes;
 beforeEach(() => {
+  Team.findOne = () => ({ lean: async () => ({ members: [staffId] }) });
   original = { find: User.find, userById: User.findById, notification: Notification.create, findById: Ticket.findById, update: Ticket.findOneAndUpdate, adminUpdate: Ticket.findByIdAndUpdate, create: Ticket.create };
   ticket = { _id: ticketId, user: studentId, requesterRole: 'student', subject: 'Documents', message: 'Help', status: 'answered', replies: [], assignedTo: staffId, save: async () => {} };
   notices = []; writes = [];

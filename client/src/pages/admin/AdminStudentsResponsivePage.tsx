@@ -10,6 +10,7 @@ import { AdminToastViewport } from "../../components/admin/AdminToastViewport";
 import { useAdminToasts } from "../../hooks/useAdminToasts";
 import { formatCurrency, formatDate } from "../../utils/format";
 import { AdminConfirmationModal } from "../../components/admin/AdminConfirmationModal";
+import { StudentSupportTeam } from '../../components/admin/StudentSupportTeam';
 
 const PAGE_SIZE = 8;
 
@@ -250,6 +251,7 @@ export const AdminStudentsResponsivePage = () => {
                 </div>
               </div>
 
+              <StudentSupportTeam key={details.student._id} studentId={details.student._id} ar={isArabic} />
               <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="rounded-3xl bg-slate-50 p-4 text-center sm:text-start">
                   <div className="flex items-center justify-center gap-2 text-sm font-semibold text-slate-900 sm:justify-start">

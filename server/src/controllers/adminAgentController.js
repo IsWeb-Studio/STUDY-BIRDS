@@ -276,7 +276,7 @@ const reviewVerificationDocumentAdmin = asyncHandler(async (req, res) => {
 });
 
 const getSupportTicketsAdmin = asyncHandler(async (req, res) => {
-  const tickets = await SupportTicket.find()
+  const tickets = await SupportTicket.find(await require('../utils/studentSupportTeam').ticketScope(req.user))
     .populate("user", "name email role")
     .populate("agent", "name email role")
     .populate("assignedTo", "name email employeeRole")
@@ -327,6 +327,9 @@ const assignSupportTicketAdmin = asyncHandler(async (req, res) => {
     const assignee = await User.findById(assignedTo).lean();
     if (!assignee?.isActive || !hasSection(assignee, 'support')) {
       return res.status(400).json({ message: 'اختر موظف دعم مخوّلًا ونشطًا' });
+    }
+    if (ticket.requesterRole === 'student' && !(await require('../utils/studentSupportTeam').membersFor(ticket.user)).some(member => String(member._id) === String(assignedTo))) {
+      return res.status(400).json({ message: 'Choose a member of this student’s team' });
     }
     ticket.assignedTo = assignee._id;
   } else {

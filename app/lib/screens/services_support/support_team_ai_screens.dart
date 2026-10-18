@@ -1,4 +1,5 @@
 import '../../core/utils/json_safe.dart';
+import '../../core/network/api_client.dart' show ApiException;
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,7 +9,6 @@ import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/services/analytics_service.dart';
-import '../../core/network/api_client.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/repositories/student_repository.dart';
 import 'faq_screen.dart';
@@ -67,8 +67,15 @@ class SupportCenterScreen extends StatelessWidget {
             margin: EdgeInsets.zero,
             onTap: () {
               if (o['label'] == 'تذكرة دعم جديدة') {
-                Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const NewSupportTicketScreen()));
+                Navigator.of(context)
+                    .push<bool>(MaterialPageRoute(
+                        builder: (_) => const NewSupportTicketScreen()))
+                    .then((sent) {
+                  if (sent == true && context.mounted) {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const SupportTicketsListScreen()));
+                  }
+                });
               } else if (o['label'] == 'تذاكري') {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (_) => const SupportTicketsListScreen()));
@@ -166,9 +173,12 @@ class _NewSupportTicketScreenState extends State<NewSupportTicketScreen> {
       if (!mounted) return;
       widget.onSubmit?.call();
       Navigator.of(context).pop(true);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/support_team_ai_screens.dart:168');
-      if (mounted)
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/support_team_ai_screens.dart:168');
+      if (mounted) {
         setState(() => _error = 'تعذر إرسال التذكرة، حاول مرة أخرى.');
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -294,7 +304,9 @@ class _SupportTicketsListScreenState extends State<SupportTicketsListScreen> {
         _tickets = data;
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/support_team_ai_screens.dart:296');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/support_team_ai_screens.dart:296');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل تذاكرك.';
@@ -315,7 +327,8 @@ class _SupportTicketsListScreenState extends State<SupportTicketsListScreen> {
                 padding: const EdgeInsets.all(16),
                 itemCount: 4,
                 itemBuilder: (_, __) => const Padding(
-                    padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: SkeletonCard()))
             : _error != null
                 ? ErrorState(message: _error!, onRetry: _load)
                 : _tickets.isEmpty
@@ -326,7 +339,8 @@ class _SupportTicketsListScreenState extends State<SupportTicketsListScreen> {
                         ctaLabel: 'تذكرة دعم جديدة',
                         onCta: () => Navigator.of(context).push(
                             MaterialPageRoute(
-                                builder: (_) => const NewSupportTicketScreen())))
+                                builder: (_) =>
+                                    const NewSupportTicketScreen())))
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: _tickets.length,
@@ -342,7 +356,8 @@ class _SupportTicketsListScreenState extends State<SupportTicketsListScreen> {
                               children: [
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(t['subject'] as String? ?? '—',
                                           style: AppTextStyles.cardTitle),
@@ -373,8 +388,7 @@ class SupportTicketDetailScreen extends StatefulWidget {
       _SupportTicketDetailScreenState();
 }
 
-class _SupportTicketDetailScreenState
-    extends State<SupportTicketDetailScreen> {
+class _SupportTicketDetailScreenState extends State<SupportTicketDetailScreen> {
   late Map<String, dynamic> _ticket;
   final _replyCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
@@ -449,21 +463,24 @@ class _SupportTicketDetailScreenState
                 if (attachment?['filePath'] is String)
                   OutlinedButton.icon(
                     icon: const Icon(Icons.attach_file_rounded),
-                    label:
-                        Text(attachment?['fileName'] as String? ?? 'فتح المرفق'),
+                    label: Text(
+                        attachment?['fileName'] as String? ?? 'فتح المرفق'),
                     onPressed: () async {
                       try {
                         final uri = await resolveDocumentDownload(
                             attachment!['filePath'] as String);
                         if (!await launchUrl(uri,
-                            mode: LaunchMode.externalApplication))
+                            mode: LaunchMode.externalApplication)) {
                           throw Exception('Cannot open attachment');
-                      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/support_team_ai_screens.dart:460');
-                        if (context.mounted)
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              AppSnackBar(
-                                  content: Text(
-                                      'تعذر فتح المرفق. تحقق من الجلسة والصلاحيات.')));
+                        }
+                      } catch (swallowedError, swallowedStack) {
+                        ErrorReporter.swallowed(swallowedError, swallowedStack,
+                            'screens/services_support/support_team_ai_screens.dart:460');
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+                              content: const Text(
+                                  'تعذر فتح المرفق. تحقق من الجلسة والصلاحيات.')));
+                        }
                       }
                     },
                   ),
@@ -471,8 +488,9 @@ class _SupportTicketDetailScreenState
                   final reply = Json.map(r);
                   final isStudent = reply['fromRole'] == 'student';
                   return Align(
-                    alignment:
-                        isStudent ? Alignment.centerLeft : Alignment.centerRight,
+                    alignment: isStudent
+                        ? Alignment.centerLeft
+                        : Alignment.centerRight,
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 10),
                       constraints: BoxConstraints(
@@ -485,12 +503,30 @@ class _SupportTicketDetailScreenState
                             ? null
                             : Border.all(color: AppColors.border),
                       ),
-                      child: Text(reply['message'] as String? ?? '',
-                          style: TextStyle(
-                              color: isStudent
-                                  ? Colors.white
-                                  : AppColors.textPrimary,
-                              fontSize: 13.5)),
+                      child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                                isStudent
+                                    ? 'أنت'
+                                    : reply['displayName']?.toString() ??
+                                        Json.map(reply['user'])['name']
+                                            ?.toString() ??
+                                        'موظف المتابعة',
+                                style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                    color: isStudent
+                                        ? Colors.white70
+                                        : AppColors.textSecondary)),
+                            const SizedBox(height: 5),
+                            Text(reply['message'] as String? ?? '',
+                                style: TextStyle(
+                                    color: isStudent
+                                        ? Colors.white
+                                        : AppColors.textPrimary,
+                                    fontSize: 13.5)),
+                          ]),
                     ),
                   );
                 }),
@@ -553,7 +589,7 @@ class MyTeamScreen extends StatefulWidget {
 }
 
 class _MyTeamScreenState extends State<MyTeamScreen> {
-  DashboardOverview? _overview;
+  List<Map<String, dynamic>> _members = [];
   bool _loading = true;
   String? _error;
 
@@ -564,10 +600,13 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      final data = await StudentRepository.instance.getOverview();
-      if (mounted) setState(() => _overview = data);
+      final data = await StudentRepository.instance.getSupportTeam();
+      if (mounted) setState(() => _members = data);
     } catch (e) {
       if (mounted) setState(() => _error = 'تعذر تحميل بيانات الفريق.');
     } finally {
@@ -577,11 +616,6 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final home = _overview?.home;
-    final consultantName = home?['consultantName'] as String?
-        ?? home?['consultant'] as String?
-        ?? _overview?.profile?['consultantName'] as String?;
-
     return AppScaffold(
       title: 'فريقي',
       body: RefreshIndicator(
@@ -593,46 +627,23 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                 ? ErrorState(message: _error!, onRetry: _load)
                 : ListView(
                     padding: const EdgeInsets.all(16),
-                    physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                    physics: const BouncingScrollPhysics(
+                        parent: AlwaysScrollableScrollPhysics()),
                     children: [
                       const Text(
-                          'هذا هو الفريق المخصص لك في Study Birds. يمكنك التواصل معهم مباشرة عبر المحادثة.',
+                          'هؤلاء الموظفون مسؤولون عن متابعتك. أرسل مشكلتك من «تذكرة دعم جديدة» وتابع ردودهم في «تذاكري».',
                           style: AppTextStyles.body),
                       const SizedBox(height: 20),
-                      _TeamMemberCard(
-                        role: 'المستشار التعليمي',
-                        name: consultantName?.isNotEmpty == true
-                            ? consultantName!
-                            : 'سيتم تعيين مستشارك قريبًا',
-                        icon: Icons.school_rounded,
-                        available: consultantName?.isNotEmpty == true,
-                        onMessage: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (_) =>
-                                    const ConversationThreadScreen())),
-                      ),
-                      const SizedBox(height: 12),
-                      _TeamMemberCard(
-                        role: 'مسؤول القبول',
-                        name: 'فريق القبول',
-                        icon: Icons.assignment_ind_rounded,
-                        available: true,
-                        onMessage: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (_) =>
-                                    const ConversationThreadScreen())),
-                      ),
-                      const SizedBox(height: 12),
-                      _TeamMemberCard(
-                        role: 'منسق الدعم',
-                        name: 'فريق الدعم',
-                        icon: Icons.support_agent_rounded,
-                        available: true,
-                        onMessage: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (_) =>
-                                    const ConversationThreadScreen())),
-                      ),
+                      if (_members.isEmpty)
+                        const InlineNotice(
+                            'لم يتم تعيين موظفين مسؤولين عنك بعد. يمكنك إرسال تذكرة وسيُتابعها المسؤولون.'),
+                      for (final member in _members) ...[
+                        _TeamMemberCard(
+                            role: 'مسؤول عن متابعتك',
+                            name: member['name']?.toString() ?? '',
+                            icon: Icons.support_agent_rounded),
+                        const SizedBox(height: 12),
+                      ],
                     ],
                   ),
       ),
@@ -644,15 +655,11 @@ class _TeamMemberCard extends StatelessWidget {
   final String role;
   final String name;
   final IconData icon;
-  final bool available;
-  final VoidCallback onMessage;
 
   const _TeamMemberCard({
     required this.role,
     required this.name,
     required this.icon,
-    required this.available,
-    required this.onMessage,
   });
 
   @override
@@ -679,13 +686,6 @@ class _TeamMemberCard extends StatelessWidget {
               ],
             ),
           ),
-          if (available)
-            IconButton(
-              onPressed: onMessage,
-              icon: const Icon(Icons.chat_bubble_outline_rounded,
-                  color: AppColors.navy),
-              tooltip: 'مراسلة',
-            ),
         ],
       ),
     );
