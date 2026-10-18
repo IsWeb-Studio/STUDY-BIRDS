@@ -40,8 +40,10 @@ export const programService = {
     const { data } = await api.post<Program>("/programs", payload);
     return data;
   },
-  update: async (id: string, payload: ProgramPayload) => {
-    const { data } = await api.put<Program>(`/programs/${id}`, payload);
+  update: async (id: string, payload: ProgramPayload & { expectedVersion: number }) => {
+    const { data } = await api.put<Program>(`/programs/${id}`, payload, {
+      headers: { 'If-Match': `"${payload.expectedVersion}"` },
+    });
     return data;
   },
   uploadCoverImage: async (file: File) => {
@@ -52,8 +54,10 @@ export const programService = {
     });
     return data.url;
   },
-  remove: async (id: string, expectedVersion?: number) => {
-    const { data } = await api.delete(`/programs/${id}`, { data: { expectedVersion } });
+  remove: async (id: string, expectedVersion: number) => {
+    const { data } = await api.delete(`/programs/${id}`, {
+      data: { expectedVersion }, headers: { 'If-Match': `"${expectedVersion}"` },
+    });
     return data;
   },
 };

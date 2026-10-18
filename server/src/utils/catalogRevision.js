@@ -42,4 +42,14 @@ async function deleteCatalog(Model, id, body) {
   return requireResult(Model, id, result);
 }
 
-module.exports = { expectedVersion, revisionFilter, explicitFields, updateCatalog, deleteCatalog };
+// A header carries the same precondition when a client/proxy omits a DELETE body.
+function withRevisionHeader(req, res, next) {
+  if (req.body?.expectedVersion === undefined && req.get('If-Match') !== undefined) {
+    const match = /^"(\d+)"$/.exec(req.get('If-Match'));
+    if (!match || !Number.isSafeInteger(Number(match[1]))) return next(Object.assign(new Error('Invalid record revision'), { status: 400 }));
+    req.body = { ...req.body, expectedVersion: Number(match[1]) };
+  }
+  next();
+}
+
+module.exports = { expectedVersion, revisionFilter, explicitFields, updateCatalog, deleteCatalog, withRevisionHeader };

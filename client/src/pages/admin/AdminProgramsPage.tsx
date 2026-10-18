@@ -171,6 +171,7 @@ export const AdminProgramsPage = () => {
   };
 
   const startEdit = async (item: Program) => {
+    setFormError("");
     let program: Program;
     try { program = await programService.getById(item._id); }
     catch (issue) { setFormError(getErrorMessage(issue, "Unable to load program")); return; }
@@ -268,7 +269,12 @@ export const AdminProgramsPage = () => {
   const handleDelete = async (id: string) => {
     setFormError("");
     try {
-      await programService.remove(id, programs.find(row => row._id === id)?.__v ?? 0);
+      const program = programs.find(row => row._id === id);
+      if (!program) {
+        await loadData();
+        return;
+      }
+      await programService.remove(id, program.__v ?? 0);
       setPrograms((current) => current.filter((item) => item._id !== id));
       if (editingId === id) {
         resetForm();
