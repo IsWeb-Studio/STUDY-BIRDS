@@ -29,9 +29,10 @@ void main() {
     },
         () => MockClient((r) async {
               expect(r.headers['authorization'], 'Bearer test-session');
-              if (r.url.path.endsWith('/confirm'))
+              if (r.url.path.endsWith('/confirm')) {
                 expect(jsonDecode(r.body), {'code': '123456'});
-              return http.Response('{}', 200);
+              }
+              return http.Response(r.url.path.endsWith('/confirm') ? '{"emailVerified":true}' : '{}', 200);
             }));
   });
   testWidgets('unavailable email verification never claims code was sent',
@@ -76,12 +77,13 @@ void main() {
     },
         () => MockClient((r) async {
               paths.add(r.url.path);
-              if (r.url.path.endsWith('/confirm'))
+              if (r.url.path.endsWith('/confirm')) {
                 expect(jsonDecode(r.body), {
                   'email': 'student@example.test',
                   'code': '123456',
                   'password': 'Birds@Sky2026'
                 });
+              }
               return http.Response('{}', 200,
                   headers: {'content-type': 'application/json'});
             }));

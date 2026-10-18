@@ -10,8 +10,14 @@ class VerifyContactScreen extends StatefulWidget {
   final bool isEmail;
   final String contact;
   final VoidCallback? onVerify;
+  final bool mandatory, autoSend;
   const VerifyContactScreen(
-      {super.key, this.isEmail = true, this.contact = '', this.onVerify});
+      {super.key,
+      this.isEmail = true,
+      this.contact = '',
+      this.onVerify,
+      this.mandatory = false,
+      this.autoSend = false});
   @override
   State<VerifyContactScreen> createState() => _VerifyContactScreenState();
 }
@@ -21,18 +27,30 @@ class _VerifyContactScreenState extends State<VerifyContactScreen> {
   bool sent = false, busy = false, verified = false;
   String? error;
   @override
+  void initState() {
+    super.initState();
+    if (widget.autoSend) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) submit();
+      });
+    }
+  }
+
+  @override
   void dispose() {
     code.dispose();
     super.dispose();
   }
 
   Future<void> submit({bool resend = false}) async {
+    if (busy) return;
     final confirm = sent && !resend;
     if (confirm && !RegExp(r'^\d{6}$').hasMatch(code.text.trim())) {
       setState(() => error = 'أدخل الرمز المكون من 6 أرقام');
       return;
     }
     final token = AuthSession.instance.token;
+    final owner = AuthSession.instance.currentUser?.id;
     if (token == null) {
       setState(() => error = 'سجّل الدخول أولًا');
       return;
@@ -42,25 +60,37 @@ class _VerifyContactScreenState extends State<VerifyContactScreen> {
       error = null;
     });
     try {
-      await ApiClient.instance.post(
+      final result = await ApiClient.instance.post(
           '/mobile-security/email/${confirm ? 'confirm' : 'request'}',
           token: token,
           body: confirm ? {'code': code.text.trim()} : {});
-      if (!mounted) return;
+      if (!mounted ||
+          AuthSession.instance.token != token ||
+          AuthSession.instance.currentUser?.id != owner) {
+        return;
+      }
+      final confirmed = result is Map && result['emailVerified'] == true;
+      if (confirm && !confirmed) {
+        setState(() => error = 'تعذر تأكيد توثيق البريد. حاول مجددًا.');
+        return;
+      }
       setState(() {
         sent = true;
-        verified = confirm;
+        verified = confirmed;
       });
-      if (confirm) {
+      if (confirmed) {
         AuthSession.instance.patchEmailVerified();
         widget.onVerify?.call();
       }
     } on ApiException catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() => error = e.statusCode == 404
             ? 'تأكيد البريد غير متاح حاليًا. يرجى المحاولة لاحقًا.'
             : e.message);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/auth/verify_contact_screen.dart:62');
+      }
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/auth/verify_contact_screen.dart:62');
       if (mounted) setState(() => error = 'تعذر الاتصال. حاول مجددًا.');
     } finally {
       if (mounted) setState(() => busy = false);
@@ -68,7 +98,10 @@ class _VerifyContactScreenState extends State<VerifyContactScreen> {
   }
 
   @override
-  Widget build(BuildContext context) => AppScaffold(
+  Widget build(BuildContext context) => PopScope(
+      canPop: !widget.mandatory,
+      child: AppScaffold(
+          showBackButton: !widget.mandatory,
           title: 'تأكيد التواصل',
           body: FeatureBody(children: [
             SecurityIntro(
@@ -111,5 +144,9 @@ class _VerifyContactScreenState extends State<VerifyContactScreen> {
                         child: const Text('إعادة إرسال الرمز')),
                 ])),
             ],
-          ]));
+            if (widget.mandatory)
+              TextButton(
+                  onPressed: busy ? null : () => AuthSession.instance.logout(),
+                  child: const Text('تسجيل الخروج')),
+          ])));
 }

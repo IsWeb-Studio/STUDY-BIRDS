@@ -115,6 +115,8 @@ class AuthUser {
   final bool emailVerified;
   final String? authProvider;
   final bool hasPassword;
+  bool get needsEmailVerification => !emailVerified &&
+      !(authProvider == 'phone' && email.endsWith('@phone.studybirds.net'));
 
   const AuthUser({
     required this.id,

@@ -160,7 +160,7 @@ const googleLogin = asyncHandler(async (req, res) => {
       email: normalizedEmail,
       googleId: payload.sub,
       authProvider: "google",
-      emailVerified: true,
+      emailVerified: false,
       avatar: payload.picture,
       role: "student",
     });
@@ -181,29 +181,14 @@ const googleLogin = asyncHandler(async (req, res) => {
     if (!user.authProvider) {
       user.authProvider = user.password ? "local" : "google";
     }
-
-    // Returning Google users are implicitly verified — Google itself confirmed
-    // email_verified. Auto-set so they are never asked for a code again.
-    if (!user.emailVerified) {
-      user.emailVerified = true;
-    }
   }
 
   // Persist Google linkage before any challenge check.
   await user.save();
 
-  if (!user.emailVerified) {
-    // NEW user: one-time email verification before they can set a password.
-    if (!emailCode) {
-      await sendCode(user, 'login', res);
-      return res.status(428).json({
-        message: 'أدخل رمز التأكيد المرسل إلى بريد حسابك في Google.',
-        requiresEmailVerification: true,
-      });
-    }
-    await consume(user, 'login', emailCode, res);
-    user.emailVerified = true;
-  } else if (user.twoFactorEnabled) {
+  // First-time setup is password, then the authenticated email-verification
+  // flow. Google identity alone does not set our emailVerified flag.
+  if (user.twoFactorEnabled) {
     // RETURNING user with 2FA: require code on every login.
     if (!emailCode) {
       await sendCode(user, 'login', res);
@@ -292,7 +277,7 @@ const changePassword = asyncHandler(async (req, res) => {
     verifiedAt <= Date.now() && Date.now() - verifiedAt < 10 * 60 * 1000;
   if (req.body.passwordSetup === true && !googleVerified) {
     res.status(400);
-    throw new Error('انتهى تأكيد حساب Google أو لم يصل إلى السيرفر. أعد الدخول بجوجل وأكد الكود، ثم احفظ كلمة المرور.');
+    throw new Error('انتهت جلسة إعداد كلمة المرور. أعد الدخول بحساب Google، ثم أنشئ كلمة المرور ووثّق بريدك.');
   }
   if (user.password && !currentPassword && !googleVerified) {
     res.status(400);
@@ -304,6 +289,7 @@ const changePassword = asyncHandler(async (req, res) => {
     throw new Error("Current password is incorrect");
   }
 
+  if (!user.password && user.authProvider === 'google') user.emailVerified = false;
   user.password = newPassword;
   user.passwordChangedAt = new Date();
   // Atomic increment: concurrent password changes must never reuse a version.

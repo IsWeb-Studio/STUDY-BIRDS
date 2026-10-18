@@ -55,12 +55,20 @@ router.post('/two-factor/disable', run(async (req, res) => {
   res.json({ enabled: false });
 }));
 router.post('/email/request', run(async (req, res) => {
-  if (req.user.emailVerified) return res.json({ emailVerified: true, alreadyVerified: true });
-  await sendCode(req.user, 'verify', res); res.json({ message: 'تم إرسال رمز التحقق إلى بريدك.' });
+  const user = await User.findOne({ _id: req.user._id, isActive: true }).select('email emailVerified password name');
+  if (!user) return res.status(401).json({ message: 'الحساب غير متاح. سجّل الدخول مجددًا.' });
+  if (user.emailVerified) return res.json({ emailVerified: true, alreadyVerified: true });
+  if (!user.password) return res.status(409).json({ message: 'أنشئ كلمة مرور لحسابك أولًا، ثم وثّق البريد الإلكتروني.' });
+  await sendCode(user, 'verify', res); res.json({ message: 'تم إرسال رمز التحقق إلى بريدك.' });
 }));
 router.post('/email/confirm', run(async (req, res) => {
-  await consume(req.user, 'verify', req.body.code, res);
-  await User.updateOne({ _id: req.user._id }, { $set: { emailVerified: true } }); res.json({ emailVerified: true });
+  const user = await User.findOne({ _id: req.user._id, isActive: true }).select('email password');
+  if (!user) return res.status(401).json({ message: 'الحساب غير متاح. سجّل الدخول مجددًا.' });
+  if (!user.password) return res.status(409).json({ message: 'أنشئ كلمة مرور لحسابك أولًا، ثم وثّق البريد الإلكتروني.' });
+  await consume(user, 'verify', req.body.code, res);
+  const result = await User.updateOne({ _id: user._id, email: user.email, isActive: true }, { $set: { emailVerified: true } });
+  if (!result.matchedCount) return res.status(409).json({ message: 'تغيّر البريد أو حالة الحساب. سجّل الدخول مجددًا.' });
+  res.json({ emailVerified: true });
 }));
 router.post('/email/change/request', run(async (req, res) => {
   if (!isMailerConfigured()) fail(res, 'إرسال البريد غير مهيأ على السيرفر.', 503);

@@ -948,7 +948,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                 const SecurityIntro(
                     title: 'أضف كلمة مرور لحسابك',
                     subtitle:
-                        'خطوتك الأخيرة لحماية حسابك. اختر كلمة مرور قوية لتبدأ رحلتك مع Study Birds.',
+                        'اختر كلمة مرور قوية، وبعدها سنرسل رمزًا لبريدك الإلكتروني لتوثيقه وإكمال إعداد حسابك.',
                     icon: Icons.lock_outline_rounded),
                 if (email.isNotEmpty) ...[
                   const SizedBox(height: 20),
