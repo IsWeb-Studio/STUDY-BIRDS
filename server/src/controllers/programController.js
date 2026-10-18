@@ -168,7 +168,15 @@ const deleteProgram = asyncHandler(async (req, res) => {
   if (await require('../models/Application').exists({program:req.params.id})) {
     res.status(409); throw new Error('Program has applications and cannot be deleted');
   }
-  const program = await deleteCatalog(Program, req.params.id, req.body);
+  // Deployed legacy clients send a bodyless DELETE. Honor the explicit delete
+  // intent, while still comparing the revision read here against the delete.
+  let deletion = req.body;
+  if (deletion?.expectedVersion === undefined) {
+    const current = await Program.findById(req.params.id).select('__v').lean();
+    if (!current) { res.status(404); throw new Error('Program not found'); }
+    deletion = { ...deletion, expectedVersion: current.__v ?? 0 };
+  }
+  const program = await deleteCatalog(Program, req.params.id, deletion);
 
   if (!program) {
     res.status(404);

@@ -54,6 +54,10 @@ test('catalog writes preserve fields and reject stale edits and deletions', {ski
     assert.ok(await Program.exists({_id:program._id}));
     assert.equal((await call(`/programs/${program._id}`,{expectedVersion:1},'DELETE')).status,200);
     assert.equal((await call(`/programs/${program._id}`,{expectedVersion:1},'DELETE')).status,404);
+    // The production Vercel frontend predates revision payloads on DELETE.
+    const legacyProgram=await Program.create({title:'Legacy delete',university:university._id,degreeLevel:'Bachelor',fieldOfStudy:'Medicine'});
+    assert.equal((await call(`/programs/${legacyProgram._id}`,undefined,'DELETE')).status,200);
+    assert.equal(await Program.exists({_id:legacyProgram._id}),null);
     // Old records without a version are upgraded by a successful CAS write.
     await Field.collection.updateOne({_id:field._id},{$unset:{__v:''}});
     assert.equal((await call(`/admin/study-fields/${field._id}`,{sortOrder:8,expectedVersion:0})).body.__v,1);
