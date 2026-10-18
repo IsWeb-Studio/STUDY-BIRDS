@@ -264,7 +264,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _selectedTargetCountries =
           targets is List ? targets.map((e) => e.toString()).toList() : [];
 
-      if (widget.section == ProfileSection.passport) _loadPassportDoc();
+      if (widget.section == null || widget.section == ProfileSection.passport) {
+        await _loadPassportDoc();
+      }
     } catch (e) {
       if (mounted) _error = AppError.message(e);
     } finally {
@@ -278,7 +280,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (!mounted) return;
       final passports = docs
           .whereType<Map<String, dynamic>>()
-          .where((d) => d['type'] == 'passport' && d['supersededBy'] == null && d['archivedAt'] == null)
+          .where((d) =>
+              d['type'] == 'passport' &&
+              d['supersededBy'] == null &&
+              d['archivedAt'] == null)
           .toList();
       if (passports.isNotEmpty) setState(() => _passportDoc = passports.first);
     } catch (swallowedError, swallowedStack) {
@@ -343,11 +348,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               : '+${_emergencyPhoneCountry.dialCode}$emergLocal',
           'relationship': emergRel,
         };
-      }
-      if (section == null || section == ProfileSection.passport) {
-        next['passportNumber'] = _controllers['passportNumber']!.text.trim();
-        final dob = _controllers['dateOfBirth']!.text.trim();
-        next['dateOfBirth'] = dob.isEmpty ? null : dob;
       }
       if (section == null || section == ProfileSection.academic) {
         next['currentEducationLevel'] = _level;
@@ -415,7 +415,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       ));
       if (replace != true || !mounted) return;
     }
-    final file = await pickDocument(context, passport: true);
+    final file = await pickDocument(context, passport: true, allowPassportEditing: false);
     if (file == null || file.bytes == null || !mounted) return;
     final bytes = file.bytes!;
     final fileName = file.name;
@@ -428,14 +428,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
 
     if (file is! ReviewedPassportFile || !file.analysis.mrz.canSubmit) return;
-    final extracted = (
-      passportNumber: file.reviewedFields['number'],
-      dateOfBirth: file.reviewedFields['birth']
-    );
-    setState(() {
-      _controllers['passportNumber']!.text = extracted.passportNumber ?? '';
-      _controllers['dateOfBirth']!.text = extracted.dateOfBirth ?? '';
-    });
     setState(() => _passportUploading = true);
     try {
       final doc = await StudentRepository.instance.uploadDocument(
@@ -445,12 +437,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         replaces: _passportDoc?['_id']?.toString(),
         passportReview: file.submissionMetadata,
       );
+      if (!mounted) return;
+      setState(() => _passportDoc = doc);
+      await _load();
       if (mounted) {
-        setState(() => _passportDoc = doc);
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-          content: Text(extracted.passportNumber != null
-              ? 'تم رفع الجواز؛ اضغط حفظ لتحديث بيانات ملفك ✓'
-              : 'تم رفع جواز السفر بنجاح ✓'),
+          content: const Text('تم رفع جواز السفر وحفظ بياناته تلقائيًا ✓'),
         ));
       }
     } catch (e) {
@@ -726,7 +718,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     return AppScaffold(
       title: title,
-      bottomBar: !_loaded
+      bottomBar: !_loaded || section == ProfileSection.passport
           ? null
           : SafeArea(
               top: false,
@@ -954,8 +946,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
-                            _field('passportNumber'),
-                            _field('dateOfBirth'),
+                            if (_profile['passportIdentity'] is Map)
+                              _PassportIdentityCard(
+                                  identity: Map<String, dynamic>.from(
+                                      _profile['passportIdentity'] as Map)),
                             const SizedBox(height: 12),
                             _PassportUploadTile(
                               doc: _passportDoc,
@@ -1023,6 +1017,51 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 }
 
 // ─── Passport upload tile ─────────────────────────────────────────────────────
+class _PassportIdentityCard extends StatelessWidget {
+  final Map<String, dynamic> identity;
+  const _PassportIdentityCard({required this.identity});
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text('بيانات صاحب الجواز',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          const SizedBox(height: 8),
+          for (final entry in const {
+            'name': 'الاسم الكامل',
+            'number': 'رقم جواز السفر',
+            'birth': 'تاريخ الميلاد',
+            'nationality': 'الجنسية',
+            'expiry': 'تاريخ انتهاء الجواز',
+            'sex': 'الجنس',
+          }.entries)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(entry.value,
+                        style: Theme.of(context).textTheme.bodySmall),
+                    const SizedBox(height: 3),
+                    SelectableText(
+                        entry.key == 'sex'
+                            ? switch (identity[entry.key]) {
+                                'M' => 'ذكر',
+                                'F' => 'أنثى',
+                                _ => 'غير محدد'
+                              }
+                            : identity[entry.key]?.toString() ?? '—',
+                        textDirection: TextDirection.ltr),
+                  ]),
+            ),
+          const Text(
+              'حُفظت هذه البيانات تلقائيًا من أول جواز. رفع صورة جديدة لا يغيّرها.'),
+          const SizedBox(height: 16),
+        ],
+      );
+}
+
 class _PassportUploadTile extends StatelessWidget {
   final Map<String, dynamic>? doc;
   final bool verifying;

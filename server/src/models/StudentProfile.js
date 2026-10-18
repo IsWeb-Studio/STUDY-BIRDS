@@ -11,6 +11,15 @@ const studentProfileSchema = new mongoose.Schema(
     phone: String,
     englishFullName: String,
     passportNumber: String,
+    passportIdentity: {
+      type: new mongoose.Schema({
+        number: String, name: String, nationality: String,
+        birth: String, expiry: String, sex: String,
+        document: { type: mongoose.Schema.Types.ObjectId, ref: 'Document' },
+        capturedAt: Date,
+      }, { _id: false }),
+      default: undefined,
+    },
     dateOfBirth: Date,
     nationality: String,
     currentEducation: String,

@@ -42,9 +42,11 @@ class ReviewedPassportFile extends PlatformFile {
 class PassportScannerScreen extends StatefulWidget {
   final PlatformFile? initialFile;
   final PassportScanOptions options;
+  final bool allowEditing;
   const PassportScannerScreen(
       {super.key,
       this.initialFile,
+      this.allowEditing = true,
       this.options = const PassportScanOptions()});
   @override
   State<PassportScannerScreen> createState() => _PassportScannerScreenState();
@@ -603,6 +605,7 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
                     Padding(
                         padding: const EdgeInsets.symmetric(vertical: 7),
                         child: TextFormField(
+                          readOnly: !widget.allowEditing,
                           controller: _fields[entry.key],
                           autocorrect: false,
                           enableSuggestions: false,

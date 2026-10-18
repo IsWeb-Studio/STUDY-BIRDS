@@ -151,7 +151,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
         builder: (_) => EditProfileScreen(section: section),
       ),
     );
-    if (saved == true && mounted) _load();
+    if (mounted && (saved == true || section == ProfileSection.passport)) {
+      _load();
+    }
   }
 
   @override

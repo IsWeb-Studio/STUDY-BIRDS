@@ -276,7 +276,8 @@ class StudentRepository {
       final owner = AuthSession.instance.currentUser?.id;
       if (owner != null) {
         unawaited(SecureDataCache.write(owner, 'documents', _documents)
-            .catchError(ErrorReporter.silent('documents.cache.stale-response')));
+            .catchError(
+                ErrorReporter.silent('documents.cache.stale-response')));
       }
       return List.unmodifiable(_documents);
     }
@@ -357,7 +358,7 @@ class StudentRepository {
     }
     if (cancellation?.cancelled == true)
       throw const ApiException(499, 'Upload cancelled');
-    if (existing != null) {
+    if (existing != null && !(type == 'passport' && passportReview != null && existing['passportReview'] == null)) {
       _documentConfirmed({...existing, 'reused': true}, session);
       return {...existing, 'reused': true};
     }

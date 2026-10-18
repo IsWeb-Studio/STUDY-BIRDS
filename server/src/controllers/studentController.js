@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const { uploadPrivateDocument } = require('../utils/privateDocumentStorage');
 const { studentNextAction } = require("../utils/studentNextAction");
 const StudentProfile = require("../models/StudentProfile");
+const { ensurePassportIdentity } = require('../utils/passportIdentity');
 const Document = require("../models/Document");
 const Application = require("../models/Application");
 const AgencyRequest = require("../models/AgencyRequest");
@@ -85,6 +86,7 @@ const STUDENT_DASHBOARD_STAGES = [
 ];
 
 const getProfile = asyncHandler(async (req, res) => {
+  await ensurePassportIdentity(req.user._id);
   const profile = await StudentProfile.findOne({ user: req.user._id }).populate(
     "user",
     "-password"
@@ -99,8 +101,6 @@ const updateProfile = asyncHandler(async (req, res) => {
     email,
     phone,
     englishFullName,
-    passportNumber,
-    dateOfBirth,
     nationality,
     currentEducation,
     currentEducationLevel,
@@ -141,8 +141,6 @@ const updateProfile = asyncHandler(async (req, res) => {
   const profilePayload = {
     phone,
     englishFullName: String(englishFullName || "").trim(),
-    passportNumber: String(passportNumber || "").trim(),
-    dateOfBirth,
     nationality,
     currentEducation,
     currentEducationLevel: String(currentEducationLevel || "").trim(),
@@ -224,6 +222,13 @@ const uploadDocument = asyncHandler(async (req, res) => {
   });
 
   const response = (await Document.findById(document._id).lean());
+  // Older uploads may have no OCR metadata. Attach it once to the same
+  // server-hashed file; never replace an existing extraction on a retry.
+  if (passportReview && !response.passportReview) {
+    await Document.updateOne({ _id: document._id, passportReview: null }, { $set: { passportReview } });
+    response.passportReview = (await Document.findById(document._id).lean()).passportReview;
+  }
+  if (response.type === 'passport') await ensurePassportIdentity(req.user._id);
   delete response.storage;
   res.status(reused ? 200 : 201).json({ ...Document.clientView(response), reused, statusInfo: documentStatusInfo(response) });
 });

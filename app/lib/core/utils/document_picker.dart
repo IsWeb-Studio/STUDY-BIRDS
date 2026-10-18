@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../screens/profile_account/passport_scanner_screen.dart';
 
 Future<PlatformFile?> pickDocument(BuildContext context,
-    {bool passport = false}) async {
+    {bool passport = false, bool allowPassportEditing = true}) async {
   try {
     final source = await showModalBottomSheet<String>(
       context: context,
@@ -36,7 +36,9 @@ Future<PlatformFile?> pickDocument(BuildContext context,
     if (source == null || !context.mounted) return null;
     if (passport && source == 'camera') {
       return await Navigator.of(context).push<ReviewedPassportFile>(
-          MaterialPageRoute(builder: (_) => const PassportScannerScreen()));
+          MaterialPageRoute(
+              builder: (_) =>
+                  PassportScannerScreen(allowEditing: allowPassportEditing)));
     }
     if (source == 'file') {
       final result = await FilePicker.platform.pickFiles(
@@ -49,7 +51,8 @@ Future<PlatformFile?> pickDocument(BuildContext context,
       if (!passport || !context.mounted) return passport ? null : file;
       return await Navigator.of(context).push<ReviewedPassportFile>(
           MaterialPageRoute(
-              builder: (_) => PassportScannerScreen(initialFile: file)));
+              builder: (_) => PassportScannerScreen(
+                  initialFile: file, allowEditing: allowPassportEditing)));
     }
     final image = await ImagePicker().pickImage(
       source: source == 'camera' ? ImageSource.camera : ImageSource.gallery,
@@ -62,7 +65,8 @@ Future<PlatformFile?> pickDocument(BuildContext context,
     if (!passport || !context.mounted) return passport ? null : file;
     return await Navigator.of(context).push<ReviewedPassportFile>(
         MaterialPageRoute(
-            builder: (_) => PassportScannerScreen(initialFile: file)));
+            builder: (_) => PassportScannerScreen(
+                initialFile: file, allowEditing: allowPassportEditing)));
   } catch (_) {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
