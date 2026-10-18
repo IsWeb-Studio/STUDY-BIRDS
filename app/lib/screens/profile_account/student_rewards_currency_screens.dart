@@ -12,6 +12,7 @@ import '../../core/services/currency_service.dart';
 import '../../core/repositories/stories_repository.dart';
 import '../../core/services/realtime_sync_service.dart';
 import '../../core/widgets/bird_points.dart';
+import '../../core/widgets/streak_restore.dart';
 import 'dart:async';
 
 // ─── بند 53: مكافآت الطالب ────────────────────────────────────────────────────
@@ -126,6 +127,7 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
                                 style: const TextStyle(
                                     fontSize: 36, fontWeight: FontWeight.bold)),
                             Text('🔥 ${_storyProgress!.days} يوم متتالي'),
+                            StreakRestore(progress: _storyProgress!, onRestored: (value) => setState(() => _storyProgress = value)),
                             if (_pointsChange != null)
                               Text(
                                   '${_pointsChange! > 0 ? '+' : ''}$_pointsChange',

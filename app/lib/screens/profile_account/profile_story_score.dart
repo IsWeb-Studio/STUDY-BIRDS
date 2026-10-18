@@ -84,6 +84,7 @@ class _ProfileStoryScoreState extends State<ProfileStoryScore> {
                 visitCommunity = true;
                 Navigator.pop(ctx);
               }));
+      if (mounted) await _load();
       if (visitCommunity && mounted) {
         await Navigator.of(context).push(
             MaterialPageRoute(builder: (_) => const StudentCommunityHub()));

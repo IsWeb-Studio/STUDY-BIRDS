@@ -86,6 +86,18 @@ test('stories: authorization, concurrent rewards, durable replay, seen, expiry a
     const reset = (await call('GET', '/progress')).data;
     assert.equal(reset.streak_days, 0); assert.equal(reset.total_points, before);
     assert.equal((await StoryStats.findOne({ user: users[0]._id })).streak_days, 0);
+    assert.equal(reset.recoverableStreakDays, 7);
+    const restores = await Promise.all(Array.from({ length: 5 }, () => call('POST', '/streak/restore')));
+    assert.equal(restores.filter(r => r.status === 200).length, 1, 'concurrent restore consumes one allowance');
+    assert.equal((await call('GET', '/progress')).data.streakRestoresRemaining, 2);
+    assert.equal((await call('GET', '/progress')).data.total_points, before);
+    for (let attempt = 2; attempt <= 4; attempt++) {
+      await StoryStats.updateOne({ user: users[0]._id }, { $set: { lastStoryAt: new Date(Date.now() - 37 * 3600000) } });
+      const result = await call('POST', '/streak/restore');
+      assert.equal(result.status, attempt <= 3 ? 200 : 409);
+    }
+    assert.equal((await call('GET', '/progress')).data.streak_days, 0);
+    assert.equal((await call('POST', '/streak/restore', 12)).status, 403);
     await Story.updateOne({ _id: id }, { $set: { expiresAt: new Date(Date.now() - 1) } });
     assert.equal((await call('POST', `/${id}/love`, 6)).status, 404);
     assert.equal((await call('POST', `/${id}/seen`, 6)).status, 404);

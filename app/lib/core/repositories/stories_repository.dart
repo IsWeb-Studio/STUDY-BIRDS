@@ -19,6 +19,8 @@ class StoryProgress {
   final String scoreEmoji;
   final bool playedToday;
   final int points, days, loves;
+  final int restoresRemaining, restoreLimit, recoverableDays;
+  final bool canRestore;
   final bool posted;
   final String state, timeZone;
   final DateTime? resetsAt;
@@ -27,6 +29,10 @@ class StoryProgress {
       this.scoreEmoji = '🔥',
       this.points = 0,
       this.days = 0,
+      this.restoresRemaining = 0,
+      this.restoreLimit = 3,
+      this.recoverableDays = 0,
+      this.canRestore = false,
       this.loves = 0,
       this.posted = false,
       this.state = 'inactive',
@@ -39,6 +45,10 @@ class StoryProgress {
           : '🔥',
       points: (j['total_points'] as num?)?.toInt() ?? 0,
       days: (j['streak_days'] as num?)?.toInt() ?? 0,
+      restoresRemaining: (j['streakRestoresRemaining'] as num?)?.toInt() ?? 0,
+      restoreLimit: (j['streakRestoreLimit'] as num?)?.toInt() ?? 3,
+      recoverableDays: (j['recoverableStreakDays'] as num?)?.toInt() ?? 0,
+      canRestore: j['canRestoreStreak'] == true,
       loves: (j['dailyLoveCount'] as num?)?.toInt() ?? 0,
       posted: j['postedToday'] == true,
       state: j['state'] as String? ?? 'inactive',
@@ -87,6 +97,11 @@ class StoriesRepository {
           '/stories/preferences',
           token: _token,
           body: {'scoreEmoji': emoji})));
+  Future<StoryProgress> restoreStreak() async => StoryProgress.fromJson(
+      Map<String, dynamic>.from(await _api.post('/stories/streak/restore',
+          token: _token,
+          body: {},
+          idempotencyKey: ApiClient.newOperationId())));
   Future<({List<StudentStory> stories, String? nextCursor})> feed(
       [String? before]) async {
     final token = _token;

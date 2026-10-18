@@ -27,8 +27,17 @@ async function atomic(fn) {
 const statsFor = (user, session) => StoryStats.findOneAndUpdate({ user }, { $setOnInsert: { user } }, { upsert: true, new: true, session, setDefaultsOnInsert: true });
 router.get('/progress', asyncHandler(async (req, res) => {
   // Persist lazy expiry with a conditional update so it cannot overwrite a concurrent post.
-  await StoryStats.updateOne({ user: req.user._id, lastStoryAt: { $lte: new Date(Date.now() - 36 * rules.HOUR) }, streak_days: { $gt: 0 } }, { $set: { streak_days: 0 } });
+  await StoryStats.updateOne({ user: req.user._id, lastStoryAt: { $lte: new Date(Date.now() - 36 * rules.HOUR) }, streak_days: { $gt: 0 } }, [{ $set: { brokenStreakDays: '$streak_days', streak_days: 0 } }]);
   res.json(rules.progress(await StoryStats.findOne({ user: req.user._id }).lean() || {}));
+}));
+router.post('/streak/restore', asyncHandler(async (req, res) => {
+  const result = await atomic(async session => {
+    const stats = await statsFor(req.user._id, session);
+    const restored = rules.restoreStreak(stats, Date.now());
+    await stats.save({ session });
+    return restored;
+  });
+  res.json(result);
 }));
 router.put('/preferences', asyncHandler(async (req, res) => {
   const emoji = req.body?.scoreEmoji;

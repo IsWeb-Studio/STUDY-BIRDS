@@ -12,6 +12,7 @@ import '../../core/network/api_client.dart';
 import '../../core/repositories/stories_repository.dart';
 import '../../core/services/auth_session.dart';
 import '../../core/widgets/student_achievements.dart';
+import '../../core/widgets/streak_restore.dart';
 import 'friends_screen.dart';
 import '../community/student_community_hub.dart';
 import '../../core/repositories/friends_repository.dart';
@@ -274,6 +275,10 @@ class StudentStoriesState extends State<StudentStories>
             TextButton(
                 onPressed: () => _load(),
                 child: Text('تعذر تحميل الستوريز. اضغط للمحاولة: $_error')),
+          if (p != null && p.recoverableDays > 0)
+            StreakRestore(
+                progress: p,
+                onRestored: (value) => setState(() => _progress = value)),
           SizedBox(
               height: 122,
               child: ListView(scrollDirection: Axis.horizontal, children: [
@@ -367,14 +372,20 @@ class _StoryAvatar extends StatelessWidget {
   }
 }
 
-class StoryProgressSheet extends StatelessWidget {
+class StoryProgressSheet extends StatefulWidget {
   final StoryProgress progress;
   final VoidCallback onPost;
   const StoryProgressSheet(
       {super.key, required this.progress, required this.onPost});
   @override
+  State<StoryProgressSheet> createState() => _StoryProgressSheetState();
+}
+
+class _StoryProgressSheetState extends State<StoryProgressSheet> {
+  StoryProgress? _restored;
+  @override
   Widget build(BuildContext context) {
-    final p = progress;
+    final p = _restored ?? widget.progress;
     return SafeArea(
         child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
@@ -392,6 +403,7 @@ class StoryProgressSheet extends StatelessWidget {
                       fontSize: 58, fontWeight: FontWeight.bold)),
               const Text('أيام متتالية',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              StreakRestore(progress: p, onRestored: (value) => setState(() => _restored = value)),
               if (p.state == 'ice_cold')
                 Padding(
                     padding: const EdgeInsets.only(top: 10),
@@ -446,7 +458,7 @@ class StoryProgressSheet extends StatelessWidget {
                   trailing: p.posted
                       ? const Text('تم ✓')
                       : TextButton(
-                          onPressed: onPost, child: const Text('انشر'))),
+                          onPressed: widget.onPost, child: const Text('انشر'))),
               ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.favorite, color: Colors.pink),
