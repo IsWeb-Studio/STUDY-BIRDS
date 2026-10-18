@@ -211,15 +211,10 @@ class ApiClient {
   static MediaType _mimeTypeFor(String fileName) {
     final ext = fileName.split('.').last.toLowerCase();
     switch (ext) {
-      case 'pdf': return MediaType('application', 'pdf');
-      case 'doc': return MediaType('application', 'msword');
-      case 'docx': return MediaType('application', 'vnd.openxmlformats-officedocument.wordprocessingml.document');
-      case 'xls': return MediaType('application', 'vnd.ms-excel');
-      case 'xlsx': return MediaType('application', 'vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      case 'ppt': return MediaType('application', 'vnd.ms-powerpoint');
-      case 'pptx': return MediaType('application', 'vnd.openxmlformats-officedocument.presentationml.presentation');
-      case 'txt': return MediaType('text', 'plain');
-      case 'zip': return MediaType('application', 'zip');
+      case 'pdf':
+        return MediaType('application', 'pdf');
+      case 'txt':
+        return MediaType('text', 'plain');
       case 'jpg':
       case 'jpeg': return MediaType('image', 'jpeg');
       case 'png': return MediaType('image', 'png');
@@ -284,7 +279,7 @@ class ApiClient {
     late final dynamic decoded;
     try {
       decoded = jsonDecode(bodyText);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/network/api_client.dart:280');
+    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(const FormatException('Invalid API JSON response'), swallowedStack, 'api.decode');
       if (response.statusCode >= 200 && response.statusCode < 300) {
         throw const ApiException(502, AppError.unavailable);
       }

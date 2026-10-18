@@ -2,6 +2,9 @@ import { api } from "../lib/api";
 import type { AuthResponse } from "../types";
 
 export const authService = {
+  logout: async (token: string) => {
+    await api.post('/auth/logout', {}, { headers: { Authorization: `Bearer ${token}` } });
+  },
   register: async (payload: { name: string; email: string; password: string; referralCode?: string }) => {
     const { data } = await api.post<AuthResponse>("/auth/register", payload);
     return data;

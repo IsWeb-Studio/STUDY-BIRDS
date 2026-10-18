@@ -69,6 +69,9 @@ app.use(express.json({ limit: '100kb', verify: (req, res, buffer) => {
   if (req.originalUrl.split('?')[0] === '/api/payments/stripe/webhook') req.rawBody = Buffer.from(buffer);
 } }));
 app.use(express.urlencoded({ extended: true, limit: '100kb', parameterLimit: 1000, depth: 16 }));
+const webSession = require('./middleware/webSession')(allowedOrigins);
+app.use('/api/auth', webSession);
+app.use('/api/identity', webSession);
 app.use('/api', requestSafety);
 // Safe retries for writes: honoured only when the client sends Idempotency-Key.
 const { createIdempotency, mongoStore } = require('./middleware/idempotency');
@@ -156,11 +159,13 @@ app.use('/api/mobile-workspace', requireDatabaseConnection, require('./routes/mo
 app.use("/api/scholarships", requireDatabaseConnection, require("./routes/scholarshipRoutes"));
 app.use("/api/assistant", requireDatabaseConnection, require("./routes/assistantRoutes").router);
 app.use("/api/translate", requireDatabaseConnection, require("./routes/translateRoutes"));
+app.use('/api/games/wink', requireDatabaseConnection, require('./routes/winkRoutes'));
 app.use("/api/identity", requireDatabaseConnection, require("./routes/identityRoutes"));
 app.use("/api/auth", requireDatabaseConnection, authRoutes);
 app.use("/api/support-attachments", requireDatabaseConnection, require("./routes/supportAttachmentAccessRoutes"));
 app.use("/api/payment-proofs", requireDatabaseConnection, require("./routes/paymentProofAccessRoutes"));
 app.use("/api/documents", requireDatabaseConnection, require("./routes/documentAccessRoutes"));
+app.use('/api/verification-documents', requireDatabaseConnection, require('./routes/verificationDocumentAccessRoutes'));
 app.use("/api/students", requireDatabaseConnection, studentRoutes);
 app.use("/api/partners", requireDatabaseConnection, partnerRoutes);
 app.use("/api/universities", requireDatabaseConnection, universityRoutes);
@@ -170,6 +175,8 @@ app.use('/api/consultations', requireDatabaseConnection, require('./routes/consu
 app.use('/api/accommodation', requireDatabaseConnection, require('./routes/accommodationRoutes'));
 app.use('/api/push-tokens', requireDatabaseConnection, require('./routes/pushRoutes'));
 app.use('/api/community', requireDatabaseConnection, require('./routes/communityRoutes'));
+app.use('/api/stories', requireDatabaseConnection, require('./routes/storyRoutes'));
+app.use('/api/friends', requireDatabaseConnection, require('./routes/friendRoutes'));
 app.use("/api/admin", requireDatabaseConnection, adminRoutes);
 app.use('/api/crm', requireDatabaseConnection, require('./routes/crmRoutes'));
 app.use("/api/content", requireDatabaseConnection, contentRoutes);

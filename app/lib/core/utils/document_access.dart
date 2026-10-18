@@ -3,7 +3,7 @@ import '../services/auth_session.dart';
 
 Future<Uri> resolveDocumentDownload(String path) async {
   final match = RegExp(
-          r'^/api/(?:documents|payment-proofs|support-attachments)/([a-fA-F0-9]{24})/access$')
+          r'^/api/(?:documents|payment-proofs|support-attachments|verification-documents)/([a-fA-F0-9]{24})/access$')
       .firstMatch(path);
   if (match != null) {
     final data = await ApiClient.instance
@@ -15,7 +15,8 @@ Future<Uri> resolveDocumentDownload(String path) async {
     return uri;
   }
   final uri = Uri.parse(ApiClient.baseUrl).resolve(path);
-  if (uri.scheme != 'https')
+  if (uri.scheme != 'https') {
     throw const FormatException('Invalid document URL');
+  }
   return uri;
 }

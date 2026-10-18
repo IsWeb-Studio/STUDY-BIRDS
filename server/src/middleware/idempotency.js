@@ -6,7 +6,7 @@ const MAX_STORED_BODY = 64 * 1024;
 
 // Responses of these areas contain credentials or one-time codes, so they are
 // never stored (or replayed). They keep their own replay protection.
-const EXCLUDED_PREFIXES = ["/auth", "/identity", "/mobile-security", "/payments/stripe/webhook"];
+const EXCLUDED_PREFIXES = ["/auth", "/identity", "/mobile-security", "/payments/stripe/webhook", "/games/wink"];
 
 const sha = (value) => crypto.createHash("sha256").update(value).digest("hex");
 

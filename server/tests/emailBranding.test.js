@@ -35,6 +35,18 @@ test('verification codes use the same branded shell and stay left to right', () 
   assert.equal((html.match(/123456/g) || []).length, 1);
 });
 
+test('new background and logo apply to user and administrative mail with readable content', () => {
+  for (const showJourney of [true, false]) {
+    const html = renderBrandedEmail({ subject: 'Account update', text: 'Keep this readable',
+      emailContent: { showJourney } });
+    assert.match(html, /background="https:\/\/[^" ]+\/email-assets\/header\.png\?v=20261015"/);
+    assert.match(html, /background-image:url\('/);
+    assert.match(html, /src="https:\/\/[^" ]+\/email-assets\/logo\.png\?v=20261015"/);
+    assert.match(html, /bgcolor="#ffffff"[^>]*text-align:right/);
+    assert.match(html, /Keep this readable/);
+  }
+});
+
 test('application confirmation addresses the authenticated student and lists real details', () => {
   const email = loadEmails().applicationEmail({ ...application,
     applicantProfile: { email: 'other@example.test' } });

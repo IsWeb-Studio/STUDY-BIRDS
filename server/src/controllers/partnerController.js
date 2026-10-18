@@ -13,7 +13,6 @@ const Notification = require("../models/Notification");
 const KnowledgeBaseItem = require("../models/KnowledgeBaseItem");
 const ActivityLog = require("../models/ActivityLog");
 const asyncHandler = require("../utils/asyncHandler");
-const { uploadFileToCloudinary } = require("../utils/uploadToCloudinary");
 const { logActivity } = require("../utils/logActivity");
 
 const PARTNER_SUPPORT_CATEGORIES = [
@@ -431,14 +430,21 @@ const uploadVerificationDocument = asyncHandler(async (req, res) => {
     throw new Error("Document type is required");
   }
 
-  const uploadResult = await uploadFileToCloudinary(req.file, "study-birds/agent-verification");
+  if (!['identity', 'commercial-license', 'supporting-document'].includes(type)) {
+    res.status(400);
+    throw new Error('Invalid verification document type');
+  }
+  const id = new mongoose.Types.ObjectId();
+  const storage = await uploadPrivateDocument(req.file);
   const document = await VerificationDocument.create({
+    _id: id,
     agent: req.user._id,
     type,
     fileName: req.file.originalname,
-    filePath: uploadResult.url,
+    filePath: `/api/verification-documents/${id}/access`,
+    storage,
     mimeType: req.file.mimetype,
-    size: uploadResult.bytes || req.file.size,
+    size: storage.bytes || req.file.size,
   });
 
   await StudentProfile.findOneAndUpdate(

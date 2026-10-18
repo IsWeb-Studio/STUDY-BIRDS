@@ -231,6 +231,7 @@ const updateStudentInvoiceAdmin = asyncHandler(async (req, res) => {
     throw new Error("Invoice not found");
   }
 
+  if (require('../utils/financialPolicy').hasCardAttempt(invoice)) { res.status(409); throw new Error('Resolve the card payment attempt before editing this invoice'); }
   if(req.body.version !== undefined && req.body.version !== invoice.__v){res.status(409);throw new Error('Invoice changed. Refresh and retry.');}
   const credited=Number(invoice.crmPaidAmount || 0)+Number(invoice.walletCreditApplied || 0);
   const nextAmount=req.body.amount === undefined ? invoice.amount : Number(req.body.amount);
@@ -271,7 +272,7 @@ const updateStudentInvoiceAdmin = asyncHandler(async (req, res) => {
 const deleteStudentInvoiceAdmin = asyncHandler(async (req, res) => {
   const invoice = await Invoice.findById(req.params.id);
   if (!invoice) { res.status(404); throw new Error("Invoice not found"); }
-  if (invoice.status === 'paid' || invoice.crmPaidAmount>0 || invoice.walletCreditApplied>0 || invoice.crmPaymentHistory?.length || await PaymentProof.exists({invoice:invoice._id}) || invoice.stripeSessionId && invoice.stripeCheckoutExpiresAt>new Date()) {
+  if (invoice.status === 'paid' || invoice.crmPaidAmount>0 || invoice.walletCreditApplied>0 || invoice.crmPaymentHistory?.length || await PaymentProof.exists({invoice:invoice._id}) || require('../utils/financialPolicy').hasCardAttempt(invoice)) {
     res.status(409);
     throw new Error("لا يمكن حذف فاتورة لها دفعات أو إثباتات دفع أو عملية دفع جارية.");
   }

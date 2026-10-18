@@ -23,6 +23,10 @@ const verificationDocumentSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    storage: { type: new mongoose.Schema({
+      publicId: String, resourceType: String, deliveryType: String, format: String,
+    }, { _id: false }), select: false },
+    legacyFilePath: { type: String, select: false },
     mimeType: String,
     size: Number,
     status: {
@@ -39,5 +43,16 @@ const verificationDocumentSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+function clientView(document) {
+  const result = { ...document };
+  result.filePath = `/api/verification-documents/${result._id}/access`;
+  delete result.storage;
+  delete result.legacyFilePath;
+  return result;
+}
+verificationDocumentSchema.statics.clientView = clientView;
+verificationDocumentSchema.set('toJSON', { transform: (_, document) => clientView(document) });
+verificationDocumentSchema.set('toObject', { transform: (_, document) => clientView(document) });
 
 module.exports = mongoose.model("VerificationDocument", verificationDocumentSchema);

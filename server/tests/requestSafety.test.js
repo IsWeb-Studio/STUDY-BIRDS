@@ -66,7 +66,6 @@ test('accepts signatures for supported image and document types', () => {
     { originalname: 'a.jpg', mimetype: 'image/jpeg', buffer: Buffer.from('ffd8ff', 'hex') },
     { originalname: 'a.pdf', mimetype: 'application/pdf', buffer: Buffer.from('%PDF-1.7\n') },
     { originalname: 'a.txt', mimetype: 'text/plain', buffer: Buffer.from('مستند الطالب') },
-    { originalname: 'a.docx', mimetype: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', buffer: Buffer.from('504b0304', 'hex') },
   ]) assert.doesNotThrow(() => checkFile(file));
 });
 

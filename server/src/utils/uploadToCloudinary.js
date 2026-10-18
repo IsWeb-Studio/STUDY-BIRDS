@@ -1,13 +1,7 @@
+const { randomUUID } = require('node:crypto');
+const { checkFile } = require('./fileSafety');
 const path = require("path");
 const { cloudinary, ensureCloudinaryConfigured } = require("../config/cloudinary");
-
-const sanitizePublicId = (value) =>
-  String(value || "file")
-    .replace(/\.[^/.]+$/, "")
-    .replace(/[^a-zA-Z0-9-_]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "")
-    .slice(0, 80) || "file";
 
 const isPdfFile = (file) => String(file?.mimetype || "").toLowerCase() === "application/pdf";
 
@@ -18,7 +12,8 @@ const buildUploadOptions = (file, folder) => {
 
   return {
     folder,
-    public_id: `${Date.now()}-${sanitizePublicId(file.originalname)}`,
+    public_id: randomUUID(),
+    overwrite: false,
     resource_type: isImage || isPdf ? "image" : "raw",
     use_filename: false,
     unique_filename: false,
@@ -45,7 +40,7 @@ const buildDeliveryUrl = (result, file) => {
     });
   }
 
-  // Signed raw delivery avoids Cloudinary 401 issues for PDFs and office docs.
+  // Delivery URL for the public non-image assets supported by this helper.
   return cloudinary.url(result.public_id, {
     resource_type: result.resource_type || "raw",
     type: "upload",
@@ -56,6 +51,10 @@ const buildDeliveryUrl = (result, file) => {
 
 const uploadFileToCloudinary = (file, folder) =>
   new Promise((resolve, reject) => {
+    checkFile(file);
+    if (folder === "study-birds/agent-verification") {
+      throw new Error("Verification documents require private storage");
+    }
     ensureCloudinaryConfigured();
 
     const uploadStream = cloudinary.uploader.upload_stream(
@@ -66,6 +65,10 @@ const uploadFileToCloudinary = (file, folder) =>
           return;
         }
 
+        if (!result?.public_id || result.existing || result.overwritten) {
+          reject(new Error("Upload did not create a new asset"));
+          return;
+        }
         resolve({
           url: buildDeliveryUrl(result, file),
           publicId: result.public_id,
@@ -76,6 +79,7 @@ const uploadFileToCloudinary = (file, folder) =>
       }
     );
 
+    uploadStream.on?.("error", reject);
     uploadStream.end(file.buffer);
   });
 

@@ -34,12 +34,13 @@ router.get('/:id/reconciliation',run(async(req,res)=>{
     require('../models/PaymentProof').find({invoice:invoice._id}).select('_id student invoice amount status reviewedAt createdAt reviewNote').lean(),
     require('../models/StudentWalletEntry').find({relatedInvoice:invoice._id}).select('_id direction amount kind createdAt notes').lean(),
   ]);
-  res.set('Cache-Control','no-store');res.json({invoice,proofs,wallet});
+  const stripePayments=await require('../models/StripePaymentReceipt').find({invoice:invoice._id}).lean();
+  res.set('Cache-Control','no-store');res.json({invoice,proofs,wallet,stripePayments});
 }));
 router.patch('/:id/payments',run(async(req,res)=>{
   const row=await owned(req),body=paymentPayload(req.body,row.amount);
   if(row.__v!==body.version)fail(409,'Invoice changed; refresh before recording payment');
-  if((row.walletCreditApplied || 0)>0 || (row.stripeCheckoutExpiresAt && row.stripeCheckoutExpiresAt>new Date()) || await require('../models/PaymentProof').exists({invoice:row._id,status:{$ne:'rejected'}}))fail(409,'A website payment is in progress; reconcile it before changing the CRM balance');
+  if((row.walletCreditApplied || 0)>0 || require('../utils/financialPolicy').hasCardAttempt(row) || await require('../models/PaymentProof').exists({invoice:row._id,status:{$ne:'rejected'}}))fail(409,'A website payment is in progress; reconcile it before changing the CRM balance');
   if(row.status==='paid' && row.crmPaidAmount<row.amount)fail(409,'Invoice was paid through another channel; reconcile before changing the CRM balance');
   if(row.crmPaidAmount===body.paidAmount)return res.json(row);
   const result=await Invoice.findOneAndUpdate({_id:row._id,__v:body.version},{$set:{crmPaidAmount:body.paidAmount,status:body.status,reviewedBy:req.user._id,reviewedAt:new Date()},$inc:{__v:1},$push:{crmPaymentHistory:{amount:body.paidAmount,changedBy:req.user._id}}},{new:true,runValidators:true});
@@ -49,7 +50,7 @@ router.patch('/:id/payments',run(async(req,res)=>{
 }));
 router.delete('/:id',run(async(req,res)=>{
   const row=await owned(req);
-  if(row.status==='paid' || row.crmPaidAmount>0 || row.walletCreditApplied>0 || row.crmPaymentHistory.length || row.stripeCheckoutExpiresAt>new Date() || await require('../models/PaymentProof').exists({invoice:row._id}))fail(409,'Invoice has payment history; preserve it and reconcile payments first');
+  if(row.status==='paid' || row.crmPaidAmount>0 || row.walletCreditApplied>0 || row.crmPaymentHistory.length || require('../utils/financialPolicy').hasCardAttempt(row) || await require('../models/PaymentProof').exists({invoice:row._id}))fail(409,'Invoice has payment history; preserve it and reconcile payments first');
   const deleted=await Invoice.deleteOne({_id:row._id,__v:row.__v,status:row.status,crmPaidAmount:row.crmPaidAmount,walletCreditApplied:row.walletCreditApplied});
   if(!deleted.deletedCount)fail(409,'Invoice changed; refresh before deleting');res.json({deleted:true});
 }));

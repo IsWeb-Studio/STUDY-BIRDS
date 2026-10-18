@@ -117,6 +117,9 @@ class ErrorReporter {
 
   static void _send(Object error, StackTrace? stack, String where,
       Map<String, Object?> extra) {
+    if (error is FormatException) {
+      error = const FormatException('Invalid data format');
+    }
     final now = DateTime.now();
     _window.removeWhere((t) => now.difference(t) > const Duration(minutes: 1));
     if (_window.length >= _maxPerMinute) return;
