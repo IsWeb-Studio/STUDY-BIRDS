@@ -42,6 +42,10 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
   final text = TextEditingController();
   Timer? _liveTimer;
   bool _syncing = false;
+  bool _sseConnected = false;
+  DateTime? _lastSync;
+  String? _readThrough;
+  String? _readingThrough;
   int _messageRevision = 0;
   bool _muted = false, _changing = false;
   Uint8List? _image, _draftImage;
@@ -66,7 +70,15 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     }
     load();
     _liveTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (_visible && !loading && contact != null) _resyncAfterGap();
+      if (_visible &&
+          !loading &&
+          contact != null &&
+          (!_sseConnected ||
+              _lastSync == null ||
+              DateTime.now().difference(_lastSync!) >=
+                  const Duration(seconds: 30))) {
+        _resyncAfterGap();
+      }
     });
     _reconnectSub = ConnectivityService.instance.onReconnected.listen((_) {
       if (contact != null) {
@@ -101,6 +113,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
   void _scheduleSse() {
     if (!mounted) return;
     _sseGap = true;
+    _sseConnected = false;
     _sseTimer?.cancel();
     final seconds = (2 << (_sseAttempt < 5 ? _sseAttempt : 5)).clamp(2, 60);
     _sseAttempt++;
@@ -124,6 +137,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     if (selected == null || _syncing || _changing || !_visible) return;
     final revision = _messageRevision;
     _syncing = true;
+    _lastSync = DateTime.now();
     try {
       final query =
           Uri(queryParameters: {'recipient': '${selected['_id']}'}).query;
@@ -179,9 +193,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
           ..sort((a, b) => '${a['_id']}'.compareTo('${b['_id']}'));
       });
       if (value.isNotEmpty) {
-        await ApiClient.instance.post('/mobile-workspace/messages/read',
-            token: token,
-            body: {'sender': selected['_id'], 'through': value.last['_id']});
+        unawaited(_markRead(selected['_id'], value.last['_id']));
       }
     } catch (swallowedError, swallowedStack) {
       ErrorReporter.swallowed(swallowedError, swallowedStack,
@@ -192,6 +204,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
   }
 
   void _connectSse() {
+    _sseConnected = false;
     _sseTimer?.cancel();
     _sseSub?.cancel();
     _httpClient?.close(force: true);
@@ -237,23 +250,72 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
         if (res.statusCode >= 500 || res.statusCode == 429) _scheduleSse();
         return;
       }
+      _sseConnected = true;
       _sseRefreshed = false;
       _sseAttempt = 0;
       if (_sseGap) {
         _sseGap = false;
         _resyncAfterGap(); // messages that arrived while the stream was down
       }
+      var event = '';
       _sseSub = res
           .transform(const Utf8Decoder())
           .transform(const LineSplitter())
           .listen((line) {
+        if (line.startsWith('event:')) {
+          event = line.substring(6).trim();
+          return;
+        }
         if (!line.startsWith('data:')) return;
         try {
           final payload = jsonDecode(line.substring(5).trim());
-          if (payload is! Map) return;
+          if (payload is! Map || !mounted) return;
+          if (!_visible) {
+            _lastSync = null;
+            return;
+          }
+          if (event == 'message-hidden') {
+            _messageRevision++;
+            setState(() => messages
+                .removeWhere((m) => '${m['_id']}' == '${payload['_id']}'));
+            return;
+          }
+          if (event == 'conversation-cleared' &&
+              '${payload['contact']}' == '${contact?['_id']}') {
+            _messageRevision++;
+            setState(() {
+              messages = [];
+              older = false;
+            });
+            return;
+          }
+          if (event == 'read' &&
+              '${payload['contact']}' == '${contact?['_id']}') {
+            if (payload['readAt'] != null) {
+              _messageRevision++;
+              setState(() => messages = messages
+                  .map((m) => '${m['sender']}' ==
+                              AuthSession.instance.currentUser?.id &&
+                          (payload['through'] == null ||
+                              '${m['_id']}'
+                                      .compareTo('${payload['through']}') <=
+                                  0)
+                      ? {
+                          ...m as Map,
+                          'readAt': m['readAt'] ?? payload['readAt']
+                        }
+                      : m)
+                  .toList());
+              return;
+            }
+            unawaited(_resyncAfterGap());
+            return;
+          }
           final senderId = '${payload['sender']}';
           final currentId = '${contact?['_id']}';
-          if (senderId != currentId || !mounted || !_visible) return;
+          final outgoing = senderId == AuthSession.instance.currentUser?.id &&
+              '${payload['recipient']}' == currentId;
+          if (senderId != currentId && !outgoing) return;
           if (payload['_id'] == null) {
             unawaited(_resyncAfterGap());
             return;
@@ -267,14 +329,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
               messages[index] = payload;
             }
           });
-          // Mark as read immediately
-          ApiClient.instance.post('/mobile-workspace/messages/read',
-              token: token,
-              body: {
-                'sender': senderId,
-                'through': payload['_id']
-              }).catchError(ErrorReporter.silent(
-              'screens/services_support/messaging_and_emergency_screens.dart:165'));
+          if (!outgoing) unawaited(_markRead(senderId, payload['_id']));
         } catch (swallowedError, swallowedStack) {
           ErrorReporter.swallowed(swallowedError, swallowedStack,
               'screens/services_support/messaging_and_emergency_screens.dart:154');
@@ -290,6 +345,53 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     });
   }
 
+  Future<void> _markRead(dynamic sender, dynamic through) async {
+    final key = '$sender:$through';
+    if (_readThrough == key || _readingThrough == key) return;
+    _readingThrough = key;
+    try {
+      await ApiClient.instance.post('/mobile-workspace/messages/read',
+          token: token, body: {'sender': sender, 'through': through});
+      _readThrough = key;
+    } catch (e, stack) {
+      ErrorReporter.swallowed(e, stack, 'messaging.read');
+    } finally {
+      if (_readingThrough == key) _readingThrough = null;
+    }
+  }
+
+  Future<void> _loadThreadDetails(Map selected) async {
+    final id = selected['_id'];
+    Future<void> preference() async {
+      try {
+        final value = await ApiClient.instance.get(
+            '/mobile-workspace/conversations/$id',
+            token: token,
+            cached: false);
+        if (mounted && contact?['_id'] == id && value is Map) {
+          setState(() => _muted = value['muted'] == true);
+        }
+      } catch (e, stack) {
+        ErrorReporter.swallowed(e, stack, 'messaging.preference');
+      }
+    }
+
+    Future<void> person() async {
+      if (widget.contactId == null || widget.contactName != 'الرسائل') return;
+      try {
+        final value = await ApiClient.instance
+            .get('/mobile-workspace/contacts/$id', token: token, cached: false);
+        if (mounted && contact?['_id'] == id && value is Map) {
+          setState(() => contact = value);
+        }
+      } catch (e, stack) {
+        ErrorReporter.swallowed(e, stack, 'messaging.contact');
+      }
+    }
+
+    await Future.wait([preference(), person()]);
+  }
+
   Future<void> load({bool previous = false}) async {
     final selected = contact;
     setState(() {
@@ -302,24 +404,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
             .get('/mobile-workspace/contacts', token: token, cached: false);
         if (mounted) setState(() => contacts = Json.list(value));
       } else {
-        if (widget.contactId != null &&
-            selected['name'] == widget.contactName &&
-            widget.contactName == 'الرسائل') {
-          final person = await ApiClient.instance.get(
-              '/mobile-workspace/contacts/${selected['_id']}',
-              token: token,
-              cached: false);
-          if (mounted && person is Map) setState(() => contact = person);
-        }
-        if (!previous) {
-          final preference = await ApiClient.instance.get(
-              '/mobile-workspace/conversations/${selected['_id']}',
-              token: token,
-              cached: false);
-          if (mounted && preference is Map) {
-            setState(() => _muted = preference['muted'] == true);
-          }
-        }
+        if (!previous) unawaited(_loadThreadDetails(selected));
         final query = Uri(queryParameters: {
           'recipient': '${selected['_id']}',
           if (previous && messages.isNotEmpty)
@@ -335,12 +420,11 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
           older = value.length == 50;
         });
         if (_visible && value.isNotEmpty) {
-          await ApiClient.instance.post('/mobile-workspace/messages/read',
-              token: token,
-              body: {'sender': selected['_id'], 'through': value.last['_id']});
+          unawaited(_markRead(selected['_id'], value.last['_id']));
         }
         // Start SSE real-time stream (replaces polling)
-        _connectSse();
+        _lastSync = DateTime.now();
+        if (!previous) _connectSse();
       }
     } catch (e) {
       if (mounted) {

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -15,6 +16,43 @@ void main() {
   tearDown(() {
     AuthSession.instance.token = null;
     AuthSession.instance.currentUser = null;
+  });
+
+  testWidgets(
+      'messages render while preferences and read receipt are still pending',
+      (tester) async {
+    final preference = Completer<http.Response>();
+    final receipt = Completer<http.Response>();
+    await http.runWithClient(() async {
+      await tester.pumpWidget(const MaterialApp(
+          home: ConversationThreadScreen(
+              contactId: 'peer', contactName: 'Sara')));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 100));
+      expect(find.text('fast message'), findsOneWidget);
+      expect(find.byType(CircularProgressIndicator), findsNothing);
+      preference.complete(http.Response('{"muted":false}', 200));
+      receipt.complete(http.Response('{"read":true}', 200));
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(const SizedBox());
+    },
+        () => MockClient((request) async {
+              if (request.url.path.endsWith('/conversations/peer'))
+                return preference.future;
+              if (request.url.path.endsWith('/messages/read'))
+                return receipt.future;
+              return http.Response(
+                  jsonEncode([
+                    {
+                      '_id': '1',
+                      'sender': 'peer',
+                      'body': 'fast message',
+                      'createdAt': '2026-10-18T09:00:00Z',
+                    }
+                  ]),
+                  200,
+                  headers: {'content-type': 'application/json; charset=utf-8'});
+            }));
   });
 
   testWidgets(
@@ -83,8 +121,9 @@ void main() {
               final path = request.url.path;
               Object data = {};
               if (path.endsWith('/conversations/peer')) {
-                if (request.method == 'PUT')
+                if (request.method == 'PUT') {
                   muted = jsonDecode(request.body)['muted'] == true;
+                }
                 data = {'muted': muted};
               }
               if (path.endsWith('/messages')) data = messages;

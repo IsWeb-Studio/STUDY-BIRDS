@@ -36,6 +36,13 @@ async function contactFilter(user) {
 }
 async function requireContact(user, recipient, res) {
   if (!mongoose.isValidObjectId(recipient)) { res.status(400); throw new Error('Invalid recipient'); }
+  // These role combinations are already permitted by contactFilter; avoid
+  // loading parent links and applications on every message/read/poll request.
+  if (['admin', 'student'].includes(user.role)) {
+    const direct = await User.findOne({ _id: recipient, isActive: true }).select('_id name role avatar');
+    if (direct && String(direct._id) !== String(user._id) &&
+        (user.role === 'admin' || ['student', 'admin'].includes(direct.role))) return direct;
+  }
   const filter = await contactFilter(user);
   const contact = await User.findOne({ $and: [filter, { _id: recipient }] }).select('_id name role avatar');
   if (!contact) { res.status(403); throw new Error('This contact is unavailable'); }
@@ -156,10 +163,12 @@ router.get('/messages', run(async (req, res) => {
   res.set('Cache-Control', 'no-store').json(rows.reverse().map(present));
 }));
 async function saveMessage(req, res, image) {
-  const contact = await requireContact(req.user, req.body.recipient, res);
   const body = req.body.body ?? '';
   if (typeof body !== 'string' || body.length > 4000 || (!body.trim() && !image)) fail(400, 'Message must contain text or an image');
-  const recent = await Message.countDocuments({ sender: req.user._id, createdAt: { $gt: new Date(Date.now() - 60000) } });
+  const [contact, recent] = await Promise.all([
+    requireContact(req.user, req.body.recipient, res),
+    Message.countDocuments({ sender: req.user._id, createdAt: { $gt: new Date(Date.now() - 60000) } }),
+  ]);
   if (recent >= 30) fail(429, 'Too many messages. Please wait.');
   let message;
   try {
@@ -224,9 +233,10 @@ router.post('/messages/read', run(async (req, res) => {
   await requireContact(req.user, req.body.sender, res);
   if (req.body.through && !mongoose.isValidObjectId(req.body.through)) fail(400, 'Invalid message');
   const filter = await threadFilter(req.user._id, req.body.sender);
-  await Message.updateMany({ ...filter, sender: req.body.sender, recipient: req.user._id, readAt: null, deletedAt: null,
-    ...(req.body.through ? { _id: { $lte: req.body.through } } : {}) }, { $set: { readAt: new Date() } });
-  sse.push(req.body.sender, 'read', { contact: req.user._id });
+  const readAt = new Date();
+  const result = await Message.updateMany({ ...filter, sender: req.body.sender, recipient: req.user._id, readAt: null, deletedAt: null,
+    ...(req.body.through ? { _id: { $lte: req.body.through } } : {}) }, { $set: { readAt } });
+  if (result.modifiedCount) sse.push(req.body.sender, 'read', { contact: req.user._id, through: req.body.through || null, readAt });
   res.json({ read: true });
 }));
 // GET /api/messaging/events — SSE stream for real-time message delivery

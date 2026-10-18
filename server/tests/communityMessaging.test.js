@@ -44,6 +44,20 @@ test('community inbox is private, ordered by latest message, and tracks bounded 
     assert.equal((await call('GET', '/conversations?summary=1')).data.unreadTotal, 1);
     await call('POST', '/messages/read', 0, { sender: users[1].id, through: latest.data._id });
     assert.equal((await call('GET', '/conversations?summary=1')).data.unreadTotal, 0);
+    const sse = require('../src/utils/sseClients');
+    const events = [];
+    const connection = { write: value => events.push(value) };
+    sse.register(users[1].id, connection);
+    try {
+      await call('POST', '/messages/read', 0, { sender: users[1].id, through: latest.data._id });
+      assert.equal(events.length, 0, 'unchanged read receipts must not trigger another client resync');
+      const next = await send(1, 0, 'new receipt');
+      await call('POST', '/messages/read', 0, { sender: users[1].id, through: next.data._id });
+      assert.equal(events.filter(value => value.startsWith('event: read')).length, 1);
+      const receipt = JSON.parse(events.find(value => value.startsWith('event: read')).split('data: ')[1].trim());
+      assert.equal(receipt.through, next.data._id);
+      assert.ok(Number.isFinite(Date.parse(receipt.readAt)));
+    } finally { sse.unregister(users[1].id, connection); }
     await Friendship.deleteMany({});
     assert.equal((await send(1, 0, 'still allowed')).status, 201);
     assert.equal((await call('GET', '/conversations')).data.conversations.length, 2, 'chat history persists after unfriending');
