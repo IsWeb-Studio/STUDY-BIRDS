@@ -28,6 +28,14 @@ retried at startup/reconnect before restoring a cookie session.
 
 ## Deployment
 
+Email-code sign-in is an alternate login method only for existing, active accounts
+whose `emailVerified` flag was already set before requesting the code. Eligibility
+is checked again when redeeming it; this endpoint never registers users or marks
+an unverified email as verified. Per the product policy, this method is available
+even when password-login two-factor verification is enabled. Password and phone
+login retain their own two-factor requirements. Login codes expire after ten
+minutes, allow at most five attempts and can be consumed only once.
+
 Deploy the backend and frontend together. Verify CLIENT_URL / CLIENT_URLS contains
 the exact deployed frontend origins. Test login, reload, refresh, password change,
 and logout using the actual supported browsers and deployment domains.

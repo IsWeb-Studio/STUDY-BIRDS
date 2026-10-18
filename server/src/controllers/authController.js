@@ -457,11 +457,12 @@ const requestEmailOtp = asyncHandler(async (req, res) => {
     res.status(400); throw new Error('أدخل بريدًا إلكترونيًا صحيحًا');
   }
   const user = await User.findOne({ email, isActive: true });
-  if (user?.twoFactorEnabled) return res.status(403).json({
-    message: 'Use your password or identity provider and complete two-factor verification.',
-    requiresTwoFactor: true,
+  // Email OTP is an explicit alternate sign-in method for previously verified
+  // accounts. It must never bootstrap verification or register a new account.
+  if (!user?.emailVerified) return res.status(403).json({
+    message: 'الدخول برمز البريد متاح فقط لحساب فعّال وبريد موثّق مسبقًا. سجّل الدخول بالطريقة الأساسية وأكمل توثيق البريد أولًا.',
   });
-  if (user) await sendCode(user, 'emaillogin', res);
+  await sendCode(user, 'emaillogin', res);
   res.json({ sent: true });
 });
 
@@ -473,13 +474,13 @@ const verifyEmailOtp = asyncHandler(async (req, res) => {
     res.status(400); throw new Error('بريد إلكتروني أو رمز غير صحيح');
   }
   const user = await User.findOne({ email, isActive: true });
-  if (user?.twoFactorEnabled) return res.status(403).json({
-    message: 'Use your password or identity provider and complete two-factor verification.',
-    requiresTwoFactor: true,
+  // Recheck eligibility at redemption: verification/activation may have changed
+  // since the code was requested. The code remains single-use and short-lived.
+  if (!user?.emailVerified) return res.status(403).json({
+    message: 'الدخول برمز البريد متاح فقط لحساب فعّال وبريد موثّق مسبقًا. سجّل الدخول بالطريقة الأساسية وأكمل توثيق البريد أولًا.',
   });
   await consume(user, 'emaillogin', code, res);
   if (user.role === 'student') await ensureStudentProfile(user._id);
-  user.emailVerified = true;
   user.lastLoginAt = new Date();
   await user.save();
   const tokens = await issueTokenPair(user);

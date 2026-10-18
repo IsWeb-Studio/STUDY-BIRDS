@@ -48,14 +48,14 @@ test('authentication security regressions with real MongoDB and HTTP', async t =
       assert.equal(response.status, 200, JSON.stringify(response));
       return response.data;
     }
-    await t.test('email OTP cannot replace two factors, even with an already-issued valid code', async () => {
-      const user = await account('twofactor');
+    await t.test('verified accounts can use email OTP independently of password two-factor login', async () => {
+      const user = await account('twofactor', { emailVerified: true });
       assert.equal((await call('email-otp/request', { email: user.email })).status, 200);
       const code = codes.get(user.email);
       await User.updateOne({ _id: user._id }, { $set: { twoFactorEnabled: true } });
-      assert.equal((await call('email-otp/request', { email: user.email })).status, 403);
-      const bypass = await call('email-otp/verify', { email: user.email, code });
-      assert.equal(bypass.status, 403); assert.equal(bypass.data.token, undefined);
+      assert.equal((await call('email-otp/request', { email: user.email })).status, 200);
+      const signedIn = await call('email-otp/verify', { email: user.email, code });
+      assert.equal(signedIn.status, 200); assert.ok(signedIn.data.token);
       const challenge = await call('login', { email: user.email, password });
       assert.equal(challenge.status, 428); assert.equal(challenge.data.token, undefined);
       const verified = await call('login', { email: user.email, password, twoFactorCode: codes.get(user.email) });
@@ -70,12 +70,31 @@ test('authentication security regressions with real MongoDB and HTTP', async t =
       assert.equal(bypass.status, 403); assert.equal(bypass.data.token, undefined);
     });
     await t.test('ordinary email OTP remains available and its code is single-use', async () => {
-      const user = await account('emailonly');
-      await call('email-otp/request', { email: user.email });
+      const user = await account('emailonly', { emailVerified: true });
+      await call('email-otp/request', { email: ` ${user.email.toUpperCase()} ` });
       const body = { email: user.email, code: codes.get(user.email) };
       const response = await call('email-otp/verify', body);
       assert.equal(response.status, 200); assert.ok(response.data.refreshToken);
       assert.equal((await call('email-otp/verify', body)).status, 400);
+    });
+    await t.test('unverified, inactive and missing accounts cannot request or redeem email login codes', async () => {
+      const unverified = await account('unverified');
+      const inactive = await account('inactiveemail', { emailVerified: true, isActive: false });
+      for (const email of [unverified.email, inactive.email, 'missing@example.test']) {
+        assert.equal((await call('email-otp/request', { email })).status, 403);
+        assert.equal(codes.has(email), false);
+        const result = await call('email-otp/verify', { email, code: '123456' });
+        assert.equal(result.status, 403); assert.equal(result.data.token, undefined);
+      }
+      assert.equal((await User.findById(unverified._id)).emailVerified, false);
+      assert.equal(await User.exists({ email: 'missing@example.test' }), null);
+      for (const field of ['emailVerified', 'isActive']) {
+        const user = await account(`changed-${field}`, { emailVerified: true });
+        assert.equal((await call('email-otp/request', { email: user.email })).status, 200);
+        await User.updateOne({ _id: user._id }, { $set: { [field]: false } });
+        const result = await call('email-otp/verify', { email: user.email, code: codes.get(user.email) });
+        assert.equal(result.status, 403); assert.equal(result.data.token, undefined);
+      }
     });
     await t.test('password changes revoke every old JWT and refresh token and return a usable replacement', async () => {
       const user = await account('passwordchange');
