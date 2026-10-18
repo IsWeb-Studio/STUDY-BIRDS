@@ -126,6 +126,29 @@ export const downloadApiAsset = async (path?: string, fileName?: string) => {
   window.URL.revokeObjectURL(blobUrl);
 };
 
+// Share renewal across requests when a suspended tab wakes with an expired token.
+let renewal: Promise<string | null> | null = null;
+let lastRenewal: { previous: string; current: string; generation: number } | null = null;
+export const renewAccessToken = (failedToken: string): Promise<string | null> => {
+  if (sessionStore.get().token !== failedToken) return Promise.resolve(null);
+  if (renewal) return renewal;
+  const generation = sessionStore.generation();
+  const pending = api.post('/auth/refresh', {}).then(({ data }) => {
+    if (generation !== sessionStore.generation()) return null;
+    if (typeof data.token !== 'string' || !data.token) throw new Error('Missing access token');
+    sessionStore.rotate(data.token, data.user);
+    lastRenewal = { previous: failedToken, current: data.token, generation: sessionStore.generation() };
+    return data.token as string;
+  }).catch(error => {
+    if (generation === sessionStore.generation() && [400, 401, 403].includes(error.response?.status)) {
+      sessionStore.clear(); broadcastLogout();
+    }
+    throw error;
+  }).finally(() => { if (renewal === pending) renewal = null; });
+  renewal = pending;
+  return pending;
+};
+
 // Password changes replace the current session and invalidate all older tokens.
 api.interceptors.response.use((response) => {
   if (response.config.url === '/auth/change-password' && response.data?.token &&
@@ -134,13 +157,32 @@ api.interceptors.response.use((response) => {
     broadcastLogout();
   }
   return response;
-}, (error) => {
+}, async (error) => {
   const token = sessionStore.get().token;
+  // A parallel request may finish after its peer already renewed this session.
+  if (error.response?.status === 401 && token && lastRenewal &&
+      lastRenewal.current === token && lastRenewal.generation === sessionStore.generation() &&
+      error.config?.headers?.Authorization === `Bearer ${lastRenewal.previous}` &&
+      !error.config._sessionRetried && !/^\/(auth|identity)\//.test(error.config.url || '')) {
+    error.config._sessionRetried = true;
+    error.config.headers.Authorization = `Bearer ${token}`;
+    return api.request(error.config);
+  }
   if (error.response?.status === 401 && token &&
       error.config?.headers?.Authorization === `Bearer ${token}` &&
       (!/^\/(auth|identity)\//.test(error.config?.url || '') ||
        /^\/auth\/(me|change-password|account)$/.test(error.config?.url || ''))) {
-    sessionStore.clear(); broadcastLogout();
+    const config = error.config;
+    if (!config._sessionRetried) {
+      const replacement = await renewAccessToken(token);
+      if (replacement) {
+        config._sessionRetried = true;
+        config.headers.Authorization = `Bearer ${replacement}`;
+        return api.request(config);
+      }
+    } else {
+      sessionStore.clear(); broadcastLogout();
+    }
   }
   return Promise.reject(error);
 });

@@ -1,6 +1,6 @@
 import { isAxiosError } from "axios";
 import { createContext, useEffect, useRef, type ReactNode } from "react";
-import { api } from '../lib/api';
+import { api, renewAccessToken } from '../lib/api';
 import { broadcastLogout, sessionStore, useSession } from '../lib/sessionStore';
 import { connectivity } from "../lib/connectivity";
 import { configureStaffReadTracking } from "../lib/sharedReadState";
@@ -131,14 +131,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     const timer = window.setInterval(() => {
       if (!sessionStore.get().token) return;
-      const generation = captureGeneration();
-      void api.post('/auth/refresh', {}).then(({ data }) => {
-        if (isCurrentGeneration(generation)) {
-          sessionStore.rotate(data.token, data.user);
-          void refreshSession();
-        }
-      }).catch(error => {
-        if (isCurrentGeneration(generation) && isAxiosError(error) && [400, 401, 403].includes(error.response?.status ?? 0)) cleanupSession();
+      const token = sessionStore.get().token;
+      if (token) void renewAccessToken(token).catch(() => {
+        // Keep the form open on transient network/server failures.
       });
     }, 10 * 60 * 1000);
     return () => window.clearInterval(timer);
