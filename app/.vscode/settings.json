@@ -1,7 +1,7 @@
 {
     "java.configuration.updateBuildConfiguration": "interactive",
-    "dart.flutterSdkPath": "C:\\Users\\Abood\\flutter",
+    "dart.flutterSdkPath": "C:\\src\\flutter",
     "terminal.integrated.env.windows": {
-        "PATH": "C:\\Users\\Abood\\flutter\\bin;${env:PATH}"
+        "PATH": "C:\\src\\flutter\\bin;${env:PATH}"
     }
 }

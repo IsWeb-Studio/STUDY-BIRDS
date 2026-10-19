@@ -24,7 +24,15 @@ flutter build apk --release --dart-define=API_BASE_URL=https://YOUR_API_HOST/api
 
 العنوان الافتراضي لبناء release/profile هو `https://study-birds-api.onrender.com/api`، مطابق لإعداد الموقع الحالي. يمكنك تجاوز أي عنوان افتراضي باستخدام `--dart-define=API_BASE_URL=...`. يجب نشر تعديلات السيرفر الجديدة قبل استخدام السيرفر المنشور؛ تعديل الملفات المحلية لا ينشر الموقع تلقائياً. إعداد توقيع إصدار Android ما زال إعداد المشروع الأصلي، ويحتاج مفتاح نشر خاصاً قبل رفع التطبيق إلى المتجر.
 
-على جهاز التطوير الحالي امتلأ القرص D. نُقل مجلد `build` إلى `C:\Users\Abood\studybirds-build-output\app-main-build` ووُضع رابط Junction في مساره الأصلي داخل المشروع، لتبقى أوامر Flutter ومسارات APK كما هي. لا تحذف المجلد الهدف إذا أردت الاحتفاظ بالبناء الحالي. بعد `flutter clean` تحقق من الرابط؛ إذا حُذف الرابط فسيعود البناء إلى القرص D.
+لبناء نسخة Android على Windows استخدم Flutter **3.47.5**، وهي النسخة المستخدمة في CI وفي إعدادات المشروع على جهاز التطوير (`C:\src\flutter`). افتح طرفية جديدة بعد تغيير إعدادات VS Code، أو شغّل الأمر التالي الذي يحدد SDK صراحةً:
+
+```powershell
+.\tools\build_release.ps1
+# عند تثبيت Flutter في مسار آخر:
+.\tools\build_release.ps1 -FlutterSdk C:\path\to\flutter
+```
+
+يحفظ الأمر ملفات `build` و`.dart_tool/flutter_build` المؤقتة في `%LOCALAPPDATA%\StudyBirds\build-cache` مع روابط Junction داخل المشروع، لتجنب امتلاء القرص D. لا ينقل الصور أو الكود أو مفتاح التوقيع، ويبقى APK في `build\app\outputs\flutter-apk\app-release.apk`. أعد تشغيل الأمر بعد `flutter clean` لإعادة إنشاء الروابط عند الحاجة.
 
 استخدم ذاكرة Gradle والمؤقتات على C، وتحقق من المساحة قبل البناء:
 
