@@ -45,6 +45,7 @@ class ProfileBottomNavigation extends StatelessWidget {
                         child: Semantics(
                       selected: selected,
                       button: true,
+                      onTap: () => onTap(index),
                       label: labels[index],
                       excludeSemantics: true,
                       child: InkWell(
