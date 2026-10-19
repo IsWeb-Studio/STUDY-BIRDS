@@ -12,7 +12,7 @@ import 'package:study_birds/screens/stories/student_stories.dart';
 
 void main() {
   testWidgets(
-      'bottom account tab is replaced by community and hidden community stops refreshing',
+      'community and center account destinations work; hidden community stops refreshing',
       (tester) async {
     tester.view.physicalSize = const Size(390, 900);
     tester.view.devicePixelRatio = 1;
@@ -49,6 +49,10 @@ void main() {
       expect(inboxRequests, requests,
           reason: 'offstage community must not poll');
       expect(tester.takeException(), isNull);
+      await tester.tap(find.byKey(const ValueKey('main-tab-6')));
+      await tester.pump(const Duration(seconds: 1));
+      expect(find.byType(ProfileScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },
         () => MockClient((request) async {
@@ -62,7 +66,9 @@ void main() {
                 '/scholarships',
                 '/services',
                 '/banners'
-              ].any(path.endsWith)) data = [];
+              ].any(path.endsWith)) {
+                data = [];
+              }
               if (path.endsWith('/conversations')) {
                 inboxRequests++;
                 data = {'conversations': [], 'unreadTotal': 0};

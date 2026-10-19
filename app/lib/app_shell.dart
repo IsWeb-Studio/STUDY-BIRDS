@@ -11,7 +11,8 @@ import 'screens/universities_programs_countries/explore_hub_screen.dart';
 import 'screens/services_support/services_consultation_screens.dart';
 import 'screens/community/student_community_hub.dart';
 import 'screens/games/wink_screen.dart';
-import 'screens/games/wink_style.dart';
+import 'screens/profile_account/profile_account_screens.dart';
+import 'core/widgets/profile_bottom_navigation.dart';
 
 /// Tab indexes for the main bottom navigation.
 const int kTabHome = 0;
@@ -20,6 +21,7 @@ const int kTabExplore = 2;
 const int kTabServices = 3;
 const int kTabCommunity = 4;
 const int kTabGame = 5;
+const int kTabAccount = 6;
 
 /// Switch the main bottom nav to [index] from anywhere in the app.
 void switchToMainTab(int index) => _StudentAppShellState.switchTab(index);
@@ -38,7 +40,7 @@ class _StudentAppShellState extends State<StudentAppShell> {
   static _StudentAppShellState? _instance;
 
   static void switchTab(int index) {
-    if (index < 0 || index > kTabGame) return;
+    if (index < 0 || index > kTabAccount) return;
     _instance?.setState(() => _instance!._index = index);
   }
 
@@ -103,6 +105,7 @@ class _StudentAppShellState extends State<StudentAppShell> {
           isActive: _index == kTabGame,
           embedInShell: true,
           onBack: () => switchTab(kTabHome)),
+      _index == kTabAccount ? const ProfileScreen() : const SizedBox.shrink(),
     ];
 
     final content = IndexedStack(index: _index, children: tabs);
@@ -123,11 +126,17 @@ class _StudentAppShellState extends State<StudentAppShell> {
                 child: const Icon(Icons.auto_awesome_rounded),
               ),
         bottomNavigationBar: AdaptiveBottomBar(
-            child: _AnimatedBottomNav(
-          currentIndex: _index,
-          items: navItems,
-          onTap: (i) => setState(() => _index = i),
-        )),
+            backgroundColor: Colors.transparent,
+            child: ProfileBottomNavigation(
+              currentIndex: _index,
+              labels: [
+                ...navItems.map((item) => item.label),
+                Localizations.localeOf(context).languageCode == 'ar'
+                    ? 'حسابي'
+                    : 'Account'
+              ],
+              onTap: (i) => setState(() => _index = i),
+            )),
       ),
     );
   }
@@ -137,178 +146,4 @@ class _NavItemData {
   final IconData icon;
   final String label;
   const _NavItemData({required this.icon, required this.label});
-}
-
-/// Custom bottom navigation bar: selected tab's icon scales up smoothly
-/// (AnimatedScale) and a slim indicator bar slides beneath the active tab
-/// (AnimatedAlign) instead of the flat default BottomNavigationBar.
-class _AnimatedBottomNav extends StatelessWidget {
-  final int currentIndex;
-  final List<_NavItemData> items;
-  final ValueChanged<int> onTap;
-
-  const _AnimatedBottomNav(
-      {required this.currentIndex, required this.items, required this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    if (currentIndex == kTabGame) return _skyNavigation(context);
-    return SafeArea(
-      top: false,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-                color: Colors.black.withValues(alpha: 0.06),
-                blurRadius: 12,
-                offset: const Offset(0, -2))
-          ],
-        ),
-        child: SizedBox(
-          height: 64 +
-              (MediaQuery.textScalerOf(context).scale(11) - 11).clamp(0, 22),
-          child: Stack(
-            children: [
-              // Sliding active indicator — a slim bar under the selected tab.
-              AnimatedAlign(
-                duration: const Duration(milliseconds: 260),
-                curve: Curves.easeOutCubic,
-                alignment:
-                    Alignment(1 - (2 * currentIndex) / (items.length - 1), -1),
-                child: FractionallySizedBox(
-                  widthFactor: 1 / items.length,
-                  child: Align(
-                    alignment: Alignment.topCenter,
-                    child: Container(
-                      margin: const EdgeInsets.only(top: 0),
-                      height: 3,
-                      width: 32,
-                      decoration: BoxDecoration(
-                          color: AppColors.orange,
-                          borderRadius: BorderRadius.circular(2)),
-                    ),
-                  ),
-                ),
-              ),
-              Row(
-                children: List.generate(items.length, (i) {
-                  final selected = i == currentIndex;
-                  final item = items[i];
-                  return Expanded(
-                    child: Semantics(
-                        selected: selected,
-                        button: true,
-                        label: item.label,
-                        child: InkWell(
-                          key: ValueKey('main-tab-$i'),
-                          onTap: () => onTap(i),
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 10),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                AnimatedScale(
-                                  scale: selected ? 1.15 : 1.0,
-                                  duration: const Duration(milliseconds: 220),
-                                  curve: Curves.easeOut,
-                                  child: Icon(item.icon,
-                                      color: selected
-                                          ? AppColors.navy
-                                          : AppColors.textSecondary,
-                                      size: 24),
-                                ),
-                                const SizedBox(height: 4),
-                                AnimatedDefaultTextStyle(
-                                  duration: const Duration(milliseconds: 220),
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: selected
-                                        ? FontWeight.w700
-                                        : FontWeight.w400,
-                                    color: selected
-                                        ? AppColors.navy
-                                        : AppColors.textSecondary,
-                                  ),
-                                  child: Text(item.label,
-                                      maxLines: i == kTabCommunity ? 2 : 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.center),
-                                ),
-                              ],
-                            ),
-                          ),
-                        )),
-                  );
-                }),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _skyNavigation(BuildContext context) => ColoredBox(
-      color: WinkSky.sky,
-      child: SafeArea(
-          top: false,
-          child: Container(
-              margin: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 9),
-              decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(28),
-                  boxShadow: const [
-                    BoxShadow(color: Color(0x12086EAB), blurRadius: 18)
-                  ]),
-              child: Row(
-                  children: List.generate(items.length, (i) {
-                final selected = i == currentIndex;
-                final item = items[i];
-                return Expanded(
-                    child: Semantics(
-                        selected: selected,
-                        button: true,
-                        label: item.label,
-                        child: InkWell(
-                            key: ValueKey('main-tab-$i'),
-                            borderRadius: BorderRadius.circular(18),
-                            onTap: () => onTap(i),
-                            child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(vertical: 4),
-                                child: Column(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Container(
-                                          padding: const EdgeInsets.all(9),
-                                          decoration: BoxDecoration(
-                                              color: selected
-                                                  ? const Color(0xFFFFEEE3)
-                                                  : Colors.transparent,
-                                              borderRadius:
-                                                  BorderRadius.circular(16)),
-                                          child: Icon(
-                                              selected
-                                                  ? Icons.sports_esports_rounded
-                                                  : item.icon,
-                                              color: selected
-                                                  ? WinkSky.orange
-                                                  : WinkSky.muted,
-                                              size: 23)),
-                                      const SizedBox(height: 3),
-                                      Text(item.label,
-                                          maxLines: i == kTabCommunity ? 2 : 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                              fontSize: 10,
-                                              color: selected
-                                                  ? WinkSky.orange
-                                                  : WinkSky.muted,
-                                              fontWeight: selected
-                                                  ? FontWeight.bold
-                                                  : FontWeight.normal)),
-                                    ])))));
-              })))));
 }

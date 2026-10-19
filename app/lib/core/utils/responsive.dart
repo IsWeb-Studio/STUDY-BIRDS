@@ -103,14 +103,20 @@ class MasterDetail extends StatelessWidget {
 /// capped, instead of stretching its tabs across a 1000px+ window. Phones are
 /// unaffected (the bar is already narrower than [maxWidth]).
 class AdaptiveBottomBar extends StatelessWidget {
+  final Color? backgroundColor;
   final Widget child;
   final double maxWidth;
-  const AdaptiveBottomBar({super.key, required this.child, this.maxWidth = 600});
+  const AdaptiveBottomBar(
+      {super.key,
+      required this.child,
+      this.maxWidth = 600,
+      this.backgroundColor});
 
   @override
   Widget build(BuildContext context) {
     return ColoredBox(
-      color: Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
+      color: backgroundColor ??
+          Theme.of(context).bottomNavigationBarTheme.backgroundColor ??
           Theme.of(context).colorScheme.surface,
       child: Center(
         heightFactor: 1,
