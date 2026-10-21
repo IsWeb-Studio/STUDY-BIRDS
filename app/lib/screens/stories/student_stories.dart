@@ -17,6 +17,7 @@ import 'friends_screen.dart';
 import '../community/student_community_hub.dart';
 import '../../core/repositories/friends_repository.dart';
 import 'story_viewer.dart';
+import 'story_loading_indicator.dart';
 export 'story_viewer.dart' show StoryViewer;
 
 /// The outer achievement ring is independent from the inner viewing ring.
@@ -403,7 +404,9 @@ class _StoryProgressSheetState extends State<StoryProgressSheet> {
                       fontSize: 58, fontWeight: FontWeight.bold)),
               const Text('أيام متتالية',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              StreakRestore(progress: p, onRestored: (value) => setState(() => _restored = value)),
+              StreakRestore(
+                  progress: p,
+                  onRestored: (value) => setState(() => _restored = value)),
               if (p.state == 'ice_cold')
                 Padding(
                     padding: const EdgeInsets.only(top: 10),
@@ -608,7 +611,9 @@ class _StoryComposerState extends State<StoryComposer> {
           if (mounted) setState(() => _uploadProgress = value);
         });
       } else if (_bytes != null && !_isVideo && _imageUrl.isEmpty) {
-        _imageUrl = await repo.upload(_bytes!, _name!);
+        _imageUrl = await repo.upload(_bytes!, _name!, onProgress: (value) {
+          if (mounted) setState(() => _uploadProgress = value);
+        });
       }
       await repo.post(
           text: _text.text.trim(),
@@ -679,7 +684,7 @@ class _StoryComposerState extends State<StoryComposer> {
           const Text('فيديو MP4 أو MOV • حتى دقيقة واحدة و25 ميجابايت',
               textAlign: TextAlign.center),
           if (_picking) const LinearProgressIndicator(),
-          if (_busy && _isVideo)
+          if (_busy)
             LinearProgressIndicator(
                 value: _uploadProgress > 0 ? _uploadProgress : null),
           if (_bytes != null)
@@ -703,10 +708,11 @@ class _StoryComposerState extends State<StoryComposer> {
           FilledButton(
               onPressed: _busy || _picking ? null : _post,
               child: _busy
-                  ? const SizedBox(
-                      height: 22,
-                      width: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                  ? const Row(mainAxisSize: MainAxisSize.min, children: [
+                      StoryLoadingIndicator(label: 'جارٍ نشر الستوري…'),
+                      SizedBox(width: 10),
+                      Text('جارٍ النشر…')
+                    ])
                   : const Text('نشر الستوري')),
         ])),
       ));

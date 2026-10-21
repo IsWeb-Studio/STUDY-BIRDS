@@ -61,6 +61,7 @@ class StudentStory {
   final double videoDuration;
   final String id, text, imageUrl, authorId, name, avatar;
   final int authorPoints, loveCount;
+  final int? viewCount;
   final bool seen, loved;
   final DateTime expiresAt;
   StudentStory.fromJson(Map<String, dynamic> j)
@@ -74,6 +75,7 @@ class StudentStory {
         avatar = j['author']['avatar'] as String? ?? '',
         authorPoints = (j['author']['total_points'] as num?)?.toInt() ?? 0,
         loveCount = (j['loveCount'] as num?)?.toInt() ?? 0,
+        viewCount = (j['viewCount'] as num?)?.toInt(),
         seen = j['seen'] == true,
         loved = j['loved'] == true,
         expiresAt = DateTime.parse(j['expiresAt'] as String);
@@ -133,6 +135,18 @@ class StoriesRepository {
     await _api.post('/stories/$id/seen', token: _token);
   }
 
+  Future<Map<String, dynamic>> viewers(
+    String id, {
+    String? before,
+  }) async =>
+      Map<String, dynamic>.from(
+        await _api.get(
+          '/stories/$id/viewers${before == null ? '' : '?before=${Uri.encodeQueryComponent(before)}'}',
+          token: _token,
+          cached: false,
+        ),
+      );
+
   Future<void> deleteStory(String id) async {
     await _api.delete('/stories/$id', token: _token);
   }
@@ -140,9 +154,9 @@ class StoriesRepository {
   Future<Map<String, dynamic>> love(String id) async =>
       Map<String, dynamic>.from(
           await _api.post('/stories/$id/love', token: _token));
-  Future<String> upload(List<int> bytes, String name) async {
+  Future<String> upload(List<int> bytes, String name, {void Function(double)? onProgress}) async {
     final j = await _api.postMultipart('/stories/image',
-        token: _token, fileBytes: bytes, fileName: name);
+        token: _token, fileBytes: bytes, fileName: name, onProgress: onProgress);
     return j['imageUrl'] as String;
   }
 

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 import '../../core/repositories/stories_repository.dart';
 import '../../core/services/auth_session.dart';
+import 'story_loading_indicator.dart';
+import 'story_viewers_screen.dart';
 
 class StoryViewer extends StatefulWidget {
   final List<StudentStory> stories;
@@ -67,6 +69,28 @@ class _StoryViewerState extends State<StoryViewer>
   bool _videoFailed = false;
   final _loved = <String>{};
   final _counts = <String, int>{};
+  final _views = <String, int>{};
+
+  Future<void> _openViewers() async {
+    if (_held || _closing) return;
+    final id = _story.id;
+    _held = true;
+    _clock.stop();
+    try {
+      await _video?.pause();
+      if (!mounted) return;
+      await Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => StoryViewersScreen(storyId: id)),
+      );
+    } finally {
+      _held = false;
+      if (mounted && !_closing) {
+        _resume();
+        unawaited(_refreshLive());
+      }
+    }
+  }
+
   final _seen = <String>{};
   String? _error;
   StudentStory get _story => widget.stories[_index];
@@ -251,6 +275,8 @@ class _StoryViewerState extends State<StoryViewer>
         _move(1);
         return;
       }
+      final views = (updates.first as Map)['viewCount'];
+      if (views is num) setState(() => _views[id] = views.toInt());
       if (!_pendingLoves.contains(id) && revision == _loveRevision) {
         final update = updates.first as Map;
         setState(() {
@@ -386,7 +412,7 @@ class _StoryViewerState extends State<StoryViewer>
         }
         return const Padding(
             padding: EdgeInsets.all(32),
-            child: CircularProgressIndicator(color: Colors.pinkAccent));
+            child: StoryLoadingIndicator());
       }, errorBuilder: (_, __, ___) {
         WidgetsBinding.instance.addPostFrameCallback(
             (_) => _contentReady(story.id, viewed: story.text.isNotEmpty));
@@ -441,8 +467,7 @@ class _StoryViewerState extends State<StoryViewer>
                                                 child: VideoPlayer(_video!)))
                                         : const Padding(
                                             padding: EdgeInsets.all(32),
-                                            child: CircularProgressIndicator(
-                                                color: Colors.pinkAccent))))),
+                                            child: StoryLoadingIndicator())))),
               if (!expired && story.text.isNotEmpty)
                 Flexible(
                     child: Padding(
@@ -566,7 +591,20 @@ class _StoryViewerState extends State<StoryViewer>
                       Text(_error!,
                           textAlign: TextAlign.center,
                           style: const TextStyle(color: Colors.orange)),
-                    Padding(
+                    if (story.authorId == AuthSession.instance.currentUser?.id)
+                  TextButton.icon(
+                    key: const ValueKey('story-viewers-button'),
+                    onPressed: expired ? null : _openViewers,
+                    icon: const Icon(
+                      Icons.visibility_outlined,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      '${_views[story.id] ?? story.viewCount ?? 0} مشاهد',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,

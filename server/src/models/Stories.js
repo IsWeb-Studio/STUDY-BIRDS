@@ -36,6 +36,7 @@ const interactionSchema = new Schema({
   lovedAt: Date,
 });
 interactionSchema.index({ story: 1, user: 1 }, { unique: true });
+interactionSchema.index({ story: 1, _id: -1 });
 module.exports = {
   Story: mongoose.model('Story', storySchema),
   StoryStats: mongoose.model('StoryStats', statsSchema),

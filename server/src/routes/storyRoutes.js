@@ -25,6 +25,14 @@ async function atomic(fn) {
   }
 }
 const statsFor = (user, session) => StoryStats.findOneAndUpdate({ user }, { $setOnInsert: { user } }, { upsert: true, new: true, session, setDefaultsOnInsert: true });
+async function viewCounts(ids, owner) {
+  if (!ids.length) return new Map();
+  const rows = await StoryInteraction.aggregate([
+    { $match: { story: { $in: ids }, user: { $ne: owner }, seenAt: { $ne: null } } },
+    { $group: { _id: '$story', count: { $sum: 1 } } },
+  ]);
+  return new Map(rows.map(row => [String(row._id), row.count]));
+}
 router.get('/progress', asyncHandler(async (req, res) => {
   // Persist lazy expiry with a conditional update so it cannot overwrite a concurrent post.
   await StoryStats.updateOne({ user: req.user._id, lastStoryAt: { $lte: new Date(Date.now() - 36 * rules.HOUR) }, streak_days: { $gt: 0 } }, [{ $set: { brokenStreakDays: '$streak_days', streak_days: 0 } }]);
@@ -54,11 +62,13 @@ router.get('/updates', asyncHandler(async (req, res) => {
   const stories = await Story.find({ _id: { $in: ids }, expiresAt: { $gt: new Date() } }).select('_id author loveCount')
     .populate({ path: 'author', select: '_id', match: { isActive: true, role: 'student' } }).lean();
   const readable = stories.filter(s => s.author);
+  const views = await viewCounts(readable.filter(s => String(s.author._id) === String(req.user._id)).map(s => s._id), req.user._id);
   const edges = await StoryInteraction.find({ story: { $in: readable.map(s => s._id) }, user: req.user._id }).select('story lovedAt seenAt').lean();
   const byId = new Map(edges.map(e => [String(e.story), e]));
   const stats = await StoryStats.findOne({ user: req.user._id }).lean();
   res.json({ progress: rules.progress(stats || {}), updates: readable.map(s => ({
     id: String(s._id), loveCount: s.loveCount,
+    ...(String(s.author._id) === String(req.user._id) ? { viewCount: views.get(String(s._id)) || 0 } : {}),
     loved: !!byId.get(String(s._id))?.lovedAt, seen: !!byId.get(String(s._id))?.seenAt,
   })) });
 }));
@@ -75,6 +85,7 @@ router.get('/', asyncHandler(async (req, res) => {
     { $unwind: '$author' }, { $limit: 61 },
   ]);
   const page = rows.slice(0, 60);
+  const views = await viewCounts(page.filter(s => String(s.author._id) === String(req.user._id)).map(s => s._id), req.user._id);
   const [edges, stats] = await Promise.all([
     StoryInteraction.find({ story: { $in: page.map(s => s._id) }, user: req.user._id }).select('story seenAt lovedAt').lean(),
     StoryStats.find({ user: { $in: page.map(s => s.author._id) } }).select('user total_points').lean(),
@@ -84,6 +95,7 @@ router.get('/', asyncHandler(async (req, res) => {
   res.json({ stories: page.filter(s => s.author).map(s => ({
     id: String(s._id), text: s.text, imageUrl: s.imageUrl, videoUrl: s.videoUrl || '', videoDuration: s.videoDuration || 0, createdAt: s.createdAt, expiresAt: s.expiresAt,
     loveCount: s.loveCount, seen: !!interactions.get(String(s._id))?.seenAt,
+    ...(String(s.author._id) === String(req.user._id) ? { viewCount: views.get(String(s._id)) || 0 } : {}),
     loved: !!interactions.get(String(s._id))?.lovedAt,
     author: { id: String(s.author._id), name: s.author.name, avatar: s.author.avatar || '', total_points: balances.get(String(s.author._id)) || 0 },
   })), nextCursor: rows.length > 60 ? String(page.at(-1)._id) : null });
@@ -125,6 +137,24 @@ router.post('/', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => 
   res.status(201).json(result);
 }));
 router.param('id', (req, res, next, id) => /^[a-f0-9]{24}$/i.test(id) ? next() : res.status(400).json({ message: 'Invalid story' }));
+router.get('/:id/viewers', asyncHandler(async (req, res) => {
+  const story = await Story.findOne({ _id: req.params.id, author: req.user._id, deletedAt: null, expiresAt: { $gt: new Date() } }).select('_id').lean();
+  if (!story) fail(404, 'Story unavailable');
+  if (req.query.before && (typeof req.query.before !== 'string' || !/^[a-f0-9]{24}$/i.test(req.query.before))) fail(400, 'Invalid cursor');
+  const filter = { story: story._id, user: { $ne: req.user._id }, seenAt: { $ne: null } };
+  const [total, rows] = await Promise.all([
+    StoryInteraction.countDocuments(filter),
+    StoryInteraction.find({ ...filter, ...(req.query.before ? { _id: { $lt: new mongoose.Types.ObjectId(req.query.before) } } : {}) })
+      .sort({ _id: -1 }).limit(51).select('_id user seenAt').lean(),
+  ]);
+  const page = rows.slice(0, 50);
+  const users = await User.find({ _id: { $in: page.map(row => row.user) }, isActive: true }).select('_id name avatar').lean();
+  const byId = new Map(users.map(user => [String(user._id), user]));
+  res.json({ total, viewers: page.map(row => {
+    const user = byId.get(String(row.user));
+    return { id: user ? String(user._id) : null, name: user?.name || 'حساب غير متاح', avatar: user?.avatar || '', viewedAt: row.seenAt };
+  }), nextCursor: rows.length > 50 ? String(page.at(-1)._id) : null });
+}));
 router.delete('/:id', asyncHandler(async (req, res) => {
   await atomic(async session => {
     const story = await Story.findOne({ _id: req.params.id, author: req.user._id }).session(session);
