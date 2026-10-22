@@ -6,6 +6,7 @@ import { studentService } from "../../services/studentService";
 
 vi.mock("../../hooks/useLanguage", () => ({ useLanguage: () => ({ language: "en" }) }));
 vi.mock("../../components/DocumentFileLink", () => ({ DocumentFileLink: () => null }));
+vi.mock("../../components/StudentAssignedTeam", () => ({ StudentAssignedTeam: () => null }));
 vi.mock("../../services/studentService", () => ({ studentService: { getSupportTickets: vi.fn(), replySupportTicket: vi.fn(), createSupportTicket: vi.fn() } }));
 let root: Root, host: HTMLDivElement;
 const ticket = { _id: "ticket", subject: "Help with documents", message: "Original question", status: "answered" as const, category: "documents" as const, replies: [{ fromRole: "student" as const, message: "Original question" }, { fromRole: "admin" as const, message: "Please upload a document", displayName: "Advisor" }] };

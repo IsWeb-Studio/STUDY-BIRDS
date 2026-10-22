@@ -1,4 +1,5 @@
 import { DocumentFileLink } from "../../components/DocumentFileLink";
+import { StudentAssignedTeam } from "../../components/StudentAssignedTeam";
 import { useState } from "react";
 import { EmptyState } from "../../components/EmptyState";
 import { DOCUMENT_UPLOAD_ACCEPT, DOCUMENT_UPLOAD_HINT_AR, DOCUMENT_UPLOAD_HINT_EN } from "../../constants/upload";
@@ -59,6 +60,7 @@ export const StudentSupportPage = () => {
 
   return (
     <div className="space-y-6">
+      <StudentAssignedTeam ar={isArabic} />
       <section className="panel p-6">
         <h1 className="text-3xl font-semibold text-slate-900">{isArabic ? "تذاكر الدعم" : "Support Tickets"}</h1>
         <p className="mt-2 text-sm text-slate-500">{isArabic ? "افتح تذكرة جديدة وتابع ردود مستشار القبول أو الإدارة." : "Open a new ticket and follow replies from the admission consultant or admin."}</p>

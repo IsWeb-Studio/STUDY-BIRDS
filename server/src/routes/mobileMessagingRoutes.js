@@ -14,15 +14,21 @@ const upload = require('../middleware/uploadMiddleware');
 const { rateLimit } = require('express-rate-limit');
 const router = express.Router();
 router.use(protect);
+const { membersFor, staffQuery } = require('../utils/studentSupportTeam');
+const SupportTeam = require('../models/StudentSupportTeam');
 
 async function contactFilter(user) {
-  if (user.role === 'admin') return { isActive: true, _id: { $ne: user._id } };
+  if (user.role === 'admin') {
+    const students=await SupportTeam.distinct('student',{$or:[{members:user._id},{crmAdvisor:user._id}]});
+    return {isActive:true,_id:{$ne:user._id},$or:[{role:{$ne:'student'}},{_id:{$in:students}}]};
+  }
   const ids = [];
   if (user.role === 'parent') {
     const links = await ParentLink.find({ parent: user._id, status: 'approved' }).select('student').lean();
     ids.push(...links.map(link => link.student));
   }
   if (user.role === 'student') {
+    ids.push(...(await membersFor(user._id)).map(member=>member._id));
     const links = await ParentLink.find({ student: user._id, status: 'approved' }).select('parent').lean();
     ids.push(...links.map(link => link.parent));
     const universities = await Application.distinct('university', { student: user._id });
@@ -32,14 +38,22 @@ async function contactFilter(user) {
   if (user.role === 'university' && user.linkedUniversity) {
     ids.push(...await Application.distinct('student', { university: user.linkedUniversity }));
   }
-  return { isActive: true, _id: { $ne: user._id }, $or: [{ role: 'admin' }, ...(user.role === 'student' ? [{ role: 'student' }] : []), { _id: { $in: ids } }] };
+  if(user.role==='employee'&&user.isActive!==false&&user.permissions?.includes('support'))ids.push(...await SupportTeam.distinct('student',{$or:[{members:user._id},{crmAdvisor:user._id}]}));
+  return { isActive: true, _id: { $ne: user._id }, $or: [...(user.role === 'student' ? [{ role: 'student' }] : [{role:'admin'}]), { _id: { $in: ids } }] };
 }
 async function requireContact(user, recipient, res) {
   if (!mongoose.isValidObjectId(recipient)) { res.status(400); throw new Error('Invalid recipient'); }
+  const target=await User.findOne({_id:recipient,isActive:true}).select('_id name role avatar');
+  const student=user.role==='student'?user:(target?.role==='student'?target:null);
+  const staff=user.role==='student'?target:user;
+  if(student&&['admin','employee'].includes(staff?.role)){
+    if((await membersFor(student._id)).some(member=>String(member._id)===String(staff._id)))return target;
+    res.status(403);throw new Error('This support contact is not assigned to this student');
+  }
   // These role combinations are already permitted by contactFilter; avoid
   // loading parent links and applications on every message/read/poll request.
   if (['admin', 'student'].includes(user.role)) {
-    const direct = await User.findOne({ _id: recipient, isActive: true }).select('_id name role avatar');
+    const direct = target;
     if (direct && String(direct._id) !== String(user._id) &&
         (user.role === 'admin' || ['student', 'admin'].includes(direct.role))) return direct;
   }
@@ -49,6 +63,11 @@ async function requireContact(user, recipient, res) {
   return contact;
 }
 router.get('/contacts', run(async (req, res) => {
+  if(req.query.supportTeam==='true'){
+    if(req.user.role!=='student')return res.status(403).json({message:'Students only'});
+    const members=await membersFor(req.user._id);
+    return res.set('Cache-Control','no-store').json(await User.find({...staffQuery,_id:{$in:members.map(m=>m._id)}}).select('_id name role avatar').sort({name:1}).lean());
+  }
   res.json(await User.find(await contactFilter(req.user)).select('name role avatar').sort({ name: 1 }).limit(200).lean());
 }));
 router.get('/contacts/:id', run(async (req, res) => {

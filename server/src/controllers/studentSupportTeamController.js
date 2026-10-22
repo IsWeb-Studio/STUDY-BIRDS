@@ -4,7 +4,15 @@ const Team = require('../models/StudentSupportTeam');
 const User = require('../models/User');
 const { membersFor, staffQuery } = require('../utils/studentSupportTeam');
 
-exports.mine = asyncHandler(async (req, res) => res.json(await membersFor(req.user._id)));
+exports.mine = asyncHandler(async (req, res) => res.set('Cache-Control', 'no-store').json(await membersFor(req.user._id)));
+exports.saveAdvisor = asyncHandler(async (req, res) => {
+  const id = req.body.advisorId;
+  if (Object.keys(req.body).some(key => key !== 'advisorId') || (id !== null && (typeof id !== 'string' || !mongoose.isValidObjectId(id)))) return res.status(400).json({ message: 'Invalid advisor' });
+  if (!mongoose.isValidObjectId(req.params.id) || !await User.exists({ _id: req.params.id, role: 'student' })) return res.status(404).json({ message: 'Student not found' });
+  if (id && !await User.exists({ ...staffQuery, _id: id })) return res.status(400).json({ message: 'Choose an active linked advisor with support access' });
+  await Team.findOneAndUpdate({ student: req.params.id }, { $set: { crmAdvisor: id, updatedBy: req.user._id } }, { upsert: true, runValidators: true });
+  res.set('Cache-Control', 'no-store').json({ advisorId: id, members: await membersFor(req.params.id) });
+});
 exports.read = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(req.params.id) || !await User.exists({ _id: req.params.id, role: 'student' })) {
     return res.status(404).json({ message: 'Student not found' });
