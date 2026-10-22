@@ -7,6 +7,8 @@ import '../../core/utils/json_safe.dart';
 import 'wink_controller.dart';
 import 'wink_playing_card.dart';
 import 'wink_style.dart';
+import 'wink_feedback.dart';
+import 'wink_local_screen.dart';
 
 class WinkScreen extends StatefulWidget {
   static bool _opening = false;
@@ -36,16 +38,18 @@ class WinkScreen extends StatefulWidget {
 
 class _WinkScreenState extends State<WinkScreen> {
   late final WinkController game;
+  final feedback = WinkFeedback();
   BuildContext? _surfaceContext;
   final code = TextEditingController();
   final _scroll = ScrollController();
   String _lastPhase = 'hub';
   bool revealing = false, sawRole = false, sounds = false, vibration = false;
   int _round = -1;
-  String? _notice, _roomCode;
+  String? _roomCode, _recoveryNotice;
   bool _leaving = false;
   bool _accusing = false, _editingSettings = false;
   bool _started = false;
+  bool _audioSheetOpen = false;
   String t(String ar, String en) =>
       Localizations.localeOf(context).languageCode == 'ar' ? ar : en;
   @override
@@ -55,6 +59,8 @@ class _WinkScreenState extends State<WinkScreen> {
     _round = (game.room?['round'] as num?)?.toInt() ?? -1;
     _roomCode = game.room?['code']?.toString();
     _lastPhase = game.phase;
+    feedback.observe(game.room,
+        sound: false, vibration: false, active: false, emit: false);
     game.visible = widget.isActive;
     game.addListener(_changed);
     if (widget.isActive) {
@@ -70,6 +76,7 @@ class _WinkScreenState extends State<WinkScreen> {
     game.visible = widget.isActive;
     if (!widget.isActive) {
       revealing = false;
+      unawaited(feedback.stop());
     }
     if (widget.isActive && !oldWidget.isActive) {
       if (!_started) {
@@ -108,12 +115,14 @@ class _WinkScreenState extends State<WinkScreen> {
       sawRole = false;
     }
     if (!widget.isActive || !game.active) revealing = false;
-    final notice = game.me['notice']?.toString();
-    if (widget.isActive && game.active && notice != null && notice != _notice) {
-      if (vibration) unawaited(HapticFeedback.lightImpact());
-      if (sounds) unawaited(SystemSound.play(SystemSoundType.click));
-    }
-    _notice = notice;
+    feedback.observe(game.room,
+        sound: sounds,
+        vibration: vibration,
+        active: widget.isActive &&
+            game.active &&
+            (_audioSheetOpen ||
+                _surfaceContext == null ||
+                (ModalRoute.of(_surfaceContext!)?.isCurrent ?? true)));
     setState(() {});
   }
 
@@ -121,6 +130,7 @@ class _WinkScreenState extends State<WinkScreen> {
   void dispose() {
     game.removeListener(_changed);
     game.dispose();
+    feedback.dispose();
     code.dispose();
     _scroll.dispose();
     super.dispose();
@@ -187,10 +197,14 @@ class _WinkScreenState extends State<WinkScreen> {
                           tooltip: t('مغادرة الغرفة', 'Leave room'),
                           onPressed: game.canAct ? _leave : null,
                           icon: const Icon(Icons.logout)),
-                    IconButton(
-                        tooltip: t('طريقة اللعب', 'How to play'),
-                        onPressed: _rules,
-                        icon: const Icon(Icons.help_outline)),
+                    SizedBox(
+                        width: 108,
+                        child: TextButton(
+                            key: const ValueKey('wink-rules'),
+                            onPressed: _rules,
+                            child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(t('قواعد اللعبة', 'Game rules'))))),
                     IconButton(
                         tooltip: t('الصوت والاهتزاز', 'Sound and vibration'),
                         onPressed: _audio,
@@ -375,15 +389,19 @@ class _WinkScreenState extends State<WinkScreen> {
             child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-              Text(t('جرّبها بجهاز واحد', 'Start on your own'),
+              Text(t('العبوا بجهاز واحد', 'Play on one device'),
                   style: const TextStyle(
                       fontSize: 20, fontWeight: FontWeight.bold)),
-              _button(t('تجربة اللعبة مع 3 بوتات', 'Try with 3 bots'),
-                  () => game.practice(),
-                  icon: Icons.smart_toy_outlined),
+              _button(
+                  t('العبوا على جهاز واحد · 4–11 لاعبًا',
+                      'One device · 4–11 people'), () async {
+                await Navigator.of(context).push(MaterialPageRoute<void>(
+                    builder: (_) => const WinkLocalScreen()));
+                if (mounted) await _preferences();
+              }, icon: Icons.groups_outlined),
               Text(
-                  t('تجربة خاصة بجهازك وحده؛ البوتات تلعب تلقائيًا، ولا يدخل معك لاعبون حقيقيون.',
-                      'A private single-device practice round. Bots play automatically; real players cannot join.'),
+                  t('أربعة أشخاص حقيقيين على الأقل. مرّروا الجهاز لكشف الكروت سرًا، بدون بوتات أو إنترنت.',
+                      'At least four real people. Pass the device to reveal cards privately, with no bots or internet.'),
                   textAlign: TextAlign.center),
             ])),
         _panel(
@@ -427,9 +445,24 @@ class _WinkScreenState extends State<WinkScreen> {
                   icon: Icons.login),
             ])),
         TextButton(
-            onPressed: () => game.start(),
+            onPressed: game.busy ? null : _recoverRoom,
             child: Text(t('استعادة غرفتي', 'Recover my room'))),
+        if (_recoveryNotice != null)
+          Text(_recoveryNotice!, textAlign: TextAlign.center),
       ];
+
+  Future<void> _recoverRoom() async {
+    setState(() => _recoveryNotice = null);
+    await game.start();
+    if (mounted &&
+        game.room == null &&
+        game.errorCode == null &&
+        game.connected) {
+      setState(() => _recoveryNotice = t(
+          'لا توجد غرفة سابقة نشطة لحسابك. أنشئ غرفة أو انضم بالكود.',
+          'No active room was found for your account. Create one or join with a code.'));
+    }
+  }
 
   Widget _feature(IconData icon, String label) =>
       Row(mainAxisSize: MainAxisSize.min, children: [
@@ -723,10 +756,14 @@ class _WinkScreenState extends State<WinkScreen> {
             MediaQuery.textScalerOf(context).scale(14) <= 19;
         final face = GestureDetector(
             onLongPress: game.connected && game.active
-                ? () => setState(() {
+                ? () {
+                    unawaited(feedback.play(WinkCue.reveal,
+                        sound: sounds, vibration: vibration));
+                    setState(() {
                       revealing = true;
                       sawRole = true;
-                    })
+                    });
+                  }
                 : null,
             child: Semantics(
                 label: t('اضغط مطولًا لكشف دورك. يبقى مفتوحًا حتى تخفيه.',
@@ -1054,37 +1091,50 @@ class _WinkScreenState extends State<WinkScreen> {
   }
 
   Future<void> _audio() async {
-    await showModalBottomSheet<void>(
-        context: _surfaceContext ?? context,
-        isScrollControlled: true,
-        builder: (ctx) => StatefulBuilder(
-            builder: (ctx, update) => SafeArea(
-                    child: SingleChildScrollView(
-                        child:
-                            Column(mainAxisSize: MainAxisSize.min, children: [
-                  SwitchListTile(
-                      title:
-                          Text(t('صوت التنبيه الخاص', 'Private alert sound')),
-                      value: sounds,
-                      onChanged: (v) async {
-                        update(() => sounds = v);
-                        await (await SharedPreferences.getInstance())
-                            .setBool('wink_sounds', v);
-                      }),
-                  SwitchListTile(
-                      title: Text(t('اهتزاز خفيف', 'Light vibration')),
-                      value: vibration,
-                      onChanged: (v) async {
-                        update(() => vibration = v);
-                        await (await SharedPreferences.getInstance())
-                            .setBool('wink_vibration', v);
-                      }),
-                  Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Text(t(
-                          'اختياريان ومغلقان افتراضيًا لحماية خصوصية اللعب. الصوت يتبع إعدادات الجهاز.',
-                          'Optional and off by default for privacy. Sound follows device settings.'))),
-                ])))));
+    if (_audioSheetOpen) return;
+    _audioSheetOpen = true;
+    try {
+      await showModalBottomSheet<void>(
+          context: _surfaceContext ?? context,
+          isScrollControlled: true,
+          builder: (ctx) => StatefulBuilder(
+              builder: (ctx, update) => SafeArea(
+                      child: SingleChildScrollView(
+                          child:
+                              Column(mainAxisSize: MainAxisSize.min, children: [
+                    SwitchListTile(
+                        title: Text(
+                            t('مؤثرات اللعبة الصوتية', 'Game sound effects')),
+                        value: sounds,
+                        onChanged: (v) async {
+                          update(() => sounds = v);
+                          if (v) {
+                            unawaited(feedback.play(WinkCue.deal,
+                                sound: true, vibration: false));
+                          } else {
+                            unawaited(feedback.stop());
+                          }
+                          await (await SharedPreferences.getInstance())
+                              .setBool('wink_sounds', v);
+                        }),
+                    SwitchListTile(
+                        title: Text(t('اهتزاز خفيف', 'Light vibration')),
+                        value: vibration,
+                        onChanged: (v) async {
+                          update(() => vibration = v);
+                          if (v) unawaited(HapticFeedback.lightImpact());
+                          await (await SharedPreferences.getInstance())
+                              .setBool('wink_vibration', v);
+                        }),
+                    Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Text(t(
+                            'مؤثرات توزيع الكروت والخروج والتصويت ونهاية الجولة. اختياريان ومغلقان افتراضيًا لخصوصية اللعب. اضبط صوت الوسائط في جهازك.',
+                            'Effects for dealing, elimination, voting and round end. Optional and off by default for privacy. Adjust your device media volume.'))),
+                  ])))));
+    } finally {
+      _audioSheetOpen = false;
+    }
   }
 
   Future<void> _rules() => showModalBottomSheet<void>(
@@ -1103,8 +1153,8 @@ class _WinkScreenState extends State<WinkScreen> {
                             fontSize: 24, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),
                     for (final rule in [
-                      t('من 4 إلى 11 لاعبًا. الخادم يختار غمّازًا واحدًا عشوائيًا. لا يبدأ اللعب حتى يؤكد الجميع رؤية دوره سرًا.',
-                          '4–11 players. The server randomly chooses one winker. Everyone privately confirms their role before play starts.'),
+                      t('جهاز واحد: 4–11 شخصًا حقيقيًا يتناوبون على رؤية كروتهم سرًا، بدون إنترنت أو بوتات. الغرف بالكود: لكل لاعب جهازه ويختار الخادم غمّازًا واحدًا عشوائيًا. لا يبدأ اللعب حتى يؤكد الجميع رؤية دوره.',
+                          'One device: 4–11 real people privately view their cards in turn, offline with no bots. Code rooms: each player has a device and the server randomly chooses one winker. Everyone confirms their role before play starts.'),
                       t('القعدة: الغمزة تحدث بالعين في الواقع؛ المتلقي ينتظر قليلًا ويضغط «اتغمزلي». نعتمد على التزامكم؛ لا كاميرا ولا تحقق من حركة العين.',
                           'In person: wink in real life; the recipient waits briefly and taps “I was winked at”. Fair play is required; there is no camera or eye detection.'),
                       t('لكل لاعب حي اتهام واحد في الجولة. التصويت بدون مهلة وينتهي بعد تصويت الجميع، والغمز يتوقف أثناءه. قبل التصويت تُسوّى الغمزات المقبولة المعلقة.',

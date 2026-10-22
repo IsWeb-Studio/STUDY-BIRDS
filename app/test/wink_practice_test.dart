@@ -37,7 +37,7 @@ void main() {
     AuthSession.instance.token = null;
   });
   testWidgets(
-      'practice button starts one human with three bots and no room sharing',
+      'legacy practice remains compatible without exposing a solo hub entry',
       (tester) async {
     var starts = 0;
     final api = ApiClient.forTesting(MockClient((request) async {
@@ -51,10 +51,8 @@ void main() {
     }));
     final game = WinkController(api: api);
     await mount(tester, game);
-    final button = find.text('تجربة اللعبة مع 3 بوتات');
-    await tester.ensureVisible(button);
-    await tester.pumpAndSettle();
-    await tester.tap(button);
+    expect(find.text('تجربة اللعبة مع 3 بوتات'), findsNothing);
+    await game.practice();
     await tester.pumpAndSettle();
     expect(starts, 1);
     expect(game.players.where((p) => p['isBot'] == true), hasLength(3));
