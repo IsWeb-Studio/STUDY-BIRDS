@@ -31,7 +31,7 @@ test('assistant: provider failure, persistence, ownership and daily quota', asyn
         const payload = JSON.parse(init.body);
         assert.equal(payload.model, 'test-model');
         if (fail) return new Response('{}', { status: 500 });
-        return new Response(JSON.stringify({ choices: [{ message: { content: 'Test answer' } }], usage: { prompt_tokens: 10, completion_tokens: 5 } }));
+        return new Response(JSON.stringify({ choices: [{ message: { content: '{"id":"documents"}' } }], usage: { prompt_tokens: 10, completion_tokens: 5 } }));
       }
       return originalFetch(url, init);
     };
@@ -42,21 +42,24 @@ test('assistant: provider failure, persistence, ownership and daily quota', asyn
       return data;
     };
     await call('/threads', null, null, 401);
+    await call('/message', b, {message:'x'.repeat(2001)}, 400);
     delete process.env.AI_API_KEY;
-    await call('/message', a, { message: 'Hello' }, 503);
+    await call('/message', a, { message: 'How do I upload documents and apply?' }, 503);
     assert.equal(calls, 0);
     Object.assign(process.env, { AI_API_KEY: 'test-only', AI_BASE_URL: 'https://provider.example.test/v1/', AI_MODEL: 'test-model', AI_DAILY_LIMIT: '2' });
-    const answer = await call('/message', a, { message: 'Hello' });
+    const answer = await call('/message', a, { message: 'How do I upload documents and apply?' });
     assert.equal(answer.messages.length, 2);
+    assert.match(answer.messages.at(-1).content, /Open your documents/);
+    if(process.env.ASSISTANT_CONTRACT_OUTPUT) require('node:fs').writeFileSync(process.env.ASSISTANT_CONTRACT_OUTPUT, JSON.stringify(answer));
     assert.equal((await call('/threads', a)).length, 1);
     assert.equal((await call('/threads', b)).length, 0);
     await call(`/threads/${answer.threadId}`, b, null, 404);
     await call('/message', b, { threadId: answer.threadId, message: 'Steal' }, 404);
     fail = true;
-    await call('/message', a, { threadId: answer.threadId, message: 'Again' }, 502);
+    await call('/message', a, { threadId: answer.threadId, message: 'How do I upload documents and apply?' }, 502);
     assert.equal((await call(`/threads/${answer.threadId}`, a)).messages.length, 2);
     fail = false;
-    await call('/message', a, { threadId: answer.threadId, message: 'Over limit' }, 429);
+    await call('/message', a, { threadId: answer.threadId, message: 'How do I upload documents and apply?' }, 429);
     assert.equal(calls, 2);
     const records = await mongoose.model('AssistantGeneration').find().lean();
     assert.deepEqual(records.map(r => r.status).sort(), ['complete', 'failed']);

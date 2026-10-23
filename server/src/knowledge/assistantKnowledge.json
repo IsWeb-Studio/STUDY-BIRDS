@@ -1,0 +1,3293 @@
+{
+  "schemaVersion": 1,
+  "version": "2026.10.23.3",
+  "reviewedAt": "2026-10-22",
+  "entries": [
+    {
+      "id": "applications",
+      "name": {
+        "ar": "الطلبات",
+        "en": "Applications"
+      },
+      "aliases": [
+        "my applications",
+        "طلباتي",
+        "وين طلباتي",
+        "كيف اقدم",
+        "كيف اتابع طلبي"
+      ],
+      "pattern": "application|apply|admission|طلب|طلبات|تقديم|قبول",
+      "description": {
+        "ar": "افتح قائمة طلباتك، ثم اختر الطلب لعرض نظرة عامة والمستندات والجدول الزمني. لبدء طلب، افتح الجامعة والبرنامج في دليل الجامعات وراجع تفاصيله قبل التقديم. تختلف المتطلبات حسب البرنامج؛ لا يمكنني تأكيد قبول أو موعد رد غير مسجل.",
+        "en": "Open your applications and select one to see its overview, documents and timeline. To start an application, open a university and program in the catalog and review its details before applying. Requirements vary by program; I cannot confirm an unrecorded admission or response date."
+      },
+      "steps": {
+        "ar": [
+          "افتح قائمة طلباتك، ثم اختر الطلب لعرض نظرة عامة والمستندات والجدول الزمني. لبدء طلب، افتح الجامعة والبرنامج في دليل الجامعات وراجع تفاصيله قبل التقديم. تختلف المتطلبات حسب البرنامج؛ لا يمكنني تأكيد قبول أو موعد رد غير مسجل."
+        ],
+        "en": [
+          "Open your applications and select one to see its overview, documents and timeline. To start an application, open a university and program in the catalog and review its details before applying. Requirements vary by program; I cannot confirm an unrecorded admission or response date."
+        ]
+      },
+      "location": {
+        "ar": "الرئيسية ← طلباتي",
+        "en": "Home → My Applications"
+      },
+      "screen": "applications_documents_payments/applications_screens.dart",
+      "sources": [
+        "mobile:lib/screens/applications_documents_payments/applications_screens.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "المعلومات حسب ما يعرضه حسابك؛ لا تنفذ المحادثة أي إجراء حساس.",
+        "en": "Availability depends on your account; this chat performs no sensitive actions."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": "applications",
+      "reviewed": true,
+      "screenHelp": {
+        "applications": {
+          "ar": [
+            "اضغط بطاقة الطلب المطلوب في طلباتي.",
+            "في تفاصيل الطلب اختر نظرة عامة أو المستندات أو الجدول الزمني، أو استكمال مستندات الطلب عند الحاجة."
+          ],
+          "en": [
+            "Tap the application card in My Applications.",
+            "In its details, choose Overview, Documents or Timeline, or Complete application documents when needed."
+          ]
+        }
+      }
+    },
+    {
+      "id": "documents",
+      "name": {
+        "ar": "المستندات",
+        "en": "Documents"
+      },
+      "aliases": [
+        "اوراقي",
+        "اوراق",
+        "ملفاتي",
+        "upload file",
+        "وين ارفع المستندات",
+        "كيف ارفع اوراقي",
+        "كيف ارفع المستندات"
+      ],
+      "pattern": "document|upload|passport|مستند|وثيق|وثائق|رفع|جواز",
+      "description": {
+        "ar": "افتح مستنداتك لإدارة الملفات. لمستندات طلب معين، افتح الطلب ثم المستندات أو استكمال مستندات الطلب. عند وجود ملف سابق، يمكنك استخدامه أو رفع نسخة أخرى. لا ترسل صور الهوية أو رموز التحقق في هذه المحادثة.",
+        "en": "Open your documents to manage files. For a specific application, open it and use its Documents tab or document completion action. You can reuse an existing file or upload another version. Do not send identity images or verification codes in this chat."
+      },
+      "steps": {
+        "ar": [
+          "افتح مستنداتك لإدارة الملفات. لمستندات طلب معين، افتح الطلب ثم المستندات أو استكمال مستندات الطلب. عند وجود ملف سابق، يمكنك استخدامه أو رفع نسخة أخرى. لا ترسل صور الهوية أو رموز التحقق في هذه المحادثة."
+        ],
+        "en": [
+          "Open your documents to manage files. For a specific application, open it and use its Documents tab or document completion action. You can reuse an existing file or upload another version. Do not send identity images or verification codes in this chat."
+        ]
+      },
+      "location": {
+        "ar": "مستنداتي أو الطلب ← المستندات",
+        "en": "My Documents or Application → Documents"
+      },
+      "screen": "applications_documents_payments/documents_screens.dart",
+      "sources": [
+        "mobile:lib/screens/applications_documents_payments/documents_screens.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "المعلومات حسب ما يعرضه حسابك؛ لا تنفذ المحادثة أي إجراء حساس.",
+        "en": "Availability depends on your account; this chat performs no sensitive actions."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": "documents",
+      "reviewed": true,
+      "screenHelp": {
+        "documents": {
+          "ar": [
+            "اضغط رفع مستند أعلى شاشة مستنداتي.",
+            "اختر نوع المستند ثم التصوير أو اختيار ملف، وراجع نتيجة الرفع. لمستندات طلب محدد افتح الطلب نفسه."
+          ],
+          "en": [
+            "Tap Upload document at the top of My Documents.",
+            "Choose the document type and camera/file source, then check the upload result. For a specific application, open that application."
+          ]
+        }
+      }
+    },
+    {
+      "id": "catalog",
+      "name": {
+        "ar": "دليل الجامعات والبرامج",
+        "en": "University and program catalog"
+      },
+      "aliases": [],
+      "pattern": "universit|program|tuition|deadline|scholarship|جامع|تخصص|برنامج|رسوم|منح|دول|بلد",
+      "description": {
+        "ar": "افتح دليل الجامعات أو البرامج واستخدم البحث والفلاتر، ثم افتح تفاصيل الجامعة أو البرنامج. المعلومات المتاحة هناك هي المرجع الحالي؛ لا أملك تأكيدًا لرسوم أو مواعيد أو متطلبات غير معروضة. للمعلومات الناقصة، أرسل تذكرة من مركز الدعم.",
+        "en": "Open the universities or programs catalog, use search and filters, then open the institution or program details. Those entries are the current reference. I cannot confirm fees, deadlines or requirements that are not listed. For missing information, create a ticket in Support Center."
+      },
+      "steps": {
+        "ar": [
+          "افتح دليل الجامعات أو البرامج واستخدم البحث والفلاتر، ثم افتح تفاصيل الجامعة أو البرنامج. المعلومات المتاحة هناك هي المرجع الحالي؛ لا أملك تأكيدًا لرسوم أو مواعيد أو متطلبات غير معروضة. للمعلومات الناقصة، أرسل تذكرة من مركز الدعم."
+        ],
+        "en": [
+          "Open the universities or programs catalog, use search and filters, then open the institution or program details. Those entries are the current reference. I cannot confirm fees, deadlines or requirements that are not listed. For missing information, create a ticket in Support Center."
+        ]
+      },
+      "location": {
+        "ar": "الاستكشاف ← الجامعات / البرامج",
+        "en": "Explore → Universities / Programs"
+      },
+      "screen": "universities_programs_countries/universities_screens.dart",
+      "sources": [
+        "mobile:lib/screens/universities_programs_countries/universities_screens.dart"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "المعلومات حسب ما يعرضه حسابك؛ لا تنفذ المحادثة أي إجراء حساس.",
+        "en": "Availability depends on your account; this chat performs no sensitive actions."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": "universities",
+      "reviewed": true
+    },
+    {
+      "id": "account",
+      "name": {
+        "ar": "تسجيل الدخول والحساب",
+        "en": "Login and account"
+      },
+      "aliases": [],
+      "pattern": "account|login|log in|sign.?in|register|password|verification|email|حساب|دخول|تسجيل|بريد|إيميل|كلمة|توثيق",
+      "description": {
+        "ar": "استخدم شاشة تسجيل الدخول للدخول إلى حسابك، وصفحة حسابي لإدارة حسابك. أكمل توثيق البريد عندما تطلبه الشاشة. لا تشارك كلمة المرور أو كود البريد هنا. إذا تعذر الدخول، تواصل مع الدعم بدل إرسال بياناتك السرية.",
+        "en": "Use the login screen to sign in and My Account to manage your account. Complete email verification when prompted. Never share your password or email code here. If sign-in fails, contact support without sending secrets."
+      },
+      "steps": {
+        "ar": [
+          "استخدم شاشة تسجيل الدخول للدخول إلى حسابك، وصفحة حسابي لإدارة حسابك. أكمل توثيق البريد عندما تطلبه الشاشة. لا تشارك كلمة المرور أو كود البريد هنا. إذا تعذر الدخول، تواصل مع الدعم بدل إرسال بياناتك السرية."
+        ],
+        "en": [
+          "Use the login screen to sign in and My Account to manage your account. Complete email verification when prompted. Never share your password or email code here. If sign-in fails, contact support without sending secrets."
+        ]
+      },
+      "location": {
+        "ar": "الدخول / حسابي",
+        "en": "Login / My Account"
+      },
+      "screen": "profile_account/profile_account_screens.dart",
+      "sources": [
+        "mobile:lib/screens/profile_account/profile_account_screens.dart",
+        "mobile:lib/screens/auth/email_challenge_screen.dart",
+        "mobile:lib/screens/auth/login_register_screens.dart"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "المعلومات حسب ما يعرضه حسابك؛ لا تنفذ المحادثة أي إجراء حساس.",
+        "en": "Availability depends on your account; this chat performs no sensitive actions."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": "settings",
+      "reviewed": true,
+      "screenHelp": {
+        "settings": {
+          "ar": [
+            "اختر تغيير كلمة المرور أو الأمان أو تفضيلات الإشعارات من هذه الشاشة.",
+            "خيار اللغة يعتمد على النسخة؛ لا يوجد زر مستقل للثيم في الإعدادات الحالية."
+          ],
+          "en": [
+            "Choose Change password, Security or Notification preferences on this screen.",
+            "Language choices depend on the build. Current settings have no standalone theme toggle."
+          ]
+        }
+      }
+    },
+    {
+      "id": "notifications",
+      "name": {
+        "ar": "الإشعارات",
+        "en": "Notifications"
+      },
+      "aliases": [
+        "ما بتوصلني اشعارات"
+      ],
+      "pattern": "notification|push|إشعار|اشعار|تنبيه|تنبيهات",
+      "description": {
+        "ar": "افتح الإشعارات لعرض تنبيهاتك، وتفضيلات الإشعارات لاختيار الفئات المتاحة لحسابك. تنبيهات الأمان والمساعدة العاجلة تبقى مفعّلة. إذا لم تصل التنبيهات، تحقق أيضًا من إذن إشعارات Study Birds في إعدادات الجهاز.",
+        "en": "Open Notifications to see alerts and Notification Preferences to choose the categories for your account. Security and urgent help alerts remain enabled. If notifications do not arrive, also check Study Birds notification permission in device settings."
+      },
+      "steps": {
+        "ar": [
+          "افتح الإشعارات لعرض تنبيهاتك، وتفضيلات الإشعارات لاختيار الفئات المتاحة لحسابك. تنبيهات الأمان والمساعدة العاجلة تبقى مفعّلة. إذا لم تصل التنبيهات، تحقق أيضًا من إذن إشعارات Study Birds في إعدادات الجهاز."
+        ],
+        "en": [
+          "Open Notifications to see alerts and Notification Preferences to choose the categories for your account. Security and urgent help alerts remain enabled. If notifications do not arrive, also check Study Birds notification permission in device settings."
+        ]
+      },
+      "location": {
+        "ar": "الرئيسية ← الإشعارات؛ حسابي ← الإعدادات ← تفضيلات الإشعارات",
+        "en": "Home → Notifications; My Account → Settings → Notification Preferences"
+      },
+      "screen": "profile_account/notification_preferences_screen.dart",
+      "sources": [
+        "mobile:lib/screens/profile_account/notification_preferences_screen.dart",
+        "mobile:lib/screens/home_journey/notifications_screen.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "المعلومات حسب ما يعرضه حسابك؛ لا تنفذ المحادثة أي إجراء حساس.",
+        "en": "Availability depends on your account; this chat performs no sensitive actions."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": "notifications",
+      "reviewed": true
+    },
+    {
+      "id": "community",
+      "name": {
+        "ar": "مجتمع الطلاب",
+        "en": "Student Community"
+      },
+      "aliases": [
+        "كوميونتي"
+      ],
+      "pattern": "community|stor(y|ies)|streak|مجتمع|ستوري|قصص|ستريك|سلسلة",
+      "description": {
+        "ar": "استخدم مجتمع الطلاب للمنشورات والنقاشات والقصص. سلسلة نشاطي موجودة في ملفك الشخصي؛ اضغط البطاقة لعرض التفاصيل والاسترجاع المتاح حسب توقيت السيرفر. لا أستطيع نشر محتوى أو استرجاع السلسلة نيابة عنك.",
+        "en": "Use Student Community for posts, discussions and stories. My Streak is in your profile; tap its card for details and recovery eligibility determined by the server. I cannot publish content or restore a streak on your behalf."
+      },
+      "steps": {
+        "ar": [
+          "استخدم مجتمع الطلاب للمنشورات والنقاشات والقصص. سلسلة نشاطي موجودة في ملفك الشخصي؛ اضغط البطاقة لعرض التفاصيل والاسترجاع المتاح حسب توقيت السيرفر. لا أستطيع نشر محتوى أو استرجاع السلسلة نيابة عنك."
+        ],
+        "en": [
+          "Use Student Community for posts, discussions and stories. My Streak is in your profile; tap its card for details and recovery eligibility determined by the server. I cannot publish content or restore a streak on your behalf."
+        ]
+      },
+      "location": {
+        "ar": "الشريط السفلي ← المجتمع",
+        "en": "Bottom navigation → Community"
+      },
+      "screen": "stories/student_stories.dart",
+      "sources": [
+        "mobile:lib/screens/stories/student_stories.dart",
+        "mobile:lib/screens/profile_account/my_streak.dart",
+        "mobile:lib/screens/community/student_community_hub.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "المعلومات حسب ما يعرضه حسابك؛ لا تنفذ المحادثة أي إجراء حساس.",
+        "en": "Availability depends on your account; this chat performs no sensitive actions."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "support",
+      "name": {
+        "ar": "مركز الدعم",
+        "en": "Support Center"
+      },
+      "aliases": [
+        "ticket",
+        "tickets",
+        "تذكرة",
+        "تذاكر",
+        "تذكرتي"
+      ],
+      "pattern": "support|troubleshoot|error|setting|دعم|مشكلة|خطأ|إعداد|اعداد|مساعدة",
+      "description": {
+        "ar": "من حسابي افتح مركز الدعم. اختر تذكرة دعم جديدة لشرح المشكلة، ثم تابع الردود في تذاكري. لا تضف كلمات مرور أو أكواد تحقق. ما الشاشة التي تواجه فيها المشكلة؟",
+        "en": "From My Account, open Support Center. Choose a new support ticket to describe the issue and follow replies in My Tickets. Do not include passwords or verification codes. Which screen has the problem?"
+      },
+      "steps": {
+        "ar": [
+          "من حسابي افتح مركز الدعم. اختر تذكرة دعم جديدة لشرح المشكلة، ثم تابع الردود في تذاكري. لا تضف كلمات مرور أو أكواد تحقق. ما الشاشة التي تواجه فيها المشكلة؟"
+        ],
+        "en": [
+          "From My Account, open Support Center. Choose a new support ticket to describe the issue and follow replies in My Tickets. Do not include passwords or verification codes. Which screen has the problem?"
+        ]
+      },
+      "location": {
+        "ar": "حسابي ← مركز الدعم",
+        "en": "My Account → Support Center"
+      },
+      "screen": "services_support/support_team_ai_screens.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/support_team_ai_screens.dart",
+        "mobile:lib/screens/services_support/bird_ai_screen.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "المعلومات حسب ما يعرضه حسابك؛ لا تنفذ المحادثة أي إجراء حساس.",
+        "en": "Availability depends on your account; this chat performs no sensitive actions."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": "support",
+      "reviewed": true
+    },
+    {
+      "id": "passport",
+      "name": {
+        "ar": "قراءة جواز السفر",
+        "en": "Passport scanning"
+      },
+      "aliases": [
+        "passport scan",
+        "scan passport",
+        "passport upload",
+        "جواز",
+        "الباسبور",
+        "جوازي",
+        "ارفع جوازي",
+        "كيف ارفع جواز السفر",
+        "رفع جواز السفر",
+        "ارفع الباسبور",
+        "upload a passport",
+        "upload passport",
+        "ارفع جواز السفر"
+      ],
+      "description": {
+        "ar": "من حسابي اختر جواز السفر، ثم افتح الكاميرا أو اختر ملفًا من الهاتف.",
+        "en": "In My Account, choose Passport, then use the camera or select a file from your phone."
+      },
+      "steps": {
+        "ar": [
+          "من حسابي اختر جواز السفر، ثم افتح الكاميرا أو اختر ملفًا من الهاتف.",
+          "راجع البيانات المستخرجة في شاشة مراجعة بيانات الجواز قبل الحفظ. لا ترسل الجواز إلى المحادثة."
+        ],
+        "en": [
+          "In My Account, choose Passport, then use the camera or select a file from your phone.",
+          "Review extracted fields on the passport review screen before saving. Never send the passport in chat."
+        ]
+      },
+      "location": {
+        "ar": "حسابي ← جواز السفر",
+        "en": "My Account → Passport"
+      },
+      "screen": "profile_account/edit_profile_screen.dart",
+      "sources": [
+        "mobile:lib/screens/profile_account/edit_profile_screen.dart",
+        "server:src/routes/studentRoutes.js",
+        "mobile:lib/screens/profile_account/passport_scanner_screen.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "تحتاج إذن الكاميرا عند التصوير؛ القراءة الآلية قد تحتاج تصحيحًا أو صورة أوضح.",
+        "en": "Camera capture requires permission; recognition may require correction or a clearer image."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": "passport",
+      "reviewed": true
+    },
+    {
+      "id": "upload-failure",
+      "name": {
+        "ar": "مشكلة رفع الملفات",
+        "en": "Upload troubleshooting"
+      },
+      "aliases": [
+        "upload failed",
+        "upload error",
+        "cannot upload",
+        "رفع فشل",
+        "ما برفع",
+        "مش راضي يرفع",
+        "تعذر رفع",
+        "مشكلة رفع"
+      ],
+      "description": {
+        "ar": "تحقق من الاتصال وصلاحية الملف وأذونات الكاميرا أو اختيار الملفات.",
+        "en": "Check connectivity, file validity and camera/file-selection permissions."
+      },
+      "steps": {
+        "ar": [
+          "تحقق من الاتصال وصلاحية الملف وأذونات الكاميرا أو اختيار الملفات.",
+          "في حالة فشل الرفع استخدم إعادة المحاولة؛ افتح الطلب نفسه للتأكد من حالة المستند.",
+          "إذا استمرت المشكلة، افتح مركز الدعم وأرسل تذكرة دون إرفاق أسرار."
+        ],
+        "en": [
+          "Check connectivity, file validity and camera/file-selection permissions.",
+          "Use retry after a failed upload, then open the application to verify document status.",
+          "If it persists, open Support Center and create a ticket without secrets."
+        ]
+      },
+      "location": {
+        "ar": "المستندات",
+        "en": "Documents"
+      },
+      "screen": "applications_documents_payments/documents_screens.dart",
+      "sources": [
+        "mobile:lib/screens/applications_documents_payments/documents_screens.dart",
+        "server:src/routes/studentRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": "documents",
+      "reviewed": true
+    },
+    {
+      "id": "password",
+      "name": {
+        "ar": "تغيير كلمة المرور",
+        "en": "Change password"
+      },
+      "aliases": [
+        "password change",
+        "change password",
+        "forgot password",
+        "reset password",
+        "باسورد",
+        "باسوورد",
+        "نسيت كلمة",
+        "تغيير كلمة",
+        "اغير كلمة"
+      ],
+      "description": {
+        "ar": "من حسابي افتح الإعدادات ثم تغيير كلمة المرور.",
+        "en": "Open My Account, Settings, then Change password."
+      },
+      "steps": {
+        "ar": [
+          "من حسابي افتح الإعدادات ثم تغيير كلمة المرور.",
+          "إذا لم تستطع الدخول، استخدم استعادة الحساب في شاشة الدخول. لا تشارك كلمة المرور أو الكود هنا."
+        ],
+        "en": [
+          "Open My Account, Settings, then Change password.",
+          "If you cannot sign in, use account recovery on the login screen. Never share passwords or codes here."
+        ]
+      },
+      "location": {
+        "ar": "حسابي ← الإعدادات ← تغيير كلمة المرور",
+        "en": "My Account → Settings → Change password"
+      },
+      "screen": "profile_account/profile_account_screens.dart",
+      "sources": [
+        "mobile:lib/screens/profile_account/profile_account_screens.dart",
+        "server:src/routes/authRoutes.js",
+        "server:src/routes/mobileSecurityRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/authRoutes.js",
+        "server:src/routes/mobileSecurityRoutes.js"
+      ],
+      "action": "settings",
+      "reviewed": true
+    },
+    {
+      "id": "security",
+      "name": {
+        "ar": "أمان الحساب",
+        "en": "Account security"
+      },
+      "aliases": [
+        "two factor",
+        "2fa",
+        "sessions",
+        "security",
+        "جلسات",
+        "بصمة",
+        "امان",
+        "أمان",
+        "تحقق بخطوتين"
+      ],
+      "description": {
+        "ar": "افتح الأمان من إعدادات حسابي.",
+        "en": "Open Security from My Account settings."
+      },
+      "steps": {
+        "ar": [
+          "افتح الأمان من إعدادات حسابي.",
+          "راجع خيارات الأمان والجلسات المعروضة لحسابك، واتبع التحقق الذي تطلبه الشاشة قبل أي تغيير."
+        ],
+        "en": [
+          "Open Security from My Account settings.",
+          "Review the security and session options offered to your account and complete any required verification before changing them."
+        ]
+      },
+      "location": {
+        "ar": "حسابي ← الإعدادات ← الأمان",
+        "en": "My Account → Settings → Security"
+      },
+      "screen": "profile_account/security_settings_screen.dart",
+      "sources": [
+        "mobile:lib/screens/profile_account/security_settings_screen.dart",
+        "server:src/routes/mobileSecurityRoutes.js",
+        "mobile:lib/screens/profile_account/account_security_screen.dart"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/mobileSecurityRoutes.js"
+      ],
+      "action": "security",
+      "reviewed": true
+    },
+    {
+      "id": "profile",
+      "name": {
+        "ar": "تعديل الملف الشخصي",
+        "en": "Edit profile"
+      },
+      "aliases": [
+        "profile",
+        "avatar",
+        "profile picture",
+        "ملفي",
+        "صورتي",
+        "بياناتي",
+        "صورتي الشخصيه",
+        "ملف شخصي",
+        "change name",
+        "edit name",
+        "update profile",
+        "تغيير اسمي",
+        "اغير اسمي",
+        "الاسم",
+        "الصورة",
+        "كيف اعدل حسابي"
+      ],
+      "description": {
+        "ar": "افتح حسابي واضغط الصورة لتغييرها، أو اختر المعلومات الشخصية أو الأكاديمية أو تفضيلات الدراسة.",
+        "en": "Open My Account and tap the photo to change it, or select Personal information, Academic information or Study preferences."
+      },
+      "steps": {
+        "ar": [
+          "افتح حسابي واضغط الصورة لتغييرها، أو اختر المعلومات الشخصية أو الأكاديمية أو تفضيلات الدراسة.",
+          "عدّل الحقول في القسم المطلوب واحفظ من شاشة التعديل."
+        ],
+        "en": [
+          "Open My Account and tap the photo to change it, or select Personal information, Academic information or Study preferences.",
+          "Edit the relevant section and save on its edit screen."
+        ]
+      },
+      "location": {
+        "ar": "حسابي",
+        "en": "My Account"
+      },
+      "screen": "profile_account/profile_account_screens.dart",
+      "sources": [
+        "mobile:lib/screens/profile_account/profile_account_screens.dart",
+        "server:src/routes/studentRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": "profile",
+      "reviewed": true
+    },
+    {
+      "id": "streak",
+      "name": {
+        "ar": "سلسلة نشاطي",
+        "en": "My Streak"
+      },
+      "aliases": [
+        "streak",
+        "streack",
+        "ستريك",
+        "سترياك",
+        "سترك",
+        "سلسلة نشاطي",
+        "استرجاع السلسلة",
+        "كيف ارجع الستريك",
+        "ارجع الستريك"
+      ],
+      "description": {
+        "ar": "افتح حسابي واضغط بطاقة سلسلة نشاطي أسفل رأس الملف الشخصي.",
+        "en": "Open My Account and tap My Streak below the profile header."
+      },
+      "steps": {
+        "ar": [
+          "افتح حسابي واضغط بطاقة سلسلة نشاطي أسفل رأس الملف الشخصي.",
+          "تعرض التفاصيل السلسلة الحالية والأطول والنشاط الأخير والموعد الفعلي من السيرفر.",
+          "يمكن استرجاع السلسلة خلال 24 ساعة بعد انتهائها، حتى 3 استرجاعات ناجحة في الشهر حسب منطقة توقيت السيرفر؛ المتبقي لا يتراكم.",
+          "راجع الوقت والمتبقي في ورقة التأكيد قبل الاسترجاع. بداية الشهر لا تعيد فتح مهلة انتهت."
+        ],
+        "en": [
+          "Open My Account and tap My Streak below the profile header.",
+          "Details show your current and longest streak, recent activity and the server deadline.",
+          "Recovery is available for 24 hours after expiry, up to 3 successful restores per calendar month in the server timezone; unused restores do not roll over.",
+          "Check time and remaining allowance in the confirmation sheet. A monthly reset does not reopen an expired window."
+        ]
+      },
+      "location": {
+        "ar": "حسابي ← سلسلة نشاطي",
+        "en": "My Account → My Streak"
+      },
+      "screen": "profile_account/my_streak.dart",
+      "sources": [
+        "mobile:lib/screens/profile_account/my_streak.dart",
+        "server:src/routes/storyRoutes.js",
+        "server:src/utils/storyRules.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/storyRoutes.js"
+      ],
+      "action": "profile",
+      "reviewed": true
+    },
+    {
+      "id": "stories",
+      "name": {
+        "ar": "القصص والمشاهدات",
+        "en": "Stories and viewers"
+      },
+      "aliases": [
+        "story",
+        "stories",
+        "ستوري",
+        "ستوريات",
+        "قصص",
+        "مشاهدات",
+        "مين شاف"
+      ],
+      "description": {
+        "ar": "افتح القصص في مجتمع الطلاب لعرض القصص أو نشر قصتك من أدوات النشر المعروضة.",
+        "en": "Open Stories in Student Community to view stories or use the displayed publishing controls."
+      },
+      "steps": {
+        "ar": [
+          "افتح القصص في مجتمع الطلاب لعرض القصص أو نشر قصتك من أدوات النشر المعروضة.",
+          "لمعرفة المشاهدين، افتح قصتك واضغط عدد المشاهدات لعرض القائمة. لا تُتاح قائمة مشاهدي قصة طالب آخر لك."
+        ],
+        "en": [
+          "Open Stories in Student Community to view stories or use the displayed publishing controls.",
+          "Open your own story and tap the viewer count to see its list. Another student’s private viewer list is not available to you."
+        ]
+      },
+      "location": {
+        "ar": "مجتمع الطلاب ← القصص",
+        "en": "Student Community → Stories"
+      },
+      "screen": "stories/student_stories.dart",
+      "sources": [
+        "mobile:lib/screens/stories/student_stories.dart",
+        "server:src/routes/storyRoutes.js",
+        "mobile:lib/screens/stories/story_viewers_screen.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/storyRoutes.js"
+      ],
+      "action": "community",
+      "reviewed": true
+    },
+    {
+      "id": "friends",
+      "name": {
+        "ar": "الأصدقاء",
+        "en": "Friends"
+      },
+      "aliases": [
+        "friends",
+        "friend request",
+        "صديق",
+        "اصدقاء",
+        "أصدقاء",
+        "صداقه"
+      ],
+      "description": {
+        "ar": "من حسابي افتح الأصدقاء.",
+        "en": "Open Friends from My Account."
+      },
+      "steps": {
+        "ar": [
+          "من حسابي افتح الأصدقاء.",
+          "استخدم البحث وخيارات طلبات الصداقة المعروضة، وراجع الطلب قبل قبوله أو إرساله."
+        ],
+        "en": [
+          "Open Friends from My Account.",
+          "Use the search and friend-request controls shown; review a request before accepting or sending it."
+        ]
+      },
+      "location": {
+        "ar": "حسابي ← الأصدقاء",
+        "en": "My Account → Friends"
+      },
+      "screen": "stories/friends_screen.dart",
+      "sources": [
+        "mobile:lib/screens/stories/friends_screen.dart",
+        "server:src/routes/friendRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/friendRoutes.js"
+      ],
+      "action": "friends",
+      "reviewed": true
+    },
+    {
+      "id": "messages",
+      "name": {
+        "ar": "المراسلات والمساعدة العاجلة",
+        "en": "Messaging and urgent help"
+      },
+      "aliases": [
+        "chat",
+        "messages",
+        "مراسلات",
+        "رسائل",
+        "دردشة",
+        "محادثه",
+        "عاجلة",
+        "emergency"
+      ],
+      "description": {
+        "ar": "افتح المحادثات في مجتمع الطلاب للوصول إلى المحادثات المسموحة لحسابك.",
+        "en": "Open conversations in Student Community to access the chats permitted for your account."
+      },
+      "steps": {
+        "ar": [
+          "افتح المحادثات في مجتمع الطلاب للوصول إلى المحادثات المسموحة لحسابك.",
+          "للمساعدة العاجلة افتح مركز الدعم ثم مساعدة عاجلة ثم فتح المحادثة الداخلية؛ تظهر فقط أسماء فريق الدعم المعيّن لك. إذا لم يوجد فريق، أرسل تذكرة دعم. لا ترسل أسرارًا للمساعد."
+        ],
+        "en": [
+          "Open conversations in Student Community to access the chats permitted for your account.",
+          "For urgent help, open Support Center, Emergency Help, then Open internal conversation. Only your assigned support team appears. If no team is assigned, create a support ticket. Never send secrets to the assistant."
+        ]
+      },
+      "location": {
+        "ar": "مجتمع الطلاب / مركز الدعم",
+        "en": "Student Community / Support Center"
+      },
+      "screen": "services_support/messaging_and_emergency_screens.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/messaging_and_emergency_screens.dart",
+        "server:src/routes/mobileMessagingRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/mobileMessagingRoutes.js"
+      ],
+      "action": "community",
+      "reviewed": true
+    },
+    {
+      "id": "game",
+      "name": {
+        "ar": "لعبة الغمّازة",
+        "en": "The Winker game"
+      },
+      "aliases": [
+        "wink",
+        "winker",
+        "game",
+        "لعبه",
+        "لعبة",
+        "غمّازة",
+        "غمازة",
+        "الغمّازة"
+      ],
+      "description": {
+        "ar": "افتح الغمّازة من الشريط السفلي.",
+        "en": "Open The Winker from bottom navigation."
+      },
+      "steps": {
+        "ar": [
+          "افتح الغمّازة من الشريط السفلي.",
+          "اختر اللعب بجهاز واحد لأربعة أشخاص حقيقيين على الأقل وتناوبوا على الكروت سرًا؛ أو أنشئ غرفة بالكود لأجهزة متعددة.",
+          "لعب المجموعة يحتاج 4 لاعبين على الأقل والجميع جاهز؛ لا تشارك دورك السري.",
+          "افتح زر قواعد اللعبة؛ ويمكن تفعيل مؤثرات التوزيع والخروج والتصويت من الصوت والاهتزاز."
+        ],
+        "en": [
+          "Open The Winker from bottom navigation.",
+          "Choose one-device play for at least four real people and pass private cards in turn, or create a code room for multiple devices.",
+          "Group play requires at least 4 ready players. Keep your secret role private.",
+          "Open Game rules. Enable dealing, elimination and voting effects from Sound and vibration."
+        ]
+      },
+      "location": {
+        "ar": "الشريط السفلي ← الغمّازة",
+        "en": "Bottom navigation → The Winker"
+      },
+      "screen": "games/wink_screen.dart",
+      "sources": [
+        "mobile:lib/screens/games/wink_screen.dart",
+        "server:src/routes/winkRoutes.js",
+        "mobile:lib/screens/games/wink_local_screen.dart",
+        "mobile:lib/screens/games/wink_local_game.dart",
+        "mobile:lib/screens/games/wink_feedback.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "وضع الجهاز الواحد محلي بلا مكافآت؛ الغرف بالكود تحتاج اتصالًا وحسابًا. لا تكشف كرت شخص آخر.",
+        "en": "One-device play is offline and unranked; code rooms require an account and connectivity. Do not reveal another person’s card."
+      },
+      "backend": [
+        "server:src/routes/winkRoutes.js"
+      ],
+      "action": "game",
+      "reviewed": true
+    },
+    {
+      "id": "countries",
+      "name": {
+        "ar": "جامعات الدولة",
+        "en": "Country universities"
+      },
+      "aliases": [
+        "countries",
+        "country",
+        "اذربيجان",
+        "أذربيجان",
+        "الصين",
+        "دولة",
+        "الدول"
+      ],
+      "description": {
+        "ar": "من الاستكشاف افتح الدول واختر الدولة المطلوبة.",
+        "en": "Open Explore, Countries, then choose a country."
+      },
+      "steps": {
+        "ar": [
+          "من الاستكشاف افتح الدول واختر الدولة المطلوبة.",
+          "عدد الجامعات يعبّر عن الجامعات الموجودة في دليل المنصة فقط؛ إذا كان صفرًا فلا توجد جامعات مسجلة لها. افتح جامعات الدولة لعرضها."
+        ],
+        "en": [
+          "Open Explore, Countries, then choose a country.",
+          "The university count represents catalog entries only; zero means none are listed for that country. Open its universities to browse them."
+        ]
+      },
+      "location": {
+        "ar": "الاستكشاف ← الدول",
+        "en": "Explore → Countries"
+      },
+      "screen": "universities_programs_countries/countries_scholarships_screens.dart",
+      "sources": [
+        "mobile:lib/screens/universities_programs_countries/countries_scholarships_screens.dart",
+        "server:src/routes/contentRoutes.js",
+        "server:src/routes/universityRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/contentRoutes.js",
+        "server:src/routes/universityRoutes.js"
+      ],
+      "action": "countries",
+      "reviewed": true
+    },
+    {
+      "id": "finder",
+      "name": {
+        "ar": "مكتشف البرنامج",
+        "en": "Program finder"
+      },
+      "aliases": [
+        "finder",
+        "find program",
+        "orientation",
+        "مكتشف",
+        "اختبار التوجيه"
+      ],
+      "description": {
+        "ar": "افتح مكتشف البرنامج من الاستكشاف.",
+        "en": "Open Program finder from Explore."
+      },
+      "steps": {
+        "ar": [
+          "افتح مكتشف البرنامج من الاستكشاف.",
+          "استخدم اختيارات وفلاتر البحث المعروضة، ثم راجع تفاصيل البرنامج ومتطلباته قبل تقديم طلب."
+        ],
+        "en": [
+          "Open Program finder from Explore.",
+          "Use the available selections and filters, then review program details and requirements before applying."
+        ]
+      },
+      "location": {
+        "ar": "الاستكشاف ← مكتشف البرنامج",
+        "en": "Explore → Program finder"
+      },
+      "screen": "universities_programs_countries/programs_screens.dart",
+      "sources": [
+        "mobile:lib/screens/universities_programs_countries/programs_screens.dart",
+        "server:src/routes/programRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/programRoutes.js"
+      ],
+      "action": "programs",
+      "reviewed": true
+    },
+    {
+      "id": "compare",
+      "name": {
+        "ar": "مقارنة الجامعات والبرامج",
+        "en": "Compare universities and programs"
+      },
+      "aliases": [
+        "compare",
+        "comparison",
+        "مقارنة",
+        "اقارن"
+      ],
+      "description": {
+        "ar": "أضف الجامعات أو البرامج إلى المقارنة من أدوات الدليل.",
+        "en": "Add universities or programs using the catalog comparison controls."
+      },
+      "steps": {
+        "ar": [
+          "أضف الجامعات أو البرامج إلى المقارنة من أدوات الدليل.",
+          "من الاستكشاف افتح قائمة المقارنة لمراجعة العناصر المختارة."
+        ],
+        "en": [
+          "Add universities or programs using the catalog comparison controls.",
+          "Open Comparison list in Explore to review the selected items."
+        ]
+      },
+      "location": {
+        "ar": "الاستكشاف ← قائمة المقارنة",
+        "en": "Explore → Comparison list"
+      },
+      "screen": "universities_programs_countries/compare_list_screen.dart",
+      "sources": [
+        "mobile:lib/screens/universities_programs_countries/compare_list_screen.dart",
+        "server:src/routes/universityRoutes.js",
+        "server:src/routes/programRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/universityRoutes.js",
+        "server:src/routes/programRoutes.js"
+      ],
+      "action": "compare",
+      "reviewed": true
+    },
+    {
+      "id": "favorites",
+      "name": {
+        "ar": "المفضلة",
+        "en": "Favorites"
+      },
+      "aliases": [
+        "favorite",
+        "favourite",
+        "bookmark",
+        "مفضله",
+        "مفضلة",
+        "احفظ جامعة"
+      ],
+      "description": {
+        "ar": "استخدم علامة الحفظ على الجامعة أو البرنامج.",
+        "en": "Use the save control on a university or program."
+      },
+      "steps": {
+        "ar": [
+          "استخدم علامة الحفظ على الجامعة أو البرنامج.",
+          "افتح المفضلة من الاستكشاف وبدّل بين الجامعات والبرامج المحفوظة."
+        ],
+        "en": [
+          "Use the save control on a university or program.",
+          "Open Favorites from Explore and switch between saved universities and programs."
+        ]
+      },
+      "location": {
+        "ar": "الاستكشاف ← المفضلة",
+        "en": "Explore → Favorites"
+      },
+      "screen": "universities_programs_countries/explore_hub_screen.dart",
+      "sources": [
+        "mobile:lib/screens/universities_programs_countries/explore_hub_screen.dart",
+        "server:src/routes/studentRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": "favorites",
+      "reviewed": true
+    },
+    {
+      "id": "journey",
+      "name": {
+        "ar": "متابعة الرحلة",
+        "en": "Journey tracking"
+      },
+      "aliases": [
+        "journey",
+        "timeline",
+        "next step",
+        "رحلتي",
+        "رحله",
+        "رحلة",
+        "الخطوة التالية",
+        "شو بعد"
+      ],
+      "description": {
+        "ar": "افتح رحلتي واختر طلبك إذا كان لديك أكثر من طلب.",
+        "en": "Open My Journey and select an application if you have several."
+      },
+      "steps": {
+        "ar": [
+          "افتح رحلتي واختر طلبك إذا كان لديك أكثر من طلب.",
+          "راجع المرحلة الحالية والمتطلبات والإجراء التالي المعروض. لا يعني اكتمال خطوة محلية حصولك على قبول رسمي."
+        ],
+        "en": [
+          "Open My Journey and select an application if you have several.",
+          "Review the current stage, requirements and next action displayed. Completing a local step is not an official admission decision."
+        ]
+      },
+      "location": {
+        "ar": "الشريط السفلي ← رحلتي",
+        "en": "Bottom navigation → My Journey"
+      },
+      "screen": "home_journey/journey_tracker_screen.dart",
+      "sources": [
+        "mobile:lib/screens/home_journey/journey_tracker_screen.dart",
+        "server:src/routes/studentRoutes.js",
+        "server:src/routes/applicationRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js",
+        "server:src/routes/applicationRoutes.js"
+      ],
+      "action": "journey",
+      "reviewed": true
+    },
+    {
+      "id": "payments",
+      "name": {
+        "ar": "الفواتير وإثبات الدفع",
+        "en": "Invoices and payment proof"
+      },
+      "aliases": [
+        "payment",
+        "invoice",
+        "فاتوره",
+        "فاتورة",
+        "فواتير",
+        "دفع",
+        "ايصال",
+        "إيصال"
+      ],
+      "description": {
+        "ar": "افتح ملخص المدفوعات واختر الفاتورة لعرض المبلغ والحالة المسجلين.",
+        "en": "Open Payments summary and select an invoice to view its recorded amount and status."
+      },
+      "steps": {
+        "ar": [
+          "افتح ملخص المدفوعات واختر الفاتورة لعرض المبلغ والحالة المسجلين.",
+          "عند توفر رفع إثبات الدفع، راجع الفاتورة قبل إرفاق الإثبات. رفع الإثبات لا يعني اعتماده تلقائيًا."
+        ],
+        "en": [
+          "Open Payments summary and select an invoice to view its recorded amount and status.",
+          "When payment-proof upload is offered, check the invoice before attaching proof. Upload does not mean automatic approval."
+        ]
+      },
+      "location": {
+        "ar": "ملخص المدفوعات في مسار الطلب",
+        "en": "Payments summary in your application workflow"
+      },
+      "screen": "applications_documents_payments/payments_screens.dart",
+      "sources": [
+        "mobile:lib/screens/applications_documents_payments/payments_screens.dart",
+        "server:src/routes/studentRoutes.js",
+        "server:src/routes/paymentProofAccessRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js",
+        "server:src/routes/paymentProofAccessRoutes.js"
+      ],
+      "action": "payments",
+      "reviewed": true
+    },
+    {
+      "id": "services",
+      "name": {
+        "ar": "طلب خدمة",
+        "en": "Service requests"
+      },
+      "aliases": [
+        "service request",
+        "services",
+        "خدمات",
+        "خدمة",
+        "طلب خدمة"
+      ],
+      "description": {
+        "ar": "افتح الخدمات واختر خدمة منشورة لقراءة التفاصيل.",
+        "en": "Open Services and select a published service to read its details."
+      },
+      "steps": {
+        "ar": [
+          "افتح الخدمات واختر خدمة منشورة لقراءة التفاصيل.",
+          "راجع الشروط والبيانات قبل إرسال الطلب بنفسك. تابع حالته من طلباتي داخل مركز الخدمات."
+        ],
+        "en": [
+          "Open Services and select a published service to read its details.",
+          "Review conditions and inputs before submitting the request yourself. Follow its status from My Requests in the service center."
+        ]
+      },
+      "location": {
+        "ar": "الشريط السفلي ← الخدمات",
+        "en": "Bottom navigation → Services"
+      },
+      "screen": "services_support/services_consultation_screens.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/services_consultation_screens.dart",
+        "server:src/routes/serviceRequestRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/serviceRequestRoutes.js"
+      ],
+      "action": "services",
+      "reviewed": true
+    },
+    {
+      "id": "consultation",
+      "name": {
+        "ar": "حجز استشارة",
+        "en": "Consultations"
+      },
+      "aliases": [
+        "consultation",
+        "advisor",
+        "استشارة",
+        "استشاره",
+        "مستشار"
+      ],
+      "description": {
+        "ar": "افتح خيار الاستشارة عندما يظهر في الرئيسية.",
+        "en": "Open the consultation option when offered on Home."
+      },
+      "steps": {
+        "ar": [
+          "افتح خيار الاستشارة عندما يظهر في الرئيسية.",
+          "اختر من المواعيد المتاحة وراجع تفاصيل الحجز قبل التأكيد. عدم وجود مواعيد لا يعني توفر حجز خارج النظام."
+        ],
+        "en": [
+          "Open the consultation option when offered on Home.",
+          "Choose an available slot and review booking details before confirming. No listed slots does not imply an off-platform booking is available."
+        ]
+      },
+      "location": {
+        "ar": "الحجز عند عرض خيار الاستشارة في الرئيسية",
+        "en": "Consultation booking when offered on Home"
+      },
+      "screen": "services_support/services_consultation_screens.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/services_consultation_screens.dart",
+        "server:src/routes/consultationRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/consultationRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "scholarships",
+      "name": {
+        "ar": "المنح الدراسية",
+        "en": "Scholarships"
+      },
+      "aliases": [
+        "scholarship",
+        "منحه",
+        "منحة",
+        "منح"
+      ],
+      "description": {
+        "ar": "افتح المنح الدراسية لمراجعة المنح المنشورة وشروط كل منها.",
+        "en": "Open Scholarships to review published opportunities and each set of requirements."
+      },
+      "steps": {
+        "ar": [
+          "افتح المنح الدراسية لمراجعة المنح المنشورة وشروط كل منها.",
+          "راجع الطلبات المقدمة وحالتها في قسم طلبات المنح. لا أضمن أهلية أو قبولًا أو موعدًا غير منشور."
+        ],
+        "en": [
+          "Open Scholarships to review published opportunities and each set of requirements.",
+          "Review your submitted scholarship applications and statuses in its applications section. Eligibility, admission and unlisted deadlines are not guaranteed."
+        ]
+      },
+      "location": {
+        "ar": "الاستكشاف أو حسابي ← المنح الدراسية",
+        "en": "Explore or My Account → Scholarships"
+      },
+      "screen": "services_support/student_life_alumni_screens.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/student_life_alumni_screens.dart",
+        "server:src/routes/scholarshipRoutes.js",
+        "mobile:lib/screens/universities_programs_countries/countries_scholarships_screens.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/scholarshipRoutes.js"
+      ],
+      "action": "scholarships",
+      "reviewed": true
+    },
+    {
+      "id": "events",
+      "name": {
+        "ar": "الحياة الطلابية والفعاليات",
+        "en": "Student life events"
+      },
+      "aliases": [
+        "event",
+        "student life",
+        "فعاليه",
+        "فعاليات",
+        "حياة طلابية",
+        "تسجيل الحضور"
+      ],
+      "description": {
+        "ar": "افتح الحياة الطلابية والفعاليات من حسابي.",
+        "en": "Open Student life and events from My Account."
+      },
+      "steps": {
+        "ar": [
+          "افتح الحياة الطلابية والفعاليات من حسابي.",
+          "اختر فعالية منشورة واقرأ التفاصيل، ثم استخدم سجّل حضورك إذا كان متاحًا."
+        ],
+        "en": [
+          "Open Student life and events from My Account.",
+          "Select a published event, read its details and use Register attendance when available."
+        ]
+      },
+      "location": {
+        "ar": "حسابي ← الحياة الطلابية والفعاليات",
+        "en": "My Account → Student life and events"
+      },
+      "screen": "services_support/student_life_alumni_screens.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/student_life_alumni_screens.dart",
+        "server:src/routes/contentRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/contentRoutes.js"
+      ],
+      "action": "events",
+      "reviewed": true
+    },
+    {
+      "id": "alumni",
+      "name": {
+        "ar": "شبكة الخريجين والفرص",
+        "en": "Alumni and opportunities"
+      },
+      "aliases": [
+        "alumni",
+        "jobs",
+        "internship",
+        "خريجين",
+        "خريج",
+        "وظائف",
+        "تدريب",
+        "إعلانات الطلاب"
+      ],
+      "description": {
+        "ar": "افتح شبكة الخريجين من حسابي.",
+        "en": "Open Alumni network from My Account."
+      },
+      "steps": {
+        "ar": [
+          "افتح شبكة الخريجين من حسابي.",
+          "اختر دليل الخريجين أو الوظائف والتدريب أو إعلانات الطلاب أو منح الدراسات العليا. ظهور السجلات يعتمد على المنشور وصلاحياتك."
+        ],
+        "en": [
+          "Open Alumni network from My Account.",
+          "Choose the directory, jobs/internships, student listings or postgraduate scholarships. Records depend on published content and your permissions."
+        ]
+      },
+      "location": {
+        "ar": "حسابي ← شبكة الخريجين",
+        "en": "My Account → Alumni network"
+      },
+      "screen": "services_support/student_life_alumni_screens.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/student_life_alumni_screens.dart",
+        "server:src/routes/alumniRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/alumniRoutes.js"
+      ],
+      "action": "alumni",
+      "reviewed": true
+    },
+    {
+      "id": "rewards",
+      "name": {
+        "ar": "المكافآت والمحفظة",
+        "en": "Rewards and wallet"
+      },
+      "aliases": [
+        "reward",
+        "wallet",
+        "points",
+        "مكافآت",
+        "مكافات",
+        "محفظة",
+        "نقاط",
+        "رصيد"
+      ],
+      "description": {
+        "ar": "افتح المكافآت أو المحفظة من حسابي.",
+        "en": "Open Rewards or Wallet from My Account."
+      },
+      "steps": {
+        "ar": [
+          "افتح المكافآت أو المحفظة من حسابي.",
+          "راجع النقاط والرصيد والشروط التي يعرضها حسابك. لا أستطيع منح نقاط أو تنفيذ استبدال أو دفع بالنيابة عنك."
+        ],
+        "en": [
+          "Open Rewards or Wallet from My Account.",
+          "Review your points, balance and the conditions displayed. I cannot grant points, redeem credit or make payments for you."
+        ]
+      },
+      "location": {
+        "ar": "حسابي ← المكافآت / المحفظة",
+        "en": "My Account → Rewards / Wallet"
+      },
+      "screen": "profile_account/student_rewards_currency_screens.dart",
+      "sources": [
+        "mobile:lib/screens/profile_account/student_rewards_currency_screens.dart",
+        "server:src/routes/studentRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": "rewards",
+      "reviewed": true
+    },
+    {
+      "id": "referral",
+      "name": {
+        "ar": "رمز الإحالة",
+        "en": "Referral code"
+      },
+      "aliases": [
+        "referral",
+        "invite",
+        "إحالة",
+        "احالة",
+        "دعوة"
+      ],
+      "description": {
+        "ar": "افتح رمز الإحالة من حسابي.",
+        "en": "Open Referral code from My Account."
+      },
+      "steps": {
+        "ar": [
+          "افتح رمز الإحالة من حسابي.",
+          "استخدم نسخ الرمز أو المشاركة إذا كان لديك رمز؛ إذا لم يظهر رمز، استخدم رابط مركز الدعم المعروض."
+        ],
+        "en": [
+          "Open Referral code from My Account.",
+          "Copy or share the code when one exists; otherwise use the displayed Support Center link."
+        ]
+      },
+      "location": {
+        "ar": "حسابي ← رمز الإحالة",
+        "en": "My Account → Referral code"
+      },
+      "screen": "profile_account/profile_account_screens.dart",
+      "sources": [
+        "mobile:lib/screens/profile_account/profile_account_screens.dart",
+        "server:src/routes/studentRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": "profile",
+      "reviewed": true
+    },
+    {
+      "id": "language",
+      "name": {
+        "ar": "لغة التطبيق",
+        "en": "App language"
+      },
+      "aliases": [
+        "language",
+        "english",
+        "انجليزي",
+        "إنجليزي",
+        "لغة",
+        "اللغه",
+        "الانجليزية",
+        "انجليزيه"
+      ],
+      "description": {
+        "ar": "افتح إعدادات حسابي ثم اللغة.",
+        "en": "Open My Account settings, then Language."
+      },
+      "steps": {
+        "ar": [
+          "افتح إعدادات حسابي ثم اللغة.",
+          "النسخة الافتراضية تعرض العربية فقط. اختيار الإنجليزية متاح فقط في بناء ENABLE_EN؛ إذا لم يظهر الخيار فهو غير مفعّل في هذه النسخة."
+        ],
+        "en": [
+          "Open My Account settings, then Language.",
+          "The default build offers Arabic only. English selection requires an ENABLE_EN build; an absent choice is not enabled in your version."
+        ]
+      },
+      "location": {
+        "ar": "حسابي ← الإعدادات ← اللغة",
+        "en": "My Account → Settings → Language"
+      },
+      "screen": "profile_account/profile_account_screens.dart",
+      "sources": [
+        "mobile:lib/screens/profile_account/profile_account_screens.dart",
+        "server:src/routes/authRoutes.js",
+        "mobile:lib/core/services/locale_controller.dart"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "لا يمكن للمحادثة تفعيل علم بناء غير مفعّل.",
+        "en": "Chat cannot enable a disabled build flag."
+      },
+      "backend": [
+        "server:src/routes/authRoutes.js"
+      ],
+      "action": "settings",
+      "reviewed": true
+    },
+    {
+      "id": "theme",
+      "name": {
+        "ar": "مظهر التطبيق",
+        "en": "App appearance"
+      },
+      "aliases": [
+        "theme",
+        "dark mode",
+        "مظهر",
+        "دارك",
+        "وضع داكن",
+        "الوضع الليلي",
+        "ثيم"
+      ],
+      "description": {
+        "ar": "لا يوجد مفتاح مستقل لتغيير الثيم في إعدادات التطبيق التي تمت مراجعتها.",
+        "en": "There is no standalone theme toggle in the reviewed app settings."
+      },
+      "steps": {
+        "ar": [
+          "لا يوجد مفتاح مستقل لتغيير الثيم في إعدادات التطبيق التي تمت مراجعتها.",
+          "لا أستطيع اختراع صفحة أو زر للوضع الداكن؛ المساعد يدعم ألوان الثيم الذي يوفّره التطبيق."
+        ],
+        "en": [
+          "There is no standalone theme toggle in the reviewed app settings.",
+          "I cannot invent a dark-mode page or button; the assistant respects the theme supplied by the app."
+        ]
+      },
+      "location": {
+        "ar": "الإعدادات الحالية",
+        "en": "Current settings"
+      },
+      "screen": "profile_account/profile_account_screens.dart",
+      "sources": [
+        "mobile:lib/screens/profile_account/profile_account_screens.dart",
+        "server:src/routes/authRoutes.js",
+        "mobile:lib/main.dart"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "unavailable",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/authRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "delete-account",
+      "name": {
+        "ar": "حذف الحساب",
+        "en": "Delete account"
+      },
+      "aliases": [
+        "delete account",
+        "حذف حساب",
+        "احذف حسابي",
+        "اغلاق حساب"
+      ],
+      "description": {
+        "ar": "للاطلاع على الشروط افتح الإعدادات ثم حذف الحساب نهائيًا.",
+        "en": "To review the conditions, open Settings then Delete account permanently."
+      },
+      "steps": {
+        "ar": [
+          "للاطلاع على الشروط افتح الإعدادات ثم حذف الحساب نهائيًا.",
+          "راجع شاشة الحذف والتحقق المطلوب بعناية. لا ينفذ المساعد الحذف ولا يتجاوز التأكيد."
+        ],
+        "en": [
+          "To review the conditions, open Settings then Delete account permanently.",
+          "Review deletion and required verification carefully. The assistant never deletes an account or bypasses confirmation."
+        ]
+      },
+      "location": {
+        "ar": "حسابي ← الإعدادات ← حذف الحساب نهائيًا",
+        "en": "My Account → Settings → Delete account permanently"
+      },
+      "screen": "profile_account/profile_account_screens.dart",
+      "sources": [
+        "mobile:lib/screens/profile_account/profile_account_screens.dart",
+        "server:src/routes/mobileSecurityRoutes.js",
+        "mobile:lib/screens/profile_account/delete_account_screen.dart"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/mobileSecurityRoutes.js"
+      ],
+      "action": "settings",
+      "reviewed": true
+    },
+    {
+      "id": "travel",
+      "name": {
+        "ar": "التأشيرة والسفر والسكن",
+        "en": "Visa travel and accommodation"
+      },
+      "aliases": [
+        "visa",
+        "travel",
+        "accommodation",
+        "insurance",
+        "equivalency",
+        "arrival",
+        "تأشيرة",
+        "تاشيرة",
+        "سفر",
+        "سكن",
+        "تأمين",
+        "معادلة",
+        "استقبال"
+      ],
+      "description": {
+        "ar": "افتح طلبك ورحلتي لعرض المرحلة والخدمة المتاحة، مثل التأشيرة أو السفر أو السكن أو التسجيل الجامعي.",
+        "en": "Open your application and My Journey to see its available stage/services, such as visa, travel, accommodation or university registration."
+      },
+      "steps": {
+        "ar": [
+          "افتح طلبك ورحلتي لعرض المرحلة والخدمة المتاحة، مثل التأشيرة أو السفر أو السكن أو التسجيل الجامعي.",
+          "راجع المتطلبات المسجلة لطلبك فقط؛ لا توجد قواعد أو رسوم أو مواعيد موحدة لجميع الدول والجامعات."
+        ],
+        "en": [
+          "Open your application and My Journey to see its available stage/services, such as visa, travel, accommodation or university registration.",
+          "Use the requirements recorded for your application; rules, fees and deadlines are not identical across countries or universities."
+        ]
+      },
+      "location": {
+        "ar": "مسار الرحلة والخدمات المتاحة في الرئيسية",
+        "en": "Journey workflow and available Home services"
+      },
+      "screen": "visa_travel_accommodation/visa_travel_screens.dart",
+      "sources": [
+        "mobile:lib/screens/visa_travel_accommodation/visa_travel_screens.dart",
+        "server:src/routes/studentRoutes.js",
+        "server:src/routes/applicationRoutes.js",
+        "mobile:lib/screens/visa_travel_accommodation/accommodation_arrival_screens.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js",
+        "server:src/routes/applicationRoutes.js"
+      ],
+      "action": "journey",
+      "reviewed": true
+    },
+    {
+      "id": "calendar",
+      "name": {
+        "ar": "التقويم والمواعيد والنشاط",
+        "en": "Calendar dates and activity"
+      },
+      "aliases": [
+        "calendar",
+        "important dates",
+        "activity log",
+        "تقويم",
+        "مواعيد",
+        "تواريخ",
+        "سجل النشاط"
+      ],
+      "description": {
+        "ar": "راجع التقويم والمواعيد المهمة وسجل النشاط عند عرضها في الرئيسية أو مسار الطلب.",
+        "en": "Review Calendar, Important dates and Activity log when shown in Home or your application workflow."
+      },
+      "steps": {
+        "ar": [
+          "راجع التقويم والمواعيد المهمة وسجل النشاط عند عرضها في الرئيسية أو مسار الطلب.",
+          "اختر اليوم أو الحدث لقراءة التفاصيل المسجلة. عدم وجود موعد مسجل لا يعني تأكيد موعد خارجي."
+        ],
+        "en": [
+          "Review Calendar, Important dates and Activity log when shown in Home or your application workflow.",
+          "Select a day or event to inspect recorded details. No recorded event does not establish an external deadline."
+        ]
+      },
+      "location": {
+        "ar": "التقويم وسجل النشاط من واجهات الرئيسية والرحلة",
+        "en": "Calendar and activity views in Home/Journey"
+      },
+      "screen": "home_journey/calendar_screen.dart",
+      "sources": [
+        "mobile:lib/screens/home_journey/calendar_screen.dart",
+        "server:src/routes/studentRoutes.js",
+        "mobile:lib/screens/home_journey/important_dates_screen.dart",
+        "mobile:lib/screens/home_journey/activity_log_screen.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "knowledge",
+      "name": {
+        "ar": "المعرفة والأسئلة الشائعة والمعارض",
+        "en": "Knowledge FAQ and exhibitions"
+      },
+      "aliases": [
+        "faq",
+        "knowledge",
+        "exhibition",
+        "اسئلة شائعة",
+        "الأسئلة الشائعة",
+        "معرفة",
+        "معارض"
+      ],
+      "description": {
+        "ar": "افتح مركز المعرفة أو الأسئلة الشائعة عندما تظهر في حسابك، أو محطة المعارض من الاستكشاف.",
+        "en": "Open Knowledge Center or FAQ when offered to your account, or Exhibitions from Explore."
+      },
+      "steps": {
+        "ar": [
+          "افتح مركز المعرفة أو الأسئلة الشائعة عندما تظهر في حسابك، أو محطة المعارض من الاستكشاف.",
+          "اقرأ المواد المنشورة؛ إذا غابت معلومة حديثة، اسأل مركز الدعم بدل الاعتماد على تقدير."
+        ],
+        "en": [
+          "Open Knowledge Center or FAQ when offered to your account, or Exhibitions from Explore.",
+          "Read the published material. Ask Support Center if current information is missing."
+        ]
+      },
+      "location": {
+        "ar": "مركز المعرفة / الاستكشاف ← محطة المعارض",
+        "en": "Knowledge Center / Explore → Exhibitions"
+      },
+      "screen": "services_support/knowledge_base_screen.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/knowledge_base_screen.dart",
+        "server:src/routes/contentRoutes.js",
+        "server:src/routes/studentRoutes.js",
+        "mobile:lib/screens/services_support/faq_screen.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/contentRoutes.js",
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "parent",
+      "name": {
+        "ar": "حساب ولي الأمر",
+        "en": "Parent dashboard"
+      },
+      "aliases": [
+        "parent",
+        "children",
+        "ولي الامر",
+        "ولي الأمر",
+        "ابنائي",
+        "ربط طالب"
+      ],
+      "description": {
+        "ar": "من لوحة ولي الأمر راجع طلبات ربط الطلاب والأبناء المرتبطين المعتمدين.",
+        "en": "Use the Parent dashboard to review link requests and approved linked children."
+      },
+      "steps": {
+        "ar": [
+          "من لوحة ولي الأمر راجع طلبات ربط الطلاب والأبناء المرتبطين المعتمدين.",
+          "افتح ابنًا مرتبطًا لعرض المعلومات والمدفوعات المسموح بها فقط؛ لا يتيح المساعد بيانات طالب غير مرتبط."
+        ],
+        "en": [
+          "Use the Parent dashboard to review link requests and approved linked children.",
+          "Open a linked child to see only permitted overview/payment information; the assistant cannot expose unlinked students."
+        ]
+      },
+      "location": {
+        "ar": "لوحة ولي الأمر بعد تسجيل الدخول بالدور المصرّح",
+        "en": "Parent dashboard after authorized sign-in"
+      },
+      "screen": "roles/parent_dashboard_screen.dart",
+      "sources": [
+        "mobile:lib/screens/roles/parent_dashboard_screen.dart",
+        "server:src/routes/parentRoutes.js"
+      ],
+      "roles": [
+        "parent"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/parentRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "partner",
+      "name": {
+        "ar": "لوحة الوكيل",
+        "en": "Agent dashboard"
+      },
+      "aliases": [
+        "agent dashboard",
+        "partner",
+        "commissions",
+        "وكيل",
+        "عمولات"
+      ],
+      "description": {
+        "ar": "راجع الطلاب ومراحل طلباتهم المتاحة في لوحة الوكيل.",
+        "en": "Review your permitted students and application stages in the Agent dashboard."
+      },
+      "steps": {
+        "ar": [
+          "راجع الطلاب ومراحل طلباتهم المتاحة في لوحة الوكيل.",
+          "استخدم إضافة طالب أو محفظتي أو العمولة المعروضة ضمن صلاحياتك؛ المساعد لا يعدل أسعارًا أو يحوّل أموالًا."
+        ],
+        "en": [
+          "Review your permitted students and application stages in the Agent dashboard.",
+          "Use Add student, My wallet or the displayed commission controls within your permissions; the assistant changes no prices or funds."
+        ]
+      },
+      "location": {
+        "ar": "لوحة الوكيل بعد الدخول",
+        "en": "Agent dashboard after sign-in"
+      },
+      "screen": "roles/agent_dashboard_screen.dart",
+      "sources": [
+        "mobile:lib/screens/roles/agent_dashboard_screen.dart",
+        "server:src/routes/partnerRoutes.js"
+      ],
+      "roles": [
+        "partner"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/partnerRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "university-role",
+      "name": {
+        "ar": "لوحة الجامعة",
+        "en": "University dashboard"
+      },
+      "aliases": [
+        "university dashboard",
+        "review applications",
+        "لوحة الجامعة",
+        "مراجعة الطلبات"
+      ],
+      "description": {
+        "ar": "افتح الطلب المصرّح لجامعتك من لوحة الجامعة.",
+        "en": "Open an authorized application from the University dashboard."
+      },
+      "steps": {
+        "ar": [
+          "افتح الطلب المصرّح لجامعتك من لوحة الجامعة.",
+          "راجع البيانات في شاشة مراجعة الطلبات واستخدم الأفعال المتاحة لدورك فقط؛ المساعد لا يقرر قبولًا أو رفضًا."
+        ],
+        "en": [
+          "Open an authorized application from the University dashboard.",
+          "Review its details in application review and use only actions permitted for your role; the assistant makes no admission decisions."
+        ]
+      },
+      "location": {
+        "ar": "لوحة الجامعة بعد الدخول",
+        "en": "University dashboard after sign-in"
+      },
+      "screen": "roles/university_dashboard_screen.dart",
+      "sources": [
+        "mobile:lib/screens/roles/university_dashboard_screen.dart",
+        "server:src/routes/universityPortalRoutes.js",
+        "mobile:lib/screens/roles/university_application_review_screen.dart"
+      ],
+      "roles": [
+        "university"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/universityPortalRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "staff",
+      "name": {
+        "ar": "لوحة الموظف والإدارة",
+        "en": "Staff dashboard"
+      },
+      "aliases": [
+        "admin",
+        "employee",
+        "crm",
+        "موظف",
+        "ادمن",
+        "إدارة",
+        "صلاحيات الموظف"
+      ],
+      "description": {
+        "ar": "افتح لوحة الموظف لمراجعة الأقسام المصرّح بها لحسابك فقط.",
+        "en": "Open the staff dashboard to see only sections authorized for your account."
+      },
+      "steps": {
+        "ar": [
+          "افتح لوحة الموظف لمراجعة الأقسام المصرّح بها لحسابك فقط.",
+          "استخدم قوائم الطلاب والطلبات والتذاكر التي تظهر لك؛ غياب قسم يحتاج مراجعة المدير، وليس تجاوز الصلاحية."
+        ],
+        "en": [
+          "Open the staff dashboard to see only sections authorized for your account.",
+          "Use the student, application and ticket lists actually visible to you. A missing section requires an administrator review, never bypassing permissions."
+        ]
+      },
+      "location": {
+        "ar": "لوحة الموظف بعد الدخول وصلاحيات الأقسام",
+        "en": "Staff dashboard after sign-in with section permissions"
+      },
+      "screen": "roles/employee_dashboard_screen.dart",
+      "sources": [
+        "mobile:lib/screens/roles/employee_dashboard_screen.dart",
+        "server:src/routes/adminRoutes.js",
+        "server:src/routes/crmRoutes.js"
+      ],
+      "roles": [
+        "admin",
+        "employee"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك. البيانات المنشورة قد تكون فارغة.",
+        "en": "Requires connectivity and your account permissions. Published data may be empty."
+      },
+      "backend": [
+        "server:src/routes/adminRoutes.js",
+        "server:src/routes/crmRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "registration",
+      "name": {
+        "ar": "التسجيل والتوثيق",
+        "en": "Registration and verification"
+      },
+      "aliases": [
+        "register",
+        "registration",
+        "تسجيل جديد",
+        "انشاء حساب",
+        "إنشاء حساب",
+        "توثيق البريد"
+      ],
+      "description": {
+        "ar": "اختر نوع الحساب المتاح وأكمل نموذج التسجيل والبيانات المطلوبة.",
+        "en": "Choose an available account type and complete required registration details."
+      },
+      "steps": {
+        "ar": [
+          "اختر نوع الحساب المتاح وأكمل نموذج التسجيل والبيانات المطلوبة.",
+          "اتبع خطوة تعيين كلمة المرور وتوثيق البريد بالكود عند طلبها. أدخل الكود في شاشة التحقق فقط."
+        ],
+        "en": [
+          "Choose an available account type and complete required registration details.",
+          "Follow password setup and email-code verification when prompted. Enter the code only on the verification screen."
+        ]
+      },
+      "location": {
+        "ar": "شاشة البداية ← إنشاء حساب",
+        "en": "Start → Register"
+      },
+      "screen": "auth/login_register_screens.dart",
+      "sources": [
+        "mobile:lib/screens/auth/login_register_screens.dart",
+        "mobile:lib/screens/auth/student_registration_wizard_screen.dart",
+        "mobile:lib/screens/auth/email_challenge_screen.dart",
+        "mobile:lib/screens/auth/verify_contact_screen.dart",
+        "mobile:lib/screens/auth/onboarding_and_account_type_screens.dart",
+        "mobile:lib/screens/auth/splash_screen.dart",
+        "server:src/routes/authRoutes.js"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/authRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "recovery",
+      "name": {
+        "ar": "استعادة الحساب",
+        "en": "Account recovery"
+      },
+      "aliases": [
+        "account recovery",
+        "forgot password",
+        "recover account",
+        "نسيت",
+        "استعادة حساب",
+        "استرجاع حساب"
+      ],
+      "description": {
+        "ar": "من شاشة الدخول افتح استعادة الحساب واتبع مسار التحقق المتاح لحسابك.",
+        "en": "Open Account recovery from Login and follow the verification path offered for your account."
+      },
+      "steps": {
+        "ar": [
+          "من شاشة الدخول افتح استعادة الحساب واتبع مسار التحقق المتاح لحسابك.",
+          "أدخل أكواد الاستعادة في الشاشات المخصصة فقط؛ عند تعذر التحقق استخدم الدعم ولا تشارك السر هنا."
+        ],
+        "en": [
+          "Open Account recovery from Login and follow the verification path offered for your account.",
+          "Enter recovery codes only in their dedicated screens. Contact support if verification fails; never share a secret here."
+        ]
+      },
+      "location": {
+        "ar": "شاشة الدخول ← استعادة الحساب",
+        "en": "Login → Account recovery"
+      },
+      "screen": "auth/account_recovery_screen.dart",
+      "sources": [
+        "mobile:lib/screens/auth/account_recovery_screen.dart",
+        "mobile:lib/screens/auth/otp_and_password_reset_screens.dart",
+        "server:src/routes/authRoutes.js"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/authRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "browser-login",
+      "name": {
+        "ar": "الدخول بالمتصفح",
+        "en": "Browser sign-in"
+      },
+      "aliases": [
+        "google sign in",
+        "browser sign in",
+        "google login",
+        "جوجل",
+        "غوغل",
+        "دخول بالمتصفح"
+      ],
+      "description": {
+        "ar": "عند اختيار الدخول بالمتصفح، أكمل تسجيل الدخول في الصفحة المفتوحة ثم ارجع إلى التطبيق.",
+        "en": "When using browser sign-in, finish authentication in the opened page and return to the app."
+      },
+      "steps": {
+        "ar": [
+          "عند اختيار الدخول بالمتصفح، أكمل تسجيل الدخول في الصفحة المفتوحة ثم ارجع إلى التطبيق.",
+          "توفر مزود الدخول يعتمد على إعدادات النسخة؛ لا تدخل بيانات حسابك في هذه المحادثة."
+        ],
+        "en": [
+          "When using browser sign-in, finish authentication in the opened page and return to the app.",
+          "Provider availability depends on build configuration. Do not enter account credentials in this chat."
+        ]
+      },
+      "location": {
+        "ar": "شاشة تسجيل الدخول ← خيار المتصفح",
+        "en": "Login → Browser sign-in option"
+      },
+      "screen": "auth/browser_sign_in_screen.dart",
+      "sources": [
+        "mobile:lib/screens/auth/browser_sign_in_screen.dart",
+        "mobile:lib/screens/auth/login_register_screens.dart",
+        "server:src/routes/authRoutes.js"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/authRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "submit-application",
+      "name": {
+        "ar": "مراجعة وإرسال طلب",
+        "en": "Review and submit an application"
+      },
+      "aliases": [
+        "submit application",
+        "send application",
+        "مراجعة وارسال",
+        "ارسل الطلب",
+        "إرسال الطلب"
+      ],
+      "description": {
+        "ar": "افتح تفاصيل البرنامج واختر التقديم على البرنامج.",
+        "en": "Open program details and choose Apply to program."
+      },
+      "steps": {
+        "ar": [
+          "افتح تفاصيل البرنامج واختر التقديم على البرنامج.",
+          "راجع المعلومات والمستندات المطلوبة لهذا البرنامج تحديدًا، ثم اضغط مراجعة وإرسال الطلب.",
+          "اقرأ نافذة التأكيد قبل إرسال الطلب بنفسك؛ المساعد لا يرسله."
+        ],
+        "en": [
+          "Open program details and choose Apply to program.",
+          "Check your information and the documents required for that specific program, then choose Review and submit.",
+          "Read the confirmation before sending it yourself; the assistant cannot submit it."
+        ]
+      },
+      "location": {
+        "ar": "تفاصيل البرنامج ← التقديم على البرنامج",
+        "en": "Program details → Apply to program"
+      },
+      "screen": "applications_documents_payments/program_application_screen.dart",
+      "sources": [
+        "mobile:lib/screens/applications_documents_payments/program_application_screen.dart",
+        "mobile:lib/screens/universities_programs_countries/catalog_detail.dart",
+        "server:src/routes/applicationRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/applicationRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "application-documents",
+      "name": {
+        "ar": "استكمال مستندات الطلب",
+        "en": "Complete application documents"
+      },
+      "aliases": [
+        "application documents",
+        "missing documents",
+        "مستندات الطلب",
+        "استكمال المستندات",
+        "مستندات ناقصة"
+      ],
+      "description": {
+        "ar": "افتح الطلب ثم استكمال مستندات الطلب أو تبويب المستندات.",
+        "en": "Open the application and choose Complete application documents or its Documents tab."
+      },
+      "steps": {
+        "ar": [
+          "افتح الطلب ثم استكمال مستندات الطلب أو تبويب المستندات.",
+          "اختر مستندًا مناسبًا من مكتبتك أو ارفع نسخة جديدة وفق المتطلبات المعروضة لهذا الطلب."
+        ],
+        "en": [
+          "Open the application and choose Complete application documents or its Documents tab.",
+          "Reuse a suitable library document or upload a new version according to that application’s displayed requirements."
+        ]
+      },
+      "location": {
+        "ar": "طلباتي ← الطلب ← استكمال مستندات الطلب",
+        "en": "My Applications → Application → Complete documents"
+      },
+      "screen": "applications_documents_payments/application_documents_screen.dart",
+      "sources": [
+        "mobile:lib/screens/applications_documents_payments/application_documents_screen.dart",
+        "mobile:lib/screens/applications_documents_payments/applications_screens.dart",
+        "server:src/routes/studentRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "search",
+      "name": {
+        "ar": "البحث العام",
+        "en": "Global search"
+      },
+      "aliases": [
+        "global search",
+        "search app",
+        "البحث العام",
+        "ابحث في التطبيق"
+      ],
+      "description": {
+        "ar": "افتح البحث من الرئيسية واكتب ما تبحث عنه.",
+        "en": "Open Search from Home and enter your query."
+      },
+      "steps": {
+        "ar": [
+          "افتح البحث من الرئيسية واكتب ما تبحث عنه.",
+          "افتح النتيجة المناسبة؛ ظهور النتائج يعتمد على بيانات المنصة وصلاحيات حسابك."
+        ],
+        "en": [
+          "Open Search from Home and enter your query.",
+          "Open a relevant result; availability depends on catalog data and your account permissions."
+        ]
+      },
+      "location": {
+        "ar": "الرئيسية ← البحث",
+        "en": "Home → Search"
+      },
+      "screen": "home_journey/global_search_screen.dart",
+      "sources": [
+        "mobile:lib/screens/home_journey/global_search_screen.dart",
+        "mobile:lib/screens/home_journey/home_dashboard_screen.dart",
+        "server:src/routes/studentRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "community-posts",
+      "name": {
+        "ar": "المنشورات والتعليقات",
+        "en": "Posts and comments"
+      },
+      "aliases": [
+        "post",
+        "comment",
+        "discussion",
+        "منشور",
+        "تعليق",
+        "نقاش"
+      ],
+      "description": {
+        "ar": "افتح مجتمع الطلاب ثم المنشورات لقراءة النقاشات.",
+        "en": "Open Student Community and Posts to read discussions."
+      },
+      "steps": {
+        "ar": [
+          "افتح مجتمع الطلاب ثم المنشورات لقراءة النقاشات.",
+          "افتح منشورًا للرد أو استخدم إنشاء منشور عندما يظهر لحسابك، وراجع المحتوى قبل النشر.",
+          "صفحة الطالب العامة لا تعرض بياناته الخاصة أو قائمة المشاهدات الخاصة به."
+        ],
+        "en": [
+          "Open Student Community and Posts to read discussions.",
+          "Open a post to reply or use Create post when offered, reviewing content before publishing.",
+          "A public student profile does not expose private account data or private viewer lists."
+        ]
+      },
+      "location": {
+        "ar": "مجتمع الطلاب ← المنشورات",
+        "en": "Student Community → Posts"
+      },
+      "screen": "services_support/community_screen.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/community_screen.dart",
+        "mobile:lib/screens/community/student_community_hub.dart",
+        "mobile:lib/screens/community/student_public_profile.dart",
+        "server:src/routes/communityRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/communityRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "alumni-directory",
+      "name": {
+        "ar": "دليل الخريجين وملفي",
+        "en": "Alumni directory and profile"
+      },
+      "aliases": [
+        "alumni directory",
+        "mentoring",
+        "دليل الخريجين",
+        "إرشاد الخريجين"
+      ],
+      "description": {
+        "ar": "افتح دليل الخريجين وملفي من شبكة الخريجين.",
+        "en": "Open Directory and my profile in Alumni network."
+      },
+      "steps": {
+        "ar": [
+          "افتح دليل الخريجين وملفي من شبكة الخريجين.",
+          "استخدم البحث وفلتر المتاحين للإرشاد؛ لا تظهر سوى الملفات المنشورة. راجع بيانات ملفك قبل نشرها."
+        ],
+        "en": [
+          "Open Directory and my profile in Alumni network.",
+          "Use search and the mentoring filter. Only published profiles appear; review your profile before publishing."
+        ]
+      },
+      "location": {
+        "ar": "شبكة الخريجين ← دليل الخريجين وملفي",
+        "en": "Alumni network → Directory and my profile"
+      },
+      "screen": "services_support/alumni_directory_screen.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/alumni_directory_screen.dart",
+        "mobile:lib/screens/services_support/student_life_alumni_screens.dart",
+        "server:src/routes/alumniRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/alumniRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "student-listings",
+      "name": {
+        "ar": "عروض وفرص الطلاب",
+        "en": "Student offers and opportunities"
+      },
+      "aliases": [
+        "student offers",
+        "student listings",
+        "عروض الطلاب",
+        "خصومات الطلاب",
+        "فرص الطلاب"
+      ],
+      "description": {
+        "ar": "افتح إعلانات وفرص الطلاب واختر القائمة المعروضة.",
+        "en": "Open Student listings and opportunities and choose the available list."
+      },
+      "steps": {
+        "ar": [
+          "افتح إعلانات وفرص الطلاب واختر القائمة المعروضة.",
+          "راجع الشروط وموعد انتهاء الإعلان؛ لا تفترض توفر عرض أو وظيفة غير منشورة."
+        ],
+        "en": [
+          "Open Student listings and opportunities and choose the available list.",
+          "Review conditions and expiry; do not assume an unlisted offer or job is available."
+        ]
+      },
+      "location": {
+        "ar": "شبكة الخريجين ← إعلانات وفرص الطلاب",
+        "en": "Alumni network → Student listings and opportunities"
+      },
+      "screen": "services_support/student_listings_screen.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/student_listings_screen.dart",
+        "mobile:lib/screens/services_support/student_life_alumni_screens.dart",
+        "server:src/routes/studentRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "live-consultation",
+      "name": {
+        "ar": "الاستشارة المباشرة",
+        "en": "Live consultation"
+      },
+      "aliases": [
+        "live consultation",
+        "meeting room",
+        "غرفة الاستشارة",
+        "استشارة مباشرة"
+      ],
+      "description": {
+        "ar": "افتح حجز الاستشارة الذي يتيح لك الدخول إلى الاستشارة المباشرة.",
+        "en": "Open an authorized booking that offers live consultation."
+      },
+      "steps": {
+        "ar": [
+          "افتح حجز الاستشارة الذي يتيح لك الدخول إلى الاستشارة المباشرة.",
+          "تحقق من الأذونات والاتصال واتبع خيارات الغرفة التي يعرضها حجزك؛ لا يستطيع المساعد إنشاء اجتماع أو ضم شخص نيابة عنك."
+        ],
+        "en": [
+          "Open an authorized booking that offers live consultation.",
+          "Check permissions and connectivity and use only the room controls offered by your booking; the assistant cannot create or join meetings for you."
+        ]
+      },
+      "location": {
+        "ar": "الحجز المصرّح ← الاستشارة المباشرة",
+        "en": "Authorized booking → Live consultation"
+      },
+      "screen": "services_support/live_consultation_screen.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/live_consultation_screen.dart",
+        "mobile:lib/screens/services_support/services_consultation_screens.dart",
+        "server:src/routes/consultationRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/consultationRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "arrival-request",
+      "name": {
+        "ar": "طلب خدمات الوصول",
+        "en": "Arrival service request"
+      },
+      "aliases": [
+        "arrival request",
+        "airport pickup",
+        "خدمات الوصول",
+        "استقبال المطار"
+      ],
+      "description": {
+        "ar": "افتح خدمات الوصول عندما تتاح في مسار طلبك.",
+        "en": "Open Arrival services when offered in your application workflow."
+      },
+      "steps": {
+        "ar": [
+          "افتح خدمات الوصول عندما تتاح في مسار طلبك.",
+          "راجع تفاصيل الخدمة والبيانات المطلوبة قبل حفظ أو إرسال طلبك. الحالات المسجلة هي المرجع وليس تقدير المساعد."
+        ],
+        "en": [
+          "Open Arrival services when offered in your application workflow.",
+          "Review the service and required details before saving or submitting. Recorded status is the reference, not an assistant estimate."
+        ]
+      },
+      "location": {
+        "ar": "مسار الطلب ← خدمات الوصول",
+        "en": "Application workflow → Arrival services"
+      },
+      "screen": "visa_travel_accommodation/arrival_services_screen.dart",
+      "sources": [
+        "mobile:lib/screens/visa_travel_accommodation/arrival_services_screen.dart",
+        "mobile:lib/screens/visa_travel_accommodation/accommodation_arrival_screens.dart",
+        "server:src/routes/studentRoutes.js"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/studentRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "admin-catalog",
+      "name": {
+        "ar": "إدارة الجامعات والبرامج والمحتوى",
+        "en": "Catalog and content administration"
+      },
+      "aliases": [
+        "إدارة الجامعات",
+        "admin catalog"
+      ],
+      "description": {
+        "ar": "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+        "en": "Open the authorized section visible in your administration dashboard."
+      },
+      "steps": {
+        "ar": [
+          "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات."
+        ],
+        "en": [
+          "Open the authorized section visible in your administration dashboard.",
+          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls."
+        ]
+      },
+      "location": {
+        "ar": "لوحة الموظف / الإدارة ← القسم المصرّح",
+        "en": "Staff/admin dashboard → Authorized section"
+      },
+      "screen": "roles/admin_content_crud_screens.dart",
+      "sources": [
+        "mobile:lib/screens/roles/admin_content_crud_screens.dart",
+        "mobile:lib/screens/roles/admin_simple_lists_screens.dart",
+        "mobile:lib/screens/roles/generic_crud_screen.dart",
+        "server:src/routes/adminRoutes.js"
+      ],
+      "roles": [
+        "admin"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/adminRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "admin-applications",
+      "name": {
+        "ar": "إدارة الطلبات والمستندات",
+        "en": "Application and document administration"
+      },
+      "aliases": [
+        "admin applications",
+        "ادارة الطلبات"
+      ],
+      "description": {
+        "ar": "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+        "en": "Open the authorized section visible in your administration dashboard."
+      },
+      "steps": {
+        "ar": [
+          "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات."
+        ],
+        "en": [
+          "Open the authorized section visible in your administration dashboard.",
+          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls."
+        ]
+      },
+      "location": {
+        "ar": "لوحة الموظف / الإدارة ← القسم المصرّح",
+        "en": "Staff/admin dashboard → Authorized section"
+      },
+      "screen": "roles/admin_applications_documents_screens.dart",
+      "sources": [
+        "mobile:lib/screens/roles/admin_applications_documents_screens.dart",
+        "mobile:lib/screens/roles/admin_approval_screens.dart",
+        "mobile:lib/screens/roles/generic_approval_list_screen.dart",
+        "server:src/routes/adminRoutes.js"
+      ],
+      "roles": [
+        "admin"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/adminRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "admin-finance",
+      "name": {
+        "ar": "الإدارة المالية والتسويق",
+        "en": "Finance and marketing administration"
+      },
+      "aliases": [
+        "admin finance",
+        "المالية والتسويق"
+      ],
+      "description": {
+        "ar": "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+        "en": "Open the authorized section visible in your administration dashboard."
+      },
+      "steps": {
+        "ar": [
+          "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات."
+        ],
+        "en": [
+          "Open the authorized section visible in your administration dashboard.",
+          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls."
+        ]
+      },
+      "location": {
+        "ar": "لوحة الموظف / الإدارة ← القسم المصرّح",
+        "en": "Staff/admin dashboard → Authorized section"
+      },
+      "screen": "roles/admin_financials_marketing_screens.dart",
+      "sources": [
+        "mobile:lib/screens/roles/admin_financials_marketing_screens.dart",
+        "server:src/routes/crmFinanceRoutes.js"
+      ],
+      "roles": [
+        "admin"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/crmFinanceRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "admin-access",
+      "name": {
+        "ar": "إدارة المستخدمين والصلاحيات",
+        "en": "Users and access administration"
+      },
+      "aliases": [
+        "admin users",
+        "صلاحيات المستخدمين"
+      ],
+      "description": {
+        "ar": "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+        "en": "Open the authorized section visible in your administration dashboard."
+      },
+      "steps": {
+        "ar": [
+          "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات."
+        ],
+        "en": [
+          "Open the authorized section visible in your administration dashboard.",
+          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls."
+        ]
+      },
+      "location": {
+        "ar": "لوحة الموظف / الإدارة ← القسم المصرّح",
+        "en": "Staff/admin dashboard → Authorized section"
+      },
+      "screen": "roles/admin_users_access_screen.dart",
+      "sources": [
+        "mobile:lib/screens/roles/admin_users_access_screen.dart",
+        "mobile:lib/screens/roles/admin_university_accounts_screen.dart",
+        "mobile:lib/screens/roles/admin_parent_links_screen.dart",
+        "server:src/routes/adminRoutes.js"
+      ],
+      "roles": [
+        "admin"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/adminRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "admin-support",
+      "name": {
+        "ar": "إدارة الدعم والمعرفة",
+        "en": "Support and knowledge administration"
+      },
+      "aliases": [
+        "admin support",
+        "ادارة الدعم"
+      ],
+      "description": {
+        "ar": "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+        "en": "Open the authorized section visible in your administration dashboard."
+      },
+      "steps": {
+        "ar": [
+          "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات."
+        ],
+        "en": [
+          "Open the authorized section visible in your administration dashboard.",
+          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls."
+        ]
+      },
+      "location": {
+        "ar": "لوحة الموظف / الإدارة ← القسم المصرّح",
+        "en": "Staff/admin dashboard → Authorized section"
+      },
+      "screen": "roles/admin_support_knowledge_screens.dart",
+      "sources": [
+        "mobile:lib/screens/roles/admin_support_knowledge_screens.dart",
+        "server:src/routes/adminRoutes.js"
+      ],
+      "roles": [
+        "admin"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/adminRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "admin-settings",
+      "name": {
+        "ar": "إدارة أقسام الموقع والفعاليات",
+        "en": "Site content and events administration"
+      },
+      "aliases": [
+        "admin site",
+        "اقسام الموقع"
+      ],
+      "description": {
+        "ar": "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+        "en": "Open the authorized section visible in your administration dashboard."
+      },
+      "steps": {
+        "ar": [
+          "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات."
+        ],
+        "en": [
+          "Open the authorized section visible in your administration dashboard.",
+          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls."
+        ]
+      },
+      "location": {
+        "ar": "لوحة الموظف / الإدارة ← القسم المصرّح",
+        "en": "Staff/admin dashboard → Authorized section"
+      },
+      "screen": "roles/admin_singleton_hub_screens.dart",
+      "sources": [
+        "mobile:lib/screens/roles/admin_singleton_hub_screens.dart",
+        "server:src/routes/adminRoutes.js"
+      ],
+      "roles": [
+        "admin"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/adminRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "admin-scholarships",
+      "name": {
+        "ar": "إدارة المنح وطلبات المنح",
+        "en": "Scholarship administration"
+      },
+      "aliases": [
+        "admin scholarships",
+        "ادارة المنح"
+      ],
+      "description": {
+        "ar": "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+        "en": "Open the authorized section visible in your administration dashboard."
+      },
+      "steps": {
+        "ar": [
+          "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات."
+        ],
+        "en": [
+          "Open the authorized section visible in your administration dashboard.",
+          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls."
+        ]
+      },
+      "location": {
+        "ar": "لوحة الموظف / الإدارة ← القسم المصرّح",
+        "en": "Staff/admin dashboard → Authorized section"
+      },
+      "screen": "roles/admin_scholarships_screen.dart",
+      "sources": [
+        "mobile:lib/screens/roles/admin_scholarships_screen.dart",
+        "server:src/routes/scholarshipRoutes.js"
+      ],
+      "roles": [
+        "admin"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/scholarshipRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "admin-rewards",
+      "name": {
+        "ar": "إدارة قواعد المكافآت",
+        "en": "Reward rule administration"
+      },
+      "aliases": [
+        "reward rules",
+        "قواعد المكافآت"
+      ],
+      "description": {
+        "ar": "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+        "en": "Open the authorized section visible in your administration dashboard."
+      },
+      "steps": {
+        "ar": [
+          "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
+          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات."
+        ],
+        "en": [
+          "Open the authorized section visible in your administration dashboard.",
+          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls."
+        ]
+      },
+      "location": {
+        "ar": "لوحة الموظف / الإدارة ← القسم المصرّح",
+        "en": "Staff/admin dashboard → Authorized section"
+      },
+      "screen": "roles/admin_reward_rules_screen.dart",
+      "sources": [
+        "mobile:lib/screens/roles/admin_reward_rules_screen.dart",
+        "server:src/routes/adminRoutes.js"
+      ],
+      "roles": [
+        "admin"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/adminRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "employee-workspace",
+      "name": {
+        "ar": "أقسام ومتابعات الموظف",
+        "en": "Employee sections and follow-ups"
+      },
+      "aliases": [
+        "employee sections",
+        "staff reminders",
+        "اقسام الموظف",
+        "متابعات الموظف"
+      ],
+      "description": {
+        "ar": "افتح القسم أو قائمة المتابعات التي تظهر في لوحة الموظف.",
+        "en": "Open a section or follow-up list visible in the Employee dashboard."
+      },
+      "steps": {
+        "ar": [
+          "افتح القسم أو قائمة المتابعات التي تظهر في لوحة الموظف.",
+          "راجع طلابك ورسائلك وطلبات الخدمات أو الاستشارات المعينة لك فقط. الأقسام المخفية تحتاج منح صلاحية من المدير."
+        ],
+        "en": [
+          "Open a section or follow-up list visible in the Employee dashboard.",
+          "Review only your assigned students, messages, service requests or consultations. Hidden sections require an administrator to grant access."
+        ]
+      },
+      "location": {
+        "ar": "لوحة الموظف ← القسم المتاح",
+        "en": "Employee dashboard → Available section"
+      },
+      "screen": "roles/employee_extra_screens.dart",
+      "sources": [
+        "mobile:lib/screens/roles/employee_extra_screens.dart",
+        "mobile:lib/screens/roles/employee_sections_picker_screen.dart",
+        "mobile:lib/screens/roles/follow_up_reminders_screen.dart",
+        "mobile:lib/screens/roles/employee_consultations_screen.dart",
+        "mobile:lib/screens/roles/employee_community_screen.dart",
+        "server:src/routes/crmRoutes.js"
+      ],
+      "roles": [
+        "employee",
+        "admin"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/crmRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "agent-students",
+      "name": {
+        "ar": "ملف طالب الوكيل والأسعار والعمولات",
+        "en": "Agent students pricing and commissions"
+      },
+      "aliases": [
+        "agent student",
+        "agent pricing",
+        "student commission",
+        "طلاب الوكيل",
+        "اسعار الوكيل"
+      ],
+      "description": {
+        "ar": "اختر طالبًا تابعًا لك من لوحة الوكيل لعرض ملفه ومسار طلبه.",
+        "en": "Select one of your students in the Agent dashboard to open their file and application workflow."
+      },
+      "steps": {
+        "ar": [
+          "اختر طالبًا تابعًا لك من لوحة الوكيل لعرض ملفه ومسار طلبه.",
+          "راجع الأسعار والعمولات المعروضة ضمن صلاحية الوكيل. أي حفظ أو تعديل يتم في الشاشة الأصلية وبصلاحيات السيرفر، وليس في المحادثة."
+        ],
+        "en": [
+          "Select one of your students in the Agent dashboard to open their file and application workflow.",
+          "Review pricing and commissions allowed for the agent. Saving or editing happens only in the original authorized screen, never in chat."
+        ]
+      },
+      "location": {
+        "ar": "لوحة الوكيل ← الطالب / محفظتي",
+        "en": "Agent dashboard → Student / My wallet"
+      },
+      "screen": "roles/agent_student_detail_screen.dart",
+      "sources": [
+        "mobile:lib/screens/roles/agent_student_detail_screen.dart",
+        "mobile:lib/screens/roles/agent_program_pricing_screen.dart",
+        "mobile:lib/screens/roles/agent_dashboard_screen.dart",
+        "server:src/routes/partnerRoutes.js"
+      ],
+      "roles": [
+        "partner"
+      ],
+      "availability": "conditional",
+      "restrictions": {
+        "ar": "استخدم فقط الخيارات التي تظهر لحسابك؛ تأكيد الإجراءات الحساسة وصلاحيات السيرفر إلزاميان.",
+        "en": "Use only options visible to your account; sensitive actions require confirmation and server authorization."
+      },
+      "backend": [
+        "server:src/routes/partnerRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "assistant",
+      "name": {
+        "ar": "المساعد وإمكانياته",
+        "en": "Assistant capabilities"
+      },
+      "aliases": [
+        "what can you do",
+        "assistant",
+        "شو بتقدر",
+        "مساعد"
+      ],
+      "description": {
+        "ar": "إرشادات Study Birds الموثقة فقط.",
+        "en": "Verified Study Birds guidance only."
+      },
+      "steps": {
+        "ar": [
+          "اسأل عن الشاشة أو الميزة التي تريد استخدامها داخل Study Birds.",
+          "للأسئلة العامة أو ميزة غير موثقة لن أخمّن جوابًا. حالات طلباتك تأتي من حسابك المصرّح فقط، ولا تنفّذ المحادثة إجراءً حساسًا."
+        ],
+        "en": [
+          "Ask about a screen or feature you want to use inside Study Birds.",
+          "I will not guess answers to general questions or unverified features. Your application statuses come only from your authorized account, and chat performs no sensitive actions."
+        ]
+      },
+      "location": {
+        "ar": "المساعد من التبويبات الرئيسية أو زر مساعدة الشاشة",
+        "en": "Assistant from main tabs or a screen help action"
+      },
+      "screen": "ai/birds_ai_screen.dart",
+      "sources": [
+        "mobile:lib/screens/ai/birds_ai_screen.dart",
+        "mobile:lib/screens/ai/assistant_help_button.dart",
+        "server:src/routes/assistantRoutes.js"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "لا يوجد حذف للمحادثات في API الحالي. لا ترسل كلمات المرور أو الهوية في الدردشة.",
+        "en": "The current API has no conversation-deletion endpoint. Never send passwords or identity documents in chat."
+      },
+      "backend": [
+        "server:src/routes/assistantRoutes.js"
+      ],
+      "action": null,
+      "reviewed": true
+    }
+  ]
+}
