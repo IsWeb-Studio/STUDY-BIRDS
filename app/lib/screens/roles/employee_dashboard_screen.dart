@@ -20,6 +20,8 @@ import 'employee_community_screen.dart';
 import 'admin_approval_screens.dart';
 import 'admin_applications_documents_screens.dart';
 import 'admin_simple_lists_screens.dart';
+import 'admin_app_notification_screen.dart';
+import '../home_journey/notifications_screen.dart' show NotificationInboxButton;
 import 'admin_support_knowledge_screens.dart';
 import 'admin_financials_marketing_screens.dart';
 import 'admin_content_crud_screens.dart';
@@ -59,7 +61,7 @@ const _partnerKeys = [
   'marketing-assets', 'verification', 'payouts',
 ];
 const _managementKeys = [
-  'university-accounts', 'universities', 'programs', 'content',
+  'app-notifications', 'university-accounts', 'universities', 'programs', 'content',
   'consultations', 'community', 'knowledge-base', 'testimonials',
   'recognitions', 'services', 'faqs', 'site-settings',
   'our-story', 'exhibitions', 'events',
@@ -74,6 +76,9 @@ const _allTabDefs = [
 
 // ─── Section registry ─────────────────────────────────────────────────────────
 final List<_SectionEntry> _allSections = [
+  _SectionEntry('app-notifications', Icons.campaign_rounded, const Color(0xFFF97316),
+      'إشعارات التطبيق', 'إرسال إعلان إلى جميع الحسابات النشطة',
+      (_) => const AdminAppNotificationScreen()),
   _SectionEntry('students', Icons.person_search_rounded, AppColors.navy,
       'ملفات الطلاب', 'استعراض وإدارة ملفات الطلاب الكاملة',
       (_) => const MyStudentsQueueScreen()),
@@ -219,6 +224,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
     return _allSections
         .where((s) =>
             tab.keys.contains(s.key) &&
+            s.key != 'app-notifications' &&
             widget.user.permissions.contains(s.key))
         .toList();
   }
@@ -334,6 +340,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
     return AppScaffold(
       title: _isAdmin ? 'لوحة الأدمن' : 'لوحة الموظف',
       actions: [
+        const NotificationInboxButton(),
         if (_isAdmin || widget.user.permissions.contains('applications'))
           IconButton(
               tooltip: 'تذكيرات متابعتي',

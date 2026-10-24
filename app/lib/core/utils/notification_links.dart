@@ -14,3 +14,11 @@ String? notificationPath(String raw) {
   if (path == '/student/consultation') path = '/student/consultations';
   return path.startsWith('/student/') ? path : null;
 }
+
+/// Student workflow links remain private to student accounts. The shared
+/// inbox itself is safe for every authenticated role.
+bool notificationLinkAllowedForRole(String? raw, {required bool isStudent}) {
+  final path = notificationPath(raw ?? '');
+  if (path == null) return false;
+  return isStudent || path == '/student/notifications';
+}

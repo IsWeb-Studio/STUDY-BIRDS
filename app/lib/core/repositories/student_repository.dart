@@ -440,18 +440,18 @@ class StudentRepository {
 
   Future<List<dynamic>> getNotifications() async {
     final data = await ApiClient.instance
-        .get('/students/notifications', token: _token, cached: false);
+        .get('/content/notifications', token: _token, cached: false);
     return Json.list(data);
   }
 
   Future<void> markNotificationRead(String id) async {
     await ApiClient.instance
-        .patch('/students/notifications/$id/read', token: _token);
+        .patch('/content/notifications/$id/read', token: _token);
   }
 
   Future<void> markAllNotificationsRead() async {
     await ApiClient.instance
-        .patch('/students/notifications/read-all', token: _token);
+        .patch('/content/notifications/read-all', token: _token);
   }
 
   /// Real endpoint covering flight + airport pickup + housing + visa/residence

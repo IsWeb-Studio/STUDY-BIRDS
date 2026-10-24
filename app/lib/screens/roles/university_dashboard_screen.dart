@@ -13,6 +13,8 @@ import '../applications_documents_payments/applications_screens.dart'
     show appStatusMeta;
 import 'university_application_review_screen.dart';
 import '../../main.dart' show RootChooserScreen;
+import '../home_journey/notifications_screen.dart'
+    show NotificationInboxButton;
 
 class UniversityDashboardScreen extends StatefulWidget {
   const UniversityDashboardScreen({super.key});
@@ -160,6 +162,7 @@ class _UniversityDashboardScreenState
 
     return AppScaffold(
       actions: [
+        const NotificationInboxButton(),
         IconButton(
             tooltip: 'الرسائل',
             icon: const Icon(Icons.forum_outlined),

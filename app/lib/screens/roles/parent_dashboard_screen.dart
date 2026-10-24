@@ -13,6 +13,8 @@ import '../applications_documents_payments/applications_screens.dart'
 import '../services_support/messaging_and_emergency_screens.dart';
 import '../profile_account/security_settings_screen.dart'
     show SecuritySettingsScreen, ChangePasswordScreen;
+import '../home_journey/notifications_screen.dart'
+    show NotificationInboxButton;
 
 const Map<String, String> _stageLabels = {
   'file-received': 'استلام الملف',
@@ -204,6 +206,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   fontWeight: FontWeight.w700)),
           centerTitle: true,
           actions: [
+            const NotificationInboxButton(),
             IconButton(
               tooltip: 'الرسائل',
               icon: const Icon(Icons.forum_outlined),

@@ -6,6 +6,7 @@ import '../../core/config/app_theme.dart';
 import '../../core/repositories/student_repository.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/realtime_sync_service.dart';
+import '../../core/services/auth_session.dart';
 import '../../core/utils/notification_links.dart';
 import '../services_support/services_consultation_screens.dart';
 import '../services_support/support_team_ai_screens.dart';
@@ -245,6 +246,19 @@ class NotificationsScreen extends StatefulWidget {
   State<NotificationsScreen> createState() => _NotificationsScreenState();
 }
 
+class NotificationInboxButton extends StatelessWidget {
+  const NotificationInboxButton({super.key});
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+        tooltip: 'صندوق الإشعارات',
+        icon: const Icon(Icons.notifications_outlined),
+        onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+          builder: (_) => const NotificationsScreen(),
+        )),
+      );
+}
+
 class _NotificationsScreenState extends State<NotificationsScreen> {
   List<dynamic> _notifications = [];
   bool _loading = true;
@@ -396,15 +410,26 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                   '';
 
                           final link = n['link'] as String?;
-                          final actionLabel = notificationActionLabel(link);
-                          final screen = notificationScreenForLink(link) ??
-                              const JourneyTrackerScreen();
+                          final isStudent = AuthSession.instance.currentUser?.role ==
+                              UserRole.student;
+                          final canOpenLink = notificationLinkAllowedForRole(
+                            link,
+                            isStudent: isStudent,
+                          );
+                          final actionLabel = canOpenLink && isStudent
+                              ? notificationActionLabel(link)
+                              : null;
+                          final screen = canOpenLink
+                              ? notificationScreenForLink(link)
+                              : null;
                           void navigate() async {
                             // Capture navigator before any await so it stays valid.
                             final navigator = Navigator.of(context);
                             await _markRead(n, i);
-                            await navigator.push(
-                                MaterialPageRoute(builder: (_) => screen));
+                            if (screen != null) {
+                              await navigator.push(MaterialPageRoute(
+                                  builder: (_) => screen));
+                            }
                           }
 
                           return AppCard(

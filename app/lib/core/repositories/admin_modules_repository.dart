@@ -76,6 +76,23 @@ class AdminModulesRepository {
   Future<List<dynamic>> getStudentNotifications() async =>
       Json.list(await ApiClient.instance.get('/admin/student-notifications', token: _token));
 
+  // ---- app-wide notification broadcasts --------------------------------
+  Future<Map<String, dynamic>> getNotificationAudience() async =>
+      Json.map(await ApiClient.instance.get(
+          '/admin/student-notifications/audience', token: _token));
+
+  Future<Map<String, dynamic>> broadcastAppNotification({
+    required String title,
+    required String message,
+    required String idempotencyKey,
+  }) async =>
+      Json.map(await ApiClient.instance.post(
+        '/admin/student-notifications/broadcast',
+        token: _token,
+        body: {'title': title, 'message': message},
+        idempotencyKey: idempotencyKey,
+      ));
+
   // ---- student-favorites (read-only) -------------------------------------
   Future<List<dynamic>> getStudentFavorites() async =>
       Json.list(await ApiClient.instance.get('/admin/student-favorites', token: _token));

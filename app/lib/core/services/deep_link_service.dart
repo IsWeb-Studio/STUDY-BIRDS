@@ -45,7 +45,11 @@ class DeepLinkService {
       if (_pending == null) return;
       final user = AuthSession.instance.currentUser;
       if (user == null) return;
-      if (user.role != UserRole.student) { _pending = null; return; }
+      if (!notificationLinkAllowedForRole(
+          _pending, isStudent: user.role == UserRole.student)) {
+        _pending = null;
+        return;
+      }
       final navigator = _navigatorKey?.currentState;
       if (navigator == null) return;
       final screen = notificationScreenForLink(_pending);
