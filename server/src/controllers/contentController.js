@@ -540,7 +540,7 @@ const getRobotsTxt = asyncHandler(async (req, res) => {
 const getNotifications = asyncHandler(async (req, res) => {
   const notifications = await timedOperation("Notification.userList", () =>
     Notification.find({ user: req.user._id })
-      .select("title message type isRead createdAt")
+      .select("title message type link isRead createdAt")
       .sort({ createdAt: -1 })
       .limit(30)
       .lean()

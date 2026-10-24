@@ -69,6 +69,22 @@ export const adminService = {
     const { data } = await api.get<NotificationItem[]>("/admin/student-notifications");
     return data;
   },
+  getNotificationAudience: async () => {
+    const { data } = await api.get<{ activeUsers: number; pushEligibleUsers: number; pushConfigured: boolean; canBroadcast: boolean }>("/admin/student-notifications/audience");
+    return data;
+  },
+  broadcastNotification: async (payload: { title: string; message: string }, idempotencyKey: string) => {
+    const { data } = await api.post<{
+      recipientCount: number;
+      pushEligibleCount: number;
+      pushConfigured: boolean;
+      pushReportedRecipientCount: number;
+      pushUnconfirmedBatches: number;
+    }>("/admin/student-notifications/broadcast", payload, {
+      headers: { "Idempotency-Key": idempotencyKey },
+    });
+    return data;
+  },
   getUsers: async () => {
     const { data } = await api.get<User[]>("/admin/users");
     return data;

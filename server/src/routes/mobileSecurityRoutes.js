@@ -39,6 +39,24 @@ router.post('/reset/confirm', run(async (req, res) => {
   res.json({ message: 'تم تغيير كلمة المرور. سجّل الدخول مجدداً.' });
 }));
 router.use(protect);
+const NotificationPreference = require('../models/NotificationPreference');
+const { shapePreferences: notificationPreferenceShape, validatePreferenceUpdate } = require('../utils/notificationPreferences');
+router.get('/notification-preferences', run(async (req, res) => {
+  const row = await NotificationPreference.findOne({ user: req.user._id }).lean();
+  res.set('Cache-Control', 'no-store').json(notificationPreferenceShape(row));
+}));
+router.put('/notification-preferences', run(async (req, res) => {
+  if (!validatePreferenceUpdate(req.body)) {
+    return res.status(400).json({ message: 'Invalid notification preference update.' });
+  }
+  const update = Object.fromEntries(Object.entries(req.body));
+  const row = await NotificationPreference.findOneAndUpdate(
+    { user: req.user._id },
+    { $set: update, $setOnInsert: { user: req.user._id } },
+    { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
+  ).lean();
+  res.set('Cache-Control', 'no-store').json(notificationPreferenceShape(row));
+}));
 router.get('/two-factor', run(async (req, res) => res.json({ enabled: req.user.twoFactorEnabled === true })));
 router.post('/two-factor/request', run(async (req, res) => {
   const user = await User.findById(req.user._id);

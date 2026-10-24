@@ -26,6 +26,7 @@ const {
 const { getBannersPublic } = require("../controllers/bannerController");
 const { protect } = require("../middleware/authMiddleware");
 const { cacheRoute } = require("../utils/responseCache");
+const notificationInbox = require("../controllers/notificationInboxController");
 
 const router = express.Router();
 
@@ -55,6 +56,8 @@ router.get("/exhibitions/:slug", getExhibitionArticleBySlug);
 router.get("/site-settings", cacheRoute(300_000), getSiteSettings);
 router.get("/study-fields", cacheRoute(120_000), getStudyFields);
 router.get("/notifications", protect, getNotifications);
+router.patch("/notifications/read-all", protect, notificationInbox.markAllNotificationsRead);
+router.patch("/notifications/:id/read", protect, notificationInbox.markNotificationRead);
 router.get("/file-open", openCloudinaryDocument);
 router.get("/seo/sitemap.xml", cacheRoute(120_000), getSitemapXml);
 router.get("/seo/robots.txt", cacheRoute(300_000), getRobotsTxt);

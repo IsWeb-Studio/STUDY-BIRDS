@@ -74,11 +74,13 @@ async function sendPushToUsers(userIds, notification) {
       body: JSON.stringify(payload),
     });
     const json = await res.json();
-    if (!res.ok) { console.error('[Push] OneSignal error:', JSON.stringify(json)); return { sent: 0 }; }
-    return { sent: json.recipients ?? ids.length };
+    if (!res.ok) { console.error('[Push] OneSignal error:', JSON.stringify(json)); return { sent: 0, confirmed: false }; }
+    const reportedRecipients = json.recipients;
+    const confirmed = Number.isInteger(reportedRecipients) && reportedRecipients >= 0;
+    return { sent: confirmed ? reportedRecipients : 0, confirmed };
   } catch (err) {
     console.error('[Push] Failed to broadcast push:', err.message);
-    return { sent: 0 };
+    return { sent: 0, confirmed: false };
   }
 }
 

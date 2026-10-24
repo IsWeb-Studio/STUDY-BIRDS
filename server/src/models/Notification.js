@@ -21,6 +21,9 @@ const notificationSchema = new mongoose.Schema(
       default: "info",
     },
     link: String,
+    // Present only for admin announcements. Prevents a retried request from
+    // inserting the same announcement twice for the same account.
+    broadcastId: { type: String, select: false },
     reminderApplication: { type: mongoose.Schema.Types.ObjectId, ref: "Application" },
     reminderDueAt: Date,
     isRead: {
@@ -29,6 +32,11 @@ const notificationSchema = new mongoose.Schema(
     },
   },
   { timestamps: true }
+);
+
+notificationSchema.index(
+  { broadcastId: 1, user: 1 },
+  { unique: true, partialFilterExpression: { broadcastId: { $exists: true } } }
 );
 
 // Push send-on-create: post('save') runs on every save, but a document's
