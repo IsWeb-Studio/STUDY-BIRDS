@@ -4,6 +4,7 @@ const storySchema = new Schema({
   author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
   operationId: { type: String, required: true },
   text: { type: String, maxlength: 1000, default: '' },
+  audience: { type: String, enum: ['students', 'guardians', 'universities', 'employees', 'allEligible'], default: 'allEligible' },
   imageUrl: { type: String, default: '' },
   videoUrl: { type: String, default: '' },
   videoDuration: { type: Number, default: 0 },

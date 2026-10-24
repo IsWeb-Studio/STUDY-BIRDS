@@ -7,11 +7,13 @@ const { Story, StoryStats, StoryInteraction } = require('../models/Stories');
 const rules = require('../utils/storyRules');
 const upload = require('../middleware/uploadMiddleware');
 const { uploadFileToCloudinary } = require('../utils/uploadToCloudinary');
-const { canReadStory } = require('../utils/storyAudience');
+const { COMMUNITY_ROLES, audienceFilter, publicationAudienceFor, canReadStory } = require('../utils/storyAudience');
 const User = require('../models/User');
 const StoryVideo = require('../models/StoryVideo');
 const { parseVideo, validateVideo, uploadStoryVideo } = require('../utils/storyVideoUpload');
-router.use(protect, authorize('student'));
+const communityAccess = authorize(...COMMUNITY_ROLES);
+const storyPublisherAccess = authorize(...COMMUNITY_ROLES);
+router.use(protect, communityAccess);
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 router.use(rateLimit({ windowMs: 60000, limit: 120, keyGenerator: req => String(req.user._id), standardHeaders: 'draft-7', legacyHeaders: false }));
 const fail = (status, message) => { throw Object.assign(new Error(message), { statusCode: status }); };
@@ -56,11 +58,11 @@ router.put('/preferences', asyncHandler(async (req, res) => {
   res.json(rules.progress(stats));
 }));
 // Small uncached snapshot for active screens; never reload images or the full feed.
-router.get('/updates', asyncHandler(async (req, res) => {
+router.get('/updates', communityAccess, asyncHandler(async (req, res) => {
   const ids = typeof req.query.ids === 'string' ? [...new Set(req.query.ids.split(','))] : [];
   if (!ids.length || ids.length > 120 || ids.some(id => !/^[a-f0-9]{24}$/i.test(id))) fail(400, 'Invalid stories');
-  const stories = await Story.find({ _id: { $in: ids }, expiresAt: { $gt: new Date() } }).select('_id author loveCount')
-    .populate({ path: 'author', select: '_id', match: { isActive: true, role: 'student' } }).lean();
+  const stories = await Story.find({ _id: { $in: ids }, expiresAt: { $gt: new Date() }, ...audienceFilter(req.user) }).select('_id author audience loveCount')
+    .populate({ path: 'author', select: '_id', match: { isActive: true, role: { $in: COMMUNITY_ROLES } } }).lean();
   const readable = stories.filter(s => s.author);
   const views = await viewCounts(readable.filter(s => String(s.author._id) === String(req.user._id)).map(s => s._id), req.user._id);
   const edges = await StoryInteraction.find({ story: { $in: readable.map(s => s._id) }, user: req.user._id }).select('story lovedAt seenAt').lean();
@@ -72,8 +74,8 @@ router.get('/updates', asyncHandler(async (req, res) => {
     loved: !!byId.get(String(s._id))?.lovedAt, seen: !!byId.get(String(s._id))?.seenAt,
   })) });
 }));
-router.get('/', asyncHandler(async (req, res) => {
-  const filter = { expiresAt: { $gt: new Date() } };
+router.get('/', communityAccess, asyncHandler(async (req, res) => {
+  const filter = { expiresAt: { $gt: new Date() }, ...audienceFilter(req.user) };
   if (req.query.before) {
     if (!/^[a-f0-9]{24}$/i.test(req.query.before)) fail(400, 'Invalid cursor');
     filter._id = { $lt: new mongoose.Types.ObjectId(req.query.before) };
@@ -81,7 +83,7 @@ router.get('/', asyncHandler(async (req, res) => {
   const rows = await Story.aggregate([
     { $match: filter }, { $sort: { _id: -1 } },
     { $lookup: { from: User.collection.name, localField: 'author', foreignField: '_id',
-      pipeline: [{ $match: { isActive: true, role: 'student' } }, { $project: { name: 1, avatar: 1 } }], as: 'author' } },
+      pipeline: [{ $match: { isActive: true, role: { $in: COMMUNITY_ROLES } } }, { $project: { name: 1, avatar: 1, role: 1 } }], as: 'author' } },
     { $unwind: '$author' }, { $limit: 61 },
   ]);
   const page = rows.slice(0, 60);
@@ -93,28 +95,32 @@ router.get('/', asyncHandler(async (req, res) => {
   const balances = new Map(stats.map(s => [String(s.user), s.total_points]));
   const interactions = new Map(edges.map(e => [String(e.story), e]));
   res.json({ stories: page.filter(s => s.author).map(s => ({
-    id: String(s._id), text: s.text, imageUrl: s.imageUrl, videoUrl: s.videoUrl || '', videoDuration: s.videoDuration || 0, createdAt: s.createdAt, expiresAt: s.expiresAt,
+    id: String(s._id), text: s.text, imageUrl: s.imageUrl, videoUrl: s.videoUrl || '', videoDuration: s.videoDuration || 0, createdAt: s.createdAt, expiresAt: s.expiresAt, audience: s.audience || 'allEligible',
     loveCount: s.loveCount, seen: !!interactions.get(String(s._id))?.seenAt,
     ...(String(s.author._id) === String(req.user._id) ? { viewCount: views.get(String(s._id)) || 0 } : {}),
     loved: !!interactions.get(String(s._id))?.lovedAt,
-    author: { id: String(s.author._id), name: s.author.name, avatar: s.author.avatar || '', total_points: balances.get(String(s.author._id)) || 0 },
+    author: { id: String(s.author._id), name: s.author.name, avatar: s.author.avatar || '', role: s.author.role, total_points: balances.get(String(s.author._id)) || 0 },
   })), nextCursor: rows.length > 60 ? String(page.at(-1)._id) : null });
 }));
-router.post('/image', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => String(req.user._id) }), upload.single('file'), asyncHandler(async (req, res) => {
+router.post('/image', storyPublisherAccess, rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => String(req.user._id) }), upload.single('file'), asyncHandler(async (req, res) => {
   if (!req.file || !['image/jpeg', 'image/png', 'image/webp'].includes(req.file.mimetype)) fail(415, 'Unsupported file type');
   const media = await uploadFileToCloudinary(req.file, `story-images/${req.user._id}`);
   await require('../utils/mediaMaintenance').queueMedia(media, new Date(Date.now() + 86400000));
   res.json({ imageUrl: media.url });
 }));
-router.post('/video', rateLimit({ windowMs: 3600000, limit: 10, keyGenerator: req => String(req.user._id) }), parseVideo, asyncHandler(async (req, res) => {
+router.post('/video', storyPublisherAccess, rateLimit({ windowMs: 3600000, limit: 10, keyGenerator: req => String(req.user._id) }), parseVideo, asyncHandler(async (req, res) => {
   validateVideo(req.file);
   const media = await uploadStoryVideo(req.file, req.user._id);
   await require('../utils/mediaMaintenance').queueMedia({ publicId: media.publicId, resourceType: 'video', url: media.videoUrl }, new Date(Date.now() + 86400000));
   await StoryVideo.create({ owner: req.user._id, url: media.videoUrl, duration: media.duration, expiresAt: new Date(Date.now() + 86400000) });
   res.json(media);
 }));
-router.post('/', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => String(req.user._id) }), asyncHandler(async (req, res) => {
-  const { text = '', imageUrl = '', videoUrl = '', operationId } = req.body || {};
+router.post('/', storyPublisherAccess, rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => String(req.user._id) }), asyncHandler(async (req, res) => {
+  const body = req.body || {};
+  const audience = publicationAudienceFor(req.user.role, body);
+  if (!audience) fail(400, 'Invalid story audience or identity fields');
+  if (req.user.role === 'admin' && body.notifyAudience === true) fail(400, 'Story audience notifications are not available yet');
+  const { text = '', imageUrl = '', videoUrl = '', operationId } = body;
   if (typeof operationId !== 'string' || !/^[A-Za-z0-9-]{8,100}$/.test(operationId) || typeof text !== 'string' || text.length > 1000 || typeof imageUrl !== 'string' || typeof videoUrl !== 'string' || (imageUrl && videoUrl) || (!text.trim() && !imageUrl && !videoUrl)) fail(400, 'Invalid story');
   if (imageUrl) {
     // Only accept this student's own uploaded Cloudinary images, never arbitrary URLs.
@@ -124,20 +130,20 @@ router.post('/', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => 
   const result = await atomic(async session => {
     const now = Date.now();
     const existing = await Story.findOne({ author: req.user._id, operationId }).session(session);
-    if (existing) return { id: existing.id, progress: rules.progress(await statsFor(req.user._id, session), now), awarded: 0 };
+    if (existing) return { id: existing.id, audience: existing.audience || 'allEligible', progress: rules.progress(await statsFor(req.user._id, session), now), awarded: 0 };
     const video = videoUrl ? await StoryVideo.findOne({ owner: req.user._id, url: videoUrl, expiresAt: { $gt: new Date(now) } }).session(session) : null;
     if (videoUrl && !video) fail(400, 'Upload your own video first');
     const stats = await statsFor(req.user._id, session);
-    const awarded = rules.postReward(stats, now);
+    const awarded = req.user.role === 'student' ? rules.postReward(stats, now) : 0;
     await stats.save({ session });
-    const [story] = await Story.create([{ author: req.user._id, operationId, text: text.trim(), imageUrl, videoUrl,
+    const [story] = await Story.create([{ author: req.user._id, operationId, text: text.trim(), audience, imageUrl, videoUrl,
       videoDuration: video?.duration || 0, expiresAt: new Date(now + 24 * rules.HOUR) }], { session });
-    return { id: story.id, progress: rules.progress(stats, now), awarded };
+    return { id: story.id, audience: story.audience, progress: rules.progress(stats, now), awarded };
   });
-  res.status(201).json(result);
+  res.status(201).json({ ...result, ...(req.user.role === 'admin' ? { audience: result.audience } : {}) });
 }));
 router.param('id', (req, res, next, id) => /^[a-f0-9]{24}$/i.test(id) ? next() : res.status(400).json({ message: 'Invalid story' }));
-router.get('/:id/viewers', asyncHandler(async (req, res) => {
+router.get('/:id/viewers', communityAccess, asyncHandler(async (req, res) => {
   const story = await Story.findOne({ _id: req.params.id, author: req.user._id, deletedAt: null, expiresAt: { $gt: new Date() } }).select('_id').lean();
   if (!story) fail(404, 'Story unavailable');
   if (req.query.before && (typeof req.query.before !== 'string' || !/^[a-f0-9]{24}$/i.test(req.query.before))) fail(400, 'Invalid cursor');
@@ -148,14 +154,14 @@ router.get('/:id/viewers', asyncHandler(async (req, res) => {
       .sort({ _id: -1 }).limit(51).select('_id user seenAt').lean(),
   ]);
   const page = rows.slice(0, 50);
-  const users = await User.find({ _id: { $in: page.map(row => row.user) }, isActive: true }).select('_id name avatar').lean();
+  const users = await User.find({ _id: { $in: page.map(row => row.user) }, isActive: true, role: { $in: COMMUNITY_ROLES } }).select('_id name avatar role').lean();
   const byId = new Map(users.map(user => [String(user._id), user]));
   res.json({ total, viewers: page.map(row => {
     const user = byId.get(String(row.user));
     return { id: user ? String(user._id) : null, name: user?.name || 'حساب غير متاح', avatar: user?.avatar || '', viewedAt: row.seenAt };
   }), nextCursor: rows.length > 50 ? String(page.at(-1)._id) : null });
 }));
-router.delete('/:id', asyncHandler(async (req, res) => {
+router.delete('/:id', communityAccess, asyncHandler(async (req, res) => {
   await atomic(async session => {
     const story = await Story.findOne({ _id: req.params.id, author: req.user._id }).session(session);
     if (!story) fail(404, 'Story unavailable');
@@ -171,9 +177,9 @@ router.delete('/:id', asyncHandler(async (req, res) => {
   });
   res.json({ deleted: true });
 }));
-router.post('/:id/seen', asyncHandler(async (req, res) => {
-  const story = await Story.findOne({ _id: req.params.id, expiresAt: { $gt: new Date() } }).select('author').lean();
-  if (!story || !await canReadStory(req.user._id, story.author)) fail(404, 'Story unavailable');
+router.post('/:id/seen', communityAccess, asyncHandler(async (req, res) => {
+  const story = await Story.findOne({ _id: req.params.id, expiresAt: { $gt: new Date() } }).select('author audience').lean();
+  if (!story || !await canReadStory(req.user, story)) fail(404, 'Story unavailable');
   const filter = { story: req.params.id, user: req.user._id };
   const update = { $set: { seenAt: new Date() } };
   try { await StoryInteraction.updateOne(filter, update, { upsert: true }); }
@@ -184,12 +190,12 @@ router.post('/:id/seen', asyncHandler(async (req, res) => {
   }
   res.json({ seen: true });
 }));
-router.post('/:id/love', asyncHandler(async (req, res) => {
+router.post('/:id/love', communityAccess, asyncHandler(async (req, res) => {
   const result = await atomic(async session => {
     const now = Date.now();
     const story = await Story.findOne({ _id: req.params.id, expiresAt: { $gt: new Date(now) } }).session(session);
     if (!story) fail(404, 'Story expired');
-    if (!await canReadStory(req.user._id, story.author, session)) fail(404, 'Story unavailable');
+    if (!await canReadStory(req.user, story, session)) fail(404, 'Story unavailable');
     const selfLove = String(story.author) === String(req.user._id);
     const edge = await StoryInteraction.findOneAndUpdate({ story: story._id, user: req.user._id }, { $setOnInsert: { story: story._id, user: req.user._id } }, { upsert: true, new: true, session });
     const giver = await statsFor(req.user._id, session);
