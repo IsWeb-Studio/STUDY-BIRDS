@@ -25,6 +25,7 @@ import '../services_support/support_team_ai_screens.dart'
 import '../universities_programs_countries/explore_hub_screen.dart';
 import 'student_rewards_currency_screens.dart';
 import 'profile_story_score.dart';
+import '../roles/admin_app_notification_screen.dart';
 import '../../core/repositories/stories_repository.dart';
 import '../../core/widgets/student_achievements.dart';
 import '../stories/friends_screen.dart';
@@ -164,6 +165,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       title: 'الملف الشخصي',
       showBackButton: true,
       actions: [
+        if (user?.role == UserRole.admin)
+          IconButton(
+            tooltip: 'نشر إشعار للتطبيق',
+            icon: const Icon(Icons.campaign_outlined, color: Colors.white),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const AdminAppNotificationScreen(),
+            )),
+          ),
         IconButton(
           tooltip: 'الإعدادات',
           icon: const Icon(Icons.settings_outlined, color: Colors.white),
@@ -337,6 +346,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       })),
           ]),
         ),
+
+        if (user?.role == UserRole.admin)
+          AppCard(
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+              builder: (_) => const AdminAppNotificationScreen(),
+            )),
+            child: const ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(Icons.campaign_rounded, color: AppColors.orange),
+              title: Text('نشر إشعار للتطبيق',
+                  style: AppTextStyles.cardTitle),
+              subtitle: Text('إرسال إعلان إلى جميع الحسابات النشطة',
+                  style: AppTextStyles.caption),
+              trailing: Icon(Icons.chevron_left_rounded),
+            ),
+          ),
 
         if (user?.role == UserRole.student)
           AppCard(
