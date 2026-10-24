@@ -6,7 +6,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { MongoMemoryReplSet } = require(path.join(process.env.STUDY_BIRDS_TEST_TOOLS, 'node_modules/mongodb-memory-server-core'));
 
-test('game points: real play, daily limit, races, next day and student-only eligibility', async () => {
+test('game activity: real multiplayer, daily limit, races, streak and role eligibility', async () => {
   process.env.JWT_SECRET = 'wink-reward-test';
   const mongo = await MongoMemoryReplSet.create({ replSet: { count: 1, storageEngine: 'wiredTiger', ip: '127.0.0.1' } });
   let server;
@@ -63,10 +63,32 @@ test('game points: real play, daily limit, races, next day and student-only elig
     assert.equal(await awardDailyGame(users[0], active, now), 0, 'a delayed previous-day request cannot award again');
     const fake = { ...active, players: [...active.players, { id: String(users[5]._id) }] };
     assert.equal(await awardDailyGame(users[5], fake, tomorrow), 0);
+    const parentGame = {
+      ...active,
+      players: [...active.players, { id: String(users[5]._id), left: false, bot: false }],
+    };
+    assert.equal(await awardDailyGame(users[5], parentGame, tomorrow), 0,
+      'non-student online activity advances streak but grants no game points');
+    let parentStats = await StoryStats.findOne({ user: users[5]._id }).lean();
+    assert.equal(parentStats.gameStreakDays, 1);
+    assert.equal(parentStats.gameActivityDays.length, 1);
+    assert.equal(await awardDailyGame(users[5], parentGame, tomorrow + 1000), 0,
+      'one activity per calendar day');
+    assert.equal(await awardDailyGame(users[5], parentGame, tomorrow + 24 * 60 * 60 * 1000), 0);
+    parentStats = await StoryStats.findOne({ user: users[5]._id }).lean();
+    assert.equal(parentStats.gameStreakDays, 2);
+    assert.equal(parentStats.total_points || 0, 0);
+    assert.equal(await awardDailyGame(users[5], { ...parentGame, practice: { owner: String(users[5]._id) } }, tomorrow + 48 * 60 * 60 * 1000), 0,
+      'practice play never advances a streak');
+    parentStats = await StoryStats.findOne({ user: users[5]._id }).lean();
+    assert.equal(parentStats.gameStreakDays, 2);
     for (const phase of ['lobby', 'reveal', 'finished', 'closed']) {
       assert.equal(await awardDailyGame(users[4], { ...active, phase }, tomorrow), 0);
     }
-    assert.equal(await StoryStats.countDocuments({ user: { $in: [users[4]._id, users[5]._id] } }), 0);
+    assert.equal(await StoryStats.countDocuments({ user: users[4]._id }), 0,
+      'a student who never participated still has no reward record');
+    assert.equal(await StoryStats.countDocuments({ user: users[5]._id }), 1,
+      'the parent game streak belongs to the parent account');
     const balances = [99999, 100000, 199999, 200000].map(total_points => progress({ total_points }, now));
     assert.equal(balances[0].ringTier, 'orange'); assert.equal(balances[1].ringTier, 'elite');
     assert.equal(balances[2].cosmeticVerified, false); assert.equal(balances[3].cosmeticVerified, true);

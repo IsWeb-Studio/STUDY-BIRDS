@@ -13,6 +13,7 @@ const StoryVideo = require('../models/StoryVideo');
 const { parseVideo, validateVideo, uploadStoryVideo } = require('../utils/storyVideoUpload');
 const communityAccess = authorize(...COMMUNITY_ROLES);
 const storyPublisherAccess = authorize(...COMMUNITY_ROLES);
+const streakSource = role => role === 'student' ? 'story' : 'game';
 router.use(protect, communityAccess);
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 router.use(rateLimit({ windowMs: 60000, limit: 120, keyGenerator: req => String(req.user._id), standardHeaders: 'draft-7', legacyHeaders: false }));
@@ -36,18 +37,44 @@ async function viewCounts(ids, owner) {
   return new Map(rows.map(row => [String(row._id), row.count]));
 }
 router.get('/progress', asyncHandler(async (req, res) => {
+  const source = streakSource(req.user.role);
+  const fields = source === 'story'
+    ? { at: 'lastStoryAt', days: 'streak_days', longest: 'longestStreak', broken: 'brokenStreakDays' }
+    : { at: 'lastGameAt', days: 'gameStreakDays', longest: 'gameLongestStreak', broken: 'gameBrokenStreakDays' };
   // Persist lazy expiry with a conditional update so it cannot overwrite a concurrent post.
-  await StoryStats.updateOne({ user: req.user._id, lastStoryAt: { $lte: new Date(Date.now() - 36 * rules.HOUR) }, streak_days: { $gt: 0 } }, [{ $set: { brokenStreakDays: '$streak_days', streak_days: 0 } }]);
-  res.json(rules.progress(await StoryStats.findOne({ user: req.user._id }).lean() || {}));
+  await StoryStats.updateOne({ user: req.user._id, [fields.at]: { $lte: new Date(Date.now() - 36 * rules.HOUR) }, [fields.days]: { $gt: 0 } }, [{ $set: { [fields.longest]: { $max: [{ $ifNull: [`$${fields.longest}`, 0] }, `$${fields.days}`] }, [fields.broken]: `$${fields.days}`, [fields.days]: 0 } }]);
+  res.json(rules.progress(await StoryStats.findOne({ user: req.user._id }).lean() || {}, Date.now(), source));
 }));
 router.post('/streak/restore', asyncHandler(async (req, res) => {
   const result = await atomic(async session => {
     const stats = await statsFor(req.user._id, session);
-    const restored = rules.restoreStreak(stats, Date.now());
+    const restored = rules.restoreStreak(stats, Date.now(), streakSource(req.user.role));
     await stats.save({ session });
     return restored;
   });
   res.json(result);
+}));
+router.get('/streak/details', asyncHandler(async (req, res) => {
+  const stats = await StoryStats.findOne({ user: req.user._id }).lean() || {};
+  const source = streakSource(req.user.role);
+  const now = Date.now(), current = rules.progress(stats, now, source);
+  if (source === 'game') return res.json(current);
+  const days = new Set(stats.activityDays || []);
+  let lastAt = null, lastDay = null, run = 0, longest = current.longestStreak;
+  const firstCalendarDay = current.activityCalendar[0]?.day;
+  for await (const story of Story.find({ author: req.user._id, deletedAt: null }).select('createdAt').sort({ createdAt: 1 }).lean().cursor()) {
+    const at = +new Date(story.createdAt);
+    if (!Number.isFinite(at) || at > now) continue;
+    const day = rules.dayKey(at);
+    if (lastAt == null || at - lastAt >= 36 * rules.HOUR) run = 0;
+    if (!run || day !== lastDay) run++;
+    longest = Math.max(longest, run);
+    lastAt = at;
+    lastDay = day;
+    if (firstCalendarDay && day >= firstCalendarDay) days.add(day);
+  }
+  res.json({ ...current, longestStreak: longest,
+    activityCalendar: current.activityCalendar.map(row => ({ ...row, active: row.active || days.has(row.day) })) });
 }));
 router.put('/preferences', asyncHandler(async (req, res) => {
   const emoji = req.body?.scoreEmoji;
@@ -55,7 +82,7 @@ router.put('/preferences', asyncHandler(async (req, res) => {
   // Only the cosmetic preference can change here; never accept balances from a client.
   const stats = await StoryStats.findOneAndUpdate({ user: req.user._id },
     { $set: { scoreEmoji: emoji } }, { upsert: true, new: true, runValidators: true });
-  res.json(rules.progress(stats));
+  res.json(rules.progress(stats, Date.now(), streakSource(req.user.role)));
 }));
 // Small uncached snapshot for active screens; never reload images or the full feed.
 router.get('/updates', communityAccess, asyncHandler(async (req, res) => {
@@ -68,7 +95,7 @@ router.get('/updates', communityAccess, asyncHandler(async (req, res) => {
   const edges = await StoryInteraction.find({ story: { $in: readable.map(s => s._id) }, user: req.user._id }).select('story lovedAt seenAt').lean();
   const byId = new Map(edges.map(e => [String(e.story), e]));
   const stats = await StoryStats.findOne({ user: req.user._id }).lean();
-  res.json({ progress: rules.progress(stats || {}), updates: readable.map(s => ({
+  res.json({ progress: rules.progress(stats || {}, Date.now(), streakSource(req.user.role)), updates: readable.map(s => ({
     id: String(s._id), loveCount: s.loveCount,
     ...(String(s.author._id) === String(req.user._id) ? { viewCount: views.get(String(s._id)) || 0 } : {}),
     loved: !!byId.get(String(s._id))?.lovedAt, seen: !!byId.get(String(s._id))?.seenAt,
@@ -130,15 +157,15 @@ router.post('/', storyPublisherAccess, rateLimit({ windowMs: 3600000, limit: 20,
   const result = await atomic(async session => {
     const now = Date.now();
     const existing = await Story.findOne({ author: req.user._id, operationId }).session(session);
-    if (existing) return { id: existing.id, audience: existing.audience || 'allEligible', progress: rules.progress(await statsFor(req.user._id, session), now), awarded: 0 };
+    if (existing) return { id: existing.id, audience: existing.audience || 'allEligible', progress: rules.progress(await statsFor(req.user._id, session), now, streakSource(req.user.role)), awarded: 0 };
     const video = videoUrl ? await StoryVideo.findOne({ owner: req.user._id, url: videoUrl, expiresAt: { $gt: new Date(now) } }).session(session) : null;
     if (videoUrl && !video) fail(400, 'Upload your own video first');
     const stats = await statsFor(req.user._id, session);
-    const awarded = req.user.role === 'student' ? rules.postReward(stats, now) : 0;
+    const awarded = rules.storyPostReward(stats, now, req.user.role);
     await stats.save({ session });
     const [story] = await Story.create([{ author: req.user._id, operationId, text: text.trim(), audience, imageUrl, videoUrl,
       videoDuration: video?.duration || 0, expiresAt: new Date(now + 24 * rules.HOUR) }], { session });
-    return { id: story.id, audience: story.audience, progress: rules.progress(stats, now), awarded };
+    return { id: story.id, audience: story.audience, progress: rules.progress(stats, now, streakSource(req.user.role)), awarded };
   });
   res.status(201).json({ ...result, ...(req.user.role === 'admin' ? { audience: result.audience } : {}) });
 }));
@@ -199,7 +226,7 @@ router.post('/:id/love', communityAccess, asyncHandler(async (req, res) => {
     const selfLove = String(story.author) === String(req.user._id);
     const edge = await StoryInteraction.findOneAndUpdate({ story: story._id, user: req.user._id }, { $setOnInsert: { story: story._id, user: req.user._id } }, { upsert: true, new: true, session });
     const giver = await statsFor(req.user._id, session);
-    if (edge.lovedAt) return { loved: true, loveCount: story.loveCount, awarded: 0, progress: rules.progress(giver, now) };
+    if (edge.lovedAt) return { loved: true, loveCount: story.loveCount, awarded: 0, progress: rules.progress(giver, now, streakSource(req.user.role)) };
     edge.lovedAt = new Date(now); await edge.save({ session });
     let awarded = 0;
     if (!selfLove) {
@@ -208,7 +235,7 @@ router.post('/:id/love', communityAccess, asyncHandler(async (req, res) => {
       awarded = rules.loveReward(giver, now); await giver.save({ session });
     }
     story.loveCount++; await story.save({ session });
-    return { loved: true, loveCount: story.loveCount, awarded, progress: rules.progress(giver, now) };
+    return { loved: true, loveCount: story.loveCount, awarded, progress: rules.progress(giver, now, streakSource(req.user.role)) };
   });
   res.json(result);
 }));

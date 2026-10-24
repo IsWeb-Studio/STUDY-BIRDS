@@ -24,7 +24,7 @@ test('stories: authorization, concurrent rewards, durable replay, seen, expiry a
     const { Session } = require('../src/models/MobileWorkspace');
     const Friendship = require('../src/models/Friendship');
     await Promise.all([User.init(), Story.init(), StoryStats.init(), StoryInteraction.init(), Session.init(), Friendship.init()]);
-    const users = await User.create(Array.from({ length: 13 }, (_, i) => ({ name: `Student ${i}`, email: `story${i}@example.test`, role: i === 12 ? 'parent' : 'student' })));
+    const users = await User.create(Array.from({ length: 14 }, (_, i) => ({ name: `Story user ${i}`, email: `story${i}@example.test`, role: i === 12 ? 'parent' : i === 13 ? 'admin' : 'student' })));
     const friends = [];
     for (let a = 0; a < 12; a++) for (let b = a + 1; b < 12; b++) friends.push({ _id: Friendship.pair(users[a]._id, users[b]._id), requester: users[a]._id, recipient: users[b]._id, status: 'accepted' });
     await Friendship.insertMany(friends);
@@ -45,6 +45,16 @@ test('stories: authorization, concurrent rewards, durable replay, seen, expiry a
     assert.equal((await call('POST', '', 0, { text: 'bad' })).status, 400);
     assert.equal((await call('POST', '', 0, { text: '', operationId: 'empty-test' })).status, 400);
     assert.equal((await call('POST', '', 0, { text: 'bad image', operationId: 'bad-image-test', imageUrl: 'https://example.com/photo.png' })).status, 400);
+    const adminStory = await call('POST', '', 13, { text: 'Official update', audience: 'students', operationId: 'admin-story-points-01' });
+    assert.equal(adminStory.status, 201, JSON.stringify(adminStory));
+    assert.equal(adminStory.data.awarded, 100, 'the first community story of the day earns points');
+    assert.equal(adminStory.data.progress.total_points, 100);
+    assert.equal(adminStory.data.progress.streak_days, 0, 'an admin story does not advance the game-based streak');
+    const adminStats = await StoryStats.findOne({ user: users[13]._id }).lean();
+    assert.equal(adminStats.gameStreakDays || 0, 0);
+    const adminExtra = await call('POST', '', 13, { text: 'Second update', audience: 'students', operationId: 'admin-story-points-02' });
+    assert.equal(adminExtra.data.awarded, 0, 'additional stories on the same day do not farm points');
+    assert.equal((await call('GET', '/progress', 13)).data.total_points, 100);
     const repeated = await Promise.all(Array.from({ length: 4 }, () => post(0, 'same-operation')));
     for (const response of repeated) assert.equal(response.status, 201, JSON.stringify(response));
     assert.equal(await Story.countDocuments(), 1);
