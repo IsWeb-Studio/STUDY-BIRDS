@@ -1,3 +1,4 @@
+import 'profile_country_picker.dart';
 import 'dart:async';
 
 import '../../core/utils/document_picker.dart';
@@ -208,14 +209,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _controllers['currentResidenceCountry']!.text = countryName;
       _controllers['residenceRegion']!.text =
           data['currentResidenceRegion']?.toString() ?? '';
-      final residenceCode = data['currentResidenceCountryCode']?.toString() ?? '';
-      final residenceByName = kCountries.where((country) => country.nameAr == countryName);
+      final residenceCode =
+          data['currentResidenceCountryCode']?.toString() ?? '';
+      final residenceByName =
+          kCountries.where((country) => country.nameAr == countryName);
       _residenceIso2 = countryByIso2(residenceCode)?.iso2 ??
           (residenceByName.isEmpty ? '' : residenceByName.first.iso2);
       final nationality = _controllers['nationality']!.text;
       final nationalityCode = data['nationalityCountryCode']?.toString() ?? '';
       final nationalityByName = kCountries.where((country) =>
-          country.nameAr == nationality || kNationalityByIso2[country.iso2] == nationality);
+          country.nameAr == nationality ||
+          kNationalityByIso2[country.iso2] == nationality);
       _nationalityIso2 = countryByIso2(nationalityCode)?.iso2 ??
           (nationalityByName.isEmpty ? '' : nationalityByName.first.iso2);
 
@@ -441,8 +445,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     if (code.isEmpty) return;
     setState(() {
       _nationalityIso2 = code;
-      _controllers['nationality']!.text =
-          kNationalityByIso2[code] ?? picked['nameAr']?.toString() ?? picked['name']?.toString() ?? '';
+      _controllers['nationality']!.text = kNationalityByIso2[code] ??
+          picked['nameAr']?.toString() ??
+          picked['name']?.toString() ??
+          '';
     });
   }
 
@@ -458,7 +464,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: const Text('تغيير بلد الإقامة؟'),
-          content: const Text('سيُمسح الإقليم الحالي لأنه مرتبط بالبلد المحدد.'),
+          content:
+              const Text('سيُمسح الإقليم الحالي لأنه مرتبط بالبلد المحدد.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
@@ -489,37 +496,52 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final countries = await CatalogRepository.instance.getCountryDirectory();
       if (!mounted) return;
-      final residence = (_profile['currentResidenceCountryCode']?.toString() ?? '').toUpperCase();
-      final residenceName = _controllers['currentResidenceCountry']!.text.trim();
-      final nationality = (_profile['nationalityCountryCode']?.toString() ?? '').toUpperCase();
+      final residence =
+          (_profile['currentResidenceCountryCode']?.toString() ?? '')
+              .toUpperCase();
+      final residenceName =
+          _controllers['currentResidenceCountry']!.text.trim();
+      final nationality =
+          (_profile['nationalityCountryCode']?.toString() ?? '').toUpperCase();
       final nationalityName = _controllers['nationality']!.text.trim();
-      Map<String, dynamic>? findCountry(String code, String name, {bool nationalityValue = false}) {
+      Map<String, dynamic>? findCountry(String code, String name,
+          {bool nationalityValue = false}) {
         for (final country in countries) {
           final countryCode = country['code']?.toString().toUpperCase() ?? '';
           final countryName = country['name']?.toString() ?? '';
           final countryNameAr = country['nameAr']?.toString() ?? '';
-          final isNameMatch = countryName == name || countryNameAr == name ||
+          final isNameMatch = countryName == name ||
+              countryNameAr == name ||
               (nationalityValue && kNationalityByIso2[countryCode] == name);
-          if ((code.isNotEmpty && countryCode == code) || (code.isEmpty && isNameMatch)) return country;
+          if ((code.isNotEmpty && countryCode == code) ||
+              (code.isEmpty && isNameMatch)) {
+            return country;
+          }
         }
         return null;
       }
+
       final residenceCountry = findCountry(residence, residenceName);
-      final nationalityCountry = findCountry(nationality, nationalityName, nationalityValue: true);
+      final nationalityCountry =
+          findCountry(nationality, nationalityName, nationalityValue: true);
       List<Map<String, dynamic>> targetOptions = [];
       try {
-        targetOptions = await CatalogRepository.instance.getUniversityCountries();
+        targetOptions =
+            await CatalogRepository.instance.getUniversityCountries();
       } catch (swallowedError, swallowedStack) {
         ErrorReporter.swallowed(swallowedError, swallowedStack,
             'screens/profile_account/edit_profile_screen.dart:target_countries');
       }
       final existingTargets = _profile['targetCountries'] is List
-          ? (_profile['targetCountries'] as List).map((value) => value.toString()).toList()
+          ? (_profile['targetCountries'] as List)
+              .map((value) => value.toString())
+              .toList()
           : <String>[];
       final storedCodes = _profile['targetCountryCodes'];
       final resolvedCodes = <String>{};
       if (storedCodes is List) {
-        resolvedCodes.addAll(storedCodes.map((value) => value.toString().toUpperCase()));
+        resolvedCodes
+            .addAll(storedCodes.map((value) => value.toString().toUpperCase()));
       } else {
         for (final label in existingTargets) {
           Map<String, dynamic>? match;
@@ -536,7 +558,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
       final canonicalByCode = {
         for (final country in countries)
-          if (country['code'] is String) (country['code'] as String).toUpperCase(): country,
+          if (country['code'] is String)
+            (country['code'] as String).toUpperCase(): country,
       };
       resolvedCodes.removeWhere((code) => !canonicalByCode.containsKey(code));
       final resolvedNames = resolvedCodes
@@ -545,13 +568,17 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           .expand((country) => [country['name'], country['nameAr']])
           .whereType<String>()
           .toSet();
-      final legacyTargets = existingTargets.where((label) => !resolvedNames.contains(label)).toList();
+      final legacyTargets = existingTargets
+          .where((label) => !resolvedNames.contains(label))
+          .toList();
       setState(() {
         _profileCountries = countries;
         _targetCountryOptions = targetOptions;
         _countryDirectoryReady = true;
-        _residenceIso2 = residenceCountry?['code']?.toString().toUpperCase() ?? '';
-        _nationalityIso2 = nationalityCountry?['code']?.toString().toUpperCase() ?? '';
+        _residenceIso2 =
+            residenceCountry?['code']?.toString().toUpperCase() ?? '';
+        _nationalityIso2 =
+            nationalityCountry?['code']?.toString().toUpperCase() ?? '';
         _selectedTargetCountryCodes = resolvedCodes.toList();
         _legacyTargetCountries = legacyTargets;
         _selectedTargetCountries = [
@@ -573,187 +600,80 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       await _loadCountryDirectory();
       if (_profileCountries.isEmpty || !mounted) return null;
     }
-    final search = TextEditingController();
-    try {
-      return await showModalBottomSheet<Map<String, dynamic>>(
-        context: context,
-        isScrollControlled: true,
-        builder: (sheetContext) => StatefulBuilder(
-          builder: (context, updateSheet) {
-            final query = search.text.trim().toLowerCase();
-            final filtered = _profileCountries.where((country) {
-              return [country['name'], country['nameAr'], country['code']]
-                  .whereType<String>()
-                  .any((value) => value.toLowerCase().contains(query));
-            }).toList();
-            return SafeArea(
-              child: SizedBox(
-                height: MediaQuery.sizeOf(context).height * .78,
-                child: Column(children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: TextField(
-                      controller: search,
-                      autofocus: true,
-                      onChanged: (_) => updateSheet(() {}),
-                      decoration: InputDecoration(
-                        labelText: 'Ø§Ø¨Ø­Ø« Ø¹Ù† Ø¯ÙˆÙ„Ø©',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(14)),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: filtered.isEmpty
-                        ? const Center(child: Text('Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¯ÙˆÙ„ Ù…Ø·Ø§Ø¨Ù‚Ø©'))
-                        : ListView.builder(
-                            itemCount: filtered.length,
-                            itemBuilder: (_, index) {
-                              final country = filtered[index];
-                              return ListTile(
-                                title: Text(country['nameAr']?.toString() ?? country['name']?.toString() ?? ''),
-                                subtitle: Text('${country['name'] ?? ''} · ${country['code'] ?? ''}'),
-                                onTap: () => Navigator.pop(sheetContext, country),
-                              );
-                            },
-                          ),
-                  ),
-                ]),
-              ),
-            );
-          },
-        ),
-      );
-    } finally {
-      search.dispose();
-    }
+    return showModalBottomSheet<Map<String, dynamic>>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => ProfileCountryPicker(countries: _profileCountries),
+    );
   }
 
   String _countryLabel(Map<String, dynamic>? country) {
     final arabicName = country?['nameAr']?.toString() ?? '';
-    return arabicName.isNotEmpty ? arabicName : country?['name']?.toString() ?? '';
+    return arabicName.isNotEmpty
+        ? arabicName
+        : country?['name']?.toString() ?? '';
   }
 
   Future<void> _pickTargetCountries() async {
     if (_targetCountryOptions.isEmpty) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('ØªØ¹Ø°Ø± ØªØ­Ù…ÙŠÙ„ Ø§Ù„Ø¯ÙˆÙ„ Ø§Ù„Ù…ØªØ§Ø­Ø© Ù…Ø¹ Ø¬Ø§Ù…Ø¹Ø§Øª.'),
+          content: Text(
+              'تعذر تحميل دول الدراسة المتاحة. تحقق من الاتصال وحاول مجددًا.'),
         ));
       }
       return;
     }
     final optionsByCode = <String, Map<String, dynamic>>{
       for (final country in [..._targetCountryOptions, ..._profileCountries])
-        if (country['code'] is String) (country['code'] as String).toUpperCase(): country,
+        if (country['code'] is String)
+          (country['code'] as String).toUpperCase(): country,
     };
     final options = <String, Map<String, dynamic>>{};
     for (final country in _targetCountryOptions) {
-      if (country['code'] is String) options[(country['code'] as String).toUpperCase()] = country;
+      if (country['code'] is String) {
+        options[(country['code'] as String).toUpperCase()] = country;
+      }
     }
     for (final code in _selectedTargetCountryCodes) {
       final country = optionsByCode[code];
       if (country != null) options[code] = country;
     }
-    final search = TextEditingController();
-    try {
-      final selected = await showModalBottomSheet<List<String>>(
-        context: context,
-        isScrollControlled: true,
-        builder: (sheetContext) {
-          final selectedCodes = Set<String>.from(_selectedTargetCountryCodes);
-          return StatefulBuilder(
-            builder: (context, updateSheet) {
-              final query = search.text.trim().toLowerCase();
-              final filtered = options.entries.where((entry) {
-                return [entry.key, entry.value['name'], entry.value['nameAr']]
-                    .whereType<String>()
-                    .any((value) => value.toLowerCase().contains(query));
-              }).toList();
-              return SafeArea(
-                child: SizedBox(
-                  height: MediaQuery.sizeOf(context).height * .82,
-                  child: Column(children: [
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: TextField(
-                        controller: search,
-                        autofocus: true,
-                        onChanged: (_) => updateSheet(() {}),
-                        decoration: const InputDecoration(
-                          labelText: 'Ø§Ø¨Ø­Ø« Ø¹Ù† Ø¯ÙˆÙ„Ø© Ø¯Ø±Ø§Ø³Ø©',
-                          prefixIcon: Icon(Icons.search),
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                      child: filtered.isEmpty
-                          ? const Center(child: Text('Ù„Ø§ ØªÙˆØ¬Ø¯ Ø¯ÙˆÙ„ Ù…ØªØ§Ø­Ø© Ù…Ø·Ø§Ø¨Ù‚Ø©'))
-                          : ListView.builder(
-                              itemCount: filtered.length,
-                              itemBuilder: (_, index) {
-                                final entry = filtered[index];
-                                return CheckboxListTile(
-                                  value: selectedCodes.contains(entry.key),
-                                  title: Text(_countryLabel(entry.value)),
-                                  subtitle: Text('${entry.value['name'] ?? ''} · ${entry.key}'),
-                                  onChanged: (checked) => updateSheet(() {
-                                    if (checked == true) {
-                                      selectedCodes.add(entry.key);
-                                    } else {
-                                      selectedCodes.remove(entry.key);
-                                    }
-                                  }),
-                                );
-                              },
-                            ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: FilledButton(
-                          onPressed: () => Navigator.pop(sheetContext, selectedCodes.toList()),
-                          child: const Text('ØªÙ…'),
-                        ),
-                      ),
-                    ),
-                  ]),
-                ),
-              );
-            },
-          );
-        },
-      );
-      if (selected == null || !mounted) return;
-      final codes = selected.toSet().toList();
-      final legacy = List<String>.from(_legacyTargetCountries);
-      setState(() {
-        _selectedTargetCountryCodes = codes;
-        _selectedTargetCountries = [
-          ...codes.map((code) => _countryLabel(optionsByCode[code])).where((name) => name.isNotEmpty),
-          ...legacy,
-        ];
-      });
-    } finally {
-      search.dispose();
-    }
+    final selected = await showModalBottomSheet<List<String>>(
+      context: context,
+      isScrollControlled: true,
+      builder: (_) => ProfileCountryPicker(
+          countries: options.values.toList(),
+          multiple: true,
+          initialCodes: _selectedTargetCountryCodes),
+    );
+    if (selected == null || !mounted) return;
+    setState(() {
+      _selectedTargetCountryCodes = selected.toSet().toList();
+      _selectedTargetCountries = [
+        ..._selectedTargetCountryCodes
+            .map((code) => _countryLabel(optionsByCode[code]))
+            .where((name) => name.isNotEmpty),
+        ..._legacyTargetCountries,
+      ];
+    });
   }
 
   Widget _targetCountriesField() => Padding(
         padding: const EdgeInsets.only(bottom: 18),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('Ø§Ù„Ø¯ÙˆÙ„ Ø§Ù„Ù…Ø³ØªÙ‡Ø¯ÙØ©', style: AppTextStyles.caption),
+          const Text('الدول المستهدفة', style: AppTextStyles.caption),
           const SizedBox(height: 8),
           Wrap(spacing: 8, runSpacing: 6, children: [
             ..._selectedTargetCountries.map((country) => Chip(
                   label: Text(country, style: const TextStyle(fontSize: 13)),
                   deleteIcon: const Icon(Icons.close, size: 14),
-                  onDeleted: _saving ? null : () => _removeTargetCountry(country),
+                  onDeleted:
+                      _saving ? null : () => _removeTargetCountry(country),
                 )),
             if (!_saving)
               ActionChip(
-                label: const Text('+ Ø¥Ø¶Ø§ÙØ©'),
+                label: const Text('+ إضافة'),
                 onPressed: _pickTargetCountries,
               ),
           ]),
@@ -783,23 +703,33 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _pickAndUploadPassport() async {
     if (_passportUploading) return;
     if (_passportDoc != null && mounted) {
-      final replace = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(
-        title: const Text('استبدال جواز السفر المحفوظ؟'),
-        content: const Text('النسخة الجديدة ستُستخدم في الطلبات المستقبلية. الطلبات السابقة تحتفظ بالجواز المرفق بها.'),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('متابعة'))],
-      ));
+      final replace = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+                title: const Text('استبدال جواز السفر المحفوظ؟'),
+                content: const Text(
+                    'النسخة الجديدة ستُستخدم في الطلبات المستقبلية. الطلبات السابقة تحتفظ بالجواز المرفق بها.'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.pop(ctx, false),
+                      child: const Text('إلغاء')),
+                  FilledButton(
+                      onPressed: () => Navigator.pop(ctx, true),
+                      child: const Text('متابعة'))
+                ],
+              ));
       if (replace != true || !mounted) return;
     }
-    final file = await pickDocument(context, passport: true, allowPassportEditing: false);
+    final file = await pickDocument(context,
+        passport: true, allowPassportEditing: false);
     if (file == null || file.bytes == null || !mounted) return;
     final bytes = file.bytes!;
     final fileName = file.name;
 
     if (!mounted) return;
     if (bytes.length > 5 * 1024 * 1024) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: const Text('حجم الملف كبير جدًا (الحد 5 ميجابايت)')));
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+          content: const Text('حجم الملف كبير جدًا (الحد 5 ميجابايت)')));
       return;
     }
 
@@ -838,7 +768,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     bool readOnly = false,
     VoidCallback? onTap,
     Widget? suffix,
-  }) => Padding(
+  }) =>
+      Padding(
         padding: const EdgeInsets.only(bottom: 18),
         child: TextFormField(
           controller: _controllers[key],
@@ -856,9 +787,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           keyboardType: key == 'gpa'
               ? const TextInputType.numberWithOptions(decimal: true)
               : TextInputType.text,
-          inputFormatters: key == 'gpa'
-              ? [LocalizedDecimalInputFormatter()]
-              : null,
+          inputFormatters:
+              key == 'gpa' ? [LocalizedDecimalInputFormatter()] : null,
           minLines: key == 'bio' ? 3 : 1,
           maxLines: key == 'bio' ? 5 : 1,
           decoration: featureInput(
@@ -1167,7 +1097,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                 'nationality',
                                 readOnly: true,
                                 onTap: _saving ? null : _pickNationality,
-                                suffix: const Icon(Icons.arrow_drop_down_rounded),
+                                suffix:
+                                    const Icon(Icons.arrow_drop_down_rounded),
                               ),
 
                               // Residence country — editable + flag prefix + picker icon
@@ -1185,7 +1116,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       icon: Icon(Icons.arrow_drop_down_rounded,
                                           size: 24,
                                           color: Colors.grey.shade500),
-                                      onPressed: _saving ? null : _pickResidenceCountry,
+                                      onPressed: _saving
+                                          ? null
+                                          : _pickResidenceCountry,
                                     ),
                                   ).copyWith(
                                     prefixIcon: _residenceIso2.isEmpty

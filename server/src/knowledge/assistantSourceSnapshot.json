@@ -1610,7 +1610,7 @@
     },
     {
       "path": "mobile:lib/screens/profile_account/edit_profile_screen.dart",
-      "sha256": "749825de8129a805526b3d670fa4f54f0376fbd205c8c5dccfc9f7790c00c805",
+      "sha256": "ae5dfa8515c2fa1f5fd171bee7622a6cc7e774d4576339aa904959047116ecf8",
       "dependencies": [
         "mobile:lib/core/utils/document_picker.dart",
         "mobile:lib/core/utils/json_safe.dart",
@@ -1727,6 +1727,13 @@
         "MyWalletScreen",
         "FavoritesScreen"
       ],
+      "routes": []
+    },
+    {
+      "path": "mobile:lib/screens/profile_account/profile_country_picker.dart",
+      "sha256": "20e43d50b23183518641be964710f78b35564f27f5d1d563557daeeeebfb9aa3",
+      "dependencies": [],
+      "screens": [],
       "routes": []
     },
     {
