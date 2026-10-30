@@ -53,7 +53,7 @@ const protect = asyncHandler(async (req, res, next) => {
   if (['mobile', 'web'].includes(req.headers['x-study-birds-client'])) {
     const session = await Session.findOneAndUpdate({ digest }, {
       $set: { lastSeen: new Date() },
-      $setOnInsert: { user: user._id, expiresAt: new Date(decoded.exp * 1000), device: String(req.headers['user-agent'] || 'Study Birds Mobile').slice(0, 200) },
+      $setOnInsert: { user: user._id, expiresAt: new Date(decoded.exp * 1000), device: String(req.headers['user-agent'] || 'COVEY Mobile').slice(0, 200) },
     }, { upsert: true, new: true });
     if (session.revoked) { res.status(401); throw new Error('Session revoked. Please sign in again.'); }
   }

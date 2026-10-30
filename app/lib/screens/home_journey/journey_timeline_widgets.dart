@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 
-const journeyGreen = Color(0xFF22B86A);
-const journeyOrange = Color(0xFFF08A24);
+const journeyGreen = AppColors.green;
+const journeyOrange = AppColors.green;
 const journeyGrey = Color(0xFF92959D);
 
 class JourneySummaryCard extends StatelessWidget {
@@ -23,7 +23,7 @@ class JourneySummaryCard extends StatelessWidget {
       decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFEBECF0)),
+          border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
                 color: Colors.black.withValues(alpha: .035),
@@ -53,7 +53,7 @@ class JourneySummaryCard extends StatelessWidget {
                           value: progress,
                           strokeWidth: 5,
                           color: journeyOrange,
-                          backgroundColor: const Color(0xFFE8E9ED),
+                          backgroundColor: AppColors.border,
                           strokeCap: StrokeCap.round)),
                   Text('$percent%',
                       style: const TextStyle(
@@ -125,7 +125,7 @@ class JourneyTimelineTile extends StatelessWidget {
                           width: 2,
                           color: completed
                               ? journeyGreen
-                              : const Color(0xFFE3E5EB)))),
+                              : AppColors.border))),
           ])),
       const SizedBox(width: 12),
       Expanded(

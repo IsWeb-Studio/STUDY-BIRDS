@@ -28,6 +28,9 @@ import 'journey_tracker_screen.dart';
 String? notificationActionLabel(String? link) {
   if (link == null || !link.startsWith('/student/')) return null;
   final dest = link.replaceFirst('/student/', '');
+  if (dest.startsWith('community/messages/')) {
+    return '\u0641\u062a\u062d \u0627\u0644\u0645\u062d\u0627\u062f\u062b\u0629';
+  }
   if (dest.startsWith('messages/')) return 'فتح المحادثة';
   return switch (dest) {
     'documents' || 'upload-document' => 'رفع المستند الآن',
@@ -55,6 +58,13 @@ Widget? notificationScreenForLink(String? link) {
   final parts = dest.split('/');
   final base = parts[0];
   final id = parts.length > 1 && parts[1].isNotEmpty ? parts[1] : null;
+
+  if (base == 'community' && parts.length > 2 && parts[1] == 'messages') {
+    return ConversationThreadScreen(
+      contactId: parts[2],
+      communityMode: true,
+    );
+  }
 
   // Deep link to a specific record by ID.
   if (id != null) {
@@ -110,11 +120,12 @@ class _ApplicationByIdState extends State<_ApplicationById> {
           .cast<Map<String, dynamic>?>()
           .firstWhere((a) => (a?['_id'] ?? a?['id'])?.toString() == widget.id,
               orElse: () => null);
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _app = match;
         });
+      }
     }).catchError((Object e_, StackTrace s_) {
       ErrorReporter.swallowed(
           e_, s_, 'screens/home_journey/notifications_screen.dart:102');
@@ -124,8 +135,9 @@ class _ApplicationByIdState extends State<_ApplicationById> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading)
+    if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     if (_app == null) return const ApplicationsListScreen();
     return ApplicationDetailScreen(application: _app!);
   }
@@ -151,11 +163,12 @@ class _DocumentByIdState extends State<_DocumentById> {
           .cast<Map<String, dynamic>?>()
           .firstWhere((d) => (d?['_id'] ?? d?['id'])?.toString() == widget.id,
               orElse: () => null);
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _doc = match;
         });
+      }
     }).catchError((Object e_, StackTrace s_) {
       ErrorReporter.swallowed(
           e_, s_, 'screens/home_journey/notifications_screen.dart:132');
@@ -165,8 +178,9 @@ class _DocumentByIdState extends State<_DocumentById> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading)
+    if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     if (_doc == null) return const MyDocumentsScreen();
     return DocumentDetailScreen(document: _doc!);
   }
@@ -194,11 +208,12 @@ class _PaymentByIdState extends State<_PaymentById> {
           .firstWhere(
               (inv) => (inv?['_id'] ?? inv?['id'])?.toString() == widget.id,
               orElse: () => null);
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _invoice = match;
         });
+      }
     }).catchError((Object e_, StackTrace s_) {
       ErrorReporter.swallowed(
           e_, s_, 'screens/home_journey/notifications_screen.dart:163');
@@ -208,8 +223,9 @@ class _PaymentByIdState extends State<_PaymentById> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading)
+    if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
     if (_invoice == null) return const PaymentsSummaryScreen();
     return PaymentDetailScreen(invoice: _invoice!);
   }
@@ -281,11 +297,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         _loading ||
         _refreshing ||
         ModalRoute.of(context)?.isCurrent != true ||
-        !TickerMode.of(context) ||
+        !TickerMode.valuesOf(context).enabled ||
         WidgetsBinding.instance.lifecycleState == AppLifecycleState.paused ||
         WidgetsBinding.instance.lifecycleState == AppLifecycleState.inactive ||
-        WidgetsBinding.instance.lifecycleState == AppLifecycleState.hidden)
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.hidden) {
       return;
+    }
     _refreshing = true;
     try {
       final data = await StudentRepository.instance.getNotifications();
@@ -423,13 +440,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                               ? notificationScreenForLink(link)
                               : null;
                           void navigate() async {
+                            if (screen == null) {
+                              await _markRead(n, i);
+                              return;
+                            }
                             // Capture navigator before any await so it stays valid.
                             final navigator = Navigator.of(context);
                             await _markRead(n, i);
-                            if (screen != null) {
-                              await navigator.push(MaterialPageRoute(
-                                  builder: (_) => screen));
-                            }
+                            await navigator.push(MaterialPageRoute(builder: (_) => screen));
                           }
 
                           return AppCard(
@@ -447,7 +465,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                         width: 8,
                                         height: 8,
                                         decoration: const BoxDecoration(
-                                            color: AppColors.orange,
+                                            color: AppColors.green,
                                             shape: BoxShape.circle),
                                       ),
                                     Container(

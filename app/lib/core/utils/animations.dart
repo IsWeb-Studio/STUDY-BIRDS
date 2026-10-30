@@ -165,7 +165,7 @@ class AnimatedProgressRing extends StatelessWidget {
                 value: animatedValue,
                 strokeWidth: strokeWidth,
                 backgroundColor: AppColors.border,
-                valueColor: const AlwaysStoppedAnimation(AppColors.orange),
+                valueColor: const AlwaysStoppedAnimation(AppColors.green),
               ),
               if (centerBuilder != null) centerBuilder!(animatedValue),
             ],

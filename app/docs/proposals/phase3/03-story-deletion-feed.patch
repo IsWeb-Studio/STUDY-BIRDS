@@ -1,0 +1,423 @@
+diff --git a/app/lib/core/repositories/stories_repository.dart b/app/lib/core/repositories/stories_repository.dart
+index 8e8956a..c20593a 100644
+--- a/app/lib/core/repositories/stories_repository.dart
++++ b/app/lib/core/repositories/stories_repository.dart
+@@ -1,5 +1,6 @@
+ import '../network/api_client.dart';
+ import '../services/auth_session.dart';
++import 'dart:async';
+ 
+ class StoryProgress {
+   static const scoreEmojis = [
+@@ -85,6 +86,13 @@ class StoriesRepository {
+   StoriesRepository._();
+   static final instance = StoriesRepository._();
+   final _api = ApiClient.instance;
++  final _changes = StreamController<void>.broadcast();
++  Stream<void> get changes => _changes.stream;
++  final _hidden = <String, Set<String>>{};
++  final _deleting = <String, Future<void>>{};
++  String get _scope => AuthSession.instance.currentUser?.id ?? _token ?? '';
++  bool isHidden(String id) => _hidden[_scope]?.contains(id) ?? false;
++  bool isDeleting(String id) => _deleting.containsKey('$_scope:$id');
+   String? get _token => AuthSession.instance.token;
+   Future<Map<String, dynamic>> updates(List<String> ids) async =>
+       Map<String, dynamic>.from(await _api.get(
+@@ -126,7 +134,8 @@ class StoriesRepository {
+   ({List<StudentStory> stories, String? nextCursor}) _feedPage(dynamic j) => (
+         stories: (j['stories'] as List)
+             .map((e) => StudentStory.fromJson(Map<String, dynamic>.from(e)))
+-            .where((s) => s.expiresAt.isAfter(DateTime.now()))
++            .where(
++                (s) => s.expiresAt.isAfter(DateTime.now()) && !isHidden(s.id))
+             .toList(),
+         nextCursor: j['nextCursor'] as String?
+       );
+@@ -135,28 +144,46 @@ class StoriesRepository {
+     await _api.post('/stories/$id/seen', token: _token);
+   }
+ 
+-  Future<Map<String, dynamic>> viewers(
+-    String id, {
+-    String? before,
+-  }) async =>
+-      Map<String, dynamic>.from(
+-        await _api.get(
++  Future<Map<String, dynamic>> viewers(String id, {String? before}) async =>
++      Map<String, dynamic>.from(await _api.get(
+           '/stories/$id/viewers${before == null ? '' : '?before=${Uri.encodeQueryComponent(before)}'}',
+           token: _token,
+-          cached: false,
+-        ),
+-      );
++          cached: false));
++
++  Future<void> deleteStory(String id) {
++    final scope = _scope, token = _token, key = '$_scope:$id';
++    final pending = _deleting[key];
++    if (pending != null) return pending;
++    _hidden.putIfAbsent(scope, () => <String>{}).add(id);
++    _changes.add(null);
++    final operation = _deleteStory(id, token, scope, key);
++    _deleting[key] = operation;
++    return operation;
++  }
+ 
+-  Future<void> deleteStory(String id) async {
+-    await _api.delete('/stories/$id', token: _token);
++  Future<void> _deleteStory(
++      String id, String? token, String scope, String key) async {
++    try {
++      await _api.delete('/stories/$id', token: token);
++    } catch (_) {
++      _hidden[scope]?.remove(id);
++      rethrow;
++    } finally {
++      _deleting.remove(key);
++      _changes.add(null);
++    }
+   }
+ 
+   Future<Map<String, dynamic>> love(String id) async =>
+       Map<String, dynamic>.from(
+           await _api.post('/stories/$id/love', token: _token));
+-  Future<String> upload(List<int> bytes, String name, {void Function(double)? onProgress}) async {
++  Future<String> upload(List<int> bytes, String name,
++      {void Function(double)? onProgress}) async {
+     final j = await _api.postMultipart('/stories/image',
+-        token: _token, fileBytes: bytes, fileName: name, onProgress: onProgress);
++        token: _token,
++        fileBytes: bytes,
++        fileName: name,
++        onProgress: onProgress);
+     return j['imageUrl'] as String;
+   }
+ 
+diff --git a/app/lib/screens/stories/student_stories.dart b/app/lib/screens/stories/student_stories.dart
+index 412c49a..a21a56f 100644
+--- a/app/lib/screens/stories/student_stories.dart
++++ b/app/lib/screens/stories/student_stories.dart
+@@ -85,6 +85,7 @@ class StudentStoriesState extends State<StudentStories>
+   bool _liveRefreshing = false;
+   final _liveCounts = <String, int>{};
+   StreamSubscription<void>? _friendsSub;
++  StreamSubscription<void>? _storiesSub;
+   bool _openingFriends = false;
+   bool _reloadAfterFriends = false;
+   @override
+@@ -98,6 +99,9 @@ class StudentStoriesState extends State<StudentStories>
+       _loading = false;
+     }
+     _load();
++    _storiesSub = _repo.changes.listen((_) {
++      if (mounted) setState(() {});
++    });
+     _friendsSub = FriendsRepository.instance.changes.listen((_) {
+       if (_refreshing) {
+         _reloadAfterFriends = true;
+@@ -117,6 +121,7 @@ class StudentStoriesState extends State<StudentStories>
+     _timer?.cancel();
+     _liveTimer?.cancel();
+     _friendsSub?.cancel();
++    _storiesSub?.cancel();
+     super.dispose();
+   }
+ 
+@@ -191,7 +196,12 @@ class StudentStoriesState extends State<StudentStories>
+                 ...page.stories
+                     .where((s) => !_stories.any((old) => old.id == s.id))
+               ]
+-            : page.stories;
++            : [
++                ..._stories.where((s) =>
++                    _repo.isDeleting(s.id) &&
++                    !page.stories.any((incoming) => incoming.id == s.id)),
++                ...page.stories,
++              ];
+         _cursor = page.nextCursor;
+         _loading = false;
+         _error = null;
+@@ -234,8 +244,8 @@ class StudentStoriesState extends State<StudentStories>
+   @override
+   Widget build(BuildContext context) {
+     final groups = <String, List<StudentStory>>{};
+-    for (final s
+-        in _stories.where((s) => s.expiresAt.isAfter(DateTime.now()))) {
++    for (final s in _stories.where(
++        (s) => s.expiresAt.isAfter(DateTime.now()) && !_repo.isHidden(s.id))) {
+       groups.putIfAbsent(s.authorId, () => []).add(s);
+     }
+     for (final stories in groups.values) {
+diff --git a/app/lib/screens/stories/story_viewer.dart b/app/lib/screens/stories/story_viewer.dart
+index e6e1bae..906f1cc 100644
+--- a/app/lib/screens/stories/story_viewer.dart
++++ b/app/lib/screens/stories/story_viewer.dart
+@@ -28,7 +28,7 @@ class _StoryViewerState extends State<StoryViewer>
+   bool _closing = false, _ready = false, _held = false, _polling = false;
+   bool _foreground = true;
+   bool _attached = true;
+-  bool _deleting = false, _confirmingDelete = false, _showHeart = false;
++  bool _confirmingDelete = false, _showHeart = false;
+   final _pendingLoves = <String>{};
+   final _deleted = <String>{};
+   Timer? _heartTimer;
+@@ -80,8 +80,7 @@ class _StoryViewerState extends State<StoryViewer>
+       await _video?.pause();
+       if (!mounted) return;
+       await Navigator.of(context).push(
+-        MaterialPageRoute(builder: (_) => StoryViewersScreen(storyId: id)),
+-      );
++          MaterialPageRoute(builder: (_) => StoryViewersScreen(storyId: id)));
+     } finally {
+       _held = false;
+       if (mounted && !_closing) {
+@@ -262,14 +261,13 @@ class _StoryViewerState extends State<StoryViewer>
+   }
+ 
+   Future<void> _refreshLive() async {
+-    if (!mounted || _closing || !_visible || _polling || _deleting) return;
++    if (!mounted || _closing || !_visible || _polling) return;
+     _polling = true;
+     final id = _story.id;
+     final revision = _loveRevision;
+     try {
+       final data = await StoriesRepository.instance.updates([id]);
+-      if (!mounted || _closing || !_visible || _deleting || _story.id != id)
+-        return;
++      if (!mounted || _closing || !_visible || _story.id != id) return;
+       final updates = data['updates'] as List;
+       if (updates.isEmpty) {
+         _move(1);
+@@ -290,12 +288,13 @@ class _StoryViewerState extends State<StoryViewer>
+     }
+   }
+ 
+-  void _move(int step) {
++  void _move(int step, {bool removeDeletedRoute = false}) {
+     if (_closing) return;
+     var next = _index + step;
+     while (next >= 0 &&
+         next < widget.stories.length &&
+-        _deleted.contains(widget.stories[next].id)) {
++        (_deleted.contains(widget.stories[next].id) ||
++            StoriesRepository.instance.isHidden(widget.stories[next].id))) {
+       next += step;
+     }
+     if (next >= widget.stories.length) {
+@@ -303,7 +302,15 @@ class _StoryViewerState extends State<StoryViewer>
+       _clock.stop();
+       if (_video != null) unawaited(_video!.pause());
+       _liveTimer?.cancel();
+-      Navigator.pop(context);
++      final navigator = Navigator.of(context);
++      final route = ModalRoute.of(context);
++      if (removeDeletedRoute && route != null) {
++        // The confirmation dialog may still be finishing its pop animation.
++        // Remove this exact viewer instead of accidentally popping the dialog.
++        navigator.removeRoute(route);
++      } else {
++        navigator.pop();
++      }
+       return;
+     }
+     if (next < 0) return;
+@@ -318,7 +325,6 @@ class _StoryViewerState extends State<StoryViewer>
+   Future<void> _love() async {
+     final story = _story;
+     if (_pendingLoves.contains(story.id) ||
+-        _deleting ||
+         !story.expiresAt.isAfter(DateTime.now()) ||
+         story.loved ||
+         _loved.contains(story.id)) {
+@@ -358,9 +364,10 @@ class _StoryViewerState extends State<StoryViewer>
+   }
+ 
+   Future<void> _deleteStory() async {
+-    if (_deleting ||
+-        _confirmingDelete ||
+-        _story.authorId != AuthSession.instance.currentUser?.id) return;
++    if (_confirmingDelete ||
++        _story.authorId != AuthSession.instance.currentUser?.id) {
++      return;
++    }
+     _confirmingDelete = true;
+     _held = true;
+     _clock.stop();
+@@ -384,15 +391,10 @@ class _StoryViewerState extends State<StoryViewer>
+                 ],
+               ));
+       if (confirm != true || !mounted) return;
+-      setState(() => _deleting = true);
+-      await StoriesRepository.instance.deleteStory(id);
+-      if (!mounted) return;
+-      _deleted.add(id);
+-      _move(1);
++      unawaited(_deleteConfirmed(id, ScaffoldMessenger.of(context)));
+     } catch (_) {
+       if (mounted) setState(() => _error = 'تعذر حذف الستوري. حاول مجدداً.');
+     } finally {
+-      _deleting = false;
+       _confirmingDelete = false;
+       _held = false;
+       if (mounted && !_closing) {
+@@ -402,6 +404,29 @@ class _StoryViewerState extends State<StoryViewer>
+     }
+   }
+ 
++  Future<void> _deleteConfirmed(
++      String id, ScaffoldMessengerState messenger) async {
++    final deletion = StoriesRepository.instance.deleteStory(id);
++    _deleted.add(id);
++    if (mounted && !_closing && _story.id == id) {
++      _move(1, removeDeletedRoute: true);
++    }
++    try {
++      await deletion;
++    } catch (_) {
++      if (mounted && !_closing) setState(() => _deleted.remove(id));
++      if (messenger.mounted) {
++        messenger.showSnackBar(SnackBar(
++          content:
++              const Text('لم يكتمل حذف الستوري. تحقق من الاتصال وحاول مجدداً.'),
++          action: SnackBarAction(
++              label: 'إعادة المحاولة',
++              onPressed: () => unawaited(_deleteConfirmed(id, messenger))),
++        ));
++      }
++    }
++  }
++
+   Widget _image(StudentStory story) => Image.network(story.imageUrl,
+           key: ValueKey(story.id), fit: BoxFit.contain,
+           frameBuilder: (context, child, frame, synchronous) {
+@@ -501,13 +526,8 @@ class _StoryViewerState extends State<StoryViewer>
+             if (story.authorId == AuthSession.instance.currentUser?.id)
+               IconButton(
+                   tooltip: 'حذف الستوري',
+-                  onPressed: _deleting ? null : _deleteStory,
+-                  icon: _deleting
+-                      ? const SizedBox.square(
+-                          dimension: 20,
+-                          child: CircularProgressIndicator(
+-                              strokeWidth: 2, color: Colors.white))
+-                      : const Icon(Icons.delete_outline_rounded)),
++                  onPressed: _deleteStory,
++                  icon: const Icon(Icons.delete_outline_rounded)),
+             IconButton(
+                 tooltip: 'إغلاق',
+                 onPressed: () => Navigator.pop(context),
+@@ -633,8 +653,7 @@ class _StoryViewerState extends State<StoryViewer>
+                                           onPressed: expired ||
+                                                   loved ||
+                                                   _pendingLoves
+-                                                      .contains(story.id) ||
+-                                                  _deleting
++                                                      .contains(story.id)
+                                               ? null
+                                               : () {
+                                                   if (_pressedLoveId ==
+diff --git a/app/test/story_deletion_test.dart b/app/test/story_deletion_test.dart
+new file mode 100644
+--- /dev/null
++++ b/app/test/story_deletion_test.dart
+@@ -0,0 +1,60 @@
++import 'dart:async';
++import 'dart:convert';
++import 'package:flutter_test/flutter_test.dart';
++import 'package:http/http.dart' as http;
++import 'package:http/testing.dart';
++import 'package:study_birds/core/repositories/stories_repository.dart';
++import 'package:study_birds/core/services/auth_session.dart';
++
++void main() {
++  TestWidgetsFlutterBinding.ensureInitialized();
++  test(
++      'pending deletion hides cached stories, deduplicates requests and restores on failure',
++      () async {
++    final previous = AuthSession.instance.currentUser,
++        oldToken = AuthSession.instance.token;
++    AuthSession.instance.currentUser = null;
++    AuthSession.instance.token = 'delete-cache-test';
++    addTearDown(() {
++      AuthSession.instance.currentUser = previous;
++      AuthSession.instance.token = oldToken;
++    });
++    final pending = Completer<http.Response>();
++    var deletes = 0;
++    final repo = StoriesRepository.instance;
++    await http.runWithClient(() async {
++      await repo.feed();
++      expect(repo.cachedFeed()!.stories.length, 1);
++      final deletion = repo.deleteStory('delete-cache-id');
++      final repeated = repo.deleteStory('delete-cache-id');
++      expect(identical(deletion, repeated), true);
++      expect(repo.cachedFeed()!.stories, isEmpty);
++      final failure = expectLater(deletion, throwsException);
++      pending.complete(http.Response('{}', 503));
++      await failure;
++      expect(deletes, 1);
++      expect(repo.isHidden('delete-cache-id'), false);
++      expect(repo.cachedFeed()!.stories.single.id, 'delete-cache-id');
++    },
++        () => MockClient((request) async {
++              if (request.method == 'DELETE') {
++                deletes++;
++                return pending.future;
++              }
++              return http.Response(
++                  jsonEncode({
++                    'stories': [
++                      {
++                        'id': 'delete-cache-id',
++                        'text': 'Test',
++                        'author': {'id': 'owner', 'name': 'Owner'},
++                        'expiresAt': DateTime.now()
++                            .add(const Duration(hours: 1))
++                            .toIso8601String()
++                      }
++                    ]
++                  }),
++                  200);
++            }));
++  });
++}
+diff --git a/app/test/story_viewer_test.dart b/app/test/story_viewer_test.dart
+index c42a5ae..48dd90b 100644
+--- a/app/test/story_viewer_test.dart
++++ b/app/test/story_viewer_test.dart
+@@ -44,6 +44,35 @@ Future<void> open(WidgetTester tester, List<StudentStory> stories,
+ }
+ 
+ void main() {
++  testWidgets('confirmed deletion exits immediately before the server responds',
++      (tester) async {
++    final previous = AuthSession.instance.currentUser;
++    AuthSession.instance.currentUser = const AuthUser(
++        id: 'other',
++        name: 'Me',
++        email: 'me@example.test',
++        role: UserRole.student);
++    addTearDown(() => AuthSession.instance.currentUser = previous);
++    final pending = Completer<http.Response>();
++    await http.runWithClient(() async {
++      await open(tester, [story('slow-delete')]);
++      await tester.tap(find.byTooltip('حذف الستوري'));
++      await tester.pumpAndSettle();
++      await tester.tap(find.text('حذف'));
++      await tester.pump();
++      await tester.pump(const Duration(milliseconds: 350));
++      expect(pending.isCompleted, false);
++      expect(find.byType(StoryViewer), findsNothing);
++      expect(find.text('Open'), findsOneWidget);
++      pending.complete(json({'deleted': true}));
++      await tester.pump();
++      await tester.pumpWidget(const SizedBox());
++    },
++        () => MockClient((request) async => request.method == 'DELETE'
++            ? await pending.future
++            : json({'seen': true})));
++  });
++
+   testWidgets(
+       'heart responds on pointer down and a slow love does not block the next story',
+       (tester) async {

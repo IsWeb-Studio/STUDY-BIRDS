@@ -182,6 +182,9 @@ app.use('/api/consultations', requireDatabaseConnection, require('./routes/consu
 app.use('/api/accommodation', requireDatabaseConnection, require('./routes/accommodationRoutes'));
 app.use('/api/push-tokens', requireDatabaseConnection, require('./routes/pushRoutes'));
 app.use('/api/community', requireDatabaseConnection, require('./routes/communityRoutes'));
+app.use('/api/safety', requireDatabaseConnection, require('./routes/safetyRoutes'));
+app.use('/api/voice', requireDatabaseConnection, require('./routes/voiceRoutes'));
+app.use('/api/admin/push-announcements', requireDatabaseConnection, require('./routes/pushAnnouncementRoutes'));
 app.use('/api/stories', requireDatabaseConnection, require('./routes/storyRoutes'));
 app.use('/api/friends', requireDatabaseConnection, require('./routes/friendRoutes'));
 app.use("/api/admin", requireDatabaseConnection, adminRoutes);

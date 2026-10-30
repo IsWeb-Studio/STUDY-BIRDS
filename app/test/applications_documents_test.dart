@@ -157,6 +157,20 @@ void main() {
             ])));
   });
 
+  testWidgets('menu upload opens the document picker on entry', (tester) async {
+    phone(tester);
+    await http.runWithClient(() async {
+      await tester.pumpWidget(
+          const MaterialApp(home: MyDocumentsScreen(openUploadOnStart: true)));
+      await tester.pumpAndSettle();
+      expect(find.text('اختر نوع المستند'), findsOneWidget);
+      Navigator.of(tester.element(find.text('اختر نوع المستند'))).pop();
+      await tester.pumpAndSettle();
+      expect(find.byType(MyDocumentsScreen), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }, () => MockClient((r) async => reply(<dynamic>[])));
+  });
+
   testWidgets('document type picker scrolls on a small phone', (tester) async {
     phone(tester);
     await http.runWithClient(() async {

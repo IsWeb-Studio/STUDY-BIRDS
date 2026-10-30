@@ -1,3 +1,4 @@
+import 'dart:async';
 import '../network/api_client.dart';
 import '../services/auth_session.dart';
 
@@ -18,16 +19,37 @@ class StoryProgress {
   ];
   final String scoreEmoji;
   final bool playedToday;
-  final int points, days, loves;
+  final int points, days, loves, awardedPoints;
   final int restoresRemaining, restoreLimit, recoverableDays;
   final bool canRestore;
   final bool posted;
   final String state, timeZone;
   final DateTime? resetsAt;
+  final DateTime? serverNow, recoveryExpiresAt, monthResetsAt;
+  final Stopwatch? serverClock;
+  final int longestStreak;
+  final String streakState;
+  final List<StreakDay> calendar;
+  DateTime? get estimatedServerNow =>
+      serverNow?.add(serverClock?.elapsed ?? Duration.zero);
+  Duration remainingUntil(DateTime? deadline) {
+    final now = estimatedServerNow;
+    if (now == null || deadline == null) return Duration.zero;
+    final delta = deadline.difference(now);
+    return delta.isNegative ? Duration.zero : delta;
+  }
+
+  bool get restoreEligible =>
+      canRestore &&
+      restoresRemaining > 0 &&
+      recoverableDays > 0 &&
+      serverNow != null &&
+      remainingUntil(recoveryExpiresAt) > Duration.zero;
   const StoryProgress(
       {this.playedToday = false,
       this.scoreEmoji = '🔥',
       this.points = 0,
+      this.awardedPoints = 0,
       this.days = 0,
       this.restoresRemaining = 0,
       this.restoreLimit = 3,
@@ -37,13 +59,21 @@ class StoryProgress {
       this.posted = false,
       this.state = 'inactive',
       this.timeZone = 'Europe/Istanbul',
-      this.resetsAt});
+      this.resetsAt,
+      this.serverNow,
+      this.recoveryExpiresAt,
+      this.monthResetsAt,
+      this.serverClock,
+      this.longestStreak = 0,
+      this.streakState = 'empty',
+      this.calendar = const []});
   factory StoryProgress.fromJson(Map<String, dynamic> j) => StoryProgress(
       playedToday: j['playedToday'] == true,
       scoreEmoji: scoreEmojis.contains(j['scoreEmoji'])
           ? j['scoreEmoji'] as String
           : '🔥',
       points: (j['total_points'] as num?)?.toInt() ?? 0,
+      awardedPoints: (j['awardedPoints'] as num?)?.toInt() ?? 0,
       days: (j['streak_days'] as num?)?.toInt() ?? 0,
       restoresRemaining: (j['streakRestoresRemaining'] as num?)?.toInt() ?? 0,
       restoreLimit: (j['streakRestoreLimit'] as num?)?.toInt() ?? 3,
@@ -53,13 +83,42 @@ class StoryProgress {
       posted: j['postedToday'] == true,
       state: j['state'] as String? ?? 'inactive',
       timeZone: j['timeZone'] as String? ?? 'Europe/Istanbul',
-      resetsAt: DateTime.tryParse(j['resetsAt'] as String? ?? ''));
+      resetsAt: DateTime.tryParse(j['resetsAt'] as String? ?? ''),
+      serverNow: DateTime.tryParse(j['serverNow'] as String? ?? ''),
+      serverClock: Stopwatch()..start(),
+      recoveryExpiresAt:
+          DateTime.tryParse(j['recoveryExpiresAt'] as String? ?? ''),
+      monthResetsAt: DateTime.tryParse(j['monthResetsAt'] as String? ?? ''),
+      longestStreak: [
+        j['longestStreak'],
+        j['streak_days'],
+        j['recoverableStreakDays']
+      ]
+          .whereType<num>()
+          .map((v) => v.toInt())
+          .fold<int>(0, (a, b) => a > b ? a : b),
+      streakState: j['streakState'] as String? ??
+          ((j['streak_days'] as num? ?? 0) > 0
+              ? (j['state'] == 'ice_cold' ? 'at_risk' : 'active')
+              : 'empty'),
+      calendar: (j['activityCalendar'] as List? ?? [])
+          .whereType<Map>()
+          .map((row) =>
+              StreakDay(row['day']?.toString() ?? '', row['active'] == true))
+          .where((row) => RegExp(r'^\d{4}-\d{2}-\d{2}$').hasMatch(row.day))
+          .toList());
+}
+
+class StreakDay {
+  final String day;
+  final bool active;
+  const StreakDay(this.day, this.active);
 }
 
 class StudentStory {
   final String videoUrl;
   final double videoDuration;
-  final String id, text, imageUrl, authorId, name, avatar;
+  final String id, text, imageUrl, authorId, name, avatar, authorRole, audience;
   final int authorPoints, loveCount;
   final int? viewCount;
   final bool seen, loved;
@@ -73,6 +132,8 @@ class StudentStory {
         authorId = j['author']['id'] as String,
         name = j['author']['name'] as String? ?? '',
         avatar = j['author']['avatar'] as String? ?? '',
+        authorRole = j['author']['role'] as String? ?? 'student',
+        audience = j['audience'] as String? ?? 'allEligible',
         authorPoints = (j['author']['total_points'] as num?)?.toInt() ?? 0,
         loveCount = (j['loveCount'] as num?)?.toInt() ?? 0,
         viewCount = (j['viewCount'] as num?)?.toInt(),
@@ -85,6 +146,14 @@ class StoriesRepository {
   StoriesRepository._();
   static final instance = StoriesRepository._();
   final _api = ApiClient.instance;
+  final _changes = StreamController<void>.broadcast();
+  Stream<void> get changes => _changes.stream;
+  void notifyProgressChanged() => _changes.add(null);
+  final _hidden = <String, Set<String>>{};
+  final _deleting = <String, Future<void>>{};
+  String get _scope => AuthSession.instance.currentUser?.id ?? _token ?? '';
+  bool isHidden(String id) => _hidden[_scope]?.contains(id) ?? false;
+  bool isDeleting(String id) => _deleting.containsKey('$_scope:$id');
   String? get _token => AuthSession.instance.token;
   Future<Map<String, dynamic>> updates(List<String> ids) async =>
       Map<String, dynamic>.from(await _api.get(
@@ -99,11 +168,26 @@ class StoriesRepository {
           '/stories/preferences',
           token: _token,
           body: {'scoreEmoji': emoji})));
-  Future<StoryProgress> restoreStreak() async => StoryProgress.fromJson(
-      Map<String, dynamic>.from(await _api.post('/stories/streak/restore',
-          token: _token,
-          body: {},
-          idempotencyKey: ApiClient.newOperationId())));
+  Future<StoryProgress> streakDetails() async {
+    try {
+      return StoryProgress.fromJson(Map<String, dynamic>.from(await _api
+          .get('/stories/streak/details', token: _token, cached: false)));
+    } on ApiException catch (error) {
+      if (error.statusCode == 404) return progress();
+      rethrow;
+    }
+  }
+
+  Future<StoryProgress> restoreStreak({String? operationId}) async {
+    final result = StoryProgress.fromJson(Map<String, dynamic>.from(
+        await _api.post('/stories/streak/restore',
+            token: _token,
+            body: {},
+            idempotencyKey: operationId ?? ApiClient.newOperationId())));
+    _changes.add(null);
+    return result;
+  }
+
   Future<({List<StudentStory> stories, String? nextCursor})> feed(
       [String? before]) async {
     final token = _token;
@@ -120,7 +204,7 @@ class StoriesRepository {
 
   ({List<StudentStory> stories, String? nextCursor})? cachedFeed() {
     final j = _api.snapshot('/stories', token: _token);
-    return j == null ? null : _feedPage(j);
+    return j is! Map || j['stories'] is! List ? null : _feedPage(j);
   }
 
   ({List<StudentStory> stories, String? nextCursor}) _feedPage(dynamic j) => (
@@ -174,13 +258,21 @@ class StoriesRepository {
       {required String text,
       required String imageUrl,
       String videoUrl = '',
-      required String operationId}) async {
+      required String operationId,
+      String? audience,
+      bool? notifyAudience}) async {
     final j = await _api.post('/stories', token: _token, body: {
       'text': text,
       'imageUrl': imageUrl,
       'videoUrl': videoUrl,
       'operationId': operationId,
+      if (audience != null) 'audience': audience,
+      if (notifyAudience != null) 'notifyAudience': notifyAudience,
     });
-    return StoryProgress.fromJson(Map<String, dynamic>.from(j['progress']));
+    final progress = Map<String, dynamic>.from(j['progress']);
+    progress['awardedPoints'] = j['awarded'];
+    final result = StoryProgress.fromJson(progress);
+    _changes.add(null);
+    return result;
   }
 }

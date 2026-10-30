@@ -7,6 +7,7 @@ import '../../core/services/auth_session.dart';
 import '../../core/repositories/employee_repository.dart';
 import '../services_support/messaging_and_emergency_screens.dart' show ConversationThreadScreen;
 import 'admin_content_crud_screens.dart' show AdminServicesScreen;
+import 'admin_student_profile_screen.dart';
 
 /// Real data from GET /api/admin/students — ALL students on the platform.
 /// Relabeled honestly: the backend has no per-employee assignment, so this
@@ -20,7 +21,9 @@ class MyStudentsQueueScreen extends StatefulWidget {
 
 class _MyStudentsQueueScreenState extends State<MyStudentsQueueScreen> {
   List<dynamic> _students = [];
+  final Set<String> _selectedStudentIds = <String>{};
   bool _loading = true;
+  bool _savingStatus = false;
   String? _error;
   final _searchController = TextEditingController();
 
@@ -58,12 +61,57 @@ class _MyStudentsQueueScreenState extends State<MyStudentsQueueScreen> {
     }
   }
 
+  Future<void> _setSelectedStatus(bool isActive) async {
+    if (_selectedStudentIds.isEmpty || _savingStatus) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(isActive ? 'تفعيل حسابات الطلاب' : 'تعطيل حسابات الطلاب'),
+        content: Text(isActive
+            ? 'سيتم تفعيل ${_selectedStudentIds.length} حساب/حسابات.'
+            : 'سيتم تعطيل ${_selectedStudentIds.length} حساب/حسابات.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('إلغاء')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('تأكيد')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _savingStatus = true);
+    try {
+      final ids = List<String>.from(_selectedStudentIds);
+      final updated = await Future.wait(ids.map((id) => EmployeeRepository.instance.updateStudentStatus(id, isActive: isActive)));
+      final byId = {for (final student in updated) student['_id']?.toString() ?? '': student};
+      if (!mounted) return;
+      setState(() {
+        _students = _students.map((item) {
+          final student = Json.map(item);
+          final patch = byId[student['_id']?.toString() ?? ''];
+          return patch == null ? item : {...student, ...patch};
+        }).toList();
+        _selectedStudentIds.clear();
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(isActive ? 'تم تفعيل الحسابات المحددة.' : 'تم تعطيل الحسابات المحددة.')));
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error is ApiException ? error.message : 'تعذر تحديث حسابات الطلاب.')));
+    } finally {
+      if (mounted) setState(() => _savingStatus = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final q = _searchController.text.trim().toLowerCase();
     final filtered = q.isEmpty
         ? _students
-        : _students.where((s) => ((Json.map(s))['name'] as String? ?? '').toLowerCase().contains(q)).toList();
+        : _students.where((item) {
+            final student = Json.map(item);
+            final profile = Json.mapOrNull(student['profile']) ?? const <String, dynamic>{};
+            return [student['name'], student['email'], profile['phone'], profile['passportNumber'], profile['nationality'], profile['currentEducation']]
+                .whereType<String>()
+                .any((value) => value.toLowerCase().contains(q));
+          }).toList();
 
     return AppScaffold(
       title: 'كل الطلاب',
@@ -76,10 +124,20 @@ class _MyStudentsQueueScreenState extends State<MyStudentsQueueScreen> {
               child: TextField(
                 controller: _searchController,
                 textAlign: TextAlign.right,
-                decoration: const InputDecoration(hintText: 'ابحث باسم الطالب...', border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12), prefixIcon: Icon(Icons.search_rounded, color: AppColors.navy)),
+                decoration: const InputDecoration(hintText: 'ابحث بالاسم أو البريد أو الهاتف...', border: InputBorder.none, contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 12), prefixIcon: Icon(Icons.search_rounded, color: AppColors.navy)),
               ),
             ),
           ),
+          if (_selectedStudentIds.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Row(children: [
+                Text('${_selectedStudentIds.length} محدد', style: AppTextStyles.caption),
+                const Spacer(),
+                TextButton.icon(onPressed: _savingStatus ? null : () => _setSelectedStatus(true), icon: const Icon(Icons.check_circle_outline), label: const Text('تفعيل')),
+                TextButton.icon(onPressed: _savingStatus ? null : () => _setSelectedStatus(false), icon: const Icon(Icons.block_outlined), label: const Text('تعطيل')),
+              ]),
+            ),
           Expanded(
             child: _loading
                 ? const LoadingState(message: 'جاري تحميل الطلاب...')
@@ -94,9 +152,13 @@ class _MyStudentsQueueScreenState extends State<MyStudentsQueueScreen> {
                               final s = Json.map(filtered[i]);
                               final profile = Json.mapOrNull(s['profile']);
                               final stage = profile?['applicationStage'] as String?;
+                              final id = s['_id']?.toString() ?? '';
+                              final isActive = s['isActive'] != false;
                               return AppCard(
+                                onTap: id.isEmpty ? null : () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => AdminStudentProfileScreen(studentId: id))),
                                 child: Row(
                                   children: [
+                                    Checkbox(value: id.isNotEmpty && _selectedStudentIds.contains(id), onChanged: id.isEmpty ? null : (checked) => setState(() { if (checked == true) { _selectedStudentIds.add(id); } else { _selectedStudentIds.remove(id); } })),
                                     const CircleAvatar(radius: 20, backgroundColor: AppColors.border, child: Icon(Icons.person_rounded, color: AppColors.navy, size: 18)),
                                     const SizedBox(width: 12),
                                     Expanded(
@@ -109,6 +171,10 @@ class _MyStudentsQueueScreenState extends State<MyStudentsQueueScreen> {
                                       ),
                                     ),
                                     if (stage != null) StatusBadge(label: stage, color: AppColors.info),
+                                    const SizedBox(width: 6),
+                                    StatusBadge(label: isActive ? 'نشط' : 'معطل', color: isActive ? AppColors.success : AppColors.danger),
+                                    const SizedBox(width: 4),
+                                    const Icon(Icons.chevron_left_rounded, color: AppColors.neutral),
                                   ],
                                 ),
                               );
@@ -176,7 +242,7 @@ class MessagesInboxScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
                     Text(t.time, style: AppTextStyles.caption),
-                    if (t.unread) Container(margin: const EdgeInsets.only(top: 4), width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.orange, shape: BoxShape.circle)),
+                    if (t.unread) Container(margin: const EdgeInsets.only(top: 4), width: 8, height: 8, decoration: const BoxDecoration(color: AppColors.green, shape: BoxShape.circle)),
                   ],
                 ),
               ],
@@ -256,7 +322,7 @@ class _ManagerOverviewScreenState extends State<ManagerOverviewScreen> {
       {'label': 'تم تقديمها', 'value': '${stats['submittedApplications'] ?? 0}', 'color': AppColors.info},
       {'label': 'الجامعات', 'value': '${stats['universities'] ?? 0}', 'color': AppColors.success},
       {'label': 'البرامج', 'value': '${stats['programs'] ?? 0}', 'color': AppColors.success},
-      {'label': 'الوكلاء (Partners)', 'value': '${stats['partners'] ?? 0}', 'color': AppColors.orange},
+      {'label': 'الوكلاء (Partners)', 'value': '${stats['partners'] ?? 0}', 'color': AppColors.green},
       {'label': 'حسابات غير نشطة', 'value': '${stats['inactiveUsers'] ?? 0}', 'color': AppColors.danger},
     ];
 
@@ -313,7 +379,7 @@ class _EmployeeServiceRequestsScreenState extends State<EmployeeServiceRequestsS
   };
   final _statusColors = {
     'pending': AppColors.warning, 'assigned': AppColors.navy,
-    'in-progress': AppColors.orange, 'completed': AppColors.success,
+    'in-progress': AppColors.green, 'completed': AppColors.success,
     'cancelled': AppColors.textSecondary,
   };
   String? get _token => AuthSession.instance.token;
@@ -339,8 +405,10 @@ class _EmployeeServiceRequestsScreenState extends State<EmployeeServiceRequestsS
       await ApiClient.instance.patch('/service-requests/$id', token: _token, body: body);
       await _load();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
         AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر التحديث')));
+      }
     }
   }
 
@@ -449,7 +517,7 @@ class _RequestCardState extends State<_RequestCard> {
           const Divider(height: 16),
           DropdownButtonFormField<String>(
             decoration: const InputDecoration(labelText: 'الحالة', border: OutlineInputBorder(), contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8)),
-            value: _status,
+            initialValue: _status,
             items: widget.statuses.map((s) => DropdownMenuItem(value: s, child: Text(widget.statusLabels[s] ?? s))).toList(),
             onChanged: (v) { if (v != null) setState(() => _status = v); },
           ),

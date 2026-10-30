@@ -24,9 +24,9 @@ class NotificationPermissionSheet extends StatelessWidget {
             Container(
                 padding: const EdgeInsets.all(22),
                 decoration: const BoxDecoration(
-                    color: AppColors.orangeSoft, shape: BoxShape.circle),
+                    color: AppColors.greenSoft, shape: BoxShape.circle),
                 child: const Icon(Icons.notifications_active_rounded,
-                    color: AppColors.orange, size: 42)),
+                    color: AppColors.green, size: 42)),
             const SizedBox(height: 20),
             const Text('خطوتك القادمة… تصلك بوقتها',
                 textAlign: TextAlign.center,
@@ -50,7 +50,7 @@ class NotificationPermissionSheet extends StatelessWidget {
             Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                    color: AppColors.orangeSoft,
+                    color: AppColors.greenSoft,
                     borderRadius: BorderRadius.circular(16)),
                 child: const _BulletRow(
                     icon: Icons.volume_up_rounded,
@@ -65,8 +65,8 @@ class NotificationPermissionSheet extends StatelessWidget {
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.orange,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.green,
+                      foregroundColor: AppColors.navy,
                       elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                       shape: RoundedRectangleBorder(
@@ -76,6 +76,9 @@ class NotificationPermissionSheet extends StatelessWidget {
                 onPressed: () => Navigator.of(context).pop(false),
                 child: const Text('ليس الآن',
                     style: TextStyle(color: AppColors.textSecondary))),
+            const Text('عند التفعيل نستخدم OneSignal لمعالجة معرّف الجهاز واشتراك الإشعارات ومعرّف حسابك لإيصال التنبيهات.',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
             const Text('يمكنك تغيير اختيارك من إعدادات الإشعارات في أي وقت.',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 12, color: AppColors.textSecondary)),
@@ -93,7 +96,7 @@ class _BulletRow extends StatelessWidget {
   Widget build(BuildContext context) => Padding(
         padding: const EdgeInsets.symmetric(vertical: 6),
         child: Row(children: [
-          Icon(icon, color: AppColors.orange, size: 22),
+          Icon(icon, color: AppColors.green, size: 22),
           const SizedBox(width: 12),
           Expanded(
               child: Text(text,

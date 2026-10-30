@@ -156,7 +156,7 @@ class _AdminUsersAccessScreenState extends State<AdminUsersAccessScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('اختيار الجامعة المرتبطة', style: AppTextStyles.cardTitle),
+                const Text('اختيار الجامعة المرتبطة', style: AppTextStyles.cardTitle),
                 Text('${user['name']} — ${user['email']}', style: AppTextStyles.caption),
                 const SizedBox(height: 12),
                 if (loading)

@@ -55,8 +55,8 @@ export const BlogCategoryPage = () => {
         title={language === "ar" ? `تصنيف ${categoryName}` : `${categoryName} Articles`}
         description={
           language === "ar"
-            ? `تصفح مقالات تصنيف ${categoryName} داخل مدونة Study Birds.`
-            : `Browse ${categoryName} articles in the Study Birds blog.`
+            ? `تصفح مقالات تصنيف ${categoryName} داخل مدونة COVEY.`
+            : `Browse ${categoryName} articles in the COVEY blog.`
         }
         canonicalPath={`/blog/category/${categorySlug}`}
       />

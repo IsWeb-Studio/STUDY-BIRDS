@@ -7,6 +7,13 @@ import '../../core/services/favorites_service.dart';
 import 'catalog_language.dart';
 
 String catalogText(dynamic value) => value is String ? value.trim() : '';
+bool catalogBelongsToCountry(Map<String, dynamic> row, String? countryId,
+    bool universities) {
+  if (countryId == null) return true;
+  final university = universities ? row : catalogMap(row['university']);
+  final country = university['country'];
+  return (country is Map ? country['_id'] : country) == countryId;
+}
 Map<String, dynamic> catalogMap(dynamic value) =>
     value is Map ? Map<String, dynamic>.from(value) : {};
 
@@ -200,9 +207,9 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
     try {
       final data = await Future.wait([
         widget.universities
-            ? CatalogRepository.instance.getUniversities()
+            ? CatalogRepository.instance.getUniversities(country: widget.countryId)
             : CatalogRepository.instance
-                .getPrograms(university: widget.universityId),
+                .getPrograms(university: widget.universityId, country: widget.countryId),
         CatalogRepository.instance.getCountries(),
         if (!widget.universities) CatalogRepository.instance.getUniversities(),
       ]);
@@ -211,6 +218,8 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
         rows = data[0]
             .whereType<Map>()
             .map((v) => Map<String, dynamic>.from(v))
+            .where((row) => catalogBelongsToCountry(
+                row, widget.countryId, widget.universities))
             .toList();
         countries = data[1]
             .whereType<Map>()
@@ -416,7 +425,10 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
                     ? SingleChildScrollView(
                         child: EmptyState(
                             icon: Icons.search_off_rounded,
-                            title: rows.isEmpty
+                            title: rows.isEmpty && widget.universities && widget.countryId != null
+                                ? cl('لا توجد جامعات في هذه الدولة حاليًا',
+                                    'No universities in this country yet')
+                                : rows.isEmpty
                                 ? cl('لا توجد بيانات متاحة بعد',
                                     'No data available yet')
                                 : cl('لا توجد نتائج مطابقة',
@@ -688,7 +700,7 @@ class _CatalogFilterSheetState extends State<_CatalogFilterSheet> {
                                   }
                                 },
                                 style: FilledButton.styleFrom(
-                                    backgroundColor: AppColors.navy,
+                                    backgroundColor: AppColors.green,
                                     minimumSize: const Size(0, 50),
                                     shape: RoundedRectangleBorder(
                                         borderRadius:

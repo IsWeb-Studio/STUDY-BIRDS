@@ -1,21 +1,15 @@
-import 'dart:async';
-import 'core/services/auth_session.dart';
+import 'screens/ai/assistant_avatar.dart';
+import 'package:study_birds/screens/universities_programs_countries/explore_hub_screen.dart';
 import 'l10n/l10n.dart';
-import 'screens/ai/birds_ai_screen.dart';
 import 'package:flutter/material.dart';
 import 'core/config/app_theme.dart';
 import 'core/utils/responsive.dart';
-import 'screens/home_journey/home_dashboard_screen.dart';
-import 'screens/home_journey/journey_tracker_screen.dart';
-import 'screens/universities_programs_countries/explore_hub_screen.dart';
-import 'screens/services_support/services_consultation_screens.dart';
-import 'screens/community/student_community_hub.dart';
-import 'screens/games/wink_screen.dart';
-import 'screens/profile_account/profile_account_screens.dart';
+import 'screens/screen.dart';
 import 'core/widgets/profile_bottom_navigation.dart';
 
-/// Tab indexes for the main bottom navigation.
+/// Stable destination IDs; only Home and Community appear in the bottom bar.
 const int kTabHome = 0;
+const int kTabDashboard = 0;
 const int kTabJourney = 1;
 const int kTabExplore = 2;
 const int kTabServices = 3;
@@ -41,14 +35,17 @@ class _StudentAppShellState extends State<StudentAppShell> {
 
   static void switchTab(int index) {
     if (index < 0 || index > kTabAccount) return;
-    _instance?.setState(() => _instance!._index = index);
+    _instance?.setState(() {
+      _instance!._visited.add(index);
+      _instance!._index = index;
+    });
   }
 
-  int _index = 0;
-  Timer? _communityWarmup;
+  int _index = kTabHome;
+  final Set<int> _visited = {kTabHome};
 
   List<_NavItemData> _items(BuildContext context) => [
-        _NavItemData(icon: Icons.home_rounded, label: context.l10n.tabHome),
+        _NavItemData(icon: Icons.home_outlined, label: context.l10n.tabHome),
         _NavItemData(
             icon: Icons.timeline_rounded, label: context.l10n.tabJourney),
         _NavItemData(
@@ -60,7 +57,7 @@ class _StudentAppShellState extends State<StudentAppShell> {
             icon: Icons.forum_outlined,
             label: Localizations.localeOf(context).languageCode == 'ar'
                 ? 'مجتمع الطلاب'
-                : 'Community'),
+                : 'Student community'),
         _NavItemData(
             icon: Icons.sports_esports_outlined,
             label: Localizations.localeOf(context).languageCode == 'ar'
@@ -72,22 +69,10 @@ class _StudentAppShellState extends State<StudentAppShell> {
   void initState() {
     super.initState();
     _instance = this;
-    _communityWarmup = Timer(const Duration(seconds: 2), () {
-      if (mounted &&
-          _index == kTabHome &&
-          AuthSession.instance.token != null &&
-          (ModalRoute.isCurrentOf(context) ?? true) &&
-          (WidgetsBinding.instance.lifecycleState == null ||
-              WidgetsBinding.instance.lifecycleState ==
-                  AppLifecycleState.resumed)) {
-        unawaited(warmCommunity());
-      }
-    });
   }
 
   @override
   void dispose() {
-    _communityWarmup?.cancel();
     if (_instance == this) _instance = null;
     super.dispose();
   }
@@ -96,11 +81,28 @@ class _StudentAppShellState extends State<StudentAppShell> {
   Widget build(BuildContext context) {
     final navItems = _items(context);
     final tabs = [
-      HomeDashboardScreen(embedInShell: true, isActive: _index == kTabHome),
-      JourneyTrackerScreen(isActive: _index == kTabJourney),
-      const ExploreHubScreen(),
-      const ServicesCenterScreen(),
-      StudentCommunityHub(isActive: _index == kTabCommunity),
+      _visited.contains(kTabDashboard)
+          ? HomeDashboardScreen(
+              embedInShell: true, isActive: _index == kTabDashboard)
+          : const SizedBox.shrink(),
+      _visited.contains(kTabJourney)
+          ? JourneyTrackerScreen(isActive: _index == kTabJourney)
+          : const SizedBox.shrink(),
+      _visited.contains(kTabExplore)
+          ? const ExploreHubScreen()
+          : const SizedBox.shrink(),
+      _visited.contains(kTabServices)
+          ? const ServicesCenterScreen()
+          : const SizedBox.shrink(),
+      _visited.contains(kTabCommunity)
+          ? StudentCommunityScreen(embedded: true, actions: [
+              IconButton(
+                  tooltip: 'المحادثات',
+                  icon: const Icon(Icons.chat_bubble_outline_rounded),
+                  onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const StudentCommunityHub()))),
+            ])
+          : const SizedBox.shrink(),
       WinkScreen(
           isActive: _index == kTabGame,
           embedInShell: true,
@@ -116,26 +118,41 @@ class _StudentAppShellState extends State<StudentAppShell> {
         floatingActionButton: _index == kTabGame
             ? null
             : FloatingActionButton(
+                heroTag: 'main-bird-ai',
                 key: const ValueKey('main-tabs-ai-button'),
-                tooltip: 'Bird AI',
+                tooltip: 'COVEY AI',
                 backgroundColor: AppColors.navy,
-                foregroundColor: AppColors.orange,
+                foregroundColor: AppColors.green,
                 onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const BirdsAiScreen(),
+                    builder: (_) => BirdsAiScreen(
+                            originScreen: const [
+                          'dashboard',
+                          'journey',
+                          'explore',
+                          'services',
+                          'community',
+                          'game',
+                          'account'
+                        ][_index]),
                     fullscreenDialog: true)),
-                child: const Icon(Icons.auto_awesome_rounded),
+                child: const AssistantAvatar(size: 36),
               ),
         bottomNavigationBar: AdaptiveBottomBar(
             backgroundColor: Colors.transparent,
             child: ProfileBottomNavigation(
               currentIndex: _index,
+              visibleDestinations: const [
+                kTabHome,
+                kTabCommunity,
+                kTabGame,
+              ],
               labels: [
                 ...navItems.map((item) => item.label),
                 Localizations.localeOf(context).languageCode == 'ar'
                     ? 'حسابي'
                     : 'Account'
               ],
-              onTap: (i) => setState(() => _index = i),
+              onTap: switchTab,
             )),
       ),
     );

@@ -1,0 +1,173 @@
+{
+    "Mode":  "OWNER_MANUAL",
+    "Started":  "2026-10-21T22:28:25.3699157Z",
+    "InitialFree":  5917052928,
+    "GitBefore":  [
+                      {
+                          "Root":  "D:/work/studybirds_app/study_birds_app-main",
+                          "Head":  "3e31e19c5343170056e6d7559c59bfb891f2c624",
+                          "IndexHash":  "7394C2812DE5E975683E7B1A18A3FC73AB783B1F50087930EB9BB849E0025950",
+                          "Worktrees":  "worktree D:/work/studybirds_app/study_birds_app-main\nHEAD 3e31e19c5343170056e6d7559c59bfb891f2c624\nbranch refs/heads/main\n",
+                          "Status":  " M README.md\n M lib/app_shell.dart\n M lib/core/services/notification_scheduler.dart\n M lib/core/widgets/app_components.dart\n M lib/main.dart\n M lib/screens/applications_documents_payments/documents_screens.dart\n M lib/screens/home_journey/notifications_screen.dart\n M lib/screens/home_journey/student_banner_carousel.dart\n M lib/screens/profile_account/notification_preferences_screen.dart\n M lib/screens/roles/employee_dashboard_screen.dart\n M lib/screens/stories/story_viewers_screen.dart\n M test/chat_controls_test.dart\n M test/journey_requirements_test.dart\n M test/post_admission_journey_test.dart\n M test/story_viewers_test.dart\n M tool/check_error_policy.dart\n?? .vscode/StudyBirds.code-workspace\n?? docs/ANDROID_DEVICE_QA_PLAN.md\n?? docs/ANDROID_QA_CONNECTION_GUIDE.md\n?? docs/ANDROID_QA_RUNTIME_TEST_PLAN.md\n?? docs/ANDROID_REAL_DEVICE_TEST_CHECKLIST.md\n?? docs/APPROVED_DEPLOYMENT_PARITY_20261021.md\n?? docs/ARCHITECTURE.md\n?? docs/AUDIT_VALIDATION.json\n?? docs/BACKEND_ENVIRONMENT_NAMES.json\n?? docs/DEPLOYMENT_PARITY_REPORT.md\n?? docs/DEVELOPMENT_SETUP.md\n?? docs/DUPLICATE_INVENTORY.json\n?? docs/DUPLICATE_INVENTORY.md\n?? docs/FEATURE_PARITY_REPORT.md\n?? docs/FINAL_CLEANUP_APPROVAL.md\n?? docs/FLUTTER_ANALYSIS_REMEDIATION.md\n?? docs/MAINTENANCE_GUIDE.md\n?? docs/PHASE2_FINAL_REPORT.md\n?? docs/PHASE2_SECURITY_REVIEW.md\n?? docs/PHASE2_VALIDATION.json\n?? docs/PHASE3_DEPENDENCY_PLAN.md\n?? docs/PHASE3_FINAL_REPORT.md\n?? docs/PHASE3_VALIDATION.json\n?? docs/PHASE4_FINAL_REPORT.md\n?? docs/PHASE4_VALIDATION.json\n?? docs/PHASE5_CLEANUP_APPROVAL.md\n?? docs/PHASE5_FINAL_REPORT.md\n?? docs/PHASE5_REMAINING_CLEANUP_REVIEW.md\n?? docs/PHASE6_FINAL_REPORT.md\n?? docs/PHASE6_QA_CONFIGURATION.md\n?? docs/PHASE6_VALIDATION.json\n?? docs/PHASE7_APPROVAL_REQUIRED.md\n?? docs/PHASE7_FINAL_REPORT.md\n?? docs/PHASE7_LOCAL_QA_SETUP.md\n?? docs/PHASE7_VALIDATION.json\n?? docs/PHASE8_ANDROID_QA_IDENTITY.md\n?? docs/PHASE8_AOT_FILENAME_FIX_VALIDATION.md\n?? docs/PHASE8_BUILD_APPROVAL.md\n?? docs/PHASE8_CLEANUP_POLICY_REVIEW.md\n?? docs/PHASE8_DISK_CLEANUP_APPROVAL.md\n?? docs/PHASE8_FINAL_REPORT.md\n?? docs/PHASE8_LIMITED_CLEANUP_RESULT.json\n?? docs/PHASE8_NATIVE_PROVIDER_ISOLATION.md\n?? docs/PHASE8_OWNER_CLEANUP.ps1\n?? docs/PHASE8_OWNER_CLEANUP_FIX_VALIDATION.md\n?? docs/PHASE8_VALIDATION.json\n?? docs/PROJECT_AUDIT_REPORT.md\n?? docs/REACT_ROUTER_UPGRADE_20261021.md\n?? docs/REACT_ROUTER_VALIDATION.json\n?? docs/RELEASE_READINESS_CHECKLIST.md\n?? docs/STABILIZATION_20261021.md\n?? docs/UPDATED_RELEASE_READINESS.md\n?? docs/WORKSPACE_WORKFLOW.md\n?? docs/proposals/deferred-story-deletion-review.patch\n?? docs/proposals/notification-preferences-review.patch\n?? docs/proposals/phase3/01-viewer-privacy.patch\n?? docs/proposals/phase3/02-material-card.patch\n?? docs/proposals/phase3/03-story-deletion-feed.patch\n?? docs/proposals/phase3/04-story-fullscreen-layout.patch\n?? docs/proposals/phase3/05-account-notification-preferences.patch\n?? docs/proposals/phase3/README.md\n?? docs/proposals/phase4/SECURITY_MIGRATIONS.md\n?? lib/core/core_import.dart\n?? lib/core/services/notification_preferences_store.dart\n?? lib/screens/screen.dart\n?? test/notification_preferences_test.dart"
+                      },
+                      {
+                          "Root":  "D:/work/studybirds_session_release",
+                          "Head":  "e9060536e8dc7a70150da9c42d6dfac901713553",
+                          "IndexHash":  "36001C28F6C0373F6924D9936EB6A3810195D53F6D68DFBD80CC3FC0D95F2AB0",
+                          "Worktrees":  "worktree D:/work/studybirds_web\nHEAD f42dc7a0edb9630a8d24f1800191a9de06856cea\nbranch refs/heads/main\n\nworktree C:/Users/Abood/studybirds-claude\nHEAD c1ae0df6299f16442372867de6e5d759bca1fb0b\nbranch refs/heads/claude-assistant\n\nworktree C:/Users/Abood/studybirds-email-refresh\nHEAD aac8419adac77d6fb2ee2e5ad7dd53c9eed69d7c\nbranch refs/heads/email-branding-refresh\n\nworktree C:/Users/Abood/studybirds-wink\nHEAD e0aff5b59fe670f04cdd1057acf420ae2edc3d14\nbranch refs/heads/wink-game\n\nworktree D:/work/studybirds-stories-release\nHEAD a5b118ab394546e487fe2eb3dbf7436188f1a375\ndetached\n\nworktree D:/work/studybirds_islam_google_password_fix\nHEAD 4fed84c56c6f825558d781dbb80fe10818e1daa0\nbranch refs/heads/fix/islam-google-password\n\nworktree D:/work/studybirds_session_release\nHEAD e9060536e8dc7a70150da9c42d6dfac901713553\ndetached\n",
+                          "Status":  " M app/android/app/build.gradle.kts\n M app/android/build.gradle.kts\n M app/integration/services_preview_test.dart\n M app/lib/core/network/api_client.dart\n M app/lib/core/network/pinned_http.dart\n M app/lib/core/repositories/stories_repository.dart\n M app/lib/core/services/analytics_service.dart\n M app/lib/core/services/apple_sign_in_service.dart\n M app/lib/core/services/currency_service.dart\n M app/lib/core/services/google_sign_in_service.dart\n M app/lib/core/services/notification_scheduler.dart\n M app/lib/core/services/push_notification_service.dart\n M app/lib/core/utils/document_access.dart\n M app/lib/core/widgets/app_components.dart\n M app/lib/main.dart\n M app/lib/screens/community/student_community_hub.dart\n M app/lib/screens/profile_account/notification_preferences_screen.dart\n M app/lib/screens/stories/story_viewer.dart\n M app/lib/screens/stories/story_viewers_screen.dart\n M app/lib/screens/stories/student_stories.dart\n M app/test/app_update_test.dart\n M app/test/story_viewer_test.dart\n M app/test/story_viewers_test.dart\n M client/package-lock.json\n M client/package.json\n M client/scripts/generate-seo-files.mjs\n M server/package-lock.json\n M server/package.json\n M server/src/app.js\n M server/src/config/db.js\n M server/src/controllers/adminAgentController.js\n M server/src/controllers/contentController.js\n M server/src/models/Notification.js\n M server/src/models/User.js\n M server/src/routes/alumniRoutes.js\n M server/src/routes/mobileSecurityRoutes.js\n M server/src/routes/scholarshipRoutes.js\n M server/src/seed/seed.js\n M server/src/server.js\n M server/src/utils/cashMisrSms.js\n M server/src/utils/mailer.js\n M server/src/utils/mobileEmailCodes.js\n M server/src/utils/privateDocumentStorage.js\n M server/src/utils/pushNotifications.js\n M server/src/utils/supportNotifications.js\n M server/src/utils/whatsappOtp.js\n M server/tests/auditFixes.test.js\n M server/tests/crmIntegration.test.js\n M server/tests/privateDocumentAccess.test.js\n?? app/android/app/src/qa/AndroidManifest.xml\n?? app/android/app/src/qa/java/com/studybirds/app/qa/QaLocalTransportBackendFactory.java\n?? app/android/app/src/qa/kotlin/com/studybirds/app/qa/QaMainActivity.kt\n?? app/android/app/src/qa/res/drawable/ic_launcher_qa.xml\n?? app/android/app/src/qaDebug/AndroidManifest.xml\n?? app/config/qa_android.pending.json\n?? app/lib/core/config/qa_configuration.dart\n?? app/lib/core/network/qa_http_client.dart\n?? app/lib/core/network/qa_tls_context.dart\n?? app/lib/core/services/notification_preferences_store.dart\n?? app/test/notification_preferences_test.dart\n?? app/test/qa_api_integration_test.dart\n?? app/test/qa_configuration_test.dart\n?? app/test/qa_local_https_test.dart\n?? app/test/qa_providers_test.dart\n?? app/test/qa_startup_test.dart\n?? app/test/qa_tls_context_test.dart\n?? app/test/qa_tls_handshake_test.dart\n?? app/test/story_deletion_test.dart\n?? app/tool/qa_android_manifest_inspection.cjs\n?? app/tool/qa_android_merged_manifest.test.cjs\n?? app/tool/qa_android_preparation.test.cjs\n?? app/tool/qa_transport_evidence.test.cjs\n?? app/tool/qa_transport_jvm/README.md\n?? app/tool/qa_transport_jvm/src/android/app/Service.java\n?? app/tool/qa_transport_jvm/src/android/content/ComponentName.java\n?? app/tool/qa_transport_jvm/src/android/content/Context.java\n?? app/tool/qa_transport_jvm/src/android/content/Intent.java\n?? app/tool/qa_transport_jvm/src/android/content/pm/PackageManager.java\n?? app/tool/qa_transport_jvm/src/android/content/pm/ServiceInfo.java\n?? app/tool/qa_transport_jvm/src/android/net/ConnectivityManager.java\n?? app/tool/qa_transport_jvm/src/android/net/NetworkInfo.java\n?? app/tool/qa_transport_jvm/src/android/os/Build.java\n?? app/tool/qa_transport_jvm/src/android/os/Bundle.java\n?? app/tool/qa_transport_jvm/src/android/os/IBinder.java\n?? app/tool/qa_transport_jvm/src/android/util/Base64.java\n?? app/tool/qa_transport_jvm/src/android/util/Log.java\n?? app/tool/qa_transport_jvm/src/com/google/android/datatransport/runtime/RuntimeHarnessBridge.java\n?? app/tool/qa_transport_jvm/src/com/google/android/datatransport/runtime/backends/LocalTransportHarness.java\n?? app/tool/qa_transport_jvm/src/qa/NegativeIoFixture.java\n?? app/tool/qa_transport_jvm/verify.cjs\n?? client/src/lib/routerMigration.test.tsx\n?? client/src/lib/seoBuild.test.ts\n?? server/qa.local.env.example\n?? server/scripts/qa-local.cjs\n?? server/scripts/qa-mongo-start.cjs\n?? server/scripts/qa-provision.cjs\n?? server/scripts/qa-seed.cjs\n?? server/scripts/run-tests.cjs\n?? server/src/qa/config.js\n?? server/src/qa/load.js\n?? server/src/qa/mail.js\n?? server/src/qa/network.js\n?? server/src/qa/start.js\n?? server/src/qa/storage.js\n?? server/src/utils/jwtSecret.js\n?? server/src/utils/notificationPreferences.js\n?? server/tests/notificationPreferences.test.js\n?? server/tests/qaLocalConfig.test.js\n?? server/tests/qaLocalIntegration.qa.cjs\n?? server/tests/recoveredParity.test.js"
+                      },
+                      {
+                          "Root":  "D:/work/studybirds_web",
+                          "Head":  "f42dc7a0edb9630a8d24f1800191a9de06856cea",
+                          "IndexHash":  "B8F356D49F0CB416D310B37E1254320BF706A5AAC94B15B84C56589DD946BDF1",
+                          "Worktrees":  "worktree D:/work/studybirds_web\nHEAD f42dc7a0edb9630a8d24f1800191a9de06856cea\nbranch refs/heads/main\n\nworktree C:/Users/Abood/studybirds-claude\nHEAD c1ae0df6299f16442372867de6e5d759bca1fb0b\nbranch refs/heads/claude-assistant\n\nworktree C:/Users/Abood/studybirds-email-refresh\nHEAD aac8419adac77d6fb2ee2e5ad7dd53c9eed69d7c\nbranch refs/heads/email-branding-refresh\n\nworktree C:/Users/Abood/studybirds-wink\nHEAD e0aff5b59fe670f04cdd1057acf420ae2edc3d14\nbranch refs/heads/wink-game\n\nworktree D:/work/studybirds-stories-release\nHEAD a5b118ab394546e487fe2eb3dbf7436188f1a375\ndetached\n\nworktree D:/work/studybirds_islam_google_password_fix\nHEAD 4fed84c56c6f825558d781dbb80fe10818e1daa0\nbranch refs/heads/fix/islam-google-password\n\nworktree D:/work/studybirds_session_release\nHEAD e9060536e8dc7a70150da9c42d6dfac901713553\ndetached\n",
+                          "Status":  "AM monorepo\nA  study_birds_app-main/android/.gradle/8.14/checksums/checksums.lock\nA  study_birds_app-main/android/.gradle/8.14/fileChanges/last-build.bin\nA  study_birds_app-main/android/.gradle/8.14/fileHashes/fileHashes.bin\nA  study_birds_app-main/android/.gradle/8.14/fileHashes/fileHashes.lock\nA  study_birds_app-main/android/.gradle/8.14/gc.properties\nA  study_birds_app-main/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock\nA  study_birds_app-main/android/.gradle/buildOutputCleanup/cache.properties\nA  study_birds_app-main/android/.gradle/vcs-1/gc.properties"
+                      },
+                      {
+                          "Root":  "D:/work/studybirds-security-release-20261017-mobile",
+                          "Head":  "fa75e05910ae1ef003acdd9303bb8b22dfde8aaa",
+                          "IndexHash":  "014DAF39FB97D02474CB14BACB9966157F07C507C15CD1073EDB610A7C71CE41",
+                          "Worktrees":  "worktree D:/work/studybirds-security-release-20261017-mobile\nHEAD fa75e05910ae1ef003acdd9303bb8b22dfde8aaa\nbranch refs/heads/main\n",
+                          "Status":  ""
+                      },
+                      {
+                          "Root":  "D:/work/study-birds",
+                          "Head":  "a1da3390c797f485141b1aabf79cb200d43231d4",
+                          "IndexHash":  "C986E381F652F900171D64701D5C982D3D6212731FA0B55516AB2235D17D3BC7",
+                          "Worktrees":  "worktree D:/work/study-birds\nHEAD a1da3390c797f485141b1aabf79cb200d43231d4\nbranch refs/heads/main\n",
+                          "Status":  ""
+                      },
+                      {
+                          "Root":  "D:/work/studybirds-security-release-20261017-web",
+                          "Head":  "a6f722636dbf48b25baef6e041ca0c44f62a05d4",
+                          "IndexHash":  "3F2724784FF737B6A4B0FCBE19876926E278C3CDF0F86CC1C15410AA2F9540AA",
+                          "Worktrees":  "worktree D:/work/studybirds-security-release-20261017-web\nHEAD a6f722636dbf48b25baef6e041ca0c44f62a05d4\nbranch refs/heads/main\n",
+                          "Status":  ""
+                      }
+                  ],
+    "Results":  [
+                    {
+                        "Id":  1,
+                        "Path":  "D:\\work\\studybirds_session_release\\app\\build\\test_cache",
+                        "Status":  "DELETED",
+                        "FreeBefore":  5917036544,
+                        "FreeAfter":  6483955712,
+                        "ObservedReclaimedBytes":  566919168
+                    },
+                    {
+                        "Id":  2,
+                        "Path":  "D:\\work\\studybirds_session_release\\app\\.dart_tool\\flutter_build",
+                        "Status":  "DELETED",
+                        "FreeBefore":  6483955712,
+                        "FreeAfter":  6586724352,
+                        "ObservedReclaimedBytes":  102768640
+                    },
+                    {
+                        "Id":  3,
+                        "Path":  "D:\\work\\studybirds_web\\app\\.dart_tool\\flutter_build",
+                        "Status":  "DELETED",
+                        "FreeBefore":  6586724352,
+                        "FreeAfter":  7083585536,
+                        "ObservedReclaimedBytes":  496861184
+                    },
+                    {
+                        "Id":  4,
+                        "Path":  "D:\\work\\studybirds-security-release-20261017-mobile\\.dart_tool\\flutter_build",
+                        "Status":  "DELETED",
+                        "FreeBefore":  7083585536,
+                        "FreeAfter":  7309746176,
+                        "ObservedReclaimedBytes":  226160640
+                    },
+                    {
+                        "Id":  5,
+                        "Path":  "D:\\work\\study-birds\\app\\.dart_tool\\flutter_build",
+                        "Status":  "DELETED",
+                        "FreeBefore":  7309746176,
+                        "FreeAfter":  7498579968,
+                        "ObservedReclaimedBytes":  188833792
+                    },
+                    {
+                        "Id":  6,
+                        "Path":  "D:\\work\\studybirds-security-release-20261017-mobile\\build\\test_cache",
+                        "Status":  "DELETED",
+                        "FreeBefore":  7498579968,
+                        "FreeAfter":  7592960000,
+                        "ObservedReclaimedBytes":  94380032
+                    },
+                    {
+                        "Id":  7,
+                        "Path":  "D:\\work\\studybirds-security-release-20261017-web\\app\\build\\test_cache",
+                        "Status":  "DELETED",
+                        "FreeBefore":  7592960000,
+                        "FreeAfter":  7687335936,
+                        "ObservedReclaimedBytes":  94375936
+                    },
+                    {
+                        "Id":  8,
+                        "Path":  "D:\\work\\studybirds-security-release-20261017-mobile\\build\\app\\generated",
+                        "Status":  "DELETED",
+                        "FreeBefore":  7687335936,
+                        "FreeAfter":  7739248640,
+                        "ObservedReclaimedBytes":  51912704
+                    },
+                    {
+                        "Id":  9,
+                        "Path":  "D:\\work\\study-birds\\app\\build\\89a6598c8854ed031dfc25d83c80860e.cache.dill.track.dill",
+                        "Status":  "DELETED",
+                        "FreeBefore":  7739248640,
+                        "FreeAfter":  7833829376,
+                        "ObservedReclaimedBytes":  94580736
+                    }
+                ],
+    "Completed":  true,
+    "FinalFree":  7833829376,
+    "ObservedTotalDelta":  1916776448,
+    "EightGiBAchieved":  false,
+    "GitAfter":  [
+                     {
+                         "Root":  "D:/work/studybirds_app/study_birds_app-main",
+                         "Head":  "3e31e19c5343170056e6d7559c59bfb891f2c624",
+                         "IndexHash":  "7394C2812DE5E975683E7B1A18A3FC73AB783B1F50087930EB9BB849E0025950",
+                         "Worktrees":  "worktree D:/work/studybirds_app/study_birds_app-main\nHEAD 3e31e19c5343170056e6d7559c59bfb891f2c624\nbranch refs/heads/main\n",
+                         "Status":  " M README.md\n M lib/app_shell.dart\n M lib/core/services/notification_scheduler.dart\n M lib/core/widgets/app_components.dart\n M lib/main.dart\n M lib/screens/applications_documents_payments/documents_screens.dart\n M lib/screens/home_journey/notifications_screen.dart\n M lib/screens/home_journey/student_banner_carousel.dart\n M lib/screens/profile_account/notification_preferences_screen.dart\n M lib/screens/roles/employee_dashboard_screen.dart\n M lib/screens/stories/story_viewers_screen.dart\n M test/chat_controls_test.dart\n M test/journey_requirements_test.dart\n M test/post_admission_journey_test.dart\n M test/story_viewers_test.dart\n M tool/check_error_policy.dart\n?? .vscode/StudyBirds.code-workspace\n?? docs/ANDROID_DEVICE_QA_PLAN.md\n?? docs/ANDROID_QA_CONNECTION_GUIDE.md\n?? docs/ANDROID_QA_RUNTIME_TEST_PLAN.md\n?? docs/ANDROID_REAL_DEVICE_TEST_CHECKLIST.md\n?? docs/APPROVED_DEPLOYMENT_PARITY_20261021.md\n?? docs/ARCHITECTURE.md\n?? docs/AUDIT_VALIDATION.json\n?? docs/BACKEND_ENVIRONMENT_NAMES.json\n?? docs/DEPLOYMENT_PARITY_REPORT.md\n?? docs/DEVELOPMENT_SETUP.md\n?? docs/DUPLICATE_INVENTORY.json\n?? docs/DUPLICATE_INVENTORY.md\n?? docs/FEATURE_PARITY_REPORT.md\n?? docs/FINAL_CLEANUP_APPROVAL.md\n?? docs/FLUTTER_ANALYSIS_REMEDIATION.md\n?? docs/MAINTENANCE_GUIDE.md\n?? docs/PHASE2_FINAL_REPORT.md\n?? docs/PHASE2_SECURITY_REVIEW.md\n?? docs/PHASE2_VALIDATION.json\n?? docs/PHASE3_DEPENDENCY_PLAN.md\n?? docs/PHASE3_FINAL_REPORT.md\n?? docs/PHASE3_VALIDATION.json\n?? docs/PHASE4_FINAL_REPORT.md\n?? docs/PHASE4_VALIDATION.json\n?? docs/PHASE5_CLEANUP_APPROVAL.md\n?? docs/PHASE5_FINAL_REPORT.md\n?? docs/PHASE5_REMAINING_CLEANUP_REVIEW.md\n?? docs/PHASE6_FINAL_REPORT.md\n?? docs/PHASE6_QA_CONFIGURATION.md\n?? docs/PHASE6_VALIDATION.json\n?? docs/PHASE7_APPROVAL_REQUIRED.md\n?? docs/PHASE7_FINAL_REPORT.md\n?? docs/PHASE7_LOCAL_QA_SETUP.md\n?? docs/PHASE7_VALIDATION.json\n?? docs/PHASE8_ANDROID_QA_IDENTITY.md\n?? docs/PHASE8_AOT_FILENAME_FIX_VALIDATION.md\n?? docs/PHASE8_BUILD_APPROVAL.md\n?? docs/PHASE8_CLEANUP_POLICY_REVIEW.md\n?? docs/PHASE8_DISK_CLEANUP_APPROVAL.md\n?? docs/PHASE8_FINAL_REPORT.md\n?? docs/PHASE8_LIMITED_CLEANUP_RESULT.json\n?? docs/PHASE8_NATIVE_PROVIDER_ISOLATION.md\n?? docs/PHASE8_OWNER_CLEANUP.ps1\n?? docs/PHASE8_OWNER_CLEANUP_FIX_VALIDATION.md\n?? docs/PHASE8_VALIDATION.json\n?? docs/PROJECT_AUDIT_REPORT.md\n?? docs/REACT_ROUTER_UPGRADE_20261021.md\n?? docs/REACT_ROUTER_VALIDATION.json\n?? docs/RELEASE_READINESS_CHECKLIST.md\n?? docs/STABILIZATION_20261021.md\n?? docs/UPDATED_RELEASE_READINESS.md\n?? docs/WORKSPACE_WORKFLOW.md\n?? docs/proposals/deferred-story-deletion-review.patch\n?? docs/proposals/notification-preferences-review.patch\n?? docs/proposals/phase3/01-viewer-privacy.patch\n?? docs/proposals/phase3/02-material-card.patch\n?? docs/proposals/phase3/03-story-deletion-feed.patch\n?? docs/proposals/phase3/04-story-fullscreen-layout.patch\n?? docs/proposals/phase3/05-account-notification-preferences.patch\n?? docs/proposals/phase3/README.md\n?? docs/proposals/phase4/SECURITY_MIGRATIONS.md\n?? lib/core/core_import.dart\n?? lib/core/services/notification_preferences_store.dart\n?? lib/screens/screen.dart\n?? test/notification_preferences_test.dart"
+                     },
+                     {
+                         "Root":  "D:/work/studybirds_session_release",
+                         "Head":  "e9060536e8dc7a70150da9c42d6dfac901713553",
+                         "IndexHash":  "36001C28F6C0373F6924D9936EB6A3810195D53F6D68DFBD80CC3FC0D95F2AB0",
+                         "Worktrees":  "worktree D:/work/studybirds_web\nHEAD f42dc7a0edb9630a8d24f1800191a9de06856cea\nbranch refs/heads/main\n\nworktree C:/Users/Abood/studybirds-claude\nHEAD c1ae0df6299f16442372867de6e5d759bca1fb0b\nbranch refs/heads/claude-assistant\n\nworktree C:/Users/Abood/studybirds-email-refresh\nHEAD aac8419adac77d6fb2ee2e5ad7dd53c9eed69d7c\nbranch refs/heads/email-branding-refresh\n\nworktree C:/Users/Abood/studybirds-wink\nHEAD e0aff5b59fe670f04cdd1057acf420ae2edc3d14\nbranch refs/heads/wink-game\n\nworktree D:/work/studybirds-stories-release\nHEAD a5b118ab394546e487fe2eb3dbf7436188f1a375\ndetached\n\nworktree D:/work/studybirds_islam_google_password_fix\nHEAD 4fed84c56c6f825558d781dbb80fe10818e1daa0\nbranch refs/heads/fix/islam-google-password\n\nworktree D:/work/studybirds_session_release\nHEAD e9060536e8dc7a70150da9c42d6dfac901713553\ndetached\n",
+                         "Status":  " M app/android/app/build.gradle.kts\n M app/android/build.gradle.kts\n M app/integration/services_preview_test.dart\n M app/lib/core/network/api_client.dart\n M app/lib/core/network/pinned_http.dart\n M app/lib/core/repositories/stories_repository.dart\n M app/lib/core/services/analytics_service.dart\n M app/lib/core/services/apple_sign_in_service.dart\n M app/lib/core/services/currency_service.dart\n M app/lib/core/services/google_sign_in_service.dart\n M app/lib/core/services/notification_scheduler.dart\n M app/lib/core/services/push_notification_service.dart\n M app/lib/core/utils/document_access.dart\n M app/lib/core/widgets/app_components.dart\n M app/lib/main.dart\n M app/lib/screens/community/student_community_hub.dart\n M app/lib/screens/profile_account/notification_preferences_screen.dart\n M app/lib/screens/stories/story_viewer.dart\n M app/lib/screens/stories/story_viewers_screen.dart\n M app/lib/screens/stories/student_stories.dart\n M app/test/app_update_test.dart\n M app/test/story_viewer_test.dart\n M app/test/story_viewers_test.dart\n M client/package-lock.json\n M client/package.json\n M client/scripts/generate-seo-files.mjs\n M server/package-lock.json\n M server/package.json\n M server/src/app.js\n M server/src/config/db.js\n M server/src/controllers/adminAgentController.js\n M server/src/controllers/contentController.js\n M server/src/models/Notification.js\n M server/src/models/User.js\n M server/src/routes/alumniRoutes.js\n M server/src/routes/mobileSecurityRoutes.js\n M server/src/routes/scholarshipRoutes.js\n M server/src/seed/seed.js\n M server/src/server.js\n M server/src/utils/cashMisrSms.js\n M server/src/utils/mailer.js\n M server/src/utils/mobileEmailCodes.js\n M server/src/utils/privateDocumentStorage.js\n M server/src/utils/pushNotifications.js\n M server/src/utils/supportNotifications.js\n M server/src/utils/whatsappOtp.js\n M server/tests/auditFixes.test.js\n M server/tests/crmIntegration.test.js\n M server/tests/privateDocumentAccess.test.js\n?? app/android/app/src/qa/AndroidManifest.xml\n?? app/android/app/src/qa/java/com/studybirds/app/qa/QaLocalTransportBackendFactory.java\n?? app/android/app/src/qa/kotlin/com/studybirds/app/qa/QaMainActivity.kt\n?? app/android/app/src/qa/res/drawable/ic_launcher_qa.xml\n?? app/android/app/src/qaDebug/AndroidManifest.xml\n?? app/config/qa_android.pending.json\n?? app/lib/core/config/qa_configuration.dart\n?? app/lib/core/network/qa_http_client.dart\n?? app/lib/core/network/qa_tls_context.dart\n?? app/lib/core/services/notification_preferences_store.dart\n?? app/test/notification_preferences_test.dart\n?? app/test/qa_api_integration_test.dart\n?? app/test/qa_configuration_test.dart\n?? app/test/qa_local_https_test.dart\n?? app/test/qa_providers_test.dart\n?? app/test/qa_startup_test.dart\n?? app/test/qa_tls_context_test.dart\n?? app/test/qa_tls_handshake_test.dart\n?? app/test/story_deletion_test.dart\n?? app/tool/qa_android_manifest_inspection.cjs\n?? app/tool/qa_android_merged_manifest.test.cjs\n?? app/tool/qa_android_preparation.test.cjs\n?? app/tool/qa_transport_evidence.test.cjs\n?? app/tool/qa_transport_jvm/README.md\n?? app/tool/qa_transport_jvm/src/android/app/Service.java\n?? app/tool/qa_transport_jvm/src/android/content/ComponentName.java\n?? app/tool/qa_transport_jvm/src/android/content/Context.java\n?? app/tool/qa_transport_jvm/src/android/content/Intent.java\n?? app/tool/qa_transport_jvm/src/android/content/pm/PackageManager.java\n?? app/tool/qa_transport_jvm/src/android/content/pm/ServiceInfo.java\n?? app/tool/qa_transport_jvm/src/android/net/ConnectivityManager.java\n?? app/tool/qa_transport_jvm/src/android/net/NetworkInfo.java\n?? app/tool/qa_transport_jvm/src/android/os/Build.java\n?? app/tool/qa_transport_jvm/src/android/os/Bundle.java\n?? app/tool/qa_transport_jvm/src/android/os/IBinder.java\n?? app/tool/qa_transport_jvm/src/android/util/Base64.java\n?? app/tool/qa_transport_jvm/src/android/util/Log.java\n?? app/tool/qa_transport_jvm/src/com/google/android/datatransport/runtime/RuntimeHarnessBridge.java\n?? app/tool/qa_transport_jvm/src/com/google/android/datatransport/runtime/backends/LocalTransportHarness.java\n?? app/tool/qa_transport_jvm/src/qa/NegativeIoFixture.java\n?? app/tool/qa_transport_jvm/verify.cjs\n?? client/src/lib/routerMigration.test.tsx\n?? client/src/lib/seoBuild.test.ts\n?? server/qa.local.env.example\n?? server/scripts/qa-local.cjs\n?? server/scripts/qa-mongo-start.cjs\n?? server/scripts/qa-provision.cjs\n?? server/scripts/qa-seed.cjs\n?? server/scripts/run-tests.cjs\n?? server/src/qa/config.js\n?? server/src/qa/load.js\n?? server/src/qa/mail.js\n?? server/src/qa/network.js\n?? server/src/qa/start.js\n?? server/src/qa/storage.js\n?? server/src/utils/jwtSecret.js\n?? server/src/utils/notificationPreferences.js\n?? server/tests/notificationPreferences.test.js\n?? server/tests/qaLocalConfig.test.js\n?? server/tests/qaLocalIntegration.qa.cjs\n?? server/tests/recoveredParity.test.js"
+                     },
+                     {
+                         "Root":  "D:/work/studybirds_web",
+                         "Head":  "f42dc7a0edb9630a8d24f1800191a9de06856cea",
+                         "IndexHash":  "B8F356D49F0CB416D310B37E1254320BF706A5AAC94B15B84C56589DD946BDF1",
+                         "Worktrees":  "worktree D:/work/studybirds_web\nHEAD f42dc7a0edb9630a8d24f1800191a9de06856cea\nbranch refs/heads/main\n\nworktree C:/Users/Abood/studybirds-claude\nHEAD c1ae0df6299f16442372867de6e5d759bca1fb0b\nbranch refs/heads/claude-assistant\n\nworktree C:/Users/Abood/studybirds-email-refresh\nHEAD aac8419adac77d6fb2ee2e5ad7dd53c9eed69d7c\nbranch refs/heads/email-branding-refresh\n\nworktree C:/Users/Abood/studybirds-wink\nHEAD e0aff5b59fe670f04cdd1057acf420ae2edc3d14\nbranch refs/heads/wink-game\n\nworktree D:/work/studybirds-stories-release\nHEAD a5b118ab394546e487fe2eb3dbf7436188f1a375\ndetached\n\nworktree D:/work/studybirds_islam_google_password_fix\nHEAD 4fed84c56c6f825558d781dbb80fe10818e1daa0\nbranch refs/heads/fix/islam-google-password\n\nworktree D:/work/studybirds_session_release\nHEAD e9060536e8dc7a70150da9c42d6dfac901713553\ndetached\n",
+                         "Status":  "AM monorepo\nA  study_birds_app-main/android/.gradle/8.14/checksums/checksums.lock\nA  study_birds_app-main/android/.gradle/8.14/fileChanges/last-build.bin\nA  study_birds_app-main/android/.gradle/8.14/fileHashes/fileHashes.bin\nA  study_birds_app-main/android/.gradle/8.14/fileHashes/fileHashes.lock\nA  study_birds_app-main/android/.gradle/8.14/gc.properties\nA  study_birds_app-main/android/.gradle/buildOutputCleanup/buildOutputCleanup.lock\nA  study_birds_app-main/android/.gradle/buildOutputCleanup/cache.properties\nA  study_birds_app-main/android/.gradle/vcs-1/gc.properties"
+                     },
+                     {
+                         "Root":  "D:/work/studybirds-security-release-20261017-mobile",
+                         "Head":  "fa75e05910ae1ef003acdd9303bb8b22dfde8aaa",
+                         "IndexHash":  "014DAF39FB97D02474CB14BACB9966157F07C507C15CD1073EDB610A7C71CE41",
+                         "Worktrees":  "worktree D:/work/studybirds-security-release-20261017-mobile\nHEAD fa75e05910ae1ef003acdd9303bb8b22dfde8aaa\nbranch refs/heads/main\n",
+                         "Status":  ""
+                     },
+                     {
+                         "Root":  "D:/work/study-birds",
+                         "Head":  "a1da3390c797f485141b1aabf79cb200d43231d4",
+                         "IndexHash":  "C986E381F652F900171D64701D5C982D3D6212731FA0B55516AB2235D17D3BC7",
+                         "Worktrees":  "worktree D:/work/study-birds\nHEAD a1da3390c797f485141b1aabf79cb200d43231d4\nbranch refs/heads/main\n",
+                         "Status":  ""
+                     },
+                     {
+                         "Root":  "D:/work/studybirds-security-release-20261017-web",
+                         "Head":  "a6f722636dbf48b25baef6e041ca0c44f62a05d4",
+                         "IndexHash":  "3F2724784FF737B6A4B0FCBE19876926E278C3CDF0F86CC1C15410AA2F9540AA",
+                         "Worktrees":  "worktree D:/work/studybirds-security-release-20261017-web\nHEAD a6f722636dbf48b25baef6e041ca0c44f62a05d4\nbranch refs/heads/main\n",
+                         "Status":  ""
+                     }
+                 ],
+    "GitUnchanged":  true,
+    "ProtectedFilesUnchanged":  true
+}

@@ -29,21 +29,23 @@ test('community stories include non-friends, paginate, and exclude expired or un
       return { status: r.status, data: await r.json() };
     }
     assert.equal((await call('GET', '', null)).status, 401);
-    assert.equal((await call('GET', '', 3)).status, 403);
+    assert.equal((await call('GET', '', 3)).status, 200);
     const first = (await call('GET')).data;
     assert.equal(first.stories.length, 60);
-    assert.ok(first.stories.every(s => s.author.id === users[1].id));
+    assert.ok(first.stories.every(s => [users[1].id, users[3].id].includes(s.author.id)));
+    assert.ok(first.stories.some(s => s.author.id === users[3].id));
     const second = (await call('GET', `?before=${first.nextCursor}`)).data;
-    assert.equal(second.stories.length, 5); assert.equal(second.nextCursor, null);
+    assert.equal(second.stories.length, 6); assert.equal(second.nextCursor, null);
     assert.ok(second.stories.every(s => !first.stories.some(p => p.id === s.id)));
     const visible = active.at(-1).id;
     assert.equal((await call('POST', `/${visible}/seen`)).status, 200);
     assert.equal((await call('POST', `/${visible}/love`)).status, 200);
     assert.equal((await call('POST', `/${visible}/love`)).status, 200);
-    const update = (await call('GET', `/updates?ids=${[visible, ...excluded.map(s => s.id)].join(',')}`)).data;
+    const update = (await call('GET', `/updates?ids=${[visible, ...excluded.slice(0, 2).map(s => s.id)].join(',')}`)).data;
     assert.equal(update.updates.length, 1); assert.equal(update.updates[0].loved, true);
     assert.equal((await StoryStats.findOne({ user: users[1]._id })).total_points, 50, 'public love still awards once');
-    for (const story of excluded) assert.equal((await call('POST', `/${story.id}/seen`)).status, 404);
+    for (const story of excluded.slice(0, 2)) assert.equal((await call('POST', `/${story.id}/seen`)).status, 404);
+    assert.equal((await call('POST', `/${excluded[2].id}/seen`)).status, 200);
   } finally {
     if (server) await new Promise(resolve => server.close(resolve));
     await mongoose.disconnect(); await mongo.stop();

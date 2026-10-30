@@ -59,9 +59,10 @@ void main() {
         await mount(tester, ApplicationDetailScreen(application: application));
         await tester.tap(find.byTooltip('استكمال مستندات الطلب'));
         await tester.pumpAndSettle();
-        if (additional)
+        if (additional) {
           expect(
               find.textContaining('نسخة حديثة من شهادة اللغة'), findsOneWidget);
+        }
         await tester.tap(find.byType(DropdownButton<String>));
         await tester.pumpAndSettle();
         await tester.tap(find.text('new.pdf').last);
@@ -91,9 +92,10 @@ void main() {
                 Object response;
                 if (request.method == 'PATCH') {
                   submitted = jsonDecode(request.body) as Map<String, dynamic>;
-                  if (conflict)
+                  if (conflict) {
                     return http.Response(
                         jsonEncode({'message': 'Conflict'}), 409);
+                  }
                   response = {
                     ...application,
                     '__v': 4,

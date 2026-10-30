@@ -1,4 +1,5 @@
 import '../../core/utils/json_safe.dart';
+import '../ai/assistant_help_button.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -45,7 +46,7 @@ AppStatusMeta appStatusMeta(Map<String, dynamic> app) {
     case 'additional-documents-required':
       return const AppStatusMeta('مطلوب مستندات إضافية', AppColors.warning);
     case 'conditional-admission':
-      return const AppStatusMeta('قبول مشروط', AppColors.orange);
+      return const AppStatusMeta('قبول مشروط', AppColors.green);
     case 'payment-required':
       return const AppStatusMeta('الدفع مطلوب', AppColors.warning);
     case 'payment-verification':
@@ -53,7 +54,7 @@ AppStatusMeta appStatusMeta(Map<String, dynamic> app) {
     case 'final-admission':
       return const AppStatusMeta('قبول نهائي', AppColors.success);
     case 'visa-preparation':
-      return const AppStatusMeta('تجهيز التأشيرة', AppColors.orange);
+      return const AppStatusMeta('تجهيز التأشيرة', AppColors.green);
     case 'completed':
     case 'file-completed-accepted':
       return const AppStatusMeta('مكتمل', AppColors.success);
@@ -61,7 +62,7 @@ AppStatusMeta appStatusMeta(Map<String, dynamic> app) {
       return const AppStatusMeta('مقبول', AppColors.success);
     // Website review actions, as they appear in the status timeline.
     case 'preliminary-accepted':
-      return const AppStatusMeta('قبول مبدئي', AppColors.orange);
+      return const AppStatusMeta('قبول مبدئي', AppColors.green);
     case 'preliminary-accepted-first-payment':
       return const AppStatusMeta('الدفع مطلوب', AppColors.warning);
     case 'final-accepted':
@@ -138,13 +139,14 @@ class _ApplicationsListScreenState extends State<ApplicationsListScreen>
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'طلباتي',
+      actions: const [AssistantHelpButton(screen: 'applications')],
       body: Column(
         children: [
           ColoredBox(
             color: AppColors.navy,
             child: TabBar(
               controller: _tabs,
-              indicatorColor: AppColors.orange,
+              indicatorColor: AppColors.green,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white70,
               tabs: const [
@@ -329,13 +331,13 @@ class _ServiceRequestsTabState extends State<_ServiceRequestsTab> {
                   driver != null &&
                   (driver['name'] as String? ?? '').isNotEmpty;
               final (statusLabel, statusColor) = switch (status) {
-                'pending' => ('في الانتظار', Colors.orange),
-                'assigned' => ('تم التعيين', Colors.blue),
+                'pending' => ('في الانتظار', AppColors.warning),
+                'assigned' => ('تم التعيين', AppColors.navy),
                 'in-progress' => ('قيد التنفيذ', AppColors.navy),
-                'en-route' => ('السائق في الطريق', AppColors.orange),
+                'en-route' => ('السائق في الطريق', AppColors.green),
                 'completed' => ('مكتمل', AppColors.success),
                 'cancelled' => ('ملغى', AppColors.danger),
-                _ => ('في الانتظار', Colors.orange),
+                _ => ('في الانتظار', AppColors.warning),
               };
               return AppCard(
                 child: Column(
@@ -386,7 +388,7 @@ class _ServiceRequestsTabState extends State<_ServiceRequestsTab> {
                             if (driver['etaMinutes'] != null)
                               Text('الوصول: ${driver['etaMinutes']} دقيقة',
                                   style: AppTextStyles.caption.copyWith(
-                                      color: AppColors.orange,
+                                      color: AppColors.green,
                                       fontWeight: FontWeight.w600)),
                           ],
                         ),
@@ -695,7 +697,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.circle, size: 8, color: AppColors.orange),
+                  const Icon(Icons.circle, size: 8, color: AppColors.green),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(

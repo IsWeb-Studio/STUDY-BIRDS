@@ -22,7 +22,8 @@ class AdminScholarshipsScreen extends StatelessWidget {
           CrudField('eligibility', 'شروط الأهلية',
               type: CrudFieldType.multiline),
           CrudField('deadline', 'آخر موعد (YYYY-MM-DD)'),
-          CrudField('active', 'منشورة', type: CrudFieldType.boolean)
+          CrudField('active', 'منشورة',
+              type: CrudFieldType.boolean, initialBoolValue: true)
         ],
         fetchItems: () async => Json.list(await ApiClient.instance
             .get('/scholarships/manage', token: token)),
@@ -53,16 +54,19 @@ class _ScholarshipApplicationsScreenState
             title: 'تحديث طلب المنحة',
             message: 'حفظ الحالة الجديدة لهذا الطلب؟',
             confirmLabel: 'حفظ') !=
-        true) return;
+        true) {
+      return;
+    }
     setState(() => saving = '${row['_id']}');
     try {
       await ApiClient.instance.patch('/scholarships/${row['_id']}/status',
           token: AuthSession.instance.token, body: {'status': status});
       if (mounted) setState(() => future = fetch());
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text(e is ApiException ? e.message : 'تعذر تحديث الطلب')));
+      }
     } finally {
       if (mounted) setState(() => saving = null);
     }
@@ -74,17 +78,19 @@ class _ScholarshipApplicationsScreenState
       body: FutureBuilder(
           future: future,
           builder: (context, snapshot) {
-            if (snapshot.hasError)
+            if (snapshot.hasError) {
               return ErrorState(
                   message: 'تعذر تحميل الطلبات',
                   onRetry: () => setState(() => future = fetch()));
+            }
             if (!snapshot.hasData) return const LoadingState();
             final rows = Json.list(snapshot.data);
-            if (rows.isEmpty)
+            if (rows.isEmpty) {
               return const EmptyState(
                   icon: Icons.school_outlined,
                   title: 'لا توجد طلبات',
                   message: 'ستظهر طلبات الطلاب هنا.');
+            }
             return RefreshIndicator(
               onRefresh: () async { setState(() => future = fetch()); try { await future; } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_scholarships_screen.dart:89');} },
               color: AppColors.navy,
@@ -113,8 +119,9 @@ class _ScholarshipApplicationsScreenState
                                     onChanged: saving != null
                                         ? null
                                         : (value) {
-                                            if (value != null)
+                                            if (value != null) {
                                               update(Json.rawMap(row), value);
+                                            }
                                           })
                               ])))
                       .toList()),

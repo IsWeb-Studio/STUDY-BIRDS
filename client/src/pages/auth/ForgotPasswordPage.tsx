@@ -35,7 +35,7 @@ export const ForgotPasswordPage = () => {
     finally { setBusy(false); }
   };
   return <section className="panel mx-auto max-w-xl p-6 sm:p-8">
-    <Seo title={text("استعادة كلمة المرور", "Reset password")} description="Study Birds account security" noIndex />
+    <Seo title={text("استعادة كلمة المرور", "Reset password")} description="COVEY account security" noIndex />
     <h1 className="text-2xl font-semibold text-slate-900">{text("استعادة كلمة المرور", "Reset password")}</h1>
     <p className="mt-3 text-slate-600">{step === "email" ? text("أدخل بريد حسابك لإرسال رمز الاستعادة.", "Enter your account email to request a reset code.") : step === "code" ? text("إذا كان البريد مسجلًا، ستصلك رسالة برمز صالح لمدة 10 دقائق.", "If this email is registered, a code valid for 10 minutes will arrive.") : text("تم تغيير كلمة المرور. سجّل الدخول بكلمتك الجديدة.", "Password changed. Sign in with your new password.")}</p>
     {error ? <p role="alert" className="mt-5 rounded-xl bg-rose-50 p-4 text-rose-700">{error}</p> : null}

@@ -7,16 +7,20 @@ export '../widgets/app_components.dart';
 export '../widgets/state_widgets.dart';
 export '../widgets/offline_banner_wrapper.dart';
 
-/// Study Birds shared design system.
-/// Navy primary, orange accents, white surfaces and consistent spacing.
+/// COVEY shared design system.
+/// Green actions, navy text, white surfaces and pale green support areas.
 class AppColors {
-  static const Color navy = Color(0xFF011E46);
+  static const Color navy = Color(0xFF041E4A);
   static const Color navyLight = Color(0xFF16305F);
-  static const Color orange = Color(0xFFFD6D04);
-  static const Color orangeSoft = Color(0xFFFFEEDD);
+  static const Color green = Color(0xFF73C027);
+  static const Color greenSoft = Color(0xFFF1F8E9);
+  static const Color greenInk = Color(0xFF3D7014);
+  // Compatibility for existing consumers of the previous palette.
+  static const Color orange = green;
+  static const Color orangeSoft = greenSoft;
   static const Color background = Color(0xFFF5F7FA);
   static const Color card = Colors.white;
-  static const Color textPrimary = Color(0xFF1A1A1A);
+  static const Color textPrimary = navy;
   static const Color textSecondary = Color(0xFF6B7280);
   static const Color border = Color(0xFFE5E8EE);
 
@@ -44,16 +48,28 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'Tajawal',
+      textTheme: ThemeData.light().textTheme.apply(
+          fontFamily: 'Tajawal',
+          bodyColor: AppColors.navy,
+          displayColor: AppColors.navy),
       scaffoldBackgroundColor: AppColors.background,
       colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.navy,
-          primary: AppColors.navy,
-          secondary: AppColors.orange,
+          seedColor: AppColors.green,
+          primary: AppColors.green,
+          onPrimary: AppColors.navy,
+          primaryContainer: AppColors.greenSoft,
+          onPrimaryContainer: AppColors.navy,
+          secondary: AppColors.navy,
+          onSecondary: Colors.white,
+          secondaryContainer: AppColors.greenSoft,
+          onSecondaryContainer: AppColors.navy,
           surface: Colors.white,
+          onSurface: AppColors.navy,
+          onSurfaceVariant: AppColors.textSecondary,
           error: AppColors.danger),
       appBarTheme: const AppBarTheme(
-          backgroundColor: AppColors.navy,
-          foregroundColor: Colors.white,
+          backgroundColor: Colors.white,
+          foregroundColor: AppColors.navy,
           surfaceTintColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0,
@@ -65,6 +81,17 @@ class AppTheme {
       iconTheme: const IconThemeData(color: AppColors.navy, size: 22),
       dividerTheme: const DividerThemeData(
           color: AppColors.border, thickness: 1, space: 24),
+      progressIndicatorTheme: const ProgressIndicatorThemeData(
+          color: AppColors.greenInk,
+          linearTrackColor: AppColors.greenSoft),
+      textSelectionTheme: const TextSelectionThemeData(
+          cursorColor: AppColors.greenInk,
+          selectionColor: AppColors.greenSoft,
+          selectionHandleColor: AppColors.greenInk),
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+          backgroundColor: Colors.white,
+          selectedItemColor: AppColors.greenInk,
+          unselectedItemColor: AppColors.textSecondary),
       inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
@@ -73,7 +100,7 @@ class AppTheme {
           border: border,
           enabledBorder: border,
           focusedBorder: border.copyWith(
-              borderSide: const BorderSide(color: AppColors.navy, width: 1.5)),
+              borderSide: const BorderSide(color: AppColors.greenInk, width: 1.5)),
           errorBorder: border.copyWith(
               borderSide: const BorderSide(color: AppColors.danger)),
           hintStyle: AppTextStyles.caption,
@@ -82,8 +109,8 @@ class AppTheme {
           suffixIconColor: AppColors.textSecondary),
       elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.navy,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.green,
+              foregroundColor: AppColors.navy,
               elevation: 0,
               minimumSize: const Size(48, 48),
               shape: shape,
@@ -93,8 +120,8 @@ class AppTheme {
                   fontSize: 14))),
       filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
-              backgroundColor: AppColors.navy,
-              foregroundColor: Colors.white,
+              backgroundColor: AppColors.green,
+              foregroundColor: AppColors.navy,
               minimumSize: const Size(48, 48),
               shape: shape)),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -137,8 +164,8 @@ class AppIconTile extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-          color: AppColors.orangeSoft, borderRadius: BorderRadius.circular(12)),
-      child: Icon(icon, color: AppColors.orange, size: 23));
+          color: AppColors.greenSoft, borderRadius: BorderRadius.circular(12)),
+      child: Icon(icon, color: AppColors.greenInk, size: 23));
 }
 
 class AppTextStyles {

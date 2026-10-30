@@ -2,6 +2,7 @@ import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/repositories/admin_modules_repository.dart';
@@ -191,11 +192,22 @@ class _AdminMarketingAssetsScreenState extends State<AdminMarketingAssetsScreen>
   List<dynamic> _assets = [];
   bool _loading = true;
   String? _error;
+  final _assetTitle = TextEditingController();
+  final _assetDescription = TextEditingController();
+  final _assetType = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _assetTitle.dispose();
+    _assetDescription.dispose();
+    _assetType.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -219,12 +231,110 @@ class _AdminMarketingAssetsScreenState extends State<AdminMarketingAssetsScreen>
     }
   }
 
+  Future<void> _editAsset({Map<String, dynamic>? asset}) async {
+    _assetTitle.text = '${asset?['title'] ?? ''}';
+    _assetDescription.text = '${asset?['description'] ?? ''}';
+    _assetType.text = '${asset?['type'] ?? ''}';
+    bool published = asset?['published'] != false;
+    PlatformFile? file;
+    bool saving = false;
+    String? error;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => SafeArea(
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.viewInsetsOf(context).bottom + 16),
+            child: SingleChildScrollView(
+              child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                Text(asset == null ? 'إضافة مادة تسويقية' : 'تعديل مادة تسويقية', style: AppTextStyles.cardTitle),
+                const SizedBox(height: 12),
+                TextField(controller: _assetTitle, decoration: const InputDecoration(labelText: 'اسم المادة')),
+                const SizedBox(height: 8),
+                TextField(controller: _assetType, decoration: const InputDecoration(labelText: 'النوع')),
+                const SizedBox(height: 8),
+                TextField(controller: _assetDescription, minLines: 2, maxLines: 4, decoration: const InputDecoration(labelText: 'الوصف')),
+                if (asset == null) ...[
+                  const SizedBox(height: 8),
+                  OutlinedButton.icon(
+                    onPressed: saving ? null : () async {
+                      final result = await FilePicker.platform.pickFiles(
+                        type: FileType.custom,
+                        allowedExtensions: ['pdf', 'txt', 'jpg', 'jpeg', 'png', 'webp'],
+                        withData: true,
+                      );
+                      if (!sheetContext.mounted) return;
+                      if (result == null || result.files.isEmpty || result.files.single.bytes == null) return;
+                      if (result.files.single.size > 5 * 1024 * 1024) {
+                        setSheetState(() => error = 'الحد الأقصى لحجم الملف 5 ميغابايت.');
+                        return;
+                      }
+                      setSheetState(() { file = result.files.single; error = null; });
+                    },
+                    icon: const Icon(Icons.attach_file_rounded),
+                    label: Text(file?.name ?? 'اختيار الملف'),
+                  ),
+                ],
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: published,
+                  onChanged: saving ? null : (value) => setSheetState(() => published = value),
+                  title: const Text('نشر المادة للشركاء'),
+                ),
+                if (error != null) Text(error!, style: const TextStyle(color: AppColors.danger)),
+                PrimaryButton(
+                  label: saving ? 'جارٍ الحفظ...' : 'حفظ',
+                  onPressed: saving ? null : () async {
+                    if (_assetTitle.text.trim().isEmpty || _assetType.text.trim().isEmpty || (asset == null && file == null)) {
+                      setSheetState(() => error = 'أدخل الاسم والنوع واختر ملفًا للمادة الجديدة.');
+                      return;
+                    }
+                    setSheetState(() { saving = true; error = null; });
+                    try {
+                      final repository = AdminModulesRepository.instance;
+                      if (asset == null) {
+                        await repository.createMarketingAsset(
+                          title: _assetTitle.text.trim(),
+                          description: _assetDescription.text.trim(),
+                          type: _assetType.text.trim(),
+                          published: published,
+                          fileBytes: file!.bytes!,
+                          fileName: file!.name,
+                        );
+                      } else {
+                        await repository.updateMarketingAsset(
+                          '${asset['_id']}',
+                          title: _assetTitle.text.trim(),
+                          description: _assetDescription.text.trim(),
+                          type: _assetType.text.trim(),
+                          published: published,
+                        );
+                      }
+                      if (sheetContext.mounted) Navigator.pop(sheetContext);
+                      await _load();
+                    } catch (saveError) {
+                      if (sheetContext.mounted) {
+                        setSheetState(() { saving = false; error = 'تعذر حفظ المادة: $saveError'; });
+                      }
+                    }
+                  },
+                ),
+              ]),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _delete(String id) async {
     try {
       await AdminModulesRepository.instance.deleteMarketingAsset(id);
       if (mounted) setState(() => _assets.removeWhere((a) => (Json.map(a))['_id'] == id));
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/admin_financials_marketing_screens.dart:224');
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر الحذف')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: const Text('تعذر الحذف')));
     }
   }
 
@@ -232,6 +342,7 @@ class _AdminMarketingAssetsScreenState extends State<AdminMarketingAssetsScreen>
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'المواد التسويقية',
+      actions: [IconButton(tooltip: 'إضافة مادة', onPressed: () => _editAsset(), icon: const Icon(Icons.add_rounded))],
       body: RefreshIndicator(
         onRefresh: _load,
         color: AppColors.navy,
@@ -250,6 +361,7 @@ class _AdminMarketingAssetsScreenState extends State<AdminMarketingAssetsScreen>
                             child: Row(
                               children: [
                                 Expanded(child: Text(asset['title'] as String? ?? asset['fileName'] as String? ?? '—', style: AppTextStyles.cardTitle)),
+                                IconButton(tooltip: 'تعديل', icon: const Icon(Icons.edit_outlined), onPressed: () => _editAsset(asset: asset)),
                                 IconButton(tooltip: 'حذف', icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger), onPressed: () => _delete(asset['_id'] as String)),
                               ],
                             ),

@@ -47,11 +47,12 @@ class _FollowUpRemindersState extends State<FollowUpRemindersScreen> {
           token: AuthSession.instance.token);
       if (mounted) await load();
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/follow_up_reminders_screen.dart:47');
-      if (mounted)
+      if (mounted) {
         setState(() {
           error = 'تعذر تحديث التذكير.';
           busy = false;
         });
+      }
     }
   }
 
@@ -69,7 +70,7 @@ class _FollowUpRemindersState extends State<FollowUpRemindersScreen> {
                       physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
                       padding: const EdgeInsets.all(16),
                       children: [
-                        Text(
+                        const Text(
                             'قراءة التذكير لا تعني إنجاز المتابعة. حدّث الموعد من لوحة الموقع بعد مراجعة الطلب.',
                             style: AppTextStyles.caption),
                         if (rows.isEmpty)

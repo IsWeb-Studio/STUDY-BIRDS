@@ -66,8 +66,9 @@ class AppError {
 
   static String response(int? status, String? raw) {
     if (status == 0) return connection;
-    if (status == 408 || status == 504)
+    if (status == 408 || status == 504) {
       return raw == uncertain ? uncertain : timeout;
+    }
     if (status != null && status >= 500) return unavailable;
     final text = raw?.trim() ?? '';
     final translated = _translations[text.toLowerCase()];
@@ -98,7 +99,9 @@ class AppError {
     if (value == connection ||
         value == timeout ||
         value == unavailable ||
-        value == unexpected) return value;
+        value == unexpected) {
+      return value;
+    }
     return _translations[value.toLowerCase()] ??
         (_isSafeArabic(value) ? value : unexpected);
   }

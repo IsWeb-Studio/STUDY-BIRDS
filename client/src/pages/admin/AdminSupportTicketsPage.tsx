@@ -1,3 +1,4 @@
+import { VoiceReply } from "../../components/VoiceReply";
 import { DocumentFileLink } from "../../components/DocumentFileLink";
 import { StaffReadReceipt } from "../../components/admin/StaffReadReceipt";
 import { useState } from "react";
@@ -56,7 +57,7 @@ export const AdminSupportTicketsPage = () => {
                 {supportConversation(item).map((reply, index) => (
                   <div key={`${item._id}-${index}`} className="rounded-2xl bg-white px-4 py-3">
                     <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{reply.displayName || reply.user?.name || (reply.fromRole === "admin" ? (isArabic ? "فريق الدعم" : "Support team") : item.user?.name || item.agent?.name || (isArabic ? "الطالب" : "Student"))}{reply.source === "crm" ? " · CRM" : ""}{reply.createdAt ? ` · ${formatDate(reply.createdAt)}` : ""}</div>
-                    <div className="mt-2 text-sm text-slate-700">{reply.message}</div>
+                    <div className="mt-2 text-sm text-slate-700">{reply.audioPath ? <VoiceReply path={reply.audioPath} /> : reply.message}</div>
                   </div>
                 ))}
               </div>

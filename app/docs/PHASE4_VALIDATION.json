@@ -1,0 +1,552 @@
+{
+  "date": "2026-10-21",
+  "timezone": "Europe/Istanbul",
+  "phase": 4,
+  "status": "VALIDATED_FOR_CONTROLLED_DEVICE_QA_NOT_PRODUCTION_CERTIFIED",
+  "sources": {
+    "authoritativeFlutter": "D:\\work\\studybirds_app\\study_birds_app-main",
+    "deploymentFlutter": "D:/work/studybirds_session_release/app",
+    "backend": "D:/work/studybirds_session_release/server",
+    "website": "D:/work/studybirds_session_release/client"
+  },
+  "checkpoint": {
+    "root": ".git/phase4-20261021",
+    "preSourceFiles": 1719,
+    "preSourceAndBackupHashesVerified": true,
+    "privateConfigurationFiles": 6,
+    "previousCheckpointsRetained": true,
+    "after": ".git/phase4-20261021/post-validation",
+    "initialFreeBytes": {
+      "C": 31559876608,
+      "D": 4975734784
+    },
+    "postBuildFreeBytes": {
+      "C": 31551803392,
+      "D": 1428025344
+    }
+  },
+  "deploymentPatches": {
+    "approved": [
+      "01",
+      "02",
+      "03",
+      "05"
+    ],
+    "newlyApplied": [],
+    "alreadyAppliedVerified": [
+      "01",
+      "02",
+      "03",
+      "05"
+    ],
+    "replayed": false,
+    "verification": {
+      "reverseCheckExit": 0,
+      "forwardCheckExit": 1,
+      "status": "ALREADY_APPLIED_VERIFIED_NOT_REPLAYED",
+      "approved": [
+        {
+          "path": "D:\\work\\studybirds_app\\study_birds_app-main\\docs\\proposals\\phase3\\01-viewer-privacy.patch",
+          "sha256": "508ebcee64d3f9cc4603ca9ad60c0e9553b6fff6d48c635333bca4b0cd5355bc"
+        },
+        {
+          "path": "D:\\work\\studybirds_app\\study_birds_app-main\\docs\\proposals\\phase3\\02-material-card.patch",
+          "sha256": "b660a5958039158dc4d9af6203ed94f9d002d648e3c71b9b8e910a05fa909b87"
+        },
+        {
+          "path": "D:\\work\\studybirds_app\\study_birds_app-main\\docs\\proposals\\phase3\\03-story-deletion-feed.patch",
+          "sha256": "3f8f1e9f960d36be5da456448e54febe98183bdfec74ea4279da08514309fb97"
+        },
+        {
+          "path": "D:\\work\\studybirds_app\\study_birds_app-main\\docs\\proposals\\phase3\\05-account-notification-preferences.patch",
+          "sha256": "42ab18e79cce979db980b96d10f14a28bf2a7096387caf03f3c524a469f1306a"
+        }
+      ],
+      "fullscreenExcluded": true
+    },
+    "excluded": [
+      {
+        "unit": "04",
+        "reason": "Explicitly excluded fullscreen design; card viewport retained"
+      }
+    ],
+    "unexpectedConflicts": [],
+    "sourceDriftSinceApprovedFollowUp": false
+  },
+  "validation": {
+    "executionRoot": "D:/work/studybirds_session_release/app",
+    "sdk": "C:/src/flutter/bin/flutter.bat",
+    "pubGet": {
+      "command": "flutter pub get",
+      "exit": 0,
+      "log": "deployment-pub-get.log"
+    },
+    "analyze": {
+      "command": "flutter analyze",
+      "exit": 1,
+      "info": 279,
+      "warning": 0,
+      "error": 0,
+      "clean": false,
+      "log": "deployment-analyze.log",
+      "existingDiagnosticEvidence": ".git/approved-parity-20261021/analysis-details.json"
+    },
+    "tests": {
+      "command": "flutter test --reporter expanded",
+      "exit": 0,
+      "passed": 444,
+      "failed": 0,
+      "log": "deployment-tests.log",
+      "coverage": [
+        "story deletion deduplication and failure restoration",
+        "immediate exact viewer route removal",
+        "private viewers cleared after logout and late responses rejected",
+        "session/account switching",
+        "six preference persistence/offline/retry/late-save tests"
+      ]
+    },
+    "debugBuild": {
+      "command": "flutter build apk --debug",
+      "exit": 0,
+      "gradleSeconds": 174.5,
+      "artifact": {
+        "path": "D:/work/studybirds_session_release/app/build/app/outputs/flutter-apk/app-debug.apk",
+        "bytes": 320844144,
+        "sha256": "9638b98f111bf25b4079555f4a48029d40a4892dc12f48f407b3894b61b9ce23"
+      },
+      "log": "deployment-build.log",
+      "securityValidationBypassed": false,
+      "signedRelease": false,
+      "deviceInstalled": false
+    },
+    "backendRegressions": {
+      "executedInPhase4": false,
+      "reason": "No shared contract or backend source change; source hashes verified",
+      "historicalPhase3": {
+        "passed": 257,
+        "exit": 0
+      }
+    },
+    "websiteRegressions": {
+      "executedInPhase4": false,
+      "reason": "No website source, package or lock change; hashes verified",
+      "historicalPhase3": {
+        "passed": 73,
+        "exit": 0
+      }
+    }
+  },
+  "security": {
+    "npmResults": [
+      {
+        "name": "website-audit-clean",
+        "command": "npm audit --json",
+        "exit": 1,
+        "summary": {
+          "info": 0,
+          "low": 0,
+          "moderate": 7,
+          "high": 6,
+          "critical": 2,
+          "total": 15
+        }
+      },
+      {
+        "name": "website-production-audit-clean",
+        "command": "npm audit --omit=dev --json",
+        "exit": 1,
+        "summary": {
+          "info": 0,
+          "low": 0,
+          "moderate": 2,
+          "high": 0,
+          "critical": 0,
+          "total": 2
+        }
+      },
+      {
+        "name": "website-compatible-dry-run-clean",
+        "command": "npm audit fix --package-lock-only --ignore-scripts --dry-run --json",
+        "exit": 1,
+        "summary": {
+          "added": 0,
+          "removed": 0,
+          "changed": 0
+        }
+      },
+      {
+        "name": "router-target-metadata-clean",
+        "command": "npm view react-router-dom@7.18.4 engines peerDependencies --json",
+        "exit": 0,
+        "summary": {
+          "engines": {
+            "node": ">=20.0.0"
+          },
+          "peerDependencies": {
+            "react": ">=18",
+            "react-dom": ">=18"
+          }
+        }
+      },
+      {
+        "name": "vitest-target-metadata-clean",
+        "command": "npm view vitest@5.0.5 engines peerDependencies --json",
+        "exit": 0,
+        "summary": {
+          "engines": {
+            "node": "^22.12.0 || ^24.0.0 || >=26.0.0"
+          },
+          "peerDependencies": {
+            "vite": "^6.4.0 || ^7.0.0 || ^8.0.0",
+            "jsdom": "*",
+            "happy-dom": "*",
+            "@vitest/ui": "5.0.5",
+            "@types/node": "^22.0.0 || >=24.0.0",
+            "@edge-runtime/vm": "*",
+            "@opentelemetry/api": "^1.9.0",
+            "@vitest/coverage-v8": "5.0.5",
+            "@vitest/browser-preview": "5.0.5",
+            "@vitest/coverage-istanbul": "5.0.5",
+            "@vitest/browser-playwright": "5.0.5",
+            "@vitest/browser-webdriverio": "^5.0.0-beta.5 || >=5.0.0"
+          }
+        }
+      },
+      {
+        "name": "tailwind-target-metadata-clean",
+        "command": "npm view tailwindcss@4.3.3 engines peerDependencies --json",
+        "exit": 0,
+        "summary": {}
+      }
+    ],
+    "fullAudit": {
+      "info": 0,
+      "low": 0,
+      "moderate": 7,
+      "high": 6,
+      "critical": 2,
+      "total": 15
+    },
+    "productionAudit": {
+      "info": 0,
+      "low": 0,
+      "moderate": 2,
+      "high": 0,
+      "critical": 0,
+      "total": 2
+    },
+    "compatibleFixesApplied": [],
+    "majorMigrationsApplied": [],
+    "forceUpgrade": false,
+    "broadOverrides": false,
+    "dependencyJunctionsChanged": false,
+    "plans": "docs/proposals/phase4/SECURITY_MIGRATIONS.md",
+    "targets": {
+      "router": {
+        "version": "7.18.4",
+        "metadata": {
+          "engines": {
+            "node": ">=20.0.0"
+          },
+          "peerDependencies": {
+            "react": ">=18",
+            "react-dom": ">=18"
+          }
+        },
+        "migratedTestsRun": false
+      },
+      "vitest": {
+        "version": "5.0.5",
+        "metadata": {
+          "engines": {
+            "node": "^22.12.0 || ^24.0.0 || >=26.0.0"
+          },
+          "peerDependencies": {
+            "vite": "^6.4.0 || ^7.0.0 || ^8.0.0",
+            "jsdom": "*",
+            "happy-dom": "*",
+            "@vitest/ui": "5.0.5",
+            "@types/node": "^22.0.0 || >=24.0.0",
+            "@edge-runtime/vm": "*",
+            "@opentelemetry/api": "^1.9.0",
+            "@vitest/coverage-v8": "5.0.5",
+            "@vitest/browser-preview": "5.0.5",
+            "@vitest/coverage-istanbul": "5.0.5",
+            "@vitest/browser-playwright": "5.0.5",
+            "@vitest/browser-webdriverio": "^5.0.0-beta.5 || >=5.0.0"
+          }
+        },
+        "migratedTestsRun": false
+      },
+      "tailwind": {
+        "version": "4.3.3",
+        "metadata": {},
+        "browserPolicyApprovalRequired": true,
+        "migratedTestsRun": false
+      }
+    },
+    "captureNote": "Original PowerShell mixed stdout/stderr npm capture was not parseable. Clean records separate stdout and stderr; all parsed successfully. Raw captures retained."
+  },
+  "integrity": {
+    "existingSourceAndManifestsUnchanged": true,
+    "backendWebsiteUnchanged": true,
+    "authenticationAuthorizationApiContractsUnchanged": true,
+    "debugSigningKeyExistedBefore": true,
+    "debugSigningKeyUnchanged": true,
+    "ignoredConfigurationChanges": [
+      {
+        "scope": "deployment-app",
+        "path": "android/local.properties",
+        "generatedKeys": [
+          "flutter.buildMode",
+          "flutter.versionName",
+          "flutter.versionCode"
+        ],
+        "originalPrivatelyPreserved": true,
+        "sdkPathsChanged": false
+      }
+    ],
+    "generatedOutputs": "Flutter Gradle wrappers/plugin/build output; no tracked Gradle/toolchain configuration change"
+  },
+  "git": {
+    "app": {
+      "head": "3e31e19c5343170056e6d7559c59bfb891f2c624",
+      "branch": "main",
+      "initialStatus": [
+        " M README.md",
+        " M lib/core/services/notification_scheduler.dart",
+        " M lib/core/widgets/app_components.dart",
+        " M lib/screens/applications_documents_payments/documents_screens.dart",
+        " M lib/screens/home_journey/notifications_screen.dart",
+        " M lib/screens/home_journey/student_banner_carousel.dart",
+        " M lib/screens/profile_account/notification_preferences_screen.dart",
+        " M lib/screens/roles/employee_dashboard_screen.dart",
+        " M lib/screens/stories/story_viewers_screen.dart",
+        " M test/chat_controls_test.dart",
+        " M test/journey_requirements_test.dart",
+        " M test/post_admission_journey_test.dart",
+        " M test/story_viewers_test.dart",
+        " M tool/check_error_policy.dart",
+        "?? .vscode/StudyBirds.code-workspace",
+        "?? docs/APPROVED_DEPLOYMENT_PARITY_20261021.md",
+        "?? docs/ARCHITECTURE.md",
+        "?? docs/AUDIT_VALIDATION.json",
+        "?? docs/BACKEND_ENVIRONMENT_NAMES.json",
+        "?? docs/DEPLOYMENT_PARITY_REPORT.md",
+        "?? docs/DEVELOPMENT_SETUP.md",
+        "?? docs/DUPLICATE_INVENTORY.json",
+        "?? docs/DUPLICATE_INVENTORY.md",
+        "?? docs/FEATURE_PARITY_REPORT.md",
+        "?? docs/FINAL_CLEANUP_APPROVAL.md",
+        "?? docs/MAINTENANCE_GUIDE.md",
+        "?? docs/PHASE2_FINAL_REPORT.md",
+        "?? docs/PHASE2_SECURITY_REVIEW.md",
+        "?? docs/PHASE2_VALIDATION.json",
+        "?? docs/PHASE3_DEPENDENCY_PLAN.md",
+        "?? docs/PHASE3_FINAL_REPORT.md",
+        "?? docs/PHASE3_VALIDATION.json",
+        "?? docs/PROJECT_AUDIT_REPORT.md",
+        "?? docs/RELEASE_READINESS_CHECKLIST.md",
+        "?? docs/STABILIZATION_20261021.md",
+        "?? docs/WORKSPACE_WORKFLOW.md",
+        "?? docs/proposals/",
+        "?? lib/core/services/notification_preferences_store.dart",
+        "?? test/notification_preferences_test.dart"
+      ],
+      "status": [
+        " M README.md",
+        " M lib/core/services/notification_scheduler.dart",
+        " M lib/core/widgets/app_components.dart",
+        " M lib/screens/applications_documents_payments/documents_screens.dart",
+        " M lib/screens/home_journey/notifications_screen.dart",
+        " M lib/screens/home_journey/student_banner_carousel.dart",
+        " M lib/screens/profile_account/notification_preferences_screen.dart",
+        " M lib/screens/roles/employee_dashboard_screen.dart",
+        " M lib/screens/stories/story_viewers_screen.dart",
+        " M test/chat_controls_test.dart",
+        " M test/journey_requirements_test.dart",
+        " M test/post_admission_journey_test.dart",
+        " M test/story_viewers_test.dart",
+        " M tool/check_error_policy.dart",
+        "?? .vscode/StudyBirds.code-workspace",
+        "?? docs/APPROVED_DEPLOYMENT_PARITY_20261021.md",
+        "?? docs/ARCHITECTURE.md",
+        "?? docs/AUDIT_VALIDATION.json",
+        "?? docs/BACKEND_ENVIRONMENT_NAMES.json",
+        "?? docs/DEPLOYMENT_PARITY_REPORT.md",
+        "?? docs/DEVELOPMENT_SETUP.md",
+        "?? docs/DUPLICATE_INVENTORY.json",
+        "?? docs/DUPLICATE_INVENTORY.md",
+        "?? docs/FEATURE_PARITY_REPORT.md",
+        "?? docs/FINAL_CLEANUP_APPROVAL.md",
+        "?? docs/MAINTENANCE_GUIDE.md",
+        "?? docs/PHASE2_FINAL_REPORT.md",
+        "?? docs/PHASE2_SECURITY_REVIEW.md",
+        "?? docs/PHASE2_VALIDATION.json",
+        "?? docs/PHASE3_DEPENDENCY_PLAN.md",
+        "?? docs/PHASE3_FINAL_REPORT.md",
+        "?? docs/PHASE3_VALIDATION.json",
+        "?? docs/PHASE4_FINAL_REPORT.md",
+        "?? docs/PHASE4_VALIDATION.json",
+        "?? docs/PROJECT_AUDIT_REPORT.md",
+        "?? docs/RELEASE_READINESS_CHECKLIST.md",
+        "?? docs/STABILIZATION_20261021.md",
+        "?? docs/UPDATED_RELEASE_READINESS.md",
+        "?? docs/WORKSPACE_WORKFLOW.md",
+        "?? docs/proposals/deferred-story-deletion-review.patch",
+        "?? docs/proposals/notification-preferences-review.patch",
+        "?? docs/proposals/phase3/01-viewer-privacy.patch",
+        "?? docs/proposals/phase3/02-material-card.patch",
+        "?? docs/proposals/phase3/03-story-deletion-feed.patch",
+        "?? docs/proposals/phase3/04-story-fullscreen-layout.patch",
+        "?? docs/proposals/phase3/05-account-notification-preferences.patch",
+        "?? docs/proposals/phase3/README.md",
+        "?? docs/proposals/phase4/SECURITY_MIGRATIONS.md",
+        "?? lib/core/services/notification_preferences_store.dart",
+        "?? test/notification_preferences_test.dart"
+      ],
+      "staged": [],
+      "diffCheckExit": 0,
+      "worktrees": [
+        "D:/work/studybirds_app/study_birds_app-main  3e31e19 [main]"
+      ]
+    },
+    "deployment": {
+      "head": "e9060536e8dc7a70150da9c42d6dfac901713553",
+      "branch": "DETACHED",
+      "initialStatus": [
+        " M app/lib/core/repositories/stories_repository.dart",
+        " M app/lib/core/services/notification_scheduler.dart",
+        " M app/lib/core/widgets/app_components.dart",
+        " M app/lib/screens/profile_account/notification_preferences_screen.dart",
+        " M app/lib/screens/stories/story_viewer.dart",
+        " M app/lib/screens/stories/story_viewers_screen.dart",
+        " M app/lib/screens/stories/student_stories.dart",
+        " M app/test/story_viewer_test.dart",
+        " M app/test/story_viewers_test.dart",
+        " M client/package-lock.json",
+        " M client/package.json",
+        " M client/scripts/generate-seo-files.mjs",
+        " M server/package-lock.json",
+        " M server/package.json",
+        " M server/src/controllers/adminAgentController.js",
+        " M server/src/controllers/contentController.js",
+        " M server/src/models/Notification.js",
+        " M server/src/models/User.js",
+        " M server/src/routes/alumniRoutes.js",
+        " M server/src/routes/mobileSecurityRoutes.js",
+        " M server/src/routes/scholarshipRoutes.js",
+        " M server/src/seed/seed.js",
+        " M server/src/utils/cashMisrSms.js",
+        " M server/src/utils/pushNotifications.js",
+        " M server/src/utils/supportNotifications.js",
+        " M server/src/utils/whatsappOtp.js",
+        " M server/tests/auditFixes.test.js",
+        " M server/tests/crmIntegration.test.js",
+        " M server/tests/privateDocumentAccess.test.js",
+        "?? app/lib/core/services/notification_preferences_store.dart",
+        "?? app/test/notification_preferences_test.dart",
+        "?? app/test/story_deletion_test.dart",
+        "?? client/src/lib/seoBuild.test.ts",
+        "?? server/scripts/run-tests.cjs",
+        "?? server/src/utils/jwtSecret.js",
+        "?? server/src/utils/notificationPreferences.js",
+        "?? server/tests/notificationPreferences.test.js",
+        "?? server/tests/recoveredParity.test.js"
+      ],
+      "status": [
+        " M app/lib/core/repositories/stories_repository.dart",
+        " M app/lib/core/services/notification_scheduler.dart",
+        " M app/lib/core/widgets/app_components.dart",
+        " M app/lib/screens/profile_account/notification_preferences_screen.dart",
+        " M app/lib/screens/stories/story_viewer.dart",
+        " M app/lib/screens/stories/story_viewers_screen.dart",
+        " M app/lib/screens/stories/student_stories.dart",
+        " M app/test/story_viewer_test.dart",
+        " M app/test/story_viewers_test.dart",
+        " M client/package-lock.json",
+        " M client/package.json",
+        " M client/scripts/generate-seo-files.mjs",
+        " M server/package-lock.json",
+        " M server/package.json",
+        " M server/src/controllers/adminAgentController.js",
+        " M server/src/controllers/contentController.js",
+        " M server/src/models/Notification.js",
+        " M server/src/models/User.js",
+        " M server/src/routes/alumniRoutes.js",
+        " M server/src/routes/mobileSecurityRoutes.js",
+        " M server/src/routes/scholarshipRoutes.js",
+        " M server/src/seed/seed.js",
+        " M server/src/utils/cashMisrSms.js",
+        " M server/src/utils/pushNotifications.js",
+        " M server/src/utils/supportNotifications.js",
+        " M server/src/utils/whatsappOtp.js",
+        " M server/tests/auditFixes.test.js",
+        " M server/tests/crmIntegration.test.js",
+        " M server/tests/privateDocumentAccess.test.js",
+        "?? app/lib/core/services/notification_preferences_store.dart",
+        "?? app/test/notification_preferences_test.dart",
+        "?? app/test/story_deletion_test.dart",
+        "?? client/src/lib/seoBuild.test.ts",
+        "?? server/scripts/run-tests.cjs",
+        "?? server/src/utils/jwtSecret.js",
+        "?? server/src/utils/notificationPreferences.js",
+        "?? server/tests/notificationPreferences.test.js",
+        "?? server/tests/recoveredParity.test.js"
+      ],
+      "staged": [],
+      "diffCheckExit": 0,
+      "worktrees": [
+        "D:/work/studybirds_web                        f42dc7a [main]",
+        "C:/Users/Abood/studybirds-claude              c1ae0df [claude-assistant]",
+        "C:/Users/Abood/studybirds-email-refresh       aac8419 [email-branding-refresh]",
+        "C:/Users/Abood/studybirds-wink                e0aff5b [wink-game]",
+        "D:/work/studybirds-stories-release            a5b118a (detached HEAD)",
+        "D:/work/studybirds_islam_google_password_fix  4fed84c [fix/islam-google-password]",
+        "D:/work/studybirds_session_release            e906053 (detached HEAD)"
+      ]
+    }
+  },
+  "phase4EditedPaths": [
+    "README.md",
+    "docs/PHASE4_FINAL_REPORT.md",
+    "docs/PHASE4_VALIDATION.json",
+    "docs/UPDATED_RELEASE_READINESS.md",
+    "docs/proposals/phase4/SECURITY_MIGRATIONS.md"
+  ],
+  "safety": {
+    "deleted": false,
+    "reset": false,
+    "stashed": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "credentialsChanged": false,
+    "signingKeysChanged": false,
+    "productionDatabaseOrHostedServicesModified": false,
+    "sourceDirectoriesMoved": false,
+    "worktreeRelationshipsChanged": false
+  },
+  "readiness": {
+    "controlledDeviceQA": true,
+    "requiresExplicitQaApi": true,
+    "defaultApiRemains": "https://study-birds1.onrender.com/api",
+    "productionReady": false,
+    "notTested": [
+      "real-device installation/flows",
+      "SMTP/Google/OneSignal live providers",
+      "background/killed-app notification behavior",
+      "live media/OCR",
+      "iOS",
+      "signed release/store upgrade"
+    ],
+    "approvalRequired": [
+      "Router major migration",
+      "Vitest major migration",
+      "Tailwind major migration plus browser/visual policy",
+      "scoped analysis/SDK/toolchain maintenance",
+      "coordinated publishing action"
+    ],
+    "fullscreen04StillExcluded": true
+  }
+}

@@ -191,9 +191,10 @@ class _CreateUniversityAccountScreenState
       );
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() =>
             _error = e is ApiException ? e.message : 'تعذر إنشاء الحساب.');
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -259,8 +260,9 @@ class _CreateUniversityAccountScreenState
                       ? 'أدخل الاسم الكامل'
                       : null),
               _field('البريد الإلكتروني', _email, validator: (v) {
-                if (v == null || v.trim().isEmpty)
+                if (v == null || v.trim().isEmpty) {
                   return 'أدخل البريد الإلكتروني';
+                }
                 if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim())) {
                   return 'صيغة البريد الإلكتروني غير صحيحة';
                 }
@@ -268,8 +270,9 @@ class _CreateUniversityAccountScreenState
               }),
               _field('كلمة المرور', _password, obscure: true, validator: (v) {
                 if (v == null || v.isEmpty) return 'أدخل كلمة المرور';
-                if (v.length < 8)
+                if (v.length < 8) {
                   return 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
+                }
                 return null;
               }),
               PasswordStrengthInline(password: _passwordText),

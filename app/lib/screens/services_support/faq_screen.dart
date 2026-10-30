@@ -78,7 +78,7 @@ class _FaqScreenState extends State<FaqScreen> {
                               Row(
                                 children: [
                                   Expanded(child: Text(faq['question'] as String? ?? '', style: AppTextStyles.cardTitle)),
-                                  Icon(expanded ? Icons.remove_rounded : Icons.add_rounded, color: AppColors.orange),
+                                  Icon(expanded ? Icons.remove_rounded : Icons.add_rounded, color: AppColors.green),
                                 ],
                               ),
                               AnimatedCrossFade(

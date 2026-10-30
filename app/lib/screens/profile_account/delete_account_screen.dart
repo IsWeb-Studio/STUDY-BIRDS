@@ -77,8 +77,9 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
     try {
       await ApiClient.instance.post('/auth/account/verification',
           token: AuthSession.instance.token);
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'تم إرسال رمز التأكيد إلى بريد حسابك.');
+      }
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (_) {
@@ -123,10 +124,10 @@ class _DeleteAccountScreenState extends State<DeleteAccountScreen> {
       title: 'حذف الحساب',
       body: FeatureBody(
         children: [
-          FeatureIntro(
+          const FeatureIntro(
             title: 'حذف الحساب نهائياً',
             subtitle:
-                'سيتم حذف الحساب والبيانات الشخصية والمستندات والطلبات المرتبطة به. تبقى سجلات المعاملات المالية اللازمة للمحاسبة، وتُعاد محاولة إزالة الملفات تلقائياً عند تعطل التخزين.',
+                'بعد التأكيد يتوقف الوصول إلى الحساب وتبدأ إزالة البيانات الشخصية والمستندات والطلبات والمحتوى المنشور آليًا. تبقى سجلات المحاسبة الضرورية بعد إزالة بيانات الملف الشخصي، وتُعاد محاولة الإزالة تلقائيًا عند تعطل التخزين. لا يلزم إرسال طلب آخر.',
             icon: Icons.delete_forever_rounded,
           ),
           const FeaturePanel(

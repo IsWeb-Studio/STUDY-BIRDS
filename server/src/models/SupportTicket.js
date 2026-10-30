@@ -30,6 +30,10 @@ const supportReplySchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
     },
+    audioPath: String,
+    audioDuration: Number,
+    operationId: String,
+    audioStorage: { type: new mongoose.Schema({ publicId: String, format: String, duration: Number, resourceType: String, deliveryType: String }, { _id: false }), select: false },
     createdAt: {
       type: Date,
       default: Date.now,

@@ -60,7 +60,7 @@ class _CountriesDiscoveryViewState extends State<CountriesDiscoveryView> {
                         gradient: const LinearGradient(
                             begin: Alignment.topRight,
                             end: Alignment.bottomLeft,
-                            colors: [AppColors.navy, Color(0xFF1D5775)]),
+                            colors: [AppColors.navy, AppColors.navyLight]),
                       ),
                       child: Row(children: [
                         const Expanded(
@@ -69,7 +69,7 @@ class _CountriesDiscoveryViewState extends State<CountriesDiscoveryView> {
                           children: [
                             Text('وجهتك الدراسية القادمة',
                                 style: TextStyle(
-                                    color: Color(0xFFFFC58A),
+                                    color: AppColors.greenSoft,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700)),
                             SizedBox(height: 12),
@@ -130,7 +130,7 @@ class _CountriesDiscoveryViewState extends State<CountriesDiscoveryView> {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                              color: const Color(0xFFFFEEDD),
+                              color: AppColors.greenSoft,
                               borderRadius: BorderRadius.circular(20)),
                           child: Text('${countries.length} وجهة',
                               style: const TextStyle(
@@ -226,7 +226,7 @@ class _CountryDestinationCard extends StatelessWidget {
                                 end: Alignment.bottomCenter,
                                 colors: [
                           Colors.transparent,
-                          Color(0x660C223A)
+                          Color(0x66041E4A)
                         ]))),
                     PositionedDirectional(
                         top: 12,
@@ -258,7 +258,7 @@ class _CountryDestinationCard extends StatelessWidget {
                       const SizedBox(height: 8),
                       Row(children: [
                         const Icon(Icons.account_balance_outlined,
-                            size: 14, color: AppColors.orange),
+                            size: 14, color: AppColors.greenInk),
                         const SizedBox(width: 5),
                         Expanded(
                             child: Text(
@@ -288,10 +288,10 @@ class _CountryDestinationCard extends StatelessWidget {
                         Container(
                             padding: const EdgeInsets.all(6),
                             decoration: const BoxDecoration(
-                                color: Color(0xFFFFEEDD),
+                                color: AppColors.greenSoft,
                                 shape: BoxShape.circle),
                             child: const Icon(Icons.arrow_forward_rounded,
-                                color: AppColors.orange, size: 16)),
+                                color: AppColors.greenInk, size: 16)),
                       ]),
                     ]),
               )),
@@ -311,7 +311,7 @@ class _DestinationFallback extends StatelessWidget {
             gradient: LinearGradient(
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft,
-                colors: [Color(0xFF1D5775), AppColors.navy])),
+                colors: [AppColors.navyLight, AppColors.navy])),
         child: Center(
             child: Icon(Icons.public_rounded, size: 62, color: Colors.white38)),
       );

@@ -54,7 +54,7 @@ async function send(phone, code) {
     throw new Error("CashMisr SMS is not configured on the server.");
   }
 
-  const message = `رمز التحقق من Study Birds: ${code}\nصالح 5 دقائق. لا تشاركه مع أحد.`;
+  const message = `رمز التحقق من COVEY: ${code}\nصالح 5 دقائق. لا تشاركه مع أحد.`;
 
   // Build query-string params (standard for most Egyptian SMS APIs).
   // Adjust key names below if CashMisr uses different parameter names.

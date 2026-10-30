@@ -1,3 +1,4 @@
+import '../../core/config/app_theme.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/repositories/stories_repository.dart';
@@ -133,6 +134,6 @@ class _ProfileStoryScoreState extends State<ProfileStoryScore> {
                                     style: const TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF06244B)))),
+                                        color: AppColors.navy))),
                           ])))))));
 }

@@ -284,12 +284,12 @@ class _StringPickerSheetState extends State<_StringPickerSheet> {
                 if (showManual && i == 0) {
                   return ListTile(
                     leading: const Icon(Icons.add_circle_outline,
-                        color: AppColors.orange, size: 22),
+                        color: AppColors.green, size: 22),
                     title: Text(
                       'إضافة "$query" مباشرة',
                       textDirection: TextDirection.rtl,
                       style: const TextStyle(
-                          color: AppColors.orange, fontWeight: FontWeight.w600),
+                          color: AppColors.greenInk, fontWeight: FontWeight.w600),
                     ),
                     onTap: () => Navigator.pop(context, query),
                   );

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:study_birds/core/config/app_theme.dart';
 import 'package:study_birds/core/widgets/profile_bottom_navigation.dart';
 import 'package:study_birds/core/services/auth_session.dart';
 
@@ -27,6 +28,35 @@ void main() {
         role: UserRole.student);
   });
   tearDown(() => AuthSession.instance.currentUser = null);
+  testWidgets('selected destination is highlighted in orange', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Directionality(
+        textDirection: TextDirection.ltr,
+        child: Scaffold(
+          bottomNavigationBar: ProfileBottomNavigation(
+            currentIndex: 4,
+            labels: const [
+              'Home',
+              'Journey',
+              'Explore',
+              'Account',
+              'Community',
+              'Game',
+              'Profile',
+            ],
+            onTap: (_) {},
+          ),
+        ),
+      ),
+    ));
+    final communityTab = find.byKey(const ValueKey('main-tab-4'));
+    final icon = tester.widget<Icon>(find.descendant(
+        of: communityTab, matching: find.byIcon(Icons.forum_outlined)));
+    final label = tester.widget<Text>(
+        find.descendant(of: communityTab, matching: find.text('Community')));
+    expect(icon.color, AppColors.greenInk);
+    expect(label.style?.color, AppColors.greenInk);
+  });
   for (final width in [320.0, 390.0, 600.0]) {
     testWidgets('center account and all destinations remain tappable at $width',
         (tester) async {

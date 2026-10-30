@@ -16,7 +16,7 @@ const { uploadFileToCloudinary } = require("../utils/uploadToCloudinary");
 const requireLinkedUniversity = (req, res) => {
   if (!req.user.linkedUniversity) {
     res.status(409);
-    throw new Error("This account is not linked to a university yet. Contact Study Birds support.");
+    throw new Error("This account is not linked to a university yet. Contact COVEY support.");
   }
   return req.user.linkedUniversity;
 };

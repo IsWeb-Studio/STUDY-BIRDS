@@ -108,7 +108,7 @@ class JourneyRequestStatusCard extends StatelessWidget {
           'طلبك قيد الانتظار',
           'تم استلام طلبك بنجاح، وهو بانتظار مراجعة فريق القبول. ستظهر تحديثات الطلب هنا فور توفرها.',
           Icons.hourglass_top_rounded,
-          AppColors.orange
+          AppColors.green
         ),
       'under-review' => (
           'طلبك قيد المراجعة',
@@ -431,7 +431,7 @@ class _JourneyDetailScreenState extends State<_JourneyDetailScreen> {
         'in-progress': 'جارية الآن',
         'not-required': 'غير مطلوبة',
         'waiting': 'بانتظار المراجعة',
-        'waiting-team': 'بانتظار فريق Study Birds',
+        'waiting-team': 'بانتظار فريق COVEY',
         'waiting-university': 'بانتظار الجامعة',
         'action-required': 'مطلوب منك',
         'overdue': 'متأخرة',
@@ -445,7 +445,7 @@ class _JourneyDetailScreenState extends State<_JourneyDetailScreen> {
       : ['overdue', 'rejected'].contains(status)
           ? AppColors.danger
           : status == 'action-required'
-              ? AppColors.orange
+              ? AppColors.green
               : status == 'partial'
                   ? AppColors.info
                   : AppColors.neutral;

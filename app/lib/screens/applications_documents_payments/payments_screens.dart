@@ -292,7 +292,7 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
     switch (status) {
       case 'completed': return AppColors.success;
       case 'partial': return AppColors.info;
-      case 'action-required': return AppColors.orange;
+      case 'action-required': return AppColors.green;
       case 'overdue': return AppColors.danger;
       case 'waiting': return AppColors.info;
       default: return AppColors.neutral;
@@ -403,7 +403,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> with WidgetsB
         if (_invoice['status'] == 'paid') await NotificationScheduler.instance.cancel('payment:${_invoice['_id']}');
       }
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:403');
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر تحديث حالة الدفع. حاول مجددًا.')));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: const Text('تعذر تحديث حالة الدفع. حاول مجددًا.')));
     }
   }
 
@@ -456,13 +456,13 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> with WidgetsB
       );
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-          content: Text('تم رفع إيصال الدفع بنجاح'),
+          content: const Text('تم رفع إيصال الدفع بنجاح'),
           backgroundColor: AppColors.success));
       Navigator.of(context).pop();
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:460');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-          content: Text('تعذر رفع الإيصال، حاول مرة أخرى'),
+          content: const Text('تعذر رفع الإيصال، حاول مرة أخرى'),
           backgroundColor: AppColors.danger));
     } finally {
       if (mounted) setState(() => _uploading = false);
@@ -671,7 +671,7 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                                             if (context.mounted) {
                                               ScaffoldMessenger.of(context)
                                                   .showSnackBar(AppSnackBar(
-                                                      content: Text(
+                                                      content: const Text(
                                                           'تعذر فتح إثبات الدفع. تحقق من الجلسة والصلاحيات.')));
                                             }
                                           }

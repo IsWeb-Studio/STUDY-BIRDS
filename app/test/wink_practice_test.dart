@@ -19,12 +19,13 @@ Map<String, dynamic> training(
     p['isBot'] = p['id'] != 'p0';
     p['seen'] = p['isBot'];
   }
-  if (phase == 'finished')
+  if (phase == 'finished') {
     data['result'] = {
       'winner': 'players',
       'winker': 'p1',
       'reason': 'winker-out'
     };
+  }
   return data;
 }
 
@@ -41,8 +42,9 @@ void main() {
       (tester) async {
     var starts = 0;
     final api = ApiClient.forTesting(MockClient((request) async {
-      if (request.url.path.endsWith('/current'))
+      if (request.url.path.endsWith('/current')) {
         return http.Response('{"code":null}', 200);
+      }
       expect(request.url.path.endsWith('/practice'), true);
       expect((jsonDecode(request.body) as Map)['role'], 'player');
       starts++;

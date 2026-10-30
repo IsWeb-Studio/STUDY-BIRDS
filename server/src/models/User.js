@@ -82,6 +82,7 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
     avatar: String,
+    notificationPreferences: { type: Map, of: Boolean, default: undefined },
     isActive: {
       type: Boolean,
       default: true,

@@ -1,0 +1,88 @@
+{
+  "date": "2026-10-21",
+  "checkpoint": {
+    "files": 1687,
+    "hashesVerified": true,
+    "phase1PrivateConfigRetained": true
+  },
+  "flutter": {
+    "pubGet": 0,
+    "analyze": {
+      "exit": 0,
+      "issues": 0
+    },
+    "tests": {
+      "exit": 0,
+      "passed": 439
+    },
+    "debugBuild": 0
+  },
+  "backend": {
+    "initialBusyRun": {
+      "exit": 1,
+      "passed": 241,
+      "failed": 2,
+      "skipped": 0,
+      "cause": "MongoDB memory-server startup timeout in financialSecurity.test.js"
+    },
+    "finalSerialRun": {
+      "exit": 0,
+      "passed": 255,
+      "failed": 0,
+      "skipped": 0,
+      "topLevel": 209
+    },
+    "syntax": {
+      "exit": 0,
+      "files": 327,
+      "failed": 0
+    },
+    "audit": {
+      "exit": 0,
+      "total": 0
+    }
+  },
+  "website": {
+    "validationRoot": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\audit-20261021\\client-validation",
+    "test": {
+      "exit": 0,
+      "passed": 65,
+      "files": 10
+    },
+    "build": 0,
+    "audit": {
+      "exit": 1,
+      "affectedEntries": 15,
+      "moderate": 7,
+      "high": 6,
+      "critical": 2
+    },
+    "productionAudit": {
+      "exit": 1,
+      "affectedEntries": 2,
+      "moderate": 2
+    },
+    "compatibleDryRun": {
+      "exit": 1,
+      "added": 0,
+      "removed": 0,
+      "changed": 0
+    },
+    "lockfileChangedInPhase2": false
+  },
+  "cleanup": {
+    "status": "REQUIRES APPROVAL",
+    "targets": 8,
+    "logicalBytes": 3578405502,
+    "deleted": 0
+  },
+  "git": {
+    "pushed": false,
+    "deployed": false,
+    "committed": false,
+    "stashed": false,
+    "reset": false,
+    "relocated": false
+  },
+  "ios": "NOT TESTED - Windows"
+}

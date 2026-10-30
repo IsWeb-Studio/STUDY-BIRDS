@@ -240,11 +240,11 @@ class _ExhibitionCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.12),
+                  color: AppColors.green.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(6)),
               child: const Text('مميز',
                   style: TextStyle(
-                      color: AppColors.orange,
+                      color: AppColors.greenInk,
                       fontSize: 11,
                       fontWeight: FontWeight.w700)),
             ),
@@ -294,8 +294,10 @@ class _ExhibitionArticleScreenState extends State<ExhibitionArticleScreen> {
     final uri = Uri.tryParse(url);
     if (uri == null) return;
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text('تعذر فتح الرابط.')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          AppSnackBar(content: const Text('تعذر فتح الرابط.')));
+      }
     }
   }
 
@@ -309,8 +311,10 @@ class _ExhibitionArticleScreenState extends State<ExhibitionArticleScreen> {
           itemType: 'article', articleSlug: slug, articleTitle: title);
       if (mounted) setState(() => _favorited = res['removed'] != true);
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/knowledge_base_screen.dart:309');
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text('تعذر تحديث المفضلة.')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          AppSnackBar(content: const Text('تعذر تحديث المفضلة.')));
+      }
     } finally {
       if (mounted) setState(() => _toggling = false);
     }

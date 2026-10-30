@@ -4,6 +4,7 @@ const Team = require('../models/StudentSupportTeam');
 const User = require('../models/User');
 const { membersFor, staffQuery } = require('../utils/studentSupportTeam');
 
+exports.membersFor = membersFor;
 exports.mine = asyncHandler(async (req, res) => res.set('Cache-Control', 'no-store').json(await membersFor(req.user._id)));
 exports.saveAdvisor = asyncHandler(async (req, res) => {
   const id = req.body.advisorId;
@@ -19,7 +20,9 @@ exports.read = asyncHandler(async (req, res) => {
   }
   const members = await membersFor(req.params.id);
   const candidates = req.user.role === 'admin' ? await User.find(staffQuery).select('_id name employeeRole').sort({ name: 1 }).lean() : [];
-  res.json({ members, candidates, canEdit: req.user.role === 'admin' });
+  const team = await Team.findOne({ student: req.params.id }).lean();
+  const memberIds = (team?.members || []).map(String);
+  res.json({ members, memberIds, teamMembers: members.filter(m => memberIds.includes(String(m._id))), crmAdvisor: members.find(m => String(m._id) === String(team?.crmAdvisor)) || null, candidates, canEdit: req.user.role === 'admin' });
 });
 exports.save = asyncHandler(async (req, res) => {
   const ids = req.body.memberIds;

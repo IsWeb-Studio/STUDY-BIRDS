@@ -13,7 +13,7 @@ async function sendCode(user, purpose, res) {
   } }, { new: true, upsert: true });
   const title = { 'delete-account': 'تأكيد حذف الحساب', reset: 'استعادة كلمة المرور', verify: 'تأكيد البريد', login: 'رمز تسجيل الدخول', security: 'تغيير إعدادات الأمان', emaillogin: 'رمز الدخول عبر البريد' }[purpose];
   const firstName = (user.name || '').split(' ')[0] || null;
-  try { await sendContactEmail({ to: user.email, subject: `Study Birds — ${title}`, text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.`, emailContent: { title, code, recipientName: firstName, bodyText: 'استخدم رمز التحقق التالي لإكمال طلبك. صالح لمدة 10 دقائق. لا تشاركه مع أحد.' } }); }
+  try { await sendContactEmail({ to: user.email, subject: `COVEY — ${title}`, text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.`, emailContent: { title, code, recipientName: firstName, bodyText: 'استخدم رمز التحقق التالي لإكمال طلبك. صالح لمدة 10 دقائق. لا تشاركه مع أحد.' } }); }
   catch (e) { await EmailCode.deleteOne({ _id: row._id, digest: row.digest }); throw e; }
 }
 async function consume(user, purpose, code, res) {

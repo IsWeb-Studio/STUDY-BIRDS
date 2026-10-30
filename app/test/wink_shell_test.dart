@@ -17,7 +17,7 @@ import 'wink_game_test.dart' show fixture;
 
 void main() {
   testWidgets(
-      'game has its own bottom tab, loads lazily and hides cards when switching',
+      'bottom game tab loads lazily, preserves rooms and hides cards when switching',
       (tester) async {
     final preview = Platform.environment['WINK_SHELL_PREVIEW'];
     final boundary = GlobalKey();
@@ -58,8 +58,11 @@ void main() {
       await tester.pump(const Duration(seconds: 1));
       expect(gameRequests, 0,
           reason: 'The offstage tab must not start a game connection.');
-      for (var i = 0; i <= kTabGame; i++) {
+      for (final i in [kTabHome, kTabCommunity, kTabGame]) {
         expect(find.byKey(ValueKey('main-tab-$i')), findsOneWidget);
+      }
+      for (final i in [kTabJourney, kTabExplore, kTabServices, kTabAccount]) {
+        expect(find.byKey(ValueKey('main-tab-$i')), findsNothing);
       }
       await tester.tap(find.byKey(const ValueKey('main-tab-5')));
       await tester.pump(const Duration(seconds: 1));

@@ -185,11 +185,12 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     try {
       _setDocuments(await StudentRepository.instance.getDocuments());
     } catch (_) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loadingDocuments = false;
           _documentError = 'تعذر تحميل المستندات';
         });
+      }
     }
   }
 
@@ -224,7 +225,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       });
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-          content: Text('تم إرسال طلبك — تابع حالته من "طلباتي"'),
+          content: const Text('تم إرسال طلبك — تابع حالته من "طلباتي"'),
           backgroundColor: AppColors.success));
       Navigator.of(context).pop();
     } catch (e) {
@@ -306,7 +307,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
             ),
             const SizedBox(height: 8),
             const Text(
-              'بعد الإرسال سيتواصل معك فريق Study Birds لتحديد التفاصيل والدفع.',
+              'بعد الإرسال سيتواصل معك فريق COVEY لتحديد التفاصيل والدفع.',
               style: AppTextStyles.caption,
             ),
             const SizedBox(height: 20),
@@ -390,8 +391,9 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
           if (snap.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
           }
-          if (snap.hasError)
+          if (snap.hasError) {
             return ErrorState(message: 'تعذر تحميل الطلبات', onRetry: _refresh);
+          }
           final rows = (snap.data ?? []).whereType<Map>().toList();
           if (rows.isEmpty) {
             return const EmptyState(
@@ -477,7 +479,7 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
                                 Text(
                                     'الوصول المتوقع: ${driver['etaMinutes']} دقيقة',
                                     style: AppTextStyles.caption.copyWith(
-                                        color: AppColors.orange,
+                                        color: AppColors.green,
                                         fontWeight: FontWeight.w600)),
                             ],
                           ),
@@ -503,14 +505,17 @@ class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
                             try {
                               final uri = await resolveDocumentDownload(
                                   '${document['filePath']}');
-                              await launchUrl(uri,
-                                  mode: LaunchMode.externalApplication);
+                              if (!await launchUrl(uri,
+                                  mode: LaunchMode.externalApplication)) {
+                                throw StateError('Document viewer unavailable');
+                              }
                             } catch (error) {
-                              if (context.mounted)
+                              if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
                                         content: Text(
                                             'تعذر فتح المستند. تحقق من الاتصال والصلاحيات.')));
+                              }
                             }
                           },
                         ),
@@ -539,10 +544,10 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      'pending' => ('في الانتظار', Colors.orange),
-      'assigned' => ('تم التعيين', Colors.blue),
+      'pending' => ('في الانتظار', AppColors.warning),
+      'assigned' => ('تم التعيين', AppColors.navy),
       'in-progress' => ('قيد التنفيذ', AppColors.navy),
-      'en-route' => ('السائق في الطريق', AppColors.orange),
+      'en-route' => ('السائق في الطريق', AppColors.green),
       'completed' => ('مكتمل', AppColors.success),
       'cancelled' => ('ملغى', Colors.red),
       _ => (status, Colors.grey),
@@ -630,7 +635,7 @@ class _ConsultationConfirmationScreenState
           'screens/services_support/services_consultation_screens.dart:471');
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
-            AppSnackBar(content: Text('تعذر فتح رابط الاجتماع.')));
+            AppSnackBar(content: const Text('تعذر فتح رابط الاجتماع.')));
       }
     }
   }
@@ -650,7 +655,7 @@ class _ConsultationConfirmationScreenState
 
     final uri = Uri.https('calendar.google.com', '/calendar/render', {
       'action': 'TEMPLATE',
-      'text': 'استشارة Study Birds مع $advisor',
+      'text': 'استشارة COVEY مع $advisor',
       'dates': '${fmt(startsAt)}/${fmt(endsAt)}',
       'details': details,
     });
@@ -663,7 +668,7 @@ class _ConsultationConfirmationScreenState
           'screens/services_support/services_consultation_screens.dart:502');
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
-            AppSnackBar(content: Text('تعذر فتح تطبيق التقويم.')));
+            AppSnackBar(content: const Text('تعذر فتح تطبيق التقويم.')));
       }
     }
   }
@@ -685,7 +690,7 @@ class _ConsultationConfirmationScreenState
           'screens/services_support/services_consultation_screens.dart:517');
       if (ctx.mounted) {
         ScaffoldMessenger.of(ctx).showSnackBar(
-            AppSnackBar(content: Text('تعذر تحميل ملف التقويم.')));
+            AppSnackBar(content: const Text('تعذر تحميل ملف التقويم.')));
       }
     }
   }

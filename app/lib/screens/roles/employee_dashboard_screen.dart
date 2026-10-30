@@ -4,8 +4,8 @@ import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'follow_up_reminders_screen.dart';
 import 'admin_scholarships_screen.dart';
-import '../services_support/messaging_and_emergency_screens.dart';
 import '../profile_account/security_settings_screen.dart';
+import '../home_journey/notifications_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/config/app_theme.dart';
@@ -21,15 +21,22 @@ import 'admin_approval_screens.dart';
 import 'admin_applications_documents_screens.dart';
 import 'admin_simple_lists_screens.dart';
 import 'admin_app_notification_screen.dart';
-import '../home_journey/notifications_screen.dart' show NotificationInboxButton;
+
 import 'admin_support_knowledge_screens.dart';
 import 'admin_financials_marketing_screens.dart';
 import 'admin_content_crud_screens.dart';
 import 'admin_singleton_hub_screens.dart';
 import 'employee_consultations_screen.dart';
 import 'admin_reward_rules_screen.dart';
+import 'admin_visa_center_screen.dart';
+import 'admin_housing_screen.dart';
+import 'admin_wallet_screen.dart';
 import '../services_support/student_listings_screen.dart';
+import '../profile_account/role_account_tab.dart';
+import '../profile_account/my_streak.dart';
+import '../../core/widgets/verified_admin_badge.dart';
 import '../../main.dart' show RootChooserScreen;
+import '../community/student_community_hub.dart';
 
 // ─── Section entry ────────────────────────────────────────────────────────────
 class _SectionEntry {
@@ -48,17 +55,32 @@ class _TabDef {
   final IconData icon;
   final String label;
   final List<String> keys;
-  const _TabDef(this.icon, this.label, this.keys);
+  final bool account;
+  final bool community;
+  const _TabDef(this.icon, this.label, this.keys,
+      {this.account = false, this.community = false});
 }
 
 const _studentKeys = [
-  'students', 'applications', 'student-documents', 'student-financials',
-  'student-arrivals', 'student-notifications', 'student-favorites',
-  'student-orientation', 'parent-links', 'support',
+  'students',
+  'applications',
+  'student-documents',
+  'student-financials',
+  'student-arrivals',
+  'student-notifications',
+  'student-favorites',
+  'student-orientation',
+  'parent-links',
+  'support',
+  'service-requests',
 ];
 const _partnerKeys = [
-  'agency-requests', 'agents', 'partner-students',
-  'marketing-assets', 'verification', 'payouts',
+  'agency-requests',
+  'agents',
+  'partner-students',
+  'marketing-assets',
+  'verification',
+  'payouts',
 ];
 const _managementKeys = [
   'app-notifications', 'university-accounts', 'universities', 'programs', 'content',
@@ -72,6 +94,10 @@ const _allTabDefs = [
   _TabDef(Icons.people_rounded, 'الطلاب', _studentKeys),
   _TabDef(Icons.handshake_rounded, 'الشركاء', _partnerKeys),
   _TabDef(Icons.admin_panel_settings_rounded, 'الإدارة', _managementKeys),
+  _TabDef(Icons.forum_rounded,
+      '\u0645\u062c\u062a\u0645\u0639 \u0627\u0644\u0637\u0644\u0627\u0628', [],
+      community: true),
+  _TabDef(Icons.person_outline_rounded, 'حسابي', [], account: true),
 ];
 
 // ─── Section registry ─────────────────────────────────────────────────────────
@@ -82,107 +108,271 @@ final List<_SectionEntry> _allSections = [
   _SectionEntry('students', Icons.person_search_rounded, AppColors.navy,
       'ملفات الطلاب', 'استعراض وإدارة ملفات الطلاب الكاملة',
       (_) => const MyStudentsQueueScreen()),
-  _SectionEntry('applications', Icons.description_rounded, const Color(0xFF3B82F6),
-      'طلبات القبول', 'متابعة الطلبات وتحديث حالاتها',
+  _SectionEntry(
+      'applications',
+      Icons.description_rounded,
+      AppColors.greenInk,
+      'طلبات القبول',
+      'متابعة الطلبات وتحديث حالاتها',
       (_) => const AdminApplicationsScreen()),
-  _SectionEntry('student-documents', Icons.folder_open_rounded, const Color(0xFFF59E0B),
-      'مستندات الطلاب', 'مراجعة المستندات والتحقق منها',
+  _SectionEntry(
+      'student-documents',
+      Icons.folder_open_rounded,
+      AppColors.greenInk,
+      'مستندات الطلاب',
+      'مراجعة المستندات والتحقق منها',
       (_) => const AdminStudentDocumentsScreen()),
-  _SectionEntry('student-financials', Icons.payments_rounded, const Color(0xFF10B981),
-      'مالية الطلاب', 'متابعة الرسوم والمدفوعات',
+  _SectionEntry(
+      'student-financials',
+      Icons.payments_rounded,
+      AppColors.greenInk,
+      'مالية الطلاب',
+      'متابعة الرسوم والمدفوعات',
       (_) => const AdminStudentFinancialsScreen()),
-  _SectionEntry('student-financials', Icons.workspace_premium_rounded, const Color(0xFF8B5CF6),
-      'قواعد المكافآت', 'تحديد قواعد وشروط مكافآت الطلاب',
+  _SectionEntry(
+      'student-financials',
+      Icons.account_balance_wallet_rounded,
+      AppColors.greenInk,
+      'محافظ الطلاب',
+      'تسجيل ومراجعة معاملات أرصدة الطلاب',
+      (_) => const AdminWalletScreen()),
+  _SectionEntry(
+      'student-financials',
+      Icons.workspace_premium_rounded,
+      AppColors.greenInk,
+      'قواعد المكافآت',
+      'تحديد قواعد وشروط مكافآت الطلاب',
       (_) => const AdminRewardRulesScreen()),
-  _SectionEntry('student-arrivals', Icons.flight_land_rounded, const Color(0xFF06B6D4),
-      'وصول الطلاب', 'تنسيق رحلات الوصول والاستقبال',
+  _SectionEntry(
+      'student-arrivals',
+      Icons.flight_land_rounded,
+      AppColors.greenInk,
+      'وصول الطلاب',
+      'تنسيق رحلات الوصول والاستقبال',
       (_) => const AdminArrivalRequestsScreen()),
-  _SectionEntry('support', Icons.support_agent_rounded, const Color(0xFFEF4444),
-      'الدعم الفني', 'متابعة ورد تذاكر الدعم الواردة',
+  _SectionEntry(
+      'support',
+      Icons.support_agent_rounded,
+      AppColors.greenInk,
+      'الدعم الفني',
+      'متابعة ورد تذاكر الدعم الواردة',
       (_) => const AdminSupportTicketsScreen()),
-  _SectionEntry('student-notifications', Icons.notifications_rounded, const Color(0xFFF97316),
-      'إشعارات الطلاب', 'إرسال إشعارات مخصصة للطلاب',
+  _SectionEntry(
+      'service-requests',
+      Icons.home_repair_service_rounded,
+      AppColors.greenInk,
+      'طلبات الخدمات',
+      'متابعة الطلبات وتحديث حالتها وتعيين المسؤول',
+      (_) => const EmployeeServiceRequestsScreen()),
+  _SectionEntry(
+      'student-notifications',
+      Icons.notifications_rounded,
+      AppColors.greenInk,
+      'إشعارات الطلاب',
+      'إرسال إشعارات مخصصة للطلاب',
       (_) => const AdminStudentNotificationsScreen()),
-  _SectionEntry('student-favorites', Icons.favorite_rounded, const Color(0xFFEC4899),
-      'المفضلة', 'استعراض تفضيلات الطلاب وجامعاتهم المفضلة',
+  _SectionEntry(
+      'student-favorites',
+      Icons.favorite_rounded,
+      AppColors.greenInk,
+      'المفضلة',
+      'استعراض تفضيلات الطلاب وجامعاتهم المفضلة',
       (_) => const AdminStudentFavoritesScreen()),
-  _SectionEntry('knowledge-base', Icons.menu_book_rounded, const Color(0xFF84CC16),
-      'دليل المعرفة', 'إدارة دليل المعلومات للطلاب والوكلاء',
+  _SectionEntry(
+      'knowledge-base',
+      Icons.menu_book_rounded,
+      AppColors.green,
+      'دليل المعرفة',
+      'إدارة دليل المعلومات للطلاب والوكلاء',
       (_) => const AdminKnowledgeBaseScreen()),
-  _SectionEntry('student-orientation', Icons.quiz_rounded, const Color(0xFF6366F1),
-      'اختبار التوجيه', 'عرض نتائج اختبار توجيه الطلاب',
+  _SectionEntry(
+      'student-orientation',
+      Icons.quiz_rounded,
+      AppColors.greenInk,
+      'اختبار التوجيه',
+      'عرض نتائج اختبار توجيه الطلاب',
       (_) => const AdminOrientationResultsScreen()),
-  _SectionEntry('parent-links', Icons.family_restroom_rounded, const Color(0xFFD97706),
-      'ربط أولياء الأمور', 'ربط أولياء الأمور بحسابات أبنائهم',
+  _SectionEntry(
+      'parent-links',
+      Icons.family_restroom_rounded,
+      AppColors.greenInk,
+      'ربط أولياء الأمور',
+      'ربط أولياء الأمور بحسابات أبنائهم',
       (_) => const AdminParentLinksScreen()),
-  _SectionEntry('agency-requests', Icons.how_to_reg_rounded, AppColors.navy,
-      'طلبات الوكالة', 'مراجعة وقبول طلبات شراكة الوكلاء',
+  _SectionEntry(
+      'agency-requests',
+      Icons.how_to_reg_rounded,
+      AppColors.navy,
+      'طلبات الوكالة',
+      'مراجعة وقبول طلبات شراكة الوكلاء',
       (_) => const AdminAgencyRequestsScreen()),
-  _SectionEntry('agents', Icons.badge_rounded, const Color(0xFF3B82F6),
-      'ملفات الوكلاء', 'استعراض وإدارة ملفات الوكلاء',
+  _SectionEntry(
+      'agents',
+      Icons.badge_rounded,
+      AppColors.greenInk,
+      'ملفات الوكلاء',
+      'استعراض وإدارة ملفات الوكلاء',
       (_) => const AdminAgentsScreen()),
-  _SectionEntry('partner-students', Icons.group_rounded, const Color(0xFF10B981),
-      'طلاب الوكلاء', 'الطلاب المسجّلون عبر الوكلاء',
+  _SectionEntry(
+      'partner-students',
+      Icons.group_rounded,
+      AppColors.greenInk,
+      'طلاب الوكلاء',
+      'الطلاب المسجّلون عبر الوكلاء',
       (_) => const AdminPartnerStudentsScreen()),
-  _SectionEntry('marketing-assets', Icons.campaign_rounded, const Color(0xFFF59E0B),
-      'المواد التسويقية', 'إدارة المواد التسويقية للوكلاء',
+  _SectionEntry(
+      'marketing-assets',
+      Icons.campaign_rounded,
+      AppColors.greenInk,
+      'المواد التسويقية',
+      'إدارة المواد التسويقية للوكلاء',
       (_) => const AdminMarketingAssetsScreen()),
-  _SectionEntry('verification', Icons.verified_rounded, const Color(0xFF06B6D4),
-      'توثيق الوكلاء', 'مراجعة مستندات توثيق الوكلاء',
+  _SectionEntry(
+      'verification',
+      Icons.verified_rounded,
+      AppColors.greenInk,
+      'توثيق الوكلاء',
+      'مراجعة مستندات توثيق الوكلاء',
       (_) => const AdminVerificationScreen()),
-  _SectionEntry('payouts', Icons.account_balance_wallet_rounded, const Color(0xFF8B5CF6),
-      'طلبات السحب', 'اعتماد وإدارة طلبات سحب الوكلاء',
+  _SectionEntry(
+      'payouts',
+      Icons.account_balance_wallet_rounded,
+      AppColors.greenInk,
+      'طلبات السحب',
+      'اعتماد وإدارة طلبات سحب الوكلاء',
       (_) => const AdminPayoutRequestsScreen()),
-  _SectionEntry('university-accounts', Icons.school_rounded, AppColors.navy,
-      'حسابات الجامعات', 'إنشاء وإدارة حسابات بوابات الجامعات',
+  _SectionEntry(
+      'university-accounts',
+      Icons.school_rounded,
+      AppColors.navy,
+      'حسابات الجامعات',
+      'إنشاء وإدارة حسابات بوابات الجامعات',
       (_) => const AdminUniversityAccountsScreen()),
-  _SectionEntry('consultations', Icons.event_available_rounded, const Color(0xFF3B82F6),
-      'الاستشارات', 'إدارة الاستشارات والمواعيد المحجوزة',
+  _SectionEntry(
+      'consultations',
+      Icons.event_available_rounded,
+      AppColors.greenInk,
+      'الاستشارات',
+      'إدارة الاستشارات والمواعيد المحجوزة',
       (_) => const EmployeeConsultationsScreen()),
-  _SectionEntry('universities', Icons.account_balance_rounded, const Color(0xFF10B981),
-      'الجامعات', 'إضافة وتعديل بيانات الجامعات',
+  _SectionEntry(
+      'visa',
+      Icons.flight_takeoff_rounded,
+      AppColors.greenInk,
+      'مركز التأشيرات',
+      'إدارة حالة التأشيرة والمتطلبات والمواعيد والتأمين',
+      (_) => const AdminVisaCenterScreen()),
+  _SectionEntry(
+      'housing',
+      Icons.home_work_rounded,
+      AppColors.greenInk,
+      'السكن الطلابي',
+      'إدارة خيارات السكن والحجوزات وطلبات السكن عند الوصول',
+      (_) => const AdminHousingScreen()),
+  _SectionEntry(
+      'universities',
+      Icons.account_balance_rounded,
+      AppColors.greenInk,
+      'الجامعات',
+      'إضافة وتعديل بيانات الجامعات',
       (_) => const AdminUniversitiesCrudScreen()),
-  _SectionEntry('programs', Icons.auto_stories_rounded, const Color(0xFFF59E0B),
-      'التخصصات', 'إدارة التخصصات والبرامج الدراسية',
+  _SectionEntry(
+      'programs',
+      Icons.auto_stories_rounded,
+      AppColors.greenInk,
+      'التخصصات',
+      'إدارة التخصصات والبرامج الدراسية',
       (_) => const AdminProgramsCrudScreen()),
-  _SectionEntry('content', Icons.public_rounded, const Color(0xFF06B6D4),
-      'الدول والمجالات', 'إدارة الدول والمجالات الدراسية',
+  _SectionEntry(
+      'content',
+      Icons.public_rounded,
+      AppColors.greenInk,
+      'الدول والمجالات',
+      'إدارة الدول والمجالات الدراسية',
       (_) => const AdminContentHubScreen()),
-  _SectionEntry('community', Icons.forum_rounded, const Color(0xFF8B5CF6),
-      'مجتمع الطلاب', 'مراقبة وإدارة منشورات المجتمع',
+  _SectionEntry(
+      'community',
+      Icons.forum_rounded,
+      AppColors.greenInk,
+      'مجتمع الطلاب',
+      'مراقبة وإدارة منشورات المجتمع',
       (_) => const EmployeeCommunityScreen()),
-  _SectionEntry('community', Icons.local_offer_rounded, const Color(0xFFEC4899),
-      'عروض الطلاب', 'إدارة العروض المنشورة في المجتمع',
+  _SectionEntry(
+      'community',
+      Icons.local_offer_rounded,
+      AppColors.greenInk,
+      'عروض الطلاب',
+      'إدارة العروض المنشورة في المجتمع',
       (_) => const AdminStudentListingsScreen(kind: 'offer')),
-  _SectionEntry('community', Icons.work_rounded, const Color(0xFFEF4444),
-      'فرص العمل', 'إدارة فرص العمل والتدريب للطلاب',
+  _SectionEntry(
+      'community',
+      Icons.work_rounded,
+      AppColors.greenInk,
+      'فرص العمل',
+      'إدارة فرص العمل والتدريب للطلاب',
       (_) => const AdminStudentListingsScreen(kind: 'opportunity')),
-  _SectionEntry('testimonials', Icons.rate_review_rounded, const Color(0xFFF97316),
-      'آراء الطلاب', 'إضافة وإدارة شهادات الطلاب',
+  _SectionEntry(
+      'testimonials',
+      Icons.rate_review_rounded,
+      AppColors.greenInk,
+      'آراء الطلاب',
+      'إضافة وإدارة شهادات الطلاب',
       (_) => const AdminTestimonialsScreen()),
-  _SectionEntry('banners', Icons.view_carousel_rounded, const Color(0xFF0C223A),
-      'البنرات', 'إدارة بنرات الكاروسيل في التطبيق',
+  _SectionEntry(
+      'banners',
+      Icons.view_carousel_rounded,
+      AppColors.navy,
+      'البنرات',
+      'إدارة بنرات الكاروسيل في التطبيق',
       (_) => const AdminBannersScreen()),
-  _SectionEntry('recognitions', Icons.workspace_premium_rounded, const Color(0xFFD97706),
-      'الاعتمادات', 'إدارة الاعتمادات الأكاديمية',
+  _SectionEntry(
+      'recognitions',
+      Icons.workspace_premium_rounded,
+      AppColors.greenInk,
+      'الاعتمادات',
+      'إدارة الاعتمادات الأكاديمية',
       (_) => const AdminRecognitionsScreen()),
-  _SectionEntry('services', Icons.design_services_rounded, const Color(0xFF6366F1),
-      'الخدمات', 'إدارة الخدمات المقدمة للطلاب',
+  _SectionEntry(
+      'services',
+      Icons.design_services_rounded,
+      AppColors.greenInk,
+      'الخدمات',
+      'إدارة الخدمات المقدمة للطلاب',
       (_) => const EmployeeServicesHubScreen()),
-  _SectionEntry('faqs', Icons.help_rounded, const Color(0xFF84CC16),
-      'الأسئلة الشائعة', 'إدارة الأسئلة الشائعة وإجاباتها',
+  _SectionEntry(
+      'faqs',
+      Icons.help_rounded,
+      AppColors.green,
+      'الأسئلة الشائعة',
+      'إدارة الأسئلة الشائعة وإجاباتها',
       (_) => const AdminFaqsScreen()),
-  _SectionEntry('site-settings', Icons.settings_rounded, AppColors.navy,
-      'إعدادات الموقع', 'تعديل بيانات التواصل وإعدادات الموقع',
+  _SectionEntry(
+      'site-settings',
+      Icons.settings_rounded,
+      AppColors.navy,
+      'إعدادات الموقع',
+      'تعديل بيانات التواصل وإعدادات الموقع',
       (_) => const AdminSiteSettingsScreen()),
-  _SectionEntry('our-story', Icons.auto_stories_rounded, const Color(0xFF3B82F6),
-      'قصتنا', 'تعديل محتوى صفحة قصة Study Birds',
+  _SectionEntry(
+      'our-story',
+      Icons.auto_stories_rounded,
+      AppColors.greenInk,
+      'قصتنا',
+      'تعديل محتوى صفحة قصة COVEY',
       (_) => const AdminOurStoryScreen()),
-  _SectionEntry('exhibitions', Icons.museum_rounded, const Color(0xFF10B981),
-      'المعارض', 'إدارة محطات المعارض الدراسية',
+  _SectionEntry(
+      'exhibitions',
+      Icons.museum_rounded,
+      AppColors.greenInk,
+      'المعارض',
+      'إدارة محطات المعارض الدراسية',
       (_) => const AdminExhibitionsScreen()),
-  _SectionEntry('events', Icons.event_rounded, const Color(0xFFF59E0B),
-      'الفعاليات', 'إدارة الفعاليات القادمة والسابقة',
+  _SectionEntry(
+      'events',
+      Icons.event_rounded,
+      AppColors.greenInk,
+      'الفعاليات',
+      'إدارة الفعاليات القادمة والسابقة',
       (_) => const AdminEventsHubScreen()),
 ];
 
@@ -208,19 +398,25 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
 
   bool get _isAdmin => widget.user.role == UserRole.admin;
 
+  bool _hasSectionAccess(String key) {
+    if (_isAdmin) return true;
+    final permissions = widget.user.permissions;
+    if (key == 'service-requests') {
+      return permissions.contains('services') ||
+          permissions.contains('support');
+    }
+    return permissions.contains(key);
+  }
+
   List<_TabDef> get _visibleTabs {
-    final perms = widget.user.permissions;
     return _allTabDefs.where((t) {
+      if (t.account || t.community) return true;
       if (t.keys.isEmpty) return true; // home tab always shown
-      if (_isAdmin) return true;
-      return t.keys.any(perms.contains);
+      return t.keys.any(_hasSectionAccess);
     }).toList();
   }
 
   List<_SectionEntry> _sectionsInTab(_TabDef tab) {
-    if (_isAdmin) {
-      return _allSections.where((s) => tab.keys.contains(s.key)).toList();
-    }
     return _allSections
         .where((s) =>
             tab.keys.contains(s.key) &&
@@ -233,17 +429,26 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
   void initState() {
     super.initState();
     _avatarUrl = widget.user.avatar;
-    if (_isAdmin) _load();
-    else if (widget.user.permissions.contains('applications')) _loadReminders();
+    if (_isAdmin) {
+      _load();
+    } else if (widget.user.permissions.contains('applications')) {
+      _loadReminders();
+    }
     _loadMyKpis();
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final data = await EmployeeRepository.instance.getOverview();
       if (!mounted) return;
-      setState(() { _overview = data; _loading = false; });
+      setState(() {
+        _overview = data;
+        _loading = false;
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -258,7 +463,10 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
       final data = await EmployeeRepository.instance.getMyKpis();
       if (!mounted) return;
       setState(() => _myKpis = data);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/employee_dashboard_screen.dart:252');}
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/employee_dashboard_screen.dart:252');
+    }
   }
 
   Future<void> _loadReminders() async {
@@ -270,19 +478,25 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
       if (!mounted) return;
       final now = DateTime.now();
       final overdue = (Json.list(data)).where((r) {
-        final due = DateTime.tryParse('${(Json.rawMap(r))['dueDate'] ?? ''}')?.toLocal();
+        final due = DateTime.tryParse('${(Json.rawMap(r))['dueDate'] ?? ''}')
+            ?.toLocal();
         return due != null && due.isBefore(now.add(const Duration(hours: 24)));
       }).length;
       setState(() => _overdueReminders = overdue);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/employee_dashboard_screen.dart:268');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/employee_dashboard_screen.dart:268');
     } finally {
       if (mounted) setState(() => _remindersLoading = false);
     }
   }
 
   Future<void> _refresh() async {
-    if (_isAdmin) await _load();
-    else if (widget.user.permissions.contains('applications')) await _loadReminders();
+    if (_isAdmin) {
+      await _load();
+    } else if (widget.user.permissions.contains('applications')) {
+      await _loadReminders();
+    }
     _loadMyKpis();
   }
 
@@ -303,10 +517,12 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
       );
       final url = (Json.map(data))['avatar'] as String;
       if (mounted) setState(() => _avatarUrl = url);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/employee_dashboard_screen.dart:297');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/employee_dashboard_screen.dart:297');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-            content: Text('تعذر رفع الصورة'),
+            content: const Text('تعذر رفع الصورة'),
             backgroundColor: AppColors.danger));
       }
     } finally {
@@ -338,24 +554,14 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
     final safeTab = _tab.clamp(0, tabs.length - 1);
 
     return AppScaffold(
+      showBackButton: false,
       title: _isAdmin ? 'لوحة الأدمن' : 'لوحة الموظف',
       actions: [
-        const NotificationInboxButton(),
-        if (_isAdmin || widget.user.permissions.contains('applications'))
-          IconButton(
-              tooltip: 'تذكيرات متابعتي',
-              icon: Badge(
-                isLabelVisible: _overdueReminders > 0,
-                label: Text('$_overdueReminders'),
-                child: const Icon(Icons.notifications_active_outlined),
-              ),
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => const FollowUpRemindersScreen()))),
         IconButton(
-            tooltip: 'الرسائل',
-            icon: const Icon(Icons.forum_outlined),
+            tooltip: 'إشعارات حسابي',
+            icon: const Icon(Icons.notifications_outlined),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const ConversationThreadScreen()))),
+                builder: (_) => const NotificationsScreen()))),
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert_rounded),
           onSelected: (value) async {
@@ -364,6 +570,9 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
                   builder: (_) => const SecuritySettingsScreen()));
             } else if (value == 'avatar') {
               await _pickAvatar();
+            } else if (value == 'reminders') {
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const FollowUpRemindersScreen()));
             } else if (value == 'logout') {
               await _logout();
             }
@@ -375,6 +584,14 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
                 Icon(Icons.security_outlined, size: 18),
                 SizedBox(width: 10),
                 Text('أمان الحساب'),
+              ]),
+            ),
+            PopupMenuItem(
+              value: 'reminders',
+              child: Row(children: [
+                Icon(Icons.notifications_active_outlined, size: 18),
+                SizedBox(width: 10),
+                Text('\u0645\u062a\u0627\u0628\u0639\u0627\u062a'),
               ]),
             ),
             PopupMenuItem(
@@ -390,22 +607,23 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
               child: Row(children: [
                 Icon(Icons.logout_rounded, size: 18, color: AppColors.danger),
                 SizedBox(width: 10),
-                Text('تسجيل الخروج',
-                    style: TextStyle(color: AppColors.danger)),
+                Text('تسجيل الخروج', style: TextStyle(color: AppColors.danger)),
               ]),
             ),
           ],
         ),
       ],
       bottomBar: tabs.length > 1
-          ? AdaptiveBottomBar(child: BottomNavigationBar(
+          ? AdaptiveBottomBar(
+              child: BottomNavigationBar(
+              key: const ValueKey('employee-bottom-navigation'),
               currentIndex: safeTab,
               onTap: (i) => setState(() => _tab = i),
               type: BottomNavigationBarType.fixed,
-              selectedItemColor: AppColors.navy,
+              selectedItemColor: AppColors.greenInk,
               unselectedItemColor: AppColors.textSecondary,
-              selectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w700, fontSize: 11),
+              selectedLabelStyle:
+                  const TextStyle(fontWeight: FontWeight.w700, fontSize: 11),
               unselectedLabelStyle: const TextStyle(fontSize: 11),
               backgroundColor: Colors.white,
               elevation: 8,
@@ -422,16 +640,24 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
         color: AppColors.navy,
         child: IndexedStack(
           index: safeTab,
-          children: tabs.map((t) => t.keys.isEmpty
-              ? _buildHomeTab()
-              : _buildSectionTab(t)).toList(),
+          children: tabs
+              .asMap()
+              .entries
+              .map((entry) => entry.value.account
+                  ? RoleAccountTab(onLogout: _logout)
+                  : entry.value.community
+                      ? StudentCommunityHub(isActive: entry.key == safeTab)
+                      : entry.value.keys.isEmpty
+                          ? _buildHomeTab(isActive: entry.key == safeTab)
+                          : _buildSectionTab(entry.value))
+              .toList(),
         ),
       ),
     );
   }
 
   // ── Home tab ──────────────────────────────────────────────────────────────
-  Widget _buildHomeTab() {
+  Widget _buildHomeTab({required bool isActive}) {
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
@@ -443,6 +669,9 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
           avatarUploading: _avatarUploading,
           onPickAvatar: _pickAvatar,
         ),
+        MyStreakCard(
+            key: ValueKey('employee-my-streak-${widget.user.id}'),
+            isActive: isActive),
         if (_myKpis != null) ...[
           const Text('أدائي هذا الشهر', style: AppTextStyles.sectionLabel),
           const SizedBox(height: 10),
@@ -463,8 +692,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
           _RemindersCard(
             overdue: _overdueReminders,
             loading: _remindersLoading,
-            onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const FollowUpRemindersScreen())),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const FollowUpRemindersScreen())),
           ),
           const SizedBox(height: 16),
         ],
@@ -538,8 +767,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
           color: s.color,
           label: s.label,
           subtitle: s.subtitle,
-          onTap: () => Navigator.of(context)
-              .push(MaterialPageRoute(builder: s.builder)),
+          onTap: () =>
+              Navigator.of(context).push(MaterialPageRoute(builder: s.builder)),
         );
       },
     );
@@ -622,10 +851,8 @@ class _EmployeeHero extends StatelessWidget {
                                   fit: BoxFit.cover,
                                   width: 58,
                                   height: 58,
-                                  errorWidget: const Icon(
-                                      Icons.badge_rounded,
-                                      color: Colors.white,
-                                      size: 26)))
+                                  errorWidget: const Icon(Icons.badge_rounded,
+                                      color: Colors.white, size: 26)))
                           : const Icon(Icons.badge_rounded,
                               color: Colors.white, size: 26),
                 ),
@@ -664,9 +891,15 @@ class _EmployeeHero extends StatelessWidget {
                     color: Colors.white.withValues(alpha: 0.18),
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: Text(_roleLabel,
-                      style:
-                          const TextStyle(color: Colors.white70, fontSize: 12)),
+                  child: Row(mainAxisSize: MainAxisSize.min, children: [
+                    Text(_roleLabel,
+                        style: const TextStyle(
+                            color: Colors.white70, fontSize: 12)),
+                    if (isAdmin) ...[
+                      const SizedBox(width: 6),
+                      const VerifiedAdminBadge(role: 'admin', size: 15),
+                    ],
+                  ]),
                 ),
               ],
             ),
@@ -711,7 +944,8 @@ class _RemindersCard extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(
                 hasOverdue
                     ? '$overdue ${overdue == 1 ? 'متابعة مستحقة' : 'متابعات مستحقة'}'
@@ -736,10 +970,26 @@ class _StatsGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final metrics = [
-      {'label': 'إجمالي الطلاب', 'value': '${stats['students'] ?? 0}', 'color': AppColors.navy},
-      {'label': 'إجمالي الطلبات', 'value': '${stats['applications'] ?? 0}', 'color': const Color(0xFF3B82F6)},
-      {'label': 'قيد المراجعة', 'value': '${stats['underReviewApplications'] ?? 0}', 'color': const Color(0xFFF59E0B)},
-      {'label': 'حسابات غير نشطة', 'value': '${stats['inactiveUsers'] ?? 0}', 'color': const Color(0xFFEF4444)},
+      {
+        'label': 'إجمالي الطلاب',
+        'value': '${stats['students'] ?? 0}',
+        'color': AppColors.navy
+      },
+      {
+        'label': 'إجمالي الطلبات',
+        'value': '${stats['applications'] ?? 0}',
+        'color': const Color(0xFF3B82F6)
+      },
+      {
+        'label': 'قيد المراجعة',
+        'value': '${stats['underReviewApplications'] ?? 0}',
+        'color': const Color(0xFFF59E0B)
+      },
+      {
+        'label': 'حسابات غير نشطة',
+        'value': '${stats['inactiveUsers'] ?? 0}',
+        'color': const Color(0xFFEF4444)
+      },
     ];
     return GridView.count(
       crossAxisCount: 2,
@@ -762,9 +1012,7 @@ class _StatsGrid extends StatelessWidget {
             children: [
               Text(m['value'] as String,
                   style: TextStyle(
-                      color: color,
-                      fontSize: 24,
-                      fontWeight: FontWeight.w800)),
+                      color: color, fontSize: 24, fontWeight: FontWeight.w800)),
               Text(m['label'] as String, style: AppTextStyles.caption),
             ],
           ),
@@ -791,10 +1039,11 @@ class _KpiRow extends StatelessWidget {
           decoration: BoxDecoration(
               color: AppColors.navy.withValues(alpha: 0.06),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: AppColors.navy.withValues(alpha: 0.15))),
+              border:
+                  Border.all(color: AppColors.navy.withValues(alpha: 0.15))),
           child: Column(children: [
             Text('$thisMonth',
-                style: TextStyle(
+                style: const TextStyle(
                     color: AppColors.navy,
                     fontSize: 22,
                     fontWeight: FontWeight.w800)),
@@ -940,8 +1189,7 @@ class _SectionCard extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Icon(Icons.arrow_back_ios_new_rounded,
-                  size: 13,
-                  color: color.withValues(alpha: 0.6)),
+                  size: 13, color: color.withValues(alpha: 0.6)),
             ],
           ),
         ),

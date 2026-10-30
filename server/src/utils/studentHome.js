@@ -25,7 +25,7 @@ const QUICK_ACTIONS = [
   ['programs', 'البرامج', 'Programs'], ['universities', 'الجامعات', 'Universities'], ['applications', 'طلباتي', 'My applications'],
   ['upload-document', 'رفع مستند', 'Upload document'], ['consultation', 'حجز استشارة', 'Book consultation'], ['visa', 'التأشيرة', 'Visa'],
   ['travel', 'السفر والوصول', 'Travel'], ['accommodation', 'السكن', 'Accommodation'], ['payments', 'المدفوعات', 'Payments'],
-  ['support', 'الدعم', 'Support'], ['bird-ai', 'Bird AI', 'Bird AI'],
+  ['support', 'الدعم', 'Support'], ['bird-ai', 'COVEY AI', 'COVEY AI'],
 ].map(([key, labelAr, labelEn]) => ({ key, labelAr, labelEn, destination: key }));
 
 // The context card (PRD 96): one headline that changes with where the student is.

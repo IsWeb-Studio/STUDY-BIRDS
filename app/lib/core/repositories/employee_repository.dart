@@ -14,7 +14,7 @@ class EmployeeRepository {
 
   String get _token {
     final token = AuthSession.instance.token;
-    if (token == null) throw ApiException(401, 'لا توجد جلسة دخول نشطة');
+    if (token == null) throw const ApiException(401, 'لا توجد جلسة دخول نشطة');
     return token;
   }
 
@@ -33,6 +33,31 @@ class EmployeeRepository {
   Future<List<dynamic>> getAllStudents() async {
     final data = await ApiClient.instance.get('/admin/students', token: _token);
     return Json.list(data);
+  }
+
+  Future<Map<String, dynamic>> getStudentDetails(String studentId) async {
+    final data = await ApiClient.instance.get('/admin/students/$studentId', token: _token, cached: false);
+    return Json.map(data);
+  }
+
+  Future<Map<String, dynamic>> updateStudentStatus(String studentId, {required bool isActive}) async {
+    final data = await ApiClient.instance.patch('/admin/students/$studentId/status', token: _token, body: {'isActive': isActive});
+    return Json.map(data);
+  }
+
+  Future<Map<String, dynamic>> getStudentSupportTeam(String studentId) async {
+    final data = await ApiClient.instance.get('/admin/students/$studentId/support-team', token: _token, cached: false);
+    return Json.map(data);
+  }
+
+  Future<Map<String, dynamic>> saveStudentSupportTeam(String studentId, {required List<String> memberIds}) async {
+    final data = await ApiClient.instance.put('/admin/students/$studentId/support-team', token: _token, body: {'memberIds': memberIds});
+    return Json.map(data);
+  }
+
+  Future<Map<String, dynamic>> saveStudentAdvisor(String studentId, {required String? advisorId}) async {
+    final data = await ApiClient.instance.put('/crm/students/$studentId/advisor', token: _token, body: {'advisorId': advisorId});
+    return Json.map(data);
   }
 
   Future<List<dynamic>> getAllApplications() async {

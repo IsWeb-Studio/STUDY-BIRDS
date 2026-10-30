@@ -508,7 +508,33 @@ const requestAccountDeletion = asyncHandler(async (req, res) => {
   res.json({ requiresPassword: Boolean(user.password), sent: !user.password });
 });
 
+const verifyAccountDeletion = asyncHandler(async (req, res) => {
+  await sendCode(req.user, 'delete-account', res);
+  res.json({ sent: true });
+});
+
+// Public web flow also works after uninstalling the mobile app. A generic
+// response prevents disclosure of whether an email address has an account.
+const requestWebDeletion = asyncHandler(async (req, res) => {
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+    return res.status(400).json({ message: 'Enter a valid email address' });
+  }
+  const user = await User.findOne({ email, isActive: true });
+  if (user) await sendCode(user, 'delete-account', res);
+  res.json({ sent: true });
+});
+
+const confirmWebDeletion = asyncHandler(async (req, res) => {
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const user = await User.findOne({ email, isActive: true });
+  await consume(user, 'delete-account', req.body.code, res);
+  await require('../utils/accountDeletion').enqueueDeletion(user);
+  res.status(202).json({ ok: true, deletionPending: true });
+});
+
 module.exports = {
+  verifyAccountDeletion, requestWebDeletion, confirmWebDeletion,
   serializeUser,
   ensureStudentProfile,
   issueTokenPair,

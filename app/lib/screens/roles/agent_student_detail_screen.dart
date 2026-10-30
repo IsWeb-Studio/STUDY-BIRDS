@@ -47,11 +47,21 @@ class AgentStudentDetailScreen extends StatefulWidget {
 class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
   late Map<String, dynamic> _student;
   bool _uploading = false;
+  bool _savingStudent = false;
+  final Map<String, TextEditingController> _studentEditorControllers = {};
 
   @override
   void initState() {
     super.initState();
     _student = widget.initialData;
+  }
+
+  @override
+  void dispose() {
+    for (final controller in _studentEditorControllers.values) {
+      controller.dispose();
+    }
+    super.dispose();
   }
 
   static const _stageLabels = {
@@ -194,7 +204,7 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/agent_student_detail_screen.dart:196');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-        content: Text('تعذر رفع المستند، حاول مرة أخرى'),
+        content: const Text('تعذر رفع المستند، حاول مرة أخرى'),
         backgroundColor: AppColors.danger,
       ));
     } finally {
@@ -204,6 +214,127 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
 
   // ── build ───────────────────────────────────────────────────────────────
 
+  Future<void> _editStudent() async {
+    if (_savingStudent) return;
+    const fields = <(String, String)>[
+      ('name', 'اسم الطالب'),
+      ('email', 'البريد الإلكتروني'),
+      ('phone', 'رقم الهاتف'),
+      ('passportNumber', 'رقم جواز السفر'),
+      ('studyPreferences', 'التخصصات المطلوبة'),
+      ('desiredUniversity', 'الجامعة المطلوبة'),
+      ('desiredProgram', 'البرنامج المطلوب'),
+      ('country', 'الدولة'),
+      ('notes', 'ملاحظات'),
+    ];
+    for (final field in fields) {
+      _studentEditorControllers
+          .putIfAbsent(field.$1, TextEditingController.new)
+          .text = '${_student[field.$1] ?? ''}';
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('تعديل بيانات الطالب'),
+        content: SizedBox(
+          width: 480,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: fields.map((field) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: TextField(
+                  controller: _studentEditorControllers[field.$1],
+                  keyboardType: field.$1 == 'email'
+                      ? TextInputType.emailAddress
+                      : field.$1 == 'phone'
+                          ? TextInputType.phone
+                          : TextInputType.text,
+                  maxLines: field.$1 == 'notes' ? 3 : 1,
+                  decoration: InputDecoration(
+                    labelText: field.$2,
+                    border: const OutlineInputBorder(),
+                  ),
+                ),
+              )).toList(),
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('إلغاء')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('حفظ')),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) {
+      return;
+    }
+    final requiredMissing = ['name', 'email', 'phone']
+        .any((key) => _studentEditorControllers[key]!.text.trim().isEmpty);
+    if (requiredMissing) {
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+        content: const Text('الاسم والبريد ورقم الهاتف حقول مطلوبة.'),
+        backgroundColor: AppColors.danger,
+      ));
+      return;
+    }
+    setState(() => _savingStudent = true);
+    try {
+      final updated = await AgentRepository.instance.updateStudent(
+        widget.studentId,
+        {for (final field in fields) field.$1: _studentEditorControllers[field.$1]!.text.trim()},
+      );
+      if (!mounted) return;
+      setState(() => _student = updated);
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+        content: const Text('تم تحديث بيانات الطالب.'),
+        backgroundColor: AppColors.success,
+      ));
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+          content: Text('تعذر تحديث بيانات الطالب: $error'),
+          backgroundColor: AppColors.danger,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _savingStudent = false);
+    }
+  }
+
+  Future<void> _deleteStudent() async {
+    if (_savingStudent) return;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('حذف سجل الطالب؟'),
+        content: Text('سيتم حذف سجل ${_student['name'] ?? 'الطالب'} من قائمة طلابك.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('إلغاء')),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
+            onPressed: () => Navigator.pop(dialogContext, true),
+            child: const Text('حذف'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    setState(() => _savingStudent = true);
+    try {
+      await AgentRepository.instance.deleteStudent(widget.studentId);
+      if (mounted) Navigator.of(context).pop(true);
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+          content: Text('تعذر حذف سجل الطالب: $error'),
+          backgroundColor: AppColors.danger,
+        ));
+        setState(() => _savingStudent = false);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final s = _student;
@@ -212,6 +343,10 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
 
     return AppScaffold(
       title: s['name'] as String? ?? 'طالب',
+      actions: [
+        IconButton(tooltip: 'تعديل بيانات الطالب', onPressed: _savingStudent ? null : _editStudent, icon: const Icon(Icons.edit_outlined)),
+        IconButton(tooltip: 'حذف الطالب', onPressed: _savingStudent ? null : _deleteStudent, icon: const Icon(Icons.delete_outline_rounded)),
+      ],
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
@@ -323,12 +458,12 @@ class _AgentStudentDetailScreenState extends State<AgentStudentDetailScreen> {
           ),
           const SizedBox(height: 10),
           if (documents.isEmpty)
-            AppCard(
+            const AppCard(
               child: Column(
                 children: [
-                  const Icon(Icons.folder_open_rounded, size: 36, color: AppColors.border),
-                  const SizedBox(height: 8),
-                  const Text('لا توجد مستندات مرفوعة بعد', style: AppTextStyles.caption),
+                  Icon(Icons.folder_open_rounded, size: 36, color: AppColors.border),
+                  SizedBox(height: 8),
+                  Text('لا توجد مستندات مرفوعة بعد', style: AppTextStyles.caption),
                 ],
               ),
             )
@@ -429,16 +564,16 @@ class _DocTypeSheet extends StatelessWidget {
                 onTap: () => Navigator.pop(context, t),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: t.isPassport ? AppColors.orangeSoft : AppColors.background,
+                    color: t.isPassport ? AppColors.greenSoft : AppColors.background,
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: t.isPassport ? AppColors.orange.withValues(alpha: 0.4) : AppColors.border),
+                    border: Border.all(color: t.isPassport ? AppColors.green.withValues(alpha: 0.4) : AppColors.border),
                   ),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(t.icon, size: 26, color: t.isPassport ? AppColors.orange : AppColors.navy),
+                      Icon(t.icon, size: 26, color: t.isPassport ? AppColors.green : AppColors.navy),
                       const SizedBox(height: 6),
-                      Text(t.label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t.isPassport ? AppColors.orange : AppColors.textPrimary), textAlign: TextAlign.center),
+                      Text(t.label, style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: t.isPassport ? AppColors.green : AppColors.textPrimary), textAlign: TextAlign.center),
                     ],
                   ),
                 ),
@@ -642,6 +777,17 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
   Map<String, dynamic>? _wallet;
   bool _loading = true;
   String? _error;
+  final _payoutAmount = TextEditingController();
+  final _payoutDetails = TextEditingController();
+  final _payoutNotes = TextEditingController();
+
+  @override
+  void dispose() {
+    _payoutAmount.dispose();
+    _payoutDetails.dispose();
+    _payoutNotes.dispose();
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -663,22 +809,83 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
 
   Future<void> _requestPayout() async {
     final summary = Json.mapOrNull(_wallet?['summary']) ?? {};
-    final available = (summary['availableBalance'] as num?) ?? 0;
-    if (available <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('لا يوجد رصيد متاح للسحب حاليًا')));
+    final available = (summary['availableBalance'] as num?)?.toDouble() ?? 0;
+    if (available < 1) {
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: const Text('لا يوجد رصيد متاح للسحب.')));
       return;
     }
+
+    _payoutAmount.text = available.toStringAsFixed(2);
+    _payoutDetails.clear();
+    _payoutNotes.clear();
+    var method = 'bank-account';
+    String? formError;
+    final request = await showDialog<Map<String, dynamic>>(
+      context: context,
+      builder: (dialogContext) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('طلب سحب رصيد'),
+          content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text('المتاح للسحب: \$${available.toStringAsFixed(2)}'),
+            TextField(controller: _payoutAmount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'المبلغ')),
+            const SizedBox(height: 8),
+            DropdownButtonFormField<String>(
+              initialValue: method,
+              decoration: const InputDecoration(labelText: 'طريقة الدفع'),
+              items: const [
+                DropdownMenuItem(value: 'bank-account', child: Text('حساب بنكي')),
+                DropdownMenuItem(value: 'usdt', child: Text('USDT')),
+                DropdownMenuItem(value: 'wise', child: Text('Wise')),
+                DropdownMenuItem(value: 'other', child: Text('أخرى')),
+              ],
+              onChanged: (value) { if (value != null) setDialogState(() => method = value); },
+            ),
+            TextField(controller: _payoutDetails, minLines: 2, maxLines: 3, decoration: const InputDecoration(labelText: 'بيانات التحويل')),
+            TextField(controller: _payoutNotes, decoration: const InputDecoration(labelText: 'ملاحظات اختيارية')),
+            if (formError != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(formError!, style: const TextStyle(color: AppColors.danger))),
+          ])),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('إلغاء')),
+            FilledButton(
+              onPressed: () {
+                final parsed = double.tryParse(_payoutAmount.text.trim());
+                if (parsed == null || parsed < 1 || parsed > available) {
+                  setDialogState(() => formError = 'أدخل مبلغًا من 1 وحتى الرصيد المتاح.');
+                  return;
+                }
+                if (_payoutDetails.text.trim().isEmpty) {
+                  setDialogState(() => formError = 'أدخل بيانات التحويل.');
+                  return;
+                }
+                Navigator.pop(dialogContext, {
+                  'amount': parsed,
+                  'method': method,
+                  'payoutDetails': _payoutDetails.text.trim(),
+                  'notes': _payoutNotes.text.trim(),
+                });
+              },
+              child: const Text('إرسال الطلب'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (request == null || !mounted) return;
     try {
-      await AgentRepository.instance.requestPayout(amount: available.toDouble(), method: 'bank-transfer', payoutDetails: 'تحويل بنكي — بيانات الوكيل المسجّلة');
+      await AgentRepository.instance.requestPayout(
+        amount: (request['amount'] as num).toDouble(),
+        method: request['method'] as String,
+        payoutDetails: request['payoutDetails'] as String,
+        notes: request['notes'] as String,
+      );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تم إرسال طلب السحب بنجاح'), backgroundColor: AppColors.success));
-      _load();
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/agent_student_detail_screen.dart:692');
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: const Text('تم إرسال طلب السحب.'), backgroundColor: AppColors.success));
+      await _load();
+    } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر إرسال طلب السحب'), backgroundColor: AppColors.danger));
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر إرسال طلب السحب: $error'), backgroundColor: AppColors.danger));
     }
   }
-
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
@@ -698,6 +905,7 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
   Widget _buildContent(BuildContext context, Map<String, dynamic> wallet) {
     final summary = Json.mapOrNull(wallet['summary']) ?? {};
     final entries = Json.listOrNull(wallet['entries']) ?? [];
+    final payouts = Json.listOrNull(wallet['payouts']) ?? [];
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -713,7 +921,7 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _WalletStat(value: '\$${summary['availableBalance'] ?? 0}', label: 'متاح', color: Colors.greenAccent),
-              _WalletStat(value: '\$${summary['pendingBalance'] ?? 0}', label: 'معلّق', color: Colors.orangeAccent),
+              _WalletStat(value: '\$${summary['pendingBalance'] ?? 0}', label: 'معلّق', color: AppColors.greenInk),
               _WalletStat(value: '\$${summary['receivedBalance'] ?? 0}', label: 'مستلم', color: Colors.white),
             ],
           ),
@@ -724,29 +932,40 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
         const Text('سجل الحركات', style: AppTextStyles.sectionLabel),
         const SizedBox(height: 10),
         if (entries.isEmpty)
-          const EmptyState(icon: Icons.receipt_long_outlined, title: 'لا يوجد سجل بعد', message: 'ستظهر هنا عمولاتك أول ما تتحقق.')
+          const EmptyState(icon: Icons.receipt_long_outlined, title: 'لا توجد حركات بعد', message: 'ستظهر هنا العمولات وعمليات المحفظة.')
         else
-          ...entries.map((e) {
-            final entry = Json.map(e);
+          ...entries.map((raw) {
+            final entry = Json.map(raw);
             final isCredit = entry['direction'] == 'credit';
-            return AppCard(
-              child: Row(
-                children: [
-                  Container(
-                    width: 36, height: 36,
-                    decoration: BoxDecoration(
-                      color: (isCredit ? AppColors.success : AppColors.danger).withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, size: 18, color: isCredit ? AppColors.success : AppColors.danger),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(child: Text(entry['description'] as String? ?? (isCredit ? 'عمولة' : 'سحب'), style: AppTextStyles.body)),
-                  Text('${isCredit ? '+' : '-'}\$${entry['amount'] ?? 0}', style: TextStyle(fontWeight: FontWeight.w700, color: isCredit ? AppColors.success : AppColors.danger)),
-                ],
-              ),
-            );
+            return AppCard(child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: Icon(isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, color: isCredit ? AppColors.success : AppColors.danger),
+              title: Text(entry['description'] as String? ?? (isCredit ? 'عمولة' : 'سحب')),
+              trailing: Text('${isCredit ? '+' : '-'}\$${entry['amount'] ?? 0}'),
+            ));
           }),
+        const SizedBox(height: 20),
+        const Text('طلبات السحب', style: AppTextStyles.sectionLabel),
+        const SizedBox(height: 10),
+        if (payouts.isEmpty)
+          const EmptyState(icon: Icons.account_balance_wallet_outlined, title: 'لا توجد طلبات سحب', message: 'ستظهر هنا حالة طلبات السحب.')
+        else
+          ...payouts.map((raw) {
+            final payout = Json.map(raw);
+            final note = '${payout['reviewNote'] ?? ''}';
+            return AppCard(child: ListTile(
+              contentPadding: EdgeInsets.zero,
+              leading: const Icon(Icons.receipt_long_outlined, color: AppColors.navy),
+              title: Text('\$${payout['amount'] ?? 0} - ${payout['status'] ?? 'pending'}'),
+              subtitle: Text([
+                '${payout['method'] ?? ''}',
+                '${payout['payoutDetails'] ?? ''}',
+                if (note.isNotEmpty) note,
+              ].where((value) => value.isNotEmpty).join('\n')),
+              isThreeLine: true,
+            ));
+          }),
+
       ],
     );
   }

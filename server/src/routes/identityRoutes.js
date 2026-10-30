@@ -114,7 +114,7 @@ router.post(
     if (existing.length >= 10)
       fail(res, 400, "Maximum number of passkeys reached");
     const options = await generateRegistrationOptions({
-      rpName: "Study Birds",
+      rpName: "COVEY",
       rpID: rpID(),
       userName: req.user.email,
       userID: new TextEncoder().encode(String(req.user._id)),

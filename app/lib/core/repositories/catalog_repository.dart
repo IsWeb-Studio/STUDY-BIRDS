@@ -44,9 +44,39 @@ class CatalogRepository {
   }
 
   Future<List<dynamic>> getCountries() async {
-    final data = await ApiClient.instance.get('/content/countries');
-    return Json.list(data);
+    final results = await Future.wait([
+      ApiClient.instance.get('/content/countries'),
+      getUniversities(),
+    ]);
+    final counts = <String, int>{};
+    for (final university in Json.list(results[1]).whereType<Map>()) {
+      final country = university['country'];
+      final id = country is Map ? country['_id'] : country;
+      if (id is String && id.isNotEmpty) {
+        counts[id] = (counts[id] ?? 0) + 1;
+      }
+    }
+    // Editorial totals may describe a country's whole education sector.
+    // The app must show only institutions available in this catalog.
+    return Json.list(results[0]).whereType<Map>().map((country) => {
+      ...Map<String, dynamic>.from(country),
+      'universityCount': counts[country['_id']] ?? 0,
+    }).toList();
   }
+
+  /// Canonical country directory used by profile selectors. It intentionally
+  /// avoids the university query used to calculate editorial result counts.
+  Future<List<Map<String, dynamic>>> getCountryDirectory() async =>
+      Json.list(await ApiClient.instance.get('/content/countries'))
+          .whereType<Map>()
+          .map((country) => Map<String, dynamic>.from(country))
+          .toList();
+
+  Future<List<Map<String, dynamic>>> getUniversityCountries() async =>
+      Json.list(await ApiClient.instance.get('/universities/available-countries'))
+          .whereType<Map>()
+          .map((country) => Map<String, dynamic>.from(country))
+          .toList();
 
   Future<List<dynamic>> getServices() async =>
       Json.list(await ApiClient.instance.get('/content/our-services'));

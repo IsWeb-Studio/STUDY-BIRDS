@@ -1,64 +1,14 @@
 import 'dart:async';
+import 'package:study_birds/screens/universities_programs_countries/countries_scholarships_screens.dart';
+import 'package:study_birds/screens/universities_programs_countries/programs_screens.dart';
 import 'l10n/l10n.dart';
-import 'core/services/locale_controller.dart';
-import 'core/services/connectivity_service.dart';
-import 'core/services/app_update_service.dart';
-import 'core/widgets/update_gate.dart';
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:shared_preferences/shared_preferences.dart';
-import 'screens/profile_account/login_notification_gate.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
-import 'core/services/analytics_service.dart';
-import 'core/services/google_sign_in_service.dart';
-import 'core/config/app_config.dart';
-import 'core/services/realtime_sync_service.dart';
-import 'core/services/currency_service.dart';
-import 'core/network/api_client.dart';
-import 'core/services/deep_link_service.dart';
-import 'core/services/notification_scheduler.dart';
-import 'core/services/push_notification_service.dart';
-import 'screens/auth/email_challenge_screen.dart';
 import 'package:flutter/material.dart';
-import 'core/config/app_theme.dart';
-import 'core/services/auth_session.dart';
-import 'core/utils/app_error.dart';
-import 'core/services/error_reporter.dart';
-import 'core/utils/animations.dart';
-import 'screens/auth/splash_screen.dart';
-import 'screens/auth/onboarding_and_account_type_screens.dart';
-import 'screens/auth/login_register_screens.dart';
-import 'screens/auth/otp_and_password_reset_screens.dart';
-import 'screens/auth/student_registration_wizard_screen.dart';
-import 'screens/home_journey/home_dashboard_screen.dart';
-import 'screens/home_journey/journey_tracker_screen.dart';
-import 'screens/home_journey/calendar_screen.dart';
-import 'screens/home_journey/activity_log_screen.dart';
-import 'screens/home_journey/notifications_screen.dart';
-import 'screens/home_journey/important_dates_screen.dart';
-import 'screens/home_journey/global_search_screen.dart';
-import 'screens/auth/verify_contact_screen.dart';
-import 'screens/profile_account/security_settings_screen.dart';
-import 'screens/universities_programs_countries/compare_list_screen.dart';
-import 'screens/services_support/messaging_and_emergency_screens.dart';
-import 'screens/roles/agent_student_detail_screen.dart';
-import 'screens/roles/employee_extra_screens.dart';
-import 'screens/applications_documents_payments/applications_screens.dart';
-import 'screens/applications_documents_payments/documents_screens.dart';
-import 'screens/applications_documents_payments/payments_screens.dart';
-import 'screens/universities_programs_countries/universities_screens.dart';
-import 'screens/universities_programs_countries/programs_screens.dart';
-import 'screens/universities_programs_countries/countries_scholarships_screens.dart';
-import 'screens/visa_travel_accommodation/visa_travel_screens.dart';
-import 'screens/visa_travel_accommodation/accommodation_arrival_screens.dart';
-import 'screens/services_support/services_consultation_screens.dart';
-import 'screens/services_support/support_team_ai_screens.dart';
-import 'screens/profile_account/profile_account_screens.dart';
-import 'screens/roles/parent_dashboard_screen.dart';
-import 'screens/roles/agent_dashboard_screen.dart';
-import 'screens/roles/university_dashboard_screen.dart';
-import 'screens/roles/employee_dashboard_screen.dart';
-import 'screens/roles/admin_users_access_screen.dart';
+import 'screens/screen.dart' hide ScholarshipsScreen;
+import 'core/core_import.dart';
 
 class _BouncingScrollBehavior extends ScrollBehavior {
   const _BouncingScrollBehavior();
@@ -86,12 +36,14 @@ void main() async {
   // at 3s) so errors during startup are captured, not lost.
   await _initSentry();
   // Render the splash on the first frame - nothing else blocks it.
-  runApp(SentryWidget(child: const StudyBirdsApp()));
+  runApp(SentryWidget(child: const CoveyApp()));
   _initServicesInBackground();
 }
 
 Future<void> _initSentry() async {
   try {
+    // Optional telemetry is off until the user explicitly opts in.
+    if (!await AnalyticsService.instance.getConsent()) return;
     await SentryFlutter.init((options) {
       // An empty DSN disables Sentry entirely.
       const enabled = kReleaseMode ||
@@ -101,7 +53,8 @@ Future<void> _initSentry() async {
       options.environment = const String.fromEnvironment('SENTRY_ENV',
           defaultValue: kReleaseMode ? 'production' : 'development');
       // Sampling kept low: profiling and tracing are costly on weak devices.
-      options.tracesSampleRate = 0.05;
+      options.tracesSampleRate = 0;
+      options.enableAutoSessionTracking = false;
       options.attachScreenshot = false;
       options.sendDefaultPii = false;
       // Keep view contents out of telemetry, including experimental SDK capture.
@@ -109,6 +62,7 @@ Future<void> _initSentry() async {
       options.attachViewHierarchy = false;
       options.maxBreadcrumbs = 60;
       options.beforeSend = (event, hint) {
+        if (!AnalyticsService.instance.consented) return null;
         // Offline / timeout noise is expected, not a defect.
         final error = event.throwable;
         if (error != null && ErrorReporter.isExpected(error)) return null;
@@ -156,14 +110,14 @@ Future<void> _safeInit(Future<void> Function() initialize) async {
   }
 }
 
-class StudyBirdsApp extends StatefulWidget {
-  const StudyBirdsApp({super.key});
+class CoveyApp extends StatefulWidget {
+  const CoveyApp({super.key});
 
   @override
-  State<StudyBirdsApp> createState() => _StudyBirdsAppState();
+  State<CoveyApp> createState() => _CoveyAppState();
 }
 
-class _StudyBirdsAppState extends State<StudyBirdsApp> {
+class _CoveyAppState extends State<CoveyApp> {
   StreamSubscription<void>? _reconnectSub;
   @override
   void initState() {
@@ -193,7 +147,7 @@ class _StudyBirdsAppState extends State<StudyBirdsApp> {
     return ListenableBuilder(
       listenable: LocaleController.instance,
       builder: (context, _) => MaterialApp(
-      title: 'Study Birds',
+      title: 'COVEY',
       navigatorKey: rootNavigatorKey,
       locale: LocaleController.instance.locale,
       supportedLocales: AppLocalizations.supportedLocales,
@@ -245,8 +199,9 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
       final prefs = await SharedPreferences.getInstance();
       _onboardingDone = prefs.getBool('_onboarding_done') ?? false;
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'main.dart:272');
-      if (mounted)
+      if (mounted) {
         _error = 'تعذر استعادة الحساب. تحقق من الاتصال وحاول مجددًا.';
+      }
     } finally {
       if (mounted) setState(() => _checking = false);
     }
@@ -255,8 +210,9 @@ class _RootChooserScreenState extends State<RootChooserScreen> {
   @override
   Widget build(BuildContext context) {
     if (_checking) return const SplashScreen();
-    if (_error != null)
+    if (_error != null) {
       return Scaffold(body: ErrorState(message: _error!, onRetry: _restore));
+    }
     return ListenableBuilder(
         listenable: AuthSession.instance,
         builder: (context, _) {
@@ -347,7 +303,7 @@ class ConnectedPrototypeEntry extends StatelessWidget {
                     title: const Text('إنشاء الحساب'),
                     content: Text(
                       selectedRole == 'university'
-                          ? 'حسابات الجامعات يتم إنشاؤها من قبل فريق Study Birds.\n\nإذا كان لديك حساب بالفعل، سجّل دخولك مباشرة.'
+                          ? 'حسابات الجامعات يتم إنشاؤها من قبل فريق COVEY.\n\nإذا كان لديك حساب بالفعل، سجّل دخولك مباشرة.'
                           : 'حسابات الموظفين يتم إنشاؤها من قبل الإدارة.\n\nإذا كان لديك حساب، سجّل دخولك مباشرة.',
                     ),
                     actions: [
@@ -560,7 +516,7 @@ class _ScreensGalleryState extends State<ScreensGallery> {
       _GalleryEntry('My Documents', () => const MyDocumentsScreen()),
       _GalleryEntry(
           'Document Detail (sample)',
-          () => DocumentDetailScreen(document: const {
+          () => const DocumentDetailScreen(document: {
                 'type': 'passport',
                 'fileName': 'passport-scan.pdf',
                 'status': 'rejected',
@@ -571,7 +527,7 @@ class _ScreensGalleryState extends State<ScreensGallery> {
           'Payments Summary (live data)', () => const PaymentsSummaryScreen()),
       _GalleryEntry(
           'Payment Detail (sample)',
-          () => PaymentDetailScreen(invoice: const {
+          () => const PaymentDetailScreen(invoice: {
                 '_id': 'sample',
                 'description': 'دفعة القبول الأولى',
                 'invoiceNumber': 'INV-0001',
@@ -616,7 +572,7 @@ class _ScreensGalleryState extends State<ScreensGallery> {
       _GalleryEntry('Services Center', () => const ServicesCenterScreen()),
       _GalleryEntry(
           'Service Detail (sample)',
-          () => ServiceDetailScreen(service: const {
+          () => const ServiceDetailScreen(service: {
                 'name': 'الترجمة',
                 'price': '20\$',
                 'icon': Icons.translate_rounded
@@ -637,7 +593,7 @@ class _ScreensGalleryState extends State<ScreensGallery> {
       _GalleryEntry('My Support Tickets (live data)',
           () => const SupportTicketsListScreen()),
       _GalleryEntry('My Team', () => const MyTeamScreen()),
-      _GalleryEntry('Bird AI Chat', () => const BirdAIChatScreen()),
+      _GalleryEntry('COVEY AI Chat', () => const BirdAIChatScreen()),
       _GalleryEntry('Conversation Thread (In-App Messaging)',
           () => const ConversationThreadScreen()),
       _GalleryEntry('Emergency Support', () => const EmergencySupportScreen()),
@@ -665,8 +621,8 @@ class _ScreensGalleryState extends State<ScreensGallery> {
           () => const UniversityDashboardScreen()),
       _GalleryEntry(
           'Employee Dashboard (sample, live overview if role allows)',
-          () => EmployeeDashboardScreen(
-              user: const AuthUser(
+          () => const EmployeeDashboardScreen(
+              user: AuthUser(
                   id: 'sample',
                   name: 'موظف تجريبي',
                   email: 'sample@studybirds.demo',
@@ -699,7 +655,7 @@ class _ScreensGalleryState extends State<ScreensGallery> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.navy,
-        title: const Text('Study Birds — Screens Gallery',
+        title: const Text('COVEY — Screens Gallery',
             style: TextStyle(color: Colors.white, fontSize: 16)),
       ),
       body: Column(

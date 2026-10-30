@@ -137,7 +137,7 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
       showBackButton: _step == 0,
       actions: [const CatalogLanguageToggle(), if (_step > 0) TextButton(
               onPressed: () => setState(() => _step--),
-              child: Text(cl('السابق', 'Previous'), style: TextStyle(color: Colors.white)))],
+              child: Text(cl('السابق', 'Previous'), style: const TextStyle(color: Colors.white)))],
       body: Column(
         children: [
           // Progress bar
@@ -149,7 +149,7 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
                   height: 4,
                   margin: EdgeInsets.only(left: i < _steps.length - 1 ? 4 : 0),
                   decoration: BoxDecoration(
-                    color: i <= _step ? AppColors.orange : AppColors.border,
+                    color: i <= _step ? AppColors.green : AppColors.border,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -164,7 +164,7 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
                 Text(cl('الخطوة ${_step + 1} من ${_steps.length}', 'Step ${_step + 1} of ${_steps.length}'),
                     style: AppTextStyles.caption),
                 Text(catalogValue(_steps[_step]),
-                    style: AppTextStyles.caption.copyWith(color: AppColors.orange)),
+                    style: AppTextStyles.caption.copyWith(color: AppColors.greenInk)),
               ],
             ),
           ),
@@ -291,11 +291,11 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
           decoration: BoxDecoration(
             color: isSelected
-                ? AppColors.orange.withValues(alpha: 0.12)
+                ? AppColors.green.withValues(alpha: 0.12)
                 : Colors.white,
             borderRadius: BorderRadius.circular(AppRadius.chip),
             border: Border.all(
-                color: isSelected ? AppColors.orange : AppColors.border,
+                color: isSelected ? AppColors.green : AppColors.border,
                 width: isSelected ? 1.5 : 1),
           ),
           child: Row(
@@ -303,13 +303,13 @@ class _ProgramOrientationScreenState extends State<ProgramOrientationScreen> {
             children: [
               if (isSelected) ...[
                 const Icon(Icons.check_rounded,
-                    size: 13, color: AppColors.orange),
+                    size: 13, color: AppColors.green),
                 const SizedBox(width: 4),
               ],
               Flexible(child: Text(catalogValue(o),
                   style: TextStyle(
                       color: isSelected
-                          ? AppColors.orange
+                          ? AppColors.green
                           : AppColors.textPrimary,
                       fontSize: 13,
                       fontWeight: isSelected
@@ -408,7 +408,7 @@ class ProgramFinderResultsScreen extends StatelessWidget {
                 spacing: 8,
                 runSpacing: 8,
                 children: suggestedFields
-                    .map((f) => StatusBadge(label: catalogValue(f), color: AppColors.orange))
+                    .map((f) => StatusBadge(label: catalogValue(f), color: AppColors.green))
                     .toList()),
             const SizedBox(height: 16),
           ],

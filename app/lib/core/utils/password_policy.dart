@@ -16,13 +16,15 @@ class PasswordPolicy {
     final password = value ?? '';
     if (password.isEmpty) return 'أدخل كلمة المرور';
     if (password.length < 8) return 'استخدم 8 أحرف على الأقل';
-    if (utf8.encode(password).length > 72)
+    if (utf8.encode(password).length > 72) {
       return 'كلمة المرور طويلة جدًا. استخدم واحدة أقصر.';
+    }
     if (isCommon(password) || password.runes.toSet().length < 4) {
       return 'هذه الكلمة سهلة التخمين. اختر كلمة أقل شيوعًا وتجنب التكرار.';
     }
-    if (kinds(password) < 3)
+    if (kinds(password) < 3) {
       return 'اخلط 3 أنواع على الأقل: أحرف كبيرة، أحرف صغيرة أو عربية، أرقام، رموز.';
+    }
     return null;
   }
 }

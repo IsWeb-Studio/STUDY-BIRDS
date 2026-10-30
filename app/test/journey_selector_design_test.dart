@@ -11,10 +11,10 @@ void main() {
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
-    await tester.pumpWidget(MaterialApp(
+    await tester.pumpWidget(const MaterialApp(
         home: MediaQuery(
-      data: const MediaQueryData(textScaler: TextScaler.linear(1.8)),
-      child: const Directionality(
+      data: MediaQueryData(textScaler: TextScaler.linear(1.8)),
+      child: Directionality(
           textDirection: TextDirection.rtl,
           child: Scaffold(
               body: SingleChildScrollView(

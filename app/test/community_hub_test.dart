@@ -30,7 +30,7 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: StudentCommunityHub()));
       await tester.pumpAndSettle();
       expect(find.byType(StudentStories), findsOneWidget);
-      expect(find.text('مجتمع الطلاب'), findsOneWidget,
+      expect(find.text('Community'), findsOneWidget,
           reason: 'no nested community entry');
       expect(tester.getTopLeft(find.text('Sara')).dy,
           lessThan(tester.getTopLeft(find.text('Omar')).dy));
@@ -40,7 +40,7 @@ void main() {
       expect(tester.getTopLeft(find.text('Omar')).dy,
           lessThan(tester.getTopLeft(find.text('Sara')).dy));
       expect(find.text('new message'), findsOneWidget);
-      expect(find.text('رسالة جديدة من Omar'), findsOneWidget);
+      expect(find.text('New message from Omar'), findsOneWidget);
       await tester.tap(find.text('Omar'));
       await tester.pumpAndSettle();
       expect(find.text('thread message'), findsOneWidget);
@@ -51,7 +51,7 @@ void main() {
         () => MockClient((request) async {
               final path = request.url.path;
               Object data = {};
-              if (path.endsWith('/conversations'))
+              if (path.endsWith('/conversations')) {
                 data = {
                   'unreadTotal': updated ? 2 : 0,
                   'conversations': updated
@@ -64,11 +64,14 @@ void main() {
                           row('omar', 'Omar', 'old', 0)
                         ]
                 };
-              if (path.endsWith('/stories'))
+              }
+              if (path.endsWith('/stories')) {
                 data = {'stories': [], 'nextCursor': null};
-              if (path.endsWith('/stories/progress'))
+              }
+              if (path.endsWith('/stories/progress')) {
                 data = {'total_points': 0, 'streak_days': 0};
-              if (path.endsWith('/messages'))
+              }
+              if (path.endsWith('/messages')) {
                 data = [
                   {
                     '_id': 'msg',
@@ -77,8 +80,10 @@ void main() {
                     'createdAt': '2026-10-16T10:00:00Z'
                   }
                 ];
-              if (path.endsWith('/messages/read'))
+              }
+              if (path.endsWith('/messages/read')) {
                 read.add('${jsonDecode(request.body)['sender']}');
+              }
               return http.Response(jsonEncode(data), 200,
                   headers: {'content-type': 'application/json; charset=utf-8'});
             }));

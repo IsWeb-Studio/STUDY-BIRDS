@@ -95,12 +95,12 @@ class _UniversityApplicationReviewScreenState
       if (!mounted) return;
       setState(() => _app = updated);
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-          content: Text('تم تحديث حالة الطلب'),
+          content: const Text('تم تحديث حالة الطلب'),
           backgroundColor: AppColors.success));
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/university_application_review_screen.dart:98');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-          content: Text('تعذر تحديث الحالة'),
+          content: const Text('تعذر تحديث الحالة'),
           backgroundColor: AppColors.danger));
     } finally {
       if (mounted) setState(() => _updating = false);
@@ -258,7 +258,7 @@ class _UniversityApplicationReviewScreenState
                     Expanded(
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.navy),
+                            backgroundColor: AppColors.green),
                         onPressed: selectedType == null
                             ? null
                             : () => Navigator.pop(ctx, {
@@ -364,7 +364,7 @@ class _UniversityApplicationReviewScreenState
     } on ApiException catch (e) {
       if (mounted) {
         final msg = e.statusCode == 409
-            ? 'هذا المستند مخزّن بتنسيق قديم — تواصل مع فريق Study Birds للوصول إليه.'
+            ? 'هذا المستند مخزّن بتنسيق قديم — تواصل مع فريق COVEY للوصول إليه.'
             : e.message;
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text(msg), backgroundColor: AppColors.warning));
@@ -372,7 +372,7 @@ class _UniversityApplicationReviewScreenState
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/university_application_review_screen.dart:370');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-            content: Text('تعذر تحميل رابط الملف'),
+            content: const Text('تعذر تحميل رابط الملف'),
             backgroundColor: AppColors.danger));
       }
     }
@@ -511,12 +511,12 @@ class _UniversityApplicationReviewScreenState
   Widget _buildDocuments(List<dynamic> documents) {
     // Filter out unpopulated refs (strings instead of maps)
     final populated =
-        documents.where((d) => d is Map<String, dynamic>).toList();
+        documents.whereType<Map<String, dynamic>>().toList();
 
     if (populated.isEmpty) {
-      return AppCard(
+      return const AppCard(
         child: Row(
-          children: const [
+          children: [
             Icon(Icons.inbox_outlined, color: AppColors.textSecondary, size: 20),
             SizedBox(width: 10),
             Text('لم يرفع الطالب أي مستندات بعد.',

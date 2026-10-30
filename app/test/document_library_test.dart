@@ -50,8 +50,9 @@ void main() {
       expect(changes.last.first['_id'], 'doc');
     },
         () => MockClient((request) async {
-              if (request.url.path.endsWith('/lookup'))
+              if (request.url.path.endsWith('/lookup')) {
                 return http.Response('{"document":null}', 200);
+              }
               uploads++;
               await gate.future;
               return http.Response(jsonEncode(document), 201);
@@ -123,8 +124,9 @@ void main() {
       expect(changes, isEmpty);
     },
         () => MockClient((request) async {
-              if (request.url.path.endsWith('/lookup'))
+              if (request.url.path.endsWith('/lookup')) {
                 return http.Response('{"document":null}', 200);
+              }
               await gate.future;
               return http.Response(jsonEncode(document), 201);
             }));

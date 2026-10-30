@@ -72,7 +72,7 @@ class _AccountSecurityScreenState extends State<AccountSecurityScreen> {
         await AuthSession.instance.logout();
         if (mounted) Navigator.of(context).popUntil((route) => route.isFirst);
       } else { await load(); }
-    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر إنهاء الجلسة'))); }
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: const Text('تعذر إنهاء الجلسة'))); }
     finally { if (mounted) setState(() => busy = false); }
   }
 

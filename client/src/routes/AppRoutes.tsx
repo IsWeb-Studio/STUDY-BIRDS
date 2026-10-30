@@ -31,6 +31,7 @@ const OurEventPage = lazy(() => import("../pages/OurEventPage").then((module) =>
 const OurStoryPage = lazy(() => import("../pages/OurStoryPage").then((module) => ({ default: module.OurStoryPage })));
 const ContactPage = lazy(() => import("../pages/ContactPage").then((module) => ({ default: module.ContactPage })));
 const PrivacyPolicyPage = lazy(() => import("../pages/PrivacyPolicyPage").then((module) => ({ default: module.PrivacyPolicyPage })));
+const AccountDeletionRequestPage = lazy(() => import('../pages/AccountDeletionRequestPage').then(module => ({ default: module.AccountDeletionRequestPage })));
 const FaqPage = lazy(() => import("../pages/FaqPage").then((module) => ({ default: module.FaqPage })));
 const PartnerPage = lazy(() => import("../pages/PartnerPage").then((module) => ({ default: module.PartnerPage })));
 const BecomeAgentPage = lazy(() => import("../pages/BecomeAgentPage").then((module) => ({ default: module.BecomeAgentPage })));
@@ -119,6 +120,7 @@ export const AppRoutes = () => (
       <Route element={<MainLayout />}>
         <Route path="/" element={<HomePage />} />
         <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/delete-account" element={<AccountDeletionRequestPage />} />
         <Route path="/mobile-sign-in" element={<MobileSignInPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />

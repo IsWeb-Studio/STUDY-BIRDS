@@ -12,6 +12,7 @@ import 'documents_screens.dart';
 import 'dart:async';
 import '../../core/repositories/student_repository.dart';
 import '../../core/utils/document_eligibility.dart';
+import '../../core/utils/form_input_validation.dart';
 
 class ProgramApplicationScreen extends StatefulWidget {
   final String programId;
@@ -245,20 +246,34 @@ class _ProgramApplicationScreenState extends State<ProgramApplicationScreen> {
                                 ? TextInputType.emailAddress
                                 : entry.key == 'phone'
                                     ? TextInputType.phone
+                                    : entry.key == 'gpa'
+                                        ? const TextInputType.numberWithOptions(
+                                            decimal: true)
                                     : TextInputType.text,
+                            inputFormatters: entry.key == 'gpa'
+                                ? [LocalizedDecimalInputFormatter()]
+                                : null,
+                            minLines: entry.key == 'address' || entry.key == 'notes'
+                                ? 2
+                                : 1,
+                            maxLines: entry.key == 'address' || entry.key == 'notes'
+                                ? 4
+                                : 1,
                             decoration: InputDecoration(labelText: entry.value),
                             validator: (value) {
-                              if (['name', 'email', 'phone']
-                                      .contains(entry.key) &&
-                                  (value == null || value.trim().isEmpty)) {
-                                return 'هذا الحقل مطلوب';
-                              }
-                              if (entry.key == 'email' &&
-                                  !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$')
-                                      .hasMatch(value?.trim() ?? '')) {
-                                return 'أدخل بريدًا إلكترونيًا صحيحًا';
-                              }
-                              return null;
+                              final issue = switch (entry.key) {
+                                'name' => FormInputValidators.requiredText(value),
+                                'email' => FormInputValidators.email(value,
+                                    required: true),
+                                'phone' => FormInputValidators.phone(value,
+                                    required: true),
+                                'gpa' =>
+                                  FormInputValidators.nonNegativeDecimal(value),
+                                _ => null,
+                              };
+                              return issue == null
+                                  ? null
+                                  : FormInputValidators.message(context, issue);
                             },
                           )),
                     const Text('المستندات المطلوبة',

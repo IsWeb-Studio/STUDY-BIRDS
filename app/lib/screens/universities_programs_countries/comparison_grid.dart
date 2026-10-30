@@ -48,10 +48,10 @@ class _UniversityComparisonGridState extends State<UniversityComparisonGrid> {
     };
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Padding(
-          padding: EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: 12),
           child: Row(children: [
-            Icon(Icons.swipe_rounded, size: 18, color: AppColors.orange),
-            SizedBox(width: 8),
+            const Icon(Icons.swipe_rounded, size: 18, color: AppColors.green),
+            const SizedBox(width: 8),
             Expanded(
                 child: Text(cl('اسحب الجدول أفقيًا لعرض جميع الجامعات', 'Swipe the table horizontally to see all universities'),
                     style: AppTextStyles.caption)),
@@ -102,7 +102,7 @@ class _UniversityComparisonGridState extends State<UniversityComparisonGrid> {
                                                 BorderRadius.circular(10)),
                                         child: const Icon(
                                             Icons.account_balance_rounded,
-                                            color: AppColors.orange,
+                                            color: AppColors.green,
                                             size: 23)),
                                     const SizedBox(height: 10),
                                     Text(catalogName(university, 'name'),

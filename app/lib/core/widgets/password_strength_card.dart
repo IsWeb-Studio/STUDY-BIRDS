@@ -24,8 +24,8 @@ class PasswordStrengthCard extends StatelessWidget {
     final color = switch (score) {
       0 => AppColors.textSecondary,
       1 => AppColors.danger,
-      2 => AppColors.orange,
-      _ => const Color(0xFF18876A)
+      2 => AppColors.warning,
+      _ => AppColors.greenInk
     };
     final label = switch (score) {
       0 => 'ابدأ الكتابة',
@@ -93,7 +93,7 @@ class PasswordStrengthCard extends StatelessWidget {
                           decoration: BoxDecoration(
                               color: index < score
                                   ? color
-                                  : const Color(0xFFE9EDF4),
+                                  : AppColors.border,
                               borderRadius: BorderRadius.circular(6)),
                         )))),
             const SizedBox(height: 14),
@@ -112,7 +112,7 @@ class PasswordStrengthCard extends StatelessWidget {
                               horizontal: 9, vertical: 7),
                           decoration: BoxDecoration(
                               color: check.$2
-                                  ? const Color(0xFFF0F8F5)
+                                  ? AppColors.greenSoft
                                   : const Color(0xFFF5F7FA),
                               borderRadius: BorderRadius.circular(10)),
                           child: Row(mainAxisSize: MainAxisSize.min, children: [
@@ -122,7 +122,7 @@ class PasswordStrengthCard extends StatelessWidget {
                                     : Icons.radio_button_unchecked_rounded,
                                 size: 14,
                                 color: check.$2
-                                    ? const Color(0xFF18876A)
+                                    ? AppColors.greenInk
                                     : AppColors.textSecondary),
                             const SizedBox(width: 5),
                             Flexible(
@@ -130,7 +130,7 @@ class PasswordStrengthCard extends StatelessWidget {
                                     style: TextStyle(
                                         fontSize: 11,
                                         color: check.$2
-                                            ? const Color(0xFF18876A)
+                                            ? AppColors.greenInk
                                             : AppColors.textSecondary))),
                           ]),
                         ))

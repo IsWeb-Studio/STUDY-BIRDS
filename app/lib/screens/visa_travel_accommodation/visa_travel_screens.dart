@@ -44,7 +44,7 @@ int visaStepFromJourneyStage(String stage) {
   }
   if (idx < 7) return (label: 'التحضير', color: AppColors.info);
   if (idx < 8) return (label: 'إعداد المستندات', color: AppColors.warning);
-  if (idx == 8) return (label: 'قيد المعالجة', color: AppColors.orange);
+  if (idx == 8) return (label: 'قيد المعالجة', color: AppColors.green);
   return (label: 'تمت الموافقة', color: AppColors.success);
 }
 
@@ -181,10 +181,11 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading)
+    if (_loading) {
       return const AppScaffold(
           title: 'مركز التأشيرة',
           body: LoadingState(message: 'جاري التحميل...'));
+    }
     if (_error != null) {
       return AppScaffold(
         title: 'مركز التأشيرة',
@@ -281,7 +282,7 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
                       const SizedBox(height: 10),
                       const Divider(height: 1),
                       const SizedBox(height: 8),
-                      Text('متطلبات اللغة', style: AppTextStyles.caption),
+                      const Text('متطلبات اللغة', style: AppTextStyles.caption),
                       const SizedBox(height: 6),
                       ...langReqs.map((r) => Padding(
                             padding: const EdgeInsets.only(bottom: 4),
@@ -379,7 +380,7 @@ class _VisaCenterScreenState extends State<VisaCenterScreen> {
             ],
             const SizedBox(height: 8),
             const InlineNotice(
-                'الموعد الدقيق لمقابلة القنصلية يُحدَّد من قِبل فريق Study Birds وسيتم إبلاغك عبر الإشعارات.'),
+                'الموعد الدقيق لمقابلة القنصلية يُحدَّد من قِبل فريق COVEY وسيتم إبلاغك عبر الإشعارات.'),
           ],
         ),
       ),
@@ -447,7 +448,7 @@ class _VisaStepsScreenState extends State<VisaStepsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading)
+    if (_loading) {
       return AppScaffold(
           title: 'مراحل التأشيرة',
           body: ListView.builder(
@@ -456,6 +457,7 @@ class _VisaStepsScreenState extends State<VisaStepsScreen> {
               itemBuilder: (_, __) => const Padding(
                   padding: EdgeInsets.only(bottom: 12),
                   child: SkeletonCard())));
+    }
     if (_error != null) {
       return AppScaffold(
         title: 'مراحل التأشيرة',
@@ -491,13 +493,13 @@ class _VisaStepsScreenState extends State<VisaStepsScreen> {
                         decoration: BoxDecoration(
                           color: done
                               ? AppColors.success
-                              : (active ? AppColors.orange : Colors.white),
+                              : (active ? AppColors.green : Colors.white),
                           shape: BoxShape.circle,
                           border: Border.all(
                               color: done
                                   ? AppColors.success
                                   : (active
-                                      ? AppColors.orange
+                                      ? AppColors.green
                                       : AppColors.border),
                               width: 2),
                         ),
@@ -525,7 +527,7 @@ class _VisaStepsScreenState extends State<VisaStepsScreen> {
                       _visaStages[i],
                       style: active
                           ? AppTextStyles.cardTitle
-                              .copyWith(color: AppColors.orange)
+                              .copyWith(color: AppColors.greenInk)
                           : AppTextStyles.body,
                     ),
                   ),
@@ -592,9 +594,10 @@ class _TravelCenterScreenState extends State<TravelCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading)
+    if (_loading) {
       return const AppScaffold(
           title: 'مركز السفر', body: LoadingState(message: 'جاري التحميل...'));
+    }
     if (_error != null) {
       return AppScaffold(
         title: 'مركز السفر',
@@ -744,7 +747,7 @@ class _AirportPickupScreenState extends State<AirportPickupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading)
+    if (_loading) {
       return AppScaffold(
           title: 'استقبال المطار',
           body: ListView.builder(
@@ -753,6 +756,7 @@ class _AirportPickupScreenState extends State<AirportPickupScreen> {
               itemBuilder: (_, __) => const Padding(
                   padding: EdgeInsets.only(bottom: 12),
                   child: SkeletonCard())));
+    }
     if (_error != null) {
       return AppScaffold(
         title: 'استقبال المطار',
@@ -830,7 +834,7 @@ class _AirportPickupScreenState extends State<AirportPickupScreen> {
               ),
               const SizedBox(height: 8),
               const InlineNotice(
-                  'سيتواصل معك فريق Study Birds لتأكيد تفاصيل الاستقبال قبل موعد وصولك.'),
+                  'سيتواصل معك فريق COVEY لتأكيد تفاصيل الاستقبال قبل موعد وصولك.'),
               const SizedBox(height: 12),
               OutlinedButton.icon(
                 onPressed: () async {
@@ -922,19 +926,21 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
     });
     try {
       final d = await StudentRepository.instance.getInsurance();
-      if (mounted)
+      if (mounted) {
         setState(() {
           _data = d;
           _loading = false;
         });
+      }
     } catch (swallowedError, swallowedStack) {
       ErrorReporter.swallowed(swallowedError, swallowedStack,
           'screens/visa_travel_accommodation/visa_travel_screens.dart:799');
-      if (mounted)
+      if (mounted) {
         setState(() {
           _error = 'تعذر تحميل بيانات التأمين.';
           _loading = false;
         });
+      }
     }
   }
 
@@ -1003,7 +1009,7 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('تفاصيل الوثيقة',
+                                  const Text('تفاصيل الوثيقة',
                                       style: AppTextStyles.sectionLabel),
                                   const SizedBox(height: 12),
                                   _InfoRow('مزود التأمين',
@@ -1033,7 +1039,7 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text('ملاحظات',
+                                      const Text('ملاحظات',
                                           style: AppTextStyles.sectionLabel),
                                       const SizedBox(height: 8),
                                       Text(_data!['notes'] as String,
@@ -1055,7 +1061,7 @@ class _InsuranceScreenState extends State<InsuranceScreen> {
                                     if (context.mounted) {
                                       ScaffoldMessenger.of(context)
                                           .showSnackBar(AppSnackBar(
-                                              content: Text(
+                                              content: const Text(
                                                   'تعذر فتح بطاقة التأمين.')));
                                     }
                                   }
@@ -1095,7 +1101,7 @@ class _InsuranceStatusCard extends StatelessWidget {
           Expanded(
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('التأمين الصحي', style: AppTextStyles.cardTitle),
+              const Text('التأمين الصحي', style: AppTextStyles.cardTitle),
               const SizedBox(height: 4),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1160,19 +1166,21 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
     });
     try {
       final d = await StudentRepository.instance.getEquivalency();
-      if (mounted)
+      if (mounted) {
         setState(() {
           _data = d;
           _loading = false;
         });
+      }
     } catch (swallowedError, swallowedStack) {
       ErrorReporter.swallowed(swallowedError, swallowedStack,
           'screens/visa_travel_accommodation/visa_travel_screens.dart:977');
-      if (mounted)
+      if (mounted) {
         setState(() {
           _error = 'تعذر تحميل بيانات المعادلة.';
           _loading = false;
         });
+      }
     }
   }
 
@@ -1250,7 +1258,7 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
                                       crossAxisAlignment:
                                           CrossAxisAlignment.start,
                                       children: [
-                                    Text('معادلة الشهادة',
+                                    const Text('معادلة الشهادة',
                                         style: AppTextStyles.cardTitle),
                                     const SizedBox(height: 4),
                                     Container(
@@ -1275,7 +1283,7 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
                             child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text('تفاصيل الطلب',
+                                  const Text('تفاصيل الطلب',
                                       style: AppTextStyles.sectionLabel),
                                   const SizedBox(height: 12),
                                   _InfoRow('الجهة المختصة',
@@ -1304,7 +1312,7 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
                               child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('المستندات المطلوبة',
+                                    const Text('المستندات المطلوبة',
                                         style: AppTextStyles.sectionLabel),
                                     const SizedBox(height: 10),
                                     for (final doc in docs)
@@ -1333,7 +1341,7 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
                               child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('ملاحظات',
+                                    const Text('ملاحظات',
                                         style: AppTextStyles.sectionLabel),
                                     const SizedBox(height: 8),
                                     Text(_data!['notes'] as String,
@@ -1354,7 +1362,7 @@ class _EquivalencyScreenState extends State<EquivalencyScreen> {
                                   if (context.mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                         AppSnackBar(
-                                            content: Text('تعذر فتح الملف.')));
+                                            content: const Text('تعذر فتح الملف.')));
                                   }
                                 }
                               },

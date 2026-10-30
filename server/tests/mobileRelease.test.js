@@ -35,14 +35,15 @@ test('mobile release: authentication, ownership, email codes, sessions, and mess
     const staff = await call('POST','/auth/login',null,{email:'employee@example.test',password:'TestPassword123!'});
     assert.deepEqual(staff.user.permissions,['students']);
     assert.equal((await call('GET','/auth/me',a.token)).user.role,'student');
-    const webResponse = await fetch(origin + '/auth/me', { headers: { Authorization: `Bearer ${b.token}`, 'X-Study-Birds-Client': 'web', 'User-Agent': 'Study Birds browser test' } });
+    const webResponse = await fetch(origin + '/auth/me', { headers: { Authorization: `Bearer ${b.token}`, 'X-Study-Birds-Client': 'web', 'User-Agent': 'COVEY browser test' } });
     assert.equal(webResponse.status, 200);
     const webSessions = await call('GET','/mobile-security/sessions',b.token);
-    assert.ok(webSessions.some(session => session.current && session.device === 'Study Birds browser test'));
+    assert.ok(webSessions.some(session => session.current && session.device === 'COVEY browser test'));
 
     assert.equal((await call('GET','/mobile/capabilities')).messaging,true);
     await call('GET','/mobile-security/sessions','bad-token',undefined,401);
     await call('POST','/mobile-workspace/messages',a.token,{recipient:b.user._id,body:'Hello classmate'},201);
+    await require('../src/models/StudentSupportTeam').create({student:a.user._id,members:[admin._id]});
     const msg = await call('POST','/mobile-workspace/messages',a.token,{recipient:String(admin._id),body:'Please help'},201);
     const adminAuth = await call('POST','/auth/login',null,{email:'admin@example.test',password:'TestPassword123!'});
     const messages = await call('GET',`/mobile-workspace/messages?recipient=${a.user._id}`,adminAuth.token);

@@ -195,7 +195,7 @@ class AuthUser {
       };
 }
 
-/// Real backend authentication — talks to the Study Birds API on Render.
+/// Real backend authentication — talks to the COVEY API on Render.
 /// See server/src/routes/authRoutes.js for the exact endpoints.
 class AuthService {
   AuthService._();
@@ -594,7 +594,7 @@ class AuthSession extends ChangeNotifier {
       _restored = true;
       final user = currentUser;
       if (user != null) {
-        PushNotificationService.instance.setUser(user.id);
+        PushNotificationService.instance.setUser(user.id, token: token);
         ErrorReporter.setUser(user.id, role: user.role.key);
       }
       notifyListeners();
@@ -735,7 +735,7 @@ class AuthSession extends ChangeNotifier {
       if (revision != _revision) return;
       currentUser = user;
       token = authToken;
-      PushNotificationService.instance.setUser(user.id);
+      PushNotificationService.instance.setUser(user.id, token: token);
       ErrorReporter.setUser(user.id, role: user.role.key);
       AnalyticsService.instance.identify(user.id,
           traits: {'role': user.role.name, 'name': user.name});
@@ -891,18 +891,18 @@ class AuthSession extends ChangeNotifier {
 Widget getHomeRouteForUser(AuthUser user) {
   switch (user.role) {
     case UserRole.student:
-      return RoleGuard(
-          requiredRole: UserRole.student, child: const StudentAppShell());
+      return const RoleGuard(
+          requiredRole: UserRole.student, child: StudentAppShell());
     case UserRole.parent:
-      return RoleGuard(
-          requiredRole: UserRole.parent, child: const ParentDashboardScreen());
+      return const RoleGuard(
+          requiredRole: UserRole.parent, child: ParentDashboardScreen());
     case UserRole.agent:
-      return RoleGuard(
-          requiredRole: UserRole.agent, child: const AgentDashboardScreen());
+      return const RoleGuard(
+          requiredRole: UserRole.agent, child: AgentDashboardScreen());
     case UserRole.university:
-      return RoleGuard(
+      return const RoleGuard(
           requiredRole: UserRole.university,
-          child: const UniversityDashboardScreen());
+          child: UniversityDashboardScreen());
     case UserRole.employee:
       return RoleGuard(
           requiredRole: UserRole.employee,

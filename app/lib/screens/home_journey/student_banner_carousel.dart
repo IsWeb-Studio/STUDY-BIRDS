@@ -80,7 +80,7 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
           _dragging ||
           !_pages.hasClients ||
           MediaQuery.disableAnimationsOf(context) ||
-          !TickerMode.of(context) ||
+          !TickerMode.valuesOf(context).enabled ||
           ModalRoute.of(context)?.isCurrent == false) {
         return;
       }
@@ -92,27 +92,33 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
 
   Future<void> _loadBanners() async {
     try {
-      final raw = await ApiClient.instance.get('/content/banners', cached: false);
+      final raw =
+          await ApiClient.instance.get('/content/banners', cached: false);
       final list = Json.list(raw);
       if (list.isEmpty) return;
-      final slides = list.map((b) {
-        final m = Json.map(b);
-        return _BannerSlide(
-          tag: (m['tag'] as String?) ?? '',
-          title: (m['title'] as String?) ?? '',
-          subtitle: (m['subtitle'] as String?) ?? '',
-          action: (m['actionLabel'] as String?) ?? 'اكتشف المزيد',
-          destination: (m['destination'] as String?) ?? 'universities',
-          imageUrl: (m['imageUrl'] as String?) ?? '',
-        );
-      }).where((s) => s.title.isNotEmpty).toList();
+      final slides = list
+          .map((b) {
+            final m = Json.map(b);
+            return _BannerSlide(
+              tag: (m['tag'] as String?) ?? '',
+              title: (m['title'] as String?) ?? '',
+              subtitle: (m['subtitle'] as String?) ?? '',
+              action: (m['actionLabel'] as String?) ?? 'اكتشف المزيد',
+              destination: (m['destination'] as String?) ?? 'universities',
+              imageUrl: (m['imageUrl'] as String?) ?? '',
+            );
+          })
+          .where((s) => s.title.isNotEmpty)
+          .toList();
       if (slides.isNotEmpty && mounted) {
         setState(() {
           _slides = slides;
           _index = 0;
         });
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/student_banner_carousel.dart:113');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/home_journey/student_banner_carousel.dart:113');
       // keep fallback
     }
   }
@@ -161,8 +167,7 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
                 onPageChanged: (index) => setState(() => _index = index),
                 itemBuilder: (context, index) {
                   final slide = _slides[index];
-                  final localImg =
-                      _localImages[index % _localImages.length];
+                  final localImg = _localImages[index % _localImages.length];
                   return Stack(fit: StackFit.expand, children: [
                     _buildBg(slide, localImg),
                     const DecoratedBox(
@@ -170,7 +175,7 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
                       gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [Color(0x500C223A), Color(0xEE0C223A)]),
+                          colors: [Color(0x50041E4A), Color(0xEE041E4A)]),
                     )),
                     Padding(
                       padding: const EdgeInsets.fromLTRB(20, 20, 20, 44),
@@ -181,7 +186,7 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
                           if (slide.tag.isNotEmpty)
                             Text(slide.tag,
                                 style: const TextStyle(
-                                    color: Color(0xFFFFCE91),
+                                    color: AppColors.greenSoft,
                                     fontSize: 12,
                                     fontWeight: FontWeight.w700)),
                           const SizedBox(height: 8),
@@ -205,8 +210,8 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
                             onPressed: () =>
                                 widget.onExplore(slide.destination),
                             style: TextButton.styleFrom(
-                                backgroundColor: AppColors.orange,
-                                foregroundColor: Colors.white,
+                                backgroundColor: AppColors.green,
+                                foregroundColor: AppColors.navy,
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 14),
                                 shape: RoundedRectangleBorder(
@@ -255,7 +260,7 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
                                     decoration: BoxDecoration(
                                         borderRadius: BorderRadius.circular(8),
                                         color: _index == index
-                                            ? AppColors.orange
+                                            ? AppColors.green
                                             : Colors.white54),
                                   ),
                                 )),

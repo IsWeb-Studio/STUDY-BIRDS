@@ -87,7 +87,7 @@ void main() {
     testWidgets('journey explains ${entry.key} before team approval', (tester) async {
       await tester.pumpWidget(MaterialApp(home: JourneyRequirementsView(
         onRefresh: () async {},
-        journeys: [{'applicationStatus': entry.key, 'stages': []}],
+        journeys: [{'applicationStatus': entry.key, 'stages': const []}],
       )));
       expect(find.text(entry.value), findsOneWidget);
       expect(find.text('لم تبدأ رحلة تقديم بعد'), findsNothing);

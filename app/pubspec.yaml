@@ -1,5 +1,5 @@
 name: study_birds
-description: Study Birds — study abroad companion app (UI screens package)
+description: COVEY ? your study abroad journey
 publish_to: 'none'
 version: 1.0.13+14
 
@@ -36,8 +36,12 @@ dependencies:
   cached_network_image: ^3.4.1
   package_info_plus: ^9.0.1
   sign_in_with_apple: ^8.1.0
+  just_audio: ^0.10.6
+  path_provider: ^2.1.6
 
 dev_dependencies:
+  image: ^4.10.1
+  image_picker_platform_interface: ^2.11.1
   video_player_platform_interface: ^6.9.0
   flutter_test:
     sdk: flutter
@@ -47,10 +51,11 @@ dev_dependencies:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/logo_mark.png"
+  image_path: "assets/images/branding/covey_icon.png"
   min_sdk_android: 21
   adaptive_icon_background: "#FFFFFF"
-  adaptive_icon_foreground: "assets/images/logo_mark.png"
+  adaptive_icon_foreground: "assets/images/branding/covey_icon.png"
+  remove_alpha_ios: true
 
 flutter:
   generate: true
@@ -62,6 +67,8 @@ flutter:
         - asset: assets/fonts/Tajawal-Bold.ttf
           weight: 700
   assets:
+    - assets/images/branding/
+    - assets/images/assistant/
     - assets/audio/wink/
     - assets/certs/
     - assets/images/dashboard/

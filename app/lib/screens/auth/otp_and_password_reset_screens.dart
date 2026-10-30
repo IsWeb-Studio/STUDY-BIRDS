@@ -40,7 +40,7 @@ class OTPVerificationScreen extends StatelessWidget {
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(
-                      color: i == 0 ? AppColors.orange : AppColors.border,
+                      color: i == 0 ? AppColors.green : AppColors.border,
                       width: i == 0 ? 1.6 : 1,
                     ),
                   ),
@@ -62,7 +62,7 @@ class OTPVerificationScreen extends StatelessWidget {
                       TextSpan(
                         text: 'إعادة الإرسال',
                         style: TextStyle(
-                            color: AppColors.orange,
+                            color: AppColors.greenInk,
                             fontWeight: FontWeight.w700),
                       ),
                     ],

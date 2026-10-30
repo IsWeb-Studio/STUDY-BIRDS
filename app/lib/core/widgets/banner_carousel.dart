@@ -106,7 +106,7 @@ class _BannerCarouselState extends State<BannerCarousel> {
                 width: i == _index ? 18 : 6,
                 height: 6,
                 decoration: BoxDecoration(
-                  color: i == _index ? AppColors.orange : AppColors.border,
+                  color: i == _index ? AppColors.green : AppColors.border,
                   borderRadius: BorderRadius.circular(3),
                 ),
               ),

@@ -1,9 +1,10 @@
+import '../config/app_theme.dart';
 import 'package:flutter/material.dart';
 
 Color? studentAchievementRing(int points) => points >= 100000
-    ? const Color(0xFF8B5CF6)
+    ? AppColors.navy
     : points >= 10000
-        ? Colors.orange
+        ? AppColors.greenInk
         : null;
 
 /// Cosmetic points achievement; this does not indicate identity verification.
@@ -19,7 +20,7 @@ class StudentAchievementMark extends StatelessWidget {
               label: 'شارة إنجاز بالنقاط، وليست توثيق هوية',
               child: const Icon(Icons.verified_rounded,
                   key: ValueKey('cosmetic-achievement-badge'),
-                  color: Color(0xFF2196F3),
+                  color: AppColors.greenInk,
                   size: 20)),
         );
 }

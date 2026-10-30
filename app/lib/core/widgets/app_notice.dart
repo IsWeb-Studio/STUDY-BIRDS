@@ -15,20 +15,20 @@ class AppSnackBar extends SnackBar {
     super.padding,
     super.width,
     super.elevation,
-    Color? backgroundColor = Colors.white,
+    super.backgroundColor = Colors.white,
     super.behavior = SnackBarBehavior.floating,
     super.shape = const RoundedRectangleBorder(
         borderRadius: BorderRadius.all(Radius.circular(18))),
     super.showCloseIcon = true,
     Color? closeIconColor,
   }) : super(
-            backgroundColor: backgroundColor,
             closeIconColor: closeIconColor ??
                 ((backgroundColor?.computeLuminance() ?? 1) < .4
                     ? Colors.white
                     : AppColors.navy),
             content: _NoticeContent(
-                child: content, backgroundColor: backgroundColor));
+                backgroundColor: backgroundColor,
+                child: content));
 }
 
 class _NoticeContent extends StatelessWidget {
@@ -45,7 +45,7 @@ class _NoticeContent extends StatelessWidget {
     final dark = (backgroundColor?.computeLuminance() ?? 1) < .4;
     final foreground = dark ? Colors.white : AppColors.navy;
     final color =
-        error ? (dark ? AppColors.orange : AppColors.danger) : foreground;
+        error ? (dark ? AppColors.warning : AppColors.danger) : foreground;
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [

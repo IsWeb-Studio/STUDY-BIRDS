@@ -123,7 +123,7 @@ final home = {
       'accommodation': 'السكن',
       'payments': 'المدفوعات',
       'support': 'الدعم',
-      'bird-ai': 'Bird AI',
+      'bird-ai': 'COVEY AI',
     }.entries)
       {'key': entry.key, 'labelAr': entry.value, 'destination': entry.key}
   ],
@@ -147,10 +147,10 @@ void main() {
       await tester.pumpWidget(
           const MaterialApp(home: HomeDashboardScreen(embedInShell: true)));
       await tester.pumpAndSettle();
-      expect(find.byType(StudentStories), findsNothing);
-      expect(find.text('مرحباً أحمد'), findsOneWidget);
-      expect(find.text('Turkey - Istanbul - Physiotherapy'), findsOneWidget);
-      expect(find.text('47%'), findsOneWidget);
+      expect(find.byType(StudentStories), findsOneWidget);
+      expect(find.text('مرحباً أحمد'), findsNothing);
+      expect(find.text('Turkey - Istanbul - Physiotherapy'), findsNothing);
+      expect(find.text('47%'), findsNothing);
       // Redesigned home: the status card, then the next required step.
       expect(find.text('الخطوة القادمة'), findsOneWidget);
       expect(find.text('استكمال مستند'), findsWidgets);
@@ -170,7 +170,7 @@ void main() {
       await tester.pumpWidget(
           const MaterialApp(home: HomeDashboardScreen(embedInShell: true)));
       await tester.pumpAndSettle();
-      expect(find.text('مرحباً بك'), findsOneWidget);
+      expect(find.text('مرحباً بك'), findsNothing);
       expect(find.text('المواعيد المهمة'), findsNothing);
       await tester.scrollUntilVisible(find.text('طلباتي'), 300,
           scrollable: find.byType(Scrollable).first);

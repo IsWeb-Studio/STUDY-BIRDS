@@ -101,7 +101,7 @@ router.post('/email/change/request', run(async (req, res) => {
     email: newEmail, digest: digest(`${req.user._id}:email-change:${code}`),
     attempts: 0, expiresAt: new Date(Date.now() + 10 * 60 * 1000),
   }}, { new: true, upsert: true });
-  await sendContactEmail({ to: newEmail, subject: 'Study Birds — تأكيد البريد الإلكتروني الجديد', text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.`, emailContent: { title: 'تأكيد البريد الإلكتروني الجديد', code, bodyText: 'أدخل الرمز التالي لتأكيد بريدك الجديد. صالح لمدة 10 دقائق. لا تشاركه مع أحد.' } });
+  await sendContactEmail({ to: newEmail, subject: 'COVEY — تأكيد البريد الإلكتروني الجديد', text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.`, emailContent: { title: 'تأكيد البريد الإلكتروني الجديد', code, bodyText: 'أدخل الرمز التالي لتأكيد بريدك الجديد. صالح لمدة 10 دقائق. لا تشاركه مع أحد.' } });
   res.json({ sent: true });
 }));
 router.post('/email/change/confirm', run(async (req, res) => {
@@ -120,7 +120,7 @@ router.post('/email/change/confirm', run(async (req, res) => {
   if (!consumed.deletedCount) fail(res, 'تم استخدام الرمز بالفعل');
   const oldEmail = req.user.email;
   await User.updateOne({ _id: req.user._id }, { $set: { email: newEmail, emailVerified: true } });
-  sendContactEmail({ to: oldEmail, subject: 'Study Birds — إشعار أمني: تغيير البريد الإلكتروني', text: `تم تغيير البريد الإلكتروني لحسابك إلى ${newEmail}.\nإذا لم تكن أنت من أجرى هذا التغيير، تواصل مع الدعم فوراً.` }).catch(() => {});
+  sendContactEmail({ to: oldEmail, subject: 'COVEY — إشعار أمني: تغيير البريد الإلكتروني', text: `تم تغيير البريد الإلكتروني لحسابك إلى ${newEmail}.\nإذا لم تكن أنت من أجرى هذا التغيير، تواصل مع الدعم فوراً.` }).catch(() => {});
   res.json({ email: newEmail, emailVerified: true });
 }));
 router.get('/sessions', run(async (req, res) => {

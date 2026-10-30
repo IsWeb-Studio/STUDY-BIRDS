@@ -125,7 +125,7 @@ class _ArrivalServicesScreenState extends State<ArrivalServicesScreen> {
 
   Color _statusColor(String? s) => switch (s) {
         'completed' => AppColors.success,
-        'in-progress' => AppColors.orange,
+        'in-progress' => AppColors.green,
         _ => AppColors.info,
       };
 
@@ -300,18 +300,18 @@ class _ApplicationPickerSheet extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: AppColors.orange.withValues(alpha: 0.1),
+                  color: AppColors.green.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.flight_land_rounded,
-                    size: 20, color: AppColors.orange),
+                    size: 20, color: AppColors.green),
               ),
               title: const Text('استقبال من المطار (بدون رحلة دراسية)',
                   style: AppTextStyles.body),
               subtitle: const Text('للطلاب القادمين دون تقديم جامعي حالي',
                   style: AppTextStyles.caption),
               trailing: const Icon(Icons.chevron_left_rounded,
-                  color: AppColors.orange),
+                  color: AppColors.green),
               onTap: () =>
                   Navigator.of(context).pop(_ArrivalServicesScreenState._noApp),
             ),
@@ -510,11 +510,11 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: (_isStandalone ? AppColors.orange : AppColors.navy)
+                color: (_isStandalone ? AppColors.green : AppColors.navy)
                     .withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(AppRadius.button),
                 border: Border.all(
-                    color: (_isStandalone ? AppColors.orange : AppColors.navy)
+                    color: (_isStandalone ? AppColors.green : AppColors.navy)
                         .withValues(alpha: 0.18)),
               ),
               child: Row(
@@ -524,14 +524,14 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
                           ? Icons.flight_land_rounded
                           : Icons.school_outlined,
                       size: 18,
-                      color: _isStandalone ? AppColors.orange : AppColors.navy),
+                      color: _isStandalone ? AppColors.green : AppColors.navy),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       _programLabel,
                       style: AppTextStyles.body.copyWith(
                           color:
-                              _isStandalone ? AppColors.orange : AppColors.navy,
+                              _isStandalone ? AppColors.green : AppColors.navy,
                           fontWeight: FontWeight.w700),
                     ),
                   ),
@@ -647,7 +647,7 @@ class _ArrivalFormScreenState extends State<_ArrivalFormScreen> {
           Expanded(child: Text(label, style: AppTextStyles.body)),
           Switch(
               value: value,
-              activeThumbColor: AppColors.orange,
+              activeThumbColor: AppColors.green,
               onChanged: onChanged),
         ],
       );

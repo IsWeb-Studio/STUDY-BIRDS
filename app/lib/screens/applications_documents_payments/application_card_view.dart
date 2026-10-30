@@ -93,7 +93,7 @@ class ApplicationCardFacts extends StatelessWidget {
             width: double.infinity,
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-                color: AppColors.orangeSoft,
+                color: AppColors.greenSoft,
                 borderRadius: BorderRadius.circular(10)),
             child: Text.rich(
                 TextSpan(children: [

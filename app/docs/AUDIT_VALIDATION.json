@@ -1,0 +1,74 @@
+{
+  "date": "2026-10-21",
+  "flutter": {
+    "pubGet": 0,
+    "formatBaseline": {
+      "exit": 1,
+      "files": 275,
+      "wouldChange": 152
+    },
+    "formatChanged": {
+      "exit": 0,
+      "files": 11,
+      "wouldChange": 0
+    },
+    "analyze": {
+      "exit": 0,
+      "issues": 0
+    },
+    "tests": {
+      "exit": 0,
+      "passed": 439
+    },
+    "debugApk": {
+      "exit": 0,
+      "bytes": 375359682
+    }
+  },
+  "backend": {
+    "tests": {
+      "exit": 0,
+      "passed": 252,
+      "failed": 0,
+      "skipped": 0
+    },
+    "syntax": {
+      "exit": 0,
+      "files": 238
+    },
+    "audit": {
+      "exit": 0,
+      "vulnerabilities": 0
+    }
+  },
+  "website": {
+    "cleanInstall": 0,
+    "tests": {
+      "exit": 0,
+      "passed": 65,
+      "files": 10
+    },
+    "build": 0,
+    "audit": {
+      "exit": 1,
+      "before": 24,
+      "after": 15,
+      "remaining": {
+        "moderate": 7,
+        "high": 6,
+        "critical": 2
+      }
+    }
+  },
+  "ios": "NOT TESTED - Windows",
+  "cleanup": {
+    "status": "REQUIRES APPROVAL",
+    "exactPaths": 8,
+    "logicalBytes": 3578405502
+  },
+  "production": "NOT MODIFIED",
+  "checkpoint": {
+    "verifiedHashes": 1126,
+    "uploaded": false
+  }
+}

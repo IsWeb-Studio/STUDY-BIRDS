@@ -1,0 +1,1426 @@
+{
+  "root": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c",
+  "syntheticOnly": true,
+  "createdAbsentVerified": true,
+  "sizes": {
+    "files": 77,
+    "dirs": 58,
+    "links": 3,
+    "logicalBytes": 157293200,
+    "rounded4KFileEstimate": 157474816
+  },
+  "rows": [
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic\\empty",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic\\file.txt",
+      "kind": "file",
+      "length": 20,
+      "sha256": "c1f2b0b03753c2d4775e259fd0bd36568d991819663c3e338418715ecde9e5ca"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic\\مرحبا-鳥-é.txt",
+      "kind": "file",
+      "length": 7,
+      "sha256": "f922e0d1e1448d98bc93d0bf5459f4951c10e10111d21dab6ad42325fc831330"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic-pax-restore",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic-results.json",
+      "kind": "file",
+      "length": 1115,
+      "sha256": "c867e8d10d69a4f6595966461c702214860e455ea0ef80ce45abd365dd488e0a"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic-zip-restore",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic.tar.gz",
+      "kind": "file",
+      "length": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic.zip",
+      "kind": "file",
+      "length": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\corrupt-synthetic.zip",
+      "kind": "file",
+      "length": 8388862,
+      "sha256": "8590c7a956dbca76301815acde8f9f4515bb4fdf2551eaaac5119e647b718936"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\coverage-results.json",
+      "kind": "file",
+      "length": 3724,
+      "sha256": "47cf6febc158585c302494c85f839c9103a565479340860cf597203c3e54d53d"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\dataset.json",
+      "kind": "file",
+      "length": 737,
+      "sha256": "6cf65c68c5247291277ceaa3ac0bc5b7e279592aee3f68862a6669e046ec71b7"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\direct-results.json",
+      "kind": "file",
+      "length": 1508,
+      "sha256": "b014b48b77a1559ca5bc52e7cfa9d47773d09e304863969a372dc5c68b89f6b9"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\junction.tar",
+      "kind": "file",
+      "length": 2560,
+      "sha256": "998c483534ce9d8589189266804a515496f3490ba5d75f80b37599eb7bf1948f"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore\\source",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long-file.txt",
+      "kind": "file",
+      "length": 19,
+      "sha256": "8f6f85e6b54a0c39cbc3e16caa4820c08439172b6841253200b46237a1109e42"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long.tar",
+      "kind": "file",
+      "length": 6144,
+      "sha256": "d861460ab32f0a93932cfc962a272eec507570f9bc4ac4d3bd0b24f28b3c4a97"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\measure-aes.zip",
+      "kind": "file",
+      "length": 8388862,
+      "sha256": "069d6fb968982e1c91c58e2745be5c9332cca378aed6d96292bbacee98eae4e5"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\measure.tar",
+      "kind": "file",
+      "length": 8390144,
+      "sha256": "6efcbe8154591cbbd11fb6ad3dd82ea1cb1f25447903f169317a447a4f191f34"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\measurements.json",
+      "kind": "file",
+      "length": 526,
+      "sha256": "601cafb2333e3cdb30b71424abb827fdd4002d7f045d42068e003b336276a565"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\OWNERSHIP.txt",
+      "kind": "file",
+      "length": 76,
+      "sha256": "de60d5eeef89ce1d854dde546e7db439b06cbfd43edbc62d497501b94a9cc344"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-create.stderr",
+      "kind": "file",
+      "length": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-create.stdout",
+      "kind": "file",
+      "length": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-list.stderr",
+      "kind": "file",
+      "length": 122,
+      "sha256": "ac0f87928cba2b42474048df19d6db3d60f8c5c96830e646695a30d57eb16f1a"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-list.stdout",
+      "kind": "file",
+      "length": 160,
+      "sha256": "5994d404be6317868165284c89401d65bae76028fa7725ddd5357f8200221071"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore\\source",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore\\source\\empty",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore\\source\\junction",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore\\source\\plain.txt",
+      "kind": "file",
+      "length": 24,
+      "sha256": "53bfec6343ff3100cc7183637cade5d035597be51c138fe90fd94f7f653fc187"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore\\source\\random.bin",
+      "kind": "file",
+      "length": 8388608,
+      "sha256": "bd8fa16555464d7f199a1c51bd3adbf7ab09da7c63991ab2df807a9e8302633d"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore.stderr",
+      "kind": "file",
+      "length": 135,
+      "sha256": "5ab71843a595343b620453993630cca65d9f87fa72383937675b5d3c41421d6f"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore.stdout",
+      "kind": "file",
+      "length": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore\\source",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore\\source\\empty",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore\\source\\junction",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore\\source\\plain.txt",
+      "kind": "file",
+      "length": 24,
+      "sha256": "53bfec6343ff3100cc7183637cade5d035597be51c138fe90fd94f7f653fc187"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore\\source\\random.bin",
+      "kind": "file",
+      "length": 8388608,
+      "sha256": "bd8fa16555464d7f199a1c51bd3adbf7ab09da7c63991ab2df807a9e8302633d"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2.tar.gz",
+      "kind": "file",
+      "length": 8355840,
+      "sha256": "e0a03c661055486dd1a24cb09cd195943c8a97c6ffef4dbcec0e21a8e1629221"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\plain-restore",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\plain-restore\\source",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\plain-restore\\source\\plain.txt",
+      "kind": "file",
+      "length": 24,
+      "sha256": "53bfec6343ff3100cc7183637cade5d035597be51c138fe90fd94f7f653fc187"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\plain.tar",
+      "kind": "file",
+      "length": 2048,
+      "sha256": "87f76b497ec75c74fdf5606a56e9b3d823032818b6cb95805385db59a7e22036"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\random.tar",
+      "kind": "file",
+      "length": 8391168,
+      "sha256": "aaca2cde796688bba15621a66a8a5f7017f9cf9b680cc4ee014c8d30774965ef"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-corrupt-synthetic.rar",
+      "kind": "file",
+      "length": 8403038,
+      "sha256": "a70173d1d3974bf41c9603c62e1d1599a8f80ef7a412b1615d088f3557feee7d"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-measured.rar",
+      "kind": "file",
+      "length": 8402990,
+      "sha256": "9e8bcff24e49cb1782e0f5204e0f7bf54c617d0d7e6a32302622b6a13ac65f36"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-measurements.json",
+      "kind": "file",
+      "length": 220,
+      "sha256": "0c7097f47a116ea9898ee3662cae620487dd3b03cc49ca43e0532067d2a86d86"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\empty",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\junction",
+      "kind": "link",
+      "length": 0,
+      "target": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic-junction-target"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long-file.txt",
+      "kind": "file",
+      "length": 19,
+      "sha256": "8f6f85e6b54a0c39cbc3e16caa4820c08439172b6841253200b46237a1109e42"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\plain.txt",
+      "kind": "file",
+      "length": 24,
+      "sha256": "53bfec6343ff3100cc7183637cade5d035597be51c138fe90fd94f7f653fc187"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\random.bin",
+      "kind": "file",
+      "length": 8388608,
+      "sha256": "535b3a09c2859abc3a8a30b7c5937cb6b5724af1268616cf9ef4f48cf125f4de"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\repeat.bin",
+      "kind": "file",
+      "length": 2097152,
+      "sha256": "5b766f6d76a999636fd93b4e039d5a32187f84a19c0950449f0c721da0223914"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\مرحبا-鳥-é.txt",
+      "kind": "file",
+      "length": 17,
+      "sha256": "8534bfab33494f6a6a2510b32839b8adb564378de1f2a52f3c2b1cd32f1a9a55"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-results.json",
+      "kind": "file",
+      "length": 9248,
+      "sha256": "afae50b910ad500e614b014450d7128ca6d1f656aad0473c00ea3999974ffd89"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-stream-integrity.json",
+      "kind": "file",
+      "length": 141,
+      "sha256": "f150be8f8c15f61c703f593018a01172b15a7020e06c481b572761c23eabb86e"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-verification.json",
+      "kind": "file",
+      "length": 2480,
+      "sha256": "5d1a6fd291bf9b73c6bd80842064e1f7f2ff5c3a43d0b1f409655847ed24f936"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-work",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\empty",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\junction",
+      "kind": "link",
+      "length": 0,
+      "target": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic-junction-target"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long-file.txt",
+      "kind": "file",
+      "length": 19,
+      "sha256": "8f6f85e6b54a0c39cbc3e16caa4820c08439172b6841253200b46237a1109e42"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\plain.txt",
+      "kind": "file",
+      "length": 24,
+      "sha256": "53bfec6343ff3100cc7183637cade5d035597be51c138fe90fd94f7f653fc187"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\random.bin",
+      "kind": "file",
+      "length": 8388608,
+      "sha256": "535b3a09c2859abc3a8a30b7c5937cb6b5724af1268616cf9ef4f48cf125f4de"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\repeat.bin",
+      "kind": "file",
+      "length": 2097152,
+      "sha256": "5b766f6d76a999636fd93b4e039d5a32187f84a19c0950449f0c721da0223914"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\مرحبا-鳥-é.txt",
+      "kind": "file",
+      "length": 17,
+      "sha256": "8534bfab33494f6a6a2510b32839b8adb564378de1f2a52f3c2b1cd32f1a9a55"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\run-synthetic.ps1",
+      "kind": "file",
+      "length": 2263,
+      "sha256": "ba79f10d32404932d409d8152e539d4961e6d22988cf99769923f0522d938c0a"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\small-pax-restore",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\small-results.json",
+      "kind": "file",
+      "length": 1032,
+      "sha256": "3505db2c4cca7c876fdaf3c1a01b617c07205e41411122b4959a3d6a2bc232af"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\small-zip-restore",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\small.tar.gz",
+      "kind": "file",
+      "length": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\small.zip",
+      "kind": "file",
+      "length": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\empty",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\junction",
+      "kind": "link",
+      "length": 0,
+      "target": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic-junction-target"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long-file.txt",
+      "kind": "file",
+      "length": 19,
+      "sha256": "8f6f85e6b54a0c39cbc3e16caa4820c08439172b6841253200b46237a1109e42"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\plain.txt",
+      "kind": "file",
+      "length": 24,
+      "sha256": "53bfec6343ff3100cc7183637cade5d035597be51c138fe90fd94f7f653fc187"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\random.bin",
+      "kind": "file",
+      "length": 8388608,
+      "sha256": "535b3a09c2859abc3a8a30b7c5937cb6b5724af1268616cf9ef4f48cf125f4de"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\repeat.bin",
+      "kind": "file",
+      "length": 2097152,
+      "sha256": "5b766f6d76a999636fd93b4e039d5a32187f84a19c0950449f0c721da0223914"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\مرحبا-鳥-é.txt",
+      "kind": "file",
+      "length": 17,
+      "sha256": "8534bfab33494f6a6a2510b32839b8adb564378de1f2a52f3c2b1cd32f1a9a55"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source-acl.txt",
+      "kind": "file",
+      "length": 182,
+      "sha256": "cbe7ff325a04453626c05d182fdbd3b474071386b16d675707ac76c42b4926a6"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\store-aes-restore",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\store-aes-restore\\basic",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\store-aes-restore\\basic\\file.txt",
+      "kind": "file",
+      "length": 20,
+      "sha256": "c1f2b0b03753c2d4775e259fd0bd36568d991819663c3e338418715ecde9e5ca"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\store-aes.zip",
+      "kind": "file",
+      "length": 268,
+      "sha256": "262dd6892db518b401b1158e311b8281f3ebac3e3c948e10f63ecf04caec9712"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic-encrypted.zip",
+      "kind": "file",
+      "length": 8386560,
+      "sha256": "542c1cfd4a0eecf686d1c1cbf0820028687076b21d16f459a36b625375d9631d"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic-junction-target",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic-junction-target\\DO_NOT_FOLLOW.txt",
+      "kind": "file",
+      "length": 31,
+      "sha256": "54104212dfd020411d933569cb74898d3a13a18ae7f98b484e27003df6802f8a"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic.rar",
+      "kind": "file",
+      "length": 8403038,
+      "sha256": "32527cb846bcfb171e602b9727bea737027a3b8a60f4f16db419cf162550eb22"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic.tar.gz",
+      "kind": "file",
+      "length": 8355840,
+      "sha256": "2039056858215e4d7d79df0263450b793bf5875141a4ce89668680332c7a5c81"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\tool-results.json",
+      "kind": "file",
+      "length": 2399,
+      "sha256": "ffa072cb233968ae680eaa52a805395b35eae4c2222c1a2248b93f657b559d95"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\verification.json",
+      "kind": "file",
+      "length": 1080,
+      "sha256": "54f51655e02a923373e5c4df68c22f711920cd699eef28f56361a03d6a6ee0bf"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-create.stderr",
+      "kind": "file",
+      "length": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-create.stdout",
+      "kind": "file",
+      "length": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-list-no-key.stderr",
+      "kind": "file",
+      "length": 62,
+      "sha256": "7459f293202a59f4a829b153deb7543e2bbcd5beacca22e8615396c4b9cd12d9"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-list-no-key.stdout",
+      "kind": "file",
+      "length": 139,
+      "sha256": "63ffa65f42e466149e7fb50d1c95b7f4e73791413a6d3b3bcc1dc9a0af8aebbc"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore\\source",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore\\source\\empty",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore\\source\\junction",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore\\source\\plain.txt",
+      "kind": "file",
+      "length": 24,
+      "sha256": "53bfec6343ff3100cc7183637cade5d035597be51c138fe90fd94f7f653fc187"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore\\source\\random.bin",
+      "kind": "file",
+      "length": 8383370,
+      "sha256": "da346b9cfbaa8fcf3225df1fa287f20a6c7e9f96a8fe5dd81501a259f69f054b"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore.stderr",
+      "kind": "file",
+      "length": 115,
+      "sha256": "b71abc148ee25a9a359adfb8b829289f668e9b168df0b9e15897ae3790bc1f67"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore.stdout",
+      "kind": "file",
+      "length": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-wrong-key.stderr",
+      "kind": "file",
+      "length": 181,
+      "sha256": "bc3e6fd353a5aae517c98a717b6a55c1e279134b56ea0b8e064c2bde2ddeaaa3"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-wrong-key.stdout",
+      "kind": "file",
+      "length": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore\\source",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore\\source\\empty",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore\\source\\junction",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "kind": "directory",
+      "length": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore\\source\\plain.txt",
+      "kind": "file",
+      "length": 24,
+      "sha256": "53bfec6343ff3100cc7183637cade5d035597be51c138fe90fd94f7f653fc187"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore\\source\\random.bin",
+      "kind": "file",
+      "length": 8383370,
+      "sha256": "da346b9cfbaa8fcf3225df1fa287f20a6c7e9f96a8fe5dd81501a259f69f054b"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2.zip",
+      "kind": "file",
+      "length": 8386560,
+      "sha256": "6b741a531bf139ca103c439c8b6c5cadcc0b76bb7bf186fe4cbbb5a894ffa68b"
+    }
+  ],
+  "correctedRarStreamVerification": {
+    "status": 0,
+    "bytes": 8388608,
+    "hashMatches": true,
+    "stderr": ""
+  },
+  "testEvidence": {
+    "dataset.json": {
+      "root": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c",
+      "source": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source",
+      "longPath": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long-file.txt",
+      "longPathLength": 409,
+      "synthetic": true
+    },
+    "tool-results.json": [
+      {
+        "Label": "pax-create",
+        "Exit": null,
+        "PeakWorkingSetObserved": 9809920,
+        "PrivateBytesObserved": 1880064,
+        "Samples": 112,
+        "Milliseconds": 1967.0673000000002,
+        "Stderr": ""
+      },
+      {
+        "Label": "pax-list",
+        "Exit": null,
+        "PeakWorkingSetObserved": 6344704,
+        "PrivateBytesObserved": 1277952,
+        "Samples": 3,
+        "Milliseconds": 71.7097,
+        "Stderr": "tar.exe: Truncated input file (needed 8388608 bytes, only 0 available)\r\ntar.exe: Error exit delayed from previous errors\r\n"
+      },
+      {
+        "Label": "pax-restore",
+        "Exit": null,
+        "PeakWorkingSetObserved": 5865472,
+        "PrivateBytesObserved": 1204224,
+        "Samples": 2,
+        "Milliseconds": 52.3611,
+        "Stderr": "source/random.bin: Truncated tar archive detected while reading data: Unknown error\r\ntar.exe: Error exit delayed from previous errors\r\n"
+      },
+      {
+        "Label": "zip-create",
+        "Exit": null,
+        "PeakWorkingSetObserved": 10215424,
+        "PrivateBytesObserved": 1986560,
+        "Samples": 49,
+        "Milliseconds": 919.6115000000001,
+        "Stderr": ""
+      },
+      {
+        "Label": "zip-list-no-key",
+        "Exit": null,
+        "PeakWorkingSetObserved": 4517888,
+        "PrivateBytesObserved": 839680,
+        "Samples": 2,
+        "Milliseconds": 61.773900000000005,
+        "Stderr": "tar.exe: Couldn't read passphrase: No such file or directory\r\n"
+      },
+      {
+        "Label": "zip-restore",
+        "Exit": null,
+        "PeakWorkingSetObserved": 6352896,
+        "PrivateBytesObserved": 1712128,
+        "Samples": 3,
+        "Milliseconds": 101.4811,
+        "Stderr": "source/random.bin: ZIP decompression failed (-5): Unknown error\r\ntar.exe: Error exit delayed from previous errors\r\n"
+      },
+      {
+        "Label": "zip-wrong-key",
+        "Exit": null,
+        "PeakWorkingSetObserved": 2752512,
+        "PrivateBytesObserved": 491520,
+        "Samples": 2,
+        "Milliseconds": 57.932100000000005,
+        "Stderr": "source/plain.txt: Incorrect passphrase: Unknown error\r\ntar.exe: Passphrase required for this entry\r\ntar.exe: Incorrect passphrase\r\ntar.exe: Error exit delayed from previous errors\r\n"
+      }
+    ],
+    "direct-results.json": [
+      {
+        "label": "pax2-create",
+        "status": 3221225477,
+        "signal": null,
+        "ms": 335,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "pax2-list",
+        "status": 1,
+        "signal": null,
+        "ms": 47,
+        "stdout": "source/\r\nsource/empty/\r\nsource/junction/\r\nsource/long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx/\r\nsource/plain.txt\r\nsource/random.bin\r\n",
+        "stderr": "tar.exe: Truncated input file (needed 8388608 bytes, only 0 available)\r\ntar.exe: Error exit delayed from previous errors\r\n"
+      },
+      {
+        "label": "pax2-restore",
+        "status": 1,
+        "signal": null,
+        "ms": 46,
+        "stdout": "",
+        "stderr": "source/random.bin: Truncated tar archive detected while reading data: Unknown error\r\ntar.exe: Error exit delayed from previous errors\r\n"
+      },
+      {
+        "label": "zip2-create",
+        "status": 3221225477,
+        "signal": null,
+        "ms": 355,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "zip2-restore",
+        "status": 1,
+        "signal": null,
+        "ms": 86,
+        "stdout": "",
+        "stderr": "source/random.bin: ZIP decompression failed (-5): Unknown error\r\ntar.exe: Error exit delayed from previous errors\r\n"
+      },
+      {
+        "label": "zip2-wrong-key",
+        "status": 1,
+        "signal": null,
+        "ms": 38,
+        "stdout": "",
+        "stderr": "source/plain.txt: Incorrect passphrase: Unknown error\r\ntar.exe: Passphrase required for this entry\r\ntar.exe: Incorrect passphrase\r\ntar.exe: Error exit delayed from previous errors\r\n"
+      }
+    ],
+    "small-results.json": [
+      {
+        "label": "small-pax-create",
+        "status": 3221225477,
+        "ms": 36,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "small-pax-restore",
+        "status": 0,
+        "ms": 22,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "small-zip-create",
+        "status": 3221225477,
+        "ms": 35,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "small-zip-restore",
+        "status": 0,
+        "ms": 23,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "small-zip-list-no-key",
+        "status": 0,
+        "ms": 22,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "small-zip-wrong",
+        "status": 1,
+        "ms": 22,
+        "stdout": "",
+        "stderr": "tar.exe: source/plain.txt: Not found in archive\r\ntar.exe: Error exit delayed from previous errors\r\n"
+      },
+      {
+        "label": "random-uncompressed-create",
+        "status": 0,
+        "ms": 34,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "random-uncompressed-list",
+        "status": 0,
+        "ms": 28,
+        "stdout": "source/random.bin\r\n",
+        "stderr": ""
+      }
+    ],
+    "basic-results.json": [
+      {
+        "label": "basic-pax-create",
+        "status": 3221225477,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "basic-pax-restore",
+        "status": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "basic-zip-create",
+        "status": 3221225477,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "basic-zip-restore",
+        "status": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "basic-zip-list",
+        "status": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "basic-zip-wrong",
+        "status": 1,
+        "stdout": "",
+        "stderr": "tar.exe: basic/file.txt: Not found in archive\r\ntar.exe: Error exit delayed from previous errors\r\n"
+      },
+      {
+        "label": "plain-uncompressed",
+        "status": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "junction-only",
+        "status": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "junction-list",
+        "status": 0,
+        "stdout": "drwxrwxrwx  0 0      0           0 Oct 22 07:10 source/junction/\r\n-rw-rw-rw-  0 0      0          31 Oct 22 07:10 source/junction/DO_NOT_FOLLOW.txt\r\n",
+        "stderr": ""
+      }
+    ],
+    "coverage-results.json": [
+      {
+        "label": "zip-store-aes-create",
+        "status": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "zip-store-aes-restore",
+        "status": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "zip-store-aes-wrong",
+        "status": 1,
+        "stdout": "",
+        "stderr": "basic/file.txt: Incorrect passphrase: Unknown error\r\ntar.exe: Error exit delayed from previous errors\r\n"
+      },
+      {
+        "label": "zip-store-list-no-key",
+        "status": 0,
+        "stdout": "basic/file.txt\r\n",
+        "stderr": ""
+      },
+      {
+        "label": "plain-restore",
+        "status": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "long-create",
+        "status": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "long-restore",
+        "status": 0,
+        "stdout": "",
+        "stderr": ""
+      },
+      {
+        "label": "robocopy-all",
+        "status": 16,
+        "stdout": "\r\n-------------------------------------------------------------------------------\r\n   ROBOCOPY     ::     Robust File Copy for Windows                              \r\n-------------------------------------------------------------------------------\r\n\r\n  Started : Thursday, 22 October 2026 7:13:01\r\n   Source : C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\\r\n     Dest : C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-all\\\r\n\r\n    Files : *.*\r\n\t    \r\n  Options : *.* /NDL /NFL /S /E /COPYALL /NP /R:0 /W:0 \r\n\r\n------------------------------------------------------------------------------\r\n\r\nERROR : You do not have the Manage Auditing user right.\r\n*****  You need this to copy auditing information (/COPY:U or /COPYALL).\r\n\r\n       Simple Usage :: ROBOCOPY source destination /MIR\r\n\r\n             source :: Source Directory (drive:\\path or \\\\server\\share\\path).\r\n        destination :: Destination Dir  (drive:\\path or \\\\server\\share\\path).\r\n               /MIR :: Mirror a complete directory tree.\r\n\r\n    For more usage information run ROBOCOPY /?\r\n\r\n                                                          \r\n****  /MIR can DELETE files as well as copy them !\r\n",
+        "stderr": ""
+      },
+      {
+        "label": "robocopy-dats",
+        "status": 1,
+        "stdout": "\r\n-------------------------------------------------------------------------------\r\n   ROBOCOPY     ::     Robust File Copy for Windows                              \r\n-------------------------------------------------------------------------------\r\n\r\n  Started : Thursday, 22 October 2026 7:13:01\r\n   Source : C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\\r\n     Dest : C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\\r\n\r\n    Files : *.*\r\n\t    \r\n  Options : *.* /NDL /NFL /S /E /DCOPY:DAT /COPY:DATS /NP /R:0 /W:0 \r\n\r\n------------------------------------------------------------------------------\r\n\r\n\r\n------------------------------------------------------------------------------\r\n\r\n               Total    Copied   Skipped  Mismatch    FAILED    Extras\r\n    Dirs :         7         7         0         0         0         0\r\n   Files :         5         5         0         0         0         0\r\n   Bytes :   10.00 m   10.00 m         0         0         0         0\r\n   Times :   0:00:00   0:00:00                       0:00:00   0:00:00\r\n\r\n\r\n   Speed :           748,987,142 Bytes/sec.\r\n   Speed :            42,857.387 MegaBytes/min.\r\n   Ended : Thursday, 22 October 2026 7:13:01\r\n\r\n",
+        "stderr": ""
+      }
+    ],
+    "measurements.json": [
+      {
+        "Label": "measure-store-create",
+        "Exit": 0,
+        "ObservedPeakWorkingSet": 6041600,
+        "ObservedPrivateBytes": 1515520,
+        "Samples": 2,
+        "Milliseconds": 48.307500000000005,
+        "Stderr": ""
+      },
+      {
+        "Label": "measure-aes-create",
+        "Exit": 0,
+        "ObservedPeakWorkingSet": 6537216,
+        "ObservedPrivateBytes": 1708032,
+        "Samples": 4,
+        "Milliseconds": 69.99340000000001,
+        "Stderr": ""
+      }
+    ],
+    "verification.json": {
+      "plain-restore": {
+        "fileHashMatches": true,
+        "ads": null,
+        "mtime": "2020-02-03T04:05:06.000Z"
+      },
+      "robo-dats": {
+        "fileHashMatches": true,
+        "ads": "synthetic named stream",
+        "mtime": "2020-02-03T04:05:06.000Z"
+      },
+      "longPath": {
+        "sourceLength": 409,
+        "tarRestoreMatches": true,
+        "roboRestoreMatches": true
+      },
+      "roboJunction": {
+        "exists": true,
+        "isLink": true,
+        "target": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic-junction-target"
+      },
+      "roboDirectoryADS": "synthetic directory stream",
+      "basicAES": true,
+      "corrupt": {
+        "status": 1,
+        "stderr": "source/random.bin: ZIP bad Authentication code: Unknown error\r\ntar.exe: Error exit delayed from previous errors\r\n",
+        "bytesEmitted": 8388608,
+        "emittedHashMatches": false
+      },
+      "streamTar": {
+        "status": 0,
+        "bytes": 8396800,
+        "stderr": ""
+      },
+      "streamAES": {
+        "status": 0,
+        "bytes": 8396800,
+        "stderr": ""
+      },
+      "tarFileBytes": 8390144,
+      "aesFileBytes": 8388862
+    },
+    "rar-results.json": [
+      {
+        "label": "rar-create",
+        "status": 0,
+        "ms": 492,
+        "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\nEvaluation copy. Please register.\r\n\r\nCreating archive C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic.rar\r\n\r\nAdding    source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long-file.txt     \b\b\b\b  0%\b\b\b\b\b  OK \r\nAdding    source\\plain.txt                                               \b\b\b\b  0%\b\b\b\b\b  OK \r\nAdding    source\\random.bin                                              \b\b\b\b 40%\b\b\b\b 79%\b\b\b\b\b  OK \r\nAdding    source\\repeat.bin                                              \b\b\b\b 99%\b\b\b\b\b  OK \r\nAdding    source\\?????-?-�.txt                                           \b\b\b\b100%\b\b\b\b\b  OK \r\nAdding    source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     \b\b\b\b\b  OK \r\nAdding    source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     \b\b\b\b\b  OK \r\nAdding    source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     \b\b\b\b\b  OK \r\nAdding    source\\empty                                                   \b\b\b\b\b  OK \r\nAdding    source\\junction                                                \b\b\b\b\b  OK \r\nAdding    source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx     \b\b\b\b\b  OK \r\nAdding    source                                                         \b\b\b\b\b  OK \r\nDone\r\n",
+        "stderr": ""
+      },
+      {
+        "label": "rar-test",
+        "status": 0,
+        "ms": 214,
+        "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\n\r\nTesting archive C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic.rar\r\n\r\nTesting     source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long-file.txt     \b\b\b\b  0%\b\b\b\b\b  OK \r\nTesting     source\\plain.txt                                             \b\b\b\b  0%\b\b\b\b\b  OK \r\nTesting     source\\random.bin                                            \b\b\b\b 49%\b\b\b\b 99%\b\b\b\b\b  OK \r\nTesting     source\\repeat.bin                                            \b\b\b\b 99%\b\b\b\b\b  OK \r\nTesting     source\\?????-?-�.txt                                         \b\b\b\b 99%\b\b\b\b\b  OK \r\nTesting     source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  OK\r\nTesting     source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  OK\r\nTesting     source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  OK\r\nTesting     source\\empty                                              OK\r\nTesting     source\\junction                                              \b\b\b\b\b  OK \r\nTesting     source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  OK\r\nTesting     source                                                    OK\r\nAll OK\r\n",
+        "stderr": ""
+      },
+      {
+        "label": "rar-list-no-key",
+        "status": 11,
+        "ms": 84,
+        "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\nArchive: C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic.rar\r\nDetails: RAR 5, encrypted headers\r\n  0 files\r\n\r\n",
+        "stderr": "\r\nIncorrect password for C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic.rar"
+      },
+      {
+        "label": "rar-list-wrong-key",
+        "status": 11,
+        "ms": 88,
+        "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\nArchive: C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic.rar\r\nDetails: RAR 5, encrypted headers\r\n  0 files\r\n\r\n",
+        "stderr": "\r\nIncorrect password for C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic.rar"
+      },
+      {
+        "label": "rar-restore",
+        "status": 0,
+        "ms": 276,
+        "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\n\r\nExtracting from C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic.rar\r\n\r\nCreating    C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source  OK\r\nCreating    C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  OK\r\nCreating    C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  OK\r\nCreating    C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  OK\r\nCreating    C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx  OK\r\nExtracting  C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long-file.txt     \b\b\b\b  0%\b\b\b\b\b  OK \r\nExtracting  C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\plain.txt     \b\b\b\b  0%\b\b\b\b\b  OK \r\nExtracting  C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\random.bin     \b\b\b\b 49%\b\b\b\b 99%\b\b\b\b\b  OK \r\nExtracting  C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\repeat.bin     \b\b\b\b 99%\b\b\b\b\b  OK \r\nExtracting  C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\?????-?-�.txt     \b\b\b\b 99%\b\b\b\b\b  OK \r\nCreating    C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\empty  OK\r\nExtracting  C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\junction     \b\b\b\b\b  OK \r\nAll OK\r\n",
+        "stderr": ""
+      }
+    ],
+    "rar-verification.json": {
+      "rows": [
+        {
+          "path": "empty",
+          "kind": "directory",
+          "exists": true,
+          "mtimeMatches": false
+        },
+        {
+          "path": "junction",
+          "kind": "junction",
+          "isLink": true,
+          "sameTarget": true
+        },
+        {
+          "path": "long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "kind": "directory",
+          "exists": true,
+          "mtimeMatches": true
+        },
+        {
+          "path": "long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "kind": "directory",
+          "exists": true,
+          "mtimeMatches": true
+        },
+        {
+          "path": "long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "kind": "directory",
+          "exists": true,
+          "mtimeMatches": true
+        },
+        {
+          "path": "long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+          "kind": "directory",
+          "exists": true,
+          "mtimeMatches": true
+        },
+        {
+          "path": "long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long-file.txt",
+          "kind": "file",
+          "length": 19,
+          "hashMatches": true,
+          "mtimeMatches": true
+        },
+        {
+          "path": "plain.txt",
+          "kind": "file",
+          "length": 24,
+          "hashMatches": true,
+          "mtimeMatches": true
+        },
+        {
+          "path": "random.bin",
+          "kind": "file",
+          "length": 8388608,
+          "hashMatches": true,
+          "mtimeMatches": true
+        },
+        {
+          "path": "repeat.bin",
+          "kind": "file",
+          "length": 2097152,
+          "hashMatches": true,
+          "mtimeMatches": true
+        },
+        {
+          "path": "مرحبا-鳥-é.txt",
+          "kind": "file",
+          "length": 17,
+          "hashMatches": true,
+          "mtimeMatches": true
+        }
+      ],
+      "streams": {
+        "file": true,
+        "directory": true
+      },
+      "archiveBytes": 8403038
+    },
+    "rar-measurements.json": {
+      "Exit": 0,
+      "PeakWorkingSetObserved": 117747712,
+      "PrivateBytesObserved": 138846208,
+      "Samples": 12,
+      "WorkDirectoryBytesObserved": 0,
+      "ArchiveBytes": 8402990,
+      "Stderr": ""
+    },
+    "rar-stream-integrity.json": {
+      "streamRead": {
+        "status": 10,
+        "bytes": 0,
+        "hashMatches": false
+      },
+      "corruption": {
+        "status": 3,
+        "stderr": ""
+      }
+    }
+  },
+  "cleanupStatus": "COMPLETE: synthetic root absent; no recursive or parent deletion",
+  "preCleanupVerifiedUTC": "2026-10-22T04:17:38.623Z",
+  "removedExactPaths": [
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic\\file.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic\\مرحبا-鳥-é.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic-results.json",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic.tar.gz",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic.zip",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\corrupt-synthetic.zip",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\coverage-results.json",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\dataset.json",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\direct-results.json",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\junction.tar",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long-file.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long.tar",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\measure-aes.zip",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\measure.tar",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\measurements.json",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\OWNERSHIP.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-create.stderr",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-create.stdout",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-list.stderr",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-list.stdout",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore\\source\\plain.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore\\source\\random.bin",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore.stderr",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore.stdout",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore\\source\\plain.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore\\source\\random.bin",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2.tar.gz",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\plain-restore\\source\\plain.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\plain.tar",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\random.tar",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-corrupt-synthetic.rar",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-measured.rar",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-measurements.json",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\junction",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long-file.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\plain.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\random.bin",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\repeat.bin",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\مرحبا-鳥-é.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-results.json",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-stream-integrity.json",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-verification.json",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\junction",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long-file.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\plain.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\random.bin",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\repeat.bin",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\مرحبا-鳥-é.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\run-synthetic.ps1",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\small-results.json",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\small.tar.gz",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\small.zip",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\junction",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long-file.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\plain.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\random.bin",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\repeat.bin",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\مرحبا-鳥-é.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source-acl.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\store-aes-restore\\basic\\file.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\store-aes.zip",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic-encrypted.zip",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic-junction-target\\DO_NOT_FOLLOW.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic.rar",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic.tar.gz",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\tool-results.json",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\verification.json",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-create.stderr",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-create.stdout",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-list-no-key.stderr",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-list-no-key.stdout",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore\\source\\plain.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore\\source\\random.bin",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore.stderr",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore.stdout",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-wrong-key.stderr",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-wrong-key.stdout",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore\\source\\plain.txt",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore\\source\\random.bin",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2.zip",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_3_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_2_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\\long_1_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\long_0_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore\\source\\junction",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore\\source\\junction",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore\\source\\junction",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore\\source\\junction",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore\\source\\empty",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\synthetic-junction-target",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore\\source\\empty",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore\\source\\empty",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source\\empty",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore\\source\\empty",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\store-aes-restore\\basic",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\plain-restore\\source",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore\\source",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore\\source",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore\\source",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore\\source",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore\\source",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore\\source",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic-pax-restore",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic-zip-restore",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\small-pax-restore",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\small-zip-restore",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\store-aes-restore",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats\\empty",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\plain-restore",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\long-restore",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax2-restore",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source\\empty",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip2-restore",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic\\empty",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\pax-restore",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-restore",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\zip-restore",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\robo-dats",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\rar-work",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\source",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c\\basic",
+    "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-tool-validation-20261022-7d236615bc4f4cc0847c9f032e59692c"
+  ],
+  "syntheticRootAbsent": true
+}

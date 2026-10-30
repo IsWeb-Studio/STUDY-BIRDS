@@ -52,8 +52,9 @@ class GoogleSignInService {
     if (!_initialized) {
       // Surface the real init error so developers can diagnose the issue
       final reason = _initError ?? 'لم يتم تهيئة Google Sign-In';
-      if (kDebugMode)
+      if (kDebugMode) {
         print('[GoogleSignIn] not available, init error: $reason');
+      }
       throw const ApiException(
           503, 'تسجيل الدخول عبر Google غير متاح حاليًا. حاول لاحقًا.');
     }

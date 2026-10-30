@@ -1,31 +1,37 @@
 import '../../core/repositories/stories_repository.dart';
-import '../../core/widgets/state_widgets.dart';
 import '../../core/config/app_theme.dart';
-import 'student_profile_link.dart';
+import 'contact_profile_screen.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
-import '../../core/repositories/friends_repository.dart';
 import '../stories/student_stories.dart';
-import '../stories/friends_screen.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
 import '../services_support/community_screen.dart';
+import 'admin_community_control_center.dart';
+
+bool _hubIsArabic(BuildContext context) =>
+    Localizations.localeOf(context).languageCode == 'ar';
+
+String _hubText(BuildContext context, String arabic, String english) =>
+    _hubIsArabic(context) ? arabic : english;
 
 Future<Map<String, dynamic>> communityInbox(
     {String? before, bool summary = false}) async {
   final token = AuthSession.instance.token;
   final version = ApiClient.instance.snapshotVersion;
+  const snapshotKey = '/mobile-workspace/conversations?community=1';
   final data = Map<String, dynamic>.from(await ApiClient.instance.get(
       Uri(path: '/mobile-workspace/conversations', queryParameters: {
+        'community': '1',
         if (before != null) 'before': before,
         if (summary) 'summary': '1',
       }).toString(),
       token: token,
       cached: false));
   if (before == null && !summary) {
-    ApiClient.instance.rememberSnapshot('/mobile-workspace/conversations', data,
-        token: token, version: version);
+    ApiClient.instance
+        .rememberSnapshot(snapshotKey, data, token: token, version: version);
   }
   return data;
 }
@@ -33,7 +39,8 @@ Future<Map<String, dynamic>> communityInbox(
 Future<void> warmCommunity() async {
   try {
     await Future.wait<dynamic>([
-      if (ApiClient.instance.snapshot('/mobile-workspace/conversations',
+      if (ApiClient.instance.snapshot(
+              '/mobile-workspace/conversations?community=1',
               token: AuthSession.instance.token) ==
           null)
         communityInbox(),
@@ -114,11 +121,12 @@ class _CommunityEntryState extends State<CommunityEntry> {
                 label: Text(_unread > 99 ? '99+' : '$_unread'),
                 child: const CircleAvatar(
                     radius: 29,
-                    backgroundColor: Color(0xFFE4F6EE),
+                    backgroundColor: AppColors.greenSoft,
                     child: Icon(Icons.forum_outlined,
-                        color: Colors.teal, size: 27))),
+                        color: AppColors.greenInk, size: 27))),
             const SizedBox(height: 9),
-            const Text('المجتمع', style: TextStyle(fontSize: 11)),
+            Text(_hubText(context, 'المجتمع', 'Community'),
+                style: const TextStyle(fontSize: 11)),
           ])));
 }
 
@@ -160,7 +168,7 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
     WidgetsBinding.instance.addObserver(this);
     _activated = widget.isActive;
     final cached = ApiClient.instance.snapshot(
-        '/mobile-workspace/conversations',
+        '/mobile-workspace/conversations?community=1',
         token: AuthSession.instance.token);
     if (cached is Map && cached['conversations'] is List) {
       _rows = (cached['conversations'] as List)
@@ -233,9 +241,13 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
       if (quiet && !_loading && newMessages.isNotEmpty && _visible) {
         final row = newMessages.first;
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('رسالة جديدة من ${row['contact']['name']}'),
+            content: Text(_hubText(
+                context,
+                'رسالة جديدة من ${row['contact']['name']}',
+                'New message from ${row['contact']['name']}')),
             action: SnackBarAction(
-                label: 'فتح', onPressed: () => _open(row['contact']))));
+                label: _hubText(context, 'فتح', 'Open'),
+                onPressed: () => _open(row['contact']))));
       }
       setState(() {
         _rows = more
@@ -253,7 +265,10 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
       if (mounted && (!quiet || _loading)) {
         setState(() {
           _loading = false;
-          _error = 'تعذر تحميل المحادثات. اضغط للمحاولة مجددًا';
+          _error = _hubText(
+              context,
+              'تعذر تحميل المحادثات. اضغط للمحاولة مجددًا',
+              'Could not load conversations. Tap to retry.');
         });
       }
     } finally {
@@ -269,6 +284,7 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
     try {
       await Navigator.of(context).push(MaterialPageRoute(
           builder: (_) => ConversationThreadScreen(
+              communityMode: true,
               contactId: '${contact['_id']}',
               contactName: '${contact['name']}',
               contactAvatar: '${contact['avatar'] ?? ''}')));
@@ -293,12 +309,15 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
                   leading: Icon(muted
                       ? Icons.notifications_active_outlined
                       : Icons.notifications_off_outlined),
-                  title: Text(muted ? 'إلغاء الكتم' : 'كتم الإشعارات'),
+                  title: Text(muted
+                      ? _hubText(ctx, 'إلغاء الكتم', 'Unmute conversation')
+                      : _hubText(ctx, 'كتم الإشعارات', 'Mute conversation')),
                   onTap: () => Navigator.pop(ctx, 'mute')),
               ListTile(
                   leading: const Icon(Icons.delete_outline, color: Colors.red),
-                  title: const Text('حذف المحادثة',
-                      style: TextStyle(color: Colors.red)),
+                  title: Text(
+                      _hubText(ctx, 'حذف المحادثة', 'Delete conversation'),
+                      style: const TextStyle(color: Colors.red)),
                   onTap: () => Navigator.pop(ctx, 'delete')),
             ])));
     if (action == null || !mounted || _mutating) return;
@@ -306,23 +325,27 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
       final confirmed = await showDialog<bool>(
           context: context,
           builder: (ctx) => AlertDialog(
-                  title: const Text('حذف المحادثة؟'),
-                  content: const Text(
-                      'ستُحذف من عندك فقط وتظهر من جديد إذا وصلت رسالة جديدة.'),
+                  title: Text(
+                      _hubText(ctx, 'حذف المحادثة؟', 'Delete conversation?')),
+                  content: Text(_hubText(
+                      ctx,
+                      'ستُحذف من عندك فقط وتظهر من جديد إذا وصلت رسالة جديدة.',
+                      'It will leave your inbox and return if a new message arrives.')),
                   actions: [
                     TextButton(
                         onPressed: () => Navigator.pop(ctx, false),
-                        child: const Text('إلغاء')),
+                        child: Text(_hubText(ctx, 'إلغاء', 'Cancel'))),
                     TextButton(
                         onPressed: () => Navigator.pop(ctx, true),
-                        child: const Text('حذف'))
+                        child: Text(_hubText(ctx, 'حذف', 'Delete')))
                   ]));
       if (confirmed != true || !mounted) return;
     }
     _mutating = true;
     _revision++;
     try {
-      final path = '/mobile-workspace/conversations/${row['contact']['_id']}';
+      final path =
+          '/mobile-workspace/conversations/${row['contact']['_id']}?community=1';
       if (action == 'delete') {
         await ApiClient.instance
             .delete(path, token: AuthSession.instance.token);
@@ -342,8 +365,9 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تعذر تنفيذ العملية، حاول مجددًا')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(_hubText(context, 'تعذر تنفيذ العملية، حاول مجددًا',
+                'Could not complete the action. Try again.'))));
       }
     } finally {
       _mutating = false;
@@ -355,43 +379,62 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
     if (_opening) return;
     _opening = true;
     try {
-      final friends = await FriendsRepository.instance.list('friends');
+      final contacts = (await ApiClient.instance.get(
+        '/mobile-workspace/contacts?community=1',
+        token: AuthSession.instance.token,
+        cached: false,
+      ) as List)
+          .map((person) => Map<String, dynamic>.from(person as Map))
+          .toList();
       if (!mounted) return;
-      final person = await showModalBottomSheet<StudentFriend>(
+      final person = await showModalBottomSheet<Map<String, dynamic>>(
           context: context,
           showDragHandle: true,
           builder: (ctx) => SafeArea(
                   child: Column(mainAxisSize: MainAxisSize.min, children: [
-                const ListTile(title: Text('محادثة جديدة')),
+                ListTile(
+                    title: Text(
+                        _hubText(ctx, 'محادثة جديدة', 'New conversation'))),
                 Flexible(
-                    child: ListView(shrinkWrap: true, children: [
-                  for (final friend in friends.people)
-                    ListTile(
-                        leading: StudentProfileLink(
-                            studentId: friend.id,
-                            child: const CircleAvatar(
-                                child: Icon(Icons.person_outline))),
-                        title: Text(friend.name),
-                        onTap: () => Navigator.pop(ctx, friend)),
-                  ListTile(
-                      leading: const Icon(Icons.person_add_alt),
-                      title: const Text('البحث عن طالب أو عرض جميع الأصدقاء'),
-                      onTap: () {
-                        Navigator.pop(ctx);
-                        Navigator.of(context).push(MaterialPageRoute(
-                            builder: (_) => const FriendsScreen()));
-                      }),
-                ])),
+                    child: contacts.isEmpty
+                        ? Padding(
+                            padding: const EdgeInsets.all(24),
+                            child: Text(_hubText(
+                                ctx,
+                                'لا توجد جهات اتصال متاحة لحسابك',
+                                'No contacts are available for your account.')),
+                          )
+                        : ListView(shrinkWrap: true, children: [
+                            for (final contact in contacts)
+                              ListTile(
+                                leading: ContactProfileLink(
+                                  userId: '${contact['_id']}',
+                                  communityMode: true,
+                                  child: CircleAvatar(
+                                    backgroundImage:
+                                        '${contact['avatar'] ?? ''}'.isEmpty
+                                            ? null
+                                            : NetworkImage(
+                                                '${contact['avatar']}'),
+                                    child: '${contact['avatar'] ?? ''}'.isEmpty
+                                        ? const Icon(Icons.person_outline)
+                                        : null,
+                                  ),
+                                ),
+                                title: Text('${contact['name'] ?? ''}'),
+                                onTap: () => Navigator.pop(ctx, contact),
+                              ),
+                          ])),
               ])));
-      _opening = false;
       if (mounted && person != null) {
-        await _open(
-            {'_id': person.id, 'name': person.name, 'avatar': person.avatar});
+        _opening = false;
+        await _open(person);
       }
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تعذر تحميل الأصدقاء، حاول مجددًا')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            content: Text(_hubText(context, 'تعذر تحميل جهات الاتصال',
+                'Could not load contacts.'))));
       }
     } finally {
       _opening = false;
@@ -413,19 +456,25 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
   Widget build(BuildContext context) => !_activated
       ? const SizedBox.shrink()
       : Scaffold(
-          appBar: AppBar(title: const Text('مجتمع الطلاب'), actions: [
-            IconButton(
-                onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                    builder: (_) => const StudentCommunityScreen())),
-                icon: const Icon(Icons.feed_outlined),
-                tooltip: 'المنشورات'),
-          ]),
+          key: const ValueKey('student-community-hub'),
+          appBar: AppBar(
+              title: Text(_hubText(context, 'المجتمع', 'Community')),
+              actions: [
+                IconButton(
+                    onPressed: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                            builder: (_) => const StudentCommunityScreen())),
+                    icon: const Icon(Icons.feed_outlined),
+                    tooltip: _hubText(context, 'المنشورات', 'Posts')),
+              ]),
           body: RefreshIndicator(
               color: AppColors.navy,
               onRefresh: _refreshPage,
               child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
+                    if (AuthSession.instance.currentUser?.role == UserRole.admin)
+                      const AdminCommunityControlCenter(),
                     StudentStories(
                         key: _storiesKey,
                         showCommunityButton: false,
@@ -433,15 +482,18 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
                     Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(children: [
-                          const Expanded(
-                              child: Text('المحادثات',
-                                  style: TextStyle(
+                          Expanded(
+                              child: Text(
+                                  _hubText(context, 'المحادثات', 'Messages'),
+                                  style: const TextStyle(
                                       fontSize: 20,
                                       fontWeight: FontWeight.bold))),
                           TextButton.icon(
+                              key: const ValueKey('community-new-chat'),
                               onPressed: _newChat,
                               icon: const Icon(Icons.add_comment_outlined),
-                              label: const Text('محادثة جديدة'))
+                              label: Text(_hubText(
+                                  context, 'محادثة جديدة', 'New message')))
                         ])),
                     if (_loading)
                       for (var i = 0; i < 6; i++)
@@ -469,17 +521,21 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
                       TextButton(
                           onPressed: () => _load(), child: Text(_error!)),
                     if (!_loading && _error == null && _rows.isEmpty)
-                      const Padding(
-                          padding: EdgeInsets.all(32),
+                      Padding(
+                          padding: const EdgeInsets.all(32),
                           child: Text(
-                              'لا توجد محادثات بعد. ابحث عن طالب وابدأ محادثة معه.',
+                              _hubText(
+                                  context,
+                                  'لا توجد محادثات بعد. ابحث عن زميل وابدأ محادثة معه.',
+                                  'No conversations yet. Find a community member to start one.'),
                               textAlign: TextAlign.center)),
                     for (final row in _rows)
                       ListTile(
                           onTap: () => _open(row['contact']),
                           onLongPress: () => _options(row),
-                          leading: StudentProfileLink(
-                              studentId: '${row['contact']['_id']}',
+                          leading: ContactProfileLink(
+                              userId: '${row['contact']['_id']}',
+                              communityMode: true,
                               child: CircleAvatar(
                                   backgroundImage:
                                       '${row['contact']['avatar'] ?? ''}'
@@ -498,9 +554,10 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
                                       : FontWeight.normal)),
                           subtitle: Text(
                               row['lastMessage']['deletedAt'] != null
-                                  ? 'تم حذف الرسالة'
+                                  ? _hubText(context, 'تم حذف الرسالة',
+                                      'Message deleted')
                                   : row['lastMessage']['imagePath'] != null
-                                      ? '📷 صورة'
+                                      ? _hubText(context, '📷 صورة', '📷 Photo')
                                       : '${row['lastMessage']['body']}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis),
@@ -509,7 +566,7 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
                               children: [
                                 if (row['muted'] == true)
                                   const Icon(Icons.notifications_off_outlined,
-                                      size: 15, color: Colors.blueGrey),
+                                      size: 15, color: AppColors.textSecondary),
                                 Text(_time(row['lastMessage']['createdAt']),
                                     style: const TextStyle(fontSize: 11)),
                                 if ((row['unreadCount'] as num) > 0)
@@ -518,6 +575,7 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
                     if (_cursor != null)
                       TextButton(
                           onPressed: () => _load(more: true),
-                          child: const Text('محادثات أقدم')),
+                          child: Text(_hubText(
+                              context, 'محادثات أقدم', 'Older conversations'))),
                   ])));
 }

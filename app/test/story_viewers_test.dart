@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:study_birds/core/services/auth_session.dart';
@@ -21,6 +24,48 @@ void main() {
   tearDown(() {
     AuthSession.instance.token = null;
     AuthSession.instance.currentUser = null;
+  });
+  testWidgets('logout clears private viewers and ignores an in-flight page',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
+    final pending = Completer<http.Response>();
+    var calls = 0;
+    await http.runWithClient(() async {
+      await tester.pumpWidget(const MaterialApp(
+          locale: Locale('ar'),
+          supportedLocales: [Locale('ar'), Locale('en')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          home: StoryViewersScreen(storyId: 'own')));
+      await tester.pump();
+      expect(find.text('Private Viewer'), findsOneWidget);
+      await tester.tap(find.text('عرض المزيد'));
+      await tester.pump();
+      final logout = AuthSession.instance.logout(revoke: false);
+      await tester.pump();
+      expect(find.text('Private Viewer'), findsNothing);
+      pending.complete(json({
+        'total': 2,
+        'viewers': [
+          {'id': '2', 'name': 'Late Private Viewer', 'avatar': ''}
+        ],
+        'nextCursor': null
+      }));
+      await tester.pump();
+      expect(find.text('Late Private Viewer'), findsNothing);
+      await tester.runAsync(() => logout);
+      await tester.pumpWidget(const SizedBox());
+    },
+        () => MockClient((request) {
+              if (++calls > 1) return pending.future;
+              return Future.value(json({
+                'total': 2,
+                'viewers': [
+                  {'id': '1', 'name': 'Private Viewer', 'avatar': ''}
+                ],
+                'nextCursor': 'next'
+              }));
+            }));
   });
   testWidgets(
       'owner opens full viewer page, loads more and story pauses until returning',
@@ -81,8 +126,11 @@ void main() {
       (tester) async {
     var calls = 0;
     await http.runWithClient(() async {
-      await tester.pumpWidget(
-          const MaterialApp(home: StoryViewersScreen(storyId: 'own')));
+      await tester.pumpWidget(const MaterialApp(
+          locale: Locale('ar'),
+          supportedLocales: [Locale('ar'), Locale('en')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          home: StoryViewersScreen(storyId: 'own')));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 50));
       expect(find.text('Viewer One'), findsOneWidget);
@@ -127,12 +175,25 @@ void main() {
   testWidgets(
       'publishing uses segmented loading, preserves errors and permits retry',
       (tester) async {
+    final previousUser = AuthSession.instance.currentUser;
+    AuthSession.instance.currentUser = const AuthUser(
+        id: 'student-publisher',
+        name: 'Student',
+        email: 'student@example.test',
+        role: UserRole.student);
+    addTearDown(() => AuthSession.instance.currentUser = previousUser);
     final pending = Completer<http.Response>();
     await http.runWithClient(() async {
-      await tester.pumpWidget(const MaterialApp(home: StoryComposer()));
+      await tester.pumpWidget(const MaterialApp(
+          locale: Locale('ar'),
+          supportedLocales: [Locale('ar'), Locale('en')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          home: StoryComposer()));
       await tester.enterText(find.byType(TextField), 'My story');
       await tester.ensureVisible(find.text('نشر الستوري'));
       await tester.tap(find.text('نشر الستوري'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('أوافق على قواعد المجتمع'));
       await tester.pump();
       expect(find.byType(StoryLoadingIndicator), findsOneWidget);
       expect(find.byType(CircularProgressIndicator), findsNothing);

@@ -1,0 +1,767 @@
+{
+  "root": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa",
+  "rootInitiallyAbsent": true,
+  "syntheticRootRetained": true,
+  "ordinaryLogicalBytes": 6396768,
+  "inventory": [
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa",
+      "kind": "directory",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\actual-scope-metadata-sample.json",
+      "kind": "file",
+      "bytes": 4642,
+      "sha256": "d3603264a848553495b548135c92bf1b8760d1986bf0546f121becadaaedd390"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\after-hybrid-repair.json",
+      "kind": "file",
+      "bytes": 1518,
+      "sha256": "9a6597c30bfa65d4450e6fc4ac04c8ad6243b9106d716ab62305901672a33bb9"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\after-native-repair.json",
+      "kind": "file",
+      "bytes": 1522,
+      "sha256": "3228d7c600387b175678919c8985e39034dbdd82acac65165a75235df3bb390f"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\after-repair.json",
+      "kind": "file",
+      "bytes": 1519,
+      "sha256": "b7e81d7b3726c77b0d9bfaa4134617ca1b04bede96d68206798f0398661123af"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\archive-results.json",
+      "kind": "file",
+      "bytes": 3865,
+      "sha256": "3dc08241eb69a2abfd5ff9116cd65ab6d7b704e2aa20f086c2fa00406b9701c2"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\archive-single-input-results.json",
+      "kind": "file",
+      "bytes": 6526,
+      "sha256": "506a5a3eecf27faae35a8f889104cb62abdda68389306ee2cf5607d4d4d1adc7"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\before-repair.json",
+      "kind": "file",
+      "bytes": 1523,
+      "sha256": "a0169515e387e9f6776043e560f681352e85f0293db04e739b3e8d5c67e28711"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\companion.json",
+      "kind": "file",
+      "bytes": 5071,
+      "sha256": "04f7056e6ca786570c4f56ecfd355ac5ab3e4e3f2467eaae19c931bdffb3605a"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\compiler",
+      "kind": "directory",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\corrupt-single.rar",
+      "kind": "file",
+      "bytes": 1054558,
+      "sha256": "4d2c1751132db9e2aa537256ae5cd1a67e01c8693118ad473b02c9aa960bfd13"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\corrupt.rar",
+      "kind": "file",
+      "bytes": 1054558,
+      "sha256": "bc38aa71b13360ae70bffc29cb527a2d2515beb0a028ee6d9f6d42fb48b5d614"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\final-integrity-results.json",
+      "kind": "file",
+      "bytes": 431,
+      "sha256": "6294d6624f57b0998ca736e4ed6e26d5e5c8d86fa79be920a05b093f2af108f2"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\final-metadata-results.json",
+      "kind": "file",
+      "bytes": 1552,
+      "sha256": "0a17f0f94c0b8443784cc8bd7e611023a555c8c06546da0aa3f6b1ccba0e5986"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\metadata-test.ps1",
+      "kind": "file",
+      "bytes": 6109,
+      "sha256": "379755b3813b3f0491c27ed77b3c46183aca85146056ff182ba6d69bf83bf0ff"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\OWNERSHIP.txt",
+      "kind": "file",
+      "bytes": 64,
+      "sha256": "0dd88e3aa5bb7a46b90ab1307c686ea94d153c833d237a4850da001b2c2c50ab"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored",
+      "kind": "directory",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\companion.json",
+      "kind": "file",
+      "bytes": 5071,
+      "sha256": "04f7056e6ca786570c4f56ecfd355ac5ab3e4e3f2467eaae19c931bdffb3605a"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\source",
+      "kind": "directory",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\source\\binary.bin",
+      "kind": "file",
+      "bytes": 1048576,
+      "sha256": "df83d8aec0fe24194fd1087394af341757fc88c714504f2b56ee04715da2db27"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\source\\empty",
+      "kind": "directory",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\source\\junction",
+      "kind": "link",
+      "bytes": 0,
+      "target": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\target"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\source\\plain.txt",
+      "kind": "file",
+      "bytes": 24,
+      "sha256": "331ebf51522543ee1cfd920429a797a3c9f1aaf5b2fc88ba9ef04653bb769198"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\source\\مرحبا-鳥.txt",
+      "kind": "file",
+      "bytes": 17,
+      "sha256": "85752ae13c7ed14e7d07f7aa5ba2d2624c93bcdd654c1d4cee987d223b3752a5"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\source",
+      "kind": "directory",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\source\\binary.bin",
+      "kind": "file",
+      "bytes": 1048576,
+      "sha256": "df83d8aec0fe24194fd1087394af341757fc88c714504f2b56ee04715da2db27"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\source\\empty",
+      "kind": "directory",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\source\\junction",
+      "kind": "link",
+      "bytes": 0,
+      "target": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\target"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\source\\plain.txt",
+      "kind": "file",
+      "bytes": 24,
+      "sha256": "331ebf51522543ee1cfd920429a797a3c9f1aaf5b2fc88ba9ef04653bb769198"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\source\\مرحبا-鳥.txt",
+      "kind": "file",
+      "bytes": 17,
+      "sha256": "85752ae13c7ed14e7d07f7aa5ba2d2624c93bcdd654c1d4cee987d223b3752a5"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic-single-input.rar",
+      "kind": "file",
+      "bytes": 1054558,
+      "sha256": "abd49a1930eca61ad16cf76d2cbc6032bc18cc56d7f7ad20eb66bcccad38fd8f"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic.rar",
+      "kind": "file",
+      "bytes": 1054558,
+      "sha256": "a035a261518876cb2bcbc44ebf80c2cd0270553a3a696f0520e959ff6cad7f01"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\SyntheticNtfs.cs",
+      "kind": "file",
+      "bytes": 3042,
+      "sha256": "f4dbc419a8c375659e79f6531c0c3e0bfbed5e074460fad84d8aa5b050b323e4"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\SyntheticNtfs.dll",
+      "kind": "file",
+      "bytes": 5632,
+      "sha256": "da574a388773de4030e27312f5c2d87878e5d1183c67930af452b5e6699feeac"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\SyntheticNtfs2.cs",
+      "kind": "file",
+      "bytes": 3560,
+      "sha256": "cda6e8f754a3a19899024dd7c4c1ba66109c685db7dd2a3257ab43a7bbad737b"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\SyntheticNtfs2.dll",
+      "kind": "file",
+      "bytes": 6144,
+      "sha256": "9342d81b8c9e6d7230486a827aaa0e1b0e150ed24532a8a82f23960f62623b94"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\SyntheticNtfs3.cs",
+      "kind": "file",
+      "bytes": 4939,
+      "sha256": "dcbe20b7a56d9ead4aab25faac526a9c968ca29583d9de799b5b4a24ca50cdc6"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\SyntheticNtfs3.dll",
+      "kind": "file",
+      "bytes": 6656,
+      "sha256": "20483a7e5abd782647b0c2148394f7ff2ca7ddd6559edacab68b75bc52aea557"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\SyntheticNtfs4.cs",
+      "kind": "file",
+      "bytes": 5237,
+      "sha256": "1043d5c73f6de7dd2d424a37ac8a7a4997c1ee68fc39a6c39e46874d44188363"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\SyntheticNtfs4.dll",
+      "kind": "file",
+      "bytes": 6656,
+      "sha256": "bfb94c34d7bda3f373342608450bbb2223a727ee7ae6ae8699cfc3872097cba8"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\target",
+      "kind": "directory",
+      "bytes": 0
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\target\\sentinel.txt",
+      "kind": "file",
+      "bytes": 23,
+      "sha256": "ff02e8fb914d1482b34e1321e7f747074f8fa0909c322c1cf83e19f613486121"
+    },
+    {
+      "path": "C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\work",
+      "kind": "directory",
+      "bytes": 0
+    }
+  ],
+  "metadata": [
+    {
+      "Relative": "",
+      "Kind": "directory",
+      "SDDLMatches": true,
+      "CreationMatches": true,
+      "WriteMatches": true,
+      "AccessMatches": true,
+      "AttributesMatch": true,
+      "StreamsMatch": true
+    },
+    {
+      "Relative": "empty",
+      "Kind": "directory",
+      "SDDLMatches": true,
+      "CreationMatches": true,
+      "WriteMatches": true,
+      "AccessMatches": true,
+      "AttributesMatch": true,
+      "StreamsMatch": true
+    },
+    {
+      "Relative": "junction",
+      "Kind": "link",
+      "TypeMatches": true,
+      "TargetMatches": true,
+      "ReparseMatches": true
+    },
+    {
+      "Relative": "binary.bin",
+      "Kind": "file",
+      "SDDLMatches": true,
+      "CreationMatches": true,
+      "WriteMatches": true,
+      "AccessMatches": true,
+      "AttributesMatch": true,
+      "StreamsMatch": true
+    },
+    {
+      "Relative": "plain.txt",
+      "Kind": "file",
+      "SDDLMatches": true,
+      "CreationMatches": true,
+      "WriteMatches": true,
+      "AccessMatches": true,
+      "AttributesMatch": true,
+      "StreamsMatch": true
+    },
+    {
+      "Relative": "مرحبا-鳥.txt",
+      "Kind": "file",
+      "SDDLMatches": true,
+      "CreationMatches": true,
+      "WriteMatches": true,
+      "AccessMatches": true,
+      "AttributesMatch": true,
+      "StreamsMatch": true
+    }
+  ],
+  "metadataChecks": [
+    {
+      "node": "",
+      "check": "SDDLMatches",
+      "pass": true
+    },
+    {
+      "node": "",
+      "check": "CreationMatches",
+      "pass": true
+    },
+    {
+      "node": "",
+      "check": "WriteMatches",
+      "pass": true
+    },
+    {
+      "node": "",
+      "check": "AccessMatches",
+      "pass": true
+    },
+    {
+      "node": "",
+      "check": "AttributesMatch",
+      "pass": true
+    },
+    {
+      "node": "",
+      "check": "StreamsMatch",
+      "pass": true
+    },
+    {
+      "node": "empty",
+      "check": "SDDLMatches",
+      "pass": true
+    },
+    {
+      "node": "empty",
+      "check": "CreationMatches",
+      "pass": true
+    },
+    {
+      "node": "empty",
+      "check": "WriteMatches",
+      "pass": true
+    },
+    {
+      "node": "empty",
+      "check": "AccessMatches",
+      "pass": true
+    },
+    {
+      "node": "empty",
+      "check": "AttributesMatch",
+      "pass": true
+    },
+    {
+      "node": "empty",
+      "check": "StreamsMatch",
+      "pass": true
+    },
+    {
+      "node": "junction",
+      "check": "TypeMatches",
+      "pass": true
+    },
+    {
+      "node": "junction",
+      "check": "TargetMatches",
+      "pass": true
+    },
+    {
+      "node": "junction",
+      "check": "ReparseMatches",
+      "pass": true
+    },
+    {
+      "node": "binary.bin",
+      "check": "SDDLMatches",
+      "pass": true
+    },
+    {
+      "node": "binary.bin",
+      "check": "CreationMatches",
+      "pass": true
+    },
+    {
+      "node": "binary.bin",
+      "check": "WriteMatches",
+      "pass": true
+    },
+    {
+      "node": "binary.bin",
+      "check": "AccessMatches",
+      "pass": true
+    },
+    {
+      "node": "binary.bin",
+      "check": "AttributesMatch",
+      "pass": true
+    },
+    {
+      "node": "binary.bin",
+      "check": "StreamsMatch",
+      "pass": true
+    },
+    {
+      "node": "plain.txt",
+      "check": "SDDLMatches",
+      "pass": true
+    },
+    {
+      "node": "plain.txt",
+      "check": "CreationMatches",
+      "pass": true
+    },
+    {
+      "node": "plain.txt",
+      "check": "WriteMatches",
+      "pass": true
+    },
+    {
+      "node": "plain.txt",
+      "check": "AccessMatches",
+      "pass": true
+    },
+    {
+      "node": "plain.txt",
+      "check": "AttributesMatch",
+      "pass": true
+    },
+    {
+      "node": "plain.txt",
+      "check": "StreamsMatch",
+      "pass": true
+    },
+    {
+      "node": "مرحبا-鳥.txt",
+      "check": "SDDLMatches",
+      "pass": true
+    },
+    {
+      "node": "مرحبا-鳥.txt",
+      "check": "CreationMatches",
+      "pass": true
+    },
+    {
+      "node": "مرحبا-鳥.txt",
+      "check": "WriteMatches",
+      "pass": true
+    },
+    {
+      "node": "مرحبا-鳥.txt",
+      "check": "AccessMatches",
+      "pass": true
+    },
+    {
+      "node": "مرحبا-鳥.txt",
+      "check": "AttributesMatch",
+      "pass": true
+    },
+    {
+      "node": "مرحبا-鳥.txt",
+      "check": "StreamsMatch",
+      "pass": true
+    }
+  ],
+  "integrity": {
+    "negative": {
+      "wrongRoot": {
+        "exit": 1,
+        "rejected": true
+      },
+      "traversal": {
+        "exit": 1,
+        "rejected": true
+      }
+    },
+    "files": [
+      {
+        "relative": "binary.bin",
+        "hashMatches": true
+      },
+      {
+        "relative": "plain.txt",
+        "hashMatches": true
+      },
+      {
+        "relative": "مرحبا-鳥.txt",
+        "hashMatches": true
+      }
+    ],
+    "companionRestoredHashMatches": true
+  },
+  "archiveTests": [
+    {
+      "label": "create",
+      "status": 0,
+      "argsContainSecret": false,
+      "outputContainsSecret": false,
+      "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\nEvaluation copy. Please register.\r\n\r\nCreating archive C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic-single-input.rar\r\n\r\nAdding    source\\binary.bin                                              \b\b\b\b 99%\b\b\b\b\b  OK \r\nAdding    source\\plain.txt                                               \b\b\b\b 99%\b\b\b\b\b  OK \r\nAdding    source\\?????-?.txt                                             \b\b\b\b 99%\b\b\b\b\b  OK \r\nAdding    companion.json                                                 \b\b\b\b100%\b\b\b\b\b  OK \r\nAdding    source\\empty                                                   \b\b\b\b\b  OK \r\nAdding    source\\junction                                                \b\b\b\b\b  OK \r\nAdding    source                                                         \b\b\b\b\b  OK \r\nDone\r\n",
+      "stderr": "\r\nEnter password (will not be echoed): \r\n"
+    },
+    {
+      "label": "test",
+      "status": 0,
+      "argsContainSecret": false,
+      "outputContainsSecret": false,
+      "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\n\r\nTesting archive C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic-single-input.rar\r\n\r\nTesting     source\\binary.bin                                            \b\b\b\b 99%\b\b\b\b\b  OK \r\nTesting     source\\plain.txt                                             \b\b\b\b 99%\b\b\b\b\b  OK \r\nTesting     source\\?????-?.txt                                           \b\b\b\b 99%\b\b\b\b\b  OK \r\nTesting     companion.json                                               \b\b\b\b 99%\b\b\b\b\b  OK \r\nTesting     source\\empty                                              OK\r\nTesting     source\\junction                                              \b\b\b\b\b  OK \r\nTesting     source                                                    OK\r\nAll OK\r\n",
+      "stderr": "\r\nEnter password (will not be echoed): \r\n"
+    },
+    {
+      "label": "restore",
+      "status": 0,
+      "argsContainSecret": false,
+      "outputContainsSecret": false,
+      "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\n\r\nExtracting from C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic-single-input.rar\r\n\r\nCreating    C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\source  OK\r\nExtracting  C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\source\\binary.bin     \b\b\b\b 99%\b\b\b\b\b  OK \r\nExtracting  C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\source\\plain.txt     \b\b\b\b 99%\b\b\b\b\b  OK \r\nExtracting  C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\source\\?????-?.txt     \b\b\b\b 99%\b\b\b\b\b  OK \r\nExtracting  C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\companion.json     \b\b\b\b 99%\b\b\b\b\b  OK \r\nCreating    C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\source\\empty  OK\r\nExtracting  C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\restored\\source\\junction     \b\b\b\b\b  OK \r\nAll OK\r\n",
+      "stderr": "\r\nEnter password (will not be echoed): \r\n"
+    },
+    {
+      "label": "missing-key",
+      "status": 11,
+      "argsContainSecret": false,
+      "outputContainsSecret": false,
+      "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\nArchive: C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic-single-input.rar\r\nDetails: RAR 5, encrypted headers\r\n  0 files\r\n\r\n",
+      "stderr": "\r\nIncorrect password for C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic-single-input.rar"
+    },
+    {
+      "label": "wrong-key",
+      "status": 11,
+      "argsContainSecret": false,
+      "outputContainsSecret": false,
+      "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\nTotal errors: 1\r\n",
+      "stderr": "\r\nEnter password (will not be echoed): \r\n\r\nIncorrect password for C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic-single-input.rar"
+    },
+    {
+      "label": "corruption",
+      "status": 3,
+      "argsContainSecret": false,
+      "outputContainsSecret": false,
+      "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\n\r\nTesting archive C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\corrupt-single.rar\r\n\r\nTesting     source\\binary.bin                                            \b\b\b\b 99%\r\nTesting     source\\plain.txt                                             \b\b\b\b 99%\b\b\b\b\b  OK \r\nTesting     source\\?????-?.txt                                           \b\b\b\b 99%\b\b\b\b\b  OK \r\nTesting     companion.json                                               \b\b\b\b 99%\b\b\b\b\b  OK \r\nTesting     source\\empty                                              OK\r\nTesting     source\\junction                                              \b\b\b\b\b  OK \r\nTesting     source                                                    OK\r\nTotal errors: 1\r\n",
+      "stderr": "\r\nEnter password (will not be echoed): \r\n\r\nsource\\binary.bin    - checksum error"
+    }
+  ],
+  "initialInputFramingFailure": [
+    {
+      "label": "create",
+      "status": 0,
+      "argsContainSecret": false,
+      "outputContainsSecret": false,
+      "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\nEvaluation copy. Please register.\r\n\r\nCreating archive C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic.rar\r\n\r\nAdding    source\\binary.bin                                              \b\b\b\b 99%\b\b\b\b\b  OK \r\nAdding    source\\plain.txt                                               \b\b\b\b 99%\b\b\b\b\b  OK \r\nAdding    source\\?????-?.txt                                             \b\b\b\b 99%\b\b\b\b\b  OK \r\nAdding    companion.json                                                 \b\b\b\b100%\b\b\b\b\b  OK \r\nAdding    source\\empty                                                   \b\b\b\b\b  OK \r\nAdding    source\\junction                                                \b\b\b\b\b  OK \r\nAdding    source                                                         \b\b\b\b\b  OK \r\nDone\r\n",
+      "stderr": "\r\nEnter password (will not be echoed): \r\n"
+    },
+    {
+      "label": "test",
+      "status": 11,
+      "argsContainSecret": false,
+      "outputContainsSecret": false,
+      "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\nTotal errors: 1\r\n",
+      "stderr": "\r\nEnter password (will not be echoed): \r\n\r\nIncorrect password for C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic.rar"
+    },
+    {
+      "label": "no-key",
+      "status": 11,
+      "argsContainSecret": false,
+      "outputContainsSecret": false,
+      "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\nArchive: C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic.rar\r\nDetails: RAR 5, encrypted headers\r\n  0 files\r\n\r\n",
+      "stderr": "\r\nIncorrect password for C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic.rar"
+    },
+    {
+      "label": "wrong-key",
+      "status": 11,
+      "argsContainSecret": false,
+      "outputContainsSecret": false,
+      "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\nTotal errors: 1\r\n",
+      "stderr": "\r\nEnter password (will not be echoed): \r\n\r\nIncorrect password for C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic.rar"
+    },
+    {
+      "label": "restore",
+      "status": 11,
+      "argsContainSecret": false,
+      "outputContainsSecret": false,
+      "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\nTotal errors: 1\r\n",
+      "stderr": "\r\nEnter password (will not be echoed): \r\n\r\nIncorrect password for C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\synthetic.rar"
+    },
+    {
+      "label": "corruption",
+      "status": 11,
+      "argsContainSecret": false,
+      "outputContainsSecret": false,
+      "stdout": "\r\nRAR 6.11 x64   Copyright (c) 1993-2022 Alexander Roshal   3 Mar 2022\r\nTrial version             Type 'rar -?' for help\r\n\r\nTotal errors: 1\r\n",
+      "stderr": "\r\nEnter password (will not be echoed): \r\n\r\nIncorrect password for C:\\Users\\Abood\\AppData\\Local\\StudyBirds\\b0-metadata-remediation-20261022-b62518c6b483494db7c0a61b835aadfa\\corrupt.rar"
+    }
+  ],
+  "actualMetadataSample": [
+    {
+      "Path": "D:\\work\\studybirds_app\\study_birds_app-main",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": true,
+      "SaclInspected": false
+    },
+    {
+      "Path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": true,
+      "SaclInspected": false
+    },
+    {
+      "Path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\index",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": true,
+      "SaclInspected": false
+    },
+    {
+      "Path": "D:\\work\\studybirds_app\\study_birds_app-main\\android\\key.properties",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": true,
+      "SaclInspected": false
+    },
+    {
+      "Path": "D:\\work\\studybirds_app\\study_birds_app-main\\android\\app\\studybirds-release.jks",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": true,
+      "SaclInspected": false
+    },
+    {
+      "Path": "D:\\work\\studybirds_web\\.git",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": false,
+      "SaclInspected": false
+    },
+    {
+      "Path": "D:\\work\\studybirds_web\\.git\\index",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": false,
+      "SaclInspected": false
+    },
+    {
+      "Path": "D:\\work\\studybirds_session_release",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": false,
+      "SaclInspected": false
+    },
+    {
+      "Path": "D:\\work\\studybirds_session_release\\app\\build\\app\\outputs\\flutter-apk\\app-debug.apk",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": false,
+      "SaclInspected": false
+    },
+    {
+      "Path": "D:\\work\\studybirds_qa_phase7",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": true,
+      "SaclInspected": false
+    },
+    {
+      "Path": "D:\\work\\studybirds_qa_phase7\\db",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": true,
+      "SaclInspected": false
+    },
+    {
+      "Path": "C:\\Users\\Abood\\studybirds-claude",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": false,
+      "SaclInspected": false
+    },
+    {
+      "Path": "C:\\Users\\Abood\\studybirds-email-refresh",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": false,
+      "SaclInspected": false
+    },
+    {
+      "Path": "C:\\Users\\Abood\\studybirds-wink",
+      "Exists": true,
+      "Reparse": false,
+      "Encrypted": false,
+      "Compressed": false,
+      "Sparse": false,
+      "NamedStreamCount": 0,
+      "DaclAutoInherited": false,
+      "SaclInspected": false
+    }
+  ],
+  "scopeSampleHasNoContents": true
+}

@@ -10,6 +10,8 @@
 	<key>com.apple.developer.associated-domains</key>
 	<array>
 		<string>applinks:studybirds.app</string>
+		<string>applinks:studybirds.net</string>
+		<string>applinks:www.studybirds.net</string>
 	</array>
 </dict>
 </plist>

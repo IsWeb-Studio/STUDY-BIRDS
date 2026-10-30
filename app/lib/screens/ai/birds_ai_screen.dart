@@ -1,3 +1,7 @@
+import 'assistant_contract.dart';
+import '../../core/widgets/ai_consent.dart';
+import 'assistant_avatar.dart';
+import 'assistant_answer.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -5,9 +9,13 @@ import '../../core/config/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
 import '../../core/utils/app_error.dart';
+import '../services_support/support_team_ai_screens.dart'
+    show SupportCenterScreen;
+import 'assistant_navigation.dart';
 
 class BirdsAiScreen extends StatefulWidget {
-  const BirdsAiScreen({super.key});
+  final String originScreen;
+  const BirdsAiScreen({super.key, this.originScreen = 'assistant'});
   @override
   State<BirdsAiScreen> createState() => _BirdsAiScreenState();
 }
@@ -18,12 +26,44 @@ class _BirdsAiScreenState extends State<BirdsAiScreen> {
   final _ctrl = TextEditingController();
   final _scroll = ScrollController();
   bool _sending = false;
+  bool _aiConsent = false;
+  bool _askingConsent = false;
   bool _enabled = true;
+  bool _contractReady = false;
+  String? _disabledMessage;
   List<String> _suggested = [];
+
+  String? _sessionToken, _sessionOwner;
+  bool _sessionValid = true;
+  void _sessionChanged() {
+    final session = AuthSession.instance;
+    final sameOwner = _sessionOwner == null
+        ? session.token == _sessionToken
+        : session.currentUser?.id == _sessionOwner && session.token != null;
+    if (!_sessionValid || sameOwner) return;
+    _sessionValid = false;
+    if (mounted) {
+      setState(() {
+        _messages.clear();
+        _threadId = null;
+        _suggested = [];
+        _enabled = false;
+        _disabledMessage = Localizations.localeOf(context).languageCode == 'en'
+            ? 'Your session changed. Sign in again to use the assistant.'
+            : 'انتهت جلستك. سجّل الدخول مجددًا لاستخدام المساعد.';
+        _sending = false;
+        _ctrl.clear();
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
+    _sessionToken = AuthSession.instance.token;
+    _sessionOwner = AuthSession.instance.currentUser?.id;
+    AuthSession.instance.addListener(_sessionChanged);
+    unawaited(AssistantNavigation.loadAppVersion());
     _loadConfig();
   }
 
@@ -31,30 +71,70 @@ class _BirdsAiScreenState extends State<BirdsAiScreen> {
   void dispose() {
     _ctrl.dispose();
     _scroll.dispose();
+    AuthSession.instance.removeListener(_sessionChanged);
     super.dispose();
   }
 
   Future<void> _loadConfig() async {
     try {
-      final cfg = await ApiClient.instance
-          .get('/assistant/config', token: AuthSession.instance.token);
-      if (!mounted) return;
-      if (cfg is Map && cfg['enabled'] == false) {
-        setState(() => _enabled = false);
+      final cfg = await ApiClient.instance.get('/assistant/config',
+          token: AuthSession.instance.token, cached: false);
+      if (!mounted || !_sessionValid) return;
+      if (!AssistantContract.accepts(cfg)) {
+        final english = Localizations.localeOf(context).languageCode == 'en';
+        setState(() {
+          _enabled = false;
+          _disabledMessage = !AssistantContract.matchesProtocol(cfg)
+              ? (english
+                  ? 'The assistant service needs an update to match this app. Please try again later or contact Support Center.'
+                  : 'خدمة المساعد تحتاج إلى تحديث ليتوافق إصدارها مع التطبيق. جرّب لاحقًا أو تواصل مع مركز الدعم.')
+              : (english
+                  ? 'The assistant service is temporarily unavailable. Please try again later or contact Support Center.'
+                  : 'خدمة المساعد غير متاحة مؤقتًا. جرّب لاحقًا أو تواصل مع مركز الدعم.');
+        });
         return;
       }
-      final q = await ApiClient.instance
-          .get('/assistant/suggested-questions', token: AuthSession.instance.token);
-      if (!mounted) return;
+      setState(() => _contractReady = true);
+      final q = await ApiClient.instance.get(
+          '/assistant/suggested-questions?language=${Localizations.localeOf(context).languageCode}',
+          token: AuthSession.instance.token);
+      if (!mounted || !_sessionValid) return;
       if (q is List) {
         setState(() => _suggested = List<String>.from(q.whereType<String>()));
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/ai/birds_ai_screen.dart:51');}
+    } catch (swallowedError, swallowedStack) {
+      if (mounted && _sessionValid) {
+        final english = Localizations.localeOf(context).languageCode == 'en';
+        setState(() {
+          _contractReady = false;
+          _enabled = false;
+          _disabledMessage = swallowedError is ApiException &&
+                  (swallowedError.statusCode == 401 ||
+                      swallowedError.statusCode == 403)
+              ? (english
+                  ? 'Your session expired. Sign in again to use the assistant.'
+                  : 'انتهت جلستك. سجّل الدخول مجددًا لاستخدام المساعد.')
+              : (english
+                  ? 'Could not reach the assistant service. Check your connection and try again later, or contact Support Center.'
+                  : 'تعذر الاتصال بخدمة المساعد. تحقق من اتصالك وحاول لاحقًا، أو تواصل مع مركز الدعم.');
+        });
+      }
+      ErrorReporter.swallowed(
+          swallowedError, swallowedStack, 'screens/ai/birds_ai_screen.dart:51');
+    }
   }
 
   Future<void> _send([String? text]) async {
     final msg = (text ?? _ctrl.text).trim();
-    if (msg.isEmpty || _sending) return;
+    if (!_sessionValid || !_contractReady || msg.isEmpty || _sending) return;
+    if (_askingConsent) return;
+    if (!_aiConsent) {
+      _askingConsent = true;
+      final accepted = await requestAiConsent(context);
+      _askingConsent = false;
+      if (!mounted || !_sessionValid || !accepted) return;
+      _aiConsent = true;
+    }
     _ctrl.clear();
     setState(() {
       _messages.add(_Msg(role: 'user', content: msg));
@@ -62,14 +142,22 @@ class _BirdsAiScreenState extends State<BirdsAiScreen> {
     });
     _scrollBottom();
     try {
-      final body = <String, dynamic>{'message': msg};
+      final body = <String, dynamic>{
+        'message': msg,
+        'screen': widget.originScreen,
+        'context': AssistantNavigation.context(
+            widget.originScreen, Localizations.localeOf(context).languageCode)
+      };
       if (_threadId != null) body['threadId'] = _threadId;
       final res = await ApiClient.instance.post(
         '/assistant/message',
         body: body,
         token: AuthSession.instance.token,
       );
-      if (!mounted) return;
+      if (!mounted || !_sessionValid) return;
+      if (!AssistantContract.acceptsResponse(res)) {
+        throw StateError('Verified assistant response unavailable');
+      }
       if (res is Map) {
         _threadId = res['threadId'] as String?;
         final msgs = res['messages'];
@@ -79,14 +167,19 @@ class _BirdsAiScreenState extends State<BirdsAiScreen> {
             setState(() {
               _messages.add(_Msg(
                   role: 'assistant',
-                  content: last['content'] as String? ?? ''));
+                  content: last['content'] as String? ?? '',
+                  details: last['details'] as String? ?? '',
+                  actions: last['actions'] is List
+                      ? last['actions'] as List
+                      : const [],
+                  knowledgeVersion: last['knowledgeVersion'] as String?));
               _suggested = [];
             });
           }
         }
       }
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted || !_sessionValid) return;
       // Never claim the assistant answered; keep the question so it can be
       // re-sent. The server may or may not have received it, so no auto-retry.
       final offline = AppError.isOffline(e);
@@ -95,12 +188,14 @@ class _BirdsAiScreenState extends State<BirdsAiScreen> {
         _messages.add(_Msg(
             role: 'assistant',
             content: offline
-                ? 'لا يوجد اتصال بالإنترنت. لم يتم إرسال رسالتك، أعد المحاولة عند عودة الاتصال.'
+                ? (Localizations.localeOf(context).languageCode == 'en'
+                    ? 'You are offline. Reconnect and retry your message.'
+                    : 'لا يوجد اتصال بالإنترنت. أعد المحاولة عند عودة الاتصال.')
                 : AppError.message(e),
             isError: true));
       });
     } finally {
-      if (mounted) {
+      if (mounted && _sessionValid) {
         setState(() => _sending = false);
         _scrollBottom();
       }
@@ -122,14 +217,26 @@ class _BirdsAiScreenState extends State<BirdsAiScreen> {
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: Localizations.localeOf(context).languageCode == 'en'
+          ? TextDirection.ltr
+          : TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF3F6FA),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           backgroundColor: AppColors.navy,
           elevation: 0,
           automaticallyImplyLeading: true,
           iconTheme: const IconThemeData(color: Colors.white),
+          actions: [
+            IconButton(
+              tooltip: Localizations.localeOf(context).languageCode == 'en'
+                  ? 'Support Center'
+                  : 'مركز الدعم',
+              icon: const Icon(Icons.support_agent_rounded),
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const SupportCenterScreen())),
+            )
+          ],
           title: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -137,14 +244,13 @@ class _BirdsAiScreenState extends State<BirdsAiScreen> {
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: AppColors.orange,
+                  color: AppColors.green,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Icon(Icons.auto_awesome_rounded,
-                    color: Colors.white, size: 18),
+                child: const AssistantAvatar(size: 28),
               ),
               const SizedBox(width: 10),
-              const Text('Birds AI',
+              const Text('COVEY AI',
                   style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
@@ -155,30 +261,51 @@ class _BirdsAiScreenState extends State<BirdsAiScreen> {
         ),
         body: SafeArea(
           child: !_enabled
-              ? _DisabledView()
+              ? _DisabledView(message: _disabledMessage)
               : Column(
                   children: [
                     Expanded(
                       child: _messages.isEmpty
-                          ? _WelcomeView(
-                              suggested: _suggested, onTap: _send)
+                          ? _WelcomeView(suggested: _suggested, onTap: _send)
                           : ListView.builder(
                               controller: _scroll,
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 12),
-                              itemCount:
-                                  _messages.length + (_sending ? 1 : 0),
+                              itemCount: _messages.length + (_sending ? 1 : 0),
                               itemBuilder: (_, i) {
                                 if (i == _messages.length) {
                                   return const _TypingBubble();
                                 }
-                                return _MessageBubble(msg: _messages[i]);
+                                final message = _messages[i];
+                                return Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      _MessageBubble(msg: message),
+                                      if (message.role == 'assistant')
+                                        AssistantActions(
+                                            actions: message.actions,
+                                            version: message.knowledgeVersion),
+                                      if (message.isError)
+                                        TextButton.icon(
+                                          icon:
+                                              const Icon(Icons.refresh_rounded),
+                                          label: Text(
+                                              Localizations.localeOf(context)
+                                                          .languageCode ==
+                                                      'en'
+                                                  ? 'Retry'
+                                                  : 'إعادة المحاولة'),
+                                          onPressed:
+                                              _sending ? null : () => _send(),
+                                        ),
+                                    ]);
                               },
                             ),
                     ),
                     _InputBar(
                       ctrl: _ctrl,
-                      sending: _sending,
+                      sending: _sending || !_contractReady,
                       onSend: _send,
                     ),
                   ],
@@ -194,8 +321,17 @@ class _BirdsAiScreenState extends State<BirdsAiScreen> {
 class _Msg {
   final String role;
   final String content;
+  final String details;
   final bool isError;
-  _Msg({required this.role, required this.content, this.isError = false});
+  final List<dynamic> actions;
+  final String? knowledgeVersion;
+  _Msg(
+      {required this.role,
+      required this.content,
+      this.details = '',
+      this.isError = false,
+      this.actions = const [],
+      this.knowledgeVersion});
 }
 
 // ── Welcome view ──────────────────────────────────────────────────────────────
@@ -225,48 +361,64 @@ class _WelcomeView extends StatelessWidget {
                     offset: const Offset(0, 6))
               ],
             ),
-            child: const Icon(Icons.auto_awesome_rounded,
-                color: AppColors.orange, size: 36),
+            child: const AssistantAvatar(size: 46),
           ),
         ),
         const SizedBox(height: 20),
-        const Text('مرحباً! أنا Birds AI',
+        Text(
+            Localizations.localeOf(context).languageCode == 'en'
+                ? 'COVEY support assistant'
+                : 'مساعد COVEY',
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.w800,
-                color: AppColors.navy)),
+                color: Theme.of(context).colorScheme.onSurface)),
         const SizedBox(height: 8),
-        const Text(
-          'مساعدك الذكي للدراسة في الخارج.\nاسألني عن البرامج والجامعات والتأشيرات والإجراءات.',
+        Text(
+          Localizations.localeOf(context).languageCode == 'en'
+              ? 'Help with COVEY, your applications and documents.\nApp support only; never share passwords or verification codes.'
+              : 'أساعدك باستخدام COVEY ومتابعة طلباتك ومستنداتك.\nمختص بالتطبيق فقط؛ لا ترسل كلمات مرور أو أكواد تحقق.',
           textAlign: TextAlign.center,
           style: TextStyle(
               fontSize: 14,
-              color: AppColors.textSecondary,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
               height: 1.6),
         ),
         if (suggested.isNotEmpty) ...[
           const SizedBox(height: 28),
-          const Text('اقتراحات لك:',
+          Text(
+              Localizations.localeOf(context).languageCode == 'en'
+                  ? 'Suggested questions'
+                  : 'اقتراحات لك:',
               style: TextStyle(
                   fontWeight: FontWeight.w700,
-                  color: AppColors.navy,
+                  color: Theme.of(context).colorScheme.onSurface,
                   fontSize: 13)),
           const SizedBox(height: 12),
           ...suggested.map((q) => _SuggestedChip(text: q, onTap: onTap)),
         ] else ...[
           const SizedBox(height: 28),
-          ..._defaultQ.map((q) => _SuggestedChip(text: q, onTap: onTap)),
+          ...(Localizations.localeOf(context).languageCode == 'en'
+                  ? _defaultEn
+                  : _defaultQ)
+              .map((q) => _SuggestedChip(text: q, onTap: onTap)),
         ],
       ],
     );
   }
 
   static const _defaultQ = [
-    'ما هي الجامعات المتاحة في تركيا؟',
-    'كيف أبدأ بالتقديم على برنامج دراسي؟',
-    'ما المستندات المطلوبة للتأشيرة؟',
-    'ما الفرق بين البكالوريوس والماجستير المتاح؟',
+    'كيف أبحث عن جامعة داخل التطبيق؟',
+    'كيف أتابع طلباتي؟',
+    'كيف أرفع المستندات؟',
+    'كيف أتواصل مع الدعم؟',
+  ];
+  static const _defaultEn = [
+    'How do I find a university in the app?',
+    'How do I track my applications?',
+    'How do I upload documents?',
+    'How do I contact support?',
   ];
 }
 
@@ -283,20 +435,20 @@ class _SuggestedChip extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.border),
         ),
         child: Row(
           children: [
-            const Icon(Icons.chevron_left_rounded,
-                color: AppColors.navy, size: 18),
+            Icon(Icons.chevron_right_rounded,
+                color: Theme.of(context).colorScheme.onSurface, size: 18),
             const SizedBox(width: 8),
             Expanded(
                 child: Text(text,
-                    style: const TextStyle(
+                    style: TextStyle(
                         fontSize: 13,
-                        color: AppColors.navy,
+                        color: Theme.of(context).colorScheme.onSurface,
                         fontWeight: FontWeight.w500))),
           ],
         ),
@@ -330,15 +482,15 @@ class _MessageBubble extends StatelessWidget {
                 color: AppColors.navy,
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.auto_awesome_rounded,
-                  color: AppColors.orange, size: 14),
+              child: const AssistantAvatar(size: 24),
             ),
           Flexible(
             child: Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: isUser ? AppColors.navy : Colors.white,
+                color: isUser
+                    ? AppColors.navy
+                    : Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.only(
                   topLeft: const Radius.circular(16),
                   topRight: const Radius.circular(16),
@@ -356,14 +508,17 @@ class _MessageBubble extends StatelessWidget {
                       offset: const Offset(0, 2))
                 ],
               ),
-              child: Text(
-                msg.content,
+              child: AssistantAnswer(
+                reportable: !isUser && !msg.isError,
+                content: msg.content,
+                details: msg.details,
+                knowledgeVersion: msg.knowledgeVersion,
                 style: TextStyle(
                   color: isUser
                       ? Colors.white
                       : msg.isError
                           ? AppColors.danger
-                          : AppColors.textPrimary,
+                          : Theme.of(context).colorScheme.onSurface,
                   fontSize: 14,
                   height: 1.55,
                 ),
@@ -419,14 +574,12 @@ class _TypingBubbleState extends State<_TypingBubble>
               color: AppColors.navy,
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Icon(Icons.auto_awesome_rounded,
-                color: AppColors.orange, size: 14),
+            child: const AssistantAvatar(size: 24),
           ),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(16),
               boxShadow: [
                 BoxShadow(
@@ -475,7 +628,7 @@ class _InputBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         boxShadow: [
           BoxShadow(
               color: Colors.black.withValues(alpha: 0.06),
@@ -489,19 +642,26 @@ class _InputBar extends StatelessWidget {
             child: TextField(
               controller: ctrl,
               enabled: !sending,
-              textDirection: TextDirection.rtl,
+              textDirection:
+                  Localizations.localeOf(context).languageCode == 'en'
+                      ? TextDirection.ltr
+                      : TextDirection.rtl,
+              maxLength: 2000,
               maxLines: 4,
               minLines: 1,
               textInputAction: TextInputAction.send,
               onSubmitted: (_) => onSend(),
               decoration: InputDecoration(
-                hintText: 'اكتب سؤالك هنا…',
+                hintText: Localizations.localeOf(context).languageCode == 'en'
+                    ? 'Ask about COVEY…'
+                    : 'اسأل عن COVEY…',
                 hintStyle: const TextStyle(
                     color: AppColors.textSecondary, fontSize: 14),
                 filled: true,
-                fillColor: const Color(0xFFF3F6FA),
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 10),
+                fillColor:
+                    Theme.of(context).colorScheme.surfaceContainerHighest,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
                     borderSide: BorderSide.none),
@@ -539,27 +699,20 @@ class _InputBar extends StatelessWidget {
 // ── Disabled view ─────────────────────────────────────────────────────────────
 
 class _DisabledView extends StatelessWidget {
+  final String? message;
+  const _DisabledView({this.message});
+
   @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(32),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          Icon(Icons.auto_awesome_rounded,
-              size: 56, color: AppColors.textSecondary),
-          SizedBox(height: 16),
-          Text('Birds AI غير متاح حالياً',
-              style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.navy)),
-          SizedBox(height: 8),
-          Text('سيتم تفعيل المساعد الذكي قريباً.',
+  Widget build(BuildContext context) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Text(
+              message ??
+                  (Localizations.localeOf(context).languageCode == 'en'
+                      ? 'The assistant is temporarily unavailable. Please contact Support Center.'
+                      : 'المساعد غير متاح مؤقتًا. تواصل مع مركز الدعم.'),
               textAlign: TextAlign.center,
-              style:
-                  TextStyle(color: AppColors.textSecondary, height: 1.6)),
-        ]),
-      ),
-    );
-  }
+              style: Theme.of(context).textTheme.bodyLarge),
+        ),
+      );
 }

@@ -1,0 +1,434 @@
+{
+  "date": "2026-10-21",
+  "timezone": "Europe/Istanbul",
+  "status": "APPROVED_ROUTER_ONLY_MIGRATION_APPLIED_AND_TESTED_LOCALLY",
+  "root": "D:/work/studybirds_session_release/client",
+  "approval": "React Router 7.18.4 only; evaluate in isolation then apply locally on passing checks; no commit/push/deployment",
+  "checkpoint": {
+    "root": ".git/router-20261021",
+    "preVerifiedSourceFiles": 1723,
+    "privateConfigFiles": 6,
+    "previousCheckpointsRetained": true,
+    "post": ".git/router-20261021/post-migration",
+    "initialFreeBytes": {
+      "C": 31547068416,
+      "D": 1381990400
+    }
+  },
+  "dependencyChanges": [
+    {
+      "path": "",
+      "before": "1.0.0",
+      "after": "1.0.0"
+    },
+    {
+      "path": "node_modules/@remix-run/router",
+      "before": "1.23.4",
+      "after": null
+    },
+    {
+      "path": "node_modules/react-router",
+      "before": "6.30.6",
+      "after": "7.18.4"
+    },
+    {
+      "path": "node_modules/react-router-dom",
+      "before": "6.30.6",
+      "after": "7.18.4"
+    },
+    {
+      "path": "node_modules/cookie",
+      "before": null,
+      "after": "1.1.1"
+    },
+    {
+      "path": "node_modules/set-cookie-parser",
+      "before": null,
+      "after": "2.7.2"
+    }
+  ],
+  "manifest": {
+    "before": "^6.28.1",
+    "previousResolved": "6.30.6",
+    "after": "7.18.4",
+    "exact": true
+  },
+  "unrelatedLockfilePackagesChanged": false,
+  "vitestChanged": false,
+  "tailwindChanged": false,
+  "viteChanged": false,
+  "install": {
+    "command": "npm install --save-exact react-router-dom@7.18.4 --ignore-scripts",
+    "root": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\router-20261021\\candidate",
+    "exit": 0,
+    "ordinaryIsolatedNodeModules": true,
+    "force": false,
+    "overrides": false
+  },
+  "candidate": {
+    "root": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\router-20261021\\candidate",
+    "focused": {
+      "command": "npm test -- --run src/lib/routerMigration.test.tsx",
+      "exit": 0,
+      "passed": 27,
+      "log": "focused-final.log"
+    },
+    "tests": {
+      "command": "npm test",
+      "exit": 0,
+      "passed": 100,
+      "files": 12,
+      "failed": 0,
+      "skipped": 0,
+      "log": "tests.log"
+    },
+    "build": {
+      "command": "npm run build",
+      "exit": 0,
+      "log": "build.log"
+    },
+    "audit": [
+      {
+        "name": "candidate-audit",
+        "exit": 1,
+        "summary": {
+          "info": 0,
+          "low": 0,
+          "moderate": 5,
+          "high": 6,
+          "critical": 2,
+          "total": 13
+        }
+      },
+      {
+        "name": "candidate-production-audit",
+        "exit": 0,
+        "summary": {
+          "info": 0,
+          "low": 0,
+          "moderate": 0,
+          "high": 0,
+          "critical": 0,
+          "total": 0
+        }
+      },
+      {
+        "name": "candidate-dependency-tree",
+        "exit": 0,
+        "summary": {
+          "react-router-dom": {
+            "version": "7.18.4",
+            "resolved": "https://registry.npmjs.org/react-router-dom/-/react-router-dom-7.18.4.tgz",
+            "overridden": false,
+            "dependencies": {
+              "react-router": {
+                "version": "7.18.4",
+                "resolved": "https://registry.npmjs.org/react-router/-/react-router-7.18.4.tgz",
+                "overridden": false,
+                "dependencies": {
+                  "cookie": {
+                    "version": "1.1.1",
+                    "resolved": "https://registry.npmjs.org/cookie/-/cookie-1.1.1.tgz",
+                    "overridden": false
+                  },
+                  "set-cookie-parser": {
+                    "version": "2.7.2",
+                    "resolved": "https://registry.npmjs.org/set-cookie-parser/-/set-cookie-parser-2.7.2.tgz",
+                    "overridden": false
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "actual": {
+    "root": "D:/work/studybirds_session_release/client",
+    "tests": {
+      "command": "npm test",
+      "exit": 0,
+      "passed": 100,
+      "files": 12,
+      "failed": 0,
+      "skipped": 0,
+      "log": "actual-tests.log"
+    },
+    "build": {
+      "command": "npm run build",
+      "exit": 0,
+      "log": "actual-build.log",
+      "includes": [
+        "tsc -b",
+        "vite build",
+        "isolated static SEO fixture"
+      ],
+      "environment": "NODE_OPTIONS=--import=file:///D:/work/studybirds_app/study_birds_app-main/.git/phase3-20261021/seo-offline.mjs; VITE_API_URL=http://127.0.0.1:1/api"
+    },
+    "audit": [
+      {
+        "name": "actual-audit",
+        "exit": 1,
+        "summary": {
+          "info": 0,
+          "low": 0,
+          "moderate": 5,
+          "high": 6,
+          "critical": 2,
+          "total": 13
+        }
+      },
+      {
+        "name": "actual-production-audit",
+        "exit": 0,
+        "summary": {
+          "info": 0,
+          "low": 0,
+          "moderate": 0,
+          "high": 0,
+          "critical": 0,
+          "total": 0
+        }
+      },
+      {
+        "name": "actual-dependency-tree",
+        "exit": 0,
+        "summary": {
+          "react-router-dom": "7.18.4",
+          "react-router": "7.18.4",
+          "tailwindcss": "3.4.19",
+          "vite-node": "2.1.9",
+          "vite": "6.4.5",
+          "vitest": "2.1.9"
+        }
+      }
+    ],
+    "productionFindings": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0
+    },
+    "totalFindings": {
+      "info": 0,
+      "low": 0,
+      "moderate": 5,
+      "high": 6,
+      "critical": 2,
+      "total": 13
+    },
+    "remainingPackages": [
+      "@vitest/mocker",
+      "braces",
+      "chokidar",
+      "esbuild",
+      "fast-glob",
+      "micromatch",
+      "postcss-nested",
+      "postcss-selector-parser",
+      "tailwindcss",
+      "tinypool",
+      "vite",
+      "vite-node",
+      "vitest"
+    ]
+  },
+  "initialFocusedFailure": {
+    "exit": 1,
+    "passed": 26,
+    "failed": 1,
+    "reason": "Google test fixture omitted the client ID required to render its mocked button; corrected with vi.stubEnv fake ID and cleanup, without application/provider configuration changes",
+    "log": "focused.log"
+  },
+  "negativeControl": {
+    "root": ".git/audit-20261021/client-validation",
+    "version": "6.30.6",
+    "command": "npm test -- --run src/lib/routerMigration.test.tsx -t 'rejects an external|keeps a pathname'",
+    "exit": 1,
+    "failed": 8,
+    "passed": 1,
+    "filteredOut": 18,
+    "intentional": true,
+    "log": "v6-negative-control.log"
+  },
+  "runtimeDependencies": {
+    "ActiveLink": "D:\\work\\studybirds_session_release\\client\\node_modules",
+    "NewTarget": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\router-20261021\\candidate\\node_modules",
+    "PreservedLink": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\router-20261021\\previous-client-node_modules-junction",
+    "OldTargetUnchanged": true,
+    "previousJunctionMovedWithoutDeletingTarget": true,
+    "newTargetIsActiveDependencyOwner": true,
+    "otherJunctionsChanged": false,
+    "gitWorktreeRelationshipsChanged": false
+  },
+  "coverage": [
+    "six external useNavigate cases including backslash/protocol-relative/control-character forms",
+    "three pathname-object Link cases remain same-origin",
+    "intended HTTPS/protocol-relative string Links preserved",
+    "query/hash, back navigation and router remount",
+    "actual LanguageRouteSync",
+    "actual ProtectedRoute anonymous/role/employee/offline cases",
+    "actual LoginPage six role homes",
+    "encoded mobile handoff request value",
+    "actual Google-success callback with mocked provider",
+    "password-setup gate"
+  ],
+  "changedSourceFiles": [
+    "client/package.json",
+    "client/package-lock.json",
+    "client/src/lib/routerMigration.test.tsx"
+  ],
+  "applicationRoutingCodeChanged": false,
+  "authenticationAuthorizationApiContractsChanged": false,
+  "backendFlutterSourceUnchanged": true,
+  "notTested": [
+    "real-browser visual and provider-backed end-to-end QA",
+    "real hosting fallback/browser reload",
+    "real Google OAuth and SMTP",
+    "physical devices/iOS",
+    "production deployment and accounts/data"
+  ],
+  "git": {
+    "app": {
+      "head": "3e31e19c5343170056e6d7559c59bfb891f2c624",
+      "branch": "main",
+      "status": [
+        " M README.md",
+        " M lib/core/services/notification_scheduler.dart",
+        " M lib/core/widgets/app_components.dart",
+        " M lib/screens/applications_documents_payments/documents_screens.dart",
+        " M lib/screens/home_journey/notifications_screen.dart",
+        " M lib/screens/home_journey/student_banner_carousel.dart",
+        " M lib/screens/profile_account/notification_preferences_screen.dart",
+        " M lib/screens/roles/employee_dashboard_screen.dart",
+        " M lib/screens/stories/story_viewers_screen.dart",
+        " M test/chat_controls_test.dart",
+        " M test/journey_requirements_test.dart",
+        " M test/post_admission_journey_test.dart",
+        " M test/story_viewers_test.dart",
+        " M tool/check_error_policy.dart",
+        "?? .vscode/StudyBirds.code-workspace",
+        "?? docs/APPROVED_DEPLOYMENT_PARITY_20261021.md",
+        "?? docs/ARCHITECTURE.md",
+        "?? docs/AUDIT_VALIDATION.json",
+        "?? docs/BACKEND_ENVIRONMENT_NAMES.json",
+        "?? docs/DEPLOYMENT_PARITY_REPORT.md",
+        "?? docs/DEVELOPMENT_SETUP.md",
+        "?? docs/DUPLICATE_INVENTORY.json",
+        "?? docs/DUPLICATE_INVENTORY.md",
+        "?? docs/FEATURE_PARITY_REPORT.md",
+        "?? docs/FINAL_CLEANUP_APPROVAL.md",
+        "?? docs/MAINTENANCE_GUIDE.md",
+        "?? docs/PHASE2_FINAL_REPORT.md",
+        "?? docs/PHASE2_SECURITY_REVIEW.md",
+        "?? docs/PHASE2_VALIDATION.json",
+        "?? docs/PHASE3_DEPENDENCY_PLAN.md",
+        "?? docs/PHASE3_FINAL_REPORT.md",
+        "?? docs/PHASE3_VALIDATION.json",
+        "?? docs/PHASE4_FINAL_REPORT.md",
+        "?? docs/PHASE4_VALIDATION.json",
+        "?? docs/PROJECT_AUDIT_REPORT.md",
+        "?? docs/REACT_ROUTER_UPGRADE_20261021.md",
+        "?? docs/REACT_ROUTER_VALIDATION.json",
+        "?? docs/RELEASE_READINESS_CHECKLIST.md",
+        "?? docs/STABILIZATION_20261021.md",
+        "?? docs/UPDATED_RELEASE_READINESS.md",
+        "?? docs/WORKSPACE_WORKFLOW.md",
+        "?? docs/proposals/deferred-story-deletion-review.patch",
+        "?? docs/proposals/notification-preferences-review.patch",
+        "?? docs/proposals/phase3/01-viewer-privacy.patch",
+        "?? docs/proposals/phase3/02-material-card.patch",
+        "?? docs/proposals/phase3/03-story-deletion-feed.patch",
+        "?? docs/proposals/phase3/04-story-fullscreen-layout.patch",
+        "?? docs/proposals/phase3/05-account-notification-preferences.patch",
+        "?? docs/proposals/phase3/README.md",
+        "?? docs/proposals/phase4/SECURITY_MIGRATIONS.md",
+        "?? lib/core/services/notification_preferences_store.dart",
+        "?? test/notification_preferences_test.dart"
+      ],
+      "staged": [],
+      "diffCheckExit": 0,
+      "worktrees": [
+        "D:/work/studybirds_app/study_birds_app-main  3e31e19 [main]"
+      ]
+    },
+    "deployment": {
+      "head": "e9060536e8dc7a70150da9c42d6dfac901713553",
+      "branch": "DETACHED",
+      "status": [
+        " M app/lib/core/repositories/stories_repository.dart",
+        " M app/lib/core/services/notification_scheduler.dart",
+        " M app/lib/core/widgets/app_components.dart",
+        " M app/lib/screens/profile_account/notification_preferences_screen.dart",
+        " M app/lib/screens/stories/story_viewer.dart",
+        " M app/lib/screens/stories/story_viewers_screen.dart",
+        " M app/lib/screens/stories/student_stories.dart",
+        " M app/test/story_viewer_test.dart",
+        " M app/test/story_viewers_test.dart",
+        " M client/package-lock.json",
+        " M client/package.json",
+        " M client/scripts/generate-seo-files.mjs",
+        " M server/package-lock.json",
+        " M server/package.json",
+        " M server/src/controllers/adminAgentController.js",
+        " M server/src/controllers/contentController.js",
+        " M server/src/models/Notification.js",
+        " M server/src/models/User.js",
+        " M server/src/routes/alumniRoutes.js",
+        " M server/src/routes/mobileSecurityRoutes.js",
+        " M server/src/routes/scholarshipRoutes.js",
+        " M server/src/seed/seed.js",
+        " M server/src/utils/cashMisrSms.js",
+        " M server/src/utils/pushNotifications.js",
+        " M server/src/utils/supportNotifications.js",
+        " M server/src/utils/whatsappOtp.js",
+        " M server/tests/auditFixes.test.js",
+        " M server/tests/crmIntegration.test.js",
+        " M server/tests/privateDocumentAccess.test.js",
+        "?? app/lib/core/services/notification_preferences_store.dart",
+        "?? app/test/notification_preferences_test.dart",
+        "?? app/test/story_deletion_test.dart",
+        "?? client/src/lib/routerMigration.test.tsx",
+        "?? client/src/lib/seoBuild.test.ts",
+        "?? server/scripts/run-tests.cjs",
+        "?? server/src/utils/jwtSecret.js",
+        "?? server/src/utils/notificationPreferences.js",
+        "?? server/tests/notificationPreferences.test.js",
+        "?? server/tests/recoveredParity.test.js"
+      ],
+      "staged": [],
+      "diffCheckExit": 0,
+      "worktrees": [
+        "D:/work/studybirds_web                        f42dc7a [main]",
+        "C:/Users/Abood/studybirds-claude              c1ae0df [claude-assistant]",
+        "C:/Users/Abood/studybirds-email-refresh       aac8419 [email-branding-refresh]",
+        "C:/Users/Abood/studybirds-wink                e0aff5b [wink-game]",
+        "D:/work/studybirds-stories-release            a5b118a (detached HEAD)",
+        "D:/work/studybirds_islam_google_password_fix  4fed84c [fix/islam-google-password]",
+        "D:/work/studybirds_session_release            e906053 (detached HEAD)"
+      ]
+    }
+  },
+  "safety": {
+    "deletedUserFiles": false,
+    "deletedRepositoriesOrBackups": false,
+    "authoritativeSourceDirectoriesMoved": false,
+    "reset": false,
+    "stashed": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "productionDatabaseOrHostedServiceModified": false,
+    "credentialsOrSigningKeysChanged": false
+  },
+  "remainingApprovals": [
+    "Vitest major migration",
+    "Tailwind major migration and browser-support/visual decision",
+    "later publishing action"
+  ],
+  "manualQAReady": true,
+  "productionCertified": false
+}

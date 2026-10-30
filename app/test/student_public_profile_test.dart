@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:study_birds/core/services/auth_session.dart';
 import 'package:study_birds/screens/community/student_profile_link.dart';
+import 'package:study_birds/screens/community/contact_profile_screen.dart';
 import 'package:study_birds/screens/community/student_community_hub.dart';
 import 'package:study_birds/screens/community/student_public_profile.dart';
 import 'package:study_birds/screens/services_support/messaging_and_emergency_screens.dart';
@@ -29,26 +30,27 @@ void main() {
   setUp(() => AuthSession.instance.token = 'public-profile');
   tearDown(() => AuthSession.instance.token = null);
 
-  testWidgets('community conversation avatar opens that student profile',
+  testWidgets('community conversation avatar opens the scoped contact identity',
       (tester) async {
     await http.runWithClient(() async {
       await tester.pumpWidget(const MaterialApp(home: StudentCommunityHub()));
       await tester.pumpAndSettle();
       final avatar = find.byWidgetPredicate(
-          (w) => w is StudentProfileLink && w.studentId == 'peer');
+          (w) => w is ContactProfileLink && w.userId == 'peer');
       expect(avatar, findsOneWidget);
       await tester.tap(avatar);
       await tester.pumpAndSettle();
-      expect(find.byType(StudentPublicProfileScreen), findsOneWidget);
+      expect(find.byType(ContactProfileScreen), findsOneWidget);
       expect(find.byType(ConversationThreadScreen), findsNothing);
-      expect(find.text('مراسلة'), findsOneWidget);
+      expect(find.text('Sara'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },
         () => MockClient((request) async {
               final path = request.url.path;
+              if (path.endsWith('/contacts/peer')) return response({'_id': 'peer', 'name': 'Sara', 'role': 'student'});
               if (path.endsWith('/profile')) return response(profile('none'));
-              if (path.endsWith('/conversations'))
+              if (path.endsWith('/conversations')) {
                 return response({
                   'unreadTotal': 0,
                   'conversations': [
@@ -63,6 +65,7 @@ void main() {
                     },
                   ]
                 });
+              }
               if (path.endsWith('/stories')) return response({'stories': []});
               return response({});
             }));
@@ -148,14 +151,16 @@ void main() {
                 relation = 'friends';
                 return response({'relation': relation});
               }
-              if (path.endsWith('/profile'))
+              if (path.endsWith('/profile')) {
                 return response({
                   ...profile(relation),
                   'storyCount': relation == 'friends' ? 1 : null,
                   'stories': relation == 'friends' ? [story] : []
                 });
-              if (path.endsWith('/updates'))
+              }
+              if (path.endsWith('/updates')) {
                 return response({'updates': [], 'progress': {}});
+              }
               return response({});
             }));
   });

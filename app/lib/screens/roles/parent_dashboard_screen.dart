@@ -10,11 +10,10 @@ import '../../core/repositories/parent_repository.dart';
 import '../../core/services/auth_session.dart';
 import '../applications_documents_payments/applications_screens.dart'
     show appStatusMeta;
-import '../services_support/messaging_and_emergency_screens.dart';
-import '../profile_account/security_settings_screen.dart'
-    show SecuritySettingsScreen, ChangePasswordScreen;
-import '../home_journey/notifications_screen.dart'
-    show NotificationInboxButton;
+import '../home_journey/notifications_screen.dart';
+import '../profile_account/role_account_tab.dart';
+import '../profile_account/security_settings_screen.dart';
+import '../community/student_community_hub.dart';
 
 const Map<String, String> _stageLabels = {
   'file-received': 'استلام الملف',
@@ -34,7 +33,7 @@ const Map<String, String> _stageLabels = {
 };
 
 /// Parent Mode Home — "My Student" view. Real data from
-/// server/src/routes/parentRoutes.js. Zero visibility into Study Birds
+/// server/src/routes/parentRoutes.js. Zero visibility into COVEY
 /// internal/employee data; a parent only ever sees an APPROVED linked
 /// student's overview/applications/payments, read-only.
 class ParentDashboardScreen extends StatefulWidget {
@@ -98,7 +97,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         _loadOverview(0);
         _loadPayments(0);
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/parent_dashboard_screen.dart:96');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/parent_dashboard_screen.dart:96');
       if (!mounted) return;
       setState(() {
         _loadError = 'تعذر تحميل بياناتك. تحقق من الاتصال وحاول مجدداً.';
@@ -115,16 +116,16 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       _overview = null;
     });
     try {
-      final studentId =
-          (Json.map(_children[index]))['_id'] as String;
-      final data =
-          await ParentRepository.instance.getChildOverview(studentId);
+      final studentId = (Json.map(_children[index]))['_id'] as String;
+      final data = await ParentRepository.instance.getChildOverview(studentId);
       if (!mounted || request != _overviewRequest) return;
       setState(() {
         _overview = data;
         _loadingOverview = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/parent_dashboard_screen.dart:122');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/parent_dashboard_screen.dart:122');
       if (!mounted || request != _overviewRequest) return;
       setState(() => _loadingOverview = false);
     }
@@ -136,16 +137,16 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       _payments = null;
     });
     try {
-      final studentId =
-          (Json.map(_children[index]))['_id'] as String;
-      final data =
-          await ParentRepository.instance.getChildPayments(studentId);
+      final studentId = (Json.map(_children[index]))['_id'] as String;
+      final data = await ParentRepository.instance.getChildPayments(studentId);
       if (!mounted) return;
       setState(() {
         _payments = data;
         _loadingPayments = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/parent_dashboard_screen.dart:143');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/parent_dashboard_screen.dart:143');
       if (!mounted) return;
       setState(() => _loadingPayments = false);
     }
@@ -176,15 +177,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       _relationshipCtrl.clear();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-            content:
-                Text('تم إرسال طلب الربط، بانتظار موافقة الإدارة'),
+            content: const Text('تم إرسال طلب الربط، بانتظار موافقة الإدارة'),
             backgroundColor: AppColors.success));
       }
       await _loadChildren();
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/parent_dashboard_screen.dart:179');
-      if (mounted)
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/parent_dashboard_screen.dart:179');
+      if (mounted) {
         setState(() => _requestError =
             'تعذر إرسال الطلب — تأكد من أن البريد صحيح ومسجّل كحساب طالب.');
+      }
     } finally {
       if (mounted) setState(() => _sendingRequest = false);
     }
@@ -199,6 +202,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
         appBar: AppBar(
           backgroundColor: AppColors.navy,
           foregroundColor: Colors.white,
+          automaticallyImplyLeading: false,
           title: const Text('حساب ولي الأمر',
               style: TextStyle(
                   fontFamily: 'Tajawal',
@@ -207,15 +211,44 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           centerTitle: true,
           actions: [
             const NotificationInboxButton(),
-            IconButton(
-              tooltip: 'الرسائل',
-              icon: const Icon(Icons.forum_outlined),
-              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => const ConversationThreadScreen())),
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert_rounded),
+              tooltip: '\u0627\u0644\u0645\u0632\u064a\u062f',
+              onSelected: (value) async {
+                if (value == 'security') {
+                  await Navigator.of(context).push(MaterialPageRoute<void>(
+                      builder: (_) => const SecuritySettingsScreen()));
+                } else if (value == 'logout') {
+                  await _confirmLogout(context);
+                }
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(
+                  value: 'security',
+                  child: Row(children: [
+                    Icon(Icons.security_outlined, size: 18),
+                    SizedBox(width: 10),
+                    Text(
+                        '\u0623\u0645\u0627\u0646 \u0627\u0644\u062d\u0633\u0627\u0628'),
+                  ]),
+                ),
+                PopupMenuItem(
+                  value: 'logout',
+                  child: Row(children: [
+                    Icon(Icons.logout_rounded,
+                        size: 18, color: AppColors.danger),
+                    SizedBox(width: 10),
+                    Text(
+                        '\u062a\u0633\u062c\u064a\u0644 \u0627\u0644\u062e\u0631\u0648\u062c',
+                        style: TextStyle(color: AppColors.danger)),
+                  ]),
+                ),
+              ],
             ),
           ],
         ),
-        body: MaxWidthBody(child: RefreshIndicator(
+        body: MaxWidthBody(
+            child: RefreshIndicator(
           onRefresh: _loadChildren,
           color: AppColors.navy,
           child: _loadingChildren
@@ -226,11 +259,15 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                       ? _buildOverviewTab()
                       : _tab == 1
                           ? _buildPaymentsTab()
-                          : _buildAccountTab(),
+                          : _tab == 2
+                              ? const StudentCommunityHub()
+                              : _buildAccountTab(),
         )),
-        bottomNavigationBar: AdaptiveBottomBar(child: BottomNavigationBar(
+        bottomNavigationBar: AdaptiveBottomBar(
+            child: BottomNavigationBar(
+          key: const ValueKey('parent-bottom-navigation'),
           currentIndex: _tab,
-          selectedItemColor: AppColors.navy,
+          selectedItemColor: AppColors.greenInk,
           unselectedItemColor: AppColors.textSecondary,
           type: BottomNavigationBarType.fixed,
           onTap: (i) => setState(() => _tab = i),
@@ -239,6 +276,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 icon: Icon(Icons.school_outlined), label: 'رحلة ابني'),
             BottomNavigationBarItem(
                 icon: Icon(Icons.payments_outlined), label: 'المدفوعات'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.forum_outlined),
+                label:
+                    '\u0645\u062c\u062a\u0645\u0639 \u0627\u0644\u0637\u0644\u0627\u0628'),
             BottomNavigationBarItem(
                 icon: Icon(Icons.person_outline_rounded), label: 'حسابي'),
           ],
@@ -268,17 +309,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       return ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          AppCard(
+          const AppCard(
             child: Column(
               children: [
-                const Icon(Icons.hourglass_top_rounded,
+                Icon(Icons.hourglass_top_rounded,
                     color: AppColors.warning, size: 36),
-                const SizedBox(height: 10),
-                const Text('بانتظار موافقة الإدارة',
+                SizedBox(height: 10),
+                Text('بانتظار موافقة الإدارة',
                     style: AppTextStyles.cardTitle,
                     textAlign: TextAlign.center),
-                const SizedBox(height: 6),
-                const Text(
+                SizedBox(height: 6),
+                Text(
                     'سيظهر حساب ابنك/ابنتك بعد مراجعة طلب الربط وقبوله من قبل الفريق.',
                     style: AppTextStyles.caption,
                     textAlign: TextAlign.center),
@@ -352,16 +393,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('تتابع رحلة',
-                    style: AppTextStyles.caption),
+                const Text('تتابع رحلة', style: AppTextStyles.caption),
                 Text(child['name'] as String? ?? '—',
                     style: AppTextStyles.cardTitle),
               ],
             ),
           ),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
             decoration: BoxDecoration(
                 color: AppColors.success.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20)),
@@ -390,8 +429,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       child: AppCard(
         child: Row(
           children: [
-            const Icon(Icons.link_rounded,
-                color: AppColors.navy, size: 18),
+            const Icon(Icons.link_rounded, color: AppColors.navy, size: 18),
             const SizedBox(width: 10),
             Expanded(
                 child: Text(
@@ -431,14 +469,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     final targetCountries =
         (Json.listOrNull(overview['targetCountries']) ?? []).join('، ');
     final stageKey = overview['journeyStage'] as String?;
-    final stageName = (stageKey != null ? _stageLabels[stageKey] : null) ??
-        stageKey ??
-        '—';
+    final stageName =
+        (stageKey != null ? _stageLabels[stageKey] : null) ?? stageKey ?? '—';
 
     // Ordered journey milestones to display as a mini-roadmap
     const milestones = [
       ('applying', 'التقديم', Icons.edit_document),
-      ('preliminary-accepted', 'القبول المبدئي', Icons.check_circle_outline_rounded),
+      (
+        'preliminary-accepted',
+        'القبول المبدئي',
+        Icons.check_circle_outline_rounded
+      ),
       ('first-payment', 'الدفعة الأولى', Icons.payments_outlined),
       ('final-accepted', 'القبول النهائي', Icons.verified_rounded),
       ('visa', 'التأشيرة', Icons.card_travel_rounded),
@@ -474,8 +515,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           style: AppTextStyles.caption),
                     ])),
               ]),
-              if (targetCountries.isNotEmpty ||
-                  overview['intake'] != null) ...[
+              if (targetCountries.isNotEmpty || overview['intake'] != null) ...[
                 const Divider(height: 20),
                 Wrap(
                   spacing: 16,
@@ -483,8 +523,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   children: [
                     if (targetCountries.isNotEmpty)
                       _MiniFact(
-                          label: 'الدول المستهدفة',
-                          value: targetCountries),
+                          label: 'الدول المستهدفة', value: targetCountries),
                     if (overview['intake'] != null)
                       _MiniFact(
                           label: 'الفصل الدراسي',
@@ -507,10 +546,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                      color: AppColors.orange.withValues(alpha: 0.1),
+                      color: AppColors.green.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10)),
                   child: const Icon(Icons.timeline_rounded,
-                      color: AppColors.orange, size: 22),
+                      color: AppColors.green, size: 22),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -537,14 +576,14 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: isCurrent
-                            ? AppColors.orange.withValues(alpha: 0.12)
+                            ? AppColors.green.withValues(alpha: 0.12)
                             : isDone
                                 ? AppColors.success.withValues(alpha: 0.08)
                                 : AppColors.border.withValues(alpha: 0.5),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
                           color: isCurrent
-                              ? AppColors.orange
+                              ? AppColors.green
                               : isDone
                                   ? AppColors.success.withValues(alpha: 0.4)
                                   : AppColors.border,
@@ -555,7 +594,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           isDone ? Icons.check_circle_rounded : m.$3,
                           size: 13,
                           color: isCurrent
-                              ? AppColors.orange
+                              ? AppColors.green
                               : isDone
                                   ? AppColors.success
                                   : AppColors.textSecondary,
@@ -565,11 +604,10 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                           m.$2,
                           style: TextStyle(
                             fontSize: 11,
-                            fontWeight: isCurrent
-                                ? FontWeight.w700
-                                : FontWeight.normal,
+                            fontWeight:
+                                isCurrent ? FontWeight.w700 : FontWeight.normal,
                             color: isCurrent
-                                ? AppColors.orange
+                                ? AppColors.green
                                 : isDone
                                     ? AppColors.success
                                     : AppColors.textSecondary,
@@ -675,7 +713,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                                 width: 7,
                                 height: 7,
                                 decoration: const BoxDecoration(
-                                    color: AppColors.orange,
+                                    color: AppColors.green,
                                     shape: BoxShape.circle),
                               ),
                           ]),
@@ -712,10 +750,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                   fontWeight: FontWeight.w700,
                   color: AppColors.textPrimary)),
           const SizedBox(height: 8),
-          const Text(
-              'أرسل طلب ربط بإدخال البريد الإلكتروني لابنك/ابنتك أعلاه.',
-              textAlign: TextAlign.center,
-              style: AppTextStyles.caption),
+          const Text('أرسل طلب ربط بإدخال البريد الإلكتروني لابنك/ابنتك أعلاه.',
+              textAlign: TextAlign.center, style: AppTextStyles.caption),
         ],
       ),
     );
@@ -749,8 +785,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           const LoadingState()
         else if (_payments == null)
           const AppCard(
-              child: Text('تعذر تحميل الفواتير.',
-                  style: AppTextStyles.caption))
+              child: Text('تعذر تحميل الفواتير.', style: AppTextStyles.caption))
         else if (_payments!.isEmpty)
           const AppCard(
               child: Text('لا توجد فواتير مسجّلة بعد لهذا الطالب.',
@@ -767,7 +802,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     final status = inv['status'] as String? ?? 'unpaid';
     final amount = inv['amount'];
     final currency = inv['currency'] as String? ?? 'USD';
-    final desc = inv['description'] as String? ?? inv['invoiceNumber'] as String? ?? 'فاتورة';
+    final desc = inv['description'] as String? ??
+        inv['invoiceNumber'] as String? ??
+        'فاتورة';
     final invNum = inv['invoiceNumber'] as String? ?? '';
     final dueDate = inv['dueDate'] as String?;
     final proofs = Json.listOrNull(inv['proofs']) ?? [];
@@ -777,7 +814,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       'paid' => ('مدفوع', AppColors.success),
       'pending-confirmation' => ('قيد المراجعة', AppColors.warning),
       'rejected' => ('مرفوض', AppColors.danger),
-      _ => ('غير مدفوع', AppColors.orange),
+      _ => ('غير مدفوع', AppColors.green),
     };
 
     return Padding(
@@ -788,25 +825,37 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
           children: [
             Row(children: [
               Container(
-                width: 42, height: 42,
+                width: 42,
+                height: 42,
                 decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(10)),
                 child: Icon(
-                    status == 'paid' ? Icons.check_circle_outline_rounded : Icons.receipt_long_outlined,
-                    color: color, size: 20),
+                    status == 'paid'
+                        ? Icons.check_circle_outline_rounded
+                        : Icons.receipt_long_outlined,
+                    color: color,
+                    size: 20),
               ),
               const SizedBox(width: 12),
               Expanded(
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(desc, style: AppTextStyles.cardTitle),
-                if (invNum.isNotEmpty) Text(invNum, style: AppTextStyles.caption),
-                if (dueDate != null) Text('الاستحقاق: ${_formatDate(dueDate)}', style: AppTextStyles.caption),
-              ])),
+                  child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                    Text(desc, style: AppTextStyles.cardTitle),
+                    if (invNum.isNotEmpty)
+                      Text(invNum, style: AppTextStyles.caption),
+                    if (dueDate != null)
+                      Text('الاستحقاق: ${_formatDate(dueDate)}',
+                          style: AppTextStyles.caption),
+                  ])),
               Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
                 if (amount != null)
                   Text('$amount $currency',
-                      style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13, color: AppColors.textPrimary)),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 13,
+                          color: AppColors.textPrimary)),
                 const SizedBox(height: 4),
                 StatusBadge(label: label, color: color),
               ]),
@@ -829,13 +878,17 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 6),
                   child: Row(children: [
-                    const Icon(Icons.attach_file_rounded, size: 14, color: AppColors.textSecondary),
+                    const Icon(Icons.attach_file_rounded,
+                        size: 14, color: AppColors.textSecondary),
                     const SizedBox(width: 6),
-                    Expanded(child: Text(
-                      paidByName != null
-                          ? (paidByRole == 'parent' ? 'دفعها الوالد/الوالدة ($paidByName)' : 'دفعها الطالب')
-                          : 'إثبات دفع',
-                      style: AppTextStyles.caption)),
+                    Expanded(
+                        child: Text(
+                            paidByName != null
+                                ? (paidByRole == 'parent'
+                                    ? 'دفعها الوالد/الوالدة ($paidByName)'
+                                    : 'دفعها الطالب')
+                                : 'إثبات دفع',
+                            style: AppTextStyles.caption)),
                     StatusBadge(label: pLabel, color: pColor),
                   ]),
                 );
@@ -848,7 +901,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               SizedBox(
                 width: double.infinity,
                 child: _PayInvoiceButton(
-                  studentId: (Json.map(_children[_selectedIndex]))['_id'] as String,
+                  studentId:
+                      (Json.map(_children[_selectedIndex]))['_id'] as String,
                   invoiceId: inv['_id'] as String,
                   invoiceDesc: desc,
                   onPaid: () {
@@ -866,85 +920,11 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
   // ── Tab 2: Account ───────────────────────────────────────────────────────
 
   Widget _buildAccountTab() {
-    final user = AuthSession.instance.currentUser;
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        // Profile card
-        AppCard(
-          child: Row(children: [
-            CircleAvatar(
-                radius: 26,
-                backgroundColor: AppColors.navy.withValues(alpha: 0.1),
-                child: const Icon(Icons.person_rounded,
-                    color: AppColors.navy, size: 28)),
-            const SizedBox(width: 14),
-            Expanded(
-                child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-              Text(user?.name ?? '—', style: AppTextStyles.cardTitle),
-              Text(user?.email ?? '', style: AppTextStyles.caption),
-              const SizedBox(height: 4),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-                decoration: BoxDecoration(
-                    color: AppColors.orange.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(20)),
-                child: const Text('ولي أمر',
-                    style: TextStyle(
-                        color: AppColors.orange,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w700)),
-              ),
-            ])),
-          ]),
-        ),
-        const SizedBox(height: 16),
-        const Text('الإعدادات', style: AppTextStyles.sectionLabel),
-        const SizedBox(height: 10),
-        AppCard(
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => const ChangePasswordScreen())),
-          child: const Row(children: [
-            Icon(Icons.lock_outline_rounded, color: AppColors.navy, size: 20),
-            SizedBox(width: 12),
-            Expanded(
-                child: Text('تغيير كلمة المرور',
-                    style: AppTextStyles.cardTitle)),
-            Icon(Icons.arrow_back_ios_new_rounded,
-                size: 14, color: AppColors.textSecondary),
-          ]),
-        ),
-        AppCard(
-          onTap: () => Navigator.of(context).push(MaterialPageRoute(
-              builder: (_) => const SecuritySettingsScreen())),
-          child: const Row(children: [
-            Icon(Icons.security_rounded, color: AppColors.navy, size: 20),
-            SizedBox(width: 12),
-            Expanded(
-                child: Text('أمان الحساب', style: AppTextStyles.cardTitle)),
-            Icon(Icons.arrow_back_ios_new_rounded,
-                size: 14, color: AppColors.textSecondary),
-          ]),
-        ),
-        const SizedBox(height: 16),
-        AppCard(
-          onTap: () => _confirmLogout(context),
-          child: const Row(children: [
-            Icon(Icons.logout_rounded, color: AppColors.danger, size: 20),
-            SizedBox(width: 12),
-            Expanded(
-                child: Text('تسجيل الخروج',
-                    style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.danger))),
-          ]),
-        ),
-        const SizedBox(height: 24),
-      ],
+    final userId = AuthSession.instance.currentUser?.id ?? '';
+    return RoleAccountTab(
+      onLogout: () => _confirmLogout(context),
+      streakCardKey: ValueKey('parent-my-streak-$userId'),
+      gameCardKey: const ValueKey('parent-wink-game'),
     );
   }
 
@@ -955,11 +935,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('ربط حساب طالب جديد',
-              style: AppTextStyles.sectionLabel),
+          const Text('ربط حساب طالب جديد', style: AppTextStyles.sectionLabel),
           const SizedBox(height: 4),
-          const Text(
-              'أدخل البريد الإلكتروني المسجّل به حساب ابنك/ابنتك.',
+          const Text('أدخل البريد الإلكتروني المسجّل به حساب ابنك/ابنتك.',
               style: AppTextStyles.caption),
           const SizedBox(height: 12),
           _InputField(
@@ -968,8 +946,7 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
               keyboardType: TextInputType.emailAddress),
           const SizedBox(height: 8),
           _InputField(
-              controller: _relationshipCtrl,
-              hint: 'صلة القرابة (اختياري)'),
+              controller: _relationshipCtrl, hint: 'صلة القرابة (اختياري)'),
           if (_requestError != null) ...[
             const SizedBox(height: 8),
             InlineNotice(_requestError!, error: true),
@@ -988,8 +965,8 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('تسجيل الخروج',
-            style: TextStyle(fontFamily: 'Tajawal')),
+        title:
+            const Text('تسجيل الخروج', style: TextStyle(fontFamily: 'Tajawal')),
         content: const Text('هل تريد تسجيل الخروج من حسابك؟',
             style: TextStyle(fontFamily: 'Tajawal')),
         actions: [
@@ -1012,7 +989,9 @@ class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
     try {
       final d = DateTime.parse(iso).toLocal();
       return '${d.day}/${d.month}/${d.year}';
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/parent_dashboard_screen.dart:1009');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/parent_dashboard_screen.dart:1009');
       return iso;
     }
   }
@@ -1029,8 +1008,7 @@ class _MiniFact extends StatelessWidget {
     return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label, style: AppTextStyles.caption),
       Text(value,
-          style:
-              AppTextStyles.body.copyWith(fontWeight: FontWeight.w700)),
+          style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700)),
     ]);
   }
 }
@@ -1039,7 +1017,8 @@ class _ChildChip extends StatelessWidget {
   final String name;
   final bool selected;
   final VoidCallback onTap;
-  const _ChildChip({required this.name, required this.selected, required this.onTap});
+  const _ChildChip(
+      {required this.name, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1053,8 +1032,8 @@ class _ChildChip extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppRadius.chip),
-            border: Border.all(
-                color: selected ? AppColors.navy : AppColors.border),
+            border:
+                Border.all(color: selected ? AppColors.navy : AppColors.border),
           ),
           child: Text(
             name,
@@ -1090,8 +1069,8 @@ class _InputField extends StatelessWidget {
         decoration: InputDecoration(
             hintText: hint,
             border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(
-                vertical: 12, horizontal: 12)),
+            contentPadding:
+                const EdgeInsets.symmetric(vertical: 12, horizontal: 12)),
       ),
     );
   }
@@ -1136,14 +1115,16 @@ class _PayInvoiceButtonState extends State<_PayInvoiceButton> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-            content: Text('تم إرسال إثبات الدفع، بانتظار مراجعة الفريق'),
+            content: const Text('تم إرسال إثبات الدفع، بانتظار مراجعة الفريق'),
             backgroundColor: AppColors.success));
         widget.onPaid();
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/parent_dashboard_screen.dart:1137');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/parent_dashboard_screen.dart:1137');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-            content: Text('تعذر رفع الملف، حاول مرة أخرى'),
+            content: const Text('تعذر رفع الملف، حاول مرة أخرى'),
             backgroundColor: AppColors.danger));
       }
     } finally {
@@ -1156,14 +1137,18 @@ class _PayInvoiceButtonState extends State<_PayInvoiceButton> {
     return OutlinedButton.icon(
       onPressed: _uploading ? null : _pay,
       icon: _uploading
-          ? const SizedBox(width: 14, height: 14, child: CircularProgressIndicator(strokeWidth: 2))
+          ? const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 2))
           : const Icon(Icons.upload_file_rounded, size: 16),
       label: Text(_uploading ? 'جاري الرفع...' : 'رفع إثبات الدفع'),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppColors.navy,
         side: const BorderSide(color: AppColors.navy),
         padding: const EdgeInsets.symmetric(vertical: 10),
-        textStyle: const TextStyle(fontFamily: 'Tajawal', fontWeight: FontWeight.w600, fontSize: 13),
+        textStyle: const TextStyle(
+            fontFamily: 'Tajawal', fontWeight: FontWeight.w600, fontSize: 13),
       ),
     );
   }

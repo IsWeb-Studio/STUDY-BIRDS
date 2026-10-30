@@ -1,0 +1,92 @@
+diff --git a/server/src/models/User.js b/server/src/models/User.js
+index 6f36aa0..c8a15f8 100644
+--- a/server/src/models/User.js
++++ b/server/src/models/User.js
+@@ -35,6 +35,7 @@ const userSchema = new mongoose.Schema(
+       type: Boolean,
+       default: false,
+     },
++    notificationPreferences: {type: Map, of: Boolean, default: () => ({})},
+     role: {
+       type: String,
+       enum: ["student", "admin", "partner", "parent", "university", "employee"],
+diff --git a/server/src/routes/mobileSecurityRoutes.js b/server/src/routes/mobileSecurityRoutes.js
+index c9b7788..585e849 100644
+--- a/server/src/routes/mobileSecurityRoutes.js
++++ b/server/src/routes/mobileSecurityRoutes.js
+@@ -39,6 +39,18 @@ router.post('/reset/confirm', run(async (req, res) => {
+   res.json({ message: 'تم تغيير كلمة المرور. سجّل الدخول مجدداً.' });
+ }));
+ router.use(protect);
++const preferences = require('../utils/notificationPreferences');
++router.get('/notification-preferences', run(async (req, res) => {
++  const user = await User.findById(req.user._id).select('notificationPreferences').lean();
++  res.json({...preferences.defaults(), ...(user?.notificationPreferences || {})});
++}));
++router.put('/notification-preferences', run(async (req, res) => {
++  const patch = preferences.parsePreferences(req.body);
++  if (!patch) return res.status(400).json({message: 'تحقق من خيارات الإشعارات وحاول مجددًا.'});
++  await User.updateOne({_id: req.user._id}, {$set: Object.fromEntries(Object.entries(patch).map(([key, value]) => [`notificationPreferences.${key}`, value]))});
++  const user = await User.findById(req.user._id).select('notificationPreferences').lean();
++  res.json({...preferences.defaults(), ...(user?.notificationPreferences || {})});
++}));
+ router.get('/two-factor', run(async (req, res) => res.json({ enabled: req.user.twoFactorEnabled === true })));
+ router.post('/two-factor/request', run(async (req, res) => {
+   const user = await User.findById(req.user._id);
+diff --git a/server/src/utils/pushNotifications.js b/server/src/utils/pushNotifications.js
+index 25fa0c1..e2ebe04 100644
+--- a/server/src/utils/pushNotifications.js
++++ b/server/src/utils/pushNotifications.js
+@@ -11,6 +11,10 @@ function isPushEnabled() {
+ // buttons: [{ id, text, url? }]  — OneSignal action buttons (Android/iOS)
+ async function sendPushToUser(userId, { title, body, link, buttons = [] }) {
+   if (!isPushEnabled()) return { sent: 0, disabled: true };
++  const User = require('../models/User');
++  const {categoryFor} = require('./notificationPreferences');
++  const account = await User.findById(userId).select('notificationPreferences').lean();
++  if (account?.notificationPreferences?.[categoryFor({title, body, link})] === false) return {sent: 0, muted: true};
+ 
+   const payload = {
+     app_id: process.env.ONESIGNAL_APP_ID,
+@@ -51,8 +55,15 @@ async function sendPushToUser(userId, { title, body, link, buttons = [] }) {
+ // Broadcast to multiple user IDs in one OneSignal call (max 2000)
+ async function sendPushToUsers(userIds, notification) {
+   if (!isPushEnabled() || !userIds.length) return { sent: 0, disabled: !isPushEnabled() };
+-  const ids = [...new Set(userIds.map(String))].slice(0, 2000);
++  let ids = [...new Set(userIds.map(String))].slice(0, 2000);
+   const { title, body, link, buttons = [] } = notification;
++  const User = require('../models/User');
++  const {categoryFor} = require('./notificationPreferences');
++  const category = categoryFor(notification);
++  const accounts = await User.find({_id: {$in: ids}}).select('notificationPreferences').lean();
++  const muted = new Set(accounts.filter(account => account.notificationPreferences?.[category] === false).map(account => String(account._id)));
++  ids = ids.filter(id => !muted.has(id));
++  if (!ids.length) return {sent: 0, muted: true};
+   const payload = {
+     app_id: process.env.ONESIGNAL_APP_ID,
+     include_aliases: { external_id: ids },
+
+diff --git a/server/src/utils/notificationPreferences.js b/server/src/utils/notificationPreferences.js
+new file mode 100644
+--- /dev/null
++++ b/server/src/utils/notificationPreferences.js
+@@ -0,0 +1,19 @@
++const categories = ['payments', 'admission', 'documents', 'consultations', 'visa', 'support', 'announcements'];
++const defaults = () => Object.fromEntries(categories.map(key => [key, true]));
++function parsePreferences(value) {
++  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
++  const keys = Object.keys(value);
++  if (!keys.length || keys.some(key => !categories.includes(key) || typeof value[key] !== 'boolean')) return null;
++  return Object.fromEntries(keys.map(key => [key, value[key]]));
++}
++function categoryFor({title = '', body = '', link = ''}) {
++  const text = `${link} ${title} ${body}`.toLowerCase();
++  if (/financial|payment|invoice|دفع|فاتورة|سداد/.test(text)) return 'payments';
++  if (/document|مستند|وثيقة/.test(text)) return 'documents';
++  if (/consultation|استشارة/.test(text)) return 'consultations';
++  if (/visa|arrival|travel|تأشيرة|سفر|وصول/.test(text)) return 'visa';
++  if (/support|message|دعم|تذكرة|رسالة/.test(text)) return 'support';
++  if (/application|admission|قبول|طلب دراسي/.test(text)) return 'admission';
++  return 'announcements';
++}
++module.exports = {categories, defaults, parsePreferences, categoryFor};

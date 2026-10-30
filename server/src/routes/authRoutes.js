@@ -32,6 +32,7 @@ router.post("/otp/verify", verifyOtp);
 router.post("/email-otp/request", requestEmailOtp);
 router.post("/email-otp/verify", verifyEmailOtp);
 router.get("/me", protect, me);
+router.patch('/me/profile', protect, require('../controllers/accountProfileController').updateName);
 router.post("/change-password", protect, changePassword);
 router.post("/refresh", refresh);
 router.post("/logout", (req, res, next) => {
@@ -43,4 +44,6 @@ router.delete("/account", protect, deleteAccount);
 router.post('/account/verification', protect, requestAccountDeletion);
 router.post('/avatar', protect, require('../middleware/uploadMiddleware').single('file'), require('../controllers/avatarController'));
 
+router.post('/account-deletion/request', authAttempts, require('../controllers/authController').requestWebDeletion);
+router.post('/account-deletion/confirm', authAttempts, require('../controllers/authController').confirmWebDeletion);
 module.exports = router;

@@ -6,6 +6,7 @@ import 'package:http/testing.dart';
 import 'package:study_birds/core/services/auth_session.dart';
 import 'package:study_birds/core/utils/student_events.dart';
 import 'package:study_birds/screens/services_support/services_consultation_screens.dart';
+import 'package:study_birds/screens/services_support/support_team_ai_screens.dart';
 
 http.Response reply(Object body, [int status = 200]) =>
     http.Response(jsonEncode(body), status,
@@ -27,6 +28,84 @@ const booking = {
 void main() {
   setUp(() => AuthSession.instance.token = 'test-session');
   tearDown(() => AuthSession.instance.token = null);
+
+  testWidgets('date selection offers published days and keeps booking reachable',
+      (tester) async {
+    final start = DateUtils.dateOnly(DateTime.now()).add(const Duration(days: 2, hours: 12));
+    final availableSlot = {...slot, 'startsAt': start.toUtc().toIso8601String()};
+    var posted = false;
+    await http.runWithClient(() async {
+      await tester.pumpWidget(const MaterialApp(home: ConsultationBookingScreen()));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('تصفية حسب التاريخ'), 150,
+          scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.text('تصفية حسب التاريخ'));
+      await tester.pumpAndSettle();
+      final picker = tester.widget<DatePickerDialog>(find.byType(DatePickerDialog));
+      expect(DateUtils.isSameDay(picker.initialDate, start), isTrue);
+      expect(picker.selectableDayPredicate!(DateUtils.dateOnly(start)), isTrue);
+      expect(picker.selectableDayPredicate!(DateUtils.dateOnly(start).add(const Duration(days: 1))), isFalse);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.text('حجز'), 150,
+          scrollable: find.byType(Scrollable).first);
+      await tester.tap(find.text('حجز'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('تأكيد'));
+      await tester.pumpAndSettle();
+      expect(posted, isTrue);
+      expect(find.text('تم تأكيد موعدك بنجاح'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }, () => MockClient((request) async {
+      if (request.method == 'POST') {
+        expect(jsonDecode(request.body), {'slotId': 'slot'});
+        posted = true;
+        return reply({...booking, 'startsAt': availableSlot['startsAt']}, 201);
+      }
+      return reply(request.url.path.endsWith('/slots') ? [availableSlot] : []);
+    }));
+  });
+
+  testWidgets('no published slots explains why no booking is offered', (tester) async {
+    var requested = false;
+    await http.runWithClient(() async {
+      await tester.pumpWidget(const MaterialApp(home: ConsultationBookingScreen()));
+      await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(find.textContaining('لا توجد مواعيد منشورة'), 150,
+          scrollable: find.byType(Scrollable).first);
+      expect(find.text('حجز'), findsNothing);
+      final dateButton = find.text('اختيار التاريخ المفضل');
+      final press = tester.widget<TextButton>(find.ancestor(of: dateButton, matching: find.byType(TextButton))).onPressed!;
+      press(); press(); press();
+      await tester.pumpAndSettle();
+      expect(find.byType(DatePickerDialog), findsOneWidget);
+      expect(find.byType(SnackBar), findsNothing);
+      await tester.tap(find.text('OK'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('طلب تنسيق استشارة'));
+      await tester.pumpAndSettle();
+      expect(find.byType(NewSupportTicketScreen), findsOneWidget);
+      expect(find.textContaining('أي نوع متاح'), findsOneWidget);
+      await tester.scrollUntilVisible(find.text('إرسال'), 200,
+          scrollable: find.byType(Scrollable).last);
+      await tester.tap(find.text('إرسال'));
+      await tester.pumpAndSettle();
+      expect(requested, isTrue);
+      expect(find.textContaining('تم إرسال طلبك'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    }, () => MockClient((request) async {
+      if (request.method == 'POST') {
+        expect(request.url.path, endsWith('/students/support-tickets'));
+        final body = jsonDecode(request.body) as Map;
+        expect(body['category'], 'other');
+        expect(body['message'], contains('أي نوع متاح'));
+        expect(body['message'], contains('التاريخ المفضل'));
+        requested = true;
+        return reply({'_id': 'consultation-request'}, 201);
+      }
+      return reply([]);
+    }));
+  });
 
   testWidgets('consultation books an available slot only after confirmation',
       (tester) async {

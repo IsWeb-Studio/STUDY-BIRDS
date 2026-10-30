@@ -78,6 +78,7 @@ test('private upload, scoped access, expiration and public signer isolation', as
     assert.equal((await Invoice.findById(invoice._id)).status, 'pending-confirmation');
     const SupportTicket = require('../src/models/SupportTicket');
     const support = await User.create({ name: 'Support', email: 'support@example.test', role: 'employee', permissions: ['support'] });
+    await require('../src/models/StudentSupportTeam').create({student:student._id,members:[support._id]});
     const partner = await User.create({ name: 'Partner', email: 'partner@example.test', role: 'partner' });
     const admin = await User.create({ name: 'Admin', email: 'admin@example.test', role: 'admin' });
     for (const [owner, route] of [[student, '/students/support-tickets'], [partner, '/partners/tickets']]) {

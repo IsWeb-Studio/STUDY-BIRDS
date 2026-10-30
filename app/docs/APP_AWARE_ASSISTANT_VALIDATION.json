@@ -1,0 +1,40 @@
+{
+  "knowledgeVersion": "2026.10.22.2",
+  "coverage": {
+    "version": "2026.10.22.2",
+    "sourceFiles": 641,
+    "screenDeclarations": 167,
+    "sourceFilesWithScreens": 82,
+    "topicCount": 62,
+    "studentTopics": 48,
+    "restrictedTopics": 14,
+    "screenDeclarationsInReferencedFiles": 166,
+    "screenDeclarationsWithoutDirectTopicSource": 1,
+    "shortcutCount": 23,
+    "skippedLinks": 0,
+    "scope": "Local code verification only; no production feature-flag, external-provider or device verification."
+  },
+  "backendTests": 17,
+  "fullFlutterTests": 472,
+  "finalFocusedFlutterTests": 9,
+  "websiteTests": 103,
+  "flutterAnalyze": "No issues found",
+  "typescript": "Passed (no emit)",
+  "sourceVerification": {
+    "valid": true,
+    "changed": [],
+    "affectedEntries": [],
+    "catalogChanged": false,
+    "reviewRequired": false
+  },
+  "fullFlutterBeforeFinalMetadataAndLabelRefinements": true,
+  "liveProviderTested": false,
+  "realDeviceTested": false,
+  "APKBuild": false,
+  "productionDeployed": false,
+  "qaGateHash": "2FA29230BAC7CB3795AE577E5DC1A627E57E39365F34549EC4F15F63B12B0390",
+  "gitHEADs": {
+    "mobile": "3e31e19c5343170056e6d7559c59bfb891f2c624",
+    "platform": "e9060536e8dc7a70150da9c42d6dfac901713553"
+  }
+}

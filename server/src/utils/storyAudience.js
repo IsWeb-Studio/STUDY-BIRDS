@@ -50,6 +50,7 @@ async function canReadStory(viewer, story, session = null) {
   if (!viewer || !story || !COMMUNITY_ROLES.includes(viewer.role)) return false;
   const author = story.author?._id || story.author;
   if (!author) return false;
+  if (await require('./userBlocks').isBlocked(viewer._id, author)) return false;
   const audience = story.audience || 'allEligible';
   const visible = String(viewer._id) === String(author) ||
       audience === 'allEligible' || audience === audienceForRole(viewer.role);

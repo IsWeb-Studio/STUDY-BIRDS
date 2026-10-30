@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { AdminCommunityComposer } from "../../components/AdminCommunityComposer";
+import { CommunityPostPhoto } from "../../components/CommunityPostPhoto";
 import { api } from "../../lib/api";
 import { useLanguage } from "../../hooks/useLanguage";
 import { getErrorMessage } from "../../utils/errors";
@@ -6,7 +8,7 @@ import { getErrorMessage } from "../../utils/errors";
 type Person = { _id?: string; name: string; email?: string };
 type Post = {
   _id: string; title: string; body: string; topic: string; status: string; commentCount: number; createdAt: string;
-  author?: Person; moderationNote?: string; moderatedBy?: Person; openReports?: number; studyField?: { name: string };
+  author?: Person; moderationNote?: string; moderatedBy?: Person; openReports?: number; studyField?: { name: string }; imagePath?: string;
 };
 type Comment = { _id: string; body: string; status: string; createdAt: string; author?: Person; moderationNote?: string; reportCount: number };
 type Report = {
@@ -161,6 +163,7 @@ export const AdminCommunityPage = () => {
         </div>
         <p className="mt-1 text-sm text-slate-600">{detail.post.author?.name} — {detail.post.author?.email} · {label(TOPIC_LABELS, detail.post.topic)} · {date(detail.post.createdAt)}</p>
         <p className="mt-3 whitespace-pre-wrap">{detail.post.body}</p>
+        {detail.post.imagePath && <CommunityPostPhoto key={detail.post.imagePath} path={detail.post.imagePath} alt={t('صورة المنشور', 'Post photo')} />}
         {detail.post.moderationNote && <p className="mt-2 text-sm text-amber-800">{t("ملاحظة الإشراف", "Moderation note")}: {detail.post.moderationNote}</p>}
         <div className="flex flex-wrap gap-2">
           {actions("post", detail.post._id, detail.post.status, openFor("post", detail.post._id))}
@@ -198,6 +201,7 @@ export const AdminCommunityPage = () => {
 
   return <div className="space-y-6" dir={ar ? "rtl" : "ltr"}>
     <h1 className="text-2xl font-bold">{t("إشراف مجتمع الطلاب", "Student Community Moderation")}</h1>
+    <AdminCommunityComposer onPublished={() => { if (tab === 'posts') void load(); else setTab('posts'); }} />
     {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-red-800">{error}</p>}
     {notice && <p role="status" className="rounded-xl bg-green-50 p-3 text-green-800">{notice}</p>}
     <div className="flex flex-wrap gap-2">

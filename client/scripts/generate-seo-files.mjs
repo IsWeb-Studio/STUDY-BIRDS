@@ -107,8 +107,8 @@ const buildArticleHtml = (template, article) => {
 };
 
 const buildCategoryHtml = (template, categoryName, categoryUrl) => {
-  const title = `${categoryName} | Study Birds`;
-  const description = `Browse ${categoryName} articles in the Study Birds blog.`;
+  const title = `${categoryName} | COVEY`;
+  const description = `Browse ${categoryName} articles in the COVEY blog.`;
   let html = template.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
   html = setOrInsert(
     html,
@@ -126,8 +126,8 @@ const buildCategoryHtml = (template, categoryName, categoryUrl) => {
 };
 
 const buildListingHtml = (template) => {
-  const title = "Study Abroad Blog | Study Birds";
-  const description = "Explore study abroad articles, university updates, and student guidance from Study Birds.";
+  const title = "Study Abroad Blog | COVEY";
+  const description = "Explore study abroad articles, university updates, and student guidance from COVEY.";
   let html = template.replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`);
   html = setOrInsert(
     html,

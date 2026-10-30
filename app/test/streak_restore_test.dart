@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -8,74 +7,129 @@ import 'package:study_birds/core/repositories/stories_repository.dart';
 import 'package:study_birds/core/services/auth_session.dart';
 import 'package:study_birds/core/widgets/streak_restore.dart';
 
-void main() {
-  testWidgets(
-      'restore consumes one request and updates remaining monthly allowance',
-      (tester) async {
-    AuthSession.instance.token = 'streak-test';
-    addTearDown(() => AuthSession.instance.token = null);
-    var progress = StoryProgress.fromJson({
+StoryProgress recoverable({int remaining = 3}) => StoryProgress.fromJson({
       'streak_days': 0,
       'recoverableStreakDays': 7,
-      'streakRestoresRemaining': 3,
-      'canRestoreStreak': true,
+      'streakRestoresRemaining': remaining,
+      'streakRestoreLimit': 3,
+      'canRestoreStreak': remaining > 0,
+      'serverNow': '2030-10-22T12:00:00Z',
+      'recoveryExpiresAt': '2030-10-22T13:00:00Z',
+      'monthResetsAt': '2030-10-31T21:00:00Z',
+      'streakState': 'recoverable',
     });
-    final response = Completer<http.Response>();
-    var requests = 0;
+void main() {
+  setUp(() => AuthSession.instance.token = 'streak-test');
+  tearDown(() => AuthSession.instance.token = null);
+  testWidgets(
+      'restoration requires confirmation, prevents duplicates and updates allowance immediately',
+      (tester) async {
+    int writes = 0;
+    StoryProgress p = recoverable();
     await http.runWithClient(() async {
       await tester.pumpWidget(MaterialApp(
           home: Scaffold(
               body: StatefulBuilder(
-        builder: (context, update) => StreakRestore(
-            progress: progress,
-            onRestored: (value) => update(() => progress = value)),
-      ))));
-      await tester.tap(find.text('استرجاع الستريك (7 يوم)'));
-      await tester.pump();
-      expect(requests, 1);
-      expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-          isNull);
-      response.complete(http.Response(
-          jsonEncode({
-            'streak_days': 7,
-            'streakRestoresRemaining': 2,
-            'recoverableStreakDays': 0,
-            'canRestoreStreak': false,
-          }),
-          200,
-          headers: {'content-type': 'application/json; charset=utf-8'}));
+                  builder: (context, update) => StreakRestore(
+                      progress: p,
+                      onRestored: (value) => update(() => p = value))))));
+      await tester.tap(find.byKey(const ValueKey('streak-restore')));
       await tester.pumpAndSettle();
-      expect(progress.days, 7);
-      expect(find.text('استرجاع الستريك: متبقي 2 من 3 هذا الشهر.'),
-          findsOneWidget);
-      expect(find.byType(FilledButton), findsNothing);
+      expect(writes, 0);
+      expect(find.text('Restore your streak?'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('confirm-streak-restore')));
+      await tester.pumpAndSettle();
+      expect(writes, 1);
+      expect(p.days, 7);
+      expect(p.restoresRemaining, 2);
+      expect(find.text('2 of 3 restores left this month'), findsOneWidget);
+      expect(find.byKey(const ValueKey('streak-restore')), findsNothing);
+      expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },
-        () => MockClient((request) {
-              requests++;
+        () => MockClient((request) async {
+              writes++;
               expect(request.url.path, endsWith('/stories/streak/restore'));
-              expect(request.method, 'POST');
               expect(request.headers['Idempotency-Key'], isNotEmpty);
-              return response.future;
+              return http.Response(
+                  jsonEncode({
+                    'streak_days': 7,
+                    'streakRestoresRemaining': 2,
+                    'streakState': 'active'
+                  }),
+                  200);
             }));
   });
-  testWidgets('fourth restore is disabled and server fields default safely',
+  testWidgets('cancel does not write and exhausted allowance offers no restore',
       (tester) async {
-    final progress = StoryProgress.fromJson({
-      'recoverableStreakDays': 7,
-      'streakRestoresRemaining': 0,
-      'canRestoreStreak': false,
-    });
+    int writes = 0;
     await tester.pumpWidget(MaterialApp(
         home: Scaffold(
             body: StreakRestore(
-      progress: progress,
-      onRestored: (_) => fail('must not restore'),
-    ))));
-    expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
-        isNull);
-    expect(find.textContaining('استخدمت الاسترجاعات الثلاثة'), findsOneWidget);
-    expect(StoryProgress.fromJson({}).canRestore, isFalse);
+                progress: recoverable(),
+                restore: (_) async {
+                  writes++;
+                  return recoverable();
+                },
+                onRestored: (_) {}))));
+    await tester.tap(find.byKey(const ValueKey('streak-restore')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Not now'));
+    await tester.pumpAndSettle();
+    expect(writes, 0);
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: StreakRestore(
+                progress: recoverable(remaining: 0), onRestored: (_) {}))));
+    expect(find.byKey(const ValueKey('streak-restore')), findsNothing);
+    expect(find.textContaining('used all three'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
+  });
+  testWidgets(
+      'uncertain retry reuses one operation; failed attempt does not change allowance',
+      (tester) async {
+    final operations = <String>[];
+    await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+            body: StreakRestore(
+                progress: recoverable(),
+                restore: (id) async {
+                  operations.add(id);
+                  throw Exception('synthetic offline');
+                },
+                onRestored: (_) {
+                  fail('failed restore must not update balance');
+                }))));
+    for (int i = 0; i < 2; i++) {
+      await tester.tap(find.byKey(const ValueKey('streak-restore')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('confirm-streak-restore')));
+      await tester.pumpAndSettle();
+    }
+    expect(operations.length, 2);
+    expect(operations.toSet().length, 1);
+    expect(find.text('3 of 3 restores left this month'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+  test(
+      'eligibility never falls back to device clock or old unlimited recovery payloads',
+      () {
+    expect(recoverable().restoreEligible, true);
+    expect(
+        StoryProgress.fromJson({
+          'canRestoreStreak': true,
+          'recoverableStreakDays': 7,
+          'streakRestoresRemaining': 3
+        }).restoreEligible,
+        false);
+    expect(
+        StoryProgress.fromJson({
+          'canRestoreStreak': true,
+          'recoverableStreakDays': 7,
+          'streakRestoresRemaining': 3,
+          'serverNow': '2030-01-01T00:00:00Z',
+          'recoveryExpiresAt': '2029-12-31T23:59:59Z'
+        }).restoreEligible,
+        false);
   });
 }

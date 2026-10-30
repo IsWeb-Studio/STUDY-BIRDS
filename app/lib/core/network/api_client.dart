@@ -284,6 +284,8 @@ class ApiClient {
         return MediaType('image', 'webp');
       case 'mp4':
         return MediaType('video', 'mp4');
+      case 'm4a':
+        return MediaType('audio', 'mp4');
       case 'mov':
         return MediaType('video', 'quicktime');
       default:
@@ -361,18 +363,19 @@ class ApiClient {
     try {
       final data = _decode(response);
       if (method != 'GET') {
+        if (path.startsWith('/safety/blocks')) clearCache();
         if (path.startsWith('/mobile-workspace/messages') ||
             path.startsWith('/mobile-workspace/conversations')) {
           _snapshotVersion++;
           _inflight.removeWhere(
               (key, value) => key.contains(':/mobile-workspace/conversations'));
           _snapshots.removeWhere(
-              (key, value) => key.endsWith(':/mobile-workspace/conversations'));
+              (key, value) => key.contains(':/mobile-workspace/conversations'));
         }
         if (path.startsWith('/stories')) {
           _snapshotVersion++;
           _inflight.removeWhere((key, value) => key.contains(':/stories'));
-          _snapshots.removeWhere((key, value) => key.endsWith(':/stories'));
+          _snapshots.removeWhere((key, value) => key.contains(':/stories'));
         }
       }
       return data;

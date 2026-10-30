@@ -109,7 +109,7 @@ export const AccountSecurityPage = () => {
   });
   const button = "rounded-full bg-brand-900 px-5 py-3 text-sm font-semibold text-white disabled:opacity-50";
   return <div className="mx-auto max-w-3xl space-y-6 py-4">
-    <Seo title={text("أمان الحساب", "Account security")} description="Study Birds account security" noIndex />
+    <Seo title={text("أمان الحساب", "Account security")} description="COVEY account security" noIndex />
     <header><h1 className="text-3xl font-semibold text-slate-900">{text("أمان الحساب", "Account security")}</h1><p className="mt-2 text-slate-600">{text("تحكّم في طرق التحقق والأجهزة التي تستخدم حسابك.", "Manage verification and the devices using your account.")}</p></header>
     {error ? <p role="alert" className="rounded-2xl bg-rose-50 p-4 text-rose-700">{error}</p> : null}
     {notice ? <p role="status" className="rounded-2xl bg-emerald-50 p-4 text-emerald-800">{notice}</p> : null}

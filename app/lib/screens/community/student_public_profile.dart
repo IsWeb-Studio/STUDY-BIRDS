@@ -1,4 +1,6 @@
+import '../../core/config/app_theme.dart';
 import '../../core/widgets/bird_points.dart';
+import '../../core/widgets/safety_controls.dart';
 import 'package:flutter/material.dart';
 import '../../core/network/api_client.dart';
 import '../../core/repositories/friends_repository.dart';
@@ -164,7 +166,7 @@ class _StudentPublicProfileScreenState
                 ]))),
         const SizedBox(height: 3),
         Text(label,
-            style: const TextStyle(fontSize: 12, color: Colors.blueGrey)),
+            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
       ]));
   Widget _friendButton(String relation) => switch (relation) {
         'friends' => OutlinedButton.icon(
@@ -196,8 +198,9 @@ class _StudentPublicProfileScreenState
     final points = (p?['total_points'] as num?)?.toInt() ?? 0;
     final canView = p?['canViewStories'] == true;
     return Scaffold(
-        backgroundColor: const Color(0xFFF5F7FB),
+        backgroundColor: AppColors.background,
         appBar: AppBar(title: const Text('الملف الشخصي'), actions: [
+          BlockUserButton(userId: widget.studentId),
           IconButton(
               onPressed: _busy ? null : () => _load(),
               icon: const Icon(Icons.refresh),
@@ -249,13 +252,13 @@ class _StudentPublicProfileScreenState
                                                         stack) =>
                                                     const Icon(Icons.person,
                                                         size: 55,
-                                                        color: Colors.blueGrey))
+                                                        color: AppColors.textSecondary))
                                             : const ColoredBox(
-                                                color: Color(0xFFE8EEFC),
+                                                color: AppColors.greenSoft,
                                                 child: Icon(
                                                     Icons.person_outline,
                                                     size: 55,
-                                                    color: Colors.blueGrey)))),
+                                                    color: AppColors.textSecondary)))),
                                 const SizedBox(height: 14),
                                 Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -270,8 +273,8 @@ class _StudentPublicProfileScreenState
                                       StudentAchievementMark(points: points)
                                     ]),
                                 const SizedBox(height: 6),
-                                const Text('طالب في مجتمع Study Birds',
-                                    style: TextStyle(color: Colors.blueGrey)),
+                                const Text('طالب في مجتمع COVEY',
+                                    style: TextStyle(color: AppColors.textSecondary)),
                                 if (p['relation'] == 'self')
                                   const Padding(
                                       padding: EdgeInsets.only(top: 8),
@@ -280,8 +283,6 @@ class _StudentPublicProfileScreenState
                                 Row(children: [
                                   _stat('$points', 'السكور',
                                       icon: const BirdPointsIcon()),
-                                  _stat('${p['streak_days'] ?? 0}',
-                                      'أيام متتالية'),
                                   _stat('${p['friendCount'] ?? 0}', 'الأصدقاء')
                                 ]),
                                 if (p['relation'] != 'self') ...[
@@ -313,7 +314,7 @@ class _StudentPublicProfileScreenState
                             if (canView)
                               Text('${p['storyCount'] ?? _stories.length}',
                                   style:
-                                      const TextStyle(color: Colors.blueGrey))
+                                      const TextStyle(color: AppColors.textSecondary))
                           ]),
                           const SizedBox(height: 12),
                           if (!canView)
@@ -352,7 +353,7 @@ class _StudentPublicProfileScreenState
                                                       fit: BoxFit.cover,
                                                       errorBuilder: (ctx, error, stack) => const ColoredBox(
                                                           color:
-                                                              Color(0xFFDDE6F7),
+                                                              AppColors.border,
                                                           child: Icon(Icons
                                                               .image_outlined)))
                                                 else
@@ -436,10 +437,10 @@ class _ProfileNotice extends StatelessWidget {
       decoration: BoxDecoration(
           color: Colors.white, borderRadius: BorderRadius.circular(18)),
       child: Column(children: [
-        Icon(icon, color: Colors.blueGrey, size: 34),
+        Icon(icon, color: AppColors.textSecondary, size: 34),
         const SizedBox(height: 10),
         Text(text,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.blueGrey))
+            style: const TextStyle(color: AppColors.textSecondary))
       ]));
 }

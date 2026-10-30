@@ -42,12 +42,13 @@ List<StudentEvent> calendarEvents(
     }
   }
   final date = DateTime.tryParse(arrival?['arrivalDate']?.toString() ?? '');
-  if (date != null)
+  if (date != null) {
     events.add(StudentEvent(
         date,
         'موعد الوصول',
         '${arrival?['airport'] ?? ''} ${arrival?['arrivalTime'] ?? ''}'
             .trim()));
+  }
   events.sort((a, b) => a.date.compareTo(b.date));
   return events;
 }

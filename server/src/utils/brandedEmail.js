@@ -16,7 +16,7 @@ function _journeyBlock(site) {
   return `
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="table-layout:fixed;margin-top:28px;border-radius:14px;overflow:hidden;background:linear-gradient(135deg,#0c223a 0%,#1a3a5c 100%)">
 <tr><td style="padding:26px 24px;text-align:center">
-  <p style="margin:0 0 6px;color:#ff8a00;font-size:12px;font-weight:bold;letter-spacing:1.5px">STUDY BIRDS</p>
+  <p style="margin:0 0 6px;color:#ff8a00;font-size:12px;font-weight:bold;letter-spacing:1.5px">COVEY</p>
   <h2 style="margin:0 0 10px;color:#ffffff;font-size:20px;line-height:1.5">ابدأ رحلتك الدراسية الآن</h2>
   <p style="margin:0 0 20px;color:#b8cfe8;font-size:14px;line-height:1.8">
     نساعدك في الالتحاق بأفضل الجامعات حول العالم — من التقديم حتى وصولك.<br>
@@ -36,9 +36,9 @@ function renderBrandedEmail({ subject, text = '', html, emailContent = {} }) {
   const site = websiteOrigin();
   const assets = assetOrigin();
   // Version image URLs so mail proxies do not reuse the previous branding.
-  const backgroundImage = `${assets}/email-assets/header.png?v=20261015`;
-  const logoImage = `${assets}/email-assets/logo.png?v=20261015`;
-  const title = emailContent.title || subject || 'رسالة من Study Birds';
+  const backgroundImage = `${assets}/email-assets/header.png?v=20261030`;
+  const logoImage = `${assets}/email-assets/logo.png?v=20261030`;
+  const title = emailContent.title || subject || 'رسالة من COVEY';
   const recipientName = emailContent.recipientName ? `أهلاً ${escapeHtml(emailContent.recipientName)}،` : 'أهلاً،';
   const body = html || `<p style="margin:0;line-height:1.9;white-space:pre-line">${escapeHtml(emailContent.bodyText ?? text)}</p>`;
   const rows = (emailContent.details || []).map(([label, value]) => `<tr>
@@ -56,18 +56,18 @@ function renderBrandedEmail({ subject, text = '', html, emailContent = {} }) {
 <div style="display:none;max-height:0;overflow:hidden;mso-hide:all">${escapeHtml(emailContent.preview || title)}</div>
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" bgcolor="#eaf4fc" style="table-layout:fixed;width:100%"><tr><td align="center" background="${escapeHtml(backgroundImage)}" style="padding:32px 12px;background-color:#eaf4fc;background-image:url('${escapeHtml(backgroundImage)}');background-position:center top;background-repeat:no-repeat;background-size:cover">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="width:100%;max-width:600px;table-layout:fixed;background:#ffffff;border:1px solid #e2e8f0;border-radius:16px;overflow:hidden">
-<tr><td bgcolor="#ffffff"><a href="${site}"><img src="${escapeHtml(backgroundImage)}" width="600" alt="Welcome to Study Birds — Your journey to a brighter future starts here." style="display:block;width:100%;height:auto;border:0"></a></td></tr>
+<tr><td bgcolor="#ffffff"><a href="${site}"><img src="${escapeHtml(backgroundImage)}" width="600" alt="Welcome to COVEY — Your journey to a brighter future starts here." style="display:block;width:100%;height:auto;border:0"></a></td></tr>
 <tr><td dir="rtl" bgcolor="#ffffff" style="padding:28px 24px 16px;text-align:right;background-color:#ffffff">
 <p style="margin:0 0 6px;color:#63758a;font-size:14px;line-height:1.7">${recipientName}</p>
 <h1 style="margin:0 0 18px;font-size:24px;line-height:1.5;color:#0c223a">${escapeHtml(title)}</h1>
 ${body}${code}
 ${rows ? `<table width="100%" cellspacing="0" cellpadding="0" style="table-layout:fixed;margin-top:22px;border:1px solid #e8edf3;border-radius:10px;font-size:14px;text-align:right">${rows}</table>` : ''}
 ${action}
-<p style="margin:22px 0 8px;line-height:1.8;color:#63758a;font-size:14px">مع أطيب التحيات،<br><strong style="color:#0c223a">فريق Study Birds</strong></p>
+<p style="margin:22px 0 8px;line-height:1.8;color:#63758a;font-size:14px">مع أطيب التحيات،<br><strong style="color:#0c223a">فريق COVEY</strong></p>
 ${showJourney ? _journeyBlock(site) : ''}
 </td></tr>
 <tr><td align="center" style="padding:22px 24px;border-top:1px solid #e8edf3;background:#f8fafc">
-  <img src="${escapeHtml(logoImage)}" width="180" alt="Study Birds — Your Future. Our Guidance. Worldwide." style="display:block;width:180px;max-width:100%;border:0;height:auto;margin:0 auto 10px">
+  <img src="${escapeHtml(logoImage)}" width="180" alt="COVEY — Your Future. Our Guidance. Worldwide." style="display:block;width:180px;max-width:100%;border:0;height:auto;margin:0 auto 10px">
   <a href="${site}" style="color:#0c223a;font-size:13px;text-decoration:none">${escapeHtml(new URL(site).hostname)}</a>
   <p style="margin:8px 0 0;color:#7a8a9c;font-size:11px">Your Future. Our Guidance. Worldwide.</p>
 </td></tr>

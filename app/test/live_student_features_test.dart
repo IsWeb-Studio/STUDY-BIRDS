@@ -89,7 +89,7 @@ void main() {
       'production entry starts onboarding without prototype or gallery chooser',
       (tester) async {
     AuthSession.instance.currentUser = null;
-    await tester.pumpWidget(const StudyBirdsApp());
+    await tester.pumpWidget(const CoveyApp());
     await tester.pump();
     await tester.pump(const Duration(seconds: 2));
     // Onboarding intentionally has a repeating animation.

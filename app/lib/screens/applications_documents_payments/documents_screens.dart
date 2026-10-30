@@ -2,6 +2,7 @@ import '../../core/utils/document_picker.dart';
 import '../../core/utils/document_eligibility.dart';
 import '../profile_account/passport_scanner_screen.dart';
 import '../../core/utils/json_safe.dart';
+import '../ai/assistant_help_button.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:study_birds/core/network/api_client.dart';
@@ -146,15 +147,17 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
     file = selected;
   }
   if (file.bytes == null) {
-    if (context.mounted)
+    if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تعذر قراءة الملف المختار')));
+    }
     return false;
   }
   if (file.size > 5 * 1024 * 1024) {
-    if (context.mounted)
+    if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('حجم الملف كبير جدًا (الحد الأقصى 5 ميجابايت)')));
+    }
     return false;
   }
 
@@ -280,10 +283,10 @@ Future<bool> pickAndUploadDocument(BuildContext context, String type,
               onPressed: () => Navigator.of(ctx).pop(false),
               child: const Text('إلغاء')),
           ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.navy),
+              style: ElevatedButton.styleFrom(backgroundColor: AppColors.green),
               onPressed: () => Navigator.of(ctx).pop(true),
               child: const Text('إعادة المحاولة',
-                  style: TextStyle(color: Colors.white))),
+                  style: TextStyle(color: AppColors.navy))),
         ],
       ),
     );
@@ -315,7 +318,7 @@ class _DocThumb extends StatelessWidget {
     final color = isPdf
         ? AppColors.danger
         : isImg
-            ? AppColors.orange
+            ? AppColors.green
             : AppColors.navy;
     final icon = isPdf
         ? Icons.picture_as_pdf_outlined
@@ -348,7 +351,8 @@ class _DocThumb extends StatelessWidget {
 }
 
 class MyDocumentsScreen extends StatefulWidget {
-  const MyDocumentsScreen({super.key});
+  final bool openUploadOnStart;
+  const MyDocumentsScreen({super.key, this.openUploadOnStart = false});
 
   @override
   State<MyDocumentsScreen> createState() => _MyDocumentsScreenState();
@@ -367,7 +371,11 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
   void initState() {
     super.initState();
     AnalyticsService.instance.screenView('my_documents');
-    _load();
+    _load().then((_) {
+      if (mounted && widget.openUploadOnStart && _error == null) {
+        _pickTypeAndUpload();
+      }
+    });
     _documentSub = StudentRepository.instance.documentChanges.listen((docs) {
       if (mounted) {
         setState(() => _docs =
@@ -385,18 +393,20 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
         _loading ||
         _refreshing ||
         ModalRoute.of(context)?.isCurrent != true ||
-        !TickerMode.of(context) ||
+        !TickerMode.valuesOf(context).enabled ||
         WidgetsBinding.instance.lifecycleState == AppLifecycleState.paused ||
         WidgetsBinding.instance.lifecycleState == AppLifecycleState.inactive ||
-        WidgetsBinding.instance.lifecycleState == AppLifecycleState.hidden)
+        WidgetsBinding.instance.lifecycleState == AppLifecycleState.hidden) {
       return;
+    }
     _refreshing = true;
     try {
       final docs =
           await StudentRepository.instance.getDocuments(forceRefresh: true);
-      if (mounted)
+      if (mounted) {
         setState(() => _docs =
             docs.whereType<Map>().where(isCurrentLibraryDocument).toList());
+      }
     } catch (error, stack) {
       ErrorReporter.swallowed(error, stack, 'documents.refresh');
     } finally {
@@ -490,6 +500,7 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
     return AppScaffold(
       title: 'مستنداتي',
       actions: [
+        const AssistantHelpButton(screen: 'documents'),
         IconButton(
           tooltip: 'رفع مستند',
           onPressed: _uploading ? null : _pickTypeAndUpload,
@@ -554,9 +565,10 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('تم حذف المستند من مستنداتي')));
     } catch (error) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context)
             .showSnackBar(SnackBar(content: Text(AppError.message(error))));
+      }
     } finally {
       _deleting.remove(id);
     }
@@ -902,15 +914,17 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                       final uri = await resolveDocumentDownload(
                           document['filePath'] as String);
                       if (!await launchUrl(uri,
-                          mode: LaunchMode.externalApplication))
+                          mode: LaunchMode.externalApplication)) {
                         throw Exception('Cannot open file');
+                      }
                     } catch (swallowedError, swallowedStack) {
                       ErrorReporter.swallowed(swallowedError, swallowedStack,
                           'screens/applications_documents_payments/documents_screens.dart:715');
-                      if (context.mounted)
+                      if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                             content: Text(
                                 'تعذر فتح الملف. تحقق من الجلسة والصلاحيات ثم حاول مجددًا.')));
+                      }
                     }
                   }),
             // Linked to this file, so the current one moves to the history.
@@ -950,9 +964,10 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                         .archiveDocument('${document['_id']}');
                     if (context.mounted) Navigator.pop(context, true);
                   } catch (error) {
-                    if (context.mounted)
+                    if (context.mounted) {
                       ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(content: Text(AppError.message(error))));
+                    }
                   }
                 },
               ),

@@ -36,9 +36,9 @@ class SmartHomeContextCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.orangeSoft,
+        color: AppColors.greenSoft,
         borderRadius: BorderRadius.circular(AppRadius.card),
-        border: Border.all(color: AppColors.orange.withValues(alpha: 0.35)),
+        border: Border.all(color: AppColors.green.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -31,11 +31,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
         body: FutureBuilder<List<StudentEvent>>(
             future: future,
             builder: (context, snapshot) {
-              if (snapshot.connectionState != ConnectionState.done)
+              if (snapshot.connectionState != ConnectionState.done) {
                 return const LoadingState();
-              if (snapshot.hasError)
+              }
+              if (snapshot.hasError) {
                 return ErrorState(
                     message: 'تعذر تحميل المواعيد', onRetry: refresh);
+              }
               final events = snapshot.data ?? [];
               final daily = events
                   .where((e) => DateUtils.isSameDay(e.date, selected))
@@ -105,8 +107,9 @@ class _CalendarScreenState extends State<CalendarScreen> {
                               crossAxisSpacing: 4,
                               mainAxisExtent: 48),
                       itemBuilder: (context, index) {
-                        if (index < offset || index >= offset + days)
+                        if (index < offset || index >= offset + days) {
                           return const SizedBox.shrink();
+                        }
                         final date = DateTime(
                             month.year, month.month, index - offset + 1);
                         final active = DateUtils.isSameDay(date, selected);
@@ -126,12 +129,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                     color: active
                                         ? AppColors.navy
                                         : today
-                                            ? AppColors.orange
+                                            ? AppColors.green
                                                 .withValues(alpha: .07)
                                             : Colors.transparent,
                                     borderRadius: BorderRadius.circular(12),
                                     border: today && !active
-                                        ? Border.all(color: AppColors.orange)
+                                        ? Border.all(color: AppColors.green)
                                         : null),
                                 child: Column(
                                     mainAxisAlignment: MainAxisAlignment.center,
@@ -151,7 +154,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                                           decoration: BoxDecoration(
                                               shape: BoxShape.circle,
                                               color: hasEvents
-                                                  ? AppColors.orange
+                                                  ? AppColors.green
                                                   : Colors.transparent)),
                                     ]),
                               ),
@@ -159,7 +162,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       }),
                   const SizedBox(height: 12),
                   Row(children: [
-                    const Icon(Icons.circle, size: 6, color: AppColors.orange),
+                    const Icon(Icons.circle, size: 6, color: AppColors.green),
                     const SizedBox(width: 6),
                     const Expanded(
                         child: Text('موعد مسجل', style: AppTextStyles.caption)),
@@ -204,7 +207,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                             width: 4,
                             height: 44,
                             decoration: BoxDecoration(
-                                color: AppColors.orange,
+                                color: AppColors.green,
                                 borderRadius: BorderRadius.circular(4))),
                         const SizedBox(width: 14),
                         Expanded(

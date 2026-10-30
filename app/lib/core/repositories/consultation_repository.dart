@@ -10,7 +10,7 @@ class ConsultationRepository {
   String? get _token => AuthSession.instance.token;
   Future<List<Map<String, dynamic>>> _list(String path) async {
     final data =
-        await ApiClient.instance.get('/consultations$path', token: _token);
+        await ApiClient.instance.get('/consultations$path', token: _token, cached: false);
     return (Json.list(data))
         .map((row) => Map<String, dynamic>.from(Json.rawMap(row)))
         .toList();

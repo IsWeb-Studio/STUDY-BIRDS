@@ -1,3 +1,4 @@
+import { VoiceReply } from "../../components/VoiceReply";
 import { DocumentFileLink } from "../../components/DocumentFileLink";
 import { useEffect, useState } from "react";
 import { EmptyState } from "../../components/EmptyState";
@@ -101,7 +102,7 @@ export const PartnerSupportTicketsPage = () => {
                   {ticket.replies.map((reply, index) => (
                     <div key={`${ticket._id}-${index}`} className="rounded-2xl bg-white px-4 py-3">
                       <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{reply.fromRole}</div>
-                      <div className="mt-2 text-sm text-slate-700">{reply.message}</div>
+                      <div className="mt-2 text-sm text-slate-700">{reply.audioPath ? <VoiceReply path={reply.audioPath} /> : reply.message}</div>
                     </div>
                   ))}
                 </div>

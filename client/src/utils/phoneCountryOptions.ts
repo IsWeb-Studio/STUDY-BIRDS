@@ -91,5 +91,8 @@ export const splitPhoneNumber = (value?: string) => {
 
 export const buildPhoneNumber = (dialCode: string, phoneNumber: string) => {
   const trimmedPhoneNumber = phoneNumber.trim();
-  return trimmedPhoneNumber ? `${dialCode} ${trimmedPhoneNumber}` : "";
+  if (!trimmedPhoneNumber) return "";
+  return trimmedPhoneNumber.startsWith("+")
+    ? trimmedPhoneNumber
+    : `${dialCode} ${trimmedPhoneNumber}`;
 };

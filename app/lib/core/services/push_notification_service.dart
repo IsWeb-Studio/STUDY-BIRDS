@@ -1,5 +1,7 @@
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:flutter/foundation.dart';
+import 'notification_preferences_store.dart';
+import '../network/api_client.dart';
 
 /// Routes a notification tap to the correct screen name.
 /// The server sends `screen` in the notification data to tell us where to go.
@@ -26,6 +28,7 @@ class PushNotificationService implements NotificationAccess {
   Future<void>? _initializing;
   bool _deliveryAllowed = false;
   String? _userId;
+  String? _token;
   bool get deliveryAllowed => _deliveryAllowed;
   Map<String, dynamic>? _pendingTap;
 
@@ -42,6 +45,8 @@ class PushNotificationService implements NotificationAccess {
   }
 
   Future<void> _initialize() async {
+    await OneSignal.consentRequired(true);
+    await OneSignal.consentGiven(false);
     await OneSignal.initialize(_appId);
     // Do not subscribe or link a new login until its permission gate completes.
     await OneSignal.User.pushSubscription.optOut();
@@ -88,8 +93,9 @@ class PushNotificationService implements NotificationAccess {
 
   /// Link this device to the logged-in user.
   /// Call after every successful login.
-  void setUser(String userId) {
+  void setUser(String userId, {String? token}) {
     _userId = userId;
+    _token = token;
     _deliveryAllowed = false;
   }
 
@@ -98,20 +104,54 @@ class PushNotificationService implements NotificationAccess {
     if (!_ready || !permissionGranted) return;
     final id = _userId;
     if (id == null) return;
+    await OneSignal.consentGiven(true);
     await OneSignal.login(id);
+    await syncAnnouncementPreference();
+    if (_userId != id) return;
     _deliveryAllowed = true;
     await OneSignal.User.pushSubscription.optIn();
+  }
+
+  /// Sync the account's announcement preference to the provider so filtering
+  /// also works when the app is closed. Older installs without a tag remain
+  /// eligible; publishing this app update migrates their saved preference.
+  Future<void> syncAnnouncementPreference() async {
+    final owner = _userId;
+    if (!_ready || owner == null) return;
+    final local = await NotificationPreferencesStore.read(owner);
+    var enabled = local['announcements'] ?? true;
+    final token = _token;
+    if (token != null) {
+      try {
+        final remote = await ApiClient.instance.get(
+            '/mobile-security/notification-preferences',
+            token: token,
+            cached: false);
+        if (remote is Map &&
+            remote['_initialized'] == true &&
+            remote['announcements'] is bool) {
+          enabled = remote['announcements'] as bool;
+        }
+      } catch (_) {/* Keep the last local preference while offline. */}
+    }
+    if (_userId != owner || token != _token) return;
+    await OneSignal.User.addTagWithKey(
+        'sb_app_announcements', enabled.toString());
   }
 
   @override
   Future<void> disableDelivery() async {
     _deliveryAllowed = false;
-    if (_ready) await OneSignal.User.pushSubscription.optOut();
+    if (_ready) {
+      await OneSignal.User.pushSubscription.optOut();
+      await OneSignal.consentGiven(false);
+    }
   }
 
   /// Unlink device from user on logout.
   void clearUser() {
     _userId = null;
+    _token = null;
     _deliveryAllowed = false;
     if (!_ready) return;
     OneSignal.User.pushSubscription.optOut();

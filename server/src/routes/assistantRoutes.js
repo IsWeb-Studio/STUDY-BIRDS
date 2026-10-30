@@ -14,7 +14,7 @@ const Quota=mongoose.model('AssistantQuota',new mongoose.Schema({key:{type:Strin
 const contract={scopePolicy:'studybirds-only-v1',responseFormat:'verified-help-v1',knowledgeVersion:knowledge.catalog.version};
 function safeMessages(messages){return messages.map(message=>{
  const row=typeof message.toObject==='function'?message.toObject():message;
- if(row.role==='assistant'&&!row.knowledgeVersion)return {...row,content:'رسالة قديمة غير موثقة. أعد سؤالك للحصول على إرشاد Study Birds الموثق. / Older unverified reply. Ask again for verified Study Birds help.',details:'',actions:[]};
+ if(row.role==='assistant'&&!row.knowledgeVersion)return {...row,content:'رسالة قديمة غير موثقة. أعد سؤالك للحصول على إرشاد COVEY الموثق. / Older unverified reply. Ask again for verified COVEY help.',details:'',actions:[]};
  return row;
 });}
 const router=express.Router();router.use(protect);
@@ -46,6 +46,7 @@ router.post('/message',rateLimit({windowMs:60000,limit:5,keyGenerator:req=>Strin
  const locked=await Thread.findOneAndUpdate({_id:thread._id,user:req.user._id,lockedUntil:{$lt:new Date()}},{$set:{lockedUntil:new Date(Date.now()+60000)}},{new:true});
  if(!locked)return res.status(409).json({message:'انتظر اكتمال الرد السابق.'});
  let generation;
+ let released = false;
  try{
   const quota=await Quota.findOneAndUpdate({key:`${req.user._id}:${new Date().toISOString().slice(0,10)}`},{$inc:{count:1},$setOnInsert:{expiresAt:new Date(Date.now()+48*60*60*1000)}},{upsert:true,new:true});
   const limit=Math.min(100,Math.max(1,Number(process.env.AI_DAILY_LIMIT)||20));
@@ -82,10 +83,11 @@ router.post('/message',rateLimit({windowMs:60000,limit:5,keyGenerator:req=>Strin
   const action=selected?.availability!=='unavailable'&&selected?.roles.includes(req.user.role)&&allowedActions.has(selected?.action)?selected.action:null;
   const alreadyHere=action===context.screen || (action==='profile' && context.screen==='account');
   const actions=action&&!alreadyHere&&req.user.role==='student'?[{id:action,label:decision.ar?'فتح الشاشة':'Open screen'}]:[];
-  const updated=await Thread.findByIdAndUpdate(thread._id,{$push:{messages:{$each:[{role:'user',content:req.body.message.trim()},{role:'assistant',content:answer,details,topicId:selected?.id,actions,knowledgeVersion:knowledge.catalog.version}],$slice:-100}}},{new:true});
+  const updated=await Thread.findByIdAndUpdate(thread._id,{$set:{lockedUntil:new Date(0)},$push:{messages:{$each:[{role:'user',content:req.body.message.trim()},{role:'assistant',content:answer,details,topicId:selected?.id,actions,knowledgeVersion:knowledge.catalog.version}],$slice:-100}}},{new:true});
+  released = true;
   res.json({threadId:thread._id,generationId:generation?._id,...contract,messages:safeMessages(updated.messages)});
  }catch(e){if(generation)await Generation.updateOne({_id:generation._id,status:'pending'},{$set:{status:'failed'}});if(res.statusCode===200)res.status(502);throw new Error(res.statusCode===429?e.message:'تعذر الحصول على رد من المساعد. حاول لاحقًا.');}
- finally{try{await Thread.updateOne({_id:thread._id},{$set:{lockedUntil:new Date(0)}});}catch(e){console.error('Failed to release assistant thread lock',e.message);}}
+ finally{try{if(!released)await Thread.updateOne({_id:thread._id},{$set:{lockedUntil:new Date(0)}});}catch(e){console.error('Failed to release assistant thread lock',e.message);}}
 }));
 // Public capability means reviewed app help is available; provider readiness
 // remains separate for the optional disambiguation path above.

@@ -38,7 +38,7 @@ test('audit regressions: verified Google, deletion, avatars, media retry and wal
     let google;
     await t.test('first and repeated verified Google login agree, 2FA stays required', async () => {
       google = await call('POST', '/auth/google', null, { credential: 'verified' });
-      assert.equal(google.user.emailVerified, true);
+      assert.equal(google.user.emailVerified, false, "Google identity alone does not complete service email verification");
       assert.ok((await call('POST', '/auth/google', null, { credential: 'verified' })).token);
       await User.updateOne({ _id: google.user._id }, { $set: { twoFactorEnabled: true } });
       for (let i = 0; i < 2; i++) assert.equal((await call('POST', '/auth/google', null, { credential: 'verified' }, 428)).requiresTwoFactor, true);

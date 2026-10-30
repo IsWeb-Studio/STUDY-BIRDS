@@ -72,19 +72,22 @@ class _CompareListScreenState extends State<CompareListScreen> {
       });
       await pendingSave;
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/universities_programs_countries/compare_list_screen.dart:72');
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
             AppSnackBar(content: Text(cl('تعذر حفظ الاختيار على الجهاز', 'Could not save your selection on this device'))));
+      }
     }
   }
 
   String cell(Map<String, dynamic> u, String field) {
     final value = u[field];
     if (value == null) return cl('غير محدد', 'Not specified');
-    if (field == 'country' && value is Map)
+    if (field == 'country' && value is Map) {
       return catalogCountryName(Map<String, dynamic>.from(value));
-    if (field == 'tuitionRange' && value is Map)
+    }
+    if (field == 'tuitionRange' && value is Map) {
       return '${value['min'] ?? '—'} – ${value['max'] ?? '—'}';
+    }
     return catalogValue(value.toString());
   }
 

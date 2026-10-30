@@ -378,7 +378,7 @@ const createContactMessage = asyncHandler(async (req, res) => {
       sendContactEmail({
         to: process.env.CONTACT_FORM_TO,
         replyTo: email,
-        subject: `[Study Birds] ${subject || name}`,
+        subject: `[COVEY] ${subject || name}`,
         text: textBody,
         html: htmlBody,
       })

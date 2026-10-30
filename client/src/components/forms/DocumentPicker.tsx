@@ -5,6 +5,30 @@ import { DOCUMENT_UPLOAD_ACCEPT } from "../../constants/upload";
 
 type Props = { onSelect: (file: File) => void; accept?: string; disabled?: boolean; selectedName?: string };
 
+export type DocumentFileIssue = "empty" | "too-large" | "unsupported";
+export const DOCUMENT_FILE_LIMIT_BYTES = 5 * 1024 * 1024;
+const MIME_BY_EXTENSION: Record<string, string> = {
+  ".pdf": "application/pdf", ".txt": "text/plain", ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp",
+};
+
+export function validateDocumentFile(file: File, accept: string): DocumentFileIssue | null {
+  if (file.size <= 0) return "empty";
+  if (file.size > DOCUMENT_FILE_LIMIT_BYTES) return "too-large";
+  const rules = accept.split(",").map((rule) => rule.trim().toLowerCase()).filter(Boolean);
+  if (!rules.length || rules.includes("*/*")) return null;
+  const fileName = file.name.toLowerCase();
+  const fileType = file.type.toLowerCase();
+  const extension = rules.find((rule) => rule.startsWith(".") && fileName.endsWith(rule));
+  if (extension) {
+    const expectedMime = MIME_BY_EXTENSION[extension];
+    return expectedMime && fileType && expectedMime !== fileType ? "unsupported" : null;
+  }
+  return rules.some((rule) => rule.endsWith("/*")
+    ? fileType.startsWith(rule.slice(0, -1))
+    : fileType === rule) ? null : "unsupported";
+}
+
 export function DocumentPicker({ onSelect, accept = DOCUMENT_UPLOAD_ACCEPT, disabled = false, selectedName }: Props) {
   const { language } = useLanguage();
   const ar = language === "ar";
@@ -120,12 +144,24 @@ export function DocumentPicker({ onSelect, accept = DOCUMENT_UPLOAD_ACCEPT, disa
       if (current === session.current) setError(ar ? "تعذر التقاط الصورة؛ حاول مجددًا." : "Unable to take the photo. Please retry.");
     } finally { if (current === session.current) setCapturing(false); }
   }
-  function select(file: File) { setName(file.name); onSelect(file); }
+  function select(file: File): boolean {
+    const issue = validateDocumentFile(file, accept);
+    if (issue) {
+      setError(issue === "too-large"
+        ? (ar ? "Ø­Ø¬Ù… Ø§Ù„Ù…Ù„Ù ÙŠØ¬Ø¨ Ø£Ù„Ø§ ÙŠØªØ¬Ø§ÙˆØ² 5 Ù…ÙŠØ¬Ø§Ø¨Ø§ÙŠØª." : "The file must be 5 MB or smaller.")
+        : issue === "empty"
+          ? (ar ? "Ø§Ù„Ù…Ù„Ù ÙØ§Ø±Øº. Ø§Ø®ØªØ± Ù…Ù„ÙÙ‹Ø§ Ø¢Ø®Ø±." : "The file is empty. Choose another file.")
+          : (ar ? "Ù†ÙˆØ¹ Ø§Ù„Ù…Ù„Ù ØºÙŠØ± Ù…Ø¯Ø¹ÙˆÙ…. Ø§Ø®ØªØ± Ù†ÙˆØ¹Ù‹Ø§ Ù…Ø³Ù…ÙˆØ­Ù‹Ø§." : "This file type is not supported. Choose an allowed type."));
+      return false;
+    }
+    setError(""); setName(file.name); onSelect(file);
+    return true;
+  }
   function picked(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
     event.currentTarget.value = "";
     if (!file) return;
-    closeCamera(); select(file);
+    if (select(file)) closeCamera();
   }
   const buttonClass = "min-h-11 rounded-xl border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50";
   return <div className="space-y-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-3">
@@ -138,6 +174,7 @@ export function DocumentPicker({ onSelect, accept = DOCUMENT_UPLOAD_ACCEPT, disa
     <input ref={photos} type="file" accept={imageAccept} disabled={disabled} hidden onChange={picked} />
     <input ref={files} type="file" accept={accept} disabled={disabled} hidden onChange={picked} />
     {(selectedName ?? name) && <p role="status" className="break-words text-sm text-slate-600">{selectedName ?? name}</p>}
+    {!cameraOpen && error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
     {cameraOpen && createPortal(<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/70 p-3" dir={ar ? "rtl" : "ltr"}>
       <section role="dialog" aria-modal="true" aria-labelledby={titleId} className="max-h-[95dvh] w-full max-w-xl space-y-4 overflow-y-auto rounded-2xl bg-white p-4">
         <div className="flex items-center justify-between gap-3">
@@ -150,7 +187,7 @@ export function DocumentPicker({ onSelect, accept = DOCUMENT_UPLOAD_ACCEPT, disa
         <p className="text-sm text-slate-500">{ar ? "أظهر المستند كاملًا بإضاءة واضحة. لن تُختار الصورة قبل تأكيدك." : "Keep the whole document visible in good light. Confirm before selecting the photo."}</p>
         <div className="flex flex-wrap gap-2">
           {photo ? <>
-            <button type="button" className={buttonClass} onClick={() => { const chosen = photo; closeCamera(); select(chosen); }}>{ar ? "استخدام هذه الصورة" : "Use this photo"}</button>
+            <button type="button" className={buttonClass} onClick={() => { if (select(photo)) closeCamera(); }}>{ar ? "استخدام هذه الصورة" : "Use this photo"}</button>
             <button type="button" className={buttonClass} onClick={() => void openCamera()}>{ar ? "إعادة التصوير" : "Retake photo"}</button>
           </> : <button type="button" disabled={!ready || capturing || !!error} className={buttonClass} onClick={() => void capture()}>{ar ? "التقاط الصورة" : "Capture photo"}</button>}
           {error && <>

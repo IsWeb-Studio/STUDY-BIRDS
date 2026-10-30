@@ -1,5 +1,6 @@
+import 'dart:io';
 import 'dart:async';
-import '../lib/core/utils/app_error.dart';
+import 'package:study_birds/core/utils/app_error.dart';
 
 void expect(bool condition, String name) {
   if (!condition) throw StateError('Failed: $name');
@@ -53,5 +54,5 @@ void main() {
       AppError.safeText('اختر ملفًا لا يتجاوز 5 ميجابايت.')
           .contains('5 ميجابايت'),
       'helpful size limit');
-  print('Error policy checks passed.');
+  stdout.writeln('Error policy checks passed.');
 }

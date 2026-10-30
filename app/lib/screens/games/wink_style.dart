@@ -1,14 +1,15 @@
+import '../../core/config/app_theme.dart';
 import 'package:flutter/material.dart';
 
 /// The selected Sky Clean design, shared by every Winker state and dialog.
 abstract final class WinkSky {
-  static const navy = Color(0xFF09285C);
-  static const orange = Color(0xFFFF741C);
-  static const sky = Color(0xFFE2F4FF);
-  static const header = Color(0xFFBDE7FF);
-  static const muted = Color(0xFF6683A4);
-  static const pale = Color(0xFFEAF4FB);
-  static const green = Color(0xFF36C98C);
+  static const navy = AppColors.navy;
+  static const orange = AppColors.green;
+  static const sky = AppColors.greenSoft;
+  static const header = AppColors.greenSoft;
+  static const muted = AppColors.textSecondary;
+  static const pale = AppColors.greenSoft;
+  static const green = AppColors.green;
 
   static ThemeData theme(ThemeData base) => ThemeData(
       brightness: Brightness.light,
@@ -20,13 +21,13 @@ abstract final class WinkSky {
       scaffoldBackgroundColor: sky,
       colorScheme: ColorScheme.fromSeed(seedColor: orange).copyWith(
           primary: orange,
-          onPrimary: Colors.white,
+          onPrimary: navy,
           secondary: navy,
           onSecondary: Colors.white,
           surface: Colors.white,
           onSurface: navy,
           onSurfaceVariant: muted,
-          outline: const Color(0xFFCADFED)),
+          outline: AppColors.border),
       appBarTheme: const AppBarTheme(
           backgroundColor: header,
           foregroundColor: navy,
@@ -43,7 +44,7 @@ abstract final class WinkSky {
       outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
               foregroundColor: navy,
-              side: const BorderSide(color: Color(0xFFD6E7F4)),
+              side: const BorderSide(color: AppColors.border),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(18)))),
@@ -60,7 +61,7 @@ abstract final class WinkSky {
               borderSide: BorderSide.none),
           enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(18),
-              borderSide: const BorderSide(color: Color(0xFFD6E7F4))),
+              borderSide: const BorderSide(color: AppColors.border)),
           focusedBorder:
               OutlineInputBorder(borderRadius: BorderRadius.circular(18), borderSide: const BorderSide(color: orange, width: 1.5))),
       bottomSheetTheme: const BottomSheetThemeData(backgroundColor: Colors.white, showDragHandle: true, shape: RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28)))),

@@ -1,131 +1,42 @@
-# Study Birds — التطبيق المتصل
+# Study Birds
 
-تطبيق Flutter مرتبط بنفس حسابات وبيانات موقع `D:\work\Study-birds`.
+Store preparation on 27 October 2026 uses the owner-supplied API/website source at `D:\work\studybirds_web\server` and `D:\work\studybirds_web\client`. See [store changes, deployment contracts and remaining checks](docs/STORE_SUBMISSION_PREPARATION_20261027.md). No store submission or production deployment is implied.
 
-## التشغيل
+Flutter application for the Study Birds platform. Current version: 1.0.13+14.
 
-1. شغّل الباك إند من `D:\work\Study-birds\server` بالأمر `npm run dev`، مع إعداد `MONGODB_URI` و`JWT_SECRET` كما في دليل الموقع. رفع الملفات يحتاج إعدادات Cloudinary الموجودة بالموقع.
-2. شغّل واجهة الموقع من `D:\work\Study-birds\client` بالأمر `npm run dev`.
-3. سجّل الدخول بحساب إدارة الموقع ثم افتح `/admin/mobile`، أو اضغط **لوحة تحكم التطبيق** أعلى لوحة الإدارة.
-4. لتشغيل التطبيق على محاكي Android مع الباك إند المحلي:
+The selected app source is this independent repository at D:\work\studybirds_app\study_birds_app-main (aboodsiaj2/fsfs, main). The owner-supplied current paired API is D:\work\studybirds_web\server; D:\work\studybirds_web\client contains the website. These sources remain separate; do not merge or delete older copies without comparing their unique work.
 
-```powershell
-flutter pub get
-flutter run --dart-define=API_BASE_URL=http://10.0.2.2:5000/api
-```
-
-على هاتف حقيقي استبدل `10.0.2.2` بعنوان الكمبيوتر داخل الشبكة. HTTP مسموح في بناء debug فقط. للإنتاج استخدم عنوان HTTPS:
+Use Flutter 3.47.5 / Dart 3.13.4 (C:\src\flutter), Java 17 and the Android SDK. The default API is https://study-birds1.onrender.com/api in debug and release; local development requires an explicit API_BASE_URL dart define.
 
 ```powershell
-flutter build apk --release --dart-define=API_BASE_URL=https://YOUR_API_HOST/api
-```
-
-التشغيل الافتراضي في وضع debug على محاكي Android يتصل بـ `http://10.0.2.2:5000/api`، وعلى المنصات الأخرى بـ `http://localhost:5000/api`. يوجد إعداد تشغيل جاهز في VS Code باسم `Study Birds - Local Android Emulator`. أوقف التشغيل السابق ثم شغّل التطبيق مجدداً بعد تغيير إعداد الاتصال؛ Hot Reload وحده لا يغيّر قيم `--dart-define`.
-
-العنوان الافتراضي لبناء release/profile هو `https://study-birds-api.onrender.com/api`، مطابق لإعداد الموقع الحالي. يمكنك تجاوز أي عنوان افتراضي باستخدام `--dart-define=API_BASE_URL=...`. يجب نشر تعديلات السيرفر الجديدة قبل استخدام السيرفر المنشور؛ تعديل الملفات المحلية لا ينشر الموقع تلقائياً. إعداد توقيع إصدار Android ما زال إعداد المشروع الأصلي، ويحتاج مفتاح نشر خاصاً قبل رفع التطبيق إلى المتجر.
-
-لبناء نسخة Android على Windows استخدم Flutter **3.47.5**، وهي النسخة المستخدمة في CI وفي إعدادات المشروع على جهاز التطوير (`C:\src\flutter`). افتح طرفية جديدة بعد تغيير إعدادات VS Code، أو شغّل الأمر التالي الذي يحدد SDK صراحةً:
-
-```powershell
+& C:\src\flutter\bin\flutter.bat pub get
+& C:\src\flutter\bin\flutter.bat run --dart-define=API_BASE_URL=http://10.0.2.2:5000/api
+& C:\src\flutter\bin\flutter.bat analyze
+& C:\src\flutter\bin\flutter.bat test
+& C:\src\flutter\bin\flutter.bat build apk --debug
 .\tools\build_release.ps1
-# عند تثبيت Flutter في مسار آخر:
-.\tools\build_release.ps1 -FlutterSdk C:\path\to\flutter
 ```
 
-يحفظ الأمر ملفات `build` و`.dart_tool/flutter_build` المؤقتة في `%LOCALAPPDATA%\StudyBirds\build-cache` مع روابط Junction داخل المشروع، لتجنب امتلاء القرص D. لا ينقل الصور أو الكود أو مفتاح التوقيع، ويبقى APK في `build\app\outputs\flutter-apk\app-release.apk`. أعد تشغيل الأمر بعد `flutter clean` لإعادة إنشاء الروابط عند الحاجة.
+The release helper preserves source on D and uses C for generated build caches through junctions when needed. Existing signing configuration remains private. Check free space before building; do not delete junction targets as duplicate folders.
 
-استخدم ذاكرة Gradle والمؤقتات على C، وتحقق من المساحة قبل البناء:
+- [Development setup](docs/DEVELOPMENT_SETUP.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Audit findings and validation](docs/PROJECT_AUDIT_REPORT.md)
+- [Copies and exact cleanup proposal](docs/DUPLICATE_INVENTORY.md)
+- [Maintenance and recovery](docs/MAINTENANCE_GUIDE.md)
+- [iOS sign-in configuration](docs/ios-social-sign-in.md)
+- [Wink game](docs/wink-game.md)
 
-```powershell
-$env:GRADLE_USER_HOME = Join-Path $env:USERPROFILE '.gradle'
-$env:TEMP = Join-Path $env:LOCALAPPDATA 'Temp'
-$env:TMP = $env:TEMP
-flutter build apk --debug
-```
+Phase 2: open [.vscode/StudyBirds.code-workspace](.vscode/StudyBirds.code-workspace) for the three active source folders. See the [Phase 2 results](docs/PHASE2_FINAL_REPORT.md), [daily workflow](docs/WORKSPACE_WORKFLOW.md), [feature recovery review](docs/FEATURE_PARITY_REPORT.md), [deployment parity](docs/DEPLOYMENT_PARITY_REPORT.md), and [exact cleanup approval list](docs/FINAL_CLEANUP_APPROVAL.md).
 
-## ما يمكن إدارته
+The October 2026 audit checkpoint is private local Git metadata, not an off-device backup. No production database or external source directory was deleted or relocated.
 
-| القسم | الوظائف |
-| --- | --- |
-| إعدادات التطبيق | الاسم، الترحيب، اللون الأساسي، وسائل الدعم، الصيانة، البانرات |
-| أقسام الطلاب والوكلاء | تعديل الاسم والترتيب والإظهار |
-| المحتوى | إنشاء وتعديل وحذف ونشر محتوى المنح والتأشيرة والسفر والسكن والخدمات والاستشارات والمواعيد والفريق والتأمين والمعادلة والتسجيل |
-| طلبات الخدمات | استقبال طلب الطالب، تحديث الحالة، كتابة رد يظهر له |
-| الطلاب | الحسابات، الملفات، طلبات القبول، مراحل الرحلة، مراجعة المستندات |
-| العمليات | الجامعات، البرامج، الدول، الفواتير، إثباتات الدفع، الوصول، الدعم، دليل الطالب، المفضلة والتوجيه |
-| الإشعارات | إرسال إشعار داخلي لطالب ومتابعة سجل الإشعارات |
+See [local stabilization and account notification preferences](docs/STABILIZATION_20261021.md) for recovery points, concurrent-writer observation, mandatory notification policy and the remaining deployment-app differences.
 
-تستخدم البيانات المشتركة صفحات الإدارة الحالية؛ تبقى عمليات الانتقال داخل وضع لوحة التطبيق. إعدادات ومحتوى التطبيق لها مجموعات MongoDB مستقلة: `mobilesettings` و`mobilecontents` و`mobilerequests`. لا يلزم تشغيل seed أو استبدال بيانات الموقع.
+Phase 3: [stabilization results](docs/PHASE3_FINAL_REPORT.md), [validation evidence](docs/PHASE3_VALIDATION.json), [release-readiness checklist](docs/RELEASE_READINESS_CHECKLIST.md), [deployment patch review](docs/proposals/phase3/README.md), and [dependency migration proposals](docs/PHASE3_DEPENDENCY_PLAN.md). Changes remain local; release/deployment and applying deployment-app patches require separate approval.
 
-تظهر تغييرات الإعدادات عند فتح التطبيق أو العودة إليه أو سحب الصفحة الرئيسية للتحديث. تحديث شاشة البيانات يجلب آخر معلوماتها. إخفاء قسم يغير التنقل في التطبيق؛ لا يحل محل صلاحيات API.
+The owner-approved deployment patches 01/02/03/05 are now applied locally; fullscreen 04 remains excluded. See [the reconciliation results](docs/APPROVED_DEPLOYMENT_PARITY_20261021.md).
 
-## التطبيق
+Phase 4 reverified the applied subset and built the actual deployment debug APK: [results](docs/PHASE4_FINAL_REPORT.md), [validation](docs/PHASE4_VALIDATION.json), [updated readiness](docs/UPDATED_RELEASE_READINESS.md), and [isolated security migration plans](docs/proposals/phase4/SECURITY_MIGRATIONS.md). No publishing action was performed.
 
-- تسجيل دخول وإنشاء حساب طالب باستخدام مصادقة الموقع، وحفظ الجلسة في التخزين الآمن، وإنهاؤها عند انتهاء صلاحيتها.
-- حساب الطالب: الجامعات والبرامج والدول، تقديم طلب مع اختيار المستندات المطلوبة، رفع المستندات، الفواتير وإثباتات الدفع، خدمات الوصول، الدعم والردود، الإشعارات، المفضلة ومقارنة ما يصل إلى أربعة عناصر، التوجيه والملف الشخصي.
-- حساب الوكيل: الطلاب وتعديلهم ورفع ملفاتهم، المحفظة وطلبات السحب، الإحالات والمواد التسويقية، التوثيق والدعم والإشعارات وسجل النشاط والملف الشخصي.
-- الخدمات المضافة من لوحة التطبيق: تفاصيل وصور وروابط وتاريخ، مع خيار السماح بطلب الخدمة ومتابعة الرد والحالة.
-- حد رفع الملف 5 ميجابايت، مطابق للباك إند.
-- شاشات النموذج التجريبي الأصلية محفوظة، ويمكن فتحها فقط بتشغيل `--dart-define=SHOW_DEMO=true`؛ ليست هي مسار التطبيق المتصل الافتراضي.
-
-## حدود التكامل
-
-يدعم الباك إند الطالب والوكيل وولي الأمر والجامعة والموظف، مع إدارة الحسابات من الموقع. تم ربط تأكيد البريد واستعادة كلمة المرور برمز بريد يستخدم مرة واحدة، باستخدام إعدادات SMTP الموجودة في السيرفر. الاختبارات تستبدل إرسال البريد الحقيقي بمحوّل اختبار؛ لم يُرسل بريد فعلي أثناء الاختبار.
-
-Bird AI مؤجل بطلب المستخدم لحين إعداد مزود الذكاء الاصطناعي. كذلك لم تُفعّل ميزات SMS لتأكيد الهاتف، أو تسجيل Apple، أو تسجيل الدخول بالبصمة، أو إشعارات Push: الأزرار التجريبية السابقة لا تثبت وجود هذه الخدمات. الإشعارات الحالية داخل التطبيق، والمدفوعات فواتير وإثباتات وليست خصماً آلياً من بطاقات الدفع. المحفظة رصيد خدمات تسجله الإدارة، ولا تنفذ تحويلات مالية خارج النظام. الترجمة الكاملة إلى الإنجليزية غير مضافة؛ لغة الواجهة الحالية العربية.
-
-## استعادة الحسابات والشاشات — سبتمبر 2026
-
-بعد تحديث الملفات أعد تشغيل السيرفر المحلي وأوقف التطبيق وشغّله مجددًا. الحساب الحالي يبقى محفوظًا؛ سجّل الخروج من **حسابي** لعرض اختيار أنواع الحسابات الخمسة. شاشات المقدمة تظهر عند التشغيل الأول، والتسجيل الجديد للطالب يفتح استكمال البيانات على ثلاث خطوات.
-
-من `/admin/mobile` افتح **الحسابات والصلاحيات والمهام والمحادثات**:
-
-1. أنشئ الحساب واختر نوعه. التسجيل العام مسموح للطالب وولي الأمر فقط؛ الوكيل والجامعة والموظف تُنشئهم الإدارة.
-2. اربط ولي الأمر بأبنائه، والموظف بطلابه، وحساب الجامعة بجامعة واحدة. الحساب الجديد لا يحصل على بيانات أي طالب تلقائيًا.
-3. أسند مهام الموظف وحدد الطالب والموعد والأولوية. صلاحية المدير تعرض مهام الفريق للطلاب المسندين إليه فقط.
-4. أرسل رسائل للمستخدمين ورد على المحادثات، وسجّل رصيد الخدمات ومكافآت الإحالة أو عطّل الحساب عند الحاجة.
-
-| الحساب / الشاشة | الربط الفعلي |
-| --- | --- |
-| ولي الأمر | الأبناء المرتبطون، رحلتهم، طلباتهم، مستنداتهم، فواتيرهم، التواصل مع المستشار |
-| الجامعة | طلبات الجامعة المحددة فقط، مراجعة القبول والرفض، طلب مستند إضافي، رفع خطاب القبول |
-| الموظف | الطلاب المسندون، مهامه وتحديث حالتها، المحادثات، نظرة المدير عند منح الصلاحية |
-| الطالب | الرئيسية والرحلة، البحث الشامل، مكتشف البرامج، بطاقات الجامعات والبرامج والدول، المقارنة والمفضلة، الطلبات والمستندات والمدفوعات والخدمات |
-| المواعيد | تقويم شهري يجمع محتوى المواعيد المنشور ومواعيد الفواتير والبرامج والمهام المتاحة للحساب |
-| الحساب | ملف شخصي بأقسامه، ولي الأمر والطوارئ وتفضيلات الدراسة، رموز الإحالة، المحفظة، سجل النشاط |
-| الأمان | تأكيد البريد، استعادة كلمة المرور، التحقق بخطوتين برمز بريد عند الدخول، الجلسات الفعلية وإنهاؤها، تغيير كلمة المرور |
-| المحادثات | رسائل محفوظة بين أعضاء الفريق المسموح بهم والإدارة، مع تسجيل القراءة |
-
-تُضاف الأقسام الجديدة تلقائيًا إلى إعدادات التطبيق المحفوظة دون استبدال أسماء الأقسام القديمة أو إظهار الأقسام التي أخفتها الإدارة. الملفات الجديدة في `integration/website` منسوخة أيضًا إلى مشروع الموقع المحلي؛ لم تُنشر على السيرفر البعيد.
-
-أضيفت اختبارات MongoDB حقيقية لعزل الأدوار وإلغاء الارتباط والجلسات ورموز البريد، واختبارات Flutter لاختيار الحسابات والتنقل وتحديث مهام الموظف والتقويم والأمان. صور مراجعة الواجهات موجودة في `integration/previews/` وتستخدم بيانات اختبار.
-
-لتفعيل التحقق بخطوتين افتح **حسابي ← الإعدادات والأمان ← التحقق بخطوتين** وأدخل رمز التأكيد المرسل للبريد. يلزم أن تكون للحساب كلمة مرور. تسجيل الدخول بعد ذلك يتطلب كلمة المرور ورمز البريد في التطبيق والموقع؛ تسجيل Google المباشر لا يتجاوز هذه الحماية، ويطلب استخدام كلمة المرور والرمز للحساب المحمي.
-
-## الملفات والتحقق
-
-- `lib/core/network/api_client.dart`: عميل API الوحيد (إعادة محاولة للقراءات، رصد الأخطاء، رفع الملفات)، و`lib/core/services/auth_session.dart`: الجلسة.
-- `integration/website`: نسخة ملفات التعديل المطبقة بالفعل في مشروع الموقع المحدد.
-- `integration/mobile-api.test.cjs`: اختبارات مسارات Express وصلاحيات JWT باستخدام نماذج معزولة في الذاكرة؛ لا تتصل بقاعدة فعلية.
-- `integration/mobile-live.test.cjs`: اختبار Express وMongoDB فعليين على localhost، بقاعدة مؤقتة تُحذف بعد الاختبار. يُستبدل موصل تخزين Cloudinary فقط؛ تمر الملفات عبر محلل multipart الفعلي وتُحفظ بياناتها في MongoDB.
-- `integration/live-test-results.json`: نتيجة آخر اختبار تكامل محلي.
-- `test`: اختبارات عميل Flutter والواجهات باستخدام استجابات HTTP معزولة.
-
-```powershell
-flutter test
-flutter analyze
-node integration/mobile-api.test.cjs
-```
-
-لتشغيل اختبار السيرفر على مسار موقع آخر، عيّن متغير `STUDY_BIRDS_SITE`. اختبار التكامل المحلي يستخدم حزمة `mongodb-memory-server-core` الموجودة في `D:\Temp\study-birds-test-tools`؛ يمكن تغيير المسار بمتغير `STUDY_BIRDS_TEST_TOOLS`.
-
-```powershell
-$env:TEMP = 'D:\Temp\study-birds-tmp'
-$env:TMP = $env:TEMP
-node integration/mobile-live.test.cjs
-```
-
-نجح اختبار التكامل بتسعة سيناريوهات تشمل حفظ الإعدادات والمحتوى، طلبات الخدمات، رفع المستندات ومراجعتها، التقديم والقبول والمفضلة، صلاحيات مراحل الرحلة، الفواتير وإثباتات الدفع، الدعم والإشعارات وعمليات الوكيل. هذا يثبت التكامل مع MongoDB المحلية، ولا يثبت اتصال قاعدة الإنتاج أو حساب Cloudinary الفعلي. لم تُستخدم بيانات الموقع الحقيقية في الاختبارات، ولم تُنشر التعديلات إلى الاستضافة.
-#   f s f s  
- #   f s f s  
- 
+Approved Router-only security migration: [7.18.4 results](docs/REACT_ROUTER_UPGRADE_20261021.md) and [validation](docs/REACT_ROUTER_VALIDATION.json). Actual website tests/build passed; production-dependency audit is clean. The active client dependency link now uses the tested isolated tree; preserve its owner as described in the workflow guide. Vitest/Tailwind and publishing remain separate approvals.

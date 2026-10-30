@@ -1,5 +1,9 @@
+import 'dart:async';
 import '../../core/utils/json_safe.dart';
-import '../../core/network/api_client.dart' show ApiException;
+import '../../core/network/api_client.dart';
+import '../../core/widgets/voice_notes.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/repositories/admin_modules_repository.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -117,8 +121,12 @@ class SupportCenterScreen extends StatelessWidget {
 class NewSupportTicketScreen extends StatefulWidget {
   final VoidCallback? onSubmit;
   final String initialSubject;
+  final String initialMessage;
   const NewSupportTicketScreen(
-      {super.key, this.onSubmit, this.initialSubject = ''});
+      {super.key,
+      this.onSubmit,
+      this.initialSubject = '',
+      this.initialMessage = ''});
 
   @override
   State<NewSupportTicketScreen> createState() => _NewSupportTicketScreenState();
@@ -129,6 +137,7 @@ class _NewSupportTicketScreenState extends State<NewSupportTicketScreen> {
   void initState() {
     super.initState();
     _subject.text = widget.initialSubject;
+    _message.text = widget.initialMessage;
     if (widget.initialSubject.isNotEmpty) _category = 'other';
   }
 
@@ -154,6 +163,7 @@ class _NewSupportTicketScreenState extends State<NewSupportTicketScreen> {
   }
 
   Future<void> _submit() async {
+    if (_submitting) return;
     if (_subject.text.trim().isEmpty || _message.text.trim().isEmpty) {
       setState(() => _error = 'الموضوع والرسالة مطلوبين');
       return;
@@ -414,10 +424,17 @@ class _SupportTicketDetailScreenState extends State<SupportTicketDetailScreen> {
     if (msg.isEmpty || _sending) return;
     setState(() => _sending = true);
     try {
-      final updated = await StudentRepository.instance.replyToSupportTicket(
-        ticketId: _ticket['_id'] as String,
-        message: msg,
-      );
+      final staff = [UserRole.admin, UserRole.employee]
+          .contains(AuthSession.instance.currentUser?.role);
+      final updated = staff
+          ? await AdminModulesRepository.instance.replySupportTicket(
+              _ticket['_id'] as String,
+              message: msg,
+              status: 'answered')
+          : await StudentRepository.instance.replyToSupportTicket(
+              ticketId: _ticket['_id'] as String,
+              message: msg,
+            );
       if (!mounted) return;
       setState(() {
         _ticket = updated;
@@ -526,6 +543,13 @@ class _SupportTicketDetailScreenState extends State<SupportTicketDetailScreen> {
                                         ? Colors.white
                                         : AppColors.textPrimary,
                                     fontSize: 13.5)),
+                            if (reply['audioPath'] != null)
+                              VoiceNotePlayer(
+                                  key: ValueKey('ticket-voice-${reply['_id']}'),
+                                  audioPath: '${reply['audioPath']}',
+                                  duration: (reply['audioDuration'] as num?)
+                                      ?.toDouble(),
+                                  onDark: isStudent),
                           ]),
                     ),
                   );
@@ -592,24 +616,47 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
   List<Map<String, dynamic>> _members = [];
   bool _loading = true;
   String? _error;
+  Timer? _refreshTimer;
+  bool _refreshing = false;
+  bool _openingChat = false;
 
   @override
   void initState() {
     super.initState();
     _load();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 15), (_) {
+      if (ModalRoute.of(context)?.isCurrent == true &&
+          WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed) {
+        _load(showLoading: false);
+      }
+    });
   }
 
-  Future<void> _load() async {
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _load({bool showLoading = true}) async {
+    if (_refreshing) return;
+    _refreshing = true;
     setState(() {
-      _loading = true;
+      if (showLoading) _loading = true;
       _error = null;
     });
     try {
       final data = await StudentRepository.instance.getSupportTeam();
       if (mounted) setState(() => _members = data);
     } catch (e) {
-      if (mounted) setState(() => _error = 'تعذر تحميل بيانات الفريق.');
+      if (mounted) {
+        setState(() {
+          _members = [];
+          _error = 'تعذر تحميل بيانات الفريق.';
+        });
+      }
     } finally {
+      _refreshing = false;
       if (mounted) setState(() => _loading = false);
     }
   }
@@ -631,7 +678,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                         parent: AlwaysScrollableScrollPhysics()),
                     children: [
                       const Text(
-                          'هؤلاء الموظفون مسؤولون عن متابعتك. أرسل مشكلتك من «تذكرة دعم جديدة» وتابع ردودهم في «تذاكري».',
+                          'هؤلاء الموظفون مسؤولون عن متابعتك. اضغط على الموظف لبدء محادثة معه، أو أرسل مشكلتك من «تذكرة دعم جديدة» وتابع ردودها في «تذاكري».',
                           style: AppTextStyles.body),
                       const SizedBox(height: 20),
                       if (_members.isEmpty)
@@ -641,6 +688,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                         _TeamMemberCard(
                             role: 'مسؤول عن متابعتك',
                             name: member['name']?.toString() ?? '',
+                            onTap: '${member['_id'] ?? ''}'.trim().isEmpty
+                                ? null
+                                : () => _openMemberChat(member),
                             icon: Icons.support_agent_rounded),
                         const SizedBox(height: 12),
                       ],
@@ -649,22 +699,42 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       ),
     );
   }
+
+  Future<void> _openMemberChat(Map<String, dynamic> member) async {
+    if (_openingChat) return;
+    _openingChat = true;
+    try {
+      await Navigator.of(context).push(MaterialPageRoute(
+        builder: (_) => ConversationThreadScreen(
+          contactId: member['_id'].toString(),
+          contactName: member['name']?.toString() ?? 'فريق الدعم',
+          supportTeamOnly: true,
+        ),
+      ));
+    } finally {
+      _openingChat = false;
+      if (mounted) _load(showLoading: false);
+    }
+  }
 }
 
 class _TeamMemberCard extends StatelessWidget {
   final String role;
   final String name;
   final IconData icon;
+  final VoidCallback? onTap;
 
   const _TeamMemberCard({
     required this.role,
     required this.name,
     required this.icon,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
     return AppCard(
+      onTap: onTap,
       child: Row(
         children: [
           Container(
@@ -683,9 +753,14 @@ class _TeamMemberCard extends StatelessWidget {
                 Text(role, style: AppTextStyles.caption),
                 const SizedBox(height: 2),
                 Text(name, style: AppTextStyles.cardTitle),
+                if (onTap != null)
+                  const Text('اضغط للمحادثة', style: AppTextStyles.caption),
               ],
             ),
           ),
+          if (onTap != null)
+            const Icon(Icons.chat_bubble_outline_rounded,
+                color: AppColors.navy),
         ],
       ),
     );

@@ -6,7 +6,7 @@ class BirdPointsIcon extends StatelessWidget {
   const BirdPointsIcon({super.key, this.size = 24});
   @override
   Widget build(BuildContext context) => Semantics(
-      label: 'Study Birds',
+      label: 'COVEY',
       image: true,
       child: SizedBox.square(
           dimension: size,

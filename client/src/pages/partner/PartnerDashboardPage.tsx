@@ -100,10 +100,10 @@ export const PartnerDashboardPage = () => {
     <div className="space-y-6">
       <section className="dashboard-page-hero panel overflow-hidden bg-white p-6 text-slate-900">
         <p className="text-sm font-semibold uppercase tracking-[0.24em] text-orange-300">{isArabic ? "لوحة الوكيل" : "Agent Dashboard"}</p>
-        <h1 className="mt-3 text-3xl font-semibold">{isArabic ? "مرحباً بك في لوحة وكلاء Study Birds" : "Welcome to the Study Birds agent workspace"}</h1>
+        <h1 className="mt-3 text-3xl font-semibold">{isArabic ? "مرحباً بك في لوحة وكلاء COVEY" : "Welcome to the COVEY agent workspace"}</h1>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-200">
           {isArabic
-            ? "مرحباً بك في لوحة تحكم وكلاء Study Birds، أدر حسابك وتتبع طلابك وعمولاتك من مكان واحد."
+            ? "مرحباً بك في لوحة تحكم وكلاء COVEY، أدر حسابك وتتبع طلابك وعمولاتك من مكان واحد."
             : "Manage your account, students, and earnings from one organized workspace."}
         </p>
       </section>

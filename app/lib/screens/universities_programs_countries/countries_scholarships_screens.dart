@@ -247,15 +247,15 @@ class _CountryDetailScreenState extends State<CountryDetailScreen> {
                     onTap: () => Navigator.of(context).push(MaterialPageRoute(
                         builder: (_) => UniversitiesExplorerScreen(
                             countryId: _country['_id'] as String?))),
-                    child: Row(
+                    child: const Row(
                       children: [
-                        const Icon(Icons.account_balance_rounded,
+                        Icon(Icons.account_balance_rounded,
                             color: AppColors.navy, size: 20),
-                        const SizedBox(width: 12),
-                        const Expanded(
+                        SizedBox(width: 12),
+                        Expanded(
                             child: Text('عرض جامعات هذه الدولة',
                                 style: AppTextStyles.cardTitle)),
-                        const Icon(Icons.arrow_back_ios_new_rounded,
+                        Icon(Icons.arrow_back_ios_new_rounded,
                             size: 14, color: AppColors.textSecondary),
                       ],
                     ),
@@ -306,21 +306,26 @@ class _ScholarshipsScreenState extends State<ScholarshipsScreen> {
     });
     try {
       final values = await Future.wait([
-        ApiClient.instance.get('/scholarships'),
+        // Scholarship publication is updated by admins outside this session.
+        // Always ask the server for the current public list instead of showing
+        // a cached response from before the latest publication.
+        ApiClient.instance.get('/scholarships', cached: false),
         if (AuthSession.instance.currentUser?.role == UserRole.student)
           ApiClient.instance
               .get('/scholarships/mine', token: AuthSession.instance.token),
       ]);
-      if (mounted)
+      if (mounted) {
         setState(() {
           rows = Json.list(values[0]);
           entries = values.length > 1 ? Json.list(values[1]) : [];
         });
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() => error = e is ApiException && e.statusCode == 404
             ? 'لم تُنشر خدمة المنح بعد.'
             : 'تعذر تحميل المنح. حاول مجددًا.');
+      }
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -339,13 +344,14 @@ class _ScholarshipsScreenState extends State<ScholarshipsScreen> {
           token: AuthSession.instance.token, body: {});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            AppSnackBar(content: Text('تم تسجيل الطلب للمراجعة')));
+            AppSnackBar(content: const Text('تم تسجيل الطلب للمراجعة')));
         await load();
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
             content: Text(e is ApiException ? e.message : 'تعذر إرسال الطلب')));
+      }
     } finally {
       if (mounted) setState(() => sending = false);
     }

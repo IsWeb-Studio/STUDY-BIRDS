@@ -45,8 +45,10 @@ class _AccommodationScreenState extends State<AccommodationScreen>
     try {
       final token = AuthSession.instance.token;
       final results = await Future.wait([
-        ApiClient.instance.get('/students/accommodations', token: token),
-        ApiClient.instance.get('/students/accommodation-bookings', token: token),
+        ApiClient.instance
+            .get('/accommodation/listings', token: token, cached: false),
+        ApiClient.instance
+            .get('/accommodation/bookings/mine', token: token, cached: false),
       ]);
       if (!mounted) return;
       setState(() {
@@ -91,7 +93,8 @@ class _AccommodationScreenState extends State<AccommodationScreen>
                     padding: const EdgeInsets.all(16),
                     itemCount: 4,
                     itemBuilder: (_, __) => const Padding(
-                        padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
+                        padding: EdgeInsets.only(bottom: 12),
+                        child: SkeletonCard()))
                 : _error != null
                     ? ErrorState(message: _error!, onRetry: _load)
                     : RefreshIndicator(
@@ -120,9 +123,7 @@ class _ListingsTab extends StatelessWidget {
   final List bookings;
   final VoidCallback onBooked;
   const _ListingsTab(
-      {required this.listings,
-      required this.bookings,
-      required this.onBooked});
+      {required this.listings, required this.bookings, required this.onBooked});
 
   bool get _hasActive => bookings
       .any((b) => b is Map && ['pending', 'confirmed'].contains(b['status']));
@@ -140,7 +141,8 @@ class _ListingsTab extends StatelessWidget {
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics:
+          const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       itemCount: listings.length,
       itemBuilder: (ctx, i) => Padding(
         padding: const EdgeInsets.only(bottom: 12),
@@ -159,9 +161,7 @@ class _ListingCard extends StatefulWidget {
   final bool canBook;
   final VoidCallback onBooked;
   const _ListingCard(
-      {required this.listing,
-      required this.canBook,
-      required this.onBooked});
+      {required this.listing, required this.canBook, required this.onBooked});
 
   @override
   State<_ListingCard> createState() => _ListingCardState();
@@ -196,13 +196,13 @@ class _ListingCardState extends State<_ListingCard> {
     setState(() => _booking = true);
     try {
       await ApiClient.instance.post(
-        '/students/accommodation-bookings',
+        '/accommodation/bookings',
         token: AuthSession.instance.token,
         body: {'listingId': '${widget.listing['_id']}'},
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text('تم تقديم طلب الحجز بنجاح')),
+          AppSnackBar(content: const Text('تم تقديم طلب الحجز بنجاح')),
         );
         widget.onBooked();
       }
@@ -211,10 +211,12 @@ class _ListingCardState extends State<_ListingCard> {
         ScaffoldMessenger.of(context)
             .showSnackBar(AppSnackBar(content: Text(e.message)));
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/accommodation_arrival_screens.dart:212');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/visa_travel_accommodation/accommodation_arrival_screens.dart:212');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text('حدث خطأ. أعد المحاولة.')),
+          AppSnackBar(content: const Text('حدث خطأ. أعد المحاولة.')),
         );
       }
     } finally {
@@ -225,8 +227,7 @@ class _ListingCardState extends State<_ListingCard> {
   @override
   Widget build(BuildContext context) {
     final l = widget.listing;
-    final typeLabel =
-        _typeLabels['${l['type']}'] ?? '${l['type']}';
+    final typeLabel = _typeLabels['${l['type']}'] ?? '${l['type']}';
     final uniName = (l['university'] is Map)
         ? '${(Json.rawMap(l['university']))['name'] ?? ''}'
         : '';
@@ -241,8 +242,7 @@ class _ListingCardState extends State<_ListingCard> {
           Expanded(
               child: Text('${l['title']}', style: AppTextStyles.cardTitle)),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
               color: AppColors.navy.withValues(alpha: 0.10),
               borderRadius: BorderRadius.circular(6),
@@ -281,12 +281,10 @@ class _ListingCardState extends State<_ListingCard> {
             children: amenities
                 .take(4)
                 .map((a) => Chip(
-                      label: Text('$a',
-                          style: const TextStyle(fontSize: 11)),
+                      label: Text('$a', style: const TextStyle(fontSize: 11)),
                       padding: EdgeInsets.zero,
                       visualDensity: VisualDensity.compact,
-                      backgroundColor:
-                          AppColors.background,
+                      backgroundColor: AppColors.background,
                     ))
                 .toList(),
           ),
@@ -302,8 +300,7 @@ class _ListingCardState extends State<_ListingCard> {
                       fontWeight: FontWeight.bold,
                       color: AppColors.navy)),
               if (capacity > 0)
-                Text('السعة: $capacity',
-                    style: AppTextStyles.caption),
+                Text('السعة: $capacity', style: AppTextStyles.caption),
             ]),
             if (widget.canBook)
               _booking
@@ -315,8 +312,8 @@ class _ListingCardState extends State<_ListingCard> {
                   : ElevatedButton(
                       onPressed: _book,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.navy,
-                        foregroundColor: Colors.white,
+                        backgroundColor: AppColors.green,
+                        foregroundColor: AppColors.navy,
                         shape: RoundedRectangleBorder(
                             borderRadius:
                                 BorderRadius.circular(AppRadius.button)),
@@ -326,7 +323,7 @@ class _ListingCardState extends State<_ListingCard> {
                       child: const Text('احجز الآن'),
                     )
             else
-              Text('لديك حجز نشط', style: AppTextStyles.caption),
+              const Text('لديك حجز نشط', style: AppTextStyles.caption),
           ],
         ),
       ]),
@@ -352,7 +349,8 @@ class _BookingsTab extends StatelessWidget {
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics:
+          const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       itemCount: bookings.length,
       itemBuilder: (ctx, i) => Padding(
         padding: const EdgeInsets.only(bottom: 12),
@@ -411,13 +409,13 @@ class _BookingCardState extends State<_BookingCard> {
     setState(() => _cancelling = true);
     try {
       await ApiClient.instance.post(
-        '/students/accommodation-bookings/${widget.booking['_id']}/cancel',
+        '/accommodation/bookings/${widget.booking['_id']}/cancel',
         token: AuthSession.instance.token,
         body: {'version': version},
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text('تم إلغاء الحجز')),
+          AppSnackBar(content: const Text('تم إلغاء الحجز')),
         );
         widget.onCancelled();
       }
@@ -426,10 +424,12 @@ class _BookingCardState extends State<_BookingCard> {
         ScaffoldMessenger.of(context)
             .showSnackBar(AppSnackBar(content: Text(e.message)));
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/visa_travel_accommodation/accommodation_arrival_screens.dart:427');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/visa_travel_accommodation/accommodation_arrival_screens.dart:427');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text('حدث خطأ. أعد المحاولة.')),
+          AppSnackBar(content: const Text('حدث خطأ. أعد المحاولة.')),
         );
       }
     } finally {
@@ -476,8 +476,7 @@ class _BookingCardState extends State<_BookingCard> {
           const SizedBox(height: 4),
           Text('تاريخ الطلب: $date', style: AppTextStyles.caption),
         ],
-        if (b['staffNote'] != null &&
-            '${b['staffNote']}'.isNotEmpty) ...[
+        if (b['staffNote'] != null && '${b['staffNote']}'.isNotEmpty) ...[
           const SizedBox(height: 8),
           Container(
             width: double.infinity,
@@ -506,8 +505,7 @@ class _BookingCardState extends State<_BookingCard> {
                     side: const BorderSide(color: AppColors.danger),
                     foregroundColor: AppColors.danger,
                     shape: RoundedRectangleBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.button)),
+                        borderRadius: BorderRadius.circular(AppRadius.button)),
                   ),
                   child: const Text('إلغاء الحجز'),
                 ),
@@ -524,7 +522,7 @@ class _BookingCardState extends State<_BookingCard> {
 }
 
 /// Required documents the student should prepare for the registration day.
-/// Only the first three have matching upload keys in the Study Birds system.
+/// Only the first three have matching upload keys in the COVEY system.
 const List<({String docKey, String label})> kUniversityRegistrationDocs = [
   (docKey: 'passport', label: 'جواز السفر الأصلي'),
   (docKey: 'biometric-photo', label: 'صور شخصية'),
@@ -593,10 +591,8 @@ class _UniversityRegistrationScreenState
       final docs = Json.list(results[1]);
       setState(() {
         _stage = '${overview?['journeyStage'] ?? ''}';
-        _uploadedKeys = docs
-            .whereType<Map>()
-            .map((d) => '${d['type']}')
-            .toSet();
+        _uploadedKeys =
+            docs.whereType<Map>().map((d) => '${d['type']}').toSet();
       });
     } catch (e) {
       if (mounted) {
@@ -677,10 +673,8 @@ class _DocRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(children: [
-      Icon(
-          done ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
-          color: done ? AppColors.success : AppColors.neutral,
-          size: 20),
+      Icon(done ? Icons.check_circle_rounded : Icons.radio_button_unchecked,
+          color: done ? AppColors.success : AppColors.neutral, size: 20),
       const SizedBox(width: 10),
       Expanded(child: Text(label, style: AppTextStyles.body)),
     ]);

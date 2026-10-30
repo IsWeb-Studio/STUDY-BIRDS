@@ -219,7 +219,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
                                                             .check_circle_outline,
                                                         size: 18,
                                                         color:
-                                                            AppColors.orange),
+                                                            AppColors.green),
                                                     const SizedBox(width: 8),
                                                     Expanded(
                                                         child: _ArticleText(
@@ -307,7 +307,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
       if (location.isNotEmpty)
         Row(children: [
           const Icon(Icons.location_on_outlined,
-              size: 18, color: AppColors.orange),
+              size: 18, color: AppColors.green),
           const SizedBox(width: 6),
           Expanded(child: Text(location, style: AppTextStyles.body))
         ]),
@@ -553,9 +553,9 @@ class _RemotePhoto extends StatelessWidget {
                   ? const Icon(Icons.broken_image_outlined,
                       color: AppColors.textSecondary)
                   : Column(mainAxisSize: MainAxisSize.min, children: [
-                      Icon(Icons.broken_image_outlined,
+                      const Icon(Icons.broken_image_outlined,
                           color: AppColors.textSecondary),
-                      SizedBox(height: 6),
+                      const SizedBox(height: 6),
                       Text(cl('تعذر تحميل الصورة', 'Could not load the image'), style: AppTextStyles.caption)
                     ]))));
 }

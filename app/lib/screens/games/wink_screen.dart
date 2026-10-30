@@ -1,9 +1,12 @@
+import '../../core/config/app_theme.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../core/utils/json_safe.dart';
+import '../../core/services/auth_session.dart';
+import '../../core/repositories/stories_repository.dart';
 import 'wink_controller.dart';
 import 'wink_playing_card.dart';
 import 'wink_style.dart';
@@ -13,7 +16,9 @@ import 'wink_local_screen.dart';
 class WinkScreen extends StatefulWidget {
   static bool _opening = false;
   static Future<void> open(BuildContext context) async {
-    if (_opening) return;
+    if (_opening || AuthSession.instance.currentUser?.role == UserRole.agent) {
+      return;
+    }
     _opening = true;
     try {
       await Navigator.of(context)
@@ -49,21 +54,23 @@ class _WinkScreenState extends State<WinkScreen> {
   bool _leaving = false;
   bool _accusing = false, _editingSettings = false;
   bool _started = false;
+  late final bool _blockedByRole;
   bool _audioSheetOpen = false;
   String t(String ar, String en) =>
       Localizations.localeOf(context).languageCode == 'ar' ? ar : en;
   @override
   void initState() {
     super.initState();
+    _blockedByRole = AuthSession.instance.currentUser?.role == UserRole.agent;
     game = widget.controller ?? WinkController();
     _round = (game.room?['round'] as num?)?.toInt() ?? -1;
     _roomCode = game.room?['code']?.toString();
     _lastPhase = game.phase;
     feedback.observe(game.room,
         sound: false, vibration: false, active: false, emit: false);
-    game.visible = widget.isActive;
+    game.visible = widget.isActive && !_blockedByRole;
     game.addListener(_changed);
-    if (widget.isActive) {
+    if (widget.isActive && !_blockedByRole) {
       _started = true;
       unawaited(game.start());
     }
@@ -73,12 +80,12 @@ class _WinkScreenState extends State<WinkScreen> {
   @override
   void didUpdateWidget(covariant WinkScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    game.visible = widget.isActive;
+    game.visible = widget.isActive && !_blockedByRole;
     if (!widget.isActive) {
       revealing = false;
       unawaited(feedback.stop());
     }
-    if (widget.isActive && !oldWidget.isActive) {
+    if (widget.isActive && !oldWidget.isActive && !_blockedByRole) {
       if (!_started) {
         _started = true;
         unawaited(game.start());
@@ -128,6 +135,10 @@ class _WinkScreenState extends State<WinkScreen> {
 
   @override
   void dispose() {
+    final role = AuthSession.instance.currentUser?.role;
+    if (role != null && role != UserRole.agent) {
+      StoriesRepository.instance.notifyProgressChanged();
+    }
     game.removeListener(_changed);
     game.dispose();
     feedback.dispose();
@@ -163,6 +174,20 @@ class _WinkScreenState extends State<WinkScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_blockedByRole) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      return Scaffold(
+        appBar: AppBar(title: Text(isArabic ? 'غير متاح' : 'Unavailable')),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text(isArabic
+                ? 'اللعبة غير متاحة لحساب الوكيل.'
+                : 'The game is not available to agent accounts.'),
+          ),
+        ),
+      );
+    }
     final base = Theme.of(context);
     final sky = WinkSky.theme(base);
     return Theme(
@@ -218,7 +243,7 @@ class _WinkScreenState extends State<WinkScreen> {
                           colors: [
                         WinkSky.header,
                         WinkSky.sky,
-                        Color(0xFFF1FAFF)
+                        AppColors.greenSoft
                       ])),
                   child: Stack(children: [
                     const Positioned(
@@ -299,7 +324,7 @@ class _WinkScreenState extends State<WinkScreen> {
   Widget _section(IconData icon, String title, {String? detail}) => Padding(
       padding: const EdgeInsets.only(top: 8, bottom: 14),
       child: Row(children: [
-        Icon(icon, size: 20, color: const Color(0xFFFF741C)),
+        Icon(icon, size: 20, color: AppColors.green),
         const SizedBox(width: 8),
         Expanded(
             child: Text(title,
@@ -308,7 +333,7 @@ class _WinkScreenState extends State<WinkScreen> {
         if (detail != null)
           Text(detail,
               textDirection: TextDirection.ltr,
-              style: const TextStyle(color: Color(0xFF6683A4), fontSize: 12)),
+              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
       ]));
 
   Widget _players(String phase, bool selfAlive) => _panel(
@@ -352,16 +377,16 @@ class _WinkScreenState extends State<WinkScreen> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      Color(0xFFEFF9FF),
-                      Color(0xFFDDF3FF),
+                      AppColors.greenSoft,
+                      AppColors.greenSoft,
                       Color(0xFFFFFFFF)
                     ]),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: const Color(0xFFD7EDF8))),
+                border: Border.all(color: AppColors.greenSoft)),
             child: Column(children: [
-              const Text('STUDY BIRDS',
+              const Text('COVEY',
                   style: TextStyle(
-                      color: Color(0xFF6683A4),
+                      color: AppColors.textSecondary,
                       fontSize: 10,
                       letterSpacing: 2)),
               _deck(),
@@ -417,7 +442,7 @@ class _WinkScreenState extends State<WinkScreen> {
               _button(t('إنشاء غرفة', 'Create room'), () => game.create(),
                   icon: Icons.add_circle_outline),
               const SizedBox(height: 16),
-              const Divider(color: Color(0xFFD7EDF8)),
+              const Divider(color: AppColors.greenSoft),
               const SizedBox(height: 24),
               TextField(
                   key: const ValueKey('wink-room-code-input'),
@@ -466,12 +491,12 @@ class _WinkScreenState extends State<WinkScreen> {
 
   Widget _feature(IconData icon, String label) =>
       Row(mainAxisSize: MainAxisSize.min, children: [
-        Icon(icon, size: 16, color: const Color(0xFFCC5300)),
+        Icon(icon, size: 16, color: AppColors.greenInk),
         const SizedBox(width: 6),
         Flexible(
             child: Text(label,
                 style:
-                    const TextStyle(color: Color(0xFF426684), fontSize: 12))),
+                    const TextStyle(color: AppColors.textSecondary, fontSize: 12))),
       ]);
   List<Widget> _room() {
     final r = game.room!;
@@ -558,7 +583,7 @@ class _WinkScreenState extends State<WinkScreen> {
         if (selfAlive && phase == 'playing') _role(compact: true),
         if (!selfAlive)
           _panel(
-              color: const Color(0xFFF0F7FE),
+              color: AppColors.greenSoft,
               child: Text(t('خرجت من الجولة! كمل تتفرج من غير غمز أو تصويت.',
                   'You are out! Keep watching without winking or voting.'))),
         if (game.me['notice'] == 'winked' && selfAlive)
@@ -574,7 +599,7 @@ class _WinkScreenState extends State<WinkScreen> {
               icon: Icons.visibility_off_outlined),
         if (phase == 'voting')
           _panel(
-              color: const Color(0xFFF0F7FE),
+              color: AppColors.greenSoft,
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -611,10 +636,10 @@ class _WinkScreenState extends State<WinkScreen> {
       ],
       if (phase == 'finished')
         _panel(
-            color: const Color(0xFFF0F7FE),
+            color: AppColors.greenSoft,
             child: Column(children: [
               const Icon(Icons.emoji_events_outlined,
-                  color: Color(0xFFFF741C), size: 58),
+                  color: AppColors.green, size: 58),
               Text(
                   result['winner'] == 'winker'
                       ? t('الغمّاز كسب!', 'The winker wins!')
@@ -676,7 +701,7 @@ class _WinkScreenState extends State<WinkScreen> {
             width: 8,
             height: 8,
             decoration: const BoxDecoration(
-                color: Color(0xFF36C98C), shape: BoxShape.circle)),
+                color: AppColors.green, shape: BoxShape.circle)),
         const SizedBox(width: 8),
         Expanded(
             child: Text(stage,
@@ -685,19 +710,19 @@ class _WinkScreenState extends State<WinkScreen> {
         Text(
             t('جولة ${game.room?['round'] ?? 0}',
                 'Round ${game.room?['round'] ?? 0}'),
-            style: const TextStyle(color: Color(0xFF6683A4), fontSize: 12)),
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
       ]),
       const SizedBox(height: 14),
       if (practice)
         Text(t('وضع التجربة · أنت و3 بوتات', 'Practice · You and 3 bots'),
             style: const TextStyle(
-                color: Color(0xFFCC5300), fontWeight: FontWeight.bold))
+                color: AppColors.greenInk, fontWeight: FontWeight.bold))
       else
         Container(
             padding: const EdgeInsetsDirectional.only(
                 start: 14, end: 4, top: 4, bottom: 4),
             decoration: BoxDecoration(
-                color: const Color(0xFFEAF4FB),
+                color: AppColors.greenSoft,
                 borderRadius: BorderRadius.circular(14)),
             child: Wrap(
                 spacing: 4,
@@ -708,7 +733,7 @@ class _WinkScreenState extends State<WinkScreen> {
                       children: [
                         Text(t('كود الغرفة', 'ROOM CODE'),
                             style: const TextStyle(
-                                color: Color(0xFF6683A4),
+                                color: AppColors.textSecondary,
                                 fontSize: 10,
                                 letterSpacing: 1)),
                         SelectableText('${game.room?['code']}',
@@ -717,7 +742,7 @@ class _WinkScreenState extends State<WinkScreen> {
                                 fontSize: 23,
                                 letterSpacing: 3,
                                 fontWeight: FontWeight.bold,
-                                color: Color(0xFF09285C))),
+                                color: AppColors.navy)),
                       ]),
                   IconButton(
                       tooltip: t('نسخ الكود', 'Copy code'),
@@ -732,9 +757,9 @@ class _WinkScreenState extends State<WinkScreen> {
       const SizedBox(height: 12),
       Wrap(spacing: 14, runSpacing: 6, children: [
         Text(t('$alive في الجولة', '$alive in play'),
-            style: const TextStyle(color: Color(0xFF6683A4), fontSize: 12)),
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
         Text(t('بدون وقت محدد', 'No time limit'),
-            style: const TextStyle(color: Color(0xFF6683A4), fontSize: 12)),
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
       ]),
     ]));
   }
@@ -742,8 +767,8 @@ class _WinkScreenState extends State<WinkScreen> {
   Future<void> _shareCode() async {
     final value = game.room?['code'];
     if (value == null) return;
-    final message = t('تعال نلعب الغمّازة في Study Birds! كود الغرفة: $value',
-        'Play The Winker in Study Birds! Room code: $value');
+    final message = t('تعال نلعب الغمّازة في COVEY! كود الغرفة: $value',
+        'Play The Winker in COVEY! Room code: $value');
     final ok = await launchUrl(Uri.https('wa.me', '/', {'text': message}),
         mode: LaunchMode.externalApplication);
     if (!ok) await Clipboard.setData(ClipboardData(text: message));
@@ -780,7 +805,7 @@ class _WinkScreenState extends State<WinkScreen> {
             children: [
               Text(t('كرتك الخاص · سرّك معك', 'YOUR SECRET CARD'),
                   style: const TextStyle(
-                      color: Color(0xFF6683A4),
+                      color: AppColors.textSecondary,
                       fontSize: 11,
                       letterSpacing: 1.5)),
               const SizedBox(height: 12),
@@ -795,7 +820,7 @@ class _WinkScreenState extends State<WinkScreen> {
                   style: TextStyle(
                       fontSize: compact ? 23 : 25,
                       fontWeight: FontWeight.bold,
-                      color: const Color(0xFF09285C))),
+                      color: AppColors.navy)),
               const SizedBox(height: 10),
               Text(
                   t(
@@ -807,7 +832,7 @@ class _WinkScreenState extends State<WinkScreen> {
                           : 'Hold your card to open it. It stays visible until you hide it.'),
                   textAlign: wide ? TextAlign.start : TextAlign.center,
                   style: const TextStyle(
-                      fontSize: 12, height: 1.6, color: Color(0xFF6683A4))),
+                      fontSize: 12, height: 1.6, color: AppColors.textSecondary)),
               if (revealing) ...[
                 const SizedBox(height: 12),
                 FilledButton.icon(
@@ -815,7 +840,7 @@ class _WinkScreenState extends State<WinkScreen> {
                     onPressed: () => setState(() => revealing = false),
                     style: FilledButton.styleFrom(
                         backgroundColor: WinkSky.orange,
-                        foregroundColor: Colors.white),
+                        foregroundColor: WinkSky.navy),
                     icon: const Icon(Icons.visibility_off_outlined, size: 17),
                     label: Text(t('إخفاء الكرت', 'Hide card'))),
               ],
@@ -826,7 +851,7 @@ class _WinkScreenState extends State<WinkScreen> {
             decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(26),
-                border: Border.all(color: const Color(0xFFD7EDF8)),
+                border: Border.all(color: AppColors.greenSoft),
                 boxShadow: const [
                   BoxShadow(
                       color: Color(0x16086EAB),
@@ -869,7 +894,7 @@ class _WinkScreenState extends State<WinkScreen> {
                   shape: BoxShape.circle,
                   border: Border.all(
                       color:
-                          !other ? const Color(0xFFFFC991) : Colors.transparent,
+                          !other ? AppColors.greenSoft : Colors.transparent,
                       width: 2)),
               child: Stack(clipBehavior: Clip.none, children: [
                 WinkAvatar(
@@ -894,7 +919,7 @@ class _WinkScreenState extends State<WinkScreen> {
                             shape: BoxShape.circle,
                             color: living && p['connected'] == true
                                 ? WinkSky.green
-                                : const Color(0xFF9CB1C5),
+                                : AppColors.textSecondary,
                             border:
                                 Border.all(color: Colors.white, width: 2)))),
               ])),
@@ -910,7 +935,7 @@ class _WinkScreenState extends State<WinkScreen> {
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: !other
-                              ? const Color(0xFFCB570D)
+                              ? AppColors.greenInk
                               : WinkSky.navy)))),
           Text(caption,
               textAlign: TextAlign.center,
@@ -934,8 +959,8 @@ class _WinkScreenState extends State<WinkScreen> {
               TextButton(
                   key: ValueKey('practice-wink-${p['id']}'),
                   style: TextButton.styleFrom(
-                      backgroundColor: const Color(0xFFFFEEE1),
-                      foregroundColor: const Color(0xFFC65105),
+                      backgroundColor: AppColors.greenSoft,
+                      foregroundColor: AppColors.greenInk,
                       minimumSize: const Size(double.infinity, 44),
                       padding: const EdgeInsets.symmetric(
                           horizontal: 5, vertical: 10),
@@ -1147,8 +1172,8 @@ class _WinkScreenState extends State<WinkScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                        t('قواعد الغمّازة في Study Birds',
-                            'The Winker rules in Study Birds'),
+                        t('قواعد الغمّازة في COVEY',
+                            'The Winker rules in COVEY'),
                         style: const TextStyle(
                             fontSize: 24, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 16),

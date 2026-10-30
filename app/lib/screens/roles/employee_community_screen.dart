@@ -35,14 +35,26 @@ String _reason(dynamic key) =>
 
 class _EmployeeCommunityScreenState extends State<EmployeeCommunityScreen> {
   final repo = CommunityRepository.instance;
-  List<Map<String, dynamic>> reports = [], suspensions = [];
+  final _blockedTerms = TextEditingController();
+  List<Map<String, dynamic>> posts = [],
+      reports = [],
+      suspensions = [],
+      log = [];
   bool loading = true, busy = false;
-  String? error;
+  String? error, notice;
+  String _reportStatus = 'open';
+  String _postsFilter = '';
 
   @override
   void initState() {
     super.initState();
     load();
+  }
+
+  @override
+  void dispose() {
+    _blockedTerms.dispose();
+    super.dispose();
   }
 
   Future<void> load() async {
@@ -51,12 +63,25 @@ class _EmployeeCommunityScreenState extends State<EmployeeCommunityScreen> {
       error = null;
     });
     try {
-      final results =
-          await Future.wait([repo.openReports(), repo.suspensions()]);
+      final results = await Future.wait([
+        repo.moderationPosts(
+          status: _postsFilter == 'reported' ? null : _postsFilter,
+          reported: _postsFilter == 'reported',
+        ),
+        repo.moderationReports(status: _reportStatus),
+        repo.moderationLog(),
+        repo.suspensions(),
+        repo.moderationSettings(),
+      ]);
       if (!mounted) return;
+      final settings = results[4] as Map<String, dynamic>;
       setState(() {
-        reports = results[0];
-        suspensions = results[1];
+        posts = results[0] as List<Map<String, dynamic>>;
+        reports = results[1] as List<Map<String, dynamic>>;
+        log = results[2] as List<Map<String, dynamic>>;
+        suspensions = results[3] as List<Map<String, dynamic>>;
+        _blockedTerms.text =
+            (settings['blockedTerms'] as List? ?? []).join('\n');
       });
     } catch (e) {
       if (mounted) {
@@ -64,6 +89,35 @@ class _EmployeeCommunityScreenState extends State<EmployeeCommunityScreen> {
       }
     } finally {
       if (mounted) setState(() => loading = false);
+    }
+  }
+
+  Future<void> saveTerms() async {
+    final terms = _blockedTerms.text
+        .split('\n')
+        .map((term) => term.trim())
+        .where((term) => term.isNotEmpty)
+        .toList();
+    if (terms.length > 300 || terms.any((term) => term.length > 60)) {
+      setState(() =>
+          error = 'القائمة تسمح حتى 300 كلمة، وبحد أقصى 60 حرفًا لكل كلمة.');
+      return;
+    }
+    setState(() {
+      busy = true;
+      error = null;
+      notice = null;
+    });
+    try {
+      final saved = await repo.saveBlockedTerms(terms);
+      _blockedTerms.text = saved.join('\n');
+      if (mounted) setState(() => notice = 'تم حفظ الكلمات المحظورة.');
+    } catch (e) {
+      if (mounted) {
+        setState(() => error = _moderationError(e, 'تعذر حفظ القائمة.'));
+      }
+    } finally {
+      if (mounted) setState(() => busy = false);
     }
   }
 
@@ -80,8 +134,8 @@ class _EmployeeCommunityScreenState extends State<EmployeeCommunityScreen> {
       await load();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            AppSnackBar(content: Text(_moderationError(e, 'تعذر رفع الإيقاف.'))));
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+            content: Text(_moderationError(e, 'تعذر رفع الإيقاف.'))));
       }
     } finally {
       if (mounted) setState(() => busy = false);
@@ -90,7 +144,8 @@ class _EmployeeCommunityScreenState extends State<EmployeeCommunityScreen> {
 
   @override
   Widget build(BuildContext context) => DefaultTabController(
-        length: 2,
+        length: 5,
+        initialIndex: 1,
         child: AppScaffold(
           title: 'إشراف مجتمع الطلاب',
           body: loading
@@ -98,66 +153,254 @@ class _EmployeeCommunityScreenState extends State<EmployeeCommunityScreen> {
               : error != null
                   ? ErrorState(message: error!, onRetry: load)
                   : Column(children: [
+                      if (notice != null)
+                        Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Text(notice!,
+                              style: const TextStyle(color: AppColors.success)),
+                        ),
                       TabBar(
+                          isScrollable: true,
                           labelColor: AppColors.navy,
-                          indicatorColor: AppColors.orange,
+                          indicatorColor: AppColors.green,
                           tabs: [
-                            Tab(text: 'البلاغات المفتوحة (${reports.length})'),
+                            Tab(text: 'المنشورات (${posts.length})'),
+                            Tab(
+                              text: '${switch (_reportStatus) {
+                                'open' => 'البلاغات المفتوحة',
+                                'resolved' => 'البلاغات المقبولة',
+                                'dismissed' => 'البلاغات المرفوضة',
+                                _ => 'البلاغات',
+                              }} (${reports.length})',
+                            ),
+                            Tab(text: 'سجل الإشراف (${log.length})'),
                             Tab(text: 'الموقوفون (${suspensions.length})'),
+                            const Tab(text: 'الكلمات المحظورة'),
                           ]),
                       Expanded(
                         child: TabBarView(children: [
+                          _postsTab(),
                           _reportsTab(),
+                          _logTab(),
                           _suspensionsTab(),
+                          _termsTab(),
                         ]),
                       ),
                     ]),
         ),
       );
 
-  Widget _reportsTab() {
-    if (reports.isEmpty) {
-      return const EmptyState(
-          icon: Icons.verified_user_outlined,
-          title: 'لا توجد بلاغات مفتوحة',
-          message: 'ستظهر هنا البلاغات التي يرسلها الطلاب.');
-    }
-    return RefreshIndicator(
-      onRefresh: load,
-      color: AppColors.navy,
-      child: ListView.separated(
-        padding: const EdgeInsets.all(16),
-        itemCount: reports.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (context, i) {
-          final report = reports[i];
-          final post = report['post'];
-          return Card(
-            margin: EdgeInsets.zero,
-            child: ListTile(
-              title: Text(post is Map ? '${post['title']}' : 'موضوع محذوف'),
-              subtitle: Text([
-                _reason(report['reason']),
-                report['targetType'] == 'post' ? 'على الموضوع' : 'على تعليق',
-                _name(report['reporter']),
-                if ('${report['details'] ?? ''}'.isNotEmpty)
-                  '${report['details']}',
-              ].join(' · ')),
-              trailing: const Icon(Icons.chevron_left),
-              onTap: post is! Map
-                  ? null
-                  : () async {
-                      await Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => EmployeeCommunityPostScreen(
-                              postId: '${post['_id']}')));
-                      load();
+  Widget _postsTab() => Column(children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: DropdownButtonFormField<String>(
+            initialValue: _postsFilter,
+            decoration: const InputDecoration(labelText: 'تصفية المنشورات'),
+            items: const [
+              DropdownMenuItem(value: '', child: Text('كل المنشورات')),
+              DropdownMenuItem(value: 'published', child: Text('المنشورة')),
+              DropdownMenuItem(value: 'hidden', child: Text('المخفية')),
+              DropdownMenuItem(
+                  value: 'reported', child: Text('عليها بلاغ مفتوح')),
+            ],
+            onChanged: busy
+                ? null
+                : (value) {
+                    setState(() => _postsFilter = value ?? '');
+                    load();
+                  },
+          ),
+        ),
+        Expanded(
+          child: posts.isEmpty
+              ? const EmptyState(
+                  icon: Icons.forum_outlined,
+                  title: 'لا توجد منشورات',
+                  message: 'لا توجد منشورات مطابقة لهذا الفلتر.',
+                )
+              : RefreshIndicator(
+                  onRefresh: load,
+                  child: ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: posts.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    itemBuilder: (context, index) {
+                      final post = posts[index];
+                      return Card(
+                        child: ListTile(
+                          title: Text('${post['title'] ?? 'موضوع محذوف'}'),
+                          subtitle: Text(
+                            '${_name(post['author'])} · ${post['status'] == 'hidden' ? 'مخفي' : 'منشور'} · ${post['openReports'] ?? 0} بلاغ مفتوح',
+                          ),
+                          trailing: const Icon(Icons.chevron_left),
+                          onTap: post['_id'] == null
+                              ? null
+                              : () async {
+                                  await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          EmployeeCommunityPostScreen(
+                                              postId: '${post['_id']}'),
+                                    ),
+                                  );
+                                  load();
+                                },
+                        ),
+                      );
                     },
-            ),
-          );
-        },
+                  ),
+                ),
+        ),
+      ]);
+
+  Widget _reportsTab() {
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+        child: DropdownButtonFormField<String>(
+          initialValue: _reportStatus,
+          decoration: const InputDecoration(labelText: 'حالة البلاغ'),
+          items: const [
+            DropdownMenuItem(value: 'open', child: Text('مفتوحة')),
+            DropdownMenuItem(value: 'resolved', child: Text('مقبولة')),
+            DropdownMenuItem(value: 'dismissed', child: Text('مرفوضة')),
+          ],
+          onChanged: busy
+              ? null
+              : (value) {
+                  setState(() => _reportStatus = value ?? 'open');
+                  load();
+                },
+        ),
       ),
-    );
+      Expanded(
+        child: reports.isEmpty
+            ? EmptyState(
+                icon: Icons.verified_user_outlined,
+                title: _reportStatus == 'open'
+                    ? 'لا توجد بلاغات مفتوحة'
+                    : 'لا توجد بلاغات بهذه الحالة',
+                message: _reportStatus == 'open'
+                    ? 'ستظهر هنا البلاغات التي يرسلها الطلاب.'
+                    : '',
+              )
+            : RefreshIndicator(
+                onRefresh: load,
+                color: AppColors.navy,
+                child: ListView.separated(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: reports.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, i) {
+                    final report = reports[i];
+                    final post = report['post'];
+                    return Card(
+                      margin: EdgeInsets.zero,
+                      child: ListTile(
+                        title: Text(
+                            post is Map ? '${post['title']}' : 'موضوع محذوف'),
+                        subtitle: Text([
+                          _reason(report['reason']),
+                          report['targetType'] == 'post'
+                              ? 'على الموضوع'
+                              : 'على تعليق',
+                          _name(report['reporter']),
+                          if ('${report['details'] ?? ''}'.isNotEmpty)
+                            '${report['details']}',
+                        ].join(' · ')),
+                        trailing: const Icon(Icons.chevron_left),
+                        onTap: post is! Map
+                            ? null
+                            : () async {
+                                await Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                        builder: (_) =>
+                                            EmployeeCommunityPostScreen(
+                                                postId: '${post['_id']}')));
+                                load();
+                              },
+                      ),
+                    );
+                  },
+                ),
+              ),
+      ),
+    ]);
   }
+
+  Widget _logTab() => log.isEmpty
+      ? const EmptyState(
+          icon: Icons.history,
+          title: 'لا يوجد سجل إشراف',
+          message: 'ستظهر هنا قرارات الإشراف وتواريخها.',
+        )
+      : RefreshIndicator(
+          onRefresh: load,
+          child: ListView.separated(
+            padding: const EdgeInsets.all(16),
+            itemCount: log.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 8),
+            itemBuilder: (context, index) {
+              final entry = log[index];
+              final until =
+                  DateTime.tryParse('${entry['suspendedUntil'] ?? ''}')
+                      ?.toLocal();
+              final targetType = '${entry['targetType'] ?? ''}';
+              final subject = _name(entry['subject']);
+              final post = entry['post'];
+              final postTitle = post is Map ? '${post['title'] ?? ''}' : '';
+              final createdAt =
+                  DateTime.tryParse('${entry['createdAt'] ?? ''}')?.toLocal();
+              final reportsClosed =
+                  (entry['reportsClosed'] as num?)?.toInt() ?? 0;
+              return Card(
+                child: ListTile(
+                  title: Text(targetType == 'user'
+                      ? 'الطالب: $subject'
+                      : postTitle.isEmpty
+                          ? 'إجراء على ${targetType == 'comment' ? 'تعليق' : 'موضوع'}'
+                          : postTitle),
+                  subtitle: Text([
+                    '${_name(entry['actor'])} · ${entry['fromStatus'] ?? ''} ← ${entry['toStatus'] ?? ''}',
+                    if ('${entry['note'] ?? ''}'.isNotEmpty) '${entry['note']}',
+                    if (until != null)
+                      'حتى ${MaterialLocalizations.of(context).formatMediumDate(until)}',
+                    if (reportsClosed > 0) 'إغلاق $reportsClosed بلاغ',
+                    if (createdAt != null)
+                      MaterialLocalizations.of(context)
+                          .formatMediumDate(createdAt),
+                  ].join(' · ')),
+                ),
+              );
+            },
+          ),
+        );
+
+  Widget _termsTab() => ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          const Text(
+              'اكتب كل كلمة أو عبارة في سطر منفصل. الحد الأقصى 300 كلمة و60 حرفًا لكل سطر.'),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _blockedTerms,
+            enabled: !busy,
+            minLines: 8,
+            maxLines: 16,
+            decoration: const InputDecoration(
+              labelText: 'الكلمات والعبارات المحظورة',
+              border: OutlineInputBorder(),
+              alignLabelWithHint: true,
+            ),
+          ),
+          const SizedBox(height: 12),
+          FilledButton.icon(
+            onPressed: busy ? null : saveTerms,
+            icon: const Icon(Icons.save_outlined),
+            label: const Text('حفظ الكلمات المحظورة'),
+          ),
+        ],
+      );
 
   Widget _suspensionsTab() {
     if (suspensions.isEmpty) {
@@ -356,7 +599,7 @@ class _EmployeeCommunityPostScreenState
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                     color: comment['status'] == 'hidden'
-                        ? AppColors.orangeSoft
+                        ? AppColors.greenSoft
                         : Colors.white,
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: AppColors.border)),

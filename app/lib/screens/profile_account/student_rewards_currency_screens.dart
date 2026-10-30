@@ -4,7 +4,7 @@ import '../../core/widgets/feature_ui.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard, ClipboardData;
-import 'package:url_launcher/url_launcher.dart';
+import '../../core/widgets/external_link.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
 import '../../core/config/app_theme.dart';
@@ -12,7 +12,6 @@ import '../../core/services/currency_service.dart';
 import '../../core/repositories/stories_repository.dart';
 import '../../core/services/realtime_sync_service.dart';
 import '../../core/widgets/bird_points.dart';
-import '../../core/widgets/streak_restore.dart';
 import 'dart:async';
 
 // ─── بند 53: مكافآت الطالب ────────────────────────────────────────────────────
@@ -115,7 +114,7 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
                       children: [
                         AppCard(
                             child: Column(children: [
-                          const Text('نقاط النشاط والستريك',
+                          const Text('نقاط النشاط',
                               style: AppTextStyles.cardTitle),
                           const SizedBox(height: 12),
                           if (_storyProgress == null)
@@ -126,8 +125,6 @@ class _StudentRewardsScreenState extends State<StudentRewardsScreen> {
                             BirdPoints('${_storyProgress!.points}',
                                 style: const TextStyle(
                                     fontSize: 36, fontWeight: FontWeight.bold)),
-                            Text('🔥 ${_storyProgress!.days} يوم متتالي'),
-                            StreakRestore(progress: _storyProgress!, onRestored: (value) => setState(() => _storyProgress = value)),
                             if (_pointsChange != null)
                               Text(
                                   '${_pointsChange! > 0 ? '+' : ''}$_pointsChange',
@@ -181,7 +178,7 @@ class _PointsSummaryCard extends StatelessWidget {
             height: 72,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppColors.navy, Color(0xFF3D7DC8)],
+                colors: [AppColors.navy, AppColors.navyLight],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -218,7 +215,7 @@ class _RewardEntryCard extends StatelessWidget {
   static const _typeColors = {
     'referral': AppColors.success,
     'stage': AppColors.navy,
-    'bonus': AppColors.orange,
+    'bonus': AppColors.green,
     'admin': AppColors.textSecondary,
   };
 
@@ -249,16 +246,13 @@ class _RewardEntryCard extends StatelessWidget {
           const SizedBox(height: 2),
           Row(children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(4)),
               child: Text(label,
                   style: TextStyle(
-                      color: color,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600)),
+                      color: color, fontSize: 11, fontWeight: FontWeight.w600)),
             ),
             if (date.isNotEmpty) ...[
               const SizedBox(width: 8),
@@ -315,7 +309,9 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
     try {
       final rates = await CurrencyService.instance.fetchRates(_from);
       if (mounted) setState(() => _rates = rates);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/student_rewards_currency_screens.dart:245');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/profile_account/student_rewards_currency_screens.dart:245');
       if (mounted) setState(() => _error = 'تعذر جلب أسعار الصرف.');
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -354,53 +350,56 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
               child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                const Text('المبلغ', style: AppTextStyles.sectionLabel),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _controller,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
-                  decoration: InputDecoration(
-                    hintText: 'أدخل المبلغ',
-                    border: OutlineInputBorder(
-                        borderRadius:
-                            BorderRadius.circular(AppRadius.card)),
-                    contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 12),
-                  ),
-                  onChanged: (_) => setState(() {}),
-                ),
-                const SizedBox(height: 16),
-                Row(children: [
-                  Expanded(child: _CurrencyDropdown(
-                    label: 'من',
-                    value: _from,
-                    onChanged: (v) {
-                      if (v == null) return;
-                      setState(() {
-                        _from = v;
-                        _rates = null;
-                      });
-                      _fetchRates();
-                    },
-                  )),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    child: IconButton(tooltip: 'تبديل العملتين', 
-                        onPressed: _swap,
-                        icon: const Icon(Icons.swap_horiz_rounded,
-                            color: AppColors.navy)),
-                  ),
-                  Expanded(child: _CurrencyDropdown(
-                    label: 'إلى',
-                    value: _to,
-                    onChanged: (v) {
-                      if (v == null) return;
-                      setState(() => _to = v);
-                    },
-                  )),
-                ]),
-              ]),
+                    const Text('المبلغ', style: AppTextStyles.sectionLabel),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _controller,
+                      keyboardType:
+                          const TextInputType.numberWithOptions(decimal: true),
+                      decoration: InputDecoration(
+                        hintText: 'أدخل المبلغ',
+                        border: OutlineInputBorder(
+                            borderRadius:
+                                BorderRadius.circular(AppRadius.card)),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 12, vertical: 12),
+                      ),
+                      onChanged: (_) => setState(() {}),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(children: [
+                      Expanded(
+                          child: _CurrencyDropdown(
+                        label: 'من',
+                        value: _from,
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setState(() {
+                            _from = v;
+                            _rates = null;
+                          });
+                          _fetchRates();
+                        },
+                      )),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: IconButton(
+                            tooltip: 'تبديل العملتين',
+                            onPressed: _swap,
+                            icon: const Icon(Icons.swap_horiz_rounded,
+                                color: AppColors.navy)),
+                      ),
+                      Expanded(
+                          child: _CurrencyDropdown(
+                        label: 'إلى',
+                        value: _to,
+                        onChanged: (v) {
+                          if (v == null) return;
+                          setState(() => _to = v);
+                        },
+                      )),
+                    ]),
+                  ]),
             ),
             const SizedBox(height: 16),
             AppCard(
@@ -408,8 +407,8 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                   ? const Center(
                       child: Padding(
                           padding: EdgeInsets.all(16),
-                          child: CircularProgressIndicator(
-                              color: AppColors.navy)))
+                          child:
+                              CircularProgressIndicator(color: AppColors.navy)))
                   : _error != null
                       ? Column(children: [
                           InlineNotice(_error!, error: true),
@@ -454,8 +453,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Row(children: [
                         Expanded(
-                            child: Text(
-                                supportedCurrencies[c] ?? c,
+                            child: Text(supportedCurrencies[c] ?? c,
                                 style: AppTextStyles.body)),
                         Text('${converted.toStringAsFixed(2)} $c',
                             style: const TextStyle(
@@ -477,9 +475,7 @@ class _CurrencyDropdown extends StatelessWidget {
   final String value;
   final ValueChanged<String?> onChanged;
   const _CurrencyDropdown(
-      {required this.label,
-      required this.value,
-      required this.onChanged});
+      {required this.label, required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) => Column(
@@ -546,16 +542,20 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
     final balance = (_data?['balance'] as num?)?.toDouble() ?? 0;
     List<dynamic> unpaidInvoices = [];
     try {
-      final fin = Json.rawMap(await ApiClient.instance.get('/students/financials', token: AuthSession.instance.token));
+      final fin = Json.rawMap(await ApiClient.instance
+          .get('/students/financials', token: AuthSession.instance.token));
       unpaidInvoices = ((Json.listOrNull(fin['invoices'])) ?? [])
           .where((i) => (Json.rawMap(i))['status'] == 'unpaid')
           .toList();
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/profile_account/student_rewards_currency_screens.dart:480');}
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/profile_account/student_rewards_currency_screens.dart:480');
+    }
 
     if (!mounted) return;
     if (unpaidInvoices.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        AppSnackBar(content: Text('لا توجد فواتير غير مدفوعة حاليًا.')));
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+          content: const Text('لا توجد فواتير غير مدفوعة حاليًا.')));
       return;
     }
 
@@ -565,89 +565,121 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (ctx) => StatefulBuilder(builder: (ctx2, setSheet) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx2).bottom, left: 20, right: 20, top: 20),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const Text('استخدام رصيد المحفظة', style: AppTextStyles.cardTitle),
-          const SizedBox(height: 4),
-          Text('رصيدك المتاح: ${balance.toStringAsFixed(0)} نقطة', style: AppTextStyles.caption),
-          const SizedBox(height: 16),
-          const Text('اختر الفاتورة', style: AppTextStyles.sectionLabel),
-          const SizedBox(height: 8),
-          for (final inv in unpaidInvoices) ...[
-            GestureDetector(
-              onTap: () => setSheet(() => selectedInvoice = Json.map(inv)),
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 6),
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                decoration: BoxDecoration(
-                  color: selectedInvoice?['_id'] == (Json.rawMap(inv))['_id']
-                      ? AppColors.navy.withValues(alpha: 0.08)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(AppRadius.card),
-                  border: Border.all(
-                    color: selectedInvoice?['_id'] == inv['_id']
-                        ? AppColors.navy
-                        : AppColors.border),
-                ),
-                child: Row(children: [
-                  Icon(
-                    selectedInvoice?['_id'] == inv['_id']
-                        ? Icons.check_circle_rounded
-                        : Icons.circle_outlined,
-                    size: 20,
-                    color: selectedInvoice?['_id'] == inv['_id']
-                        ? AppColors.navy
-                        : AppColors.textSecondary,
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(child: Text(
-                    '${inv['description'] ?? 'فاتورة'} — ${inv['amount']} ${inv['currency'] ?? ''}',
-                    style: AppTextStyles.body)),
-                ]),
-              ),
-            ),
-          ],
-          const SizedBox(height: 8),
-          TextField(
-            controller: amountCtrl,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            decoration: const InputDecoration(
-              labelText: 'المبلغ المراد خصمه (دولار)',
-              border: OutlineInputBorder(),
-              contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(width: double.infinity, child: PrimaryButton(
-            label: 'تأكيد الخصم',
-            onPressed: () async {
-              final inv = selectedInvoice;
-              final amount = double.tryParse(amountCtrl.text.trim()) ?? 0;
-              if (inv == null || amount <= 0) {
-                ScaffoldMessenger.of(ctx2).showSnackBar(
-                  AppSnackBar(content: Text('اختر فاتورة وأدخل مبلغاً صحيحاً.')));
-                return;
-              }
-              final nav = Navigator.of(ctx2);
-              final messenger = ScaffoldMessenger.of(ctx2);
-              try {
-                await ApiClient.instance.post('/students/wallet/redeem',
-                    token: AuthSession.instance.token,
-                    body: { 'invoiceId': inv['_id'], 'amount': amount });
-                nav.pop();
-                await _load();
-                messenger.showSnackBar(AppSnackBar(content: Text('تم خصم الرصيد بنجاح.')));
-              } catch (e) {
-                messenger.showSnackBar(
-                  AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر تنفيذ الخصم.')));
-              }
-            },
-          )),
-          const SizedBox(height: 20),
-        ]),
-      )),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (ctx) => StatefulBuilder(
+          builder: (ctx2, setSheet) => Padding(
+                padding: EdgeInsets.only(
+                    bottom: MediaQuery.viewInsetsOf(ctx2).bottom,
+                    left: 20,
+                    right: 20,
+                    top: 20),
+                child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('استخدام رصيد المحفظة',
+                          style: AppTextStyles.cardTitle),
+                      const SizedBox(height: 4),
+                      Text('رصيدك المتاح: ${balance.toStringAsFixed(0)} نقطة',
+                          style: AppTextStyles.caption),
+                      const SizedBox(height: 16),
+                      const Text('اختر الفاتورة',
+                          style: AppTextStyles.sectionLabel),
+                      const SizedBox(height: 8),
+                      for (final inv in unpaidInvoices) ...[
+                        GestureDetector(
+                          onTap: () =>
+                              setSheet(() => selectedInvoice = Json.map(inv)),
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 6),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: selectedInvoice?['_id'] ==
+                                      (Json.rawMap(inv))['_id']
+                                  ? AppColors.navy.withValues(alpha: 0.08)
+                                  : Colors.transparent,
+                              borderRadius:
+                                  BorderRadius.circular(AppRadius.card),
+                              border: Border.all(
+                                  color: selectedInvoice?['_id'] == inv['_id']
+                                      ? AppColors.navy
+                                      : AppColors.border),
+                            ),
+                            child: Row(children: [
+                              Icon(
+                                selectedInvoice?['_id'] == inv['_id']
+                                    ? Icons.check_circle_rounded
+                                    : Icons.circle_outlined,
+                                size: 20,
+                                color: selectedInvoice?['_id'] == inv['_id']
+                                    ? AppColors.navy
+                                    : AppColors.textSecondary,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                  child: Text(
+                                      '${inv['description'] ?? 'فاتورة'} — ${inv['amount']} ${inv['currency'] ?? ''}',
+                                      style: AppTextStyles.body)),
+                            ]),
+                          ),
+                        ),
+                      ],
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: amountCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: 'المبلغ المراد خصمه (دولار)',
+                          border: OutlineInputBorder(),
+                          contentPadding: EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      SizedBox(
+                          width: double.infinity,
+                          child: PrimaryButton(
+                            label: 'تأكيد الخصم',
+                            onPressed: () async {
+                              final inv = selectedInvoice;
+                              final amount =
+                                  double.tryParse(amountCtrl.text.trim()) ?? 0;
+                              if (inv == null || amount <= 0) {
+                                ScaffoldMessenger.of(ctx2).showSnackBar(
+                                    AppSnackBar(
+                                        content: const Text(
+                                            'اختر فاتورة وأدخل مبلغاً صحيحاً.')));
+                                return;
+                              }
+                              final nav = Navigator.of(ctx2);
+                              final messenger = ScaffoldMessenger.of(ctx2);
+                              try {
+                                await ApiClient.instance.post(
+                                    '/students/wallet/redeem',
+                                    token: AuthSession.instance.token,
+                                    body: {
+                                      'invoiceId': inv['_id'],
+                                      'amount': amount
+                                    });
+                                nav.pop();
+                                await _load();
+                                messenger.showSnackBar(AppSnackBar(
+                                    content:
+                                        const Text('تم خصم الرصيد بنجاح.')));
+                              } catch (e) {
+                                messenger.showSnackBar(AppSnackBar(
+                                    content: Text(e is ApiException
+                                        ? e.message
+                                        : 'تعذر تنفيذ الخصم.')));
+                              }
+                            },
+                          )),
+                      const SizedBox(height: 20),
+                    ]),
+              )),
     );
     amountCtrl.dispose();
   }
@@ -675,9 +707,13 @@ class _StudentWalletScreenState extends State<StudentWalletScreen> {
 
     return ListView(
       padding: const EdgeInsets.all(16),
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics:
+          const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       children: [
-        _WalletBalanceCard(balance: balance, referralCode: referralCode, onRedeem: balance > 0 ? _showRedeemSheet : null),
+        _WalletBalanceCard(
+            balance: balance,
+            referralCode: referralCode,
+            onRedeem: balance > 0 ? _showRedeemSheet : null),
         const SizedBox(height: 20),
         if (referrals.isNotEmpty) ...[
           const Text('إحالاتك', style: AppTextStyles.sectionLabel),
@@ -729,7 +765,8 @@ class _WalletBalanceCard extends StatelessWidget {
   final double balance;
   final String referralCode;
   final VoidCallback? onRedeem;
-  const _WalletBalanceCard({required this.balance, required this.referralCode, this.onRedeem});
+  const _WalletBalanceCard(
+      {required this.balance, required this.referralCode, this.onRedeem});
 
   @override
   Widget build(BuildContext context) => AppCard(
@@ -739,7 +776,7 @@ class _WalletBalanceCard extends StatelessWidget {
             height: 72,
             decoration: BoxDecoration(
               gradient: const LinearGradient(
-                colors: [AppColors.navy, Color(0xFF3D7DC8)],
+                colors: [AppColors.navy, AppColors.navyLight],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -752,7 +789,9 @@ class _WalletBalanceCard extends StatelessWidget {
           Text(
             balance.toStringAsFixed(2),
             style: const TextStyle(
-                fontSize: 36, fontWeight: FontWeight.bold, color: AppColors.navy),
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: AppColors.navy),
           ),
           const Text('نقطة رصيد', style: AppTextStyles.caption),
           if (referralCode.isNotEmpty) ...[
@@ -765,7 +804,7 @@ class _WalletBalanceCard extends StatelessWidget {
               onTap: () {
                 Clipboard.setData(ClipboardData(text: referralCode));
                 ScaffoldMessenger.of(context).showSnackBar(
-                  AppSnackBar(content: Text('تم نسخ الكود')),
+                  AppSnackBar(content: const Text('تم نسخ الكود')),
                 );
               },
               child: Container(
@@ -790,35 +829,36 @@ class _WalletBalanceCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Row(children: [
-              Expanded(child: OutlinedButton.icon(
+              Expanded(
+                  child: OutlinedButton.icon(
                 onPressed: () {
                   final msg = Uri.encodeComponent(
-                      'سجّل في Study Birds باستخدام كود الإحالة الخاص بي: $referralCode 🎓\nhttps://studybirds.app');
-                  launchUrl(
-                    Uri.parse('https://wa.me/?text=$msg'),
-                    mode: LaunchMode.externalApplication,
-                  );
+                      'سجّل في COVEY باستخدام كود الإحالة الخاص بي: $referralCode 🎓\nhttps://studybirds.net');
+                  openExternalLink(context, 'https://wa.me/?text=$msg');
                 },
                 icon: const Icon(Icons.share_rounded, size: 16),
                 label: const Text('مشاركة'),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.success,
                   side: const BorderSide(color: AppColors.success),
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(AppRadius.button)),
                 ),
               )),
               if (onRedeem != null) ...[
                 const SizedBox(width: 8),
-                Expanded(child: OutlinedButton.icon(
+                Expanded(
+                    child: OutlinedButton.icon(
                   onPressed: onRedeem,
                   icon: const Icon(Icons.payment_rounded, size: 16),
                   label: const Text('استخدام الرصيد'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: AppColors.navy,
                     side: const BorderSide(color: AppColors.navy),
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(AppRadius.button)),
                   ),
@@ -845,8 +885,8 @@ class _ReferralRow extends StatelessWidget {
       child: Row(children: [
         CircleAvatar(
           radius: 18,
-          backgroundColor:
-              (isQualified ? AppColors.success : AppColors.warning).withValues(alpha: 0.15),
+          backgroundColor: (isQualified ? AppColors.success : AppColors.warning)
+              .withValues(alpha: 0.15),
           child: Icon(
             isQualified ? Icons.check_rounded : Icons.hourglass_top_rounded,
             size: 18,
@@ -855,7 +895,8 @@ class _ReferralRow extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(name, style: AppTextStyles.cardTitle),
           if (date.isNotEmpty) Text(date, style: AppTextStyles.caption),
         ])),
@@ -912,7 +953,8 @@ class _TransactionRow extends StatelessWidget {
         ),
         const SizedBox(width: 12),
         Expanded(
-            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            child:
+                Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text(
             notes.isNotEmpty ? notes : (isCredit ? 'إضافة رصيد' : 'خصم رصيد'),
             style: AppTextStyles.body,

@@ -11,7 +11,7 @@ class UniversityRepository {
 
   String get _token {
     final token = AuthSession.instance.token;
-    if (token == null) throw ApiException(401, 'لا توجد جلسة دخول نشطة');
+    if (token == null) throw const ApiException(401, 'لا توجد جلسة دخول نشطة');
     return token;
   }
 

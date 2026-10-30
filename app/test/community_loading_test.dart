@@ -138,7 +138,7 @@ void main() {
     ApiClient.instance.rememberSnapshot('/stories', stories('Cached story'),
         token: AuthSession.instance.token);
     ApiClient.instance.rememberSnapshot(
-        '/mobile-workspace/conversations', inbox('Cached chat'),
+        '/mobile-workspace/conversations?community=1', inbox('Cached chat'),
         token: AuthSession.instance.token);
     final feed = Completer<http.Response>(), chats = Completer<http.Response>();
     await http.runWithClient(() async {
@@ -167,15 +167,15 @@ void main() {
     final api =
         ApiClient.forTesting(MockClient((_) async => reply({'deleted': true})));
     api.rememberSnapshot(
-        '/mobile-workspace/conversations', inbox('Private chat'),
+        '/mobile-workspace/conversations?community=1', inbox('Private chat'),
         token: 'student-a');
-    expect(api.snapshot('/mobile-workspace/conversations', token: 'student-b'),
+    expect(api.snapshot('/mobile-workspace/conversations?community=1', token: 'student-b'),
         isNull);
-    final copy = api.snapshot('/mobile-workspace/conversations',
+    final copy = api.snapshot('/mobile-workspace/conversations?community=1',
         token: 'student-a') as Map;
     (copy['conversations'] as List).clear();
     expect(
-        (api.snapshot('/mobile-workspace/conversations',
+        (api.snapshot('/mobile-workspace/conversations?community=1',
                 token: 'student-a')['conversations'] as List)
             .length,
         1);
@@ -183,9 +183,9 @@ void main() {
     await api.delete('/mobile-workspace/conversations/peer',
         token: 'student-a');
     api.rememberSnapshot(
-        '/mobile-workspace/conversations', inbox('Deleted chat'),
+        '/mobile-workspace/conversations?community=1', inbox('Deleted chat'),
         token: 'student-a', version: oldVersion);
-    expect(api.snapshot('/mobile-workspace/conversations', token: 'student-a'),
+    expect(api.snapshot('/mobile-workspace/conversations?community=1', token: 'student-a'),
         isNull);
     api.rememberSnapshot('/stories', stories('Old account'),
         token: 'student-a');
@@ -205,7 +205,7 @@ void main() {
       pending.complete(reply(inbox('Deleted history')));
       await old;
       expect(
-          ApiClient.instance.snapshot('/mobile-workspace/conversations',
+          ApiClient.instance.snapshot('/mobile-workspace/conversations?community=1',
               token: AuthSession.instance.token),
           isNull);
     },

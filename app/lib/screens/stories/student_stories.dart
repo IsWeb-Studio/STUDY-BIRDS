@@ -1,7 +1,10 @@
+import '../../core/config/app_theme.dart';
 import '../../core/widgets/bird_points.dart';
+import '../../core/widgets/community_terms.dart';
 import '../../core/widgets/gallery_access.dart';
-import '../../core/widgets/state_widgets.dart';
+import '../../core/widgets/current_user_avatar.dart';
 import '../community/student_profile_link.dart';
+import '../community/contact_profile_screen.dart';
 import 'dart:async';
 import 'dart:typed_data';
 import 'dart:io' show File;
@@ -12,13 +15,22 @@ import '../../core/network/api_client.dart';
 import '../../core/repositories/stories_repository.dart';
 import '../../core/services/auth_session.dart';
 import '../../core/widgets/student_achievements.dart';
-import '../../core/widgets/streak_restore.dart';
+import '../../core/widgets/verified_admin_badge.dart';
 import 'friends_screen.dart';
 import '../community/student_community_hub.dart';
 import '../../core/repositories/friends_repository.dart';
 import 'story_viewer.dart';
 import 'story_loading_indicator.dart';
 export 'story_viewer.dart' show StoryViewer;
+
+bool _storyIsArabic(BuildContext context) =>
+    Localizations.localeOf(context).languageCode == 'ar';
+
+String _storyText(BuildContext context, String arabic, String english) =>
+    _storyIsArabic(context) ? arabic : english;
+
+bool _canPublishCommunityStory(UserRole? role) =>
+    role != null && role != UserRole.agent;
 
 /// The outer achievement ring is independent from the inner viewing ring.
 class StoryRing extends StatelessWidget {
@@ -50,7 +62,7 @@ class StoryRing extends StatelessWidget {
               decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                      color: seen ? Colors.grey : Colors.blue, width: 2.5)),
+                      color: seen ? Colors.grey : AppColors.navy, width: 2.5)),
               child: ClipOval(child: child)),
         ),
         if (points >= 200000)
@@ -64,8 +76,12 @@ class StoryRing extends StatelessWidget {
 class StudentStories extends StatefulWidget {
   final bool isActive;
   final bool showCommunityButton;
+  final bool compact;
   const StudentStories(
-      {super.key, this.isActive = true, this.showCommunityButton = true});
+      {super.key,
+      this.isActive = true,
+      this.showCommunityButton = true,
+      this.compact = false});
   @override
   State<StudentStories> createState() => StudentStoriesState();
 }
@@ -86,10 +102,17 @@ class StudentStoriesState extends State<StudentStories>
   final _liveCounts = <String, int>{};
   StreamSubscription<void>? _friendsSub;
   bool _openingFriends = false;
+  bool _publishingStory = false;
   bool _reloadAfterFriends = false;
+  bool _reloadAfterAccountChange = false;
+  String? _accountId;
+  bool get _canPublishStories =>
+      _canPublishCommunityStory(AuthSession.instance.currentUser?.role);
   @override
   void initState() {
     super.initState();
+    _accountId = AuthSession.instance.currentUser?.id;
+    AuthSession.instance.addListener(_accountChanged);
     WidgetsBinding.instance.addObserver(this);
     final cached = _repo.cachedFeed();
     if (cached != null) {
@@ -114,10 +137,30 @@ class StudentStoriesState extends State<StudentStories>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    AuthSession.instance.removeListener(_accountChanged);
     _timer?.cancel();
     _liveTimer?.cancel();
     _friendsSub?.cancel();
     super.dispose();
+  }
+
+  void _accountChanged() {
+    final nextId = AuthSession.instance.currentUser?.id;
+    if (nextId == _accountId) return;
+    _accountId = nextId;
+    _stories.clear();
+    _seen.clear();
+    _liveCounts.clear();
+    _cursor = null;
+    _progress = null;
+    _error = null;
+    _loading = true;
+    if (_refreshing) {
+      _reloadAfterAccountChange = true;
+    } else {
+      unawaited(_load());
+    }
+    if (mounted) setState(() {});
   }
 
   @override
@@ -173,17 +216,25 @@ class StudentStoriesState extends State<StudentStories>
   Future<void> _load({bool quiet = false, bool more = false}) async {
     if (_refreshing) {
       await _loadDone?.future;
+      if (_reloadAfterAccountChange) {
+        _reloadAfterAccountChange = false;
+        return _load(quiet: quiet, more: false);
+      }
       return;
     }
     if (quiet && !_visible) {
       return;
     }
     _refreshing = true;
+    final requestAccountId = AuthSession.instance.currentUser?.id;
     _loadDone = Completer<void>();
     try {
       // The feed already contains author scores; do not wait for a profile call.
       final page = await _repo.feed(more ? _cursor : null);
-      if (!mounted) return;
+      if (!mounted ||
+          requestAccountId != AuthSession.instance.currentUser?.id) {
+        return;
+      }
       setState(() {
         _stories = more
             ? [
@@ -211,13 +262,94 @@ class StudentStoriesState extends State<StudentStories>
         _reloadAfterFriends = false;
         unawaited(_load());
       }
+      if (_reloadAfterAccountChange && mounted) {
+        _reloadAfterAccountChange = false;
+        unawaited(_load());
+      }
     }
   }
 
   Future<void> _compose() async {
-    final posted = await Navigator.of(context)
-        .push<bool>(MaterialPageRoute(builder: (_) => const StoryComposer()));
-    if (posted == true && mounted) await _load();
+    if (!_canPublishStories || _publishingStory) return;
+    final posted = AuthSession.instance.currentUser?.role == UserRole.admin
+        ? await Navigator.of(context).push<StoryProgress>(
+            MaterialPageRoute(builder: (_) => const StoryComposer()))
+        : await _publishPhoto();
+    if (posted != null && mounted) {
+      await _load();
+      if (!mounted) return;
+      final earned = posted.awardedPoints;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(earned > 0
+            ? _storyText(
+                context,
+                'تم نشر الستوري وإضافة $earned نقطة إلى رصيدك.',
+                'Story posted. $earned points were added to your balance.')
+            : _storyText(
+                context,
+                'تم نشر الستوري. وصلت إلى حد نقاط القصص اليومي؛ سيُحتسب نشاطها غدًا.',
+                'Story posted. You reached today’s story-points limit; points are available again tomorrow.')),
+      ));
+    }
+  }
+
+  Future<StoryProgress?> _publishPhoto() async {
+    setState(() => _publishingStory = true);
+    final owner = AuthSession.instance.currentUser?.id;
+    bool valid() => mounted && owner == AuthSession.instance.currentUser?.id;
+    try {
+      if (!await requireCommunityTerms(context) || !valid()) return null;
+      final image = await ImagePicker().pickImage(
+          source: ImageSource.gallery,
+          maxWidth: 1600,
+          maxHeight: 2000,
+          imageQuality: 85);
+      if (image == null || !valid()) return null;
+      final length = await image.length();
+      if (!mounted || !valid()) return null;
+      if (length > 5 * 1024 * 1024) {
+        throw Exception(_storyText(context, 'حجم الصورة أكبر من 5 ميجابايت',
+            'Choose an image smaller than 5 MB.'));
+      }
+      final bytes = await image.readAsBytes();
+      final operation = ApiClient.newOperationId();
+      String? url;
+      while (valid()) {
+        try {
+          url ??= await _repo.upload(bytes, image.name);
+          if (!valid()) return null;
+          return await _repo.post(
+              text: '', imageUrl: url, operationId: operation);
+        } catch (error) {
+          if (!mounted || !valid()) return null;
+          final retry = await showDialog<bool>(
+              context: context,
+              builder: (ctx) => AlertDialog(
+                    title: Text(_storyText(context, 'تعذر نشر الستوري',
+                        'Could not publish story')),
+                    content: Text(mediaPickerError(error)),
+                    actions: [
+                      TextButton(
+                          onPressed: () => Navigator.pop(ctx, false),
+                          child: Text(_storyText(context, 'إلغاء', 'Cancel'))),
+                      FilledButton(
+                          onPressed: () => Navigator.pop(ctx, true),
+                          child: Text(
+                              _storyText(context, 'إعادة المحاولة', 'Retry'))),
+                    ],
+                  ));
+          if (retry != true) return null;
+        }
+      }
+    } catch (error) {
+      if (mounted && valid()) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(mediaPickerError(error))));
+      }
+    } finally {
+      if (mounted) setState(() => _publishingStory = false);
+    }
+    return null;
   }
 
   Future<void> _open(List<StudentStory> stories) async {
@@ -233,6 +365,7 @@ class StudentStoriesState extends State<StudentStories>
 
   @override
   Widget build(BuildContext context) {
+    final canPublishStories = _canPublishStories;
     final groups = <String, List<StudentStory>>{};
     for (final s
         in _stories.where((s) => s.expiresAt.isAfter(DateTime.now()))) {
@@ -241,63 +374,102 @@ class StudentStoriesState extends State<StudentStories>
     for (final stories in groups.values) {
       stories.sort((a, b) => a.expiresAt.compareTo(b.expiresAt));
     }
-    final p = _progress;
     return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+        padding: EdgeInsets.fromLTRB(16, widget.compact ? 0 : 16, 16, 0),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            const Expanded(
-                child: Text('الستوريات المنشورة',
-                    style:
-                        TextStyle(fontWeight: FontWeight.bold, fontSize: 17))),
-          ]),
-          if (!_loading && _error == null && _stories.isEmpty)
-            const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8),
-                child: Text('لا توجد ستوريات منشورة حاليًا. انشر أول ستوري!',
-                    style: TextStyle(color: Colors.blueGrey))),
-          Align(
-              alignment: AlignmentDirectional.centerEnd,
-              child: TextButton.icon(
-                  icon: const Icon(Icons.people_outline),
-                  label: const Text('الأصدقاء وطلبات الصداقة'),
-                  onPressed: () async {
-                    if (_openingFriends) return;
-                    _openingFriends = true;
-                    try {
-                      await Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const FriendsScreen()));
-                      if (mounted) await _load();
-                    } finally {
-                      _openingFriends = false;
-                    }
-                  })),
+          if (!widget.compact)
+            Row(children: [
+              Expanded(
+                  child: Text(
+                      _storyText(context, 'الستوريات المنشورة', 'Stories'),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold, fontSize: 17))),
+            ]),
+          if (!widget.compact &&
+              !_loading &&
+              _error == null &&
+              _stories.isEmpty)
+            Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: Text(
+                    _storyText(
+                        context,
+                        canPublishStories
+                            ? 'لا توجد ستوريات منشورة حاليًا. انشر أول ستوري!'
+                            : 'لا توجد ستوريات منشورة حاليًا.',
+                        canPublishStories
+                            ? 'No stories yet. Share the first one!'
+                            : 'No stories have been posted yet.'),
+                    style: const TextStyle(color: AppColors.textSecondary))),
+          if (!widget.compact)
+            Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: TextButton.icon(
+                    icon: const Icon(Icons.people_outline),
+                    label: Text(_storyText(context, 'الأصدقاء وطلبات الصداقة',
+                        'Friends and requests')),
+                    onPressed: () async {
+                      if (_openingFriends) return;
+                      _openingFriends = true;
+                      try {
+                        await Navigator.of(context).push(MaterialPageRoute(
+                            builder: (_) => const FriendsScreen()));
+                        if (mounted) await _load();
+                      } finally {
+                        _openingFriends = false;
+                      }
+                    })),
           if (_error != null)
             TextButton(
                 onPressed: () => _load(),
-                child: Text('تعذر تحميل الستوريز. اضغط للمحاولة: $_error')),
-          if (p != null && p.recoverableDays > 0)
-            StreakRestore(
-                progress: p,
-                onRestored: (value) => setState(() => _progress = value)),
+                child: Text(_storyText(
+                    context,
+                    'تعذر تحميل الستوريز. اضغط للمحاولة.',
+                    'Could not load stories. Tap to retry.'))),
           SizedBox(
               height: 122,
               child: ListView(scrollDirection: Axis.horizontal, children: [
-                SizedBox(
-                    width: 78,
-                    child: InkWell(
-                        onTap: _compose,
-                        borderRadius: BorderRadius.circular(16),
-                        child: const Column(children: [
-                          SizedBox(height: 5),
-                          CircleAvatar(
-                              radius: 29,
-                              backgroundColor: Color(0xFFEAF2FF),
-                              child: Icon(Icons.add,
-                                  size: 30, color: Colors.blue)),
-                          SizedBox(height: 9),
-                          Text('ستوري جديدة', style: TextStyle(fontSize: 11)),
-                        ]))),
+                if (canPublishStories)
+                  SizedBox(
+                      width: 78,
+                      child: InkWell(
+                          onTap: _publishingStory ? null : _compose,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Column(children: [
+                            const SizedBox(height: 5),
+                            CircleAvatar(
+                                radius: 29,
+                                backgroundColor: AppColors.greenSoft,
+                                child: _publishingStory
+                                    ? const SizedBox(
+                                        width: 24,
+                                        height: 24,
+                                        child: CircularProgressIndicator(
+                                            strokeWidth: 2))
+                                    : widget.compact
+                                        ? const Stack(
+                                            clipBehavior: Clip.none,
+                                            children: [
+                                                CurrentUserAvatar(radius: 29),
+                                                Positioned(
+                                                    bottom: -2,
+                                                    left: -2,
+                                                    child: CircleAvatar(
+                                                        radius: 10,
+                                                        backgroundColor:
+                                                            Colors.white,
+                                                        child: Icon(Icons.add,
+                                                            size: 16,
+                                                            color: AppColors
+                                                                .navy))),
+                                              ])
+                                        : const Icon(Icons.add,
+                                            size: 30, color: AppColors.navy)),
+                            const SizedBox(height: 9),
+                            Text(
+                                _storyText(context, 'ستوري جديدة', 'New story'),
+                                style: const TextStyle(fontSize: 11)),
+                          ]))),
                 if (widget.showCommunityButton)
                   CommunityEntry(isActive: widget.isActive),
                 if (_loading)
@@ -321,18 +493,41 @@ class StudentStoriesState extends State<StudentStories>
                                     (s) => s.seen || _seen.contains(s.id)),
                                 points: stories.first.authorId ==
                                         AuthSession.instance.currentUser?.id
-                                    ? (p?.points ?? stories.first.authorPoints)
+                                    ? (_progress?.points ??
+                                        stories.first.authorPoints)
                                     : stories.first.authorPoints,
                                 child: _StoryAvatar(
                                     name: stories.first.name,
                                     url: stories.first.avatar)),
                             const SizedBox(height: 6),
-                            StudentProfileLink(
-                                studentId: stories.first.authorId,
-                                child: Text(stories.first.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 11))),
+                            Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: stories.first.authorRole == 'student'
+                                        ? StudentProfileLink(
+                                            studentId: stories.first.authorId,
+                                            child: Text(stories.first.name,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                    fontSize: 11)))
+                                        : ContactProfileLink(
+                                            userId: stories.first.authorId,
+                                            communityMode: true,
+                                            child: Text(stories.first.name,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                    fontSize: 11))),
+                                  ),
+                                  if (stories.first.authorRole == 'admin') ...[
+                                    const SizedBox(width: 3),
+                                    const VerifiedAdminBadge(
+                                        role: 'admin', size: 13),
+                                  ],
+                                ]),
                             const SizedBox(height: 3),
                             Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
@@ -349,7 +544,7 @@ class StudentStoriesState extends State<StudentStories>
                   Center(
                       child: TextButton(
                           onPressed: () => _load(more: true),
-                          child: const Text('المزيد'))),
+                          child: Text(_storyText(context, 'المزيد', 'More')))),
               ])),
         ]));
   }
@@ -361,11 +556,10 @@ class _StoryAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fallback = ColoredBox(
-        color: const Color(0xFFEAF2FF),
+        color: AppColors.greenSoft,
         child: Center(
             child: Text(name.isEmpty ? '؟' : name.characters.first,
-                style:
-                    const TextStyle(fontSize: 23, color: Color(0xFF173459)))));
+                style: const TextStyle(fontSize: 23, color: AppColors.navy))));
     return url.isEmpty
         ? fallback
         : Image.network(url,
@@ -383,52 +577,40 @@ class StoryProgressSheet extends StatefulWidget {
 }
 
 class _StoryProgressSheetState extends State<StoryProgressSheet> {
-  StoryProgress? _restored;
   @override
   Widget build(BuildContext context) {
-    final p = _restored ?? widget.progress;
+    final p = widget.progress;
+    final isStudent =
+        AuthSession.instance.currentUser?.role == UserRole.student;
     return SafeArea(
         child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
             child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Icon(
-                  p.state == 'ice_cold'
-                      ? Icons.ac_unit
-                      : Icons.local_fire_department,
-                  size: 48,
-                  color: p.state == 'ice_cold'
-                      ? Colors.lightBlue
-                      : Colors.deepOrange),
-              Text('${p.days}',
+              Text(_storyText(context, 'إنجازات النقاط', 'Points and activity'),
                   style: const TextStyle(
-                      fontSize: 58, fontWeight: FontWeight.bold)),
-              const Text('أيام متتالية',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              StreakRestore(
-                  progress: p,
-                  onRestored: (value) => setState(() => _restored = value)),
-              if (p.state == 'ice_cold')
-                Padding(
-                    padding: const EdgeInsets.only(top: 10),
-                    child: Text(
-                        'الستريك متجمّد ❄️ انشر قبل ${p.resetsAt?.toLocal().toString().substring(0, 16) ?? ''} للحفاظ عليه.',
-                        textAlign: TextAlign.center)),
+                      fontSize: 20, fontWeight: FontWeight.w700)),
               const SizedBox(height: 22),
               Text(
                   p.points >= 200000
-                      ? 'فتحت شارة الإنجاز الزرقاء ✓'
+                      ? _storyText(context, 'فتحت شارة الإنجاز الزرقاء ✓',
+                          'Blue achievement badge unlocked ✓')
                       : p.points >= 100000
-                          ? 'فتحت الحلقة البنفسجية 💜'
+                          ? _storyText(context, 'فتحت الحلقة البنفسجية 💜',
+                              'Purple ring unlocked 💜')
                           : p.points >= 10000
-                              ? 'فتحت الحلقة البرتقالية 🟠'
-                              : 'اجمع 10,000 لفتح الحلقة البرتقالية',
+                              ? _storyText(context, 'فتحت الحلقة البرتقالية 🟠',
+                                  'Orange ring unlocked 🟠')
+                              : _storyText(
+                                  context,
+                                  'اجمع 10,000 لفتح الحلقة البرتقالية',
+                                  'Earn 10,000 points to unlock the orange ring'),
                   textAlign: TextAlign.center),
               const SizedBox(height: 12),
               LinearProgressIndicator(
                   value: (p.points / 10000).clamp(0.0, 1.0),
                   minHeight: 10,
                   borderRadius: BorderRadius.circular(10),
-                  color: Colors.orange),
+                  color: AppColors.greenInk),
               const SizedBox(height: 10),
               BirdPoints('${p.points} / 10,000',
                   style: const TextStyle(fontWeight: FontWeight.bold)),
@@ -442,74 +624,97 @@ class _StoryProgressSheetState extends State<StoryProgressSheet> {
                             '${p.points} / ${p.points >= 100000 ? '200,000' : '100,000'}'),
                       Text(
                           p.points >= 200000
-                              ? 'شارة إنجاز شكلية للمميزين بالنقاط'
+                              ? _storyText(
+                                  context,
+                                  'شارة إنجاز شكلية للمميزين بالنقاط',
+                                  'A special badge for top point earners')
                               : p.points >= 100000
-                                  ? 'الشارة الشكلية القادمة'
-                                  : 'الحلقة البنفسجية القادمة',
+                                  ? _storyText(
+                                      context,
+                                      'الشارة الشكلية القادمة',
+                                      'Next: the special badge')
+                                  : _storyText(
+                                      context,
+                                      'الحلقة البنفسجية القادمة',
+                                      'Next: the purple ring'),
                           textAlign: TextAlign.center)
                     ])),
-              ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(
-                      p.posted ? Icons.check_circle : Icons.add_circle_outline,
-                      color: Colors.blue),
-                  title: const Text('انشر ستوري اليوم'),
-                  subtitle: const Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 6,
-                      children: [BirdPoints('+100'), Text('لأول ستوري فقط')]),
-                  trailing: p.posted
-                      ? const Text('تم ✓')
-                      : TextButton(
-                          onPressed: widget.onPost, child: const Text('انشر'))),
+              if (isStudent)
+                ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                        p.posted
+                            ? Icons.check_circle
+                            : Icons.add_circle_outline,
+                        color: AppColors.navy),
+                    title: Text(_storyText(
+                        context, 'انشر ستوري اليوم', 'Post a story today')),
+                    subtitle: Wrap(
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 6,
+                        children: [
+                          const BirdPoints('+100'),
+                          Text(_storyText(context, 'لأول ستوري فقط',
+                              'For your first story only'))
+                        ]),
+                    trailing: p.posted
+                        ? const Text('✓')
+                        : TextButton(
+                            onPressed: widget.onPost,
+                            child: Text(_storyText(context, 'انشر', 'Post')))),
               ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.favorite, color: Colors.pink),
-                  title: const Text('اعمل لاف لزمايلك'),
-                  subtitle: const Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 6,
-                      children: [
-                        BirdPoints('+5'),
-                        Text('لكل لاف • أول 10 يوميًا')
-                      ]),
-                  trailing: Text('${p.loves} / 10')),
-              const ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: Icon(Icons.favorite_border, color: Colors.orange),
-                  title: Text('استقبل لاف من زميل'),
+                  title: Text(_storyText(
+                      context, 'اعمل لاف لزمايلك', 'Like other stories')),
                   subtitle: Wrap(
                       crossAxisAlignment: WrapCrossAlignment.center,
                       spacing: 6,
                       children: [
-                        BirdPoints('+50'),
-                        Text('لكل طالب مختلف على نفس الستوري')
+                        const BirdPoints('+5'),
+                        Text(_storyText(context, 'لكل لاف • أول 10 يوميًا',
+                            'Per like • first 10 each day'))
+                      ]),
+                  trailing: Text('${p.loves} / 10')),
+              ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.favorite_border,
+                      color: AppColors.greenInk),
+                  title: Text(_storyText(context, 'استقبل لاف من زميل',
+                      'Receive a like from another member')),
+                  subtitle: Wrap(
+                      crossAxisAlignment: WrapCrossAlignment.center,
+                      spacing: 6,
+                      children: [
+                        const BirdPoints('+50'),
+                        Text(_storyText(
+                            context,
+                            'لكل طالب مختلف على نفس الستوري',
+                            'From each different member on the same story'))
                       ])),
               ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.sports_esports,
                       color: Colors.deepPurple),
-                  title: const Text('العب الغمّازة اليوم'),
-                  subtitle: const Wrap(
+                  title: Text(_storyText(
+                      context, 'العب الغمّازة اليوم', 'Play Wink today')),
+                  subtitle: Wrap(
                       crossAxisAlignment: WrapCrossAlignment.center,
                       spacing: 6,
                       children: [
-                        BirdPoints('+10'),
-                        Text('مرة واحدة يوميًا عند بدء اللعب')
+                        const BirdPoints('+10'),
+                        Text(_storyText(
+                            context,
+                            'مرة واحدة يوميًا عند بدء اللعب',
+                            'Once per day when online play begins'))
                       ]),
-                  trailing: Text(p.playedToday ? 'تم ✓' : '+10')),
-              ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.emoji_events, color: Colors.orange),
-                  title: const Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 6,
-                      children: [Text('بونص الاستمرارية'), BirdPoints('+300')]),
-                  subtitle: Text(
-                      'كل 7 أيام متتالية • ${p.days % 7} / 7 للدورة القادمة')),
+                  trailing: Text(p.playedToday ? '✓' : '+10')),
               const SizedBox(height: 8),
               Text(
-                  'اليوم حسب ${p.timeZone}. تجميد بعد 24 ساعة من آخر نشر، وتصفير الستريك بعد 36 ساعة. نقاطك تفضل محفوظة.',
+                  _storyText(
+                      context,
+                      'نقاطك محفوظة لحسابك. اعرض سلسلة نشاطك من بطاقتها في ملفك الشخصي.',
+                      'Points belong to your account. Open your profile streak card to see your activity streak.'),
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall),
             ])));
@@ -532,7 +737,20 @@ class _StoryComposerState extends State<StoryComposer> {
   VideoPlayerController? _preview;
   Uint8List? _bytes;
   String? _name, _error;
-  bool _busy = false;
+  bool _busy = false, _notifyAudience = false;
+  String? _audience;
+  bool get _isAdmin => AuthSession.instance.currentUser?.role == UserRole.admin;
+  bool get _canPublishStory =>
+      _canPublishCommunityStory(AuthSession.instance.currentUser?.role);
+
+  @override
+  void initState() {
+    super.initState();
+    // Give admins a useful, narrow audience by default so the required
+    // audience choice does not silently block their first publication.
+    if (_isAdmin) _audience = 'students';
+  }
+
   @override
   void dispose() {
     _preview?.dispose();
@@ -541,7 +759,7 @@ class _StoryComposerState extends State<StoryComposer> {
   }
 
   Future<void> _pick() async {
-    if (_picking || _busy) return;
+    if (!_canPublishStory || _picking || _busy) return;
     setState(() => _picking = true);
     VideoPlayerController? candidate;
     try {
@@ -594,8 +812,42 @@ class _StoryComposerState extends State<StoryComposer> {
   }
 
   Future<void> _post() async {
-    if (_busy || _picking || (_text.text.trim().isEmpty && _bytes == null)) {
+    if (!_canPublishStory ||
+        _busy ||
+        _picking ||
+        (_text.text.trim().isEmpty && _bytes == null)) {
       return;
+    }
+    if (_isAdmin && _audience == null) {
+      setState(() => _error = _storyText(context, 'اختر جمهور الستوري أولاً.',
+          'Choose a story audience first.'));
+      return;
+    }
+    if (!await requireCommunityTerms(context) || !mounted) return;
+    if (_isAdmin && _audience == 'allEligible') {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(_storyText(
+              context, 'نشر رسمي للجميع', 'Official story for all users')),
+          content: Text(_storyText(
+            context,
+            'ستظهر هذه الستوري لجميع المستخدمين المؤهلين في COVEY. هل تريد نشرها؟',
+            'This story will be visible to all eligible COVEY users.${_notifyAudience ? ' They will also receive a community notification if their preferences allow it.' : ''} Publish?',
+          )),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(_storyText(context, 'إلغاء', 'Cancel')),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: Text(_storyText(context, 'نشر', 'Publish')),
+            ),
+          ],
+        ),
+      );
+      if (confirmed != true || !mounted) return;
     }
     setState(() {
       _busy = true;
@@ -615,12 +867,14 @@ class _StoryComposerState extends State<StoryComposer> {
           if (mounted) setState(() => _uploadProgress = value);
         });
       }
-      await repo.post(
+      final progress = await repo.post(
           text: _text.text.trim(),
           imageUrl: _imageUrl,
           videoUrl: _videoUrl,
-          operationId: _operationId);
-      if (mounted) Navigator.pop(context, true);
+          operationId: _operationId,
+          audience: _isAdmin ? _audience : null,
+          notifyAudience: _isAdmin ? _notifyAudience : null);
+      if (mounted) Navigator.pop(context, progress);
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -632,88 +886,221 @@ class _StoryComposerState extends State<StoryComposer> {
   }
 
   @override
-  Widget build(BuildContext context) => PopScope(
-      canPop: !_busy,
-      child: Scaffold(
-        appBar: AppBar(title: const Text('ستوري جديدة')),
-        body: SafeArea(
-            child: ListView(padding: const EdgeInsets.all(20), children: [
-          const Text('شارك يومك مع زمايلك',
-              style: TextStyle(fontSize: 23, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          const Text(
-              'الستوري متاحة للطلاب لمدة 24 ساعة. أول ستوري في اليوم تكسبك 100 نقطة.'),
-          const SizedBox(height: 20),
-          if (_isVideo && _preview != null) ...[
-            AspectRatio(
-                aspectRatio: _preview!.value.aspectRatio,
-                child: VideoPlayer(_preview!)),
-            TextButton.icon(
-                onPressed: _busy
+  Widget build(BuildContext context) {
+    if (!_canPublishStory) {
+      final role = AuthSession.instance.currentUser?.role;
+      final explanation = role == null
+          ? _storyText(context, 'سجّل الدخول بحساب طالب لنشر ستوري.',
+              'Sign in with a student account to publish a story.')
+          : _storyText(
+              context,
+              'نشر الستوري متاح لحسابات المجتمع ما عدا الوكيل. ستريك حسابك يُحتسب من المشاركة في اللعب الأونلاين.',
+              'Story publishing is available to community accounts except agents. Your streak is counted through online play.');
+      return Scaffold(
+        appBar: AppBar(title: Text(_storyText(context, 'القصص', 'Stories'))),
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(mainAxisSize: MainAxisSize.min, children: [
+              const Icon(Icons.lock_outline_rounded, size: 36),
+              const SizedBox(height: 12),
+              Text(explanation, textAlign: TextAlign.center),
+            ]),
+          ),
+        ),
+      );
+    }
+    return PopScope(
+        canPop: !_busy,
+        child: Scaffold(
+          appBar: AppBar(
+              title: Text(_storyText(context, 'ستوري جديدة', 'New story'))),
+          body: SafeArea(
+              child: ListView(padding: const EdgeInsets.all(20), children: [
+            Text(
+                _storyText(context, 'شارك يومك مع زملائك',
+                    'Share an update with your community'),
+                style:
+                    const TextStyle(fontSize: 23, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(_storyText(
+                context,
+                AuthSession.instance.currentUser?.role == UserRole.student
+                    ? 'الستوري متاحة لمدة 24 ساعة. أول ستوري في اليوم تكسبك 100 نقطة.'
+                    : 'الستوري متاحة لمدة 24 ساعة. نشاط السلسلة يُحتسب من اللعب الأونلاين.',
+                AuthSession.instance.currentUser?.role == UserRole.student
+                    ? 'Stories last 24 hours. Your first story each day earns 100 points.'
+                    : 'Stories last 24 hours. Your streak activity is counted through online play.')),
+            const SizedBox(height: 20),
+            if (_isVideo && _preview != null) ...[
+              AspectRatio(
+                  aspectRatio: _preview!.value.aspectRatio,
+                  child: VideoPlayer(_preview!)),
+              TextButton.icon(
+                  onPressed: _busy
+                      ? null
+                      : () async {
+                          if (_preview!.value.isPlaying) {
+                            await _preview!.pause();
+                          } else {
+                            await _preview!.play();
+                          }
+                          if (mounted) setState(() {});
+                        },
+                  icon: Icon(_preview!.value.isPlaying
+                      ? Icons.pause
+                      : Icons.play_arrow),
+                  label: Text(
+                      _storyText(context, 'معاينة الفيديو', 'Preview video'))),
+            ] else if (_bytes != null)
+              ClipRRect(
+                  borderRadius: BorderRadius.circular(20),
+                  child:
+                      Image.memory(_bytes!, height: 280, fit: BoxFit.contain)),
+            if (_isAdmin) ...[
+              Row(children: [
+                const VerifiedAdminBadge(role: 'admin', size: 20),
+                const SizedBox(width: 7),
+                Text(
+                  _storyText(context, 'قصة رسمية من COVEY',
+                      'Official COVEY story'),
+                  style: const TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ]),
+              const SizedBox(height: 10),
+              DropdownButtonFormField<String>(
+                key: const ValueKey('admin-story-audience'),
+                initialValue: _audience,
+                decoration: InputDecoration(
+                  labelText:
+                      _storyText(context, 'الجمهور المستهدف', 'Story audience'),
+                  helperText: _storyText(
+                      context,
+                      'اختر من يمكنه مشاهدة هذه القصة.',
+                      'Choose which eligible accounts can view this story.'),
+                ),
+                items: [
+                  DropdownMenuItem(
+                      value: 'students',
+                      child: Text(
+                          _storyText(context, 'الطلاب فقط', 'Students only'))),
+                  DropdownMenuItem(
+                      value: 'guardians',
+                      child: Text(_storyText(
+                          context, 'أولياء الأمور فقط', 'Guardians only'))),
+                  DropdownMenuItem(
+                      value: 'universities',
+                      child: Text(_storyText(
+                          context, 'الجامعات فقط', 'Universities only'))),
+                  DropdownMenuItem(
+                      value: 'employees',
+                      child: Text(_storyText(
+                          context, 'الموظفون فقط', 'Employees only'))),
+                  DropdownMenuItem(
+                      value: 'allEligible',
+                      child: Text(_storyText(context, 'كل المستخدمين المؤهلين',
+                          'All eligible users'))),
+                ],
+                onChanged: _busy
                     ? null
-                    : () async {
-                        if (_preview!.value.isPlaying) {
-                          await _preview!.pause();
-                        } else {
-                          await _preview!.play();
-                        }
-                        if (mounted) setState(() {});
-                      },
-                icon: Icon(
-                    _preview!.value.isPlaying ? Icons.pause : Icons.play_arrow),
-                label: const Text('معاينة الفيديو')),
-          ] else if (_bytes != null)
-            ClipRRect(
-                borderRadius: BorderRadius.circular(20),
-                child: Image.memory(_bytes!, height: 280, fit: BoxFit.contain)),
-          TextField(
-              controller: _text,
-              enabled: !_busy,
-              maxLength: 1000,
-              minLines: 3,
-              maxLines: 6,
-              onChanged: (_) {
-                _operationId = ApiClient.newOperationId();
-              },
-              decoration:
-                  const InputDecoration(hintText: 'إيه إنجازك النهارده؟')),
-          OutlinedButton.icon(
-              onPressed: _busy || _picking ? null : () => _pick(),
-              icon: const Icon(Icons.photo_library_outlined),
-              label: const Text('اختيار صورة أو فيديو')),
-          const Text('فيديو MP4 أو MOV • حتى دقيقة واحدة و25 ميجابايت',
-              textAlign: TextAlign.center),
-          if (_picking) const LinearProgressIndicator(),
-          if (_busy)
-            LinearProgressIndicator(
-                value: _uploadProgress > 0 ? _uploadProgress : null),
-          if (_bytes != null)
-            TextButton(
-                onPressed: _busy || _picking
-                    ? null
-                    : () => setState(() {
-                          _bytes = null;
-                          _imageUrl = '';
-                          _videoUrl = '';
-                          _isVideo = false;
-                          final old = _preview;
-                          _preview = null;
-                          old?.dispose();
-                          _operationId = ApiClient.newOperationId();
+                    : (value) => setState(() {
+                          _audience = value;
+                          _error = null;
                         }),
-                child: Text(_isVideo ? 'إزالة الفيديو' : 'إزالة الصورة')),
-          if (_error != null)
-            Text(_error!, style: const TextStyle(color: Colors.red)),
-          const SizedBox(height: 12),
-          FilledButton(
-              onPressed: _busy || _picking ? null : _post,
-              child: _busy
-                  ? const Row(mainAxisSize: MainAxisSize.min, children: [
-                      StoryLoadingIndicator(label: 'جارٍ نشر الستوري…'),
-                      SizedBox(width: 10),
-                      Text('جارٍ النشر…')
-                    ])
-                  : const Text('نشر الستوري')),
-        ])),
-      ));
+              ),
+              if (_audience != null) ...[
+                const SizedBox(height: 8),
+                Text(
+                  _audience == 'allEligible'
+                      ? _storyText(
+                          context,
+                          'ستظهر للمستخدمين النشطين المؤهلين من الطلاب وأولياء الأمور والجامعات والموظفين والأدمن. الوكلاء غير مشمولين.',
+                          'Visible to active eligible students, guardians, universities, employees and admins. Agents are excluded.')
+                      : _storyText(
+                          context,
+                          'ستظهر فقط للحسابات النشطة المؤهلة ضمن الجمهور المحدد.',
+                          'Visible only to active eligible accounts in the selected audience.'),
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+              ],
+              const SizedBox(height: 16),
+            ],
+            if (_isAdmin)
+              CheckboxListTile(
+                key: const ValueKey('admin-story-notify-audience'),
+                contentPadding: EdgeInsets.zero,
+                value: _notifyAudience,
+                onChanged: _busy
+                    ? null
+                    : (value) =>
+                        setState(() => _notifyAudience = value == true),
+                title: Text(_storyText(
+                    context, 'إبلاغ الجمهور', 'Notify this audience')),
+                subtitle: Text(_storyText(
+                    context,
+                    'إشعار اختياري مع مراعاة تفضيلات المجتمع وحدّ النشر.',
+                    'Optional inbox and push notice, respecting community preferences and a three-notices-per-hour limit.')),
+              ),
+            TextField(
+                controller: _text,
+                enabled: !_busy,
+                maxLength: 1000,
+                minLines: 3,
+                maxLines: 6,
+                onChanged: (_) {
+                  _operationId = ApiClient.newOperationId();
+                },
+                decoration: InputDecoration(
+                    hintText: _storyText(context, 'ما إنجازك اليوم؟',
+                        'What would you like to share?'))),
+            OutlinedButton.icon(
+                onPressed: _busy || _picking ? null : () => _pick(),
+                icon: const Icon(Icons.photo_library_outlined),
+                label: Text(_storyText(context, 'اختيار صورة أو فيديو',
+                    'Choose a photo or video'))),
+            Text(
+                _storyText(
+                    context,
+                    'فيديو MP4 أو MOV • حتى دقيقة واحدة و25 ميجابايت',
+                    'MP4 or MOV video • up to 1 minute and 25 MB'),
+                textAlign: TextAlign.center),
+            if (_picking) const LinearProgressIndicator(),
+            if (_busy)
+              LinearProgressIndicator(
+                  value: _uploadProgress > 0 ? _uploadProgress : null),
+            if (_bytes != null)
+              TextButton(
+                  onPressed: _busy || _picking
+                      ? null
+                      : () => setState(() {
+                            _bytes = null;
+                            _imageUrl = '';
+                            _videoUrl = '';
+                            _isVideo = false;
+                            final old = _preview;
+                            _preview = null;
+                            old?.dispose();
+                            _operationId = ApiClient.newOperationId();
+                          }),
+                  child: Text(_isVideo
+                      ? _storyText(context, 'إزالة الفيديو', 'Remove video')
+                      : _storyText(context, 'إزالة الصورة', 'Remove image'))),
+            if (_error != null)
+              Text(_error!, style: const TextStyle(color: Colors.red)),
+            const SizedBox(height: 12),
+            FilledButton(
+                onPressed: _busy || _picking ? null : _post,
+                child: _busy
+                    ? Row(mainAxisSize: MainAxisSize.min, children: [
+                        StoryLoadingIndicator(
+                            label: _storyText(context, 'جارٍ نشر الستوري…',
+                                'Publishing story…')),
+                        const SizedBox(width: 10),
+                        Text(_storyText(context, 'جارٍ النشر…', 'Publishing…'))
+                      ])
+                    : Text(
+                        _storyText(context, 'نشر الستوري', 'Publish story'))),
+          ])),
+        ));
+  }
 }

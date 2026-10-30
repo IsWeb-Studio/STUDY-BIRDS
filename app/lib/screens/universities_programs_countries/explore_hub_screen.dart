@@ -110,7 +110,7 @@ class _ExploreCard extends StatelessWidget {
             const DecoratedBox(decoration: BoxDecoration(
               gradient: LinearGradient(begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Color(0x300C223A), Color(0xED0C223A)]),
+                  colors: [Color(0x30041E4A), Color(0xED041E4A)]),
             )),
             Material(
               color: Colors.transparent,
@@ -142,7 +142,7 @@ class _ExploreCard extends StatelessWidget {
                       ]),
                       const SizedBox(height: 8),
                       Container(width: 26, height: 3,
-                        decoration: BoxDecoration(color: AppColors.orange,
+                        decoration: BoxDecoration(color: AppColors.green,
                             borderRadius: BorderRadius.circular(3))),
                     ],
                   ),

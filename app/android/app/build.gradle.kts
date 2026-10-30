@@ -13,7 +13,7 @@ val keyProperties = Properties().apply {
 
 android {
     namespace = "com.studybirds.app"
-    compileSdk = flutter.compileSdkVersion
+    compileSdk = maxOf(36, flutter.compileSdkVersion)
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -29,7 +29,7 @@ android {
     defaultConfig {
         applicationId = "com.studybirds.app"
         minSdk = flutter.minSdkVersion
-        targetSdk = flutter.targetSdkVersion
+        targetSdk = maxOf(36, flutter.targetSdkVersion)
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -58,7 +58,8 @@ flutter {
 }
 
 dependencies {
-    implementation("org.opencv:opencv:4.10.0")
+    // 4.10 native binaries predate Android's 16 KB page-size support.
+    implementation("org.opencv:opencv:4.13.0")
     implementation("androidx.exifinterface:exifinterface:1.3.7")
     implementation("com.google.mlkit:text-recognition:16.0.1")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")

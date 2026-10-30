@@ -9,13 +9,16 @@ const Notification = require('../models/Notification');
 const { Message } = require('../models/MobileWorkspace');
 const sse = require('../utils/sseClients');
 const ChatPreference = require('../models/ChatPreference');
+const { blockedIds, isBlocked } = require('../utils/userBlocks');
+const voiceNotes = require('../utils/voiceNotes');
+const voiceUpload = require('../middleware/voiceUpload');
 const chatImages = require('../utils/chatImages');
 const upload = require('../middleware/uploadMiddleware');
 const { rateLimit } = require('express-rate-limit');
 const router = express.Router();
+const SupportTeam = require('../models/StudentSupportTeam');
 router.use(protect);
 const { membersFor, staffQuery } = require('../utils/studentSupportTeam');
-const SupportTeam = require('../models/StudentSupportTeam');
 
 async function contactFilter(user) {
   if (user.role === 'admin') {
@@ -42,6 +45,7 @@ async function contactFilter(user) {
   return { isActive: true, _id: { $ne: user._id }, $or: [...(user.role === 'student' ? [{ role: 'student' }] : [{role:'admin'}]), { _id: { $in: ids } }] };
 }
 async function requireContact(user, recipient, res) {
+  if (mongoose.isValidObjectId(recipient) && await isBlocked(user._id, recipient)) { res.status(403); throw new Error('Contact unavailable'); }
   if (!mongoose.isValidObjectId(recipient)) { res.status(400); throw new Error('Invalid recipient'); }
   const target=await User.findOne({_id:recipient,isActive:true}).select('_id name role avatar');
   const student=user.role==='student'?user:(target?.role==='student'?target:null);
@@ -80,6 +84,8 @@ function present(message) {
   return { _id: message._id, sender: message.sender, recipient: message.recipient,
     body: message.deletedAt ? '' : message.body || '', createdAt: message.createdAt,
     readAt: message.readAt, deletedAt: message.deletedAt,
+    audioPath: !message.deletedAt && message.audio?.publicId ? `/mobile-workspace/messages/${message._id}/audio` : null,
+    audioDuration: message.audio?.duration || null,
     imagePath: !message.deletedAt && message.image?.publicId ? `/mobile-workspace/messages/${message._id}/image` : null };
 }
 async function threadFilter(user, contact) {
@@ -181,9 +187,9 @@ router.get('/messages', run(async (req, res) => {
   const rows = await Message.find(filter).sort({ _id: -1 }).limit(req.query.ids ? 100 : 50).lean();
   res.set('Cache-Control', 'no-store').json(rows.reverse().map(present));
 }));
-async function saveMessage(req, res, image) {
+async function saveMessage(req, res, image, audio) {
   const body = req.body.body ?? '';
-  if (typeof body !== 'string' || body.length > 4000 || (!body.trim() && !image)) fail(400, 'Message must contain text or an image');
+  if (typeof body !== 'string' || body.length > 4000 || (!body.trim() && !image && !audio)) fail(400, 'Message must contain text or an image');
   const [contact, recent] = await Promise.all([
     requireContact(req.user, req.body.recipient, res),
     Message.countDocuments({ sender: req.user._id, createdAt: { $gt: new Date(Date.now() - 60000) } }),
@@ -191,10 +197,10 @@ async function saveMessage(req, res, image) {
   if (recent >= 30) fail(429, 'Too many messages. Please wait.');
   let message;
   try {
-    message = await Message.create({ sender: req.user._id, recipient: contact._id, body: body.trim(), image,
-      ...(image && req.body.operationId ? { operationId: req.body.operationId } : {}) });
+    message = await Message.create({ sender: req.user._id, recipient: contact._id, body: body.trim(), image, audio,
+      ...((image || audio) && req.body.operationId ? { operationId: req.body.operationId } : {}) });
   } catch (error) {
-    if (error.code !== 11000 || !image || !req.body.operationId) throw error;
+    if (error.code !== 11000 || (!image && !audio) || !req.body.operationId) throw error;
     const existing = await Message.findOne({ sender: req.user._id, recipient: contact._id, operationId: req.body.operationId }).lean();
     if (!existing) fail(409, 'Operation already used');
     return res.json(present(existing));
@@ -211,6 +217,28 @@ async function saveMessage(req, res, image) {
   res.status(201).json(data);
 }
 router.post('/messages', run((req, res) => saveMessage(req, res)));
+router.post('/messages/audio', rateLimit({ windowMs: 3600000, limit: 60, keyGenerator: req => String(req.user._id) }), voiceUpload, run(async (req, res) => {
+  await requireContact(req.user, req.body.recipient, res);
+  if (typeof req.body.operationId !== 'string' || !/^[A-Za-z0-9_-]{8,100}$/.test(req.body.operationId)) fail(400, 'Invalid operation');
+  if (typeof (req.body.body ?? '') !== 'string' || (req.body.body || '').length > 4000) fail(400, 'Invalid caption');
+  const existing = await Message.findOne({ sender: req.user._id, operationId: req.body.operationId }).lean();
+  if (existing) {
+    if (String(existing.recipient) !== String(req.body.recipient)) fail(409, 'Operation already used');
+    return res.json(present(existing));
+  }
+  if (await Message.countDocuments({ sender: req.user._id, createdAt: { $gt: new Date(Date.now() - 60000) } }) >= 30) fail(429, 'Too many messages');
+  const audio = await voiceNotes.uploadVoice(req.file, req.user._id);
+  try { await saveMessage(req, res, undefined, audio); }
+  finally {
+    try { if (!await Message.exists({ 'audio.publicId': audio.publicId })) await voiceNotes.removeVoice(audio); }
+    catch (_) { console.warn('Voice attachment cleanup needs retry'); }
+  }
+}));
+router.get('/messages/:id/audio', run(async (req, res) => {
+  const { message } = await permittedMessage(req, res);
+  if (message.deletedAt || !message.audio?.publicId) fail(404, 'Voice recording unavailable');
+  voiceNotes.sendVoice(res, await voiceNotes.readVoice(message.audio));
+}));
 router.post('/messages/image', rateLimit({ windowMs: 3600000, limit: 30, keyGenerator: req => String(req.user._id) }),
   upload.single('file'), run(async (req, res) => {
     await requireContact(req.user, req.body.recipient, res);
@@ -239,7 +267,9 @@ router.delete('/messages/:id', run(async (req, res) => {
   const { message, peer } = await permittedMessage(req, res);
   if (req.query.scope === 'everyone') {
     if (String(message.sender) !== String(req.user._id)) fail(403, 'Only the sender can unsend');
-    await Message.updateOne({ _id: message._id, sender: req.user._id }, { $set: { body: '', deletedAt: message.deletedAt || new Date() }, $unset: { image: 1 } });
+    await require('../utils/mediaMaintenance').queueMedia(message.audio);
+    await require('../utils/mediaMaintenance').queueMedia(message.image);
+    await Message.updateOne({ _id: message._id, sender: req.user._id }, { $set: { body: '', deletedAt: message.deletedAt || new Date() }, $unset: { image: 1, audio: 1 } });
     const data = present(await Message.findById(message._id).lean());
     sse.push(peer, 'message-updated', data); sse.push(req.user._id, 'message-updated', data);
   } else if (!req.query.scope || req.query.scope === 'me') {

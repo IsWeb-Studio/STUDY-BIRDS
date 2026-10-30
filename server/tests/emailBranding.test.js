@@ -39,9 +39,9 @@ test('new background and logo apply to user and administrative mail with readabl
   for (const showJourney of [true, false]) {
     const html = renderBrandedEmail({ subject: 'Account update', text: 'Keep this readable',
       emailContent: { showJourney } });
-    assert.match(html, /background="https:\/\/[^" ]+\/email-assets\/header\.png\?v=20261015"/);
+    assert.match(html, /background="https:\/\/[^" ]+\/email-assets\/header\.png\?v=20261030"/);
     assert.match(html, /background-image:url\('/);
-    assert.match(html, /src="https:\/\/[^" ]+\/email-assets\/logo\.png\?v=20261015"/);
+    assert.match(html, /src="https:\/\/[^" ]+\/email-assets\/logo\.png\?v=20261030"/);
     assert.match(html, /bgcolor="#ffffff"[^>]*text-align:right/);
     assert.match(html, /Keep this readable/);
   }
@@ -123,7 +123,7 @@ test('mailer brands existing text emails while preserving plaintext verification
     subject: 'Verify', text: 'Your code: 123456' });
   assert.equal(message.text, 'Your code: 123456');
   assert.match(message.html, /email-assets\/header.png/);
-  assert.equal(message.from.name, 'Study Birds');
+  assert.equal(message.from.name, 'COVEY');
 });
 
 test('creating a valid journey queues its confirmation before returning success', async () => {

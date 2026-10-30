@@ -7,7 +7,7 @@ import 'password_strength_inline.dart';
 
 InputDecoration securityDecoration(InputDecoration input) => input.copyWith(
       filled: true,
-      fillColor: const Color(0xFFF3F6FB),
+      fillColor: AppColors.background,
       contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
       border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
@@ -198,7 +198,7 @@ class SecurityIntro extends StatelessWidget {
         decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: const LinearGradient(
-                colors: [AppColors.navy, Color(0xFF174D80)],
+                colors: [AppColors.navy, AppColors.navyLight],
                 begin: Alignment.topRight,
                 end: Alignment.bottomLeft)),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -207,7 +207,7 @@ class SecurityIntro extends StatelessWidget {
               decoration: BoxDecoration(
                   color: Colors.white.withValues(alpha: .14),
                   borderRadius: BorderRadius.circular(16)),
-              child: Icon(icon, color: const Color(0xFFFFAD42), size: 30)),
+              child: Icon(icon, color: AppColors.greenSoft, size: 30)),
           const SizedBox(height: 20),
           Text(title,
               style: const TextStyle(

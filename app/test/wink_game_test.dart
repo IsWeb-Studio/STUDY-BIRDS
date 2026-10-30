@@ -259,17 +259,19 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
     for (final phase in ['lobby', 'reveal', 'playing', 'voting', 'finished']) {
       final data = fixture(phase: phase);
-      if (phase == 'voting')
+      if (phase == 'voting') {
         data['vote'] = {
           'accused': 'p1',
           'endsAt': DateTime.now().millisecondsSinceEpoch + 20000
         };
-      if (phase == 'finished')
+      }
+      if (phase == 'finished') {
         data['result'] = {
           'winner': 'players',
           'winker': 'p0',
           'reason': 'time'
         };
+      }
       await mount(tester, DisplayGame(data), scale: 2);
       await tester.drag(find.byType(ListView).first, const Offset(0, -1500));
       await tester.pumpAndSettle();
@@ -289,11 +291,13 @@ void main() {
     final operations = <String>[];
     late Completer<http.Response> pending;
     final client = MockClient((request) async {
-      if (request.url.path.endsWith('/current'))
+      if (request.url.path.endsWith('/current')) {
         return http.Response('{"code":"ABCD1234"}', 200);
-      if (request.method == 'GET')
+      }
+      if (request.method == 'GET') {
         return http.Response(jsonEncode(fixture(phase: 'playing')), 200,
             headers: {'content-type': 'application/json; charset=utf-8'});
+      }
       operations
           .add((jsonDecode(request.body) as Map)['operationId'] as String);
       if (fail) return pending.future;

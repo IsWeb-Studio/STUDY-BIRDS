@@ -88,7 +88,7 @@ router.put('/preferences', asyncHandler(async (req, res) => {
 router.get('/updates', communityAccess, asyncHandler(async (req, res) => {
   const ids = typeof req.query.ids === 'string' ? [...new Set(req.query.ids.split(','))] : [];
   if (!ids.length || ids.length > 120 || ids.some(id => !/^[a-f0-9]{24}$/i.test(id))) fail(400, 'Invalid stories');
-  const stories = await Story.find({ _id: { $in: ids }, expiresAt: { $gt: new Date() }, ...audienceFilter(req.user) }).select('_id author audience loveCount')
+  const stories = await Story.find({ _id: { $in: ids }, author: { $nin: await require('../utils/userBlocks').blockedIds(req.user._id) }, expiresAt: { $gt: new Date() }, ...audienceFilter(req.user) }).select('_id author audience loveCount')
     .populate({ path: 'author', select: '_id', match: { isActive: true, role: { $in: COMMUNITY_ROLES } } }).lean();
   const readable = stories.filter(s => s.author);
   const views = await viewCounts(readable.filter(s => String(s.author._id) === String(req.user._id)).map(s => s._id), req.user._id);
@@ -102,7 +102,7 @@ router.get('/updates', communityAccess, asyncHandler(async (req, res) => {
   })) });
 }));
 router.get('/', communityAccess, asyncHandler(async (req, res) => {
-  const filter = { expiresAt: { $gt: new Date() }, ...audienceFilter(req.user) };
+  const filter = { expiresAt: { $gt: new Date() }, author: { $nin: await require('../utils/userBlocks').blockedIds(req.user._id) }, ...audienceFilter(req.user) };
   if (req.query.before) {
     if (!/^[a-f0-9]{24}$/i.test(req.query.before)) fail(400, 'Invalid cursor');
     filter._id = { $lt: new mongoose.Types.ObjectId(req.query.before) };
@@ -189,6 +189,7 @@ router.get('/:id/viewers', communityAccess, asyncHandler(async (req, res) => {
   }), nextCursor: rows.length > 50 ? String(page.at(-1)._id) : null });
 }));
 router.delete('/:id', communityAccess, asyncHandler(async (req, res) => {
+  if (!await Story.exists({ _id: req.params.id, author: req.user._id })) fail(404, 'Story unavailable');
   await atomic(async session => {
     const story = await Story.findOne({ _id: req.params.id, author: req.user._id }).session(session);
     if (!story) fail(404, 'Story unavailable');

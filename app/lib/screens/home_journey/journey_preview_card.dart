@@ -72,12 +72,12 @@ class JourneyPreviewCard extends StatelessWidget {
               ],
               const SizedBox(height: 9),
               Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-                decoration: BoxDecoration(color: const Color(0xFFFFF0E2), borderRadius: BorderRadius.circular(18)),
+                decoration: BoxDecoration(color: AppColors.greenSoft, borderRadius: BorderRadius.circular(18)),
                 child: Row(mainAxisSize: MainAxisSize.min, children: [
-                  const Icon(Icons.schedule_rounded, color: AppColors.orange, size: 14),
+                  const Icon(Icons.schedule_rounded, color: AppColors.green, size: 14),
                   const SizedBox(width: 4),
                   Flexible(child: Text(status, maxLines: 1, overflow: TextOverflow.ellipsis,
-                      style: AppTextStyles.caption.copyWith(color: const Color(0xFFAD4B00), fontSize: 11, fontWeight: FontWeight.w700))),
+                      style: AppTextStyles.caption.copyWith(color: AppColors.greenInk, fontSize: 11, fontWeight: FontWeight.w700))),
                 ])),
             ]))),
         ])),
@@ -97,7 +97,7 @@ class JourneyPreviewCard extends StatelessWidget {
               ])),
             const Spacer(),
             Row(children: [
-              Expanded(child: Text('تقدّم الرحلة', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption)),
+              const Expanded(child: Text('تقدّم الرحلة', maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption)),
               const SizedBox(width: 8),
               Flexible(child: Text(totalStages > 0 ? '$completedStages من $totalStages مراحل' : '${(value * 100).round()}%',
                   maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTextStyles.caption.copyWith(color: AppColors.navy))),
@@ -105,16 +105,16 @@ class JourneyPreviewCard extends StatelessWidget {
             const SizedBox(height: 10),
             Row(children: List.generate(segments, (index) => Expanded(child: Container(
               height: 7, margin: EdgeInsetsDirectional.only(end: index == segments - 1 ? 0 : 4),
-              decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), color: const Color(0xFFE8EDF3)),
+              decoration: BoxDecoration(borderRadius: BorderRadius.circular(6), color: AppColors.border),
               child: ClipRRect(borderRadius: BorderRadius.circular(6), child: Align(
                 alignment: AlignmentDirectional.centerStart,
                 child: FractionallySizedBox(widthFactor: (value * segments - index).clamp(0.0, 1.0),
-                  child: Container(color: AppColors.orange)),
+                  child: Container(color: AppColors.green)),
               )),
             )))),
             const SizedBox(height: 16),
             FilledButton(onPressed: onTap, style: FilledButton.styleFrom(
-              backgroundColor: AppColors.navy, foregroundColor: Colors.white,
+              backgroundColor: AppColors.green, foregroundColor: AppColors.navy,
               minimumSize: const Size.fromHeight(46),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
               child: const Row(mainAxisAlignment: MainAxisAlignment.center, children: [
@@ -126,7 +126,7 @@ class JourneyPreviewCard extends StatelessWidget {
     );
   }
 
-  Widget _photoFallback() => Container(color: const Color(0xFFE8F2FA),
+  Widget _photoFallback() => Container(color: AppColors.greenSoft,
       child: const Icon(Icons.travel_explore_rounded, color: AppColors.navy, size: 39));
 
   Widget _detail(IconData icon, String text, Color color) => Row(children: [
@@ -145,7 +145,7 @@ class _OrangeJourneyCorner extends CustomPainter {
           size.height * .8, 0, size.height)..close();
     canvas.drawPath(path, Paint()..shader = const LinearGradient(
       begin: Alignment.topLeft, end: Alignment.bottomRight,
-      colors: [Color(0xFFFF8F13), AppColors.orange])
+      colors: [AppColors.green, AppColors.green])
         .createShader(Offset.zero & size));
   }
   @override

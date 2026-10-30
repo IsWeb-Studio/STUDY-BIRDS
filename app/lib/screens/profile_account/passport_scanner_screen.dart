@@ -712,7 +712,7 @@ class _PassportScannerScreenState extends State<PassportScannerScreen>
                           decoration: BoxDecoration(
                               gradient: LinearGradient(colors: [
                         Colors.transparent,
-                        AppColors.orange,
+                        AppColors.green,
                         Colors.transparent
                       ]))))),
             SafeArea(
@@ -787,7 +787,7 @@ class _PassportFramePainter extends CustomPainter {
     canvas.drawRRect(
         cutout,
         Paint()
-          ..color = AppColors.orange
+          ..color = AppColors.green
           ..style = PaintingStyle.stroke
           ..strokeWidth = 1.5);
     final paint = Paint()

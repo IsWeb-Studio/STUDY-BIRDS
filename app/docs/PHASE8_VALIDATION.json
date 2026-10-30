@@ -1,0 +1,1990 @@
+{
+  "phase": 8,
+  "recordedAt": "2026-10-21T21:43:16.467Z",
+  "status": "PREBUILD_CHECKS_RECORDED_NOT_READY_FOR_EXECUTION",
+  "repositories": {
+    "primary": {
+      "root": "D:\\work\\studybirds_app\\study_birds_app-main",
+      "comparisonBaseline": "Phase7 Git HEAD/index/worktrees; Phase8 four-file hashes separately",
+      "head": "3e31e19c5343170056e6d7559c59bfb891f2c624",
+      "headUnchanged": true,
+      "indexUnchanged": true,
+      "worktreesUnchanged": true,
+      "diffCheckExit": 0,
+      "status": " M README.md\n M lib/app_shell.dart\n M lib/core/services/notification_scheduler.dart\n M lib/core/widgets/app_components.dart\n M lib/main.dart\n M lib/screens/applications_documents_payments/documents_screens.dart\n M lib/screens/home_journey/notifications_screen.dart\n M lib/screens/home_journey/student_banner_carousel.dart\n M lib/screens/profile_account/notification_preferences_screen.dart\n M lib/screens/roles/employee_dashboard_screen.dart\n M lib/screens/stories/story_viewers_screen.dart\n M test/chat_controls_test.dart\n M test/journey_requirements_test.dart\n M test/post_admission_journey_test.dart\n M test/story_viewers_test.dart\n M tool/check_error_policy.dart\n?? .vscode/StudyBirds.code-workspace\n?? docs/ANDROID_DEVICE_QA_PLAN.md\n?? docs/ANDROID_QA_CONNECTION_GUIDE.md\n?? docs/ANDROID_REAL_DEVICE_TEST_CHECKLIST.md\n?? docs/APPROVED_DEPLOYMENT_PARITY_20261021.md\n?? docs/ARCHITECTURE.md\n?? docs/AUDIT_VALIDATION.json\n?? docs/BACKEND_ENVIRONMENT_NAMES.json\n?? docs/DEPLOYMENT_PARITY_REPORT.md\n?? docs/DEVELOPMENT_SETUP.md\n?? docs/DUPLICATE_INVENTORY.json\n?? docs/DUPLICATE_INVENTORY.md\n?? docs/FEATURE_PARITY_REPORT.md\n?? docs/FINAL_CLEANUP_APPROVAL.md\n?? docs/FLUTTER_ANALYSIS_REMEDIATION.md\n?? docs/MAINTENANCE_GUIDE.md\n?? docs/PHASE2_FINAL_REPORT.md\n?? docs/PHASE2_SECURITY_REVIEW.md\n?? docs/PHASE2_VALIDATION.json\n?? docs/PHASE3_DEPENDENCY_PLAN.md\n?? docs/PHASE3_FINAL_REPORT.md\n?? docs/PHASE3_VALIDATION.json\n?? docs/PHASE4_FINAL_REPORT.md\n?? docs/PHASE4_VALIDATION.json\n?? docs/PHASE5_CLEANUP_APPROVAL.md\n?? docs/PHASE5_FINAL_REPORT.md\n?? docs/PHASE5_REMAINING_CLEANUP_REVIEW.md\n?? docs/PHASE6_FINAL_REPORT.md\n?? docs/PHASE6_QA_CONFIGURATION.md\n?? docs/PHASE6_VALIDATION.json\n?? docs/PHASE7_APPROVAL_REQUIRED.md\n?? docs/PHASE7_FINAL_REPORT.md\n?? docs/PHASE7_LOCAL_QA_SETUP.md\n?? docs/PHASE7_VALIDATION.json\n?? docs/PHASE8_ANDROID_QA_IDENTITY.md\n?? docs/PHASE8_BUILD_APPROVAL.md\n?? docs/PHASE8_FINAL_REPORT.md\n?? docs/PHASE8_NATIVE_PROVIDER_ISOLATION.md\n?? docs/PHASE8_VALIDATION.json\n?? docs/PROJECT_AUDIT_REPORT.md\n?? docs/REACT_ROUTER_UPGRADE_20261021.md\n?? docs/REACT_ROUTER_VALIDATION.json\n?? docs/RELEASE_READINESS_CHECKLIST.md\n?? docs/STABILIZATION_20261021.md\n?? docs/UPDATED_RELEASE_READINESS.md\n?? docs/WORKSPACE_WORKFLOW.md\n?? docs/proposals/deferred-story-deletion-review.patch\n?? docs/proposals/notification-preferences-review.patch\n?? docs/proposals/phase3/01-viewer-privacy.patch\n?? docs/proposals/phase3/02-material-card.patch\n?? docs/proposals/phase3/03-story-deletion-feed.patch\n?? docs/proposals/phase3/04-story-fullscreen-layout.patch\n?? docs/proposals/phase3/05-account-notification-preferences.patch\n?? docs/proposals/phase3/README.md\n?? docs/proposals/phase4/SECURITY_MIGRATIONS.md\n?? lib/core/core_import.dart\n?? lib/core/services/notification_preferences_store.dart\n?? lib/screens/screen.dart\n?? test/notification_preferences_test.dart\n"
+    },
+    "deployment": {
+      "root": "D:/work/studybirds_session_release",
+      "comparisonBaseline": "Phase8 checkpoint",
+      "head": "e9060536e8dc7a70150da9c42d6dfac901713553",
+      "headUnchanged": true,
+      "indexUnchanged": true,
+      "worktreesUnchanged": true,
+      "diffCheckExit": 0,
+      "status": " M app/android/app/build.gradle.kts\n M app/android/build.gradle.kts\n M app/integration/services_preview_test.dart\n M app/lib/core/network/api_client.dart\n M app/lib/core/network/pinned_http.dart\n M app/lib/core/repositories/stories_repository.dart\n M app/lib/core/services/analytics_service.dart\n M app/lib/core/services/apple_sign_in_service.dart\n M app/lib/core/services/currency_service.dart\n M app/lib/core/services/google_sign_in_service.dart\n M app/lib/core/services/notification_scheduler.dart\n M app/lib/core/services/push_notification_service.dart\n M app/lib/core/utils/document_access.dart\n M app/lib/core/widgets/app_components.dart\n M app/lib/main.dart\n M app/lib/screens/community/student_community_hub.dart\n M app/lib/screens/profile_account/notification_preferences_screen.dart\n M app/lib/screens/stories/story_viewer.dart\n M app/lib/screens/stories/story_viewers_screen.dart\n M app/lib/screens/stories/student_stories.dart\n M app/test/app_update_test.dart\n M app/test/story_viewer_test.dart\n M app/test/story_viewers_test.dart\n M client/package-lock.json\n M client/package.json\n M client/scripts/generate-seo-files.mjs\n M server/package-lock.json\n M server/package.json\n M server/src/app.js\n M server/src/config/db.js\n M server/src/controllers/adminAgentController.js\n M server/src/controllers/contentController.js\n M server/src/models/Notification.js\n M server/src/models/User.js\n M server/src/routes/alumniRoutes.js\n M server/src/routes/mobileSecurityRoutes.js\n M server/src/routes/scholarshipRoutes.js\n M server/src/seed/seed.js\n M server/src/server.js\n M server/src/utils/cashMisrSms.js\n M server/src/utils/mailer.js\n M server/src/utils/mobileEmailCodes.js\n M server/src/utils/privateDocumentStorage.js\n M server/src/utils/pushNotifications.js\n M server/src/utils/supportNotifications.js\n M server/src/utils/whatsappOtp.js\n M server/tests/auditFixes.test.js\n M server/tests/crmIntegration.test.js\n M server/tests/privateDocumentAccess.test.js\n?? app/android/app/src/qa/AndroidManifest.xml\n?? app/android/app/src/qa/res/drawable/ic_launcher_qa.xml\n?? app/android/app/src/qaDebug/AndroidManifest.xml\n?? app/config/qa_android.pending.json\n?? app/lib/core/config/qa_configuration.dart\n?? app/lib/core/network/qa_http_client.dart\n?? app/lib/core/network/qa_tls_context.dart\n?? app/lib/core/services/notification_preferences_store.dart\n?? app/test/notification_preferences_test.dart\n?? app/test/qa_api_integration_test.dart\n?? app/test/qa_configuration_test.dart\n?? app/test/qa_local_https_test.dart\n?? app/test/qa_providers_test.dart\n?? app/test/qa_startup_test.dart\n?? app/test/qa_tls_context_test.dart\n?? app/test/qa_tls_handshake_test.dart\n?? app/test/story_deletion_test.dart\n?? app/tool/qa_android_merged_manifest.test.cjs\n?? app/tool/qa_android_preparation.test.cjs\n?? client/src/lib/routerMigration.test.tsx\n?? client/src/lib/seoBuild.test.ts\n?? server/qa.local.env.example\n?? server/scripts/qa-local.cjs\n?? server/scripts/qa-mongo-start.cjs\n?? server/scripts/qa-provision.cjs\n?? server/scripts/qa-seed.cjs\n?? server/scripts/run-tests.cjs\n?? server/src/qa/config.js\n?? server/src/qa/load.js\n?? server/src/qa/mail.js\n?? server/src/qa/network.js\n?? server/src/qa/start.js\n?? server/src/qa/storage.js\n?? server/src/utils/jwtSecret.js\n?? server/src/utils/notificationPreferences.js\n?? server/tests/notificationPreferences.test.js\n?? server/tests/qaLocalConfig.test.js\n?? server/tests/qaLocalIntegration.qa.cjs\n?? server/tests/recoveredParity.test.js\n"
+    }
+  },
+  "integrity": {
+    "baselineSourceFilesChecked": 1741,
+    "unexpectedChanges": [],
+    "primaryPhase8Files": [
+      {
+        "path": "lib/main.dart",
+        "sha256": "ea7d6a30e6a85c83eff49c6517624fe44424b409d779882ff569db6f7a546b00",
+        "unchanged": true
+      },
+      {
+        "path": "lib/app_shell.dart",
+        "sha256": "531fbf97e058554971abcb6f99d7d5619b911fa22c17f121e80981e6f6b3bd8d",
+        "unchanged": true
+      },
+      {
+        "path": "lib/screens/screen.dart",
+        "sha256": "6e6fefab90440cb7c2adcdbde243e09f739d27e9551b8e7df85881ed3e204fee",
+        "unchanged": true
+      },
+      {
+        "path": "lib/core/core_import.dart",
+        "sha256": "41f3fac39eb6bc61d8cef17292ce2d6b608ff5adea5d60f4b5585bdd27b93a00",
+        "unchanged": true
+      }
+    ],
+    "recovery": [
+      {
+        "path": "android/app/build.gradle.kts",
+        "sha256": "f6cac8f5e7bfd5e299503e7aa0b10e5b34fd5e6aacee9ab9867929f356c85130",
+        "backupVerified": true
+      },
+      {
+        "path": "android/build.gradle.kts",
+        "sha256": "88b3cb9f462b0890b0416e7a359434b21ad312ed5ad1b6984ff6e9e35dc0092d",
+        "backupVerified": true
+      },
+      {
+        "path": "android/app/src/main/AndroidManifest.xml",
+        "sha256": "2392ff5f7cbffc76af69fb58e4cbc6438a15aa94ea5c634f66560e3cc552eae4",
+        "backupVerified": true
+      }
+    ],
+    "protectedFiles": [
+      {
+        "scope": "app",
+        "path": "android/key.properties",
+        "unchanged": true
+      },
+      {
+        "scope": "app",
+        "path": "android/local.properties",
+        "unchanged": true
+      },
+      {
+        "scope": "app",
+        "path": "android/app/studybirds-release.jks",
+        "unchanged": true
+      },
+      {
+        "scope": "deployment-app",
+        "path": "android/local.properties",
+        "unchanged": true
+      },
+      {
+        "scope": "server",
+        "path": ".env.example",
+        "unchanged": true
+      },
+      {
+        "scope": "client",
+        "path": ".env.example",
+        "unchanged": true
+      }
+    ],
+    "releaseSigningBlockUnchanged": true,
+    "releaseBuildTypesBlockUnchanged": true,
+    "defaultConfigBlockUnchanged": true,
+    "productionMainManifestUnchanged": true
+  },
+  "sourceInvestigation": {
+    "lib/main.dart": {
+      "checkpointSha256": "20bf9ce3d51e2c5c2f7d28e76476288fb1c226d07fde6900ca1c68f3dcd8dc7f",
+      "reconstructedGitHeadSha256": "20bf9ce3d51e2c5c2f7d28e76476288fb1c226d07fde6900ca1c68f3dcd8dc7f",
+      "currentSha256": "ea7d6a30e6a85c83eff49c6517624fe44424b409d779882ff569db6f7a546b00",
+      "checkpointMatchesReconstructedHead": true,
+      "nonImportCodeEqual": true,
+      "currentMtime": "2026-10-21T18:28:31.682Z"
+    },
+    "lib/app_shell.dart": {
+      "checkpointSha256": "4156e00b1d625106591442c0e0a7eebb0af94bde9ebd887ca157c2d62e1e0e99",
+      "reconstructedGitHeadSha256": "4156e00b1d625106591442c0e0a7eebb0af94bde9ebd887ca157c2d62e1e0e99",
+      "currentSha256": "531fbf97e058554971abcb6f99d7d5619b911fa22c17f121e80981e6f6b3bd8d",
+      "checkpointMatchesReconstructedHead": true,
+      "nonImportCodeEqual": true,
+      "currentMtime": "2026-10-21T20:43:41.182Z"
+    },
+    "barrels": {
+      "screenSelfExport": true,
+      "screenTracked": false,
+      "coreTracked": false
+    }
+  },
+  "modifiedAndAddedDeploymentFiles": [
+    {
+      "path": "android/app/build.gradle.kts",
+      "sha256": "2fa29230bac7cb3795ae577e5dc1a627e57e39365f34549ec4f15f63b12b0390"
+    },
+    {
+      "path": "android/build.gradle.kts",
+      "sha256": "1b8b015add70eb5fc2de3b292f577ad76784b81e1e0ddb4b099d23b3532ef58d"
+    },
+    {
+      "path": "android/app/src/qa/AndroidManifest.xml",
+      "sha256": "20f49959a97e2b57e5f2b11c525529c02f6b725f28d91baadd61ab461a5c1a60"
+    },
+    {
+      "path": "android/app/src/qaDebug/AndroidManifest.xml",
+      "sha256": "917ca98272e19eaeef7cadbeb42121122e7e269603919a2f4ebe8eb40ff9e328"
+    },
+    {
+      "path": "android/app/src/qa/res/drawable/ic_launcher_qa.xml",
+      "sha256": "e44a7418c95575810c3dce8d36f24065c2b748380136e7bf2cbfc0f42c7d7991"
+    },
+    {
+      "path": "tool/qa_android_preparation.test.cjs",
+      "sha256": "f6a3f582ff635678ae1624801d5e8d404b6212abdd19ee7c118d2fce757a48f0"
+    },
+    {
+      "path": "tool/qa_android_merged_manifest.test.cjs",
+      "sha256": "a6e35b2318185a99808ab23e41266bcd2e47df366e7bd6f76f55e3bc2858c123"
+    },
+    {
+      "path": "test/qa_tls_handshake_test.dart",
+      "sha256": "a0e890c0f1430aedfc12c7d63a36a9af4bfe4ae4a002006096b07f1e39f38c81"
+    },
+    {
+      "path": "config/qa_android.pending.json",
+      "sha256": "a398ee5cde8131c1b75ab4abab244420ff99866a19bf13a642ba7c99e92bf3aa"
+    }
+  ],
+  "mergedManifest": {
+    "path": "D:\\work\\studybirds_qa_phase7\\android-build\\app\\intermediates\\merged_manifest\\qaDebug\\processQaDebugMainManifest\\AndroidManifest.xml",
+    "sha256": "b111392688283ec9c8d4aa5311c3b54d8bd67ddef602f8789e20970458a5cd79",
+    "outboundBackendMetadata": [],
+    "package": "com.studybirds.app.qa",
+    "label": "Study Birds QA",
+    "cleartext": "false",
+    "unresolvedNativeComponents": [
+      "com.google.mlkit.common.internal.MlKitComponentDiscoveryService",
+      "com.google.mlkit.common.internal.MlKitInitProvider",
+      "com.google.android.datatransport.runtime.backends.TransportBackendDiscovery",
+      "com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService",
+      "com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+    ],
+    "requiredLocalDiscoveryRetained": true,
+    "oneSignalStartupInitializerStillPresent": false,
+    "nativeRuntimeIsolationVerified": false,
+    "backendDiscoveryMetadata": [
+      {
+        "component": "com.google.android.datatransport.runtime.backends.TransportBackendDiscovery",
+        "value": "cct",
+        "name": "backend:com.studybirds.app.qa.QaLocalTransportBackendFactory"
+      }
+    ],
+    "originalCctFactoryAbsent": true,
+    "localBackendVerifiedOnJvm": true
+  },
+  "tests": [
+    {
+      "name": "offlineManifestMerge",
+      "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-local-transport-20261022\\manifest-merge.log",
+      "sha256": "e5515bc8f4668bde5cf0411adfd7e5fb3a865babff9e8bb4f69da4950f3674f5",
+      "exitCode": 0,
+      "passed": null,
+      "failed": null,
+      "tail": "ating] Problems report is available at: file:///D:/work/studybirds_qa_phase7/android-build/reports/problems/problems-report.html\r\n\r\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\r\n\r\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\r\n\r\nFor more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\r\n\r\nBUILD SUCCESSFUL in 25s\r\n71 actionable tasks: 2 executed, 69 up-to-date\r\n"
+    },
+    {
+      "name": "strictManifestAndNative",
+      "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-local-transport-20261022\\merged-tests-final.log",
+      "sha256": "015d6f0704c98bd96138922a5440f59795f3d1395b7d9e9722ef61f33ebb5d8e",
+      "exitCode": 0,
+      "passed": 8,
+      "failed": 0,
+      "tail": "gate: merged configuration must not expose an unresolved outbound telemetry backend\r\nok 7 - release gate: merged configuration must not expose an unresolved outbound telemetry backend\r\n  ---\r\n  duration_ms: 1638.4758\r\n  type: 'test'\r\n  ...\r\n# Subtest: vendor, duplicate and unknown factory bindings are rejected before they can initialize\r\nok 8 - vendor, duplicate and unknown factory bindings are rejected before they can initialize\r\n  ---\r\n  duration_ms: 1.9434\r\n  type: 'test'\r\n  ...\r\n1..8\r\n# tests 8\r\n# suites 0\r\n# pass 8\r\n# fail 0\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 2186.5601\r\n"
+    },
+    {
+      "name": "sourceAndBytecode",
+      "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-local-transport-20261022\\source-bytecode-tests.log",
+      "sha256": "3b698605a05dfec79f0406e25c8429b3235ea488d4c0d99a41b6006681b9e8fd",
+      "exitCode": 0,
+      "passed": 15,
+      "failed": 0,
+      "tail": "ot proof that network-capable code or cached backends disappeared\r\nok 14 - absence of CCT metadata alone is not proof that network-capable code or cached backends disappeared\r\n  ---\r\n  duration_ms: 351.2576\r\n  type: 'test'\r\n  ...\r\n# Subtest: missing backend is handled as scheduling failure/batch rejection, not an OCR opt-out API\r\nok 15 - missing backend is handled as scheduling failure/batch rejection, not an OCR opt-out API\r\n  ---\r\n  duration_ms: 586.3836\r\n  type: 'test'\r\n  ...\r\n1..15\r\n# tests 15\r\n# suites 0\r\n# pass 15\r\n# fail 0\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 4203.9935\r\n"
+    },
+    {
+      "name": "flutterQa",
+      "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-local-transport-20261022\\flutter-tests.log",
+      "sha256": "f43967189fbb0fa4308513a53255d77e2c4f2ee3d53fbbfb43fecb63689603ff",
+      "exitCode": 0,
+      "passed": 31,
+      "failed": 0,
+      "tail": " validates local HTTPS certificate and QA health\r\n00:00 +28: D:/work/studybirds_session_release/app/test/qa_local_https_test.dart: actual Flutter login and signed document download stay on QA origin\r\n00:01 +29: D:/work/studybirds_session_release/app/test/qa_providers_test.dart: QA refuses SDK initialization even with production analytics defines\r\n00:01 +30: D:/work/studybirds_session_release/app/test/qa_providers_test.dart: QA external sign-in and currency calls fail without provider requests\r\n[GoogleSignIn] not available, init error: لم يتم تهيئة Google Sign-In\r\n00:01 +31: All tests passed!\r\n"
+    },
+    {
+      "name": "apkGateDryRun",
+      "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-local-transport-20261022\\build-gate-dry-run.log",
+      "sha256": "abd10d5cfc507c0cfc42b77a70cf06efcfa956fd8f044a1acf5ae46bf05cbe19",
+      "exitCode": 1,
+      "passed": null,
+      "failed": null,
+      "tail": "\n> Run with --info or --debug option to get more log output.\r\n> Run with --scan to get full insights.\r\n> Get more help at https://help.gradle.org.\r\n\r\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\r\n\r\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\r\n\r\nFor more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\r\n\r\nBUILD FAILED in 25s\r\n4 actionable tasks: 4 up-to-date\r\n"
+    }
+  ],
+  "localQa": {
+    "httpHealth": {
+      "status": "ok",
+      "service": "study-birds-local-qa",
+      "db": "connected"
+    },
+    "verifiedLoopbackListeners": [
+      {
+        "port": 27029,
+        "pid": 21696
+      },
+      {
+        "port": 5008,
+        "pid": 23368
+      },
+      {
+        "port": 5448,
+        "pid": 23368
+      }
+    ],
+    "windowsLoginAndDocumentPassed": true,
+    "provisioned": false,
+    "seedExecuted": false,
+    "certificate": {
+      "san": [
+        "localhost",
+        "127.0.0.1"
+      ],
+      "notBefore": "2026-10-21T17:33:34Z",
+      "notAfter": "2026-11-20T17:33:34Z",
+      "trustStoreModified": false
+    },
+    "androidResourcesVerified": false,
+    "pendingConfigResourcesVerified": false
+  },
+  "apk": {
+    "path": "D:\\work\\studybirds_session_release\\app\\build\\app\\outputs\\flutter-apk\\app-debug.apk",
+    "bytes": 320844144,
+    "sha256": "9638b98f111bf25b4079555f4a48029d40a4892dc12f48f407b3894b61b9ce23",
+    "unchanged": true,
+    "qaApkBuilt": false,
+    "apkCountInQaOutput": 0
+  },
+  "disk": {
+    "freeBytes": 5922316288,
+    "freeGiB": 5.515586853027344,
+    "requiredHeadroomGiB": 6,
+    "buildHeadroomMet": false
+  },
+  "buildGate": {
+    "allowed": false,
+    "ownerBuildApprovalRequiredAfterPrerequisites": true,
+    "ownerApprovalRequested": false,
+    "blockers": [
+      "Android Kotlin/Gradle compilation not verified; current gate rejects compile graph",
+      "D free space below 6 GiB minimum",
+      "Narrow gate-policy review and explicit diagnostic-build approval required",
+      "Runtime target, egress monitoring and Android TLS/native-media still unverified; no install approval"
+    ],
+    "proposedCommandDocument": "docs/PHASE8_BUILD_APPROVAL.md",
+    "executionGuardVerifiedByDryRun": true,
+    "outputRoot": "D:/work/studybirds_qa_phase7/android-build"
+  },
+  "actionsNotPerformed": [
+    "APK build",
+    "device installation",
+    "ADB commands",
+    "cleanup or deletion",
+    "flutter clean",
+    "dependency install or migration",
+    "production access",
+    "provider changes",
+    "signing changes",
+    "firewall changes",
+    "LAN/public exposure",
+    "commit/push/deploy/reset/stash",
+    "cross-checkout synchronization"
+  ],
+  "notes": [
+    "Gradle manifest processing was executed offline; this is not APK compilation",
+    "Initial manifest merge conflict fixed using qaDebug priority overlay; original failure log retained",
+    "Merged isolation test remains failing and was not disabled",
+    "Initial Python inspection command unavailable; used existing .NET ZipFile without installing tools"
+  ],
+  "nativeIsolationFollowup": {
+    "recordedAt": "2026-10-21T21:09:26.302Z",
+    "status": "17_ENTRY_POINTS_RESOLVED_OCR_TRANSPORT_NETWORK_BLOCKED",
+    "checkpoint": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-native-20261022",
+    "originalComponentCount": 22,
+    "removedOriginalComponents": 17,
+    "retainedOriginalComponents": [
+      {
+        "name": "com.google.mlkit.common.internal.MlKitComponentDiscoveryService",
+        "classification": "Required local functionality"
+      },
+      {
+        "name": "com.google.mlkit.common.internal.MlKitInitProvider",
+        "classification": "Requires further runtime verification"
+      },
+      {
+        "name": "com.google.android.datatransport.runtime.backends.TransportBackendDiscovery",
+        "classification": "Requires further runtime verification"
+      },
+      {
+        "name": "com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService",
+        "classification": "Requires further runtime verification"
+      },
+      {
+        "name": "com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver",
+        "classification": "Requires further runtime verification"
+      }
+    ],
+    "classifications": [
+      {
+        "name": "androidx.credentials.playservices.CredentialProviderMetadataHolder",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "androidx.credentials:credentials-play-services-auth:1.6.0"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "androidx.credentials.playservices.controllers.identityauth.HiddenActivity",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "androidx.credentials:credentials-play-services-auth:1.6.0"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "androidx.credentials.playservices.controllers.identitycredentials.IdentityCredentialApiHiddenActivity",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "androidx.credentials:credentials-play-services-auth:1.6.0"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.google.mlkit.common.internal.MlKitComponentDiscoveryService",
+        "classification": "Required local functionality",
+        "libraries": [
+          "com.google.android.gms:play-services-mlkit-text-recognition-common:19.1.0",
+          "com.google.mlkit:vision-common:17.3.0",
+          "com.google.mlkit:common:18.11.0"
+        ],
+        "presentInLatestMergedManifest": true,
+        "evidence": "Stub service plus three preserved OCR registrars; no network in service body",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.google.mlkit.common.internal.MlKitInitProvider",
+        "classification": "Requires further runtime verification",
+        "libraries": [
+          "com.google.mlkit:common:18.11.0"
+        ],
+        "presentInLatestMergedManifest": true,
+        "evidence": "Inspected SDK initialization/discovery/uploader path; runtime network safety not proven",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.onesignal.notifications.receivers.FCMBroadcastReceiver",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.onesignal:notifications:5.10.2"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.onesignal.notifications.services.HmsMessageServiceOneSignal",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.onesignal:notifications:5.10.2"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.onesignal.NotificationOpenedActivityHMS",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.onesignal:notifications:5.10.2"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.onesignal.notifications.receivers.NotificationDismissReceiver",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.onesignal:notifications:5.10.2"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.onesignal.notifications.receivers.BootUpReceiver",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.onesignal:notifications:5.10.2"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.onesignal.notifications.receivers.UpgradeReceiver",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.onesignal:notifications:5.10.2"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.onesignal.notifications.activities.NotificationOpenedActivity",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.onesignal:notifications:5.10.2"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.onesignal.notifications.activities.NotificationOpenedActivityAndroid22AndOlder",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.onesignal:notifications:5.10.2"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.google.firebase.iid.FirebaseInstanceIdReceiver",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.google.firebase:firebase-messaging:24.0.0"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.google.firebase.messaging.FirebaseMessagingService",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.google.firebase:firebase-messaging:24.0.0"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.google.firebase.components.ComponentDiscoveryService",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.google.firebase:firebase-messaging:24.0.0",
+          "com.google.firebase:firebase-installations:17.2.0",
+          "com.google.firebase:firebase-common-ktx:21.0.0"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.onesignal.core.services.SyncJobService",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.onesignal:core:5.10.2"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.onesignal.SyncJobService",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.onesignal:core:5.10.2"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.onesignal.core.activities.PermissionsActivity",
+        "classification": "Must be disabled in QA",
+        "libraries": [
+          "com.onesignal:core:5.10.2"
+        ],
+        "presentInLatestMergedManifest": false,
+        "evidence": "Removed QA-only OS entry point; provider plugin registration excluded",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.google.android.datatransport.runtime.backends.TransportBackendDiscovery",
+        "classification": "Requires further runtime verification",
+        "libraries": [
+          "com.google.android.datatransport:transport-backend-cct:3.1.9",
+          "com.google.android.datatransport:transport-runtime:3.1.9"
+        ],
+        "presentInLatestMergedManifest": true,
+        "evidence": "Inspected SDK initialization/discovery/uploader path; runtime network safety not proven",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService",
+        "classification": "Requires further runtime verification",
+        "libraries": [
+          "com.google.android.datatransport:transport-runtime:3.1.9"
+        ],
+        "presentInLatestMergedManifest": true,
+        "evidence": "Inspected SDK initialization/discovery/uploader path; runtime network safety not proven",
+        "runtimeNetworkVerified": false
+      },
+      {
+        "name": "com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver",
+        "classification": "Requires further runtime verification",
+        "libraries": [
+          "com.google.android.datatransport:transport-runtime:3.1.9"
+        ],
+        "presentInLatestMergedManifest": true,
+        "evidence": "Inspected SDK initialization/discovery/uploader path; runtime network safety not proven",
+        "runtimeNetworkVerified": false
+      }
+    ],
+    "oneSignalInitializerRemoved": true,
+    "qaEntryPoint": "com.studybirds.app.qa.QaMainActivity",
+    "localPluginsExplicitlyRegistered": 16,
+    "providerPluginsExcluded": [
+      "GoogleSignInPlugin",
+      "SignInWithApplePlugin",
+      "OneSignalPlugin",
+      "SentryFlutterPlugin",
+      "PosthogFlutterPlugin"
+    ],
+    "automaticRegistrationEvidence": "Installed Flutter delegate sets automaticallyRegisterPlugins=false; QA override does not invoke superclass or generated registration; cached engines/groups disabled",
+    "kotlinCompilationRun": false,
+    "androidRuntimeNetworkVerified": false,
+    "offlineOcrSourceAndRegistrarsPreserved": true,
+    "offlineOcrRuntimeVerified": false,
+    "mergedManifest": {
+      "path": "D:/work/studybirds_qa_phase7/android-build/app/intermediates/merged_manifest/qaDebug/processQaDebugMainManifest/AndroidManifest.xml",
+      "sha256": "fadfc84b96bdc733c5bfb448e7e9cd2f756dba68cc68de88bc8376289dba770e",
+      "outboundBackendMetadata": [
+        {
+          "component": "com.google.android.datatransport.runtime.backends.TransportBackendDiscovery",
+          "value": "cct",
+          "name": "backend:com.google.android.datatransport.cct.CctBackendFactory"
+        }
+      ]
+    },
+    "tests": [
+      {
+        "name": "androidSource",
+        "log": "source-tests.log",
+        "passed": 9,
+        "failed": 0,
+        "exitCode": 0,
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-native-20261022\\source-tests.log",
+        "sha256": "7cf6586717ba5d1998cb688fdebf655fb7f9e504ff0527d38f66b84eca114281",
+        "tail": "separate; default Gradle output root is retained\r\n  ---\r\n  duration_ms: 0.1853\r\n  type: 'test'\r\n  ...\r\n# Subtest: unverified native startup cannot silently produce a QA APK\r\nok 8 - unverified native startup cannot silently produce a QA APK\r\n  ---\r\n  duration_ms: 0.3646\r\n  type: 'test'\r\n  ...\r\n# Subtest: QA registers every existing local plugin but never initializes provider plugins first\r\nok 9 - QA registers every existing local plugin but never initializes provider plugins first\r\n  ---\r\n  duration_ms: 1.5654\r\n  type: 'test'\r\n  ...\r\n1..9\r\n# tests 9\r\n# suites 0\r\n# pass 9\r\n# fail 0\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 1067.795\r\n"
+      },
+      {
+        "name": "androidMerged",
+        "log": "merged-tests.log",
+        "passed": 6,
+        "failed": 1,
+        "exitCode": 1,
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-native-20261022\\merged-tests.log",
+        "sha256": "b13241dbc28565ee73fa2bc9cae4563cdcc278d6a0ea00d84345b793d7478a11",
+        "tail": " operator: 'deepStrictEqual'\r\n  stack: |-\r\n    TestContext.<anonymous> (D:\\work\\studybirds_session_release\\app\\tool\\qa_android_merged_manifest.test.cjs:64:10)\r\n    Test.runInAsyncScope (node:async_hooks:214:14)\r\n    Test.run (node:internal/test_runner/test:1047:25)\r\n    Test.processPendingSubtests (node:internal/test_runner/test:744:18)\r\n    Test.postRun (node:internal/test_runner/test:1173:19)\r\n    Test.run (node:internal/test_runner/test:1101:12)\r\n    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)\r\n  ...\r\n1..7\r\n# tests 7\r\n# suites 0\r\n# pass 6\r\n# fail 1\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 688.2096\r\n"
+      },
+      {
+        "name": "flutterQa",
+        "log": "flutter-tests.log",
+        "passed": 31,
+        "failed": 0,
+        "exitCode": 0,
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-native-20261022\\flutter-tests.log",
+        "sha256": "4dcd86c1988edd79a81b6301ecdd8ec04387087542afbb3c8196a76616ed14ee",
+        "tail": "qa_local_https_test.dart: actual Flutter transport validates local HTTPS certificate and QA health\r\n00:00 +28: D:/work/studybirds_session_release/app/test/qa_local_https_test.dart: actual Flutter login and signed document download stay on QA origin\r\n00:00 +29: D:/work/studybirds_session_release/app/test/qa_providers_test.dart: QA refuses SDK initialization even with production analytics defines\r\n00:00 +30: D:/work/studybirds_session_release/app/test/qa_providers_test.dart: QA external sign-in and currency calls fail without provider requests\r\n[GoogleSignIn] not available, init error: لم يتم تهيئة Google Sign-In\r\n00:00 +31: All tests passed!\r\n"
+      },
+      {
+        "name": "manifestMerge",
+        "log": "manifest-merge.log",
+        "exitCode": 0,
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-native-20261022\\manifest-merge.log",
+        "sha256": "43b1f25474197a22cdc33185851ce13404ee96cd223009b5ea587ed3ccec283b",
+        "tail": "rations but no other declaration present\r\n\r\n[Incubating] Problems report is available at: file:///D:/work/studybirds_qa_phase7/android-build/reports/problems/problems-report.html\r\n\r\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\r\n\r\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\r\n\r\nFor more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\r\n\r\nBUILD SUCCESSFUL in 28s\r\n71 actionable tasks: 2 executed, 69 up-to-date\r\n"
+      },
+      {
+        "name": "apkGateDryRun",
+        "log": "build-gate-dry-run.log",
+        "exitCode": 1,
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-native-20261022\\build-gate-dry-run.log",
+        "sha256": "abd10d5cfc507c0cfc42b77a70cf06efcfa956fd8f044a1acf5ae46bf05cbe19",
+        "tail": " with --stacktrace option to get the stack trace.\r\n> Run with --info or --debug option to get more log output.\r\n> Run with --scan to get full insights.\r\n> Get more help at https://help.gradle.org.\r\n\r\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\r\n\r\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\r\n\r\nFor more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\r\n\r\nBUILD FAILED in 25s\r\n4 actionable tasks: 4 up-to-date\r\n"
+      }
+    ],
+    "integrity": {
+      "files": [
+        {
+          "scope": "primary",
+          "path": "docs/PHASE8_NATIVE_PROVIDER_ISOLATION.md",
+          "sha256": "c6d56a1a8cf028ef3300b449c2cf19744c70377bc3f5b26ea33fc4d2f2ad9fab",
+          "backupVerified": true,
+          "unchanged": false,
+          "expectedEdit": true
+        },
+        {
+          "scope": "primary",
+          "path": "docs/PHASE8_BUILD_APPROVAL.md",
+          "sha256": "08cbba81b9363653d7f606fe232c59eb0b3d725f809894318bea12d5e5b76b9d",
+          "backupVerified": true,
+          "unchanged": false,
+          "expectedEdit": true
+        },
+        {
+          "scope": "primary",
+          "path": "docs/PHASE8_VALIDATION.json",
+          "sha256": "8f2334cc52e92be60ca282105d58e499e9fd8054a78185491d8389872c9f8ce0",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": true
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/src/qa/AndroidManifest.xml",
+          "sha256": "20f49959a97e2b57e5f2b11c525529c02f6b725f28d91baadd61ab461a5c1a60",
+          "backupVerified": true,
+          "unchanged": false,
+          "expectedEdit": true
+        },
+        {
+          "scope": "deployment",
+          "path": "app/tool/qa_android_preparation.test.cjs",
+          "sha256": "f6a3f582ff635678ae1624801d5e8d404b6212abdd19ee7c118d2fce757a48f0",
+          "backupVerified": true,
+          "unchanged": false,
+          "expectedEdit": true
+        },
+        {
+          "scope": "deployment",
+          "path": "app/tool/qa_android_merged_manifest.test.cjs",
+          "sha256": "a6e35b2318185a99808ab23e41266bcd2e47df366e7bd6f76f55e3bc2858c123",
+          "backupVerified": true,
+          "unchanged": false,
+          "expectedEdit": true
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/build.gradle.kts",
+          "sha256": "2fa29230bac7cb3795ae577e5dc1a627e57e39365f34549ec4f15f63b12b0390",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/src/main/AndroidManifest.xml",
+          "sha256": "2392ff5f7cbffc76af69fb58e4cbc6438a15aa94ea5c634f66560e3cc552eae4",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/src/main/kotlin/com/studybirds/app/MainActivity.kt",
+          "sha256": "4a71ce69ddf13662182c92056608f5bde541bfcba8149d67c048757a40434c90",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/src/main/kotlin/com/studybirds/app/PassportScanner.kt",
+          "sha256": "3277ee8b5485f899405ce39c28b3a20ddd779b42912ff2288f16ca397ed7a148",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        }
+      ],
+      "unexpectedChanges": [],
+      "protectedFiles": [
+        {
+          "scope": "app",
+          "path": "android/key.properties",
+          "unchanged": true
+        },
+        {
+          "scope": "app",
+          "path": "android/local.properties",
+          "unchanged": true
+        },
+        {
+          "scope": "app",
+          "path": "android/app/studybirds-release.jks",
+          "unchanged": true
+        },
+        {
+          "scope": "deployment-app",
+          "path": "android/local.properties",
+          "unchanged": true
+        },
+        {
+          "scope": "server",
+          "path": ".env.example",
+          "unchanged": true
+        },
+        {
+          "scope": "client",
+          "path": ".env.example",
+          "unchanged": true
+        }
+      ],
+      "repositories": {
+        "primary": {
+          "head": "3e31e19c5343170056e6d7559c59bfb891f2c624",
+          "headUnchanged": true,
+          "indexUnchanged": true,
+          "worktreesUnchanged": true,
+          "status": " M README.md\n M lib/app_shell.dart\n M lib/core/services/notification_scheduler.dart\n M lib/core/widgets/app_components.dart\n M lib/main.dart\n M lib/screens/applications_documents_payments/documents_screens.dart\n M lib/screens/home_journey/notifications_screen.dart\n M lib/screens/home_journey/student_banner_carousel.dart\n M lib/screens/profile_account/notification_preferences_screen.dart\n M lib/screens/roles/employee_dashboard_screen.dart\n M lib/screens/stories/story_viewers_screen.dart\n M test/chat_controls_test.dart\n M test/journey_requirements_test.dart\n M test/post_admission_journey_test.dart\n M test/story_viewers_test.dart\n M tool/check_error_policy.dart\n?? .vscode/StudyBirds.code-workspace\n?? docs/ANDROID_DEVICE_QA_PLAN.md\n?? docs/ANDROID_QA_CONNECTION_GUIDE.md\n?? docs/ANDROID_REAL_DEVICE_TEST_CHECKLIST.md\n?? docs/APPROVED_DEPLOYMENT_PARITY_20261021.md\n?? docs/ARCHITECTURE.md\n?? docs/AUDIT_VALIDATION.json\n?? docs/BACKEND_ENVIRONMENT_NAMES.json\n?? docs/DEPLOYMENT_PARITY_REPORT.md\n?? docs/DEVELOPMENT_SETUP.md\n?? docs/DUPLICATE_INVENTORY.json\n?? docs/DUPLICATE_INVENTORY.md\n?? docs/FEATURE_PARITY_REPORT.md\n?? docs/FINAL_CLEANUP_APPROVAL.md\n?? docs/FLUTTER_ANALYSIS_REMEDIATION.md\n?? docs/MAINTENANCE_GUIDE.md\n?? docs/PHASE2_FINAL_REPORT.md\n?? docs/PHASE2_SECURITY_REVIEW.md\n?? docs/PHASE2_VALIDATION.json\n?? docs/PHASE3_DEPENDENCY_PLAN.md\n?? docs/PHASE3_FINAL_REPORT.md\n?? docs/PHASE3_VALIDATION.json\n?? docs/PHASE4_FINAL_REPORT.md\n?? docs/PHASE4_VALIDATION.json\n?? docs/PHASE5_CLEANUP_APPROVAL.md\n?? docs/PHASE5_FINAL_REPORT.md\n?? docs/PHASE5_REMAINING_CLEANUP_REVIEW.md\n?? docs/PHASE6_FINAL_REPORT.md\n?? docs/PHASE6_QA_CONFIGURATION.md\n?? docs/PHASE6_VALIDATION.json\n?? docs/PHASE7_APPROVAL_REQUIRED.md\n?? docs/PHASE7_FINAL_REPORT.md\n?? docs/PHASE7_LOCAL_QA_SETUP.md\n?? docs/PHASE7_VALIDATION.json\n?? docs/PHASE8_ANDROID_QA_IDENTITY.md\n?? docs/PHASE8_BUILD_APPROVAL.md\n?? docs/PHASE8_FINAL_REPORT.md\n?? docs/PHASE8_NATIVE_PROVIDER_ISOLATION.md\n?? docs/PHASE8_VALIDATION.json\n?? docs/PROJECT_AUDIT_REPORT.md\n?? docs/REACT_ROUTER_UPGRADE_20261021.md\n?? docs/REACT_ROUTER_VALIDATION.json\n?? docs/RELEASE_READINESS_CHECKLIST.md\n?? docs/STABILIZATION_20261021.md\n?? docs/UPDATED_RELEASE_READINESS.md\n?? docs/WORKSPACE_WORKFLOW.md\n?? docs/proposals/deferred-story-deletion-review.patch\n?? docs/proposals/notification-preferences-review.patch\n?? docs/proposals/phase3/01-viewer-privacy.patch\n?? docs/proposals/phase3/02-material-card.patch\n?? docs/proposals/phase3/03-story-deletion-feed.patch\n?? docs/proposals/phase3/04-story-fullscreen-layout.patch\n?? docs/proposals/phase3/05-account-notification-preferences.patch\n?? docs/proposals/phase3/README.md\n?? docs/proposals/phase4/SECURITY_MIGRATIONS.md\n?? lib/core/core_import.dart\n?? lib/core/services/notification_preferences_store.dart\n?? lib/screens/screen.dart\n?? test/notification_preferences_test.dart\n",
+          "diffCheckExit": 0
+        },
+        "deployment": {
+          "head": "e9060536e8dc7a70150da9c42d6dfac901713553",
+          "headUnchanged": true,
+          "indexUnchanged": true,
+          "worktreesUnchanged": true,
+          "status": " M app/android/app/build.gradle.kts\n M app/android/build.gradle.kts\n M app/integration/services_preview_test.dart\n M app/lib/core/network/api_client.dart\n M app/lib/core/network/pinned_http.dart\n M app/lib/core/repositories/stories_repository.dart\n M app/lib/core/services/analytics_service.dart\n M app/lib/core/services/apple_sign_in_service.dart\n M app/lib/core/services/currency_service.dart\n M app/lib/core/services/google_sign_in_service.dart\n M app/lib/core/services/notification_scheduler.dart\n M app/lib/core/services/push_notification_service.dart\n M app/lib/core/utils/document_access.dart\n M app/lib/core/widgets/app_components.dart\n M app/lib/main.dart\n M app/lib/screens/community/student_community_hub.dart\n M app/lib/screens/profile_account/notification_preferences_screen.dart\n M app/lib/screens/stories/story_viewer.dart\n M app/lib/screens/stories/story_viewers_screen.dart\n M app/lib/screens/stories/student_stories.dart\n M app/test/app_update_test.dart\n M app/test/story_viewer_test.dart\n M app/test/story_viewers_test.dart\n M client/package-lock.json\n M client/package.json\n M client/scripts/generate-seo-files.mjs\n M server/package-lock.json\n M server/package.json\n M server/src/app.js\n M server/src/config/db.js\n M server/src/controllers/adminAgentController.js\n M server/src/controllers/contentController.js\n M server/src/models/Notification.js\n M server/src/models/User.js\n M server/src/routes/alumniRoutes.js\n M server/src/routes/mobileSecurityRoutes.js\n M server/src/routes/scholarshipRoutes.js\n M server/src/seed/seed.js\n M server/src/server.js\n M server/src/utils/cashMisrSms.js\n M server/src/utils/mailer.js\n M server/src/utils/mobileEmailCodes.js\n M server/src/utils/privateDocumentStorage.js\n M server/src/utils/pushNotifications.js\n M server/src/utils/supportNotifications.js\n M server/src/utils/whatsappOtp.js\n M server/tests/auditFixes.test.js\n M server/tests/crmIntegration.test.js\n M server/tests/privateDocumentAccess.test.js\n?? app/android/app/src/qa/AndroidManifest.xml\n?? app/android/app/src/qa/kotlin/com/studybirds/app/qa/QaMainActivity.kt\n?? app/android/app/src/qa/res/drawable/ic_launcher_qa.xml\n?? app/android/app/src/qaDebug/AndroidManifest.xml\n?? app/config/qa_android.pending.json\n?? app/lib/core/config/qa_configuration.dart\n?? app/lib/core/network/qa_http_client.dart\n?? app/lib/core/network/qa_tls_context.dart\n?? app/lib/core/services/notification_preferences_store.dart\n?? app/test/notification_preferences_test.dart\n?? app/test/qa_api_integration_test.dart\n?? app/test/qa_configuration_test.dart\n?? app/test/qa_local_https_test.dart\n?? app/test/qa_providers_test.dart\n?? app/test/qa_startup_test.dart\n?? app/test/qa_tls_context_test.dart\n?? app/test/qa_tls_handshake_test.dart\n?? app/test/story_deletion_test.dart\n?? app/tool/qa_android_manifest_inspection.cjs\n?? app/tool/qa_android_merged_manifest.test.cjs\n?? app/tool/qa_android_preparation.test.cjs\n?? client/src/lib/routerMigration.test.tsx\n?? client/src/lib/seoBuild.test.ts\n?? server/qa.local.env.example\n?? server/scripts/qa-local.cjs\n?? server/scripts/qa-mongo-start.cjs\n?? server/scripts/qa-provision.cjs\n?? server/scripts/qa-seed.cjs\n?? server/scripts/run-tests.cjs\n?? server/src/qa/config.js\n?? server/src/qa/load.js\n?? server/src/qa/mail.js\n?? server/src/qa/network.js\n?? server/src/qa/start.js\n?? server/src/qa/storage.js\n?? server/src/utils/jwtSecret.js\n?? server/src/utils/notificationPreferences.js\n?? server/tests/notificationPreferences.test.js\n?? server/tests/qaLocalConfig.test.js\n?? server/tests/qaLocalIntegration.qa.cjs\n?? server/tests/recoveredParity.test.js\n",
+          "diffCheckExit": 0
+        }
+      },
+      "apkUnchanged": true,
+      "apkSha256": "9638b98f111bf25b4079555f4a48029d40a4892dc12f48f407b3894b61b9ce23"
+    },
+    "sourceFiles": [
+      {
+        "path": "app/android/app/src/qa/AndroidManifest.xml",
+        "sha256": "b61a61c54eb06b31e18c72726290ee4cb78eb33d5992cbc8562ef47b99587ce2"
+      },
+      {
+        "path": "app/android/app/src/qa/kotlin/com/studybirds/app/qa/QaMainActivity.kt",
+        "sha256": "11d2640406ccfc325c66fc3bcd74884252bd0e201351705cee6b9b22e1fea258"
+      },
+      {
+        "path": "app/tool/qa_android_preparation.test.cjs",
+        "sha256": "94069cd3c723b69d77cff00c14faf3102cb6c78c06faedeb0827940c4e95cbe1"
+      },
+      {
+        "path": "app/tool/qa_android_merged_manifest.test.cjs",
+        "sha256": "56df81196536460947d6773a26d51bdfe56d6b87bcfe25c4644f1d175acf17a9"
+      },
+      {
+        "path": "app/tool/qa_android_manifest_inspection.cjs",
+        "sha256": "da4af65e060c8c2ec955eb61872f3e163f898734c3c91de2c4034d1afd806136"
+      }
+    ],
+    "disk": {
+      "freeBytes": 5924560896,
+      "freeGiB": 5.517677307128906
+    },
+    "buildGate": {
+      "enabled": true,
+      "gradleBuildScriptUnchanged": true,
+      "apkBuilt": false,
+      "deviceInstalled": false,
+      "resourcesVerifiedForAndroid": false
+    },
+    "nextAction": "Demonstrate QA-only ML Kit/DataTransport telemetry isolation without breaking offline OCR; current CCT backend remains capable of outbound HTTP. No APK approval is ready.",
+    "notPerformed": [
+      "APK compilation",
+      "device/ADB",
+      "production access",
+      "firewall/network exposure",
+      "downloads or dependency changes",
+      "cache cleanup",
+      "commit/push/deploy",
+      "signing or production manifest changes"
+    ]
+  },
+  "initialPreparationSnapshot": {
+    "recordedAt": "2026-10-21T21:00:20.635Z",
+    "mergedManifest": {
+      "path": "D:\\work\\studybirds_qa_phase7\\android-build\\app\\intermediates\\merged_manifest\\qaDebug\\processQaDebugMainManifest\\AndroidManifest.xml",
+      "sha256": "7317be49527422f52275340c2f4d657926439228d6fa550869b73ceb068a5da0",
+      "package": "com.studybirds.app.qa",
+      "label": "Study Birds QA",
+      "cleartext": "false",
+      "unresolvedNativeComponents": [
+        "androidx.credentials.playservices.CredentialProviderMetadataHolder",
+        "androidx.credentials.playservices.controllers.identityauth.HiddenActivity",
+        "androidx.credentials.playservices.controllers.identitycredentials.IdentityCredentialApiHiddenActivity",
+        "com.google.mlkit.common.internal.MlKitComponentDiscoveryService",
+        "com.google.mlkit.common.internal.MlKitInitProvider",
+        "com.onesignal.notifications.receivers.FCMBroadcastReceiver",
+        "com.onesignal.notifications.services.HmsMessageServiceOneSignal",
+        "com.onesignal.NotificationOpenedActivityHMS",
+        "com.onesignal.notifications.receivers.NotificationDismissReceiver",
+        "com.onesignal.notifications.receivers.BootUpReceiver",
+        "com.onesignal.notifications.receivers.UpgradeReceiver",
+        "com.onesignal.notifications.activities.NotificationOpenedActivity",
+        "com.onesignal.notifications.activities.NotificationOpenedActivityAndroid22AndOlder",
+        "com.google.firebase.iid.FirebaseInstanceIdReceiver",
+        "com.google.firebase.messaging.FirebaseMessagingService",
+        "com.google.firebase.components.ComponentDiscoveryService",
+        "com.onesignal.core.services.SyncJobService",
+        "com.onesignal.SyncJobService",
+        "com.onesignal.core.activities.PermissionsActivity",
+        "com.google.android.datatransport.runtime.backends.TransportBackendDiscovery",
+        "com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService",
+        "com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+      ],
+      "oneSignalStartupInitializerStillPresent": true,
+      "nativeRuntimeIsolationVerified": false
+    },
+    "tests": [
+      {
+        "name": "androidSource",
+        "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-20261021\\android-source-tests-final.log",
+        "sha256": "e7a371852f7a1543844cb9a6c402d1976326114977067b3caedf315b2ff59c66",
+        "exitCode": 0,
+        "passed": 8,
+        "failed": 0
+      },
+      {
+        "name": "androidMerged",
+        "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-20261021\\android-merged-tests.log",
+        "sha256": "b74ae6ae8b957463f1aec726033df93b8f69476e8f5e8669ef690f84f7239e6b",
+        "exitCode": 1,
+        "passed": 3,
+        "failed": 1
+      },
+      {
+        "name": "flutterTargeted",
+        "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-20261021\\flutter-targeted.log",
+        "sha256": "55f83439a96cf32cc2360b415eae45c51223c814317d9b88aeb4269470b0fc3a",
+        "exitCode": 0,
+        "passed": 31,
+        "failed": 0
+      },
+      {
+        "name": "flutterChangedFileAnalysis",
+        "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-20261021\\flutter-analyze.log",
+        "sha256": "06d2a23c7ec6aba62efcecd555ff55b23fd1eb6826abac651e2a6385d4e2dde6",
+        "exitCode": 0,
+        "passed": null,
+        "failed": 0
+      },
+      {
+        "name": "primaryImportAnalysis",
+        "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-20261021\\primary-import-analysis.log",
+        "sha256": "48570df02cea36ef48b442b344692a90f47145106dc6ad0f3ba653c1eb8807e7",
+        "exitCode": 0,
+        "passed": null,
+        "failed": 0
+      },
+      {
+        "name": "manifestDryRun",
+        "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-20261021\\manifest-dry-run.log",
+        "sha256": "dd2663e3c50ee60b5394c02d2d5bef612d5255f37d9d8eaa9eb641210cbe5a9e",
+        "exitCode": 0,
+        "passed": null,
+        "failed": 0
+      },
+      {
+        "name": "manifestMergeInitial",
+        "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-20261021\\manifest-merge.log",
+        "sha256": "1c659472fb99bf92e3b91e52e0deefb9da7ac5ca1c181c894bc219bf6ce04dda",
+        "exitCode": 1,
+        "passed": null,
+        "failed": 1
+      },
+      {
+        "name": "manifestMergeFinal",
+        "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-20261021\\manifest-merge-final.log",
+        "sha256": "e5515bc8f4668bde5cf0411adfd7e5fb3a865babff9e8bb4f69da4950f3674f5",
+        "exitCode": 0,
+        "passed": null,
+        "failed": 0
+      },
+      {
+        "name": "qaBuildGateDryRun",
+        "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-20261021\\qa-build-gate-dry-run.log",
+        "sha256": "abd10d5cfc507c0cfc42b77a70cf06efcfa956fd8f044a1acf5ae46bf05cbe19",
+        "exitCode": 1,
+        "passed": null,
+        "failed": null
+      }
+    ],
+    "disk": {
+      "freeBytes": 5929717760,
+      "freeGiB": 5.522480010986328,
+      "requiredHeadroomGiB": 6,
+      "buildHeadroomMet": false
+    },
+    "notes": "Historical first Phase8 run; current follow-up below supersedes native results"
+  },
+  "transportInvestigation": {
+    "recordedAt": "2026-10-21T21:17:14.668Z",
+    "status": "NO_SUPPORTED_VERIFIED_OPT_OUT_FOUND_ALTERNATIVES_PROPOSED_BUILD_BLOCKED",
+    "checkpoint": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-transport-20261022",
+    "selectedVersions": {
+      "com.google.mlkit:text-recognition": "16.0.1",
+      "com.google.mlkit:text-recognition-bundled-common": "17.0.0",
+      "com.google.mlkit:common": "18.11.0",
+      "com.google.mlkit:vision-common": "17.3.0",
+      "com.google.android.gms:play-services-mlkit-text-recognition": "19.0.1",
+      "com.google.android.gms:play-services-mlkit-text-recognition-common": "19.1.0",
+      "com.google.android.datatransport:transport-api": "3.1.0",
+      "com.google.android.datatransport:transport-runtime": "3.1.9",
+      "com.google.android.datatransport:transport-backend-cct": "3.1.9"
+    },
+    "evidenceJars": [
+      {
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-native-20261022\\classes\\com.google.android.datatransport_transport-backend-cct_3.1.9.jar",
+        "sha256": "21204d3a0182911f39b76a8a6f538ca103b2905c00b5dfdbe7093c44ac0239f0"
+      },
+      {
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-native-20261022\\classes\\com.google.android.datatransport_transport-runtime_3.1.9.jar",
+        "sha256": "145ebe58332ee55f9f790f21aff9a134b4d4cf337b9107ca9ec04d7257dbaabc"
+      },
+      {
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-native-20261022\\classes\\com.google.android.gms_play-services-mlkit-text-recognition-common_19.1.0.jar",
+        "sha256": "479cd4fee0e4b31ab7b956b14619ebf0d34a20ea9354f4ef1c7c4f2c5a91e1ff"
+      },
+      {
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-native-20261022\\classes\\com.google.mlkit_common_18.11.0.jar",
+        "sha256": "a88fa28ffc01c41378e3ae490b33ea476af181c6ea5b98f18a80d7310bcf32d9"
+      },
+      {
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-native-20261022\\classes\\com.google.mlkit_vision-common_17.3.0.jar",
+        "sha256": "1200d5ae01b5b52a6a827834d9bb8b9652f5bca9c6336fd07048fd8b91c1bf0b"
+      },
+      {
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-transport-20261022\\play-services-mlkit-text-recognition-19.0.1.jar",
+        "sha256": "ac8ebbb7ccb68ede762d38e8fb757e049f57faf8974a4e0a8738b0036f1f6cf1"
+      }
+    ],
+    "bytecodeEvidence": [
+      {
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-transport-20261022\\mlkit-logging-bytecode.log",
+        "sha256": "3bcd9c4c8b2238b2e1dfc452c2b19db7b76de2dc2cee2b12fa2b61c1e78ae5c6"
+      },
+      {
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-transport-20261022\\public-api-final.log",
+        "sha256": "73ec66e12c38f5f322f1ca1d3645619af20480bc275dea7321d490fd5c83b7da"
+      },
+      {
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-transport-20261022\\options-bytecode.log",
+        "sha256": "f55d2ba476467f6a28b66305345928fa5cfff35693001f65a0d33377b8412cc1"
+      },
+      {
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-transport-20261022\\transport-paths.log",
+        "sha256": "32599b9dad99107bc6788f07f75c41ddc230524b54a01e9b280a95d3a7b9158e"
+      }
+    ],
+    "findings": {
+      "publicSupportedOptOutFound": false,
+      "internalBooleanBuilderHardcodesTrue": [
+        "mlkit_common.zzrs.zza(boolean)",
+        "mlkit_vision_text_common.zzto.zza(boolean)"
+      ],
+      "programmaticLoggers": [
+        "mlkit_common.zzsp",
+        "mlkit_vision_text_common.zzuk"
+      ],
+      "networkBackend": "CctTransportBackend URL.openConnection/HTTP POST",
+      "directUploadPath": "ForcedSender.sendBlocking -> Uploader.logAndUpdateState",
+      "deferredUploadPaths": [
+        "JobInfoSchedulerService",
+        "AlarmManagerSchedulerBroadcastReceiver",
+        "WorkInitializer.loadActiveContexts/reschedule",
+        "SQLiteEventStore persisted batches"
+      ],
+      "missingBackendHandling": "DefaultScheduler reports scheduling error; Uploader rejects/deletes unknown-backend batch in inspected paths; not supported OCR telemetry opt-out",
+      "backendRegistryCachesInstances": true,
+      "dependencyExclusionRisk": "CCTDestination directly referenced by both ML Kit loggers",
+      "runtimeCompatibilityProven": false
+    },
+    "changes": {
+      "appRuntimeSourceChanged": false,
+      "manifestChanged": false,
+      "dependenciesChanged": false,
+      "ocrScannerChanged": false,
+      "addedTest": "app/tool/qa_transport_evidence.test.cjs",
+      "testSha256": "128f161c2bfbd03c53c06ab5cfcaefd60d8591454db10e03c8c37ceebfe77db2"
+    },
+    "tests": [
+      {
+        "name": "resolvedOfflineDependencies",
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-transport-20261022\\runtime-dependencies.log",
+        "sha256": "85ce9531b106f8043605c94aad6d83d1e34fb52519f9a0346814c18167a34a48",
+        "exitCode": 0,
+        "passed": null,
+        "failed": null,
+        "tail": "e features were used in this build, making it incompatible with Gradle 9.0.\r\n\r\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\r\n\r\nFor more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\r\n\r\nBUILD SUCCESSFUL in 24s\r\n5 actionable tasks: 1 executed, 4 up-to-date\r\n"
+      },
+      {
+        "name": "manifestMerge",
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-transport-20261022\\manifest-merge.log",
+        "sha256": "22f7107f76da20133c36176e78fd3af64192f49b8e53014d6276028f0cc142b7",
+        "exitCode": 0,
+        "passed": null,
+        "failed": null,
+        "tail": "features were used in this build, making it incompatible with Gradle 9.0.\r\n\r\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\r\n\r\nFor more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\r\n\r\nBUILD SUCCESSFUL in 29s\r\n71 actionable tasks: 1 executed, 70 up-to-date\r\n"
+      },
+      {
+        "name": "sourceAndBytecodeDiagnostics",
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-transport-20261022\\source-bytecode-tests.log",
+        "sha256": "3d9525ae9a5b91cae944172ca49a7f7f5694c6aecbeff36943b7100f87e116e2",
+        "exitCode": 0,
+        "passed": 15,
+        "failed": 0,
+        "tail": "hed backends disappeared\r\n  ---\r\n  duration_ms: 425.4262\r\n  type: 'test'\r\n  ...\r\n# Subtest: missing backend is handled as scheduling failure/batch rejection, not an OCR opt-out API\r\nok 15 - missing backend is handled as scheduling failure/batch rejection, not an OCR opt-out API\r\n  ---\r\n  duration_ms: 696.7756\r\n  type: 'test'\r\n  ...\r\n1..15\r\n# tests 15\r\n# suites 0\r\n# pass 15\r\n# fail 0\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 5355.8779\r\n"
+      },
+      {
+        "name": "mergedManifest",
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-transport-20261022\\merged-tests.log",
+        "sha256": "683fe9413b84a5dcb839d36487ea5c9f106e1aab962a3bf8e961a9f3618be665",
+        "exitCode": 1,
+        "passed": 6,
+        "failed": 1,
+        "tail": "ks:214:14)\r\n    Test.run (node:internal/test_runner/test:1047:25)\r\n    Test.processPendingSubtests (node:internal/test_runner/test:744:18)\r\n    Test.postRun (node:internal/test_runner/test:1173:19)\r\n    Test.run (node:internal/test_runner/test:1101:12)\r\n    async Test.processPendingSubtests (node:internal/test_runner/test:744:7)\r\n  ...\r\n1..7\r\n# tests 7\r\n# suites 0\r\n# pass 6\r\n# fail 1\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 557.6879\r\n"
+      },
+      {
+        "name": "flutterQa",
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-transport-20261022\\flutter-tests.log",
+        "sha256": "6b3965912fe25a8713ca48222c16770786ae89fb8bb671b0f769354eb8922437",
+        "exitCode": 0,
+        "passed": 31,
+        "failed": 0,
+        "tail": "n and signed document download stay on QA origin\r\n00:00 +29: D:/work/studybirds_session_release/app/test/qa_providers_test.dart: QA refuses SDK initialization even with production analytics defines\r\n00:00 +30: D:/work/studybirds_session_release/app/test/qa_providers_test.dart: QA external sign-in and currency calls fail without provider requests\r\n[GoogleSignIn] not available, init error: لم يتم تهيئة Google Sign-In\r\n00:00 +31: All tests passed!\r\n"
+      },
+      {
+        "name": "apkGateDryRun",
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-transport-20261022\\build-gate-dry-run.log",
+        "sha256": "fe309e9881443f4598274c1a6cd1597ef8094477908ebc8fc11a368525bd8fb5",
+        "exitCode": 1,
+        "passed": null,
+        "failed": null,
+        "tail": "Deprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\r\n\r\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\r\n\r\nFor more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\r\n\r\nBUILD FAILED in 27s\r\n4 actionable tasks: 4 up-to-date\r\n"
+      }
+    ],
+    "manifest": {
+      "path": "D:/work/studybirds_qa_phase7/android-build/app/intermediates/merged_manifest/qaDebug/processQaDebugMainManifest/AndroidManifest.xml",
+      "sha256": "fadfc84b96bdc733c5bfb448e7e9cd2f756dba68cc68de88bc8376289dba770e",
+      "unchangedFromPreviousRound": true,
+      "nativeIsolationTestGreen": false
+    },
+    "ocr": {
+      "sourceAndInitializationPreserved": true,
+      "androidExecutionTested": false
+    },
+    "runtimeNetworkIsolationVerified": false,
+    "apkBuilt": false,
+    "buildGate": {
+      "enabled": true,
+      "dryRunRejected": true,
+      "gradleGateFileUnchanged": true
+    },
+    "alternatives": {
+      "implemented": false,
+      "ownerApprovalRequired": true,
+      "localTransport": "QA-only BackendFactory/TransportBackend binding for cct; no IO, return ok(0), preserve OCR and dependencies; requires actual routing/compatibility/runtime evidence",
+      "networkDenial": "Independently enforced isolated Android environment with no external routes and verified local TLS/API path; no device/firewall/VM changes performed"
+    },
+    "integrity": {
+      "files": [
+        {
+          "scope": "primary",
+          "path": "docs/PHASE8_NATIVE_PROVIDER_ISOLATION.md",
+          "sha256": "56876e2d2d82acb4f63e6bd2aca495239317d9838163a8710a989ac5791b7276",
+          "backupVerified": true,
+          "unchanged": false,
+          "expectedEdit": true
+        },
+        {
+          "scope": "primary",
+          "path": "docs/PHASE8_BUILD_APPROVAL.md",
+          "sha256": "24df38ac472a57fc3d81feabe253c99bd13178ff0f5f486d1c1bab5b65826b2d",
+          "backupVerified": true,
+          "unchanged": false,
+          "expectedEdit": true
+        },
+        {
+          "scope": "primary",
+          "path": "docs/PHASE8_VALIDATION.json",
+          "sha256": "5666a427ffb80bc87385735f1a5d9383f86c57629fa1d83d6f75244476a5366b",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": true
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/src/qa/AndroidManifest.xml",
+          "sha256": "b61a61c54eb06b31e18c72726290ee4cb78eb33d5992cbc8562ef47b99587ce2",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/build.gradle.kts",
+          "sha256": "2fa29230bac7cb3795ae577e5dc1a627e57e39365f34549ec4f15f63b12b0390",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/src/main/AndroidManifest.xml",
+          "sha256": "2392ff5f7cbffc76af69fb58e4cbc6438a15aa94ea5c634f66560e3cc552eae4",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/src/main/kotlin/com/studybirds/app/PassportScanner.kt",
+          "sha256": "3277ee8b5485f899405ce39c28b3a20ddd779b42912ff2288f16ca397ed7a148",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/src/qa/kotlin/com/studybirds/app/qa/QaMainActivity.kt",
+          "sha256": "11d2640406ccfc325c66fc3bcd74884252bd0e201351705cee6b9b22e1fea258",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/tool/qa_android_merged_manifest.test.cjs",
+          "sha256": "56df81196536460947d6773a26d51bdfe56d6b87bcfe25c4644f1d175acf17a9",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        }
+      ],
+      "unexpectedChanges": [],
+      "protectedFiles": [
+        {
+          "scope": "app",
+          "path": "android/key.properties",
+          "unchanged": true
+        },
+        {
+          "scope": "app",
+          "path": "android/local.properties",
+          "unchanged": true
+        },
+        {
+          "scope": "app",
+          "path": "android/app/studybirds-release.jks",
+          "unchanged": true
+        },
+        {
+          "scope": "deployment-app",
+          "path": "android/local.properties",
+          "unchanged": true
+        },
+        {
+          "scope": "server",
+          "path": ".env.example",
+          "unchanged": true
+        },
+        {
+          "scope": "client",
+          "path": ".env.example",
+          "unchanged": true
+        }
+      ],
+      "repositories": {
+        "primary": {
+          "headUnchanged": true,
+          "indexUnchanged": true,
+          "worktreesUnchanged": true,
+          "diffCheckExit": 0,
+          "status": " M README.md\n M lib/app_shell.dart\n M lib/core/services/notification_scheduler.dart\n M lib/core/widgets/app_components.dart\n M lib/main.dart\n M lib/screens/applications_documents_payments/documents_screens.dart\n M lib/screens/home_journey/notifications_screen.dart\n M lib/screens/home_journey/student_banner_carousel.dart\n M lib/screens/profile_account/notification_preferences_screen.dart\n M lib/screens/roles/employee_dashboard_screen.dart\n M lib/screens/stories/story_viewers_screen.dart\n M test/chat_controls_test.dart\n M test/journey_requirements_test.dart\n M test/post_admission_journey_test.dart\n M test/story_viewers_test.dart\n M tool/check_error_policy.dart\n?? .vscode/StudyBirds.code-workspace\n?? docs/ANDROID_DEVICE_QA_PLAN.md\n?? docs/ANDROID_QA_CONNECTION_GUIDE.md\n?? docs/ANDROID_REAL_DEVICE_TEST_CHECKLIST.md\n?? docs/APPROVED_DEPLOYMENT_PARITY_20261021.md\n?? docs/ARCHITECTURE.md\n?? docs/AUDIT_VALIDATION.json\n?? docs/BACKEND_ENVIRONMENT_NAMES.json\n?? docs/DEPLOYMENT_PARITY_REPORT.md\n?? docs/DEVELOPMENT_SETUP.md\n?? docs/DUPLICATE_INVENTORY.json\n?? docs/DUPLICATE_INVENTORY.md\n?? docs/FEATURE_PARITY_REPORT.md\n?? docs/FINAL_CLEANUP_APPROVAL.md\n?? docs/FLUTTER_ANALYSIS_REMEDIATION.md\n?? docs/MAINTENANCE_GUIDE.md\n?? docs/PHASE2_FINAL_REPORT.md\n?? docs/PHASE2_SECURITY_REVIEW.md\n?? docs/PHASE2_VALIDATION.json\n?? docs/PHASE3_DEPENDENCY_PLAN.md\n?? docs/PHASE3_FINAL_REPORT.md\n?? docs/PHASE3_VALIDATION.json\n?? docs/PHASE4_FINAL_REPORT.md\n?? docs/PHASE4_VALIDATION.json\n?? docs/PHASE5_CLEANUP_APPROVAL.md\n?? docs/PHASE5_FINAL_REPORT.md\n?? docs/PHASE5_REMAINING_CLEANUP_REVIEW.md\n?? docs/PHASE6_FINAL_REPORT.md\n?? docs/PHASE6_QA_CONFIGURATION.md\n?? docs/PHASE6_VALIDATION.json\n?? docs/PHASE7_APPROVAL_REQUIRED.md\n?? docs/PHASE7_FINAL_REPORT.md\n?? docs/PHASE7_LOCAL_QA_SETUP.md\n?? docs/PHASE7_VALIDATION.json\n?? docs/PHASE8_ANDROID_QA_IDENTITY.md\n?? docs/PHASE8_BUILD_APPROVAL.md\n?? docs/PHASE8_FINAL_REPORT.md\n?? docs/PHASE8_NATIVE_PROVIDER_ISOLATION.md\n?? docs/PHASE8_VALIDATION.json\n?? docs/PROJECT_AUDIT_REPORT.md\n?? docs/REACT_ROUTER_UPGRADE_20261021.md\n?? docs/REACT_ROUTER_VALIDATION.json\n?? docs/RELEASE_READINESS_CHECKLIST.md\n?? docs/STABILIZATION_20261021.md\n?? docs/UPDATED_RELEASE_READINESS.md\n?? docs/WORKSPACE_WORKFLOW.md\n?? docs/proposals/deferred-story-deletion-review.patch\n?? docs/proposals/notification-preferences-review.patch\n?? docs/proposals/phase3/01-viewer-privacy.patch\n?? docs/proposals/phase3/02-material-card.patch\n?? docs/proposals/phase3/03-story-deletion-feed.patch\n?? docs/proposals/phase3/04-story-fullscreen-layout.patch\n?? docs/proposals/phase3/05-account-notification-preferences.patch\n?? docs/proposals/phase3/README.md\n?? docs/proposals/phase4/SECURITY_MIGRATIONS.md\n?? lib/core/core_import.dart\n?? lib/core/services/notification_preferences_store.dart\n?? lib/screens/screen.dart\n?? test/notification_preferences_test.dart\n"
+        },
+        "deployment": {
+          "headUnchanged": true,
+          "indexUnchanged": true,
+          "worktreesUnchanged": true,
+          "diffCheckExit": 0,
+          "status": " M app/android/app/build.gradle.kts\n M app/android/build.gradle.kts\n M app/integration/services_preview_test.dart\n M app/lib/core/network/api_client.dart\n M app/lib/core/network/pinned_http.dart\n M app/lib/core/repositories/stories_repository.dart\n M app/lib/core/services/analytics_service.dart\n M app/lib/core/services/apple_sign_in_service.dart\n M app/lib/core/services/currency_service.dart\n M app/lib/core/services/google_sign_in_service.dart\n M app/lib/core/services/notification_scheduler.dart\n M app/lib/core/services/push_notification_service.dart\n M app/lib/core/utils/document_access.dart\n M app/lib/core/widgets/app_components.dart\n M app/lib/main.dart\n M app/lib/screens/community/student_community_hub.dart\n M app/lib/screens/profile_account/notification_preferences_screen.dart\n M app/lib/screens/stories/story_viewer.dart\n M app/lib/screens/stories/story_viewers_screen.dart\n M app/lib/screens/stories/student_stories.dart\n M app/test/app_update_test.dart\n M app/test/story_viewer_test.dart\n M app/test/story_viewers_test.dart\n M client/package-lock.json\n M client/package.json\n M client/scripts/generate-seo-files.mjs\n M server/package-lock.json\n M server/package.json\n M server/src/app.js\n M server/src/config/db.js\n M server/src/controllers/adminAgentController.js\n M server/src/controllers/contentController.js\n M server/src/models/Notification.js\n M server/src/models/User.js\n M server/src/routes/alumniRoutes.js\n M server/src/routes/mobileSecurityRoutes.js\n M server/src/routes/scholarshipRoutes.js\n M server/src/seed/seed.js\n M server/src/server.js\n M server/src/utils/cashMisrSms.js\n M server/src/utils/mailer.js\n M server/src/utils/mobileEmailCodes.js\n M server/src/utils/privateDocumentStorage.js\n M server/src/utils/pushNotifications.js\n M server/src/utils/supportNotifications.js\n M server/src/utils/whatsappOtp.js\n M server/tests/auditFixes.test.js\n M server/tests/crmIntegration.test.js\n M server/tests/privateDocumentAccess.test.js\n?? app/android/app/src/qa/AndroidManifest.xml\n?? app/android/app/src/qa/kotlin/com/studybirds/app/qa/QaMainActivity.kt\n?? app/android/app/src/qa/res/drawable/ic_launcher_qa.xml\n?? app/android/app/src/qaDebug/AndroidManifest.xml\n?? app/config/qa_android.pending.json\n?? app/lib/core/config/qa_configuration.dart\n?? app/lib/core/network/qa_http_client.dart\n?? app/lib/core/network/qa_tls_context.dart\n?? app/lib/core/services/notification_preferences_store.dart\n?? app/test/notification_preferences_test.dart\n?? app/test/qa_api_integration_test.dart\n?? app/test/qa_configuration_test.dart\n?? app/test/qa_local_https_test.dart\n?? app/test/qa_providers_test.dart\n?? app/test/qa_startup_test.dart\n?? app/test/qa_tls_context_test.dart\n?? app/test/qa_tls_handshake_test.dart\n?? app/test/story_deletion_test.dart\n?? app/tool/qa_android_manifest_inspection.cjs\n?? app/tool/qa_android_merged_manifest.test.cjs\n?? app/tool/qa_android_preparation.test.cjs\n?? app/tool/qa_transport_evidence.test.cjs\n?? client/src/lib/routerMigration.test.tsx\n?? client/src/lib/seoBuild.test.ts\n?? server/qa.local.env.example\n?? server/scripts/qa-local.cjs\n?? server/scripts/qa-mongo-start.cjs\n?? server/scripts/qa-provision.cjs\n?? server/scripts/qa-seed.cjs\n?? server/scripts/run-tests.cjs\n?? server/src/qa/config.js\n?? server/src/qa/load.js\n?? server/src/qa/mail.js\n?? server/src/qa/network.js\n?? server/src/qa/start.js\n?? server/src/qa/storage.js\n?? server/src/utils/jwtSecret.js\n?? server/src/utils/notificationPreferences.js\n?? server/tests/notificationPreferences.test.js\n?? server/tests/qaLocalConfig.test.js\n?? server/tests/qaLocalIntegration.qa.cjs\n?? server/tests/recoveredParity.test.js\n"
+        }
+      },
+      "apkUnchanged": true,
+      "apkSha256": "9638b98f111bf25b4079555f4a48029d40a4892dc12f48f407b3894b61b9ce23"
+    },
+    "publicReferences": [
+      "https://developers.google.com/android/reference/com/google/mlkit/common/MlKit",
+      "https://developers.google.com/android/reference/com/google/mlkit/vision/text/latin/TextRecognizerOptions",
+      "https://developers.google.com/ml-kit/android-data-disclosure",
+      "https://github.com/googlesamples/mlkit/issues/593"
+    ],
+    "limitations": [
+      "Bytecode/static tests do not execute Android OCR or prove runtime network containment",
+      "Initial public API lookup targeted wrapper jar and failed; corrected to resolved play-services jar; errors retained in first log",
+      "No runtime patch applied because a safe supported opt-out was not established"
+    ],
+    "notPerformed": [
+      "APK build/install",
+      "ADB/device",
+      "production services",
+      "dependency downloads/upgrades",
+      "TLS bypass",
+      "global dependency removal",
+      "cleanup/reset/stash/commit/push/deploy",
+      "firewall or public exposure"
+    ]
+  },
+  "approvedLocalTransport": {
+    "recordedAt": "2026-10-21T21:32:45.022Z",
+    "status": "QA_LOCAL_TRANSPORT_IMPLEMENTED_JVM_VERIFIED_ANDROID_RUNTIME_PENDING",
+    "ownerAuthorization": "Alternative A explicitly approved in this turn; APK build not approved",
+    "checkpoint": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-local-transport-20261022",
+    "implementation": {
+      "qaOnlySource": "app/android/app/src/qa/java/com/studybirds/app/qa/QaLocalTransportBackendFactory.java",
+      "interface": "public BackendFactory / TransportBackend from installed DataTransport runtime 3.1.9",
+      "factory": "com.studybirds.app.qa.QaLocalTransportBackendFactory",
+      "sourceSha256": "b93232fd7ed2ff328c0f320f50cd0a6e030774a60b89fbfd17e7e4a6dbdcf921",
+      "decorate": "identity, no payload inspection",
+      "send": "BackendResponse.ok(0), no payload/extras inspection or retention",
+      "networkOrLoggingOrDiskIoInSink": false,
+      "globalDependenciesModified": false,
+      "productionCodeModified": false,
+      "sourceFiles": [
+        {
+          "path": "app/tool/qa_transport_jvm/README.md",
+          "sha256": "5d4085353d0b42a5e3110522429b5b286a050bce3e359cfee6ae8ef4fe5fa0b9"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/android/app/Service.java",
+          "sha256": "ecf4d23a821cd2863d7884c0b50005529b0f4ece7b257737e2d10ec6b96eb3fc"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/android/content/ComponentName.java",
+          "sha256": "0778062695b2aaaa13a055463408e1edb715963e077687ab2ea16d042d61a868"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/android/content/Context.java",
+          "sha256": "2f18301a8ec543a0b9bfc5084adfde75d478a8741ee6120354f57c9576e82c68"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/android/content/Intent.java",
+          "sha256": "dc694a4c38f286cf5e9e2d20c02ceeb870437fcbaabe6cc0886dea26ddb419c0"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/android/content/pm/PackageManager.java",
+          "sha256": "ca9438dab30951725118f908ed9d0da23c375c91c681b1f0a1abccbf1152cbe4"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/android/content/pm/ServiceInfo.java",
+          "sha256": "a94abbc11f7b218329b7ba5a2148638c98dd363d8b36d13b8ca160446301a553"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/android/net/ConnectivityManager.java",
+          "sha256": "a3ca53bfeb91fe880207c2fc1b7af8cb9b0d3f0f2f268ed50dfdf8cd466b8ad0"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/android/net/NetworkInfo.java",
+          "sha256": "f007510c283a71baa8a0c78b44cca4eed25b4f88ea4b930f799069213771c27b"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/android/os/Build.java",
+          "sha256": "52e2d39e98d90981574e6798507b315cc0d517676efc76a72a7149ef75b86bf5"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/android/os/Bundle.java",
+          "sha256": "82d2f49b62ce29ab3eaaa12b147d9a43f1a2ce5e1369b1a1066ebb74db9d8021"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/android/os/IBinder.java",
+          "sha256": "5b96295e2052ef79f524abb7d1a8a2252759294cabe1a7ce1a65949323224451"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/android/util/Base64.java",
+          "sha256": "a2bc1862c1e34630716adce850cafdcfeef4419b8416ee8b4c6655fcc999d764"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/android/util/Log.java",
+          "sha256": "1b8119e0f48c6973f71d3d19934d9aadfc44a84d5946dee9d1cc6d13f9890685"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/com/google/android/datatransport/runtime/backends/LocalTransportHarness.java",
+          "sha256": "460bd56a91f231a159fc6bf84734b01c8105328fcbfd87f746cb141fc3983900"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/com/google/android/datatransport/runtime/RuntimeHarnessBridge.java",
+          "sha256": "d1d54e08e553c9af29e2caa7e530b5d844741135bf43a6fae39500fb9c74d48b"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/src/qa/NegativeIoFixture.java",
+          "sha256": "a756c76c6800444d6151115719c3f10ffb4536701cf0dccb6ffcf4d83e9ea9a5"
+        },
+        {
+          "path": "app/tool/qa_transport_jvm/verify.cjs",
+          "sha256": "8297cdc2ac7a8f3eb1a87bc7835ea1ae9540cc4b326803cd5d7026c7d4828d5f"
+        },
+        {
+          "path": "app/android/app/src/qa/java/com/studybirds/app/qa/QaLocalTransportBackendFactory.java",
+          "sha256": "b93232fd7ed2ff328c0f320f50cd0a6e030774a60b89fbfd17e7e4a6dbdcf921"
+        },
+        {
+          "path": "app/android/app/src/qa/AndroidManifest.xml",
+          "sha256": "a5ddf332649851e114d7eee327805395da815b20e838c82ce45bd644504f1f07"
+        },
+        {
+          "path": "app/tool/qa_android_merged_manifest.test.cjs",
+          "sha256": "1aa24fb4c99ff5178d2fddf5892d9ee5fe92add587c6344e4bd7b69444fe5697"
+        }
+      ]
+    },
+    "manifest": {
+      "path": "D:\\work\\studybirds_qa_phase7\\android-build\\app\\intermediates\\merged_manifest\\qaDebug\\processQaDebugMainManifest\\AndroidManifest.xml",
+      "sha256": "b111392688283ec9c8d4aa5311c3b54d8bd67ddef602f8789e20970458a5cd79",
+      "package": "com.studybirds.app.qa",
+      "backendMetadata": [
+        {
+          "component": "com.google.android.datatransport.runtime.backends.TransportBackendDiscovery",
+          "value": "cct",
+          "name": "backend:com.studybirds.app.qa.QaLocalTransportBackendFactory"
+        }
+      ],
+      "originalCctFactoryAbsent": true,
+      "exactlyOneLocalBinding": true
+    },
+    "tests": [
+      {
+        "name": "offlineManifestMerge",
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-local-transport-20261022\\manifest-merge.log",
+        "sha256": "e5515bc8f4668bde5cf0411adfd7e5fb3a865babff9e8bb4f69da4950f3674f5",
+        "exitCode": 0,
+        "passed": null,
+        "failed": null,
+        "tail": "ating] Problems report is available at: file:///D:/work/studybirds_qa_phase7/android-build/reports/problems/problems-report.html\r\n\r\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\r\n\r\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\r\n\r\nFor more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\r\n\r\nBUILD SUCCESSFUL in 25s\r\n71 actionable tasks: 2 executed, 69 up-to-date\r\n"
+      },
+      {
+        "name": "strictManifestAndNative",
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-local-transport-20261022\\merged-tests-final.log",
+        "sha256": "015d6f0704c98bd96138922a5440f59795f3d1395b7d9e9722ef61f33ebb5d8e",
+        "exitCode": 0,
+        "passed": 8,
+        "failed": 0,
+        "tail": "gate: merged configuration must not expose an unresolved outbound telemetry backend\r\nok 7 - release gate: merged configuration must not expose an unresolved outbound telemetry backend\r\n  ---\r\n  duration_ms: 1638.4758\r\n  type: 'test'\r\n  ...\r\n# Subtest: vendor, duplicate and unknown factory bindings are rejected before they can initialize\r\nok 8 - vendor, duplicate and unknown factory bindings are rejected before they can initialize\r\n  ---\r\n  duration_ms: 1.9434\r\n  type: 'test'\r\n  ...\r\n1..8\r\n# tests 8\r\n# suites 0\r\n# pass 8\r\n# fail 0\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 2186.5601\r\n"
+      },
+      {
+        "name": "sourceAndBytecode",
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-local-transport-20261022\\source-bytecode-tests.log",
+        "sha256": "3b698605a05dfec79f0406e25c8429b3235ea488d4c0d99a41b6006681b9e8fd",
+        "exitCode": 0,
+        "passed": 15,
+        "failed": 0,
+        "tail": "ot proof that network-capable code or cached backends disappeared\r\nok 14 - absence of CCT metadata alone is not proof that network-capable code or cached backends disappeared\r\n  ---\r\n  duration_ms: 351.2576\r\n  type: 'test'\r\n  ...\r\n# Subtest: missing backend is handled as scheduling failure/batch rejection, not an OCR opt-out API\r\nok 15 - missing backend is handled as scheduling failure/batch rejection, not an OCR opt-out API\r\n  ---\r\n  duration_ms: 586.3836\r\n  type: 'test'\r\n  ...\r\n1..15\r\n# tests 15\r\n# suites 0\r\n# pass 15\r\n# fail 0\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 4203.9935\r\n"
+      },
+      {
+        "name": "flutterQa",
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-local-transport-20261022\\flutter-tests.log",
+        "sha256": "f43967189fbb0fa4308513a53255d77e2c4f2ee3d53fbbfb43fecb63689603ff",
+        "exitCode": 0,
+        "passed": 31,
+        "failed": 0,
+        "tail": " validates local HTTPS certificate and QA health\r\n00:00 +28: D:/work/studybirds_session_release/app/test/qa_local_https_test.dart: actual Flutter login and signed document download stay on QA origin\r\n00:01 +29: D:/work/studybirds_session_release/app/test/qa_providers_test.dart: QA refuses SDK initialization even with production analytics defines\r\n00:01 +30: D:/work/studybirds_session_release/app/test/qa_providers_test.dart: QA external sign-in and currency calls fail without provider requests\r\n[GoogleSignIn] not available, init error: لم يتم تهيئة Google Sign-In\r\n00:01 +31: All tests passed!\r\n"
+      },
+      {
+        "name": "apkGateDryRun",
+        "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-local-transport-20261022\\build-gate-dry-run.log",
+        "sha256": "abd10d5cfc507c0cfc42b77a70cf06efcfa956fd8f044a1acf5ae46bf05cbe19",
+        "exitCode": 1,
+        "passed": null,
+        "failed": null,
+        "tail": "\n> Run with --info or --debug option to get more log output.\r\n> Run with --scan to get full insights.\r\n> Get more help at https://help.gradle.org.\r\n\r\nDeprecated Gradle features were used in this build, making it incompatible with Gradle 9.0.\r\n\r\nYou can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.\r\n\r\nFor more on this, please refer to https://docs.gradle.org/8.14/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.\r\n\r\nBUILD FAILED in 25s\r\n4 actionable tasks: 4 up-to-date\r\n"
+      }
+    ],
+    "jvm": {
+      "factory": "com.studybirds.app.qa.QaLocalTransportBackendFactory",
+      "sourceSha256": "b93232fd7ed2ff328c0f320f50cd0a6e030774a60b89fbfd17e7e4a6dbdcf921",
+      "jvmScenariosPassed": 14,
+      "bytecodeAuditPassed": true,
+      "ioMutationRejected": true,
+      "androidRuntimeVerified": false,
+      "classpath": [
+        {
+          "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-native-20261022\\classes\\com.google.android.datatransport_transport-runtime_3.1.9.jar",
+          "sha256": "145ebe58332ee55f9f790f21aff9a134b4d4cf337b9107ca9ec04d7257dbaabc"
+        },
+        {
+          "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-native-20261022\\classes\\com.google.android.datatransport_transport-backend-cct_3.1.9.jar",
+          "sha256": "21204d3a0182911f39b76a8a6f538ca103b2905c00b5dfdbe7093c44ac0239f0"
+        },
+        {
+          "path": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-local-transport-20261022\\transport-api-3.1.0.jar",
+          "sha256": "19845214f83335e2097c32812fe86ddb4a507baa1ee79ee291ef367072748eb7"
+        },
+        {
+          "path": "C:\\Users\\Abood\\.gradle\\caches\\modules-2\\files-2.1\\com.google.dagger\\dagger\\2.28.3\\10d83810ef9e19714116ed518896c90c6606d633\\dagger-2.28.3.jar",
+          "sha256": "f1dd23f8ae34a8e91366723991ead0d6499d1a3e9163ce550c200b02d76a872b"
+        },
+        {
+          "path": "C:\\Users\\Abood\\.gradle\\caches\\modules-2\\files-2.1\\javax.inject\\javax.inject\\1\\6975da39a7040257bd51d21a231b76c915872d38\\javax.inject-1.jar",
+          "sha256": "91c77044a50c481636c32d916fd89c9118a72195390452c81065080f957de7ff"
+        },
+        {
+          "path": "C:\\Users\\Abood\\.gradle\\caches\\modules-2\\files-2.1\\com.google.firebase\\firebase-encoders\\17.0.0\\26f52dc549c42575b155f8c720e84059ee600a85\\firebase-encoders-17.0.0.jar",
+          "sha256": "282a5a703f9b7eb56508dde97ea918e95d73318b157050f457f7a86dca750150"
+        },
+        {
+          "path": "C:\\Users\\Abood\\.gradle\\caches\\modules-2\\files-2.1\\com.google.firebase\\firebase-encoders-proto\\16.0.0\\a42d5fd83b96ae7b73a8617d29c94703e18c9992\\firebase-encoders-proto-16.0.0.jar",
+          "sha256": "293db96a0d1d43f033167881b638d8fde844e4e5495f5101cf52295765295e0e"
+        }
+      ],
+      "limits": [
+        "Android PackageManager/connectivity/logging stubs",
+        "In-memory event store and work scheduler",
+        "No Android Dagger boot or SQLite",
+        "Health-metrics store and connectivity are modeled; serialization/uploader are real",
+        "No OCR recognition on Android"
+      ],
+      "actualVendorRegistryAndRoutingExecuted": true,
+      "androidBoundary": "PackageManager, Bundle, connectivity and logging modeled",
+      "persistenceBoundary": "in-memory event store/work scheduler/client-health store; real serialization/uploader",
+      "vendorTestHookAccess": "test-only package bridge for constructors and withInstance; no reflection in application factory",
+      "negativeControls": [
+        "I/O/logging mutation bytecode rejected",
+        "DNS/socket attempt denied before dial",
+        "file write denied before creation",
+        "duplicate/vendor/unknown/missing bindings rejected"
+      ],
+      "runtimeLogSha256": "912cdc9571c5b3f378632d4d0f7950ef8463083a4cdf12cc2fbdd1a3fa8e15f5",
+      "compiledSinkBytecodeSha256": "446799a582aaa0ce87ddc7c063dbbbc74f18baff403a637b984536179b0bee29"
+    },
+    "ocr": {
+      "scannerUnchanged": true,
+      "qaRegistrationUnchanged": true,
+      "mlKitRegistrarsPreserved": true,
+      "cctDestinationLinkAndTransportCreationTested": true,
+      "actualAndroidRecognitionVerified": false
+    },
+    "runtimeNetworkMonitoringRequired": true,
+    "androidProviderBootVerified": false,
+    "androidSqliteAndOsJobDeliveryVerified": false,
+    "storageScope": "Sink writes no telemetry. Unchanged surrounding DataTransport may persist its own Android SQLite queue; not disabled or tested on a device.",
+    "buildGate": {
+      "enabled": true,
+      "gradleFileUnchanged": true,
+      "dryRunRejected": true,
+      "androidResourcesVerified": false,
+      "apkBuilt": false,
+      "deviceInstalled": false,
+      "adbUsed": false
+    },
+    "integrity": {
+      "files": [
+        {
+          "scope": "primary",
+          "path": "docs/PHASE8_NATIVE_PROVIDER_ISOLATION.md",
+          "sha256": "7dcc76a022240fd45f3b98aad31e94b21b60bd159453a162cc76e49d64c260c2",
+          "backupVerified": true,
+          "unchanged": false,
+          "expectedEdit": true
+        },
+        {
+          "scope": "primary",
+          "path": "docs/PHASE8_BUILD_APPROVAL.md",
+          "sha256": "ce1f3b12e9252b1d2004230df9977757edf31b8679bc4c0f05e5b1cf7d841fc4",
+          "backupVerified": true,
+          "unchanged": false,
+          "expectedEdit": true
+        },
+        {
+          "scope": "primary",
+          "path": "docs/PHASE8_VALIDATION.json",
+          "sha256": "e817f6113900ba64b8dd79a8df93f784fd8e6846c0d95ddc18a3de41db7ae34c",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": true
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/src/qa/AndroidManifest.xml",
+          "sha256": "b61a61c54eb06b31e18c72726290ee4cb78eb33d5992cbc8562ef47b99587ce2",
+          "backupVerified": true,
+          "unchanged": false,
+          "expectedEdit": true
+        },
+        {
+          "scope": "deployment",
+          "path": "app/tool/qa_android_merged_manifest.test.cjs",
+          "sha256": "56df81196536460947d6773a26d51bdfe56d6b87bcfe25c4644f1d175acf17a9",
+          "backupVerified": true,
+          "unchanged": false,
+          "expectedEdit": true
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/build.gradle.kts",
+          "sha256": "2fa29230bac7cb3795ae577e5dc1a627e57e39365f34549ec4f15f63b12b0390",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/build.gradle.kts",
+          "sha256": "1b8b015add70eb5fc2de3b292f577ad76784b81e1e0ddb4b099d23b3532ef58d",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/src/main/AndroidManifest.xml",
+          "sha256": "2392ff5f7cbffc76af69fb58e4cbc6438a15aa94ea5c634f66560e3cc552eae4",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/src/main/kotlin/com/studybirds/app/PassportScanner.kt",
+          "sha256": "3277ee8b5485f899405ce39c28b3a20ddd779b42912ff2288f16ca397ed7a148",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/android/app/src/qa/kotlin/com/studybirds/app/qa/QaMainActivity.kt",
+          "sha256": "11d2640406ccfc325c66fc3bcd74884252bd0e201351705cee6b9b22e1fea258",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/pubspec.yaml",
+          "sha256": "8600daa69f4f593524f7b1f4d6ba050de24c05f8a33971adeef050601ecb4592",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        },
+        {
+          "scope": "deployment",
+          "path": "app/pubspec.lock",
+          "sha256": "12c735eccbfad58511f93338ea5563a293274e602bea4ac361d6041a50063675",
+          "backupVerified": true,
+          "unchanged": true,
+          "expectedEdit": false
+        }
+      ],
+      "unexpectedChanges": [],
+      "protectedFiles": [
+        {
+          "scope": "app",
+          "path": "android/key.properties",
+          "unchanged": true
+        },
+        {
+          "scope": "app",
+          "path": "android/local.properties",
+          "unchanged": true
+        },
+        {
+          "scope": "app",
+          "path": "android/app/studybirds-release.jks",
+          "unchanged": true
+        },
+        {
+          "scope": "deployment-app",
+          "path": "android/local.properties",
+          "unchanged": true
+        },
+        {
+          "scope": "server",
+          "path": ".env.example",
+          "unchanged": true
+        },
+        {
+          "scope": "client",
+          "path": ".env.example",
+          "unchanged": true
+        }
+      ],
+      "repositories": {
+        "primary": {
+          "headUnchanged": true,
+          "indexUnchanged": true,
+          "worktreesUnchanged": true,
+          "status": " M README.md\n M lib/app_shell.dart\n M lib/core/services/notification_scheduler.dart\n M lib/core/widgets/app_components.dart\n M lib/main.dart\n M lib/screens/applications_documents_payments/documents_screens.dart\n M lib/screens/home_journey/notifications_screen.dart\n M lib/screens/home_journey/student_banner_carousel.dart\n M lib/screens/profile_account/notification_preferences_screen.dart\n M lib/screens/roles/employee_dashboard_screen.dart\n M lib/screens/stories/story_viewers_screen.dart\n M test/chat_controls_test.dart\n M test/journey_requirements_test.dart\n M test/post_admission_journey_test.dart\n M test/story_viewers_test.dart\n M tool/check_error_policy.dart\n?? .vscode/StudyBirds.code-workspace\n?? docs/ANDROID_DEVICE_QA_PLAN.md\n?? docs/ANDROID_QA_CONNECTION_GUIDE.md\n?? docs/ANDROID_REAL_DEVICE_TEST_CHECKLIST.md\n?? docs/APPROVED_DEPLOYMENT_PARITY_20261021.md\n?? docs/ARCHITECTURE.md\n?? docs/AUDIT_VALIDATION.json\n?? docs/BACKEND_ENVIRONMENT_NAMES.json\n?? docs/DEPLOYMENT_PARITY_REPORT.md\n?? docs/DEVELOPMENT_SETUP.md\n?? docs/DUPLICATE_INVENTORY.json\n?? docs/DUPLICATE_INVENTORY.md\n?? docs/FEATURE_PARITY_REPORT.md\n?? docs/FINAL_CLEANUP_APPROVAL.md\n?? docs/FLUTTER_ANALYSIS_REMEDIATION.md\n?? docs/MAINTENANCE_GUIDE.md\n?? docs/PHASE2_FINAL_REPORT.md\n?? docs/PHASE2_SECURITY_REVIEW.md\n?? docs/PHASE2_VALIDATION.json\n?? docs/PHASE3_DEPENDENCY_PLAN.md\n?? docs/PHASE3_FINAL_REPORT.md\n?? docs/PHASE3_VALIDATION.json\n?? docs/PHASE4_FINAL_REPORT.md\n?? docs/PHASE4_VALIDATION.json\n?? docs/PHASE5_CLEANUP_APPROVAL.md\n?? docs/PHASE5_FINAL_REPORT.md\n?? docs/PHASE5_REMAINING_CLEANUP_REVIEW.md\n?? docs/PHASE6_FINAL_REPORT.md\n?? docs/PHASE6_QA_CONFIGURATION.md\n?? docs/PHASE6_VALIDATION.json\n?? docs/PHASE7_APPROVAL_REQUIRED.md\n?? docs/PHASE7_FINAL_REPORT.md\n?? docs/PHASE7_LOCAL_QA_SETUP.md\n?? docs/PHASE7_VALIDATION.json\n?? docs/PHASE8_ANDROID_QA_IDENTITY.md\n?? docs/PHASE8_BUILD_APPROVAL.md\n?? docs/PHASE8_FINAL_REPORT.md\n?? docs/PHASE8_NATIVE_PROVIDER_ISOLATION.md\n?? docs/PHASE8_VALIDATION.json\n?? docs/PROJECT_AUDIT_REPORT.md\n?? docs/REACT_ROUTER_UPGRADE_20261021.md\n?? docs/REACT_ROUTER_VALIDATION.json\n?? docs/RELEASE_READINESS_CHECKLIST.md\n?? docs/STABILIZATION_20261021.md\n?? docs/UPDATED_RELEASE_READINESS.md\n?? docs/WORKSPACE_WORKFLOW.md\n?? docs/proposals/deferred-story-deletion-review.patch\n?? docs/proposals/notification-preferences-review.patch\n?? docs/proposals/phase3/01-viewer-privacy.patch\n?? docs/proposals/phase3/02-material-card.patch\n?? docs/proposals/phase3/03-story-deletion-feed.patch\n?? docs/proposals/phase3/04-story-fullscreen-layout.patch\n?? docs/proposals/phase3/05-account-notification-preferences.patch\n?? docs/proposals/phase3/README.md\n?? docs/proposals/phase4/SECURITY_MIGRATIONS.md\n?? lib/core/core_import.dart\n?? lib/core/services/notification_preferences_store.dart\n?? lib/screens/screen.dart\n?? test/notification_preferences_test.dart\n",
+          "diffCheckExit": 0
+        },
+        "deployment": {
+          "headUnchanged": true,
+          "indexUnchanged": true,
+          "worktreesUnchanged": true,
+          "status": " M app/android/app/build.gradle.kts\n M app/android/build.gradle.kts\n M app/integration/services_preview_test.dart\n M app/lib/core/network/api_client.dart\n M app/lib/core/network/pinned_http.dart\n M app/lib/core/repositories/stories_repository.dart\n M app/lib/core/services/analytics_service.dart\n M app/lib/core/services/apple_sign_in_service.dart\n M app/lib/core/services/currency_service.dart\n M app/lib/core/services/google_sign_in_service.dart\n M app/lib/core/services/notification_scheduler.dart\n M app/lib/core/services/push_notification_service.dart\n M app/lib/core/utils/document_access.dart\n M app/lib/core/widgets/app_components.dart\n M app/lib/main.dart\n M app/lib/screens/community/student_community_hub.dart\n M app/lib/screens/profile_account/notification_preferences_screen.dart\n M app/lib/screens/stories/story_viewer.dart\n M app/lib/screens/stories/story_viewers_screen.dart\n M app/lib/screens/stories/student_stories.dart\n M app/test/app_update_test.dart\n M app/test/story_viewer_test.dart\n M app/test/story_viewers_test.dart\n M client/package-lock.json\n M client/package.json\n M client/scripts/generate-seo-files.mjs\n M server/package-lock.json\n M server/package.json\n M server/src/app.js\n M server/src/config/db.js\n M server/src/controllers/adminAgentController.js\n M server/src/controllers/contentController.js\n M server/src/models/Notification.js\n M server/src/models/User.js\n M server/src/routes/alumniRoutes.js\n M server/src/routes/mobileSecurityRoutes.js\n M server/src/routes/scholarshipRoutes.js\n M server/src/seed/seed.js\n M server/src/server.js\n M server/src/utils/cashMisrSms.js\n M server/src/utils/mailer.js\n M server/src/utils/mobileEmailCodes.js\n M server/src/utils/privateDocumentStorage.js\n M server/src/utils/pushNotifications.js\n M server/src/utils/supportNotifications.js\n M server/src/utils/whatsappOtp.js\n M server/tests/auditFixes.test.js\n M server/tests/crmIntegration.test.js\n M server/tests/privateDocumentAccess.test.js\n?? app/android/app/src/qa/AndroidManifest.xml\n?? app/android/app/src/qa/java/com/studybirds/app/qa/QaLocalTransportBackendFactory.java\n?? app/android/app/src/qa/kotlin/com/studybirds/app/qa/QaMainActivity.kt\n?? app/android/app/src/qa/res/drawable/ic_launcher_qa.xml\n?? app/android/app/src/qaDebug/AndroidManifest.xml\n?? app/config/qa_android.pending.json\n?? app/lib/core/config/qa_configuration.dart\n?? app/lib/core/network/qa_http_client.dart\n?? app/lib/core/network/qa_tls_context.dart\n?? app/lib/core/services/notification_preferences_store.dart\n?? app/test/notification_preferences_test.dart\n?? app/test/qa_api_integration_test.dart\n?? app/test/qa_configuration_test.dart\n?? app/test/qa_local_https_test.dart\n?? app/test/qa_providers_test.dart\n?? app/test/qa_startup_test.dart\n?? app/test/qa_tls_context_test.dart\n?? app/test/qa_tls_handshake_test.dart\n?? app/test/story_deletion_test.dart\n?? app/tool/qa_android_manifest_inspection.cjs\n?? app/tool/qa_android_merged_manifest.test.cjs\n?? app/tool/qa_android_preparation.test.cjs\n?? app/tool/qa_transport_evidence.test.cjs\n?? app/tool/qa_transport_jvm/README.md\n?? app/tool/qa_transport_jvm/src/android/app/Service.java\n?? app/tool/qa_transport_jvm/src/android/content/ComponentName.java\n?? app/tool/qa_transport_jvm/src/android/content/Context.java\n?? app/tool/qa_transport_jvm/src/android/content/Intent.java\n?? app/tool/qa_transport_jvm/src/android/content/pm/PackageManager.java\n?? app/tool/qa_transport_jvm/src/android/content/pm/ServiceInfo.java\n?? app/tool/qa_transport_jvm/src/android/net/ConnectivityManager.java\n?? app/tool/qa_transport_jvm/src/android/net/NetworkInfo.java\n?? app/tool/qa_transport_jvm/src/android/os/Build.java\n?? app/tool/qa_transport_jvm/src/android/os/Bundle.java\n?? app/tool/qa_transport_jvm/src/android/os/IBinder.java\n?? app/tool/qa_transport_jvm/src/android/util/Base64.java\n?? app/tool/qa_transport_jvm/src/android/util/Log.java\n?? app/tool/qa_transport_jvm/src/com/google/android/datatransport/runtime/RuntimeHarnessBridge.java\n?? app/tool/qa_transport_jvm/src/com/google/android/datatransport/runtime/backends/LocalTransportHarness.java\n?? app/tool/qa_transport_jvm/src/qa/NegativeIoFixture.java\n?? app/tool/qa_transport_jvm/verify.cjs\n?? client/src/lib/routerMigration.test.tsx\n?? client/src/lib/seoBuild.test.ts\n?? server/qa.local.env.example\n?? server/scripts/qa-local.cjs\n?? server/scripts/qa-mongo-start.cjs\n?? server/scripts/qa-provision.cjs\n?? server/scripts/qa-seed.cjs\n?? server/scripts/run-tests.cjs\n?? server/src/qa/config.js\n?? server/src/qa/load.js\n?? server/src/qa/mail.js\n?? server/src/qa/network.js\n?? server/src/qa/start.js\n?? server/src/qa/storage.js\n?? server/src/utils/jwtSecret.js\n?? server/src/utils/notificationPreferences.js\n?? server/tests/notificationPreferences.test.js\n?? server/tests/qaLocalConfig.test.js\n?? server/tests/qaLocalIntegration.qa.cjs\n?? server/tests/recoveredParity.test.js\n",
+          "diffCheckExit": 0
+        }
+      },
+      "apkUnchanged": true,
+      "apkBytes": 320844144,
+      "apkSha256": "9638b98f111bf25b4079555f4a48029d40a4892dc12f48f407b3894b61b9ce23",
+      "negativeProbeFileCreated": false
+    },
+    "initialHarnessFailures": [
+      "WorkInitializer constructor package-private; corrected test-only bridge access",
+      "ProtoEnum absent from harness classpath; added already cached selected encoder jars, not app dependencies"
+    ],
+    "nextAction": "Review JVM proof and approve an isolated Android verification plan for provider boot/OCR/native networking; retain APK gate and separate owner build approval.",
+    "notPerformed": [
+      "APK build/install",
+      "ADB/device interaction",
+      "production/provider services",
+      "network/firewall changes",
+      "downloads or dependency upgrades",
+      "cleanup",
+      "commit/push/deploy/reset/stash"
+    ]
+  },
+  "preBuildVerification": {
+    "recordedAt": "2026-10-21T21:43:16.467Z",
+    "status": "PREBUILD_CHECKS_RECORDED_NOT_READY_FOR_EXECUTION",
+    "checkpoint": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase8-prebuild-20261022",
+    "currentBinding": {
+      "factorySourceUnchanged": true,
+      "previousProofSourceFilesUnchanged": true,
+      "mergedManifestUnchanged": true,
+      "package": "com.studybirds.app.qa",
+      "metadata": [
+        {
+          "component": "com.google.android.datatransport.runtime.backends.TransportBackendDiscovery",
+          "value": "cct",
+          "name": "backend:com.studybirds.app.qa.QaLocalTransportBackendFactory"
+        }
+      ]
+    },
+    "compilation": {
+      "qaJavaFactoryStandaloneVerified": true,
+      "evidenceFromPreviousRoundUnchanged": true,
+      "jvmProofSourceHash": "b93232fd7ed2ff328c0f320f50cd0a6e030774a60b89fbfd17e7e4a6dbdcf921",
+      "kotlinQaActivityVerified": false,
+      "androidGradleJavaCompilationVerified": false,
+      "compileDryRunExit": 1,
+      "taskGraphExit": 1,
+      "gateRejected": true,
+      "includesFlutterAppCompile": true,
+      "tasks": [
+        ":app:checkKotlinGradlePluginConfigurationErrors",
+        ":app:validateCompileSdkVersion",
+        ":app:preBuild",
+        ":app:preQaDebugBuild",
+        ":app:checkQaDebugAarMetadata",
+        ":app:cleanMergeQaDebugAssets",
+        ":app:compileFlutterBuildQaDebug",
+        ":app:mergeQaDebugShaders",
+        ":app:compileQaDebugShaders",
+        ":app:generateQaDebugAssets",
+        ":app:mergeQaDebugAssets",
+        ":app:copyFlutterAssetsQaDebug",
+        ":app:generateQaDebugResValues",
+        ":app:mapQaDebugSourceSetPaths",
+        ":app:generateQaDebugResources",
+        ":app:mergeQaDebugResources",
+        ":app:packageQaDebugResources",
+        ":app:parseQaDebugLocalResources",
+        ":app:createQaDebugCompatibleScreenManifests",
+        ":app:extractDeepLinksQaDebug",
+        ":app:processQaDebugMainManifest",
+        ":app:outputQaDebugAppLinkSettings",
+        ":app:processQaDebugManifest",
+        ":app:processQaDebugManifestForPackage",
+        ":app:processQaDebugResources",
+        ":app:compileQaDebugKotlin",
+        ":app:javaPreCompileQaDebug",
+        ":app:compileQaDebugJavaWithJavac"
+      ],
+      "actualAppCompileExecuted": false,
+      "gateBypassed": false,
+      "manualKotlinBypassAttempted": false,
+      "commandForApproval": "gradlew.bat --offline --no-daemon --max-workers=1 -PstudybirdsQa=true -Ptarget=lib/main.dart -Ptarget-platform=android-x64 -Pdart-defines=<encoded pending config> :app:compileQaDebugKotlin :app:compileQaDebugJavaWithJavac",
+      "scope": "Exact proposed encoding/commands and conditional gate-policy approval are in PHASE8_BUILD_APPROVAL.md"
+    },
+    "configuration": {
+      "pending": {
+        "APP_ENV": "qa",
+        "QA_API_BASE_URL": "https://localhost:5448/api",
+        "QA_RESOURCES_VERIFIED": false,
+        "QA_CA_CERT_BASE64": "",
+        "SENTRY_ENABLED": false,
+        "POSTHOG_API_KEY": ""
+      },
+      "approvedAndroidDefinesExist": false,
+      "resourcesFlagChanged": false,
+      "apiOrigin": "https://localhost:5448/api",
+      "publicCaSha256": "64886888a3cafe0d21a5b5e2a93d90f59509ab3b4f00d1fb70bb628dba75d0de",
+      "certificateValidUntil": "2026-11-20T17:33:34Z",
+      "san": [
+        "localhost",
+        "127.0.0.1"
+      ],
+      "tlsHostnameSuccess": {
+        "exitCode": 0,
+        "verified": true
+      },
+      "tlsWrongHostnameRejected": {
+        "exitCode": 1,
+        "verified": true
+      },
+      "androidNativeBrowserMediaTrustVerified": false,
+      "noTrustAll": true,
+      "health": {
+        "status": "ok",
+        "service": "study-birds-local-qa",
+        "db": "connected"
+      }
+    },
+    "disk": {
+      "freeBytes": 5922316288,
+      "freeGiB": 5.515586853027344,
+      "minimumBuildHeadroomBytes": 6442450944,
+      "minimumMet": false,
+      "shortfallBytes": 520134656,
+      "estimatedIncrementalWorkspaceGiB": [
+        2,
+        4
+      ],
+      "reservedHeadroomGiB": 2,
+      "estimateMeasuredByQaBuild": false,
+      "additionalNewAvdDataPartitionGiB": 6,
+      "estimatedBuildPlusNewAvdAndCaptureGiB": [
+        12,
+        14
+      ],
+      "cleanupPerformed": false
+    },
+    "deviceInspection": {
+      "avds": [
+        {
+          "name": "Pixel_9_Pro",
+          "ini": "C:\\Users\\Abood\\.android\\avd\\Pixel_9_Pro.ini",
+          "settings": [
+            "path=C:\\Users\\Abood\\.android\\avd\\Pixel_9_Pro.avd",
+            "target=android-36"
+          ]
+        }
+      ],
+      "processes": [
+        {
+          "Name": "adb.exe",
+          "ProcessId": 1100
+        }
+      ],
+      "androidUsbCandidates": [],
+      "isolatedTargetVerified": false,
+      "adbInvoked": false,
+      "avdDetails": {
+        "name": "Pixel_9_Pro",
+        "api": 36,
+        "abi": "x86_64",
+        "playStore": true,
+        "ramMiB": 2048,
+        "dataPartitionBytes": 6442450944
+      },
+      "sdkToolsPresent": [
+        "emulator.exe",
+        "adb.exe",
+        "android-36/android.jar"
+      ],
+      "emulatorRunningObserved": false,
+      "usbTargetConfirmed": false,
+      "isolatedTargetAvailable": false,
+      "existingAdbProcessTouched": false,
+      "networkAnalyzerFoundInCheckedLocations": false,
+      "inspectionMethod": "Read local AVD/SDK files, Windows process and PnP inventory only; no adb invocation or emulator launch"
+    },
+    "evidenceScopes": {
+      "previousTestsNotRepeated": {
+        "manifestAndNativePassed": 8,
+        "jvmScenariosPassed": 14,
+        "sourceBytecodePassed": 15,
+        "flutterQaPassed": 31,
+        "sourceEvidenceUnchanged": true
+      },
+      "actualNewChecks": [
+        "Source/manifest hashes and exact binding",
+        "201 production deployment source hashes",
+        "Gradle compilation dry-run/task-graph refusal",
+        "Certificate validity and actual local TLS success/wrong-host refusal",
+        "Disk free space",
+        "Non-invasive AVD/Windows device inventory"
+      ],
+      "androidRuntimeTestsRun": false
+    },
+    "approval": {
+      "readyForUnconditionalBuild": false,
+      "requiresMoreDisk": true,
+      "requiresExplicitReviewedGatePolicyChange": true,
+      "proposal": "First x86_64 diagnostic QA artifact, resourcesVerified=false; compile then assemble only after narrow gate-policy review and sufficient disk; no install/device",
+      "pendingSourceFlagKeptFalse": true,
+      "runtimePlan": "docs/ANDROID_QA_RUNTIME_TEST_PLAN.md",
+      "buildCommand": "docs/PHASE8_BUILD_APPROVAL.md",
+      "runtimeInstallLaunchAndNetworkApprovalSeparate": true
+    },
+    "integrity": {
+      "appFiles": [
+        {
+          "path": "android/app/src/qa/java/com/studybirds/app/qa/QaLocalTransportBackendFactory.java",
+          "sha256": "b93232fd7ed2ff328c0f320f50cd0a6e030774a60b89fbfd17e7e4a6dbdcf921",
+          "unchanged": true
+        },
+        {
+          "path": "android/app/src/qa/kotlin/com/studybirds/app/qa/QaMainActivity.kt",
+          "sha256": "11d2640406ccfc325c66fc3bcd74884252bd0e201351705cee6b9b22e1fea258",
+          "unchanged": true
+        },
+        {
+          "path": "android/app/src/main/kotlin/com/studybirds/app/PassportScanner.kt",
+          "sha256": "3277ee8b5485f899405ce39c28b3a20ddd779b42912ff2288f16ca397ed7a148",
+          "unchanged": true
+        },
+        {
+          "path": "android/app/src/main/AndroidManifest.xml",
+          "sha256": "2392ff5f7cbffc76af69fb58e4cbc6438a15aa94ea5c634f66560e3cc552eae4",
+          "unchanged": true
+        },
+        {
+          "path": "android/app/src/debug/AndroidManifest.xml",
+          "sha256": "833ceca807d101a152bfe898ef849446b863af4cf505ffa156d7d4b04d82901e",
+          "unchanged": true
+        },
+        {
+          "path": "android/app/build.gradle.kts",
+          "sha256": "2fa29230bac7cb3795ae577e5dc1a627e57e39365f34549ec4f15f63b12b0390",
+          "unchanged": true
+        },
+        {
+          "path": "android/build.gradle.kts",
+          "sha256": "1b8b015add70eb5fc2de3b292f577ad76784b81e1e0ddb4b099d23b3532ef58d",
+          "unchanged": true
+        },
+        {
+          "path": "config/qa_android.pending.json",
+          "sha256": "a398ee5cde8131c1b75ab4abab244420ff99866a19bf13a642ba7c99e92bf3aa",
+          "unchanged": true
+        },
+        {
+          "path": "lib/core/config/qa_configuration.dart",
+          "sha256": "019853188530b6bcef2f1818ab19bd5f9a1ef0938c92ea7961681f8080b77c65",
+          "unchanged": true
+        },
+        {
+          "path": "lib/core/network/qa_tls_context.dart",
+          "sha256": "ac00fc56503fc0586face8e68c093bc98859379bee1990c11c95374f6486adb5",
+          "unchanged": true
+        },
+        {
+          "path": "lib/core/network/pinned_http.dart",
+          "sha256": "fa143ffceddb3fdad0b95df15cce126bc2f80afbe92fbd605af8b7baa2d06d77",
+          "unchanged": true
+        }
+      ],
+      "productionFilesChecked": 201,
+      "productionMismatches": [],
+      "protectedFiles": [
+        {
+          "scope": "app",
+          "path": "android/key.properties",
+          "unchanged": true
+        },
+        {
+          "scope": "app",
+          "path": "android/local.properties",
+          "unchanged": true
+        },
+        {
+          "scope": "app",
+          "path": "android/app/studybirds-release.jks",
+          "unchanged": true
+        },
+        {
+          "scope": "deployment-app",
+          "path": "android/local.properties",
+          "unchanged": true
+        },
+        {
+          "scope": "server",
+          "path": ".env.example",
+          "unchanged": true
+        },
+        {
+          "scope": "client",
+          "path": ".env.example",
+          "unchanged": true
+        }
+      ],
+      "repositories": {
+        "primary": {
+          "headUnchanged": true,
+          "indexUnchanged": true,
+          "worktreesUnchanged": true,
+          "diffCheckExit": 0,
+          "status": " M README.md\n M lib/app_shell.dart\n M lib/core/services/notification_scheduler.dart\n M lib/core/widgets/app_components.dart\n M lib/main.dart\n M lib/screens/applications_documents_payments/documents_screens.dart\n M lib/screens/home_journey/notifications_screen.dart\n M lib/screens/home_journey/student_banner_carousel.dart\n M lib/screens/profile_account/notification_preferences_screen.dart\n M lib/screens/roles/employee_dashboard_screen.dart\n M lib/screens/stories/story_viewers_screen.dart\n M test/chat_controls_test.dart\n M test/journey_requirements_test.dart\n M test/post_admission_journey_test.dart\n M test/story_viewers_test.dart\n M tool/check_error_policy.dart\n?? .vscode/StudyBirds.code-workspace\n?? docs/ANDROID_DEVICE_QA_PLAN.md\n?? docs/ANDROID_QA_CONNECTION_GUIDE.md\n?? docs/ANDROID_QA_RUNTIME_TEST_PLAN.md\n?? docs/ANDROID_REAL_DEVICE_TEST_CHECKLIST.md\n?? docs/APPROVED_DEPLOYMENT_PARITY_20261021.md\n?? docs/ARCHITECTURE.md\n?? docs/AUDIT_VALIDATION.json\n?? docs/BACKEND_ENVIRONMENT_NAMES.json\n?? docs/DEPLOYMENT_PARITY_REPORT.md\n?? docs/DEVELOPMENT_SETUP.md\n?? docs/DUPLICATE_INVENTORY.json\n?? docs/DUPLICATE_INVENTORY.md\n?? docs/FEATURE_PARITY_REPORT.md\n?? docs/FINAL_CLEANUP_APPROVAL.md\n?? docs/FLUTTER_ANALYSIS_REMEDIATION.md\n?? docs/MAINTENANCE_GUIDE.md\n?? docs/PHASE2_FINAL_REPORT.md\n?? docs/PHASE2_SECURITY_REVIEW.md\n?? docs/PHASE2_VALIDATION.json\n?? docs/PHASE3_DEPENDENCY_PLAN.md\n?? docs/PHASE3_FINAL_REPORT.md\n?? docs/PHASE3_VALIDATION.json\n?? docs/PHASE4_FINAL_REPORT.md\n?? docs/PHASE4_VALIDATION.json\n?? docs/PHASE5_CLEANUP_APPROVAL.md\n?? docs/PHASE5_FINAL_REPORT.md\n?? docs/PHASE5_REMAINING_CLEANUP_REVIEW.md\n?? docs/PHASE6_FINAL_REPORT.md\n?? docs/PHASE6_QA_CONFIGURATION.md\n?? docs/PHASE6_VALIDATION.json\n?? docs/PHASE7_APPROVAL_REQUIRED.md\n?? docs/PHASE7_FINAL_REPORT.md\n?? docs/PHASE7_LOCAL_QA_SETUP.md\n?? docs/PHASE7_VALIDATION.json\n?? docs/PHASE8_ANDROID_QA_IDENTITY.md\n?? docs/PHASE8_BUILD_APPROVAL.md\n?? docs/PHASE8_FINAL_REPORT.md\n?? docs/PHASE8_NATIVE_PROVIDER_ISOLATION.md\n?? docs/PHASE8_VALIDATION.json\n?? docs/PROJECT_AUDIT_REPORT.md\n?? docs/REACT_ROUTER_UPGRADE_20261021.md\n?? docs/REACT_ROUTER_VALIDATION.json\n?? docs/RELEASE_READINESS_CHECKLIST.md\n?? docs/STABILIZATION_20261021.md\n?? docs/UPDATED_RELEASE_READINESS.md\n?? docs/WORKSPACE_WORKFLOW.md\n?? docs/proposals/deferred-story-deletion-review.patch\n?? docs/proposals/notification-preferences-review.patch\n?? docs/proposals/phase3/01-viewer-privacy.patch\n?? docs/proposals/phase3/02-material-card.patch\n?? docs/proposals/phase3/03-story-deletion-feed.patch\n?? docs/proposals/phase3/04-story-fullscreen-layout.patch\n?? docs/proposals/phase3/05-account-notification-preferences.patch\n?? docs/proposals/phase3/README.md\n?? docs/proposals/phase4/SECURITY_MIGRATIONS.md\n?? lib/core/core_import.dart\n?? lib/core/services/notification_preferences_store.dart\n?? lib/screens/screen.dart\n?? test/notification_preferences_test.dart\n"
+        },
+        "deployment": {
+          "headUnchanged": true,
+          "indexUnchanged": true,
+          "worktreesUnchanged": true,
+          "diffCheckExit": 0,
+          "status": " M app/android/app/build.gradle.kts\n M app/android/build.gradle.kts\n M app/integration/services_preview_test.dart\n M app/lib/core/network/api_client.dart\n M app/lib/core/network/pinned_http.dart\n M app/lib/core/repositories/stories_repository.dart\n M app/lib/core/services/analytics_service.dart\n M app/lib/core/services/apple_sign_in_service.dart\n M app/lib/core/services/currency_service.dart\n M app/lib/core/services/google_sign_in_service.dart\n M app/lib/core/services/notification_scheduler.dart\n M app/lib/core/services/push_notification_service.dart\n M app/lib/core/utils/document_access.dart\n M app/lib/core/widgets/app_components.dart\n M app/lib/main.dart\n M app/lib/screens/community/student_community_hub.dart\n M app/lib/screens/profile_account/notification_preferences_screen.dart\n M app/lib/screens/stories/story_viewer.dart\n M app/lib/screens/stories/story_viewers_screen.dart\n M app/lib/screens/stories/student_stories.dart\n M app/test/app_update_test.dart\n M app/test/story_viewer_test.dart\n M app/test/story_viewers_test.dart\n M client/package-lock.json\n M client/package.json\n M client/scripts/generate-seo-files.mjs\n M server/package-lock.json\n M server/package.json\n M server/src/app.js\n M server/src/config/db.js\n M server/src/controllers/adminAgentController.js\n M server/src/controllers/contentController.js\n M server/src/models/Notification.js\n M server/src/models/User.js\n M server/src/routes/alumniRoutes.js\n M server/src/routes/mobileSecurityRoutes.js\n M server/src/routes/scholarshipRoutes.js\n M server/src/seed/seed.js\n M server/src/server.js\n M server/src/utils/cashMisrSms.js\n M server/src/utils/mailer.js\n M server/src/utils/mobileEmailCodes.js\n M server/src/utils/privateDocumentStorage.js\n M server/src/utils/pushNotifications.js\n M server/src/utils/supportNotifications.js\n M server/src/utils/whatsappOtp.js\n M server/tests/auditFixes.test.js\n M server/tests/crmIntegration.test.js\n M server/tests/privateDocumentAccess.test.js\n?? app/android/app/src/qa/AndroidManifest.xml\n?? app/android/app/src/qa/java/com/studybirds/app/qa/QaLocalTransportBackendFactory.java\n?? app/android/app/src/qa/kotlin/com/studybirds/app/qa/QaMainActivity.kt\n?? app/android/app/src/qa/res/drawable/ic_launcher_qa.xml\n?? app/android/app/src/qaDebug/AndroidManifest.xml\n?? app/config/qa_android.pending.json\n?? app/lib/core/config/qa_configuration.dart\n?? app/lib/core/network/qa_http_client.dart\n?? app/lib/core/network/qa_tls_context.dart\n?? app/lib/core/services/notification_preferences_store.dart\n?? app/test/notification_preferences_test.dart\n?? app/test/qa_api_integration_test.dart\n?? app/test/qa_configuration_test.dart\n?? app/test/qa_local_https_test.dart\n?? app/test/qa_providers_test.dart\n?? app/test/qa_startup_test.dart\n?? app/test/qa_tls_context_test.dart\n?? app/test/qa_tls_handshake_test.dart\n?? app/test/story_deletion_test.dart\n?? app/tool/qa_android_manifest_inspection.cjs\n?? app/tool/qa_android_merged_manifest.test.cjs\n?? app/tool/qa_android_preparation.test.cjs\n?? app/tool/qa_transport_evidence.test.cjs\n?? app/tool/qa_transport_jvm/README.md\n?? app/tool/qa_transport_jvm/src/android/app/Service.java\n?? app/tool/qa_transport_jvm/src/android/content/ComponentName.java\n?? app/tool/qa_transport_jvm/src/android/content/Context.java\n?? app/tool/qa_transport_jvm/src/android/content/Intent.java\n?? app/tool/qa_transport_jvm/src/android/content/pm/PackageManager.java\n?? app/tool/qa_transport_jvm/src/android/content/pm/ServiceInfo.java\n?? app/tool/qa_transport_jvm/src/android/net/ConnectivityManager.java\n?? app/tool/qa_transport_jvm/src/android/net/NetworkInfo.java\n?? app/tool/qa_transport_jvm/src/android/os/Build.java\n?? app/tool/qa_transport_jvm/src/android/os/Bundle.java\n?? app/tool/qa_transport_jvm/src/android/os/IBinder.java\n?? app/tool/qa_transport_jvm/src/android/util/Base64.java\n?? app/tool/qa_transport_jvm/src/android/util/Log.java\n?? app/tool/qa_transport_jvm/src/com/google/android/datatransport/runtime/RuntimeHarnessBridge.java\n?? app/tool/qa_transport_jvm/src/com/google/android/datatransport/runtime/backends/LocalTransportHarness.java\n?? app/tool/qa_transport_jvm/src/qa/NegativeIoFixture.java\n?? app/tool/qa_transport_jvm/verify.cjs\n?? client/src/lib/routerMigration.test.tsx\n?? client/src/lib/seoBuild.test.ts\n?? server/qa.local.env.example\n?? server/scripts/qa-local.cjs\n?? server/scripts/qa-mongo-start.cjs\n?? server/scripts/qa-provision.cjs\n?? server/scripts/qa-seed.cjs\n?? server/scripts/run-tests.cjs\n?? server/src/qa/config.js\n?? server/src/qa/load.js\n?? server/src/qa/mail.js\n?? server/src/qa/network.js\n?? server/src/qa/start.js\n?? server/src/qa/storage.js\n?? server/src/utils/jwtSecret.js\n?? server/src/utils/notificationPreferences.js\n?? server/tests/notificationPreferences.test.js\n?? server/tests/qaLocalConfig.test.js\n?? server/tests/qaLocalIntegration.qa.cjs\n?? server/tests/recoveredParity.test.js\n"
+        }
+      },
+      "apkUnchanged": true,
+      "apkSha256": "9638b98f111bf25b4079555f4a48029d40a4892dc12f48f407b3894b61b9ce23",
+      "debugKeystoreExists": true,
+      "debugKeystoreSha256": "c0af5b22d7eb03b637db609789c9daa7ae34540a35277a26bd7d8383a221af00",
+      "recoveryCopiesVerified": true
+    },
+    "actionsNotPerformed": [
+      "APK build",
+      "actual Android/Kotlin compile",
+      "ADB invocation",
+      "emulator launch or device connection",
+      "install",
+      "network/firewall/provider changes",
+      "download/dependency upgrade",
+      "cleanup",
+      "commit/push/deploy/reset/stash",
+      "source or gate edits"
+    ]
+  }
+}

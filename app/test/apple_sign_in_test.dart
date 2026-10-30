@@ -87,11 +87,12 @@ void main() {
                 'token': 'apple-access',
                 'refreshToken': 'apple-refresh'
               };
-              if (request.url.path.endsWith('/options'))
+              if (request.url.path.endsWith('/options')) {
                 data = {
                   'nonce': 'server-nonce',
                   'challengeId': 'server-challenge'
                 };
+              }
               if (request.url.path.endsWith('/verify')) {
                 final body = jsonDecode(request.body);
                 expect(body['identityToken'], 'signed-token');

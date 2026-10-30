@@ -19,12 +19,14 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
       ApiClient.instance.get('/content/site-settings');
   Future<void> open(Uri uri) async {
     try {
-      if (!await launchUrl(uri, mode: LaunchMode.externalApplication))
+      if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         throw Exception();
+      }
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/auth/account_recovery_screen.dart:22');
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            AppSnackBar(content: Text('تعذر فتح وسيلة التواصل')));
+            AppSnackBar(content: const Text('تعذر فتح وسيلة التواصل')));
+      }
     }
   }
 
@@ -90,14 +92,16 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
   Widget contacts() => FutureBuilder<dynamic>(
       future: settings,
       builder: (context, snapshot) {
-        if (snapshot.connectionState != ConnectionState.done)
+        if (snapshot.connectionState != ConnectionState.done) {
           return const LinearProgressIndicator();
-        if (snapshot.hasError)
+        }
+        if (snapshot.hasError) {
           return TextButton.icon(
               onPressed: () => setState(() =>
                   settings = ApiClient.instance.get('/content/site-settings')),
               icon: const Icon(Icons.refresh),
               label: const Text('إعادة تحميل وسائل الدعم'));
+        }
         final data = snapshot.data is Map ? Json.rawMap(snapshot.data) : {};
         final email = data['contactEmail']?.toString().trim() ?? '';
         final whatsapp = Uri.tryParse(data['whatsappUrl']?.toString() ?? '');
@@ -115,7 +119,7 @@ class _AccountRecoveryScreenState extends State<AccountRecoveryScreen> {
                 onTap: () => open(Uri(
                     scheme: 'mailto',
                     path: email,
-                    queryParameters: {'subject': 'استعادة حساب Study Birds'}))),
+                    queryParameters: {'subject': 'استعادة حساب COVEY'}))),
           if (validWhatsapp)
             ListTile(
                 contentPadding: EdgeInsets.zero,

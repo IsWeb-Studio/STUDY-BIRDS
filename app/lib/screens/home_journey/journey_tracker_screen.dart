@@ -32,7 +32,7 @@ extension StageStatusX on StageStatus {
       case StageStatus.completed:
         return AppColors.success;
       case StageStatus.inProgress:
-        return AppColors.orange;
+        return AppColors.green;
       case StageStatus.upcoming:
         return AppColors.neutral;
     }

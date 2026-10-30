@@ -10,7 +10,7 @@ class AgentRepository {
 
   String get _token {
     final token = AuthSession.instance.token;
-    if (token == null) throw ApiException(401, 'لا توجد جلسة دخول نشطة');
+    if (token == null) throw const ApiException(401, 'لا توجد جلسة دخول نشطة');
     return token;
   }
 
@@ -51,6 +51,20 @@ class AgentRepository {
     return Json.map(data);
   }
 
+  Future<Map<String, dynamic>> updateStudent(
+      String studentId, Map<String, dynamic> payload) async {
+    final data = await ApiClient.instance.put(
+      '/partners/students/$studentId',
+      token: _token,
+      body: payload,
+    );
+    return Json.map(data);
+  }
+
+  Future<void> deleteStudent(String studentId) async {
+    await ApiClient.instance.delete('/partners/students/$studentId', token: _token);
+  }
+
   Future<Map<String, dynamic>> uploadStudentDocument({
     required String studentId,
     required List<int> fileBytes,
@@ -87,6 +101,67 @@ class AgentRepository {
     final data = await ApiClient.instance.get('/partners/referral', token: _token);
     return Json.map(data);
   }
+
+  Future<Map<String, dynamic>> getProfile() async => Json.map(
+      await ApiClient.instance.get('/partners/profile', token: _token));
+
+  Future<Map<String, dynamic>> updateProfile(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance.put('/partners/profile',
+          token: _token, body: payload));
+
+  Future<List<dynamic>> getMarketingAssets() async => Json.list(
+      await ApiClient.instance.get('/partners/marketing-assets', token: _token));
+
+  Future<Map<String, dynamic>> getVerification() async => Json.map(
+      await ApiClient.instance.get('/partners/verification', token: _token));
+
+  Future<Map<String, dynamic>> uploadVerificationDocument({
+    required List<int> fileBytes,
+    required String fileName,
+    required String type,
+  }) async =>
+      Json.map(await ApiClient.instance.postMultipart(
+        '/partners/verification/documents',
+        fileBytes: fileBytes,
+        fileName: fileName,
+        fields: {'type': type},
+        token: _token,
+      ));
+
+  Future<List<dynamic>> getSupportTickets() async => Json.list(
+      await ApiClient.instance.get('/partners/tickets', token: _token));
+
+  Future<Map<String, dynamic>> createSupportTicket({
+    required String subject,
+    required String message,
+    required String category,
+    List<int>? fileBytes,
+    String? fileName,
+  }) async {
+    final fields = {
+      'subject': subject,
+      'message': message,
+      'category': category,
+    };
+    final data = fileBytes != null && fileName != null
+        ? await ApiClient.instance.postMultipart(
+            '/partners/tickets',
+            fileBytes: fileBytes,
+            fileName: fileName,
+            fields: fields,
+            token: _token,
+          )
+        : await ApiClient.instance.post('/partners/tickets',
+            token: _token, body: fields);
+    return Json.map(data);
+  }
+
+  Future<List<dynamic>> getActivityLog() async => Json.list(
+      await ApiClient.instance.get('/partners/activity-log', token: _token));
+
+  Future<List<dynamic>> getKnowledgeBase() async => Json.list(
+      await ApiClient.instance.get('/partners/knowledge-base', token: _token));
 
   Future<List<dynamic>> getNotifications() async {
     final data = await ApiClient.instance.get('/partners/notifications', token: _token);

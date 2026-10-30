@@ -28,24 +28,6 @@ retried at startup/reconnect before restoring a cookie session.
 
 ## Deployment
 
-First-time Google onboarding now creates an unverified account, asks for a password,
-then uses authenticated `/mobile-security/email/request` and `/email/confirm`.
-Those endpoints require a saved password. A Google identity assertion does not
-auto-set the application's email verification flag. Saving the first Google
-password also clears legacy automatic verification; a valid, single-use emailed
-verification code must confirm it. The app gates access after password setup until
-the server confirms verification, and resumes the gate after restart. Existing
-verified accounts with a password do not repeat this flow. Phone-only placeholder
-addresses are excluded from the app email gate.
-
-Email-code sign-in is an alternate login method only for existing, active accounts
-whose `emailVerified` flag was already set before requesting the code. Eligibility
-is checked again when redeeming it; this endpoint never registers users or marks
-an unverified email as verified. Per the product policy, this method is available
-even when password-login two-factor verification is enabled. Password and phone
-login retain their own two-factor requirements. Login codes expire after ten
-minutes, allow at most five attempts and can be consumed only once.
-
 Deploy the backend and frontend together. Verify CLIENT_URL / CLIENT_URLS contains
 the exact deployed frontend origins. Test login, reload, refresh, password change,
 and logout using the actual supported browsers and deployment domains.

@@ -51,7 +51,7 @@ interface FloatingPosition {
   y: number;
 }
 
-const ASSISTANT_NAME = "bird Ai";
+const ASSISTANT_NAME = "COVEY AI";
 const ASSISTANT_POSITION_KEY = "studyBirdsAssistantPosition";
 
 const getAssistantContent = (pathname: string, role: Role | undefined, language: "ar" | "en"): AssistantContent => {
@@ -512,7 +512,7 @@ export const FloatingAssistant = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  // Other screens (e.g. the student home "Bird AI" shortcut) open the assistant with this event.
+  // Other screens (e.g. the student home "COVEY AI" shortcut) open the assistant with this event.
   useEffect(() => {
     const openAssistant = () => setOpen(true);
     window.addEventListener("studybirds:open-assistant", openAssistant);

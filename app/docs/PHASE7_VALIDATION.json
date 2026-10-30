@@ -1,0 +1,308 @@
+{
+  "phase": 7,
+  "recordedAt": "2026-10-21T20:48:25.829Z",
+  "status": "LOCAL_QA_VERIFIED_ANDROID_BLOCKED_SOURCE_DRIFT_REQUIRES_REVIEW",
+  "repositories": {
+    "primary": {
+      "root": "D:\\work\\studybirds_app\\study_birds_app-main",
+      "head": "3e31e19c5343170056e6d7559c59bfb891f2c624",
+      "headUnchanged": true,
+      "indexUnchanged": true,
+      "worktreesUnchanged": true,
+      "baselineFilesChecked": 568,
+      "changedBaselineFiles": [
+        {
+          "path": "lib/app_shell.dart",
+          "sha256": "531fbf97e058554971abcb6f99d7d5619b911fa22c17f121e80981e6f6b3bd8d"
+        },
+        {
+          "path": "lib/main.dart",
+          "sha256": "ea7d6a30e6a85c83eff49c6517624fe44424b409d779882ff569db6f7a546b00"
+        }
+      ],
+      "status": " M README.md\n M lib/app_shell.dart\n M lib/core/services/notification_scheduler.dart\n M lib/core/widgets/app_components.dart\n M lib/main.dart\n M lib/screens/applications_documents_payments/documents_screens.dart\n M lib/screens/home_journey/notifications_screen.dart\n M lib/screens/home_journey/student_banner_carousel.dart\n M lib/screens/profile_account/notification_preferences_screen.dart\n M lib/screens/roles/employee_dashboard_screen.dart\n M lib/screens/stories/story_viewers_screen.dart\n M test/chat_controls_test.dart\n M test/journey_requirements_test.dart\n M test/post_admission_journey_test.dart\n M test/story_viewers_test.dart\n M tool/check_error_policy.dart\n?? .vscode/StudyBirds.code-workspace\n?? docs/ANDROID_DEVICE_QA_PLAN.md\n?? docs/ANDROID_QA_CONNECTION_GUIDE.md\n?? docs/ANDROID_REAL_DEVICE_TEST_CHECKLIST.md\n?? docs/APPROVED_DEPLOYMENT_PARITY_20261021.md\n?? docs/ARCHITECTURE.md\n?? docs/AUDIT_VALIDATION.json\n?? docs/BACKEND_ENVIRONMENT_NAMES.json\n?? docs/DEPLOYMENT_PARITY_REPORT.md\n?? docs/DEVELOPMENT_SETUP.md\n?? docs/DUPLICATE_INVENTORY.json\n?? docs/DUPLICATE_INVENTORY.md\n?? docs/FEATURE_PARITY_REPORT.md\n?? docs/FINAL_CLEANUP_APPROVAL.md\n?? docs/FLUTTER_ANALYSIS_REMEDIATION.md\n?? docs/MAINTENANCE_GUIDE.md\n?? docs/PHASE2_FINAL_REPORT.md\n?? docs/PHASE2_SECURITY_REVIEW.md\n?? docs/PHASE2_VALIDATION.json\n?? docs/PHASE3_DEPENDENCY_PLAN.md\n?? docs/PHASE3_FINAL_REPORT.md\n?? docs/PHASE3_VALIDATION.json\n?? docs/PHASE4_FINAL_REPORT.md\n?? docs/PHASE4_VALIDATION.json\n?? docs/PHASE5_CLEANUP_APPROVAL.md\n?? docs/PHASE5_FINAL_REPORT.md\n?? docs/PHASE5_REMAINING_CLEANUP_REVIEW.md\n?? docs/PHASE6_FINAL_REPORT.md\n?? docs/PHASE6_QA_CONFIGURATION.md\n?? docs/PHASE6_VALIDATION.json\n?? docs/PHASE7_APPROVAL_REQUIRED.md\n?? docs/PHASE7_FINAL_REPORT.md\n?? docs/PHASE7_LOCAL_QA_SETUP.md\n?? docs/PHASE7_VALIDATION.json\n?? docs/PROJECT_AUDIT_REPORT.md\n?? docs/REACT_ROUTER_UPGRADE_20261021.md\n?? docs/REACT_ROUTER_VALIDATION.json\n?? docs/RELEASE_READINESS_CHECKLIST.md\n?? docs/STABILIZATION_20261021.md\n?? docs/UPDATED_RELEASE_READINESS.md\n?? docs/WORKSPACE_WORKFLOW.md\n?? docs/proposals/\n?? lib/core/core_import.dart\n?? lib/core/services/notification_preferences_store.dart\n?? lib/screens/screen.dart\n?? test/notification_preferences_test.dart\n",
+      "diffCheckExit": 0
+    },
+    "deployment": {
+      "root": "D:/work/studybirds_session_release",
+      "head": "e9060536e8dc7a70150da9c42d6dfac901713553",
+      "headUnchanged": true,
+      "indexUnchanged": true,
+      "worktreesUnchanged": true,
+      "baselineFilesChecked": 1173,
+      "changedBaselineFiles": [
+        {
+          "path": "app/lib/core/network/pinned_http.dart",
+          "sha256": "fa143ffceddb3fdad0b95df15cce126bc2f80afbe92fbd605af8b7baa2d06d77"
+        },
+        {
+          "path": "app/lib/core/utils/document_access.dart",
+          "sha256": "7b0d0c30cfd169d1df352edb1d4edba31c75bfd8e29e9aae3b2ed6408bcdc8dd"
+        },
+        {
+          "path": "server/src/app.js",
+          "sha256": "dc691645b30e5895a08535d2c760124a53e0f1a0b11f7f4e3376b2de5895b42b"
+        },
+        {
+          "path": "server/src/config/db.js",
+          "sha256": "0d44767938a602aeca167a22bc3502df4f4cb1feebb6bf547d03b661703c8f3b"
+        },
+        {
+          "path": "server/src/seed/seed.js",
+          "sha256": "ce452a8b6885be87b033f61b5e3821acd0163ef311c249bbfff89b38aec4749f"
+        },
+        {
+          "path": "server/src/server.js",
+          "sha256": "58956c22659e5a2cf5966ee0f9a1bb15da314a5637540e82a224ac5d0d0ee38d"
+        },
+        {
+          "path": "server/src/utils/mailer.js",
+          "sha256": "31614303a984d5b46d6a089e182d359aa6b7e7855beba8dcd621006b8dd2e1cc"
+        },
+        {
+          "path": "server/src/utils/mobileEmailCodes.js",
+          "sha256": "2861df4ce6189d3d203a4034c644cb1923178df7d6212ec4e349efb6e6ad08d7"
+        },
+        {
+          "path": "server/src/utils/privateDocumentStorage.js",
+          "sha256": "905653cd6e8c41c4618dd5a3d78ed0a650510a28b65204cf5a2f2e8b7f7765e6"
+        }
+      ],
+      "status": " M app/integration/services_preview_test.dart\n M app/lib/core/network/api_client.dart\n M app/lib/core/network/pinned_http.dart\n M app/lib/core/repositories/stories_repository.dart\n M app/lib/core/services/analytics_service.dart\n M app/lib/core/services/apple_sign_in_service.dart\n M app/lib/core/services/currency_service.dart\n M app/lib/core/services/google_sign_in_service.dart\n M app/lib/core/services/notification_scheduler.dart\n M app/lib/core/services/push_notification_service.dart\n M app/lib/core/utils/document_access.dart\n M app/lib/core/widgets/app_components.dart\n M app/lib/main.dart\n M app/lib/screens/community/student_community_hub.dart\n M app/lib/screens/profile_account/notification_preferences_screen.dart\n M app/lib/screens/stories/story_viewer.dart\n M app/lib/screens/stories/story_viewers_screen.dart\n M app/lib/screens/stories/student_stories.dart\n M app/test/app_update_test.dart\n M app/test/story_viewer_test.dart\n M app/test/story_viewers_test.dart\n M client/package-lock.json\n M client/package.json\n M client/scripts/generate-seo-files.mjs\n M server/package-lock.json\n M server/package.json\n M server/src/app.js\n M server/src/config/db.js\n M server/src/controllers/adminAgentController.js\n M server/src/controllers/contentController.js\n M server/src/models/Notification.js\n M server/src/models/User.js\n M server/src/routes/alumniRoutes.js\n M server/src/routes/mobileSecurityRoutes.js\n M server/src/routes/scholarshipRoutes.js\n M server/src/seed/seed.js\n M server/src/server.js\n M server/src/utils/cashMisrSms.js\n M server/src/utils/mailer.js\n M server/src/utils/mobileEmailCodes.js\n M server/src/utils/privateDocumentStorage.js\n M server/src/utils/pushNotifications.js\n M server/src/utils/supportNotifications.js\n M server/src/utils/whatsappOtp.js\n M server/tests/auditFixes.test.js\n M server/tests/crmIntegration.test.js\n M server/tests/privateDocumentAccess.test.js\n?? app/lib/core/config/qa_configuration.dart\n?? app/lib/core/network/qa_http_client.dart\n?? app/lib/core/network/qa_tls_context.dart\n?? app/lib/core/services/notification_preferences_store.dart\n?? app/test/notification_preferences_test.dart\n?? app/test/qa_api_integration_test.dart\n?? app/test/qa_configuration_test.dart\n?? app/test/qa_local_https_test.dart\n?? app/test/qa_providers_test.dart\n?? app/test/qa_startup_test.dart\n?? app/test/qa_tls_context_test.dart\n?? app/test/story_deletion_test.dart\n?? client/src/lib/routerMigration.test.tsx\n?? client/src/lib/seoBuild.test.ts\n?? server/qa.local.env.example\n?? server/scripts/qa-local.cjs\n?? server/scripts/qa-mongo-start.cjs\n?? server/scripts/qa-provision.cjs\n?? server/scripts/qa-seed.cjs\n?? server/scripts/run-tests.cjs\n?? server/src/qa/\n?? server/src/utils/jwtSecret.js\n?? server/src/utils/notificationPreferences.js\n?? server/tests/notificationPreferences.test.js\n?? server/tests/qaLocalConfig.test.js\n?? server/tests/qaLocalIntegration.qa.cjs\n?? server/tests/recoveredParity.test.js\n",
+      "diffCheckExit": 0
+    }
+  },
+  "unexpectedBaselineChanges": [
+    "primary:changed:lib/app_shell.dart",
+    "primary:changed:lib/main.dart"
+  ],
+  "recoveryCopies": [
+    {
+      "path": "server/src/server.js",
+      "verified": true
+    },
+    {
+      "path": "server/src/app.js",
+      "verified": true
+    },
+    {
+      "path": "server/src/config/db.js",
+      "verified": true
+    },
+    {
+      "path": "server/src/utils/mailer.js",
+      "verified": true
+    },
+    {
+      "path": "server/src/utils/mobileEmailCodes.js",
+      "verified": true
+    },
+    {
+      "path": "server/src/utils/privateDocumentStorage.js",
+      "verified": true
+    },
+    {
+      "path": "server/src/seed/seed.js",
+      "verified": true
+    },
+    {
+      "path": "app/lib/core/utils/document_access.dart",
+      "verified": true
+    },
+    {
+      "path": "app/lib/core/network/pinned_http.dart",
+      "verified": true
+    }
+  ],
+  "protectedFiles": [
+    {
+      "scope": "app",
+      "path": "android/key.properties",
+      "unchanged": true
+    },
+    {
+      "scope": "app",
+      "path": "android/local.properties",
+      "unchanged": true
+    },
+    {
+      "scope": "app",
+      "path": "android/app/studybirds-release.jks",
+      "unchanged": true
+    },
+    {
+      "scope": "deployment-app",
+      "path": "android/local.properties",
+      "unchanged": true
+    },
+    {
+      "scope": "server",
+      "path": ".env.example",
+      "unchanged": true
+    },
+    {
+      "scope": "client",
+      "path": ".env.example",
+      "unchanged": true
+    }
+  ],
+  "apk": {
+    "path": "D:/work/studybirds_session_release/app/build/app/outputs/flutter-apk/app-debug.apk",
+    "bytes": 320844144,
+    "sha256": "9638b98f111bf25b4079555f4a48029d40a4892dc12f48f407b3894b61b9ce23",
+    "unchanged": true
+  },
+  "tests": [
+    {
+      "name": "backendConfiguration",
+      "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase7-20261021\\config-tests-final-accepted.log",
+      "sha256": "f87c8d460ddb2755c8a14b22952188d9cbf8d5bee0d3c11dd2faff8e47e80061",
+      "passed": 29,
+      "exitCode": 0,
+      "tail": "onfiguration forbidden SENTRY_DSN\r\nok 25 - provider configuration forbidden SENTRY_DSN\r\n  ---\r\n  duration_ms: 0.3735\r\n  type: 'test'\r\n  ...\r\n# Subtest: local storage identifiers reject traversal and unsupported extensions\r\nok 26 - local storage identifiers reject traversal and unsupported extensions\r\n  ---\r\n  duration_ms: 53.3828\r\n  type: 'test'\r\n  ...\r\n# Subtest: missing QA TLS files stop startup before MongoDB connection\r\nok 27 - missing QA TLS files stop startup before MongoDB connection\r\n  ---\r\n  duration_ms: 79.9684\r\n  type: 'test'\r\n  ...\r\n# Subtest: legacy destructive seed refuses non-QA targets before loading dotenv or connecting\r\nok 28 - legacy destructive seed refuses non-QA targets before loading dotenv or connecting\r\n  ---\r\n  duration_ms: 56.6822\r\n  type: 'test'\r\n  ...\r\n# Subtest: network guard rejects outbound HTTP/fetch/TLS before a dial\r\nok 29 - network guard rejects outbound HTTP/fetch/TLS before a dial\r\n  ---\r\n  duration_ms: 3.2179\r\n  type: 'test'\r\n  ...\r\n1..29\r\n# tests 29\r\n# suites 0\r\n# pass 29\r\n# fail 0\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 312.5112\r\n"
+    },
+    {
+      "name": "backendIntegration",
+      "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase7-20261021\\integration-final.log",
+      "sha256": "c286463f042dded84455b09629a877d91c9031dd5f2a0e60a51bac76ab616b07",
+      "passed": 11,
+      "exitCode": 0,
+      "tail": "ership before signed access\r\n  ---\r\n  duration_ms: 83.7174\r\n  type: 'test'\r\n  ...\r\n# initial synthetic upload HTTP 200\r\n# Subtest: story deletion is authorized, idempotent and removes it from the feed\r\nok 8 - story deletion is authorized, idempotent and removes it from the feed\r\n  ---\r\n  duration_ms: 56.8866\r\n  type: 'test'\r\n  ...\r\n# Subtest: notification preferences remain account-scoped and mandatory categories cannot be muted\r\nok 9 - notification preferences remain account-scoped and mandatory categories cannot be muted\r\n  ---\r\n  duration_ms: 43.2017\r\n  type: 'test'\r\n  ...\r\n# Subtest: OAuth, payments, AI and external push fail explicitly in local QA\r\nok 10 - OAuth, payments, AI and external push fail explicitly in local QA\r\n  ---\r\n  duration_ms: 4.7571\r\n  type: 'test'\r\n  ...\r\n# Subtest: refresh rotation and revocation are enforced on QA sessions\r\nok 11 - refresh rotation and revocation are enforced on QA sessions\r\n  ---\r\n  duration_ms: 23.4223\r\n  type: 'test'\r\n  ...\r\n1..11\r\n# tests 11\r\n# suites 0\r\n# pass 11\r\n# fail 0\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 2211.6659\r\n"
+    },
+    {
+      "name": "backendRegression",
+      "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase7-20261021\\backend-regressions.log",
+      "sha256": "8edc3e03840579d6bf82b2e02c2b1568c4638cae3e897c959876cf4b546460dd",
+      "passed": 16,
+      "exitCode": 0,
+      "tail": "extra stories refresh deadline without extra days or points\r\n  ---\r\n  duration_ms: 4.3495\r\n  type: 'test'\r\n  ...\r\n# Subtest: 24h freezes, 36h resets days only; posting in grace preserves the streak\r\nok 13 - 24h freezes, 36h resets days only; posting in grace preserves the streak\r\n  ---\r\n  duration_ms: 0.9189\r\n  type: 'test'\r\n  ...\r\n# Subtest: bonuses repeat at days 7 and 14, never again for an extra story that day\r\nok 14 - bonuses repeat at days 7 and 14, never again for an extra story that day\r\n  ---\r\n  duration_ms: 0.8038\r\n  type: 'test'\r\n  ...\r\n# Subtest: calendar rollover uses Istanbul, giver capped at 10 and reset next local day\r\nok 15 - calendar rollover uses Istanbul, giver capped at 10 and reset next local day\r\n  ---\r\n  duration_ms: 0.5289\r\n  type: 'test'\r\n  ...\r\n# Subtest: orange achievement persists after streak break, exact threshold\r\nok 16 - orange achievement persists after streak break, exact threshold\r\n  ---\r\n  duration_ms: 0.3303\r\n  type: 'test'\r\n  ...\r\n1..16\r\n# tests 16\r\n# suites 0\r\n# pass 16\r\n# fail 0\r\n# cancelled 0\r\n# skipped 0\r\n# todo 0\r\n# duration_ms 10802.1718\r\n"
+    },
+    {
+      "name": "flutterTargeted",
+      "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase7-20261021\\flutter-tests.log",
+      "sha256": "3fa3ac854c5b1726e5aa624c52f14a1b1cfd60fe40679efea2abbb3d89e098f9",
+      "passed": 38,
+      "exitCode": 0,
+      "tail": "otification_preferences_test.dart: preferences belong to each account and ignore unattributable legacy keys\r\n00:04 +32: D:/work/studybirds_session_release/app/test/notification_preferences_test.dart: save is pending until confirmed and a failure rolls the switch back\r\n00:04 +33: D:/work/studybirds_session_release/app/test/notification_preferences_test.dart: save is pending until confirmed and a failure rolls the switch back\r\n00:05 +34: D:/work/studybirds_session_release/app/test/notification_preferences_test.dart: a response arriving after an account switch is ignored\r\n00:05 +35: D:/work/studybirds_session_release/app/test/notification_preferences_test.dart: confirmed preferences persist only for the signed-in account\r\n00:05 +36: D:/work/studybirds_session_release/app/test/notification_preferences_test.dart: offline load uses only this account cache and retry fetches fresh preferences\r\n00:05 +37: D:/work/studybirds_session_release/app/test/notification_preferences_test.dart: a late save after logout cannot change cached preferences or show a save error\r\n00:05 +38: All tests passed!\r\n"
+    },
+    {
+      "name": "flutterQaGuards",
+      "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase7-20261021\\flutter-qa-guards.log",
+      "sha256": "64656f88f6d9bc245c439da63afd1d61a8894a427d42cbf891afc776eea62947",
+      "passed": 25,
+      "exitCode": 0,
+      "tail": "ate\r\n00:00 +19: D:/work/studybirds_session_release/app/test/qa_configuration_test.dart: redirect is not followed with credentials\r\n00:00 +20: D:/work/studybirds_session_release/app/test/qa_configuration_test.dart: same-origin API and synthetic media payloads are accepted\r\n00:00 +21: D:/work/studybirds_session_release/app/test/qa_configuration_test.dart: nested provider media URLs are rejected before plugin consumption\r\n00:01 +22: D:/work/studybirds_session_release/app/test/qa_startup_test.dart: incomplete QA blocks startup before restoring sessions/services\r\n00:01 +23: D:/work/studybirds_session_release/app/test/qa_startup_test.dart: incomplete QA blocks startup before restoring sessions/services\r\n00:01 +23: D:/work/studybirds_session_release/app/test/qa_providers_test.dart: QA external sign-in and currency calls fail without provider requests\r\n[GoogleSignIn] not available, init error: لم يتم تهيئة Google Sign-In\r\n00:01 +24: D:/work/studybirds_session_release/app/test/qa_startup_test.dart: incomplete QA blocks startup before restoring sessions/services\r\n00:02 +25: All tests passed!\r\n"
+    },
+    {
+      "name": "flutterRealLoopback",
+      "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase7-20261021\\flutter-loopback-verified.log",
+      "sha256": "d857556928f1161383cef26bd001b85821c0528acbf6e174426df330a545b996",
+      "passed": 2,
+      "exitCode": 0,
+      "tail": "﻿00:00 +0: loading D:/work/studybirds_session_release/app/test/qa_local_https_test.dart\r\n00:00 +0: actual Flutter transport validates local HTTPS certificate and QA health\r\n00:00 +1: actual Flutter login and signed document download stay on QA origin\r\n00:00 +2: All tests passed!\r\n"
+    },
+    {
+      "name": "flutterAnalyze",
+      "log": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase7-20261021\\flutter-analyze.log",
+      "sha256": "becdba403960eff5ebf49173602209117fb9dee4ef27d8576d418e3e396a8111",
+      "passed": null,
+      "exitCode": 1,
+      "tail": "ntrol_structures\r\n   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - test\\wink_practice_test.dart:23:5 - curly_braces_in_flow_control_structures\r\n   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - test\\wink_practice_test.dart:45:9 - curly_braces_in_flow_control_structures\r\n   info - Can't use a relative path to import a library in 'lib'. Try fixing the relative path or changing the import to a 'package:' import - tool\\check_error_policy.dart:2:8 - avoid_relative_lib_imports\r\n   info - Don't invoke 'print' in production code. Try using a logging framework - tool\\check_error_policy.dart:56:3 - avoid_print\r\n\r\nflutter.bat : 275 issues found. (ran in 62.4s)\r\nAt line:2 char:379\r\n+ ... STEXITCODE; & C:\\src\\flutter\\bin\\flutter.bat analyze --no-pub *> D:\\w ...\r\n+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (275 issues found. (ran in 62.4s):String) [], RemoteException\r\n    + FullyQualifiedErrorId : NativeCommandError\r\n \r\n"
+    }
+  ],
+  "analysis": {
+    "errors": 0,
+    "warnings": 0,
+    "information": 275,
+    "exitCode": 1
+  },
+  "seed": {
+    "database": "studybirds_qa_phase7",
+    "counts": {
+      "users": 5,
+      "countries": 1,
+      "universities": 1,
+      "programs": 1,
+      "applications": 1,
+      "documents": 2,
+      "stories": 1,
+      "alumniprofiles": 1,
+      "scholarships": 1,
+      "studentprofiles": 2
+    },
+    "repeatSeedExit": 0,
+    "idempotentCounts": true,
+    "passwordHashesUnchanged": true,
+    "bcryptVerified": true,
+    "reset": false
+  },
+  "runtime": {
+    "root": "D:/work/studybirds_qa_phase7",
+    "mongo": {
+      "address": "127.0.0.1",
+      "port": 27029,
+      "pid": 21696,
+      "authenticated": true,
+      "otherDatabaseReadDeniedCode": 13
+    },
+    "backend": {
+      "address": "127.0.0.1",
+      "httpPort": 5008,
+      "httpsPort": 5448,
+      "pid": 23368
+    },
+    "leftRunning": true,
+    "windowsServiceInstalled": false
+  },
+  "disk": {
+    "freeBytes": 5931298816,
+    "freeGiB": 5.523952484130859,
+    "plannedBuildHeadroomGiB": 6,
+    "buildPerformed": false
+  },
+  "android": {
+    "qaApkBuilt": false,
+    "deviceCommandsExecuted": false,
+    "realDeviceQa": false,
+    "blockedBy": [
+      "Dedicated device and egress verification",
+      "Production package and autoVerify isolation decision",
+      "Android certificate and native media verification",
+      "Separate build output preserving existing APK",
+      "Disk headroom"
+    ]
+  },
+  "actionsNotPerformed": [
+    "production access",
+    "downloads or package installs",
+    "additional cleanup",
+    "flutter clean",
+    "full Flutter build",
+    "dependency migrations",
+    "commit",
+    "push",
+    "deploy",
+    "reset",
+    "stash",
+    "signing configuration changes"
+  ],
+  "initialFailures": [
+    "Relative defines path preparation failed; corrected to absolute path before successful run",
+    "Integration readiness race failed hooks; verified health wait added and final suite passed"
+  ],
+  "scopeNotes": [
+    "Legacy destructive seed entry disabled before dotenv/connection in all modes",
+    "QA network guard is process-local, not an OS or Android firewall",
+    "Windows loopback defines file is test-only, not approved Android build configuration"
+  ],
+  "sourceDrift": {
+    "paths": [
+      "lib/main.dart",
+      "lib/app_shell.dart"
+    ],
+    "scope": "primary Flutter only",
+    "observed": "Import consolidation differs from pre-phase hashes; origin not established",
+    "action": "Preserved without overwrite or rollback; no further source editing",
+    "tested": false
+  }
+}

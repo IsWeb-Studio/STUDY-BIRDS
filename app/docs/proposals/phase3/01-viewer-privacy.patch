@@ -1,0 +1,213 @@
+diff --git a/app/lib/screens/stories/story_viewers_screen.dart b/app/lib/screens/stories/story_viewers_screen.dart
+index 3871f65..7267861 100644
+--- a/app/lib/screens/stories/story_viewers_screen.dart
++++ b/app/lib/screens/stories/story_viewers_screen.dart
+@@ -13,6 +13,8 @@ class StoryViewersScreen extends StatefulWidget {
+ }
+ 
+ class _StoryViewersScreenState extends State<StoryViewersScreen> {
++  String? _owner;
++  bool _sessionEnded = false;
+   final List<Map<String, dynamic>> _viewers = [];
+   int _total = 0;
+   bool _busy = false;
+@@ -21,11 +23,31 @@ class _StoryViewersScreenState extends State<StoryViewersScreen> {
+   @override
+   void initState() {
+     super.initState();
++    _owner = AuthSession.instance.currentUser?.id;
++    AuthSession.instance.addListener(_onSessionChanged);
+     _load();
+   }
+ 
++  void _onSessionChanged() {
++    if (_sessionEnded || _owner == AuthSession.instance.currentUser?.id) return;
++    setState(() {
++      _sessionEnded = true;
++      _viewers.clear();
++      _total = 0;
++      _next = null;
++      _error = null;
++      _busy = false;
++    });
++  }
++
++  @override
++  void dispose() {
++    AuthSession.instance.removeListener(_onSessionChanged);
++    super.dispose();
++  }
++
+   Future<void> _load({bool more = false}) async {
+-    if (_busy || (more && _next == null)) return;
++    if (_sessionEnded || _busy || (more && _next == null)) return;
+     final owner = AuthSession.instance.currentUser?.id;
+     setState(() {
+       _busy = true;
+@@ -35,7 +57,11 @@ class _StoryViewersScreenState extends State<StoryViewersScreen> {
+     try {
+       final data = await StoriesRepository.instance
+           .viewers(widget.storyId, before: more ? _next : null);
+-      if (!mounted || owner != AuthSession.instance.currentUser?.id) return;
++      if (!mounted ||
++          _sessionEnded ||
++          owner != AuthSession.instance.currentUser?.id) {
++        return;
++      }
+       setState(() {
+         if (!more) _viewers.clear();
+         _viewers.addAll((data['viewers'] as List)
+@@ -44,7 +70,9 @@ class _StoryViewersScreenState extends State<StoryViewersScreen> {
+         _next = data['nextCursor'] as String?;
+       });
+     } catch (_) {
+-      if (mounted) {
++      if (mounted &&
++          !_sessionEnded &&
++          owner == AuthSession.instance.currentUser?.id) {
+         setState(() => _error =
+             'تعذر تحميل المشاهدين. قد تكون الستوري انتهت أو حُذفت. حاول مجددًا.');
+       }
+@@ -56,42 +84,45 @@ class _StoryViewersScreenState extends State<StoryViewersScreen> {
+   @override
+   Widget build(BuildContext context) => AppScaffold(
+       title: 'مشاهدو الستوري',
+-      body: RefreshIndicator(
+-          onRefresh: () => _load(),
+-          child: ListView(
+-              physics: const AlwaysScrollableScrollPhysics(),
+-              padding: const EdgeInsets.all(16),
+-              children: [
+-                Text('شاهدها $_total شخص',
+-                    key: const ValueKey('story-viewers-total'),
+-                    style: Theme.of(context).textTheme.titleLarge),
+-                const SizedBox(height: 16),
+-                if (_error != null) ...[
+-                  Text(_error!),
+-                  TextButton(
+-                      onPressed: () => _load(more: _retryMore),
+-                      child: const Text('إعادة المحاولة'))
+-                ],
+-                if (_busy && _viewers.isEmpty)
+-                  const Center(
+-                      child: StoryLoadingIndicator(color: Colors.indigo)),
+-                if (!_busy && _error == null && _viewers.isEmpty)
+-                  const Padding(
+-                      padding: EdgeInsets.all(24),
+-                      child: Text('لم يشاهد الستوري أحد بعد',
+-                          textAlign: TextAlign.center)),
+-                for (final viewer in _viewers)
+-                  Padding(
+-                      padding: const EdgeInsets.symmetric(vertical: 12),
+-                      child: viewer['id'] == null
+-                          ? Text(viewer['name'] as String)
+-                          : StudentIdentity(
+-                              id: viewer['id'] as String,
+-                              name: viewer['name'] as String,
+-                              avatar: viewer['avatar'] as String)),
+-                if (_next != null)
+-                  TextButton(
+-                      onPressed: _busy ? null : () => _load(more: true),
+-                      child: Text(_busy ? 'جارٍ التحميل…' : 'عرض المزيد')),
+-              ])));
++      body: _sessionEnded
++          ? const Center(
++              child: Text('انتهت الجلسة. افتح الستوري مجددًا من حسابك.'))
++          : RefreshIndicator(
++              onRefresh: () => _load(),
++              child: ListView(
++                  physics: const AlwaysScrollableScrollPhysics(),
++                  padding: const EdgeInsets.all(16),
++                  children: [
++                    Text('شاهدها $_total شخص',
++                        key: const ValueKey('story-viewers-total'),
++                        style: Theme.of(context).textTheme.titleLarge),
++                    const SizedBox(height: 16),
++                    if (_error != null) ...[
++                      Text(_error!),
++                      TextButton(
++                          onPressed: () => _load(more: _retryMore),
++                          child: const Text('إعادة المحاولة'))
++                    ],
++                    if (_busy && _viewers.isEmpty)
++                      const Center(
++                          child: StoryLoadingIndicator(color: Colors.indigo)),
++                    if (!_busy && _error == null && _viewers.isEmpty)
++                      const Padding(
++                          padding: EdgeInsets.all(24),
++                          child: Text('لم يشاهد الستوري أحد بعد',
++                              textAlign: TextAlign.center)),
++                    for (final viewer in _viewers)
++                      Padding(
++                          padding: const EdgeInsets.symmetric(vertical: 12),
++                          child: viewer['id'] == null
++                              ? Text(viewer['name'] as String)
++                              : StudentIdentity(
++                                  id: viewer['id'] as String,
++                                  name: viewer['name'] as String,
++                                  avatar: viewer['avatar'] as String)),
++                    if (_next != null)
++                      TextButton(
++                          onPressed: _busy ? null : () => _load(more: true),
++                          child: Text(_busy ? 'جارٍ التحميل…' : 'عرض المزيد')),
++                  ])));
+ }
+diff --git a/app/test/story_viewers_test.dart b/app/test/story_viewers_test.dart
+index 8f448d7..26159ee 100644
+--- a/app/test/story_viewers_test.dart
++++ b/app/test/story_viewers_test.dart
+@@ -1,6 +1,8 @@
+ import 'dart:async';
+ import 'package:flutter/material.dart';
+ import 'package:flutter_test/flutter_test.dart';
++import 'package:flutter_secure_storage/flutter_secure_storage.dart';
++import 'package:shared_preferences/shared_preferences.dart';
+ import 'package:http/http.dart' as http;
+ import 'package:http/testing.dart';
+ import 'package:study_birds/core/services/auth_session.dart';
+@@ -22,6 +24,45 @@ void main() {
+     AuthSession.instance.token = null;
+     AuthSession.instance.currentUser = null;
+   });
++  testWidgets('logout clears private viewers and ignores an in-flight page',
++      (tester) async {
++    SharedPreferences.setMockInitialValues({});
++    FlutterSecureStorage.setMockInitialValues({});
++    final pending = Completer<http.Response>();
++    var calls = 0;
++    await http.runWithClient(() async {
++      await tester.pumpWidget(
++          const MaterialApp(home: StoryViewersScreen(storyId: 'own')));
++      await tester.pump();
++      expect(find.text('Private Viewer'), findsOneWidget);
++      await tester.tap(find.text('عرض المزيد'));
++      await tester.pump();
++      final logout = AuthSession.instance.logout(revoke: false);
++      await tester.pump();
++      expect(find.text('Private Viewer'), findsNothing);
++      pending.complete(json({
++        'total': 2,
++        'viewers': [
++          {'id': '2', 'name': 'Late Private Viewer', 'avatar': ''}
++        ],
++        'nextCursor': null
++      }));
++      await tester.pump();
++      expect(find.text('Late Private Viewer'), findsNothing);
++      await tester.runAsync(() => logout);
++      await tester.pumpWidget(const SizedBox());
++    },
++        () => MockClient((request) {
++              if (++calls > 1) return pending.future;
++              return Future.value(json({
++                'total': 2,
++                'viewers': [
++                  {'id': '1', 'name': 'Private Viewer', 'avatar': ''}
++                ],
++                'nextCursor': 'next'
++              }));
++            }));
++  });
+   testWidgets(
+       'owner opens full viewer page, loads more and story pauses until returning',
+       (tester) async {

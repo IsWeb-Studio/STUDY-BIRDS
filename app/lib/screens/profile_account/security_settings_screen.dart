@@ -1,4 +1,8 @@
 import '../../core/widgets/app_notice.dart';
+import '../../core/widgets/privacy_links.dart';
+import '../../core/widgets/analytics_consent_tile.dart';
+import '../../core/widgets/safety_controls.dart';
+import 'delete_account_screen.dart';
 import '../../core/widgets/security_fields.dart';
 import 'account_security_screen.dart';
 import '../auth/verify_contact_screen.dart';
@@ -23,6 +27,18 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
     return AppScaffold(
         title: 'الأمان',
         body: FeatureBody(children: [
+          const PrivacyLinks(),
+          const AnalyticsConsentTile(),
+          ListTile(leading: const Icon(Icons.block_outlined),
+            title: const Text('المستخدمون المحظورون / Blocked users'),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+              builder: (_) => const BlockedUsersScreen()))),
+          ListTile(
+            leading: const Icon(Icons.delete_forever_outlined),
+            title: const Text('حذف الحساب نهائيًا / Delete account'),
+            onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => const DeleteAccountScreen())),
+          ),
           const SecurityIntro(
               title: 'حسابك تحت سيطرتك',
               subtitle: 'راجع وسائل حماية حسابك وحافظ على خصوصية بياناتك.',
@@ -158,12 +174,13 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
           refreshToken: credentials['refreshToken'] as String);
       if (!mounted) return;
       ScaffoldMessenger.of(context)
-          .showSnackBar(AppSnackBar(content: Text('تم تغيير كلمة المرور')));
+          .showSnackBar(AppSnackBar(content: const Text('تم تغيير كلمة المرور')));
       Navigator.of(context).pop();
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() =>
             error = e is ApiException ? e.message : 'تعذر تغيير كلمة المرور');
+      }
     } finally {
       if (mounted) setState(() => saving = false);
     }
@@ -216,10 +233,12 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
                         decoration: featureInput(entry.$2,
                             ),
                         validator: (value) {
-                          if (value == null || value.isEmpty)
+                          if (value == null || value.isEmpty) {
                             return 'هذا الحقل مطلوب';
-                          if (entry.$1 == confirmation && value != next.text)
+                          }
+                          if (entry.$1 == confirmation && value != next.text) {
                             return 'كلمتا المرور غير متطابقتين';
+                          }
                           return null;
                         },
                       )),
@@ -293,8 +312,8 @@ class _ChangeEmailScreenState extends State<ChangeEmailScreen> {
       await AuthSession.instance.refreshCurrentUser();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-          content: Text('تم تغيير البريد الإلكتروني بنجاح ✓'),
-          backgroundColor: Color(0xFF065F46)));
+          content: const Text('تم تغيير البريد الإلكتروني بنجاح ✓'),
+          backgroundColor: const Color(0xFF065F46)));
       Navigator.of(context).pop();
     } catch (e) {
       setState(() => error = e is ApiException ? e.message : 'رمز غير صحيح أو منتهي الصلاحية');

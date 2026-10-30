@@ -37,10 +37,12 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
         () => MockClient((request) async {
-              if (request.url.path.endsWith('/conversations/peer'))
+              if (request.url.path.endsWith('/conversations/peer')) {
                 return preference.future;
-              if (request.url.path.endsWith('/messages/read'))
+              }
+              if (request.url.path.endsWith('/messages/read')) {
                 return receipt.future;
+              }
               return http.Response(
                   jsonEncode([
                     {

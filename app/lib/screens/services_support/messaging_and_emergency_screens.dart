@@ -1,4 +1,5 @@
-import '../community/student_profile_link.dart';
+import '../community/contact_profile_screen.dart';
+import '../../core/widgets/voice_notes.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
@@ -21,9 +22,13 @@ class ConversationThreadScreen extends StatefulWidget {
   final String contactName;
   final String contactAvatar;
   final String? contactId;
+  final bool supportTeamOnly;
+  final bool communityMode;
   const ConversationThreadScreen(
       {super.key,
       this.contactId,
+      this.supportTeamOnly = false,
+      this.communityMode = false,
       this.contactName = 'الرسائل',
       this.contactAvatar = ''});
   @override
@@ -57,6 +62,14 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
       (WidgetsBinding.instance.lifecycleState == null ||
           WidgetsBinding.instance.lifecycleState == AppLifecycleState.resumed);
   String? get token => AuthSession.instance.token;
+  Map<String, String> get _scopeQuery =>
+      widget.communityMode ? const {'community': '1'} : const {};
+  String _scopedPath(String path) {
+    if (!widget.communityMode) return path;
+    final uri = Uri.parse(path);
+    return uri.replace(
+        queryParameters: {...uri.queryParameters, 'community': '1'}).toString();
+  }
 
   @override
   void initState() {
@@ -139,8 +152,10 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     _syncing = true;
     _lastSync = DateTime.now();
     try {
-      final query =
-          Uri(queryParameters: {'recipient': '${selected['_id']}'}).query;
+      final query = Uri(queryParameters: {
+        'recipient': '${selected['_id']}',
+        ..._scopeQuery,
+      }).query;
       final value = await ApiClient.instance.get(
           '/mobile-workspace/messages?$query',
           token: token,
@@ -164,7 +179,8 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
         final ids = loadedIds.skip(offset).take(100).toList();
         final query = Uri(queryParameters: {
           'recipient': '${selected['_id']}',
-          'ids': ids.join(',')
+          'ids': ids.join(','),
+          ..._scopeQuery,
         }).query;
         final updates = Json.list(await ApiClient.instance.get(
             '/mobile-workspace/messages?$query',
@@ -270,6 +286,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
         try {
           final payload = jsonDecode(line.substring(5).trim());
           if (payload is! Map || !mounted) return;
+          if ((payload['community'] == true) != widget.communityMode) return;
           if (!_visible) {
             _lastSync = null;
             return;
@@ -350,8 +367,12 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     if (_readThrough == key || _readingThrough == key) return;
     _readingThrough = key;
     try {
-      await ApiClient.instance.post('/mobile-workspace/messages/read',
-          token: token, body: {'sender': sender, 'through': through});
+      await ApiClient.instance
+          .post('/mobile-workspace/messages/read', token: token, body: {
+        'sender': sender,
+        'through': through,
+        'community': widget.communityMode,
+      });
       _readThrough = key;
     } catch (e, stack) {
       ErrorReporter.swallowed(e, stack, 'messaging.read');
@@ -365,7 +386,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     Future<void> preference() async {
       try {
         final value = await ApiClient.instance.get(
-            '/mobile-workspace/conversations/$id',
+            _scopedPath('/mobile-workspace/conversations/$id'),
             token: token,
             cached: false);
         if (mounted && contact?['_id'] == id && value is Map) {
@@ -379,8 +400,10 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     Future<void> person() async {
       if (widget.contactId == null || widget.contactName != 'الرسائل') return;
       try {
-        final value = await ApiClient.instance
-            .get('/mobile-workspace/contacts/$id', token: token, cached: false);
+        final value = await ApiClient.instance.get(
+            _scopedPath('/mobile-workspace/contacts/$id'),
+            token: token,
+            cached: false);
         if (mounted && contact?['_id'] == id && value is Map) {
           setState(() => contact = value);
         }
@@ -400,15 +423,23 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     });
     try {
       if (selected == null) {
+        final contactPath = Uri(
+          path: '/mobile-workspace/contacts',
+          queryParameters: {
+            if (widget.supportTeamOnly) 'supportTeam': 'true',
+            ..._scopeQuery,
+          },
+        ).toString();
         final value = await ApiClient.instance
-            .get('/mobile-workspace/contacts', token: token, cached: false);
+            .get(contactPath, token: token, cached: false);
         if (mounted) setState(() => contacts = Json.list(value));
       } else {
         if (!previous) unawaited(_loadThreadDetails(selected));
         final query = Uri(queryParameters: {
           'recipient': '${selected['_id']}',
           if (previous && messages.isNotEmpty)
-            'before': '${messages.first['_id']}'
+            'before': '${messages.first['_id']}',
+          ..._scopeQuery,
         }).query;
         final value = Json.list(await ApiClient.instance.get(
             '/mobile-workspace/messages?$query',
@@ -463,14 +494,19 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
               fields: {
                   'recipient': '${contact!['_id']}',
                   'body': body,
-                  'operationId': key
+                  'operationId': key,
+                  if (widget.communityMode) 'community': 'true',
                 }, onProgress: (value) {
               if (mounted) setState(() => _uploadProgress = value);
             })
           : await ApiClient.instance.post('/mobile-workspace/messages',
               token: token,
               idempotencyKey: key,
-              body: {'recipient': contact!['_id'], 'body': body});
+              body: {
+                  'recipient': contact!['_id'],
+                  'body': body,
+                  'community': widget.communityMode,
+                });
       if (!mounted) return;
       _draftKey = null;
       _draftText = null;
@@ -554,7 +590,8 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     if (_changing || contact == null) return;
     _changing = true;
     try {
-      final path = '/mobile-workspace/conversations/${contact!['_id']}';
+      final path =
+          _scopedPath('/mobile-workspace/conversations/${contact!['_id']}');
       if (action == 'mute') {
         final value = await ApiClient.instance
             .put(path, token: token, body: {'muted': !_muted});
@@ -614,7 +651,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
     _messageRevision++;
     try {
       await ApiClient.instance.delete(
-          '/mobile-workspace/messages/${row['_id']}?scope=$action',
+          _scopedPath('/mobile-workspace/messages/${row['_id']}?scope=$action'),
           token: token);
       if (!mounted) return;
       setState(() {
@@ -627,6 +664,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
                       ...m,
                       'body': '',
                       'imagePath': null,
+                      'audioPath': null,
                       'deletedAt': DateTime.now().toIso8601String()
                     }
                   : m)
@@ -662,17 +700,49 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
         : '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
+  Widget _contactIdentity() {
+    final id = '${contact?['_id'] ?? ''}';
+    final name = contact?['name']?.toString() ?? 'المحادثات';
+    final avatar = contact?['avatar']?.toString() ?? '';
+    return ContactProfileLink(
+      userId: id,
+      communityMode: widget.communityMode,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircleAvatar(
+              radius: 17,
+              backgroundColor: AppColors.greenSoft,
+              backgroundImage:
+                  avatar.startsWith('https://') ? NetworkImage(avatar) : null,
+              child: avatar.startsWith('https://')
+                  ? null
+                  : const Icon(Icons.person_outline, size: 20),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => Scaffold(
-      backgroundColor: const Color(0xFFF5F7FB),
+      backgroundColor: AppColors.background,
       appBar: AppBar(
         titleSpacing: 0,
         title: Row(children: [
-          Expanded(
-              child: StudentIdentity(
-                  id: '${contact?['_id'] ?? ''}',
-                  name: contact?['name']?.toString() ?? 'المحادثات',
-                  avatar: '${contact?['avatar'] ?? ''}')),
+          Expanded(child: _contactIdentity()),
           if (_muted && contact != null)
             const Padding(
                 padding: EdgeInsets.all(8),
@@ -725,14 +795,18 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
   // A conversation always occupies the whole screen, including wide layouts.
   Widget _contactsList() => ListView(children: [
         if (contacts.isEmpty)
-          const Padding(
-              padding: EdgeInsets.all(32),
-              child:
-                  Text('لا توجد محادثات متاحة.', textAlign: TextAlign.center)),
+          Padding(
+              padding: const EdgeInsets.all(32),
+              child: Text(
+                  widget.supportTeamOnly
+                      ? 'لم يتم تعيين فريق دعم لك بعد. يمكنك إرسال تذكرة دعم من مركز الدعم.'
+                      : 'لا توجد محادثات متاحة.',
+                  textAlign: TextAlign.center)),
         for (final row in contacts)
           ListTile(
-              leading: StudentProfileLink(
-                  studentId: row['role'] == 'student' ? '${row['_id']}' : '',
+              leading: ContactProfileLink(
+                  userId: '${row['_id'] ?? ''}',
+                  communityMode: widget.communityMode,
                   child: CircleAvatar(
                       backgroundImage: '${row['avatar'] ?? ''}'.isEmpty
                           ? null
@@ -767,14 +841,14 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
                   padding: EdgeInsets.all(40),
                   child: Column(children: [
                     Icon(Icons.chat_bubble_outline_rounded,
-                        color: Colors.blueGrey, size: 42),
+                        color: AppColors.textSecondary, size: 42),
                     SizedBox(height: 12),
                     Text('ابدأ المحادثة 👋',
                         style: TextStyle(
                             fontSize: 18, fontWeight: FontWeight.bold)),
                     SizedBox(height: 6),
                     Text('أرسل رسالة أو صورة لصديقك',
-                        style: TextStyle(color: Colors.blueGrey)),
+                        style: TextStyle(color: AppColors.textSecondary)),
                   ]));
             }
             final row = messages[messages.length - 1 - index] as Map;
@@ -799,7 +873,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     child: Text('${date.day}/${date.month}/${date.year}',
                         style: const TextStyle(
-                            fontSize: 11, color: Colors.blueGrey))),
+                            fontSize: 11, color: AppColors.textSecondary))),
               Align(
                   alignment: mine
                       ? AlignmentDirectional.centerEnd
@@ -814,8 +888,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
                         margin: const EdgeInsets.only(bottom: 7),
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                            color:
-                                mine ? const Color(0xFF4169E1) : Colors.white,
+                            color: mine ? AppColors.navyLight : Colors.white,
                             borderRadius: BorderRadius.only(
                                 topLeft: const Radius.circular(20),
                                 topRight: const Radius.circular(20),
@@ -823,7 +896,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
                                 bottomRight: Radius.circular(mine ? 5 : 20)),
                             border: mine
                                 ? null
-                                : Border.all(color: const Color(0xFFE8ECF3))),
+                                : Border.all(color: AppColors.border)),
                         child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
@@ -834,6 +907,15 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
                                         color: color.withValues(alpha: .65),
                                         fontStyle: FontStyle.italic))
                               else ...[
+                                if (row['audioPath'] != null &&
+                                    row['deletedAt'] == null)
+                                  VoiceNotePlayer(
+                                      key: ValueKey('chat-voice-${row['_id']}'),
+                                      audioPath:
+                                          _scopedPath('${row['audioPath']}'),
+                                      duration: (row['audioDuration'] as num?)
+                                          ?.toDouble(),
+                                      onDark: mine),
                                 if (row['imagePath'] != null)
                                   Padding(
                                       padding: const EdgeInsets.only(bottom: 6),
@@ -890,7 +972,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
               padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
               decoration: const BoxDecoration(
                   color: Colors.white,
-                  border: Border(top: BorderSide(color: Color(0xFFE8ECF3)))),
+                  border: Border(top: BorderSide(color: AppColors.border))),
               child: Column(mainAxisSize: MainAxisSize.min, children: [
                 if (_image != null)
                   Align(
@@ -926,7 +1008,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
                       tooltip: 'إرفاق صورة',
                       onPressed: sending ? null : _pickImage,
                       icon: const Icon(Icons.photo_library_outlined,
-                          color: Color(0xFF4169E1))),
+                          color: AppColors.navyLight)),
                   Expanded(
                       child: TextField(
                           controller: text,
@@ -939,7 +1021,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
                               hintText: 'اكتب رسالة…',
                               counterText: '',
                               filled: true,
-                              fillColor: const Color(0xFFF4F6FA),
+                              fillColor: AppColors.background,
                               contentPadding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 12),
                               border: OutlineInputBorder(
@@ -950,7 +1032,7 @@ class _ConversationThreadScreenState extends State<ConversationThreadScreen> {
                       tooltip: 'إرسال',
                       onPressed: sending ? null : send,
                       style: IconButton.styleFrom(
-                          backgroundColor: const Color(0xFF4169E1)),
+                          backgroundColor: AppColors.navyLight),
                       icon: sending
                           ? const SizedBox(
                               width: 18,
@@ -1071,7 +1153,8 @@ class EmergencySupportScreen extends StatelessWidget {
             icon: const Icon(Icons.message_outlined),
             label: const Text('فتح المحادثة الداخلية'),
             onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const ConversationThreadScreen())),
+                builder: (_) => const ConversationThreadScreen(
+                    supportTeamOnly: true, contactName: 'فريق الدعم'))),
           ),
         ],
       ),

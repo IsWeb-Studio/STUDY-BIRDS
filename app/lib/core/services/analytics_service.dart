@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:posthog_flutter/posthog_flutter.dart';
 import '../config/app_config.dart';
 import 'auth_session.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 /// Analytics layer wired to PostHog.
 /// Set AppConfig.posthogApiKey before release to activate.
@@ -14,14 +16,35 @@ class AnalyticsService {
   static final AnalyticsService instance = AnalyticsService._();
 
   bool _ready = false;
+  bool _consented = false;
+  bool get consented => _consented;
+  static const consentKey = 'analytics_consent_v1';
+
+  Future<bool> getConsent() async =>
+      (await SharedPreferences.getInstance()).getBool(consentKey) == true;
+
+  Future<void> setConsent(bool value) async {
+    _consented = value;
+    await (await SharedPreferences.getInstance()).setBool(consentKey, value);
+    if (!value) {
+      await Sentry.close();
+      if (_ready) await Posthog().disable();
+      return;
+    }
+    await init();
+    if (_ready) await Posthog().enable();
+  }
 
   Future<void> init() async {
+    _consented = await getConsent();
+    if (!_consented || _ready) return;
     if (AppConfig.posthogApiKey.isEmpty) return;
     try {
       final config = PostHogConfig(AppConfig.posthogApiKey)
         ..host = AppConfig.posthogHost
         ..debug = kDebugMode
-        ..captureApplicationLifecycleEvents = true;
+        ..captureApplicationLifecycleEvents = false
+        ..sessionReplay = false;
       await Posthog().setup(config);
       _ready = true;
     } catch (e) {
@@ -30,40 +53,58 @@ class AnalyticsService {
   }
 
   Future<void> identify(String userId, {Map<String, dynamic>? traits}) async {
-    if (!_ready) return;
+    if (!_ready || !_consented) return;
     try {
-      final props = traits?.map((k, v) => MapEntry(k, v as Object));
+      final props = <String, Object>{
+        if (traits?['role'] is String) 'role': traits!['role'] as String,
+      };
       await Posthog().identify(userId: userId, userProperties: props);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/analytics_service.dart:36');}
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'core/services/analytics_service.dart:36');
+    }
   }
 
   Future<void> reset() async {
     if (!_ready) return;
-    try { await Posthog().reset(); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/analytics_service.dart:41');}
+    try {
+      await Posthog().reset();
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'core/services/analytics_service.dart:41');
+    }
   }
 
   Future<void> track(String event, [Map<String, dynamic>? props]) async {
     final userId = AuthSession.instance.currentUser?.id ?? 'anonymous';
     if (kDebugMode) print('[Analytics] $event ${props ?? ''}');
-    if (!_ready) return;
+    if (!_ready || !_consented) return;
     try {
       await Posthog().capture(
         eventName: event,
         properties: {'userId': userId, ...?props},
       );
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/analytics_service.dart:53');}
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'core/services/analytics_service.dart:53');
+    }
   }
 
   // ── convenience wrappers ──────────────────────────────────────────────────
 
   Future<void> screenView(String screenName) async {
     if (kDebugMode) print('[Analytics] screen: $screenName');
-    if (!_ready) return;
-    try { await Posthog().screen(screenName: screenName); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/analytics_service.dart:61');}
+    if (!_ready || !_consented) return;
+    try {
+      await Posthog().screen(screenName: screenName);
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'core/services/analytics_service.dart:61');
+    }
   }
 
-  Future<void> buttonTap(String button, {String? screen}) =>
-      track('button_tap', {'button': button, if (screen != null) 'screen': screen});
+  Future<void> buttonTap(String button, {String? screen}) => track(
+      'button_tap', {'button': button, if (screen != null) 'screen': screen});
 
   Future<void> documentUploaded(String docType) =>
       track('document_uploaded', {'type': docType});
@@ -75,10 +116,13 @@ class AnalyticsService {
       track('application_viewed', {'id': applicationId});
 
   Future<void> paymentInitiated(String invoiceId, double amount) =>
-      track('payment_initiated', {'invoice': invoiceId, 'amount': amount});
+      track('payment_initiated');
 
   Future<void> searchPerformed(String query, {String? category}) =>
-      track('search', {'query': query, if (category != null) 'category': category});
+      track('search', {
+        'queryLength': query.length,
+        if (category != null) 'category': category
+      });
 
   Future<void> universityViewed(String universityId) =>
       track('university_viewed', {'id': universityId});

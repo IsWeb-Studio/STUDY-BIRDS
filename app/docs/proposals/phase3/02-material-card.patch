@@ -1,0 +1,29 @@
+diff --git a/app/lib/core/widgets/app_components.dart b/app/lib/core/widgets/app_components.dart
+index 94509f8..4252edd 100644
+--- a/app/lib/core/widgets/app_components.dart
++++ b/app/lib/core/widgets/app_components.dart
+@@ -26,17 +26,17 @@ class AppCard extends StatelessWidget {
+         borderRadius: BorderRadius.circular(AppRadius.card),
+         border: Border.all(color: AppColors.border),
+       ),
+-      child: onTap == null
+-          ? Padding(padding: padding, child: child)
+-          : Material(
+-              color: Colors.transparent,
+-              borderRadius: BorderRadius.circular(AppRadius.card),
+-              child: InkWell(
++      child: Material(
++        color: Colors.transparent,
++        borderRadius: BorderRadius.circular(AppRadius.card),
++        child: onTap == null
++            ? Padding(padding: padding, child: child)
++            : InkWell(
+                 borderRadius: BorderRadius.circular(AppRadius.card),
+                 onTap: onTap,
+                 child: Padding(padding: padding, child: child),
+               ),
+-            ),
++      ),
+     );
+   }
+ }

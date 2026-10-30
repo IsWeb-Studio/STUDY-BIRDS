@@ -15,6 +15,7 @@ const messageSchema = new mongoose.Schema({
   sender: { ...id('User'), required: true, index: true }, recipient: { ...id('User'), required: true, index: true },
   body: { type: String, default: '', maxlength: 4000 }, readAt: Date,
   image: { publicId: String, format: String },
+  audio: { publicId: String, format: String, duration: Number, resourceType: String, deliveryType: String },
   deletedAt: Date,
   hiddenFor: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   operationId: String,

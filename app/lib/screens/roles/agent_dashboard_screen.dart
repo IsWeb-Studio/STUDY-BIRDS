@@ -1,15 +1,19 @@
 import '../../core/utils/json_safe.dart';
+import '../../core/utils/responsive.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
 import '../profile_account/security_settings_screen.dart';
+import '../profile_account/role_account_tab.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/services/auth_session.dart';
+import '../home_journey/notifications_screen.dart';
 import '../../core/repositories/agent_repository.dart';
 import '../../main.dart' show RootChooserScreen;
 import 'agent_student_detail_screen.dart';
 import 'agent_program_pricing_screen.dart';
+import 'agent_partner_workspace_screen.dart';
 
 // ─── status metadata ────────────────────────────────────────────────────────
 
@@ -48,6 +52,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   List<dynamic> _filtered = [];
   bool _loading = true;
   String? _error;
+  int _tab = 0;
   final _searchController = TextEditingController();
   String? _statusFilter;
   String? _stageFilter;
@@ -82,7 +87,10 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final results = await Future.wait([
         AgentRepository.instance.getOverview(),
@@ -95,9 +103,14 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
         _loading = false;
       });
       _applyFilter();
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/agent_dashboard_screen.dart:96');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/agent_dashboard_screen.dart:96');
       if (!mounted) return;
-      setState(() { _error = 'تعذر تحميل بيانات لوحتك.'; _loading = false; });
+      setState(() {
+        _error = 'تعذر تحميل بيانات لوحتك.';
+        _loading = false;
+      });
     }
   }
 
@@ -108,10 +121,14 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
         final st = Json.map(s);
         final nameMatch = q.isEmpty ||
             (st['name'] as String? ?? '').toLowerCase().contains(q) ||
-            (st['desiredUniversity'] as String? ?? '').toLowerCase().contains(q) ||
+            (st['desiredUniversity'] as String? ?? '')
+                .toLowerCase()
+                .contains(q) ||
             (st['country'] as String? ?? '').toLowerCase().contains(q);
-        final statusMatch = _statusFilter == null || st['applicationStatus'] == _statusFilter;
-        final stageMatch = _stageFilter == null || st['applicationStage'] == _stageFilter;
+        final statusMatch =
+            _statusFilter == null || st['applicationStatus'] == _statusFilter;
+        final stageMatch =
+            _stageFilter == null || st['applicationStage'] == _stageFilter;
         return nameMatch && statusMatch && stageMatch;
       }).toList();
     });
@@ -146,15 +163,20 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 64, height: 64,
-              decoration: const BoxDecoration(color: Color(0xFFECFDF5), shape: BoxShape.circle),
-              child: const Icon(Icons.check_rounded, color: AppColors.success, size: 34),
+              width: 64,
+              height: 64,
+              decoration: const BoxDecoration(
+                  color: Color(0xFFECFDF5), shape: BoxShape.circle),
+              child: const Icon(Icons.check_rounded,
+                  color: AppColors.success, size: 34),
             ),
             const SizedBox(height: 16),
-            Text(studentName, style: AppTextStyles.cardTitle.copyWith(fontSize: 17), textAlign: TextAlign.center),
+            Text(studentName,
+                style: AppTextStyles.cardTitle.copyWith(fontSize: 17),
+                textAlign: TextAlign.center),
             const SizedBox(height: 8),
             const Text(
-              'تمت إضافة الطالب بنجاح وهو الآن في قائمة الانتظار للمراجعة والموافقة من فريق Study Birds.\n\nيمكنك رفع مستنداته ومتابعة حالته من لوحتك.',
+              'تمت إضافة الطالب بنجاح وهو الآن في قائمة الانتظار للمراجعة والموافقة من فريق COVEY.\n\nيمكنك رفع مستنداته ومتابعة حالته من لوحتك.',
               style: AppTextStyles.caption,
               textAlign: TextAlign.center,
             ),
@@ -182,13 +204,33 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
     );
   }
 
+  Future<void> _logout() async {
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: 'تسجيل الخروج',
+      message: 'هل تريد تسجيل الخروج من حسابك؟',
+      confirmLabel: 'تسجيل الخروج',
+      danger: true,
+    );
+    if (!confirmed || !mounted) return;
+    await AuthSession.instance.logout();
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const RootChooserScreen()),
+        (_) => false,
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final notifications = (Json.listOrNull(_overview?['notifications'])) ?? [];
-    final unreadCount = notifications.where((n) => (Json.rawMap(n))['isRead'] != true).length;
+    final unreadCount =
+        notifications.where((n) => (Json.rawMap(n))['isRead'] != true).length;
 
     return AppScaffold(
-      title: 'لوحة الوكيل',
+      showBackButton: false,
+      title: _tab == 0 ? 'لوحة الوكيل' : 'حسابي',
       actions: [
         Stack(
           children: [
@@ -204,63 +246,94 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                 child: Container(
                   width: 16,
                   height: 16,
-                  decoration: const BoxDecoration(color: AppColors.danger, shape: BoxShape.circle),
+                  decoration: const BoxDecoration(
+                      color: AppColors.danger, shape: BoxShape.circle),
                   child: Center(
                     child: Text(
                       unreadCount > 9 ? '9+' : '$unreadCount',
-                      style: const TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.w800),
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 9,
+                          fontWeight: FontWeight.w800),
                     ),
                   ),
                 ),
               ),
           ],
         ),
-        IconButton(tooltip: 'الرسائل', icon: const Icon(Icons.forum_outlined),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ConversationThreadScreen()))),
         PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert_rounded, color: Colors.white),
           tooltip: 'المزيد',
           onSelected: (value) async {
             if (value == 'security') {
-              Navigator.of(context).push(MaterialPageRoute(builder: (_) => const SecuritySettingsScreen()));
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const SecuritySettingsScreen()));
             } else if (value == 'logout') {
-              final confirmed = await showAppConfirmDialog(
-                context,
-                title: 'تسجيل الخروج',
-                message: 'هل تريد تسجيل الخروج من حسابك؟',
-                confirmLabel: 'تسجيل الخروج',
-                danger: true,
-              );
-              if (!confirmed || !context.mounted) return;
-              await AuthSession.instance.logout();
-              if (context.mounted) {
-                Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const RootChooserScreen()),
-                    (_) => false);
-              }
+              await _logout();
             }
           },
           itemBuilder: (_) => [
-            const PopupMenuItem(value: 'security', child: Row(children: [Icon(Icons.security_outlined, size: 18), SizedBox(width: 10), Text('أمان الحساب')])),
-            const PopupMenuItem(value: 'logout', child: Row(children: [Icon(Icons.logout_rounded, size: 18, color: AppColors.danger), SizedBox(width: 10), Text('تسجيل الخروج', style: TextStyle(color: AppColors.danger))])),
+            const PopupMenuItem(
+                value: 'security',
+                child: Row(children: [
+                  Icon(Icons.security_outlined, size: 18),
+                  SizedBox(width: 10),
+                  Text('أمان الحساب')
+                ])),
+            const PopupMenuItem(
+                value: 'logout',
+                child: Row(children: [
+                  Icon(Icons.logout_rounded, size: 18, color: AppColors.danger),
+                  SizedBox(width: 10),
+                  Text('تسجيل الخروج',
+                      style: TextStyle(color: AppColors.danger))
+                ])),
           ],
         ),
       ],
-      body: RefreshIndicator(
-        onRefresh: _load,
-        color: AppColors.navy,
-        child: _loading
-            ? const LoadingState(message: 'جاري تحميل لوحتك...')
-            : _error != null
-                ? ErrorState(message: _error!, onRetry: _load)
-                : _buildContent(),
+      bottomBar: AdaptiveBottomBar(
+        child: BottomNavigationBar(
+          key: const ValueKey('agent-bottom-navigation'),
+          currentIndex: _tab,
+          onTap: (index) => setState(() => _tab = index),
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: AppColors.greenInk,
+          unselectedItemColor: AppColors.textSecondary,
+          items: const [
+            BottomNavigationBarItem(
+                icon: Icon(Icons.dashboard_outlined), label: 'الرئيسية'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.person_outline_rounded), label: 'حسابي'),
+          ],
+        ),
+      ),
+      body: IndexedStack(
+        index: _tab,
+        children: [
+          RefreshIndicator(
+            onRefresh: _load,
+            color: AppColors.navy,
+            child: _loading
+                ? const LoadingState(message: 'جاري تحميل لوحتك...')
+                : _error != null
+                    ? ErrorState(message: _error!, onRetry: _load)
+                    : _buildContent(),
+          ),
+          RoleAccountTab(
+            key: const ValueKey('agent-account-page'),
+            showStreakAndGame: false,
+            onLogout: _logout,
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildContent() {
     final stats = Json.mapOrNull(_overview?['stats']) ?? {};
-    final pending = _students.where((s) => (Json.rawMap(s))['applicationStatus'] == 'under-review').length;
+    final pending = _students
+        .where((s) => (Json.rawMap(s))['applicationStatus'] == 'under-review')
+        .length;
     final accepted = (stats['acceptedStudents'] as num?)?.toInt() ?? 0;
 
     return ListView(
@@ -271,7 +344,7 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
           padding: const EdgeInsets.fromLTRB(20, 24, 20, 28),
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [AppColors.navy, Color(0xFF1B3A6B)],
+              colors: [AppColors.navy, AppColors.navyLight],
               begin: Alignment.topRight,
               end: Alignment.bottomLeft,
             ),
@@ -282,20 +355,28 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
               Row(
                 children: [
                   Container(
-                    width: 44, height: 44,
+                    width: 44,
+                    height: 44,
                     decoration: BoxDecoration(
                       color: Colors.white.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.handshake_rounded, color: Colors.white, size: 22),
+                    child: const Icon(Icons.handshake_rounded,
+                        color: Colors.white, size: 22),
                   ),
                   const SizedBox(width: 12),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('مرحباً بك', style: TextStyle(color: Colors.white70, fontSize: 12)),
-                        Text('لوحة تحكم الوكيل', style: TextStyle(color: Colors.white, fontSize: 17, fontWeight: FontWeight.w800)),
+                        Text('مرحباً بك',
+                            style:
+                                TextStyle(color: Colors.white70, fontSize: 12)),
+                        Text('لوحة تحكم الوكيل',
+                            style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800)),
                       ],
                     ),
                   ),
@@ -305,30 +386,53 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
               // summary row
               Row(
                 children: [
-                  _HeroBadge(value: '${stats['totalStudents'] ?? 0}', label: 'إجمالي الطلاب', icon: Icons.people_rounded),
+                  _HeroBadge(
+                      value: '${stats['totalStudents'] ?? 0}',
+                      label: 'إجمالي الطلاب',
+                      icon: Icons.people_rounded),
                   const SizedBox(width: 10),
-                  _HeroBadge(value: '$accepted', label: 'مقبولين', icon: Icons.check_circle_rounded, color: Colors.greenAccent),
+                  _HeroBadge(
+                      value: '$accepted',
+                      label: 'مقبولين',
+                      icon: Icons.check_circle_rounded,
+                      color: Colors.greenAccent),
                   const SizedBox(width: 10),
-                  _HeroBadge(value: '$pending', label: 'قيد المراجعة', icon: Icons.hourglass_top_rounded, color: Colors.orangeAccent),
+                  _HeroBadge(
+                      value: '$pending',
+                      label: 'قيد المراجعة',
+                      icon: Icons.hourglass_top_rounded,
+                      color: AppColors.greenInk),
                 ],
               ),
               if ((stats['pendingEarnings'] as num? ?? 0) > 0) ...[
                 const SizedBox(height: 14),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.monetization_on_rounded, color: Colors.orangeAccent, size: 18),
+                      const Icon(Icons.monetization_on_rounded,
+                          color: AppColors.greenInk, size: 18),
                       const SizedBox(width: 8),
-                      Text('\$${stats['pendingEarnings']} عمولات معلّقة', style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600)),
+                      Text('\$${stats['pendingEarnings']} عمولات معلّقة',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600)),
                       const Spacer(),
                       GestureDetector(
-                        onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyCommissionsScreen())),
-                        child: const Text('عرض ←', style: TextStyle(color: Colors.orangeAccent, fontSize: 12, fontWeight: FontWeight.w700)),
+                        onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const MyCommissionsScreen())),
+                        child: const Text('عرض ←',
+                            style: TextStyle(
+                                color: AppColors.greenInk,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700)),
                       ),
                     ],
                   ),
@@ -343,14 +447,51 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
           child: Row(
             children: [
-              _ActionTile(icon: Icons.person_add_alt_rounded, label: 'إضافة طالب', color: AppColors.navy, onTap: _openAddStudent),
+              _ActionTile(
+                  icon: Icons.person_add_alt_rounded,
+                  label: 'إضافة طالب',
+                  color: AppColors.navy,
+                  onTap: _openAddStudent),
               const SizedBox(width: 10),
-              _ActionTile(icon: Icons.account_balance_wallet_outlined, label: 'محفظتي', color: AppColors.success, onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const MyCommissionsScreen()))),
+              _ActionTile(
+                  icon: Icons.account_balance_wallet_outlined,
+                  label: 'محفظتي',
+                  color: AppColors.success,
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const MyCommissionsScreen()))),
               const SizedBox(width: 10),
-              _ActionTile(icon: Icons.sell_outlined, label: 'الأسعار', color: AppColors.warning, onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const AgentProgramPricingScreen()))),
+              _ActionTile(
+                  icon: Icons.sell_outlined,
+                  label: 'الأسعار',
+                  color: AppColors.warning,
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const AgentProgramPricingScreen()))),
               const SizedBox(width: 10),
-              _ActionTile(icon: Icons.forum_outlined, label: 'الرسائل', color: AppColors.info, onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => const ConversationThreadScreen()))),
+              _ActionTile(
+                  icon: Icons.forum_outlined,
+                  label: 'الرسائل',
+                  color: AppColors.info,
+                  onTap: () => Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => const ConversationThreadScreen()))),
             ],
+          ),
+        ),
+
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+          child: OutlinedButton.icon(
+            key: const ValueKey('agent-partner-workspace-entry'),
+            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const AgentPartnerWorkspaceScreen())),
+            icon: const Icon(Icons.handshake_outlined),
+            label: const Text('مساحة الشريك: الإحالات، التوثيق، الدعم والمواد'),
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              foregroundColor: AppColors.navy,
+              side: const BorderSide(color: AppColors.border),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppRadius.button)),
+            ),
           ),
         ),
 
@@ -367,7 +508,8 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                   GestureDetector(
                     onTap: _openAddStudent,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
                         color: AppColors.navy,
                         borderRadius: BorderRadius.circular(20),
@@ -375,9 +517,14 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(Icons.add_rounded, size: 16, color: Colors.white),
+                          Icon(Icons.add_rounded,
+                              size: 16, color: Colors.white),
                           SizedBox(width: 4),
-                          Text('إضافة', style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
+                          Text('إضافة',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w700)),
                         ],
                       ),
                     ),
@@ -398,8 +545,10 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
                   decoration: const InputDecoration(
                     hintText: 'ابحث بالاسم أو الجامعة أو البلد...',
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 14),
-                    prefixIcon: Icon(Icons.search_rounded, color: AppColors.navy),
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                    prefixIcon:
+                        Icon(Icons.search_rounded, color: AppColors.navy),
                   ),
                 ),
               ),
@@ -409,13 +558,23 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
               _FilterSection(
                 label: 'الحالة',
                 children: [
-                  _FilterChip(label: 'الكل', selected: _statusFilter == null, onTap: () { setState(() => _statusFilter = null); _applyFilter(); }),
+                  _FilterChip(
+                      label: 'الكل',
+                      selected: _statusFilter == null,
+                      onTap: () {
+                        setState(() => _statusFilter = null);
+                        _applyFilter();
+                      }),
                   ..._statusOptions.map((opt) => _FilterChip(
-                    label: opt.label,
-                    selected: _statusFilter == opt.key,
-                    color: agentStudentStatusMeta(opt.key).color,
-                    onTap: () { setState(() => _statusFilter = _statusFilter == opt.key ? null : opt.key); _applyFilter(); },
-                  )),
+                        label: opt.label,
+                        selected: _statusFilter == opt.key,
+                        color: agentStudentStatusMeta(opt.key).color,
+                        onTap: () {
+                          setState(() => _statusFilter =
+                              _statusFilter == opt.key ? null : opt.key);
+                          _applyFilter();
+                        },
+                      )),
                 ],
               ),
               const SizedBox(height: 8),
@@ -424,13 +583,23 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
               _FilterSection(
                 label: 'المرحلة',
                 children: [
-                  _FilterChip(label: 'الكل', selected: _stageFilter == null, onTap: () { setState(() => _stageFilter = null); _applyFilter(); }),
+                  _FilterChip(
+                      label: 'الكل',
+                      selected: _stageFilter == null,
+                      onTap: () {
+                        setState(() => _stageFilter = null);
+                        _applyFilter();
+                      }),
                   ..._stageOptions.map((opt) => _FilterChip(
-                    label: opt.label,
-                    selected: _stageFilter == opt.key,
-                    color: AppColors.info,
-                    onTap: () { setState(() => _stageFilter = _stageFilter == opt.key ? null : opt.key); _applyFilter(); },
-                  )),
+                        label: opt.label,
+                        selected: _stageFilter == opt.key,
+                        color: AppColors.info,
+                        onTap: () {
+                          setState(() => _stageFilter =
+                              _stageFilter == opt.key ? null : opt.key);
+                          _applyFilter();
+                        },
+                      )),
                 ],
               ),
               const SizedBox(height: 14),
@@ -438,7 +607,8 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
               // count
               Text(
                 '${_filtered.length} طالب',
-                style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600),
+                style:
+                    AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 8),
             ],
@@ -449,7 +619,10 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
         if (_filtered.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            child: EmptyState(icon: Icons.people_outline_rounded, title: 'لا يوجد طلاب', message: 'أضف أول طالب من زر "إضافة" أعلاه.'),
+            child: EmptyState(
+                icon: Icons.people_outline_rounded,
+                title: 'لا يوجد طلاب',
+                message: 'أضف أول طالب من زر "إضافة" أعلاه.'),
           )
         else
           Padding(
@@ -457,27 +630,35 @@ class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
             child: Column(
               children: _filtered.map((s) {
                 final student = Json.map(s);
-                final meta = agentStudentStatusMeta(student['applicationStatus'] as String?);
+                final meta = agentStudentStatusMeta(
+                    student['applicationStatus'] as String?);
                 final name = student['name'] as String? ?? '—';
-                final initials = name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : '?';
+                final initials =
+                    name.trim().isNotEmpty ? name.trim()[0].toUpperCase() : '?';
                 final subtitle = [
-                  if ((student['desiredUniversity'] as String?)?.isNotEmpty == true) student['desiredUniversity'] as String,
-                  if ((student['country'] as String?)?.isNotEmpty == true) student['country'] as String,
+                  if ((student['desiredUniversity'] as String?)?.isNotEmpty ==
+                      true)
+                    student['desiredUniversity'] as String,
+                  if ((student['country'] as String?)?.isNotEmpty == true)
+                    student['country'] as String,
                 ].join(' · ');
                 final stage = student['applicationStage'] as String?;
 
                 return _StudentCard(
                   initials: initials,
                   name: name,
-                  subtitle: subtitle.isNotEmpty ? subtitle : (student['email'] as String? ?? ''),
+                  subtitle: subtitle.isNotEmpty
+                      ? subtitle
+                      : (student['email'] as String? ?? ''),
                   stage: stage != null ? _stageLabel(stage) : null,
                   statusLabel: meta.label,
                   statusColor: meta.color,
                   onTap: () => Navigator.of(context)
-                      .push(MaterialPageRoute(builder: (_) => AgentStudentDetailScreen(
-                            studentId: student['_id'] as String,
-                            initialData: student,
-                          )))
+                      .push(MaterialPageRoute(
+                          builder: (_) => AgentStudentDetailScreen(
+                                studentId: student['_id'] as String,
+                                initialData: student,
+                              )))
                       .then((_) => _load()),
                 );
               }).toList(),
@@ -515,25 +696,38 @@ class _NotificationsSheet extends StatelessWidget {
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
-      constraints: BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.75),
+      constraints:
+          BoxConstraints(maxHeight: MediaQuery.sizeOf(context).height * 0.75),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: AppColors.border, borderRadius: BorderRadius.circular(2))),
+          Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2))),
           const SizedBox(height: 16),
           Row(
             children: [
-              const Icon(Icons.notifications_rounded, color: AppColors.navy, size: 20),
+              const Icon(Icons.notifications_rounded,
+                  color: AppColors.navy, size: 20),
               const SizedBox(width: 8),
               const Text('الإشعارات', style: AppTextStyles.cardTitle),
               const SizedBox(width: 8),
               if (notifications.isNotEmpty)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                  decoration: BoxDecoration(color: AppColors.danger, borderRadius: BorderRadius.circular(10)),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                  decoration: BoxDecoration(
+                      color: AppColors.danger,
+                      borderRadius: BorderRadius.circular(10)),
                   child: Text(
                     '${notifications.where((n) => (Json.rawMap(n))['isRead'] != true).length} جديد',
-                    style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700),
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700),
                   ),
                 ),
             ],
@@ -544,7 +738,8 @@ class _NotificationsSheet extends StatelessWidget {
               padding: EdgeInsets.symmetric(vertical: 32),
               child: Column(
                 children: [
-                  Icon(Icons.notifications_none_rounded, size: 44, color: AppColors.border),
+                  Icon(Icons.notifications_none_rounded,
+                      size: 44, color: AppColors.border),
                   SizedBox(height: 10),
                   Text('لا توجد إشعارات', style: AppTextStyles.caption),
                 ],
@@ -566,10 +761,14 @@ class _NotificationsSheet extends StatelessWidget {
                   return Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isRead ? AppColors.background : color.withValues(alpha: 0.05),
+                      color: isRead
+                          ? AppColors.background
+                          : color.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: isRead ? AppColors.border : color.withValues(alpha: 0.3),
+                        color: isRead
+                            ? AppColors.border
+                            : color.withValues(alpha: 0.3),
                         width: isRead ? 1 : 1.5,
                       ),
                     ),
@@ -579,7 +778,9 @@ class _NotificationsSheet extends StatelessWidget {
                         Container(
                           width: 36,
                           height: 36,
-                          decoration: BoxDecoration(color: color.withValues(alpha: 0.12), shape: BoxShape.circle),
+                          decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.12),
+                              shape: BoxShape.circle),
                           child: Icon(icon, size: 18, color: color),
                         ),
                         const SizedBox(width: 12),
@@ -591,7 +792,9 @@ class _NotificationsSheet extends StatelessWidget {
                                 notif['title'] as String? ?? '',
                                 style: TextStyle(
                                   fontSize: 13.5,
-                                  fontWeight: isRead ? FontWeight.w500 : FontWeight.w700,
+                                  fontWeight: isRead
+                                      ? FontWeight.w500
+                                      : FontWeight.w700,
                                   color: AppColors.textPrimary,
                                 ),
                               ),
@@ -610,7 +813,8 @@ class _NotificationsSheet extends StatelessWidget {
                             width: 9,
                             height: 9,
                             margin: const EdgeInsets.only(top: 4, right: 4),
-                            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                            decoration: BoxDecoration(
+                                color: color, shape: BoxShape.circle),
                           ),
                       ],
                     ),
@@ -618,6 +822,15 @@ class _NotificationsSheet extends StatelessWidget {
                 },
               ),
             ),
+          TextButton.icon(
+            onPressed: () {
+              Navigator.of(context).pop();
+              Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const NotificationsScreen()));
+            },
+            icon: const Icon(Icons.open_in_new_rounded, size: 18),
+            label: const Text('فتح مركز الإشعارات'),
+          ),
         ],
       ),
     );
@@ -631,7 +844,11 @@ class _HeroBadge extends StatelessWidget {
   final String label;
   final IconData icon;
   final Color? color;
-  const _HeroBadge({required this.value, required this.label, required this.icon, this.color});
+  const _HeroBadge(
+      {required this.value,
+      required this.label,
+      required this.icon,
+      this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -647,8 +864,12 @@ class _HeroBadge extends StatelessWidget {
           children: [
             Icon(icon, color: c, size: 20),
             const SizedBox(height: 6),
-            Text(value, style: TextStyle(color: c, fontSize: 18, fontWeight: FontWeight.w800)),
-            Text(label, style: TextStyle(color: c.withValues(alpha: 0.8), fontSize: 10), textAlign: TextAlign.center),
+            Text(value,
+                style: TextStyle(
+                    color: c, fontSize: 18, fontWeight: FontWeight.w800)),
+            Text(label,
+                style: TextStyle(color: c.withValues(alpha: 0.8), fontSize: 10),
+                textAlign: TextAlign.center),
           ],
         ),
       ),
@@ -663,7 +884,11 @@ class _ActionTile extends StatelessWidget {
   final String label;
   final Color color;
   final VoidCallback onTap;
-  const _ActionTile({required this.icon, required this.label, required this.color, required this.onTap});
+  const _ActionTile(
+      {required this.icon,
+      required this.label,
+      required this.color,
+      required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -680,7 +905,8 @@ class _ActionTile extends StatelessWidget {
           child: Column(
             children: [
               Container(
-                width: 38, height: 38,
+                width: 38,
+                height: 38,
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
@@ -688,7 +914,12 @@ class _ActionTile extends StatelessWidget {
                 child: Icon(icon, color: color, size: 20),
               ),
               const SizedBox(height: 7),
-              Text(label, style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textPrimary), textAlign: TextAlign.center),
+              Text(label,
+                  style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary),
+                  textAlign: TextAlign.center),
             ],
           ),
         ),
@@ -711,7 +942,9 @@ class _FilterSection extends StatelessWidget {
       children: [
         SizedBox(
           width: 52,
-          child: Text(label, style: AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600)),
+          child: Text(label,
+              style:
+                  AppTextStyles.caption.copyWith(fontWeight: FontWeight.w600)),
         ),
         Expanded(
           child: SizedBox(
@@ -734,7 +967,11 @@ class _FilterChip extends StatelessWidget {
   final bool selected;
   final Color? color;
   final VoidCallback onTap;
-  const _FilterChip({required this.label, required this.selected, required this.onTap, this.color});
+  const _FilterChip(
+      {required this.label,
+      required this.selected,
+      required this.onTap,
+      this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -749,11 +986,12 @@ class _FilterChip extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.chip),
           border: Border.all(color: selected ? activeColor : AppColors.border),
         ),
-        child: Text(label, style: TextStyle(
-          color: selected ? Colors.white : AppColors.textPrimary,
-          fontSize: 12,
-          fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
-        )),
+        child: Text(label,
+            style: TextStyle(
+              color: selected ? Colors.white : AppColors.textPrimary,
+              fontSize: 12,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.normal,
+            )),
       ),
     );
   }
@@ -794,13 +1032,18 @@ class _StudentCard extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              width: 44, height: 44,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: AppColors.navy.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Center(
-                child: Text(initials, style: const TextStyle(color: AppColors.navy, fontSize: 17, fontWeight: FontWeight.w800)),
+                child: Text(initials,
+                    style: const TextStyle(
+                        color: AppColors.navy,
+                        fontSize: 17,
+                        fontWeight: FontWeight.w800)),
               ),
             ),
             const SizedBox(width: 12),
@@ -811,17 +1054,25 @@ class _StudentCard extends StatelessWidget {
                   Text(name, style: AppTextStyles.cardTitle),
                   if (subtitle.isNotEmpty) ...[
                     const SizedBox(height: 2),
-                    Text(subtitle, style: AppTextStyles.caption, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    Text(subtitle,
+                        style: AppTextStyles.caption,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis),
                   ],
                   if (stage != null) ...[
                     const SizedBox(height: 4),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 2),
                       decoration: BoxDecoration(
                         color: AppColors.info.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      child: Text(stage!, style: const TextStyle(fontSize: 11, color: AppColors.info, fontWeight: FontWeight.w600)),
+                      child: Text(stage!,
+                          style: const TextStyle(
+                              fontSize: 11,
+                              color: AppColors.info,
+                              fontWeight: FontWeight.w600)),
                     ),
                   ],
                 ],
@@ -833,7 +1084,8 @@ class _StudentCard extends StatelessWidget {
               children: [
                 StatusBadge(label: statusLabel, color: statusColor),
                 const SizedBox(height: 6),
-                const Icon(Icons.chevron_left_rounded, size: 18, color: AppColors.textSecondary),
+                const Icon(Icons.chevron_left_rounded,
+                    size: 18, color: AppColors.textSecondary),
               ],
             ),
           ],
@@ -874,17 +1126,26 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
 
   @override
   void dispose() {
-    _name.dispose(); _email.dispose(); _phone.dispose();
-    _university.dispose(); _program.dispose(); _country.dispose();
+    _name.dispose();
+    _email.dispose();
+    _phone.dispose();
+    _university.dispose();
+    _program.dispose();
+    _country.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
-    if (_name.text.trim().isEmpty || _email.text.trim().isEmpty || _phone.text.trim().isEmpty) {
+    if (_name.text.trim().isEmpty ||
+        _email.text.trim().isEmpty ||
+        _phone.text.trim().isEmpty) {
       setState(() => _error = 'الاسم والبريد ورقم الهاتف مطلوبين');
       return;
     }
-    setState(() { _saving = true; _error = null; });
+    setState(() {
+      _saving = true;
+      _error = null;
+    });
     try {
       final name = _name.text.trim();
       await AgentRepository.instance.createStudent(
@@ -897,14 +1158,20 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
         applicationStage: _stage,
       );
       if (mounted) Navigator.of(context).pop({'name': name});
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/agent_dashboard_screen.dart:898');
-      if (mounted) setState(() => _error = 'تعذر إضافة الطالب، تأكد من البيانات وحاول مرة أخرى.');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/agent_dashboard_screen.dart:898');
+      if (mounted) {
+        setState(() =>
+            _error = 'تعذر إضافة الطالب، تأكد من البيانات وحاول مرة أخرى.');
+      }
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
-  Widget _field(String label, TextEditingController controller, {TextInputType? type, bool required = false}) {
+  Widget _field(String label, TextEditingController controller,
+      {TextInputType? type, bool required = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -914,7 +1181,8 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
             children: [
               Text(label, style: AppTextStyles.caption),
               if (required)
-                const Text(' *', style: TextStyle(color: AppColors.danger, fontSize: 12)),
+                const Text(' *',
+                    style: TextStyle(color: AppColors.danger, fontSize: 12)),
             ],
           ),
           const SizedBox(height: 6),
@@ -929,7 +1197,8 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
                 textAlign: TextAlign.right,
                 decoration: const InputDecoration(
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 12, horizontal: 14))),
+                    contentPadding:
+                        EdgeInsets.symmetric(vertical: 12, horizontal: 14))),
           ),
         ],
       ),
@@ -952,24 +1221,29 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
               decoration: BoxDecoration(
                 color: AppColors.info.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.info.withValues(alpha: 0.2)),
+                border:
+                    Border.all(color: AppColors.info.withValues(alpha: 0.2)),
               ),
               child: const Row(
                 children: [
-                  Icon(Icons.info_outline_rounded, color: AppColors.info, size: 18),
+                  Icon(Icons.info_outline_rounded,
+                      color: AppColors.info, size: 18),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'بعد الإضافة سيكون الطالب في انتظار مراجعة فريق Study Birds قبل البدء باستعراض التقديم.',
-                      style: TextStyle(fontSize: 12, color: AppColors.info, height: 1.5),
+                      'بعد الإضافة سيكون الطالب في انتظار مراجعة فريق COVEY قبل البدء باستعراض التقديم.',
+                      style: TextStyle(
+                          fontSize: 12, color: AppColors.info, height: 1.5),
                     ),
                   ),
                 ],
               ),
             ),
             _field('الاسم الكامل', _name, required: true),
-            _field('البريد الإلكتروني', _email, type: TextInputType.emailAddress, required: true),
-            _field('رقم الهاتف', _phone, type: TextInputType.phone, required: true),
+            _field('البريد الإلكتروني', _email,
+                type: TextInputType.emailAddress, required: true),
+            _field('رقم الهاتف', _phone,
+                type: TextInputType.phone, required: true),
             _field('بلد الدراسة', _country),
             _field('الجامعة المطلوبة', _university),
             _field('البرنامج المطلوب', _program),
@@ -979,7 +1253,8 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('مرحلة التقديم الحالية', style: AppTextStyles.caption),
+                  const Text('مرحلة التقديم الحالية',
+                      style: AppTextStyles.caption),
                   const SizedBox(height: 8),
                   Wrap(
                     spacing: 8,
@@ -989,17 +1264,22 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
                       return GestureDetector(
                         onTap: () => setState(() => _stage = opt.key),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 7),
                           decoration: BoxDecoration(
                             color: sel ? AppColors.info : Colors.white,
                             borderRadius: BorderRadius.circular(AppRadius.chip),
-                            border: Border.all(color: sel ? AppColors.info : AppColors.border),
+                            border: Border.all(
+                                color: sel ? AppColors.info : AppColors.border),
                           ),
-                          child: Text(opt.label, style: TextStyle(
-                            color: sel ? Colors.white : AppColors.textPrimary,
-                            fontSize: 12.5,
-                            fontWeight: sel ? FontWeight.w700 : FontWeight.normal,
-                          )),
+                          child: Text(opt.label,
+                              style: TextStyle(
+                                color:
+                                    sel ? Colors.white : AppColors.textPrimary,
+                                fontSize: 12.5,
+                                fontWeight:
+                                    sel ? FontWeight.w700 : FontWeight.normal,
+                              )),
                         ),
                       );
                     }).toList(),
@@ -1016,7 +1296,8 @@ class _AddAgentStudentScreenState extends State<AddAgentStudentScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.error_outline_rounded, color: AppColors.danger, size: 16),
+                    const Icon(Icons.error_outline_rounded,
+                        color: AppColors.danger, size: 16),
                     const SizedBox(width: 8),
                     InlineNotice(_error!, error: true),
                   ],

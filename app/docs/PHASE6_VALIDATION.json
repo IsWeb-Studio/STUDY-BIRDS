@@ -1,0 +1,333 @@
+{
+  "date": "2026-10-21",
+  "phase": 6,
+  "status": "LOCAL_CONFIGURATION_TESTED_DEVICE_QA_BLOCKED_EXTERNAL_RESOURCES",
+  "checkpoint": {
+    "path": ".git/phase6-20261021",
+    "sourceFiles": 1731,
+    "backupHashesVerified": true,
+    "unchangedExistingFiles": 1723
+  },
+  "scope": {
+    "deploymentApp": "D:/work/studybirds_session_release/app",
+    "authoritativeAppSourceUnchanged": true,
+    "backendSourceUnchanged": true,
+    "websiteSourceUnchanged": true,
+    "existingEdits": [
+      {
+        "path": "D:\\work\\studybirds_session_release\\app\\lib\\core\\network\\api_client.dart",
+        "before": "9e4dfde02a1a99ee7674d7e94aa96a15d85625ab72590eebb7a67904590a2903",
+        "after": "e6cd4150d2c44a6a559a561f5bd3e9de2adeef4fa2f07caee41e44c9cc1ae425"
+      },
+      {
+        "path": "D:\\work\\studybirds_session_release\\app\\lib\\core\\services\\analytics_service.dart",
+        "before": "adc2f54b327417e178299e5083e26c30c8d5bafe48e408c42ed6529ed6e0e8f5",
+        "after": "a80565bcd581a848d5ec5f13dbe12e5ed625a1295ad19d4164dd3bbeb06be7b2"
+      },
+      {
+        "path": "D:\\work\\studybirds_session_release\\app\\lib\\core\\services\\apple_sign_in_service.dart",
+        "before": "665d36f782fc486c87147aea497cf63d5b2afbe3c3d2312089a5e8ea24b7b835",
+        "after": "0b92ec8574fca39bf9efa781e3e9e1b82d5a43f303dd1725439a8322b8714ae3"
+      },
+      {
+        "path": "D:\\work\\studybirds_session_release\\app\\lib\\core\\services\\currency_service.dart",
+        "before": "1320ea992302d45cc78e453dcf8084eac6564d24ffd0d4e1f8c0c672be9b20fb",
+        "after": "ba154322c13f0fcc2d21f950837a02f34addc5b0f5f54707b3f33bc8c2f42de2"
+      },
+      {
+        "path": "D:\\work\\studybirds_session_release\\app\\lib\\core\\services\\google_sign_in_service.dart",
+        "before": "84e2724c6f6f988062fd11d5db26ef72070956051eaac86a64be92dd42bc519c",
+        "after": "c9d17d1ab843802fbdd32eee2323f79ec075237d8457017ff6a35203eeb71e8e"
+      },
+      {
+        "path": "D:\\work\\studybirds_session_release\\app\\lib\\core\\services\\push_notification_service.dart",
+        "before": "aa94e09c87c0d0aedc115b640c7211e6a0b57a08c0367232e3314d7851f420fc",
+        "after": "cd09acf8978baafef206a5121027b0a1b73bc1164c1a237573d747af466380b0"
+      },
+      {
+        "path": "D:\\work\\studybirds_session_release\\app\\lib\\core\\utils\\document_access.dart",
+        "before": "4207bacba6cb3ed6a76e5f105197f2afe08bd93d4210251a8b07f2aa018498be",
+        "after": "b9a539048433aaa5606d0b257bf28df00de914a72e9a776cedc11a10a6423d2c"
+      },
+      {
+        "path": "D:\\work\\studybirds_session_release\\app\\lib\\main.dart",
+        "before": "d56f58cf4c2f6d6037c807ee16d80664c40b7cec4c3ce3774b00a2f63f106a93",
+        "after": "aa4a5887c4b46be4a7c6046e754097138d3745f6a8b5753937a3de309563ae0f"
+      }
+    ],
+    "newSourceFiles": [
+      {
+        "path": "D:/work/studybirds_session_release/app/lib/core/config/qa_configuration.dart",
+        "sha256": "019853188530b6bcef2f1818ab19bd5f9a1ef0938c92ea7961681f8080b77c65"
+      },
+      {
+        "path": "D:/work/studybirds_session_release/app/lib/core/network/qa_http_client.dart",
+        "sha256": "e98cd9e24064f9a29e079dcb9259e1f0f9ae249d6754c5190468e8027b7f877f"
+      },
+      {
+        "path": "D:/work/studybirds_session_release/app/test/qa_configuration_test.dart",
+        "sha256": "a09c28eb1aba565fc25a71363b7feb405a21809023eaba43359b6aa8b7b8b3a9"
+      },
+      {
+        "path": "D:/work/studybirds_session_release/app/test/qa_startup_test.dart",
+        "sha256": "31fbf1feef2dc66c4ef187d092d09e25110a80482e7f91e92d743c2c8aa28b53"
+      },
+      {
+        "path": "D:/work/studybirds_session_release/app/test/qa_providers_test.dart",
+        "sha256": "3f9fd76f3c3fcd925753d2a7134940be2ad437f5b4c1a601cc6f32bbabc3abe0"
+      },
+      {
+        "path": "D:/work/studybirds_session_release/app/test/qa_api_integration_test.dart",
+        "sha256": "e442ba3465dca55f00e1b1e590db79031e7241e54a81026c208ff6dd508dcfd5"
+      }
+    ],
+    "deliverables": [
+      "docs/PHASE6_FINAL_REPORT.md",
+      "docs/PHASE6_QA_CONFIGURATION.md",
+      "docs/PHASE6_VALIDATION.json",
+      "docs/ANDROID_REAL_DEVICE_TEST_CHECKLIST.md"
+    ]
+  },
+  "configuration": {
+    "environmentDefine": "APP_ENV",
+    "default": "production",
+    "qaApiDefine": "QA_API_BASE_URL",
+    "verificationAttestation": "QA_RESOURCES_VERIFIED",
+    "unknownModeBlocked": true,
+    "productionFallbackInQa": false,
+    "apiSameOriginOnly": true,
+    "apiRedirectsDisabledInQa": true,
+    "externalProvidersDisabledInQa": [
+      "Google",
+      "Apple",
+      "OneSignal",
+      "Sentry",
+      "PostHog",
+      "Frankfurter"
+    ],
+    "deviceWideFirewall": false,
+    "qaResourcesVerified": false
+  },
+  "validation": {
+    "tests": [
+      {
+        "log": "acceptance-default.log",
+        "passed": 44,
+        "failed": 0,
+        "exit": 0
+      },
+      {
+        "log": "acceptance-qa.log",
+        "passed": 25,
+        "failed": 0,
+        "exit": 0
+      },
+      {
+        "log": "acceptance-api.log",
+        "passed": 3,
+        "failed": 0,
+        "exit": 0
+      },
+      {
+        "log": "unknown-env-tests.log",
+        "passed": 1,
+        "failed": 0,
+        "exit": 0
+      }
+    ],
+    "executedTestCases": 73,
+    "uniqueScenarioCountClaimed": false,
+    "flutterAnalyze": {
+      "exit": 1,
+      "info": 275,
+      "warning": 0,
+      "error": 0,
+      "log": "acceptance-analyze.log",
+      "clean": false
+    },
+    "initialFailure": {
+      "passed": 22,
+      "loadFailures": 6,
+      "log": "default-tests.log",
+      "resolved": true,
+      "causes": [
+        "baseUrl const compatibility",
+        "await of void main in startup test"
+      ]
+    },
+    "backendWebsiteSuitesRun": false,
+    "reason": "No backend/website or shared contract changes"
+  },
+  "disk": {
+    "initialFreeBytes": 6780030976,
+    "finalFreeBytes": 6342680576,
+    "planningBuildMarginBytes": 6442450944,
+    "meetsPlanningMargin": false,
+    "cleanupPerformed": false
+  },
+  "apk": {
+    "qaApkBuilt": false,
+    "buildAttempted": false,
+    "reason": "External QA resources not verified; final D space below planning margin",
+    "existingArtifact": "D:/work/studybirds_session_release/app/build/app/outputs/flutter-apk/app-debug.apk",
+    "bytes": 320844144,
+    "sha256": "9638b98f111bf25b4079555f4a48029d40a4892dc12f48f407b3894b61b9ce23",
+    "unchanged": true
+  },
+  "integrity": {
+    "git": [
+      {
+        "root": "D:\\work\\studybirds_app\\study_birds_app-main",
+        "head": "3e31e19c5343170056e6d7559c59bfb891f2c624",
+        "status": [
+          " M README.md",
+          " M lib/core/services/notification_scheduler.dart",
+          " M lib/core/widgets/app_components.dart",
+          " M lib/screens/applications_documents_payments/documents_screens.dart",
+          " M lib/screens/home_journey/notifications_screen.dart",
+          " M lib/screens/home_journey/student_banner_carousel.dart",
+          " M lib/screens/profile_account/notification_preferences_screen.dart",
+          " M lib/screens/roles/employee_dashboard_screen.dart",
+          " M lib/screens/stories/story_viewers_screen.dart",
+          " M test/chat_controls_test.dart",
+          " M test/journey_requirements_test.dart",
+          " M test/post_admission_journey_test.dart",
+          " M test/story_viewers_test.dart",
+          " M tool/check_error_policy.dart",
+          "?? .vscode/StudyBirds.code-workspace",
+          "?? docs/ANDROID_DEVICE_QA_PLAN.md",
+          "?? docs/ANDROID_REAL_DEVICE_TEST_CHECKLIST.md",
+          "?? docs/APPROVED_DEPLOYMENT_PARITY_20261021.md",
+          "?? docs/ARCHITECTURE.md",
+          "?? docs/AUDIT_VALIDATION.json",
+          "?? docs/BACKEND_ENVIRONMENT_NAMES.json",
+          "?? docs/DEPLOYMENT_PARITY_REPORT.md",
+          "?? docs/DEVELOPMENT_SETUP.md",
+          "?? docs/DUPLICATE_INVENTORY.json",
+          "?? docs/DUPLICATE_INVENTORY.md",
+          "?? docs/FEATURE_PARITY_REPORT.md",
+          "?? docs/FINAL_CLEANUP_APPROVAL.md",
+          "?? docs/FLUTTER_ANALYSIS_REMEDIATION.md",
+          "?? docs/MAINTENANCE_GUIDE.md",
+          "?? docs/PHASE2_FINAL_REPORT.md",
+          "?? docs/PHASE2_SECURITY_REVIEW.md",
+          "?? docs/PHASE2_VALIDATION.json",
+          "?? docs/PHASE3_DEPENDENCY_PLAN.md",
+          "?? docs/PHASE3_FINAL_REPORT.md",
+          "?? docs/PHASE3_VALIDATION.json",
+          "?? docs/PHASE4_FINAL_REPORT.md",
+          "?? docs/PHASE4_VALIDATION.json",
+          "?? docs/PHASE5_CLEANUP_APPROVAL.md",
+          "?? docs/PHASE5_FINAL_REPORT.md",
+          "?? docs/PHASE5_REMAINING_CLEANUP_REVIEW.md",
+          "?? docs/PHASE6_FINAL_REPORT.md",
+          "?? docs/PHASE6_QA_CONFIGURATION.md",
+          "?? docs/PHASE6_VALIDATION.json",
+          "?? docs/PROJECT_AUDIT_REPORT.md",
+          "?? docs/REACT_ROUTER_UPGRADE_20261021.md",
+          "?? docs/REACT_ROUTER_VALIDATION.json",
+          "?? docs/RELEASE_READINESS_CHECKLIST.md",
+          "?? docs/STABILIZATION_20261021.md",
+          "?? docs/UPDATED_RELEASE_READINESS.md",
+          "?? docs/WORKSPACE_WORKFLOW.md",
+          "?? docs/proposals/",
+          "?? lib/core/services/notification_preferences_store.dart",
+          "?? test/notification_preferences_test.dart"
+        ],
+        "preexistingStatusPreserved": true,
+        "indexUnchanged": true,
+        "worktreesMatchPriorVerifiedState": true,
+        "diffCheckExit": 0
+      },
+      {
+        "root": "D:/work/studybirds_session_release",
+        "head": "e9060536e8dc7a70150da9c42d6dfac901713553",
+        "status": [
+          " M app/integration/services_preview_test.dart",
+          " M app/lib/core/network/api_client.dart",
+          " M app/lib/core/repositories/stories_repository.dart",
+          " M app/lib/core/services/analytics_service.dart",
+          " M app/lib/core/services/apple_sign_in_service.dart",
+          " M app/lib/core/services/currency_service.dart",
+          " M app/lib/core/services/google_sign_in_service.dart",
+          " M app/lib/core/services/notification_scheduler.dart",
+          " M app/lib/core/services/push_notification_service.dart",
+          " M app/lib/core/utils/document_access.dart",
+          " M app/lib/core/widgets/app_components.dart",
+          " M app/lib/main.dart",
+          " M app/lib/screens/community/student_community_hub.dart",
+          " M app/lib/screens/profile_account/notification_preferences_screen.dart",
+          " M app/lib/screens/stories/story_viewer.dart",
+          " M app/lib/screens/stories/story_viewers_screen.dart",
+          " M app/lib/screens/stories/student_stories.dart",
+          " M app/test/app_update_test.dart",
+          " M app/test/story_viewer_test.dart",
+          " M app/test/story_viewers_test.dart",
+          " M client/package-lock.json",
+          " M client/package.json",
+          " M client/scripts/generate-seo-files.mjs",
+          " M server/package-lock.json",
+          " M server/package.json",
+          " M server/src/controllers/adminAgentController.js",
+          " M server/src/controllers/contentController.js",
+          " M server/src/models/Notification.js",
+          " M server/src/models/User.js",
+          " M server/src/routes/alumniRoutes.js",
+          " M server/src/routes/mobileSecurityRoutes.js",
+          " M server/src/routes/scholarshipRoutes.js",
+          " M server/src/seed/seed.js",
+          " M server/src/utils/cashMisrSms.js",
+          " M server/src/utils/pushNotifications.js",
+          " M server/src/utils/supportNotifications.js",
+          " M server/src/utils/whatsappOtp.js",
+          " M server/tests/auditFixes.test.js",
+          " M server/tests/crmIntegration.test.js",
+          " M server/tests/privateDocumentAccess.test.js",
+          "?? app/lib/core/config/qa_configuration.dart",
+          "?? app/lib/core/network/qa_http_client.dart",
+          "?? app/lib/core/services/notification_preferences_store.dart",
+          "?? app/test/notification_preferences_test.dart",
+          "?? app/test/qa_api_integration_test.dart",
+          "?? app/test/qa_configuration_test.dart",
+          "?? app/test/qa_providers_test.dart",
+          "?? app/test/qa_startup_test.dart",
+          "?? app/test/story_deletion_test.dart",
+          "?? client/src/lib/routerMigration.test.tsx",
+          "?? client/src/lib/seoBuild.test.ts",
+          "?? server/scripts/run-tests.cjs",
+          "?? server/src/utils/jwtSecret.js",
+          "?? server/src/utils/notificationPreferences.js",
+          "?? server/tests/notificationPreferences.test.js",
+          "?? server/tests/recoveredParity.test.js"
+        ],
+        "preexistingStatusPreserved": true,
+        "indexUnchanged": true,
+        "worktreesMatchPriorVerifiedState": true,
+        "diffCheckExit": 0
+      }
+    ],
+    "privateConfigHashesVerified": 6,
+    "signingChanges": false,
+    "dependencyManifestChanges": false,
+    "checkpointsPreserved": true
+  },
+  "blockers": [
+    "Owner-verified isolated API/database/JWT/storage/accounts/mail sink",
+    "Fresh isolated Android profile and device/server egress allowlist; native media/browser paths need verification",
+    "Separate provider setup/support for OAuth/push/telemetry; currently disabled",
+    "Isolated storage/download design: current QA guard blocks external Cloudinary URLs",
+    "Recheck disk budget and preserve old APK before future build"
+  ],
+  "safety": {
+    "deleted": false,
+    "flutterClean": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "reset": false,
+    "stashed": false,
+    "productionAccess": false,
+    "realDeviceTested": false,
+    "productionReadinessClaimed": false
+  }
+}

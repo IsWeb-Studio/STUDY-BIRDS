@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 import 'deep_link_service.dart';
 import 'push_notification_service.dart';
+import 'auth_session.dart';
+import 'notification_preferences_store.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -107,6 +109,29 @@ class NotificationScheduler {
     await _plugin.cancelAll();
   }
 
+  static String? categoryForPath(String path) =>
+      switch (Uri.tryParse(path)?.path) {
+        '/student/consultations' => 'consultations',
+        '/student/payments' => 'payments',
+        '/student/documents' => 'documents',
+        _ => null,
+      };
+
+  Future<void> cancelCategory(String category, {required String owner}) async {
+    if (!_ready) return;
+    final token = AuthSession.instance.token;
+    final pending = await _plugin.pendingNotificationRequests();
+    for (final request in pending) {
+      if (AuthSession.instance.currentUser?.id != owner ||
+          AuthSession.instance.token != token) {
+        return;
+      }
+      if (categoryForPath(request.payload ?? '') == category) {
+        await _plugin.cancel(request.id);
+      }
+    }
+  }
+
   // ── internal ──────────────────────────────────────────────────────────────
 
   Future<void> _schedule(
@@ -117,12 +142,24 @@ class NotificationScheduler {
     String path,
   ) async {
     if (!_ready || !PushNotificationService.instance.deliveryAllowed) return;
+    final owner = AuthSession.instance.currentUser?.id;
+    final token = AuthSession.instance.token;
+    if (owner == null || token == null) return;
+    final category = categoryForPath(path);
+    if (category != null) {
+      final values = await NotificationPreferencesStore.read(owner);
+      if (values[category] == false) return;
+    }
+    if (AuthSession.instance.currentUser?.id != owner ||
+        AuthSession.instance.token != token) {
+      return;
+    }
     final when = tz.TZDateTime.from(at, tz.local);
     if (when.isBefore(tz.TZDateTime.now(tz.local))) return;
 
     const androidDetails = AndroidNotificationDetails(
       'sb_reminders_sound_v2',
-      'Study Birds Reminders',
+      'COVEY Reminders',
       channelDescription: 'تذكيرات المواعيد والمدفوعات والمستندات',
       importance: Importance.high,
       priority: Priority.high,

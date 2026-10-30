@@ -76,6 +76,7 @@ void main() {
       expect(find.text('إعلان سكن'), findsOneWidget);
       expect(find.textContaining('إعلان أو محتوى متكرر'), findsOneWidget);
 
+      await tester.ensureVisible(find.text('الموقوفون (1)'));
       await tester.tap(find.text('الموقوفون (1)'));
       await tester.pumpAndSettle();
       expect(find.textContaining('حتى رفعه يدويًا'), findsOneWidget);
@@ -108,6 +109,23 @@ void main() {
                   }
                 ]);
               }
+              if (r.url.path.endsWith('/community-posts')) {
+                return reply([
+                  {
+                    '_id': 'p1',
+                    'title': 'إعلان سكن',
+                    'status': 'published',
+                    'author': author,
+                    'openReports': 1,
+                  }
+                ]);
+              }
+              if (r.url.path.endsWith('/community-moderation-log')) {
+                return reply([]);
+              }
+              if (r.url.path.endsWith('/community-settings')) {
+                return reply({'blockedTerms': []});
+              }
               return reply(lifted
                   ? []
                   : [
@@ -118,6 +136,60 @@ void main() {
                         'reason': 'إساءة متكررة',
                       }
                     ]);
+            }));
+  });
+
+  testWidgets('community admin can inspect posts and save blocked terms',
+      (tester) async {
+    phone(tester);
+    final writes = <String>[];
+    await http.runWithClient(() async {
+      await tester
+          .pumpWidget(const MaterialApp(home: EmployeeCommunityScreen()));
+      await tester.pumpAndSettle();
+
+      await tester.ensureVisible(find.text('المنشورات (1)'));
+      await tester.tap(find.text('المنشورات (1)'));
+      await tester.pumpAndSettle();
+      expect(find.text('إعلان سكن'), findsOneWidget);
+
+      await tester.ensureVisible(find.text('الكلمات المحظورة'));
+      await tester.tap(find.text('الكلمات المحظورة'));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'سبام\nbuy now');
+      await tester
+          .tap(find.widgetWithText(FilledButton, 'حفظ الكلمات المحظورة'));
+      await tester.pumpAndSettle();
+
+      expect(writes, [
+        'PUT /api/admin/community-settings {"blockedTerms":["سبام","buy now"]}'
+      ]);
+      expect(find.text('تم حفظ الكلمات المحظورة.'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+        () => MockClient((r) async {
+              if (r.method == 'PUT') {
+                writes.add('${r.method} ${r.url.path} ${r.body}');
+                return reply({
+                  'blockedTerms': ['سبام', 'buy now']
+                });
+              }
+              if (r.url.path.endsWith('/community-reports')) return reply([]);
+              if (r.url.path.endsWith('/community-posts')) {
+                return reply([
+                  {
+                    '_id': 'p1',
+                    'title': 'إعلان سكن',
+                    'status': 'published',
+                    'author': author,
+                    'openReports': 0,
+                  }
+                ]);
+              }
+              if (r.url.path.endsWith('/community-settings')) {
+                return reply({'blockedTerms': []});
+              }
+              return reply([]);
             }));
   });
 

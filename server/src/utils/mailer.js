@@ -5,7 +5,7 @@ const { renderBrandedEmail } = require('./brandedEmail');
 // ─── Brevo REST API (primary) ────────────────────────────────────────────────
 const BREVO_API_KEY      = String(process.env.BREVO_API_KEY      || "").trim();
 const BREVO_SENDER_EMAIL = String(process.env.BREVO_SENDER_EMAIL || process.env.SMTP_FROM || "").trim();
-const BREVO_SENDER_NAME  = String(process.env.BREVO_SENDER_NAME  || "Study Birds").trim();
+const BREVO_SENDER_NAME  = String(process.env.BREVO_SENDER_NAME  || "COVEY").trim();
 
 // ─── SMTP fallback ────────────────────────────────────────────────────────────
 const SMTP_HOST = String(process.env.SMTP_HOST || "").trim();
@@ -87,7 +87,7 @@ const sendContactEmail = async ({ to, replyTo, subject, text, html, emailContent
     return _sendWithBrevo({ to, replyTo, subject, text, html });
   }
   return _getSmtpTransporter().sendMail({
-    from: SMTP_FROM.includes('<') ? SMTP_FROM : { name: 'Study Birds', address: SMTP_FROM },
+    from: SMTP_FROM.includes('<') ? SMTP_FROM : { name: 'COVEY', address: SMTP_FROM },
     to, replyTo, subject, text, html,
   });
 };

@@ -9,28 +9,30 @@ void main() {
     await tester.pumpWidget(MaterialApp(
         home: Directionality(
             textDirection: TextDirection.rtl,
-            child: JourneyRequirementsView(onRefresh: () async {}, journeys: [
-              {
-                'title': 'الطب',
-                'followUp': {
-                  'advisor': {'name': 'أحمد'},
-                  'dueAt': '2020-01-01T12:00:00Z',
-                  'overdue': true
-                },
-                'stages': [
+            child: JourneyRequirementsView(
+                onRefresh: () async {},
+                journeys: const [
                   {
-                    'titleAr': 'المستندات',
-                    'status': 'waiting',
-                    'descriptionAr': 'بانتظار اعتماد الفريق'
+                    'title': 'الطب',
+                    'followUp': {
+                      'advisor': {'name': 'أحمد'},
+                      'dueAt': '2020-01-01T12:00:00Z',
+                      'overdue': true
+                    },
+                    'stages': [
+                      {
+                        'titleAr': 'المستندات',
+                        'status': 'waiting',
+                        'descriptionAr': 'بانتظار اعتماد الفريق'
+                      },
+                      {
+                        'titleAr': 'الدفع',
+                        'status': 'overdue',
+                        'descriptionAr': 'فاتورة متأخرة'
+                      },
+                    ]
                   },
-                  {
-                    'titleAr': 'الدفع',
-                    'status': 'overdue',
-                    'descriptionAr': 'فاتورة متأخرة'
-                  },
-                ]
-              },
-            ]))));
+                ]))));
     expect(find.text('بانتظار المراجعة'), findsOneWidget);
     expect(find.text('متأخرة'), findsOneWidget);
     // The only percentage allowed is the one derived from real stage counts
@@ -44,7 +46,8 @@ void main() {
   testWidgets('empty journey does not claim an application exists',
       (tester) async {
     await tester.pumpWidget(MaterialApp(
-        home: JourneyRequirementsView(journeys: [], onRefresh: () async {})));
+        home: JourneyRequirementsView(
+            journeys: const [], onRefresh: () async {})));
     expect(find.text('لم تبدأ رحلة تقديم بعد'), findsOneWidget);
   });
 }

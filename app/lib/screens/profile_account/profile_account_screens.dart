@@ -1,8 +1,10 @@
+import 'my_streak.dart';
 import '../../core/widgets/current_user_avatar.dart';
 import '../../core/widgets/gallery_access.dart';
 import '../../core/services/locale_controller.dart';
 import '../../core/widgets/language_tile.dart';
 import '../../core/utils/json_safe.dart';
+import '../ai/assistant_help_button.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
@@ -20,6 +22,7 @@ import '../../core/repositories/student_repository.dart';
 import 'security_settings_screen.dart';
 import 'edit_profile_screen.dart';
 import 'delete_account_screen.dart';
+import '../../core/widgets/privacy_links.dart';
 import '../services_support/support_team_ai_screens.dart'
     show SupportCenterScreen;
 import '../universities_programs_countries/explore_hub_screen.dart';
@@ -97,7 +100,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final source =
         choice == PickSource.camera ? ImageSource.camera : ImageSource.gallery;
     if (source == ImageSource.gallery &&
-        (!await confirmGalleryAccess(context) || !mounted)) return;
+        (!await confirmGalleryAccess(context) || !mounted)) {
+      return;
+    }
     final XFile? img;
     try {
       img = await ImagePicker().pickImage(source: source, imageQuality: 70);
@@ -132,7 +137,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (ownerId != null) await CurrentUserAvatar.save(ownerId, bytes);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text('تم رفع الصورة الشخصية بنجاح ✓')),
+          AppSnackBar(content: const Text('تم رفع الصورة الشخصية بنجاح ✓')),
         );
       }
     } catch (e) {
@@ -175,7 +180,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         IconButton(
           tooltip: 'الإعدادات',
-          icon: const Icon(Icons.settings_outlined, color: Colors.white),
+          icon: const Icon(Icons.settings_outlined, color: AppColors.navy),
           onPressed: () => Navigator.of(context)
               .push(MaterialPageRoute(builder: (_) => const SettingsScreen())),
         ),
@@ -291,12 +296,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                     width: 22,
                                     height: 22,
                                     decoration: const BoxDecoration(
-                                      color: AppColors.orange,
+                                      color: AppColors.green,
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Icon(
                                       Icons.camera_alt_rounded,
-                                      color: Colors.white,
+                                      color: AppColors.navy,
                                       size: 12,
                                     ),
                                   ),
@@ -324,7 +329,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             child: const Text(
                               'تغيير الصورة الشخصية',
                               style: TextStyle(
-                                color: AppColors.orange,
+                                color: AppColors.greenInk,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -364,6 +369,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
 
         if (user?.role == UserRole.student)
+          MyStreakCard(
+              key: ValueKey('my-streak-${user?.id}'),
+              isActive: widget.isActive),
+
+        if (user?.role == UserRole.student)
           AppCard(
               child: ListTile(
             contentPadding: EdgeInsets.zero,
@@ -394,7 +404,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   Text(
                     '${(completion * 100).round()}%',
                     style: const TextStyle(
-                      color: AppColors.orange,
+                      color: AppColors.greenInk,
                       fontWeight: FontWeight.w800,
                     ),
                   ),
@@ -407,7 +417,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   value: completion,
                   minHeight: 8,
                   backgroundColor: AppColors.border,
-                  valueColor: const AlwaysStoppedAnimation(AppColors.orange),
+                  valueColor: const AlwaysStoppedAnimation(AppColors.green),
                 ),
               ),
               if (missingLabels.isNotEmpty) ...[
@@ -460,7 +470,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         AppCard(
           onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ReferralProgramScreen())),
-          child: Row(children: const [
+          child: const Row(children: [
             Icon(Icons.card_giftcard_rounded, color: AppColors.navy),
             SizedBox(width: 12),
             Expanded(
@@ -472,7 +482,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         AppCard(
           onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const StudentRewardsScreen())),
-          child: Row(children: const [
+          child: const Row(children: [
             Icon(Icons.workspace_premium_rounded, color: AppColors.navy),
             SizedBox(width: 12),
             Expanded(child: Text('مكافآتي', style: AppTextStyles.cardTitle)),
@@ -483,7 +493,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         AppCard(
           onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const StudentWalletScreen())),
-          child: Row(children: const [
+          child: const Row(children: [
             Icon(Icons.account_balance_wallet_rounded, color: AppColors.navy),
             SizedBox(width: 12),
             Expanded(
@@ -496,7 +506,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         AppCard(
           onTap: () => Navigator.of(context)
               .push(MaterialPageRoute(builder: (_) => const MyWalletScreen())),
-          child: Row(children: const [
+          child: const Row(children: [
             Icon(Icons.account_balance_wallet_outlined, color: AppColors.navy),
             SizedBox(width: 12),
             Expanded(
@@ -509,7 +519,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         AppCard(
           onTap: () => Navigator.of(context)
               .push(MaterialPageRoute(builder: (_) => const FavoritesScreen())),
-          child: Row(children: const [
+          child: const Row(children: [
             Icon(Icons.favorite_border_rounded, color: AppColors.navy),
             SizedBox(width: 12),
             Expanded(child: Text('المفضلة', style: AppTextStyles.cardTitle)),
@@ -520,7 +530,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         AppCard(
           onTap: () => Navigator.of(context).push(MaterialPageRoute(
               builder: (_) => const StudentLifeOffersScreen())),
-          child: Row(children: const [
+          child: const Row(children: [
             Icon(Icons.celebration_rounded, color: AppColors.navy),
             SizedBox(width: 12),
             Expanded(
@@ -533,7 +543,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         AppCard(
           onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const AlumniNetworkScreen())),
-          child: Row(children: const [
+          child: const Row(children: [
             Icon(Icons.school_rounded, color: AppColors.navy),
             SizedBox(width: 12),
             Expanded(
@@ -545,7 +555,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         AppCard(
           onTap: () => Navigator.of(context).push(
               MaterialPageRoute(builder: (_) => const ScholarshipsScreen())),
-          child: Row(children: const [
+          child: const Row(children: [
             Icon(Icons.workspace_premium_outlined, color: AppColors.navy),
             SizedBox(width: 12),
             Expanded(
@@ -566,15 +576,17 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: 'الإعدادات',
+      actions: const [AssistantHelpButton(screen: 'settings')],
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
           if (LocaleController.englishEnabled) const LanguageTile(),
+          const PrivacyLinks(),
           AppCard(
             onTap: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const ChangePasswordScreen())),
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Icon(Icons.lock_outline_rounded, color: AppColors.navy),
                 SizedBox(width: 12),
                 Expanded(
@@ -588,8 +600,8 @@ class SettingsScreen extends StatelessWidget {
           AppCard(
             onTap: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const SecuritySettingsScreen())),
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Icon(Icons.shield_outlined, color: AppColors.navy),
                 SizedBox(width: 12),
                 Expanded(child: Text('الأمان', style: AppTextStyles.cardTitle)),
@@ -601,8 +613,8 @@ class SettingsScreen extends StatelessWidget {
           AppCard(
             onTap: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const NotificationPreferencesScreen())),
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Icon(Icons.notifications_none_rounded, color: AppColors.navy),
                 SizedBox(width: 12),
                 Expanded(
@@ -627,8 +639,8 @@ class SettingsScreen extends StatelessWidget {
                 ],
               ),
             ),
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Icon(Icons.language_rounded, color: AppColors.navy),
                 SizedBox(width: 12),
                 Expanded(child: Text('اللغة', style: AppTextStyles.cardTitle)),
@@ -639,8 +651,8 @@ class SettingsScreen extends StatelessWidget {
           AppCard(
             onTap: () => Navigator.of(context).push(MaterialPageRoute(
                 builder: (_) => const CurrencyConverterScreen())),
-            child: Row(
-              children: const [
+            child: const Row(
+              children: [
                 Icon(Icons.currency_exchange_rounded, color: AppColors.navy),
                 SizedBox(width: 12),
                 Expanded(
@@ -709,18 +721,20 @@ class _ReferralProgramScreenState extends State<ReferralProgramScreen> {
       body: FutureBuilder<Map<String, dynamic>?>(
           future: future,
           builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done)
+            if (snapshot.connectionState != ConnectionState.done) {
               return const Center(
                   child:
                       SkeletonBox(width: 200, height: 120, borderRadius: 16));
-            if (snapshot.hasError)
+            }
+            if (snapshot.hasError) {
               return ErrorState(
                   message: 'تعذر تحميل رمز الإحالة',
                   onRetry: () => setState(
                       () => future = StudentRepository.instance.getProfile()));
+            }
             final code =
                 snapshot.data?['referralCode']?.toString().trim() ?? '';
-            if (code.isEmpty)
+            if (code.isEmpty) {
               return EmptyState(
                   icon: Icons.card_giftcard,
                   title: 'لا يوجد رمز إحالة لحسابك',
@@ -728,6 +742,7 @@ class _ReferralProgramScreenState extends State<ReferralProgramScreen> {
                   ctaLabel: 'تواصل مع الدعم',
                   onCta: () => Navigator.of(context).push(MaterialPageRoute(
                       builder: (_) => const SupportCenterScreen())));
+            }
             return Padding(
                 padding: const EdgeInsets.all(24),
                 child: Column(children: [
@@ -737,9 +752,10 @@ class _ReferralProgramScreenState extends State<ReferralProgramScreen> {
                       label: 'نسخ الرمز',
                       onPressed: () async {
                         await Clipboard.setData(ClipboardData(text: code));
-                        if (context.mounted)
+                        if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                              AppSnackBar(content: Text('تم نسخ الرمز')));
+                              AppSnackBar(content: const Text('تم نسخ الرمز')));
+                        }
                       }),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
@@ -747,13 +763,14 @@ class _ReferralProgramScreenState extends State<ReferralProgramScreen> {
                     label: const Text('مشاركة عبر واتساب'),
                     onPressed: () async {
                       final msg = Uri.encodeComponent(
-                          'انضم إلى Study Birds باستخدام رمز الإحالة الخاص بي: $code');
+                          'انضم إلى COVEY باستخدام رمز الإحالة الخاص بي: $code');
                       final uri = Uri.parse('whatsapp://send?text=$msg');
                       if (!await launchUrl(uri,
                           mode: LaunchMode.externalApplication)) {
-                        if (context.mounted)
+                        if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                              AppSnackBar(content: Text('تعذر فتح واتساب')));
+                              AppSnackBar(content: const Text('تعذر فتح واتساب')));
+                        }
                       }
                     },
                     style: OutlinedButton.styleFrom(
@@ -818,15 +835,17 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   Future<void> _remove(String id) async {
     try {
       await StudentRepository.instance.removeFavorite(id);
-      if (mounted)
+      if (mounted) {
         setState(
             () => _favorites.removeWhere((f) => (Json.map(f))['_id'] == id));
+      }
     } catch (swallowedError, swallowedStack) {
       ErrorReporter.swallowed(swallowedError, swallowedStack,
           'screens/profile_account/profile_account_screens.dart:727');
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            AppSnackBar(content: Text('تعذر إزالة العنصر من المفضلة')));
+            AppSnackBar(content: const Text('تعذر إزالة العنصر من المفضلة')));
+      }
     }
   }
 
@@ -914,7 +933,7 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                                 IconButton(
                                   tooltip: 'المفضلة',
                                   icon: const Icon(Icons.favorite_rounded,
-                                      color: AppColors.orange, size: 20),
+                                      color: AppColors.green, size: 20),
                                   onPressed: () =>
                                       _remove(fav['_id'] as String),
                                 ),

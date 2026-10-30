@@ -32,15 +32,15 @@ class AppScaffold extends StatelessWidget {
         backgroundColor: AppColors.background,
         resizeToAvoidBottomInset: true,
         appBar: AppBar(
-          backgroundColor: AppColors.navy,
+          backgroundColor: Colors.white,
           elevation: 0,
           centerTitle: true,
           automaticallyImplyLeading: showBackButton,
-          iconTheme: const IconThemeData(color: Colors.white),
+          iconTheme: const IconThemeData(color: AppColors.navy),
           title: Text(
             title,
             style: const TextStyle(
-              color: Colors.white,
+              color: AppColors.navy,
               fontWeight: FontWeight.w700,
               fontSize: 17,
             ),

@@ -19,7 +19,7 @@ final university = <String, dynamic>{
   '_id': 'u1',
   'name': 'جامعة إسطنبول',
   'city': 'إسطنبول',
-  'country': {'name': 'تركيا'},
+  'country': {'_id': 'turkey', 'name': 'تركيا'},
   'language': 'التركية',
   'isPartnerInstitution': true,
   'tuitionRange': {'min': 2000}
@@ -194,7 +194,7 @@ void main() {
                 scoped = true;
                 data = programs;
               } else if (r.url.path.endsWith('/universities')) {
-                expect(r.url.queryParameters['country'], isNull);
+                expect(r.url.queryParameters['country'], isIn([null, 'turkey']));
                 data = [university];
               } else if (r.url.path.endsWith('/content/countries')) {
                 data = [

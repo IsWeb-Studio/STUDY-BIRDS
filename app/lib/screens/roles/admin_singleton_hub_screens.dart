@@ -178,7 +178,7 @@ class _SingletonEditScreenState extends State<_SingletonEditScreen> {
     try {
       final payload = {for (final f in widget.fields) f.key: _controllers[f.key]!.text.trim()};
       await widget.save(payload);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تم الحفظ بنجاح'), backgroundColor: AppColors.success));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: const Text('تم الحفظ بنجاح'), backgroundColor: AppColors.success));
     } catch (e) {
       if (mounted) setState(() => _error = e is ApiException ? e.message : 'تعذر الحفظ.');
     } finally {

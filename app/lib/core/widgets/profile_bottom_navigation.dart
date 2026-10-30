@@ -2,17 +2,18 @@ import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
 import 'current_user_avatar.dart';
 
-/// Keeps destination IDs stable while placing the account between Explore and
-/// Services. The entire raised avatar is inside the hit-test area.
+/// Shared navigation with stable destination IDs.
 class ProfileBottomNavigation extends StatelessWidget {
   final int currentIndex;
   final List<String> labels;
   final ValueChanged<int> onTap;
+  final List<int>? visibleDestinations;
   const ProfileBottomNavigation(
       {super.key,
       required this.currentIndex,
       required this.labels,
-      required this.onTap});
+      required this.onTap,
+      this.visibleDestinations});
   static const order = [0, 1, 2, 6, 3, 4, 5];
   static const icons = [
     Icons.home_outlined,
@@ -25,6 +26,86 @@ class ProfileBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (visibleDestinations != null) {
+      return DecoratedBox(
+          decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(26)),
+              boxShadow: [
+                BoxShadow(
+                    color: Color(0x12041E4A),
+                    blurRadius: 20,
+                    offset: Offset(0, -4))
+              ]),
+          child: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              child: Row(children: [
+                for (final index in visibleDestinations!)
+                  Expanded(
+                    child: Semantics(
+                      button: true,
+                      selected: currentIndex == index,
+                      label: labels[index],
+                      excludeSemantics: true,
+                      child: InkWell(
+                          key: ValueKey('main-tab-$index'),
+                          onTap: () => onTap(index),
+                          borderRadius: BorderRadius.circular(16),
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(minHeight: 64),
+                            child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 180),
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                padding: const EdgeInsets.symmetric(
+                                    vertical: 8, horizontal: 4),
+                                decoration: BoxDecoration(
+                                    color: currentIndex == index
+                                        ? AppColors.navy
+                                        : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(16)),
+                                child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      AnimatedScale(
+                                          scale:
+                                              currentIndex == index ? 1.08 : 1,
+                                          duration:
+                                              const Duration(milliseconds: 180),
+                                          child: Icon(
+                                              index == 0
+                                                  ? Icons.home_rounded
+                                                  : index == 4
+                                                      ? Icons.forum_rounded
+                                                      : Icons
+                                                          .sports_esports_rounded,
+                                              size: 25,
+                                              color: currentIndex == index
+                                                  ? AppColors.green
+                                                  : AppColors.textSecondary)),
+                                      const SizedBox(height: 4),
+                                      Text(labels[index],
+                                          maxLines: 2,
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                              fontSize: 11,
+                                              fontWeight: currentIndex == index
+                                                  ? FontWeight.w700
+                                                  : FontWeight.w500,
+                                              color: currentIndex == index
+                                                  ? Colors.white
+                                                  : AppColors.textSecondary)),
+                                    ])),
+                          )),
+                    ),
+                  )
+              ]),
+            ),
+          ));
+    }
     final extra =
         (MediaQuery.textScalerOf(context).scale(10) - 10).clamp(0.0, 18.0);
     final safe = MediaQuery.paddingOf(context).bottom;
@@ -50,6 +131,8 @@ class ProfileBottomNavigation extends StatelessWidget {
                       excludeSemantics: true,
                       child: InkWell(
                         key: ValueKey('main-tab-$index'),
+                        splashColor: AppColors.green.withValues(alpha: .18),
+                        highlightColor: AppColors.green.withValues(alpha: .10),
                         borderRadius: BorderRadius.circular(24),
                         onTap: () => onTap(index),
                         child: SizedBox(
@@ -67,7 +150,7 @@ class ProfileBottomNavigation extends StatelessWidget {
                                       color: Colors.white,
                                       boxShadow: [
                                         BoxShadow(
-                                            color: Color(0x22011E46),
+                                            color: Color(0x22041E4A),
                                             blurRadius: 12,
                                             offset: Offset(0, 3))
                                       ]),
@@ -76,7 +159,9 @@ class ProfileBottomNavigation extends StatelessWidget {
                                       decoration: BoxDecoration(
                                           shape: BoxShape.circle,
                                           border: Border.all(
-                                              color: AppColors.navy,
+                                              color: selected
+                                                  ? AppColors.greenInk
+                                                  : AppColors.navy,
                                               width: selected ? 2 : 1.3)),
                                       child:
                                           const CurrentUserAvatar(radius: 24)),
@@ -88,7 +173,10 @@ class ProfileBottomNavigation extends StatelessWidget {
                                     scale: selected ? 1.08 : 1,
                                     duration: const Duration(milliseconds: 180),
                                     child: Icon(icons[index],
-                                        size: 23, color: AppColors.navy)),
+                                        size: 23,
+                                        color: selected
+                                            ? AppColors.greenInk
+                                            : AppColors.navy)),
                                 const SizedBox(height: 5),
                               ],
                               Padding(
@@ -100,7 +188,9 @@ class ProfileBottomNavigation extends StatelessWidget {
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                           fontSize: 10,
-                                          color: AppColors.navy,
+                                          color: selected
+                                              ? AppColors.greenInk
+                                              : AppColors.navy,
                                           fontWeight: selected
                                               ? FontWeight.w700
                                               : FontWeight.w500))),
@@ -133,7 +223,7 @@ class _NotchedBarPainter extends CustomPainter {
       ..lineTo(30, size.height)
       ..quadraticBezierTo(0, size.height, 0, size.height - 30)
       ..close();
-    canvas.drawShadow(path, const Color(0x40011E46), 8, false);
+    canvas.drawShadow(path, const Color(0x40041E4A), 8, false);
     canvas.drawPath(path, Paint()..color = Colors.white);
   }
 

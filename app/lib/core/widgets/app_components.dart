@@ -26,17 +26,17 @@ class AppCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppRadius.card),
         border: Border.all(color: AppColors.border),
       ),
-      child: onTap == null
-          ? Padding(padding: padding, child: child)
-          : Material(
-              color: Colors.transparent,
-              borderRadius: BorderRadius.circular(AppRadius.card),
-              child: InkWell(
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(AppRadius.card),
+        child: onTap == null
+            ? Padding(padding: padding, child: child)
+            : InkWell(
                 borderRadius: BorderRadius.circular(AppRadius.card),
                 onTap: onTap,
                 child: Padding(padding: padding, child: child),
               ),
-            ),
+      ),
     );
   }
 }
@@ -150,8 +150,8 @@ class PrimaryButton extends StatelessWidget {
     final button = ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.navy,
-        foregroundColor: Colors.white,
+          backgroundColor: AppColors.green,
+          foregroundColor: AppColors.navy,
         minimumSize: const Size(48, 48),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         shape: RoundedRectangleBorder(
@@ -175,7 +175,6 @@ class PrimaryButton extends StatelessWidget {
     return expand ? SizedBox(width: double.infinity, child: button) : button;
   }
 }
-
 
 /// Password strength indicator bar. Shows nothing when [password] is empty.
 class PasswordStrengthBar extends StatelessWidget {
@@ -202,7 +201,11 @@ class PasswordStrengthBar extends StatelessWidget {
         : score <= 3
             ? AppColors.warning
             : AppColors.success;
-    final label = score <= 1 ? 'ضعيفة' : score <= 3 ? 'متوسطة' : 'قوية';
+    final label = score <= 1
+        ? 'ضعيفة'
+        : score <= 3
+            ? 'متوسطة'
+            : 'قوية';
     return Padding(
       padding: const EdgeInsets.only(top: 6),
       child: Column(

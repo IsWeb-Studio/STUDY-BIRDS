@@ -24,7 +24,6 @@ test('wallet and housing hold under simultaneous requests', async () => {
     const University = require('../src/models/University');
     const AccommodationListing = require('../src/models/AccommodationListing');
     const AccommodationBooking = require('../src/models/AccommodationBooking');
-    const WorkerLease = require('../src/models/WorkerLease');
     const student = await User.create({ name: 'Student', email: 'student@example.test' });
     const second = await User.create({ name: 'Second', email: 'second@example.test' });
     const finance = await User.create({ name: 'Finance', email: 'finance@example.test', role: 'employee', permissions: ['student-financials'] });

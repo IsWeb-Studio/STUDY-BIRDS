@@ -45,7 +45,7 @@ class _OnboardingIntroScreenState extends State<OnboardingIntroScreen> with Sing
     OnboardingSlide(
       icon: Icons.support_agent_rounded,
       title: 'فريق ودعم دايمًا معك',
-      description: 'مستشارك التعليمي و Bird AI جاهزين يجاوبوك في أي وقت.',
+      description: 'مستشارك التعليمي و COVEY AI جاهزين يجاوبوك في أي وقت.',
       imageUrl: 'https://images.unsplash.com/photo-1600880292203-757bb62b4baf?w=800&q=80',
     ),
   ];
@@ -128,7 +128,7 @@ class _OnboardingIntroScreenState extends State<OnboardingIntroScreen> with Sing
                                         height: 220,
                                         decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          border: Border.all(color: AppColors.orange.withValues(alpha: 0.15), width: 6),
+                                          border: Border.all(color: AppColors.green.withValues(alpha: 0.15), width: 6),
                                           boxShadow: [BoxShadow(color: AppColors.navy.withValues(alpha: 0.08), blurRadius: 24, offset: const Offset(0, 10))],
                                         ),
                                         child: ClipOval(
@@ -148,12 +148,12 @@ class _OnboardingIntroScreenState extends State<OnboardingIntroScreen> with Sing
                                         child: Container(
                                           padding: const EdgeInsets.all(12),
                                           decoration: BoxDecoration(
-                                            color: AppColors.orange,
+                                            color: AppColors.green,
                                             shape: BoxShape.circle,
                                             border: Border.all(color: Colors.white, width: 3),
                                             boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.15), blurRadius: 8)],
                                           ),
-                                          child: Icon(s.icon, size: 22, color: Colors.white),
+                                          child: Icon(s.icon, size: 22, color: AppColors.navy),
                                         ),
                                       ),
                                     ],
@@ -195,7 +195,7 @@ class _OnboardingIntroScreenState extends State<OnboardingIntroScreen> with Sing
                     width: i == _index ? 24 : 8,
                     height: 8,
                     decoration: BoxDecoration(
-                      color: i == _index ? AppColors.orange : AppColors.border,
+                      color: i == _index ? AppColors.green : AppColors.border,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -271,10 +271,10 @@ class OnboardingServicesScreen extends StatelessWidget {
                           width: 42,
                           height: 42,
                           decoration: BoxDecoration(
-                            color: AppColors.orange.withValues(alpha: 0.12),
+                            color: AppColors.green.withValues(alpha: 0.12),
                             borderRadius: BorderRadius.circular(10),
                           ),
-                          child: Icon(s.icon, color: AppColors.orange, size: 20),
+                          child: Icon(s.icon, color: AppColors.green, size: 20),
                         ),
                         const SizedBox(width: 12),
                         Expanded(child: Text(s.title, style: AppTextStyles.cardTitle)),
@@ -310,7 +310,7 @@ class _AccountTypeSelectionScreenState
     {'key': 'parent', 'label': 'ولي أمر', 'icon': Icons.family_restroom_rounded},
     {'key': 'agent', 'label': 'وكيل', 'icon': Icons.handshake_rounded},
     {'key': 'university', 'label': 'جامعة', 'icon': Icons.account_balance_rounded},
-    {'key': 'employee', 'label': 'موظف Study Birds', 'icon': Icons.badge_rounded},
+    {'key': 'employee', 'label': 'موظف COVEY', 'icon': Icons.badge_rounded},
   ];
 
   @override
@@ -346,11 +346,11 @@ class _AccountTypeSelectionScreenState
                       curve: Curves.easeOut,
                       decoration: BoxDecoration(
                         color: selected
-                            ? AppColors.orange.withValues(alpha: 0.08)
+                            ? AppColors.green.withValues(alpha: 0.08)
                             : Colors.white,
                         borderRadius: BorderRadius.circular(AppRadius.card),
                         border: Border.all(
-                          color: selected ? AppColors.orange : AppColors.border,
+                          color: selected ? AppColors.green : AppColors.border,
                           width: selected ? 1.6 : 1,
                         ),
                       ),
@@ -363,7 +363,7 @@ class _AccountTypeSelectionScreenState
                             curve: Curves.easeOut,
                             child: Icon(t['icon'] as IconData,
                                 size: 34,
-                                color: selected ? AppColors.orange : AppColors.navy),
+                                color: selected ? AppColors.green : AppColors.navy),
                           ),
                           const SizedBox(height: 10),
                           Text(t['label'] as String, style: AppTextStyles.cardTitle),

@@ -1,6 +1,6 @@
 import '../../l10n/l10n.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'external_link.dart';
 
 import '../config/app_theme.dart';
 import '../services/app_update_service.dart';
@@ -35,9 +35,10 @@ class UpdateGate extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.all(20),
                           decoration: const BoxDecoration(
-                              color: AppColors.orangeSoft, shape: BoxShape.circle),
+                              color: AppColors.greenSoft,
+                              shape: BoxShape.circle),
                           child: const Icon(Icons.system_update_rounded,
-                              size: 40, color: AppColors.orange),
+                              size: 40, color: AppColors.green),
                         ),
                         const SizedBox(height: 22),
                         Text(context.l10n.updateTitle,
@@ -56,9 +57,8 @@ class UpdateGate extends StatelessWidget {
                           PrimaryButton(
                             label: context.l10n.updateNow,
                             icon: Icons.open_in_new_rounded,
-                            onPressed: () => launchUrl(
-                                Uri.parse(required.storeUrl!),
-                                mode: LaunchMode.externalApplication),
+                            onPressed: () =>
+                                openExternalLink(context, required.storeUrl!),
                           ),
                         ],
                       ],

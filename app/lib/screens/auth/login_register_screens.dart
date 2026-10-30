@@ -1,4 +1,5 @@
 import '../../core/services/error_reporter.dart';
+import '../../core/widgets/privacy_links.dart';
 import '../../core/utils/password_policy.dart';
 import '../../core/widgets/feature_ui.dart';
 import '../../core/utils/app_error.dart';
@@ -314,8 +315,9 @@ class _LoginScreenState extends State<LoginScreen>
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             validator: (v) {
-              if (v == null || v.trim().isEmpty)
+              if (v == null || v.trim().isEmpty) {
                 return 'أدخل بريدك الإلكتروني';
+              }
               if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(v.trim())) {
                 return 'صيغة البريد الإلكتروني غير صحيحة';
               }
@@ -347,7 +349,7 @@ class _LoginScreenState extends State<LoginScreen>
             child: TextButton(
               onPressed: widget.onForgotPassword,
               child: const Text('نسيت كلمة المرور؟',
-                  style: TextStyle(color: AppColors.orange)),
+                  style: TextStyle(color: AppColors.greenInk)),
             ),
           ),
           const SizedBox(height: 8),
@@ -410,7 +412,7 @@ class _LoginScreenState extends State<LoginScreen>
                 : TextButton(
                     onPressed: _otpLoading ? null : _requestOtp,
                     child: const Text('إعادة إرسال الرمز',
-                        style: TextStyle(color: AppColors.orange)),
+                        style: TextStyle(color: AppColors.greenInk)),
                   ),
           ),
         ],
@@ -436,9 +438,10 @@ class _LoginScreenState extends State<LoginScreen>
                     Center(
                         child: Image.asset('assets/images/logo_mark.png',
                             height: 60, width: 60, fit: BoxFit.contain)),
+                    const PrivacyLinks(),
                     const SizedBox(height: 12),
                     const Center(
-                        child: Text('STUDY BIRDS',
+                        child: Text('COVEY',
                             style: TextStyle(
                                 color: AppColors.navy,
                                 fontSize: 16,
@@ -547,15 +550,15 @@ class _LoginScreenState extends State<LoginScreen>
                     Center(
                       child: TextButton(
                         onPressed: widget.onGoRegister,
-                        child: Text.rich(
-                          const TextSpan(
+                        child: const Text.rich(
+                          TextSpan(
                             style: AppTextStyles.body,
                             children: [
                               TextSpan(text: 'ليس لديك حساب؟ '),
                               TextSpan(
                                 text: 'إنشاء حساب جديد',
                                 style: TextStyle(
-                                    color: AppColors.orange,
+                                    color: AppColors.greenInk,
                                     fontWeight: FontWeight.w700),
                               ),
                             ],
@@ -715,6 +718,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text('لنبدأ رحلتك 🎓', style: AppTextStyles.screenTitle),
+              const PrivacyLinks(),
               const SizedBox(height: 6),
               const Text(
                   'التسجيل بسيط، وتقدر تكمل باقي بياناتك لاحقًا من ملفك الشخصي',
@@ -737,8 +741,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 keyboardType: TextInputType.emailAddress,
                 controller: _emailController,
                 validator: (v) {
-                  if (v == null || v.trim().isEmpty)
+                  if (v == null || v.trim().isEmpty) {
                     return 'أدخل بريدك الإلكتروني';
+                  }
                   if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
                       .hasMatch(v.trim())) {
                     return 'صيغة البريد الإلكتروني غير صحيحة';
@@ -758,8 +763,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       controller: _passwordController,
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'أدخل كلمة المرور';
-                        if (v.length < 8)
+                        if (v.length < 8) {
                           return 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
+                        }
                         return null;
                       })
                   .animate()
@@ -827,7 +833,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         TextSpan(
                           text: 'تسجيل الدخول',
                           style: TextStyle(
-                              color: AppColors.orange,
+                              color: AppColors.greenInk,
                               fontWeight: FontWeight.w700),
                         ),
                       ],
@@ -868,8 +874,9 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
     try {
       await AuthSession.instance.logout(revoke: false);
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/auth/login_register_screens.dart:798');
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'تعذر العودة لتسجيل الدخول. حاول مجددًا.');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -924,8 +931,9 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
     } on ApiException catch (e) {
       if (mounted) setState(() => _error = e.message);
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/auth/login_register_screens.dart:845');
-      if (mounted)
+      if (mounted) {
         setState(() => _error = 'تعذر حفظ كلمة المرور. حاول مجددًا.');
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -937,7 +945,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFFF3F6FB),
+        backgroundColor: AppColors.background,
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
@@ -1006,7 +1014,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                 ElevatedButton(
                   onPressed: _busy ? null : _save,
                   style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.navy,
+                      backgroundColor: AppColors.green,
                       minimumSize: const Size(double.infinity, 48),
                       shape: RoundedRectangleBorder(
                           borderRadius:

@@ -1,3 +1,4 @@
+import '../../core/config/app_theme.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 
@@ -6,8 +7,8 @@ class WinkPlayingCard extends StatelessWidget {
   final bool revealed;
   final int? number;
   const WinkPlayingCard({super.key, required this.revealed, this.number});
-  static const _cream = Color(0xFFF2EEE5);
-  static const _navy = Color(0xFF193F68);
+  static const _cream = AppColors.card;
+  static const _navy = AppColors.navy;
 
   @override
   Widget build(BuildContext context) => Center(
@@ -82,7 +83,7 @@ class WinkPlayingCard extends StatelessWidget {
                                           bottom: 22,
                                           left: 12,
                                           right: 12,
-                                          child: Text('STUDY BIRDS',
+                                          child: Text('COVEY',
                                               textAlign: TextAlign.center,
                                               textScaler: TextScaler.noScaling,
                                               style: TextStyle(
@@ -168,7 +169,7 @@ class _NumberPainter extends CustomPainter {
   const _NumberPainter(this.number, this.image);
   @override
   void paint(Canvas canvas, Size size) {
-    final ink = Paint()..color = const Color(0xFF193F68);
+    final ink = Paint()..color = AppColors.navy;
     if (image != null) {
       ink.shader = ImageShader(
           image!,

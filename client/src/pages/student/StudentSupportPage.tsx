@@ -1,6 +1,7 @@
+import { VoiceReply } from "../../components/VoiceReply";
 import { DocumentFileLink } from "../../components/DocumentFileLink";
 import { StudentAssignedTeam } from "../../components/StudentAssignedTeam";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { EmptyState } from "../../components/EmptyState";
 import { DOCUMENT_UPLOAD_ACCEPT, DOCUMENT_UPLOAD_HINT_AR, DOCUMENT_UPLOAD_HINT_EN } from "../../constants/upload";
 import { useLanguage } from "../../hooks/useLanguage";
@@ -117,7 +118,7 @@ export const StudentSupportPage = () => {
                   {supportConversation(ticket).map((reply, index) => (
                     <div key={`${ticket._id}-${index}`} className="rounded-2xl bg-white px-4 py-3">
                       <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{reply.fromRole === "student" ? (isArabic ? "أنت" : "You") : reply.displayName || reply.user?.name || (isArabic ? "فريق الدعم" : "Support team")}{reply.source === "crm" ? " · CRM" : ""}{reply.createdAt ? ` · ${formatDate(reply.createdAt)}` : ""}</div>
-                      <div className="mt-2 text-sm text-slate-700">{reply.message}</div>
+                      <div className="mt-2 text-sm text-slate-700">{reply.audioPath ? <VoiceReply path={reply.audioPath} /> : reply.message}</div>
                     </div>
                   ))}
                 </div>

@@ -3,6 +3,8 @@ import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/repositories/admin_modules_repository.dart';
+import '../../core/services/auth_session.dart';
+import 'admin_push_announcements_screen.dart';
 
 class _SimpleAdminListScreen extends StatefulWidget {
   final String title;
@@ -11,6 +13,7 @@ class _SimpleAdminListScreen extends StatefulWidget {
   final String emptyTitle;
   final String emptyMessage;
   final IconData emptyIcon;
+  final List<Widget>? actions;
 
   const _SimpleAdminListScreen({
     required this.title,
@@ -19,6 +22,7 @@ class _SimpleAdminListScreen extends StatefulWidget {
     required this.emptyTitle,
     required this.emptyMessage,
     required this.emptyIcon,
+    this.actions,
   });
 
   @override
@@ -61,6 +65,7 @@ class _SimpleAdminListScreenState extends State<_SimpleAdminListScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: widget.title,
+      actions: widget.actions,
       body: RefreshIndicator(
         onRefresh: _load,
         color: AppColors.navy,
@@ -88,6 +93,10 @@ class AdminStudentNotificationsScreen extends StatelessWidget {
     return _SimpleAdminListScreen(
       title: 'إشعارات الطلاب',
       fetchItems: () => AdminModulesRepository.instance.getStudentNotifications(),
+      actions: AuthSession.instance.currentUser?.role == UserRole.admin ? [
+        IconButton(tooltip: 'إعلانات التطبيق / App announcements', icon: const Icon(Icons.campaign_outlined),
+          onPressed: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => const AdminPushAnnouncementsScreen()))),
+      ] : null,
       emptyIcon: Icons.notifications_off_outlined,
       emptyTitle: 'لا توجد إشعارات',
       emptyMessage: 'ستظهر هنا كل الإشعارات المرسلة للمستخدمين.',

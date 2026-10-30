@@ -20,8 +20,8 @@ class PasswordStrengthInline extends StatelessWidget {
             : 1;
     final color = switch (score) {
       1 => AppColors.danger,
-      2 => AppColors.orange,
-      _ => const Color(0xFF18876A),
+      2 => AppColors.warning,
+      _ => AppColors.greenInk,
     };
     final label = switch (score) { 1 => 'ضعيفة', 2 => 'متوسطة', _ => 'قوية' };
     return Padding(
@@ -54,7 +54,7 @@ class PasswordStrengthInline extends StatelessWidget {
                               decoration: BoxDecoration(
                                   color: index < score
                                       ? color
-                                      : const Color(0xFFE9EDF4),
+                                      : AppColors.border,
                                   borderRadius: BorderRadius.circular(3)),
                             ))))),
           ])),

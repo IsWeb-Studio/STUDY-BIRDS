@@ -45,7 +45,7 @@ class _StudentListingsScreenState extends State<StudentListingsScreen> {
                 try {
                   if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) throw Exception();
                 } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/student_listings_screen.dart:45');
-                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر فتح الرابط')));
+                  if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: const Text('تعذر فتح الرابط')));
                 }
               }, child: Text(widget.kind == 'offer' ? 'الاستفادة من العرض' : 'تفاصيل التقديم')),
             ],

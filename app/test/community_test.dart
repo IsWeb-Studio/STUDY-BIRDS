@@ -1,12 +1,15 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:study_birds/core/network/api_client.dart';
 import 'package:study_birds/core/services/auth_session.dart';
 import 'package:study_birds/screens/services_support/community_screen.dart';
 import 'package:study_birds/screens/community/student_public_profile.dart';
+import 'package:study_birds/screens/community/student_profile_link.dart';
 
 http.Response reply(Object body, [int status = 200]) =>
     http.Response(jsonEncode(body), status,
@@ -54,11 +57,69 @@ void phone(WidgetTester tester) {
   addTearDown(tester.view.resetDevicePixelRatio);
 }
 
+Widget arabicCommunityApp(Widget home) => MaterialApp(
+      locale: const Locale('ar'),
+      supportedLocales: const [Locale('ar'), Locale('en')],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: home,
+    );
+
 void main() {
-  testWidgets('feed author avatar opens the topic; thread avatar opens profile', (tester) async {
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+  testWidgets(
+      'community role badges localize and use the verified university name',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+      locale: Locale('ar'),
+      supportedLocales: [Locale('ar'), Locale('en')],
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: Scaffold(
+        body: StudentIdentity(
+          id: 'university-1',
+          name: 'University login',
+          role: 'university',
+          organizationName: 'Verified University',
+          showRoleBadge: true,
+        ),
+      ),
+    ));
+    expect(find.text('Verified University'), findsOneWidget);
+    expect(find.text('جامعة'), findsOneWidget);
+    await tester.pumpWidget(const MaterialApp(
+      locale: Locale('en'),
+      supportedLocales: [Locale('ar'), Locale('en')],
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      home: Scaffold(
+        body: StudentIdentity(
+          id: 'employee-1',
+          name: 'Staff member',
+          role: 'employee',
+          showRoleBadge: true,
+        ),
+      ),
+    ));
+    expect(find.text('Employee'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('feed author avatar opens the topic; thread avatar opens profile',
+      (tester) async {
     phone(tester);
     await http.runWithClient(() async {
-      await tester.pumpWidget(const MaterialApp(home: StudentCommunityScreen()));
+      await tester
+          .pumpWidget(arabicCommunityApp(const StudentCommunityScreen()));
       await tester.pumpAndSettle();
       await tester.tap(find.byType(CircleAvatar).first);
       await tester.pumpAndSettle();
@@ -69,13 +130,22 @@ void main() {
       expect(find.byType(StudentPublicProfileScreen), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
-    }, () => MockClient((r) async {
-      if (lookups.containsKey(r.url.path)) return reply(lookups[r.url.path]!);
-      if (r.url.path.endsWith('/community/status')) return reply({'suspended': false});
-      if (r.url.path.endsWith('/community/posts/p1')) return reply({'post': publicPost, 'comments': []});
-      if (r.url.path.contains('/friends/')) return reply({'id': 'other', 'name': 'Lina', 'stories': []});
-      return reply([publicPost]);
-    }));
+    },
+        () => MockClient((r) async {
+              if (lookups.containsKey(r.url.path)) {
+                return reply(lookups[r.url.path]!);
+              }
+              if (r.url.path.endsWith('/community/status')) {
+                return reply({'suspended': false});
+              }
+              if (r.url.path.endsWith('/community/posts/p1')) {
+                return reply({'post': publicPost, 'comments': []});
+              }
+              if (r.url.path.contains('/friends/')) {
+                return reply({'id': 'other', 'name': 'Lina', 'stories': []});
+              }
+              return reply([publicPost]);
+            }));
   });
   setUp(() {
     AuthSession.instance.token = 'test-session';
@@ -94,7 +164,7 @@ void main() {
     final queries = <String>[];
     await http.runWithClient(() async {
       await tester
-          .pumpWidget(const MaterialApp(home: StudentCommunityScreen()));
+          .pumpWidget(arabicCommunityApp(const StudentCommunityScreen()));
       await tester.pumpAndSettle();
       expect(find.text('سكن قريب من الجامعة'), findsOneWidget);
       expect(find.textContaining('Medicine'), findsOneWidget);
@@ -115,7 +185,7 @@ void main() {
           {'topic': 'housing', 'studyField': 'med'});
       expect(find.text('تصفية (1)'), findsOneWidget);
 
-      await tester.tap(find.widgetWithText(ChoiceChip, 'مواضيعي'));
+      await tester.tap(find.widgetWithText(ChoiceChip, 'منشوراتي'));
       await tester.pumpAndSettle();
       expect(queries.last, 'mine=1');
       expect(find.text('أخفاه فريق الإشراف — إعلان تجاري'), findsOneWidget);
@@ -145,13 +215,13 @@ void main() {
     phone(tester);
     await http.runWithClient(() async {
       await tester
-          .pumpWidget(const MaterialApp(home: StudentCommunityScreen()));
+          .pumpWidget(arabicCommunityApp(const StudentCommunityScreen()));
       await tester.pumpAndSettle();
       expect(find.textContaining('أنت موقوف عن النشر والتعليق والإبلاغ'),
           findsOneWidget);
       expect(find.textContaining('حتى يرفعه فريق الإشراف'), findsOneWidget);
       expect(find.textContaining('السبب: إساءة متكررة'), findsOneWidget);
-      expect(find.text('موضوع جديد'), findsNothing);
+      expect(find.text('منشور جديد'), findsNothing);
       expect(find.text('سكن قريب من الجامعة'), findsOneWidget);
 
       await tester.tap(find.text('سكن قريب من الجامعة'));
@@ -186,16 +256,20 @@ void main() {
     expect(communityError(const ApiException(403, 'x'), 'f'),
         'أنت موقوف حاليًا عن النشر في المجتمع.');
     expect(communityError(Exception('offline'), 'f'), 'f');
+    expect(
+        communityError(const ApiException(404, 'route missing'), 'f',
+            creatingPost: true, arabic: false),
+        contains('Your draft is preserved'));
   });
 
   testWidgets(
-      'composing requires title and body, sends tags and keeps input on failure',
+      'composing sends optional title and tags, retaining the draft on failure',
       (tester) async {
     phone(tester);
     final bodies = <Map<String, dynamic>>[];
     await http.runWithClient(() async {
-      await tester.pumpWidget(const MaterialApp(
-          home: CommunityComposeScreen(fields: [
+      await tester
+          .pumpWidget(arabicCommunityApp(const CommunityComposeScreen(fields: [
         {'_id': 'med', 'name': 'Medicine'}
       ])));
       await tester.pumpAndSettle();
@@ -203,7 +277,7 @@ void main() {
           tester.widget<FilledButton>(find.widgetWithText(FilledButton, 'نشر'));
       expect(publish().onPressed, isNull);
       await tester.enterText(
-          find.widgetWithText(TextField, 'العنوان'), 'نصيحة');
+          find.widgetWithText(TextField, 'العنوان (اختياري)'), 'نصيحة');
       await tester.enterText(
           find.widgetWithText(TextField, 'النص'), 'ابدأ مبكرًا');
       await tester.pumpAndSettle();
@@ -216,9 +290,15 @@ void main() {
       await tester.tap(find.text('Medicine').last);
       await tester.pumpAndSettle();
 
+      await tester.ensureVisible(find.widgetWithText(FilledButton, 'نشر'));
+      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(FilledButton, 'نشر'));
       await tester.pumpAndSettle();
-      expect(bodies.single, {
+      await tester.tap(find.text('أوافق على قواعد المجتمع'));
+      await tester.pumpAndSettle();
+      expect(bodies.single['operationId'], isNotEmpty);
+      final payload = {...bodies.single}..remove('operationId');
+      expect(payload, {
         'title': 'نصيحة',
         'body': 'ابدأ مبكرًا',
         'topic': 'tips',
@@ -236,6 +316,88 @@ void main() {
             }));
   });
 
+  testWidgets('community members can like and edit their own content',
+      (tester) async {
+    phone(tester);
+    final requests = <String>[];
+    var title = 'عنواني';
+    var body = 'نصي الأصلي';
+    var commentBody = 'تعليقي الأصلي';
+    var liked = false;
+    await http.runWithClient(() async {
+      await tester.pumpWidget(
+          arabicCommunityApp(const CommunityThreadScreen(postId: 'p1')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const ValueKey('community-thread-like')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('reaction-choice-like')));
+      await tester.pumpAndSettle();
+      expect(find.text('1 تفاعل'), findsOneWidget);
+
+      await tester.tap(find.text('تعديل منشوري'));
+      await tester.pumpAndSettle();
+      final fields = find.descendant(
+          of: find.byType(AlertDialog), matching: find.byType(TextField));
+      await tester.enterText(fields.at(0), 'عنوان محدّث');
+      await tester.enterText(fields.at(1), 'نص محدّث');
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+      expect(find.text('عنوان محدّث'), findsOneWidget);
+
+      await tester.tap(find.text('تعديل تعليقي'));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+          find
+              .descendant(
+                  of: find.byType(AlertDialog),
+                  matching: find.byType(TextField))
+              .first,
+          'تعليق محدّث');
+      await tester.tap(find.text('حفظ'));
+      await tester.pumpAndSettle();
+
+      expect(liked, isTrue);
+      expect(title, 'عنوان محدّث');
+      expect(body, 'نص محدّث');
+      expect(commentBody, 'تعليق محدّث');
+      expect(requests, contains('PUT /api/community/posts/p1/reaction'));
+      expect(requests, contains('PATCH /api/community/posts/p1'));
+      expect(requests, contains('PATCH /api/community/comments/c1'));
+      expect(tester.takeException(), isNull);
+    },
+        () => MockClient((request) async {
+              if (request.method == 'GET') {
+                return reply({
+                  'post': {
+                    ...publicPost,
+                    'title': title,
+                    'body': body,
+                    'author': me,
+                    'likeCount': liked ? 1 : 0,
+                    'likedByMe': liked,
+                  },
+                  'comments': [
+                    {'_id': 'c1', 'body': commentBody, 'author': me}
+                  ],
+                });
+              }
+              requests.add('${request.method} ${request.url.path}');
+              if (request.url.path.endsWith('/reaction')) {
+                liked = request.method == 'PUT';
+                return reply({'liked': liked, 'likeCount': liked ? 1 : 0});
+              }
+              final payload = jsonDecode(request.body) as Map<String, dynamic>;
+              if (request.url.path == '/api/community/posts/p1') {
+                title = payload['title'] as String;
+                body = payload['body'] as String;
+              } else if (request.url.path == '/api/community/comments/c1') {
+                commentBody = payload['body'] as String;
+              }
+              return reply({'message': 'updated'});
+            }));
+  });
+
   testWidgets(
       'thread: report needs a reason and confirmation; own comment can be deleted',
       (tester) async {
@@ -244,11 +406,11 @@ void main() {
     var deleted = false;
     await http.runWithClient(() async {
       await tester.pumpWidget(
-          const MaterialApp(home: CommunityThreadScreen(postId: 'p1')));
+          arabicCommunityApp(const CommunityThreadScreen(postId: 'p1')));
       await tester.pumpAndSettle();
       expect(find.text('أين أجد سكنًا مناسبًا؟'), findsOneWidget);
       // Someone else's post can be reported, not deleted.
-      expect(find.text('حذف موضوعي'), findsNothing);
+      expect(find.text('حذف منشوري'), findsNothing);
 
       await tester.tap(find.text('إبلاغ').first);
       await tester.pumpAndSettle();

@@ -7,12 +7,13 @@ import 'package:http/testing.dart';
 import 'package:study_birds/app_shell.dart';
 import 'package:study_birds/core/services/auth_session.dart';
 import 'package:study_birds/screens/community/student_community_hub.dart';
+import 'package:study_birds/screens/home_journey/home_dashboard_screen.dart';
 import 'package:study_birds/screens/profile_account/profile_account_screens.dart';
 import 'package:study_birds/screens/stories/student_stories.dart';
 
 void main() {
   testWidgets(
-      'community and center account destinations work; hidden community stops refreshing',
+      'dashboard account and community messages work; hidden dashboard stories stop refreshing',
       (tester) async {
     tester.view.physicalSize = const Size(390, 900);
     tester.view.devicePixelRatio = 1;
@@ -31,8 +32,11 @@ void main() {
       expect(find.text('مجتمع الطلاب'), findsOneWidget);
       expect(find.byType(ProfileScreen, skipOffstage: false), findsNothing);
       expect(inboxRequests, 0);
-      expect(storyRequests, 0);
+      expect(storyRequests, greaterThan(0));
       await tester.tap(find.byKey(const ValueKey('main-tab-4')));
+      await tester.pump(const Duration(seconds: 1));
+      await tester.tap(find.byTooltip('المحادثات'));
+      await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       expect(
           tester
@@ -42,14 +46,26 @@ void main() {
       expect(find.byType(StudentStories), findsOneWidget);
       expect(inboxRequests, greaterThan(0));
       expect(storyRequests, greaterThan(0));
-      await tester.tap(find.byKey(const ValueKey('main-tab-0')));
+      Navigator.of(tester.element(find.byType(StudentCommunityHub))).pop();
+      await tester.pump();
       await tester.pump(const Duration(seconds: 1));
-      final requests = inboxRequests;
+      await tester.tap(find.byKey(const ValueKey('main-tab-4')));
+      await tester.pump(const Duration(seconds: 1));
+      final requests = storyRequests;
+      expect(
+          tester
+              .widget<HomeDashboardScreen>(
+                  find.byType(HomeDashboardScreen, skipOffstage: false))
+              .isActive,
+          false);
       await tester.pump(const Duration(seconds: 6));
-      expect(inboxRequests, requests,
-          reason: 'offstage community must not poll');
+      expect(storyRequests, requests,
+          reason: 'offstage dashboard stories must not poll');
       expect(tester.takeException(), isNull);
-      await tester.tap(find.byKey(const ValueKey('main-tab-6')));
+      await tester.tap(find.byKey(const ValueKey('main-tab-0')));
+      await tester.pump();
+      await tester.tap(find.byKey(const ValueKey('student-home-account')));
+      await tester.pump();
       await tester.pump(const Duration(seconds: 1));
       expect(find.byType(ProfileScreen), findsOneWidget);
       expect(tester.takeException(), isNull);

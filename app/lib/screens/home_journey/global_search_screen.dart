@@ -43,8 +43,9 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     _controller.addListener(() {
       _debounce?.cancel();
       _debounce = Timer(const Duration(milliseconds: 250), () {
-        if (mounted)
+        if (mounted) {
           setState(() => _query = _controller.text.trim().toLowerCase());
+        }
       });
     });
   }
@@ -72,11 +73,12 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         _loading = false;
       });
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/home_journey/global_search_screen.dart:72');
-      if (mounted)
+      if (mounted) {
         setState(() {
           _loading = false;
           _error = 'تعذر تحميل بيانات البحث. تحقق من الاتصال وحاول مجددًا.';
         });
+      }
     }
   }
 

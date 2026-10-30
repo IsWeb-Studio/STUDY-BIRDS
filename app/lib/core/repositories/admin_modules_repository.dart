@@ -12,69 +12,97 @@ class AdminModulesRepository {
 
   String get _token {
     final token = AuthSession.instance.token;
-    if (token == null) throw ApiException(401, 'لا توجد جلسة دخول نشطة');
+    if (token == null) throw const ApiException(401, 'لا توجد جلسة دخول نشطة');
     return token;
   }
 
   // ---- applications ---------------------------------------------------
-  Future<List<dynamic>> getApplications() async =>
-      Json.list(await ApiClient.instance.get('/admin/applications', token: _token));
+  Future<List<dynamic>> getApplications() async => Json.list(
+      await ApiClient.instance.get('/admin/applications', token: _token));
 
   // ---- student-documents ------------------------------------------------
-  Future<List<dynamic>> getStudentDocuments() async =>
-      Json.list(await ApiClient.instance.get('/admin/student-documents', token: _token));
+  Future<List<dynamic>> getStudentDocuments() async => Json.list(
+      await ApiClient.instance.get('/admin/student-documents', token: _token));
 
   // ---- student-financials -------------------------------------------------
-  Future<Map<String, dynamic>> getStudentFinancials() async =>
-      Json.map(await ApiClient.instance.get('/admin/student-financials', token: _token));
+  Future<Map<String, dynamic>> getStudentFinancials() async => Json.map(
+      await ApiClient.instance.get('/admin/student-financials', token: _token));
 
   Future<Map<String, dynamic>> createInvoice({
     required String studentId,
     required String description,
     required num amount,
   }) async =>
-      Json.map(await ApiClient.instance.post('/admin/student-financials/invoices', token: _token, body: {
+      Json.map(await ApiClient.instance
+          .post('/admin/student-financials/invoices', token: _token, body: {
         'student': studentId,
         'description': description,
         'amount': amount,
       }));
 
-  Future<Map<String, dynamic>> updateInvoice(String id, {String? status, String? description, num? amount}) async =>
-      Json.map(await ApiClient.instance.patch('/admin/student-financials/invoices/$id', token: _token, body: {
-        if (status != null) 'status': status,
-        if (description != null) 'description': description,
-        if (amount != null) 'amount': amount,
-      }));
+  Future<Map<String, dynamic>> updateInvoice(String id,
+          {String? status, String? description, num? amount}) async =>
+      Json.map(await ApiClient.instance.patch(
+          '/admin/student-financials/invoices/$id',
+          token: _token,
+          body: {
+            if (status != null) 'status': status,
+            if (description != null) 'description': description,
+            if (amount != null) 'amount': amount,
+          }));
 
-  Future<Map<String, dynamic>> reviewPaymentProof(String id, {required String status, String? note}) async =>
-      Json.map(await ApiClient.instance.patch('/admin/student-financials/payment-proofs/$id', token: _token, body: {
-        'status': status,
-        if (note != null) 'note': note,
-      }));
+  Future<Map<String, dynamic>> reviewPaymentProof(String id,
+          {required String status, String? note}) async =>
+      Json.map(await ApiClient.instance.patch(
+          '/admin/student-financials/payment-proofs/$id',
+          token: _token,
+          body: {
+            'status': status,
+            if (note != null) 'note': note,
+          }));
 
   // ---- student-arrivals -------------------------------------------------
   Future<List<dynamic>> getArrivalRequests() async =>
-      Json.list(await ApiClient.instance.get('/admin/student-arrival-requests', token: _token));
+      Json.list(await ApiClient.instance
+          .get('/admin/student-arrival-requests', token: _token));
 
-  Future<Map<String, dynamic>> updateArrivalRequest(String id, {required String status, String? note}) async =>
-      Json.map(await ApiClient.instance.patch('/admin/student-arrival-requests/$id', token: _token, body: {
+  Future<Map<String, dynamic>> updateArrivalRequest(String id,
+          {required String status, String? note}) async =>
+      Json.map(await ApiClient.instance
+          .patch('/admin/student-arrival-requests/$id', token: _token, body: {
         'status': status,
         if (note != null) 'note': note,
       }));
 
-  // ---- support (support-tickets) -----------------------------------------
-  Future<List<dynamic>> getSupportTickets() async =>
-      Json.list(await ApiClient.instance.get('/admin/support-tickets', token: _token));
+  /// Updates only one selected arrival-service journey stage. The request's
+  /// overall status is intentionally left unchanged.
+  Future<Map<String, dynamic>> updateArrivalServiceStatus(
+    String id, {
+    required String serviceKey,
+    required String serviceStatus,
+  }) async =>
+      Json.map(await ApiClient.instance.patch(
+        '/admin/student-arrival-requests/$id',
+        token: _token,
+        body: {'serviceKey': serviceKey, 'serviceStatus': serviceStatus},
+      ));
 
-  Future<Map<String, dynamic>> replySupportTicket(String id, {required String message, String? status}) async =>
-      Json.map(await ApiClient.instance.patch('/admin/support-tickets/$id/reply', token: _token, body: {
+  // ---- support (support-tickets) -----------------------------------------
+  Future<List<dynamic>> getSupportTickets() async => Json.list(
+      await ApiClient.instance.get('/admin/support-tickets', token: _token));
+
+  Future<Map<String, dynamic>> replySupportTicket(String id,
+          {required String message, String? status}) async =>
+      Json.map(await ApiClient.instance
+          .patch('/admin/support-tickets/$id/reply', token: _token, body: {
         'message': message,
         if (status != null) 'status': status,
       }));
 
   // ---- student-notifications ------------------------------------------
   Future<List<dynamic>> getStudentNotifications() async =>
-      Json.list(await ApiClient.instance.get('/admin/student-notifications', token: _token));
+      Json.list(await ApiClient.instance
+          .get('/admin/student-notifications', token: _token));
 
   // ---- app-wide notification broadcasts --------------------------------
   Future<Map<String, dynamic>> getNotificationAudience() async =>
@@ -94,15 +122,19 @@ class AdminModulesRepository {
       ));
 
   // ---- student-favorites (read-only) -------------------------------------
-  Future<List<dynamic>> getStudentFavorites() async =>
-      Json.list(await ApiClient.instance.get('/admin/student-favorites', token: _token));
+  Future<List<dynamic>> getStudentFavorites() async => Json.list(
+      await ApiClient.instance.get('/admin/student-favorites', token: _token));
 
   // ---- knowledge-base -----------------------------------------------------
-  Future<List<dynamic>> getKnowledgeBase() async =>
-      Json.list(await ApiClient.instance.get('/admin/knowledge-base', token: _token));
+  Future<List<dynamic>> getKnowledgeBase() async => Json.list(
+      await ApiClient.instance.get('/admin/knowledge-base', token: _token));
 
-  Future<Map<String, dynamic>> createKnowledgeBaseItem({required String title, required String body, String? resourceType}) async =>
-      Json.map(await ApiClient.instance.post('/admin/knowledge-base', token: _token, body: {
+  Future<Map<String, dynamic>> createKnowledgeBaseItem(
+          {required String title,
+          required String body,
+          String? resourceType}) async =>
+      Json.map(await ApiClient.instance
+          .post('/admin/knowledge-base', token: _token, body: {
         'title': title,
         'body': body,
         if (resourceType != null) 'resourceType': resourceType,
@@ -114,14 +146,17 @@ class AdminModulesRepository {
 
   // ---- student-orientation ------------------------------------------------
   Future<List<dynamic>> getOrientationResults() async =>
-      Json.list(await ApiClient.instance.get('/admin/student-orientation-results', token: _token));
+      Json.list(await ApiClient.instance
+          .get('/admin/student-orientation-results', token: _token));
 
   // ---- agency-requests ------------------------------------------------------
-  Future<List<dynamic>> getAgencyRequests() async =>
-      Json.list(await ApiClient.instance.get('/admin/agency-requests', token: _token));
+  Future<List<dynamic>> getAgencyRequests() async => Json.list(
+      await ApiClient.instance.get('/admin/agency-requests', token: _token));
 
-  Future<Map<String, dynamic>> updateAgencyRequestStatus(String id, {required String status, String? adminNote}) async =>
-      Json.map(await ApiClient.instance.patch('/admin/agency-requests/$id', token: _token, body: {
+  Future<Map<String, dynamic>> updateAgencyRequestStatus(String id,
+          {required String status, String? adminNote}) async =>
+      Json.map(await ApiClient.instance
+          .patch('/admin/agency-requests/$id', token: _token, body: {
         'status': status,
         if (adminNote != null) 'adminNote': adminNote,
       }));
@@ -130,40 +165,97 @@ class AdminModulesRepository {
   Future<List<dynamic>> getPartners() async =>
       Json.list(await ApiClient.instance.get('/admin/partners', token: _token));
 
-  // ---- partner-students -----------------------------------------------------
-  Future<List<dynamic>> getAllPartnerStudents() async =>
-      Json.list(await ApiClient.instance.get('/admin/partner-students', token: _token));
+  Future<Map<String, dynamic>> getPartnerDetails(String partnerId) async =>
+      Json.map(await ApiClient.instance.get('/admin/partners/$partnerId', token: _token));
 
-  Future<Map<String, dynamic>> updatePartnerStudentStatus(String studentId, {required String applicationStatus}) async =>
-      Json.map(await ApiClient.instance.patch('/admin/partner-students/$studentId', token: _token, body: {
+  Future<Map<String, dynamic>> updatePartnerAccountStatus(
+          String partnerId, {required bool isActive}) async =>
+      Json.map(await ApiClient.instance.patch(
+          '/admin/partners/$partnerId/status',
+          token: _token,
+          body: {'isActive': isActive}));
+
+  // ---- partner-students -----------------------------------------------------
+  Future<List<dynamic>> getAllPartnerStudents() async => Json.list(
+      await ApiClient.instance.get('/admin/partner-students', token: _token));
+
+  Future<Map<String, dynamic>> updatePartnerStudentStatus(String studentId,
+          {required String applicationStatus}) async =>
+      Json.map(await ApiClient.instance
+          .patch('/admin/partner-students/$studentId', token: _token, body: {
         'applicationStatus': applicationStatus,
       }));
 
   // ---- marketing-assets (read + delete only from the app for now; upload
   // needs a file, offered from Documents-style pickers if needed later) ----
-  Future<List<dynamic>> getMarketingAssets() async =>
-      Json.list(await ApiClient.instance.get('/admin/marketing-assets', token: _token));
+  Future<List<dynamic>> getMarketingAssets() async => Json.list(
+      await ApiClient.instance.get('/admin/marketing-assets', token: _token));
 
   Future<void> deleteMarketingAsset(String id) async {
-    await ApiClient.instance.delete('/admin/marketing-assets/$id', token: _token);
+    await ApiClient.instance
+        .delete('/admin/marketing-assets/$id', token: _token);
   }
+
+  Future<Map<String, dynamic>> createMarketingAsset({
+    required String title,
+    required String description,
+    required String type,
+    required bool published,
+    required List<int> fileBytes,
+    required String fileName,
+  }) async =>
+      Json.map(await ApiClient.instance.postMultipart(
+        '/admin/marketing-assets',
+        fileBytes: fileBytes,
+        fileName: fileName,
+        fields: {
+          'title': title,
+          'description': description,
+          'type': type,
+          'published': '$published',
+        },
+        token: _token,
+      ));
+
+  Future<Map<String, dynamic>> updateMarketingAsset(
+          String id, {
+          required String title,
+          required String description,
+          required String type,
+          required bool published,
+        }) async =>
+      Json.map(await ApiClient.instance.put(
+        '/admin/marketing-assets/$id',
+        token: _token,
+        body: {
+          'title': title,
+          'description': description,
+          'type': type,
+          'published': published,
+        },
+      ));
 
   // ---- verification (agent verification documents) -----------------------
   Future<List<dynamic>> getVerificationQueue() async =>
-      Json.list(await ApiClient.instance.get('/admin/verification-documents', token: _token));
+      Json.list(await ApiClient.instance
+          .get('/admin/verification-documents', token: _token));
 
-  Future<Map<String, dynamic>> reviewVerificationDocument(String id, {required String status, String? note}) async =>
-      Json.map(await ApiClient.instance.patch('/admin/verification-documents/$id', token: _token, body: {
+  Future<Map<String, dynamic>> reviewVerificationDocument(String id,
+          {required String status, String? note}) async =>
+      Json.map(await ApiClient.instance
+          .patch('/admin/verification-documents/$id', token: _token, body: {
         'status': status,
         if (note != null) 'note': note,
       }));
 
   // ---- payouts --------------------------------------------------------------
-  Future<List<dynamic>> getPayoutRequests() async =>
-      Json.list(await ApiClient.instance.get('/admin/payout-requests', token: _token));
+  Future<List<dynamic>> getPayoutRequests() async => Json.list(
+      await ApiClient.instance.get('/admin/payout-requests', token: _token));
 
-  Future<Map<String, dynamic>> updatePayoutRequestStatus(String id, {required String status, String? note}) async =>
-      Json.map(await ApiClient.instance.patch('/admin/payout-requests/$id', token: _token, body: {
+  Future<Map<String, dynamic>> updatePayoutRequestStatus(String id,
+          {required String status, String? note}) async =>
+      Json.map(await ApiClient.instance
+          .patch('/admin/payout-requests/$id', token: _token, body: {
         'status': status,
         if (note != null) 'note': note,
       }));
@@ -177,99 +269,129 @@ class AdminModulesRepository {
   // ======================================================================
 
   // ---- universities -----------------------------------------------------
-  Future<Map<String, dynamic>> createUniversity(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.post('/universities', token: _token, body: payload));
+  Future<Map<String, dynamic>> createUniversity(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .post('/universities', token: _token, body: payload));
 
-  Future<Map<String, dynamic>> updateUniversity(String id, Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/universities/$id', token: _token, body: payload));
+  Future<Map<String, dynamic>> updateUniversity(
+          String id, Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/universities/$id', token: _token, body: payload));
 
   Future<void> deleteUniversity(String id) async {
     await ApiClient.instance.delete('/universities/$id', token: _token);
   }
 
   // ---- programs -----------------------------------------------------------
-  Future<Map<String, dynamic>> createProgram(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.post('/programs', token: _token, body: payload));
+  Future<Map<String, dynamic>> createProgram(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .post('/programs', token: _token, body: payload));
 
-  Future<Map<String, dynamic>> updateProgram(String id, Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/programs/$id', token: _token, body: payload));
+  Future<Map<String, dynamic>> updateProgram(
+          String id, Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/programs/$id', token: _token, body: payload));
 
   Future<void> deleteProgram(String id) async {
     await ApiClient.instance.delete('/programs/$id', token: _token);
   }
 
   // ---- content: countries --------------------------------------------------
-  Future<List<dynamic>> getCountries() async =>
-      Json.list(await ApiClient.instance.get('/admin/countries', token: _token));
+  Future<List<dynamic>> getCountries() async => Json.list(
+      await ApiClient.instance.get('/admin/countries', token: _token));
 
-  Future<Map<String, dynamic>> createCountry(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.post('/admin/countries', token: _token, body: payload));
+  Future<Map<String, dynamic>> createCountry(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .post('/admin/countries', token: _token, body: payload));
 
-  Future<Map<String, dynamic>> updateCountry(String id, Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/admin/countries/$id', token: _token, body: payload));
+  Future<Map<String, dynamic>> updateCountry(
+          String id, Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/admin/countries/$id', token: _token, body: payload));
 
   Future<void> deleteCountry(String id) async {
     await ApiClient.instance.delete('/admin/countries/$id', token: _token);
   }
 
   // ---- content: study fields ------------------------------------------------
-  Future<List<dynamic>> getStudyFields() async =>
-      Json.list(await ApiClient.instance.get('/admin/study-fields', token: _token));
+  Future<List<dynamic>> getStudyFields() async => Json.list(
+      await ApiClient.instance.get('/admin/study-fields', token: _token));
 
-  Future<Map<String, dynamic>> createStudyField(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.post('/admin/study-fields', token: _token, body: payload));
+  Future<Map<String, dynamic>> createStudyField(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .post('/admin/study-fields', token: _token, body: payload));
 
-  Future<Map<String, dynamic>> updateStudyField(String id, Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/admin/study-fields/$id', token: _token, body: payload));
+  Future<Map<String, dynamic>> updateStudyField(
+          String id, Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/admin/study-fields/$id', token: _token, body: payload));
 
   Future<void> deleteStudyField(String id) async {
     await ApiClient.instance.delete('/admin/study-fields/$id', token: _token);
   }
 
   // ---- site-settings (singleton) -------------------------------------------
-  Future<Map<String, dynamic>> getSiteSettings() async =>
-      Json.map(await ApiClient.instance.get('/admin/site-settings', token: _token));
+  Future<Map<String, dynamic>> getSiteSettings() async => Json.map(
+      await ApiClient.instance.get('/admin/site-settings', token: _token));
 
-  Future<Map<String, dynamic>> updateSiteSettings(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/admin/site-settings', token: _token, body: payload));
+  Future<Map<String, dynamic>> updateSiteSettings(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/admin/site-settings', token: _token, body: payload));
 
   // ---- testimonials -----------------------------------------------------
-  Future<List<dynamic>> getTestimonials() async =>
-      Json.list(await ApiClient.instance.get('/admin/testimonials', token: _token));
+  Future<List<dynamic>> getTestimonials() async => Json.list(
+      await ApiClient.instance.get('/admin/testimonials', token: _token));
 
-  Future<Map<String, dynamic>> createTestimonial(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.post('/admin/testimonials', token: _token, body: payload));
+  Future<Map<String, dynamic>> createTestimonial(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .post('/admin/testimonials', token: _token, body: payload));
 
-  Future<Map<String, dynamic>> updateTestimonial(String id, Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/admin/testimonials/$id', token: _token, body: payload));
+  Future<Map<String, dynamic>> updateTestimonial(
+          String id, Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/admin/testimonials/$id', token: _token, body: payload));
 
   Future<void> deleteTestimonial(String id) async {
     await ApiClient.instance.delete('/admin/testimonials/$id', token: _token);
   }
 
   // ---- recognitions ---------------------------------------------------------
-  Future<List<dynamic>> getRecognitions() async =>
-      Json.list(await ApiClient.instance.get('/admin/recognitions', token: _token));
+  Future<List<dynamic>> getRecognitions() async => Json.list(
+      await ApiClient.instance.get('/admin/recognitions', token: _token));
 
-  Future<Map<String, dynamic>> createRecognition(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.post('/admin/recognitions', token: _token, body: payload));
+  Future<Map<String, dynamic>> createRecognition(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .post('/admin/recognitions', token: _token, body: payload));
 
-  Future<Map<String, dynamic>> updateRecognition(String id, Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/admin/recognitions/$id', token: _token, body: payload));
+  Future<Map<String, dynamic>> updateRecognition(
+          String id, Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/admin/recognitions/$id', token: _token, body: payload));
 
   Future<void> deleteRecognition(String id) async {
     await ApiClient.instance.delete('/admin/recognitions/$id', token: _token);
   }
 
   // ---- services (our-services) ---------------------------------------------
-  Future<List<dynamic>> getServices() async =>
-      Json.list(await ApiClient.instance.get('/admin/our-services', token: _token));
+  Future<List<dynamic>> getServices() async => Json.list(
+      await ApiClient.instance.get('/admin/our-services', token: _token));
 
-  Future<Map<String, dynamic>> createService(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.post('/admin/our-services', token: _token, body: payload));
+  Future<Map<String, dynamic>> createService(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .post('/admin/our-services', token: _token, body: payload));
 
-  Future<Map<String, dynamic>> updateService(String id, Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/admin/our-services/$id', token: _token, body: payload));
+  Future<Map<String, dynamic>> updateService(
+          String id, Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/admin/our-services/$id', token: _token, body: payload));
 
   Future<void> deleteService(String id) async {
     await ApiClient.instance.delete('/admin/our-services/$id', token: _token);
@@ -280,10 +402,13 @@ class AdminModulesRepository {
       Json.list(await ApiClient.instance.get('/admin/faqs', token: _token));
 
   Future<Map<String, dynamic>> createFaq(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.post('/admin/faqs', token: _token, body: payload));
+      Json.map(await ApiClient.instance
+          .post('/admin/faqs', token: _token, body: payload));
 
-  Future<Map<String, dynamic>> updateFaq(String id, Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/admin/faqs/$id', token: _token, body: payload));
+  Future<Map<String, dynamic>> updateFaq(
+          String id, Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/admin/faqs/$id', token: _token, body: payload));
 
   Future<void> deleteFaq(String id) async {
     await ApiClient.instance.delete('/admin/faqs/$id', token: _token);
@@ -293,55 +418,146 @@ class AdminModulesRepository {
   Future<Map<String, dynamic>> getOurStory() async =>
       Json.map(await ApiClient.instance.get('/admin/our-story', token: _token));
 
-  Future<Map<String, dynamic>> updateOurStory(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/admin/our-story', token: _token, body: payload));
+  Future<Map<String, dynamic>> updateOurStory(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/admin/our-story', token: _token, body: payload));
 
   // ---- events: upcoming (singleton) + past (list) + registrations (read) ----
-  Future<Map<String, dynamic>> getUpcomingEvent() async =>
-      Json.map(await ApiClient.instance.get('/admin/upcoming-event', token: _token));
+  Future<Map<String, dynamic>> getUpcomingEvent() async => Json.map(
+      await ApiClient.instance.get('/admin/upcoming-event', token: _token));
 
-  Future<Map<String, dynamic>> updateUpcomingEvent(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/admin/upcoming-event', token: _token, body: payload));
+  Future<Map<String, dynamic>> updateUpcomingEvent(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/admin/upcoming-event', token: _token, body: payload));
 
-  Future<List<dynamic>> getPastEvents() async =>
-      Json.list(await ApiClient.instance.get('/admin/past-events', token: _token));
+  Future<List<dynamic>> getPastEvents() async => Json.list(
+      await ApiClient.instance.get('/admin/past-events', token: _token));
 
-  Future<Map<String, dynamic>> createPastEvent(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.post('/admin/past-events', token: _token, body: payload));
+  Future<Map<String, dynamic>> createPastEvent(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .post('/admin/past-events', token: _token, body: payload));
 
-  Future<Map<String, dynamic>> updatePastEvent(String id, Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/admin/past-events/$id', token: _token, body: payload));
+  Future<Map<String, dynamic>> updatePastEvent(
+          String id, Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/admin/past-events/$id', token: _token, body: payload));
 
   Future<void> deletePastEvent(String id) async {
     await ApiClient.instance.delete('/admin/past-events/$id', token: _token);
   }
 
   Future<List<dynamic>> getEventRegistrations() async =>
-      Json.list(await ApiClient.instance.get('/admin/event-registrations', token: _token));
+      Json.list(await ApiClient.instance
+          .get('/admin/event-registrations', token: _token));
 
   // ---- exhibitions --------------------------------------------------------------
-  Future<List<dynamic>> getExhibitions() async =>
-      Json.list(await ApiClient.instance.get('/admin/exhibitions', token: _token));
+  Future<List<dynamic>> getExhibitions() async => Json.list(
+      await ApiClient.instance.get('/admin/exhibitions', token: _token));
 
-  Future<Map<String, dynamic>> createExhibition(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.post('/admin/exhibitions', token: _token, body: payload));
+  Future<Map<String, dynamic>> createExhibition(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .post('/admin/exhibitions', token: _token, body: payload));
 
-  Future<Map<String, dynamic>> updateExhibition(String id, Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/admin/exhibitions/$id', token: _token, body: payload));
+  Future<Map<String, dynamic>> updateExhibition(
+          String id, Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/admin/exhibitions/$id', token: _token, body: payload));
 
   Future<void> deleteExhibition(String id) async {
     await ApiClient.instance.delete('/admin/exhibitions/$id', token: _token);
   }
 
+  // ---- web admin parity: visa, housing, and student wallet -----------------
+  Future<List<dynamic>> getVisaCases() async => Json.list(
+      await ApiClient.instance.get('/applications/visa-cases', token: _token));
+
+  Future<Map<String, dynamic>> getVisaCase(String applicationId) async =>
+      Json.map(await ApiClient.instance
+          .get('/applications/$applicationId/visa-case', token: _token));
+
+  Future<Map<String, dynamic>> updateVisaCase(
+          String applicationId, Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance.patch(
+          '/applications/$applicationId/visa-case',
+          token: _token,
+          body: payload));
+
+  Future<List<dynamic>> getAccommodationListings() async =>
+      Json.list(await ApiClient.instance
+          .get('/admin/accommodation-listings', token: _token));
+
+  Future<List<dynamic>> getAccommodationBookings() async =>
+      Json.list(await ApiClient.instance
+          .get('/admin/accommodation-bookings', token: _token));
+
+  Future<List<dynamic>> getAdminUniversities() async =>
+      Json.list(await ApiClient.instance.get('/universities', token: _token));
+
+  Future<Map<String, dynamic>> saveAccommodationListing(
+          String? id, Map<String, dynamic> payload) async =>
+      Json.map(id == null
+          ? await ApiClient.instance.post('/admin/accommodation-listings',
+              token: _token, body: payload)
+          : await ApiClient.instance.put('/admin/accommodation-listings/$id',
+              token: _token, body: payload));
+
+  Future<void> deleteAccommodationListing(String id) async {
+    await ApiClient.instance
+        .delete('/admin/accommodation-listings/$id', token: _token);
+  }
+
+  Future<Map<String, dynamic>> updateAccommodationBooking(
+    String id, {
+    required String status,
+    required int version,
+    String staffNote = '',
+  }) async =>
+      Json.map(await ApiClient.instance
+          .patch('/admin/accommodation-bookings/$id', token: _token, body: {
+        'status': status,
+        'version': version,
+        'staffNote': staffNote,
+      }));
+
+  Future<List<dynamic>> getWalletEntries({String? studentId}) async =>
+      Json.list(await ApiClient.instance.get(
+        '/admin/student-financials/wallet-entries${studentId == null || studentId.isEmpty ? '' : '?student=${Uri.encodeQueryComponent(studentId)}'}',
+        token: _token,
+      ));
+
+  Future<Map<String, dynamic>> createWalletAdjustment({
+    required String studentId,
+    required String direction,
+    required num amount,
+    required String notes,
+  }) async =>
+      Json.map(await ApiClient.instance.post(
+          '/admin/student-financials/wallet-entries',
+          token: _token,
+          body: {
+            'studentId': studentId,
+            'direction': direction,
+            'amount': amount,
+            'notes': notes,
+          }));
+
   // ---- banners ----------------------------------------------------------------
   Future<List<dynamic>> getBanners() async =>
       Json.list(await ApiClient.instance.get('/admin/banners', token: _token));
 
-  Future<Map<String, dynamic>> createBanner(Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.post('/admin/banners', token: _token, body: payload));
+  Future<Map<String, dynamic>> createBanner(
+          Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .post('/admin/banners', token: _token, body: payload));
 
-  Future<Map<String, dynamic>> updateBanner(String id, Map<String, dynamic> payload) async =>
-      Json.map(await ApiClient.instance.put('/admin/banners/$id', token: _token, body: payload));
+  Future<Map<String, dynamic>> updateBanner(
+          String id, Map<String, dynamic> payload) async =>
+      Json.map(await ApiClient.instance
+          .put('/admin/banners/$id', token: _token, body: payload));
 
   Future<void> deleteBanner(String id) async {
     await ApiClient.instance.delete('/admin/banners/$id', token: _token);
@@ -352,11 +568,20 @@ class AdminModulesRepository {
   /// across the backend: `{url}` for single-file endpoints and
   /// `{urls:[...]}` for the university multi-image endpoint (first URL is
   /// used there, matching the single "logo" field this app exposes).
-  Future<String> uploadImage(String path, {required List<int> fileBytes, required String fileName, String fileFieldName = 'file'}) async {
-    final data = await ApiClient.instance.postMultipart(path, fileBytes: fileBytes, fileName: fileName, fileFieldName: fileFieldName, token: _token);
+  Future<String> uploadImage(String path,
+      {required List<int> fileBytes,
+      required String fileName,
+      String fileFieldName = 'file'}) async {
+    final data = await ApiClient.instance.postMultipart(path,
+        fileBytes: fileBytes,
+        fileName: fileName,
+        fileFieldName: fileFieldName,
+        token: _token);
     final map = Json.map(data);
     if (map['url'] is String) return map['url'] as String;
-    if (map['urls'] is List && (Json.list(map['urls'])).isNotEmpty) return (Json.list(map['urls'])).first as String;
-    throw ApiException(0, 'Unexpected upload response');
+    if (map['urls'] is List && (Json.list(map['urls'])).isNotEmpty) {
+      return (Json.list(map['urls'])).first as String;
+    }
+    throw const ApiException(0, 'Unexpected upload response');
   }
 }

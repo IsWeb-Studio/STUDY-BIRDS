@@ -1,7 +1,7 @@
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
-import '../services_support/messaging_and_emergency_screens.dart';
+import '../../core/utils/responsive.dart';
 import '../profile_account/security_settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -12,9 +12,12 @@ import '../../core/repositories/university_repository.dart';
 import '../applications_documents_payments/applications_screens.dart'
     show appStatusMeta;
 import 'university_application_review_screen.dart';
+import '../games/wink_screen.dart';
+import '../profile_account/my_streak.dart';
+import '../profile_account/role_account_tab.dart';
+import '../home_journey/notifications_screen.dart';
 import '../../main.dart' show RootChooserScreen;
-import '../home_journey/notifications_screen.dart'
-    show NotificationInboxButton;
+import '../community/student_community_hub.dart';
 
 class UniversityDashboardScreen extends StatefulWidget {
   const UniversityDashboardScreen({super.key});
@@ -23,8 +26,7 @@ class UniversityDashboardScreen extends StatefulWidget {
       _UniversityDashboardScreenState();
 }
 
-class _UniversityDashboardScreenState
-    extends State<UniversityDashboardScreen> {
+class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
   List<dynamic> _all = [];
   List<dynamic> _filtered = [];
   bool _loading = true;
@@ -33,6 +35,7 @@ class _UniversityDashboardScreenState
   int _favoritesCount = 0;
   String? _avatarUrl;
   bool _avatarUploading = false;
+  int _tab = 0;
   final _searchCtrl = TextEditingController();
 
   static const _statusOptions = [
@@ -69,11 +72,18 @@ class _UniversityDashboardScreenState
     try {
       final url = await UniversityRepository.instance
           .uploadAvatar(fileBytes: bytes, fileName: img.name);
+      final user = AuthSession.instance.currentUser;
+      if (user != null) {
+        await AuthSession.instance
+            .updateAccount({...user.toJson(), 'avatar': url});
+      }
       if (mounted) setState(() => _avatarUrl = url);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/university_dashboard_screen.dart:69');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/university_dashboard_screen.dart:69');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-            content: Text('تعذر رفع الصورة'),
+            content: const Text('تعذر رفع الصورة'),
             backgroundColor: AppColors.danger));
       }
     } finally {
@@ -118,8 +128,9 @@ class _UniversityDashboardScreenState
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error =
-            e is ApiException ? e.message : 'تعذر تحميل الطلبات، حاول مرة أخرى.';
+        _error = e is ApiException
+            ? e.message
+            : 'تعذر تحميل الطلبات، حاول مرة أخرى.';
         _loading = false;
       });
     }
@@ -130,11 +141,11 @@ class _UniversityDashboardScreenState
     setState(() {
       _filtered = _all.where((a) {
         final app = Json.map(a);
-        final status = app['detailedStatus'] as String? ?? app['status'] as String? ?? '';
+        final status =
+            app['detailedStatus'] as String? ?? app['status'] as String? ?? '';
         final student = Json.mapOrNull(app['student']);
         final name = (student?['name'] as String? ?? '').toLowerCase();
-        final matchStatus =
-            _statusFilter == 'all' || status == _statusFilter;
+        final matchStatus = _statusFilter == 'all' || status == _statusFilter;
         final matchSearch = q.isEmpty || name.contains(q);
         return matchStatus && matchSearch;
       }).toList();
@@ -161,14 +172,10 @@ class _UniversityDashboardScreenState
     }).length;
 
     return AppScaffold(
+      showBackButton: false,
       actions: [
         const NotificationInboxButton(),
-        IconButton(
-            tooltip: 'الرسائل',
-            icon: const Icon(Icons.forum_outlined),
-            onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-                builder: (_) => const ConversationThreadScreen()))),
-        PopupMenuButton<String>(
+PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert_rounded),
           onSelected: (value) async {
             if (value == 'security') {
@@ -192,31 +199,62 @@ class _UniversityDashboardScreenState
               child: Row(children: [
                 Icon(Icons.logout_rounded, size: 18, color: AppColors.danger),
                 SizedBox(width: 10),
-                Text('تسجيل الخروج',
-                    style: TextStyle(color: AppColors.danger)),
+                Text('تسجيل الخروج', style: TextStyle(color: AppColors.danger)),
               ]),
             ),
           ],
         ),
       ],
-      title: 'بوابة الجامعة',
-      body: RefreshIndicator(
-        onRefresh: _load,
-        color: AppColors.navy,
-        child: _loading
-            ? const LoadingState(message: 'جاري تحميل الطلبات...')
-            : _error != null
-                ? ErrorState(message: _error!, onRetry: _load)
-                : _buildContent(
-                    uniName, total, pending, accepted, rejected, _favoritesCount),
+      title: _tab == 0
+          ? '\u0628\u0648\u0627\u0628\u0629 \u0627\u0644\u062c\u0627\u0645\u0639\u0629'
+          : _tab == 1
+              ? '\u0645\u062c\u062a\u0645\u0639 \u0627\u0644\u0637\u0644\u0627\u0628'
+              : '\u062d\u0633\u0627\u0628\u064a',
+      bottomBar: AdaptiveBottomBar(
+        child: BottomNavigationBar(
+          key: const ValueKey('university-bottom-navigation'),
+          currentIndex: _tab,
+          onTap: (index) => setState(() => _tab = index),
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: AppColors.greenInk,
+          unselectedItemColor: AppColors.textSecondary,
+          items: const [
+            BottomNavigationBarItem(
+                icon: Icon(Icons.fact_check_outlined), label: 'الطلبات'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.forum_outlined),
+                label:
+                    '\u0645\u062c\u062a\u0645\u0639 \u0627\u0644\u0637\u0644\u0627\u0628'),
+            BottomNavigationBarItem(
+                icon: Icon(Icons.person_outline_rounded), label: 'حسابي'),
+          ],
+        ),
+      ),
+      body: IndexedStack(
+        index: _tab,
+        children: [
+          RefreshIndicator(
+            onRefresh: _load,
+            color: AppColors.navy,
+            child: _loading
+                ? const LoadingState(message: 'جاري تحميل الطلبات...')
+                : _error != null
+                    ? ErrorState(message: _error!, onRetry: _load)
+                    : _buildContent(uniName, total, pending, accepted, rejected,
+                        _favoritesCount),
+          ),
+          StudentCommunityHub(isActive: _tab == 1),
+          RoleAccountTab(onLogout: _logout),
+        ],
       ),
     );
   }
 
-  Widget _buildContent(
-      String uniName, int total, int pending, int accepted, int rejected, int favorites) {
+  Widget _buildContent(String uniName, int total, int pending, int accepted,
+      int rejected, int favorites) {
     return CustomScrollView(
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics:
+          const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       slivers: [
         SliverToBoxAdapter(
           child: _HeroBanner(
@@ -225,6 +263,25 @@ class _UniversityDashboardScreenState
             avatarUrl: _avatarUrl,
             avatarUploading: _avatarUploading,
             onPickAvatar: _pickAvatar,
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: MyStreakCard(
+                key: ValueKey(
+                    'university-my-streak-${AuthSession.instance.currentUser?.id}'),
+                isActive: true),
+          ),
+        ),
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+            child: _UniversityGameCard(
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(builder: (_) => const WinkScreen()),
+              ),
+            ),
           ),
         ),
         SliverToBoxAdapter(
@@ -269,7 +326,8 @@ class _UniversityDashboardScreenState
                 hintText: 'ابحث عن طالب...',
                 prefixIcon: const Icon(Icons.search_rounded),
                 suffixIcon: _searchCtrl.text.isNotEmpty
-                    ? IconButton(tooltip: 'إغلاق', 
+                    ? IconButton(
+                        tooltip: 'إغلاق',
                         icon: const Icon(Icons.close_rounded),
                         onPressed: () {
                           _searchCtrl.clear();
@@ -304,8 +362,7 @@ class _UniversityDashboardScreenState
                       fontSize: 13),
                   backgroundColor: AppColors.card,
                   side: BorderSide(
-                      color:
-                          selected ? AppColors.navy : AppColors.border),
+                      color: selected ? AppColors.navy : AppColors.border),
                 );
               },
             ),
@@ -317,9 +374,7 @@ class _UniversityDashboardScreenState
             hasScrollBody: false,
             child: EmptyState(
                 icon: Icons.inbox_outlined,
-                title: _all.isEmpty
-                    ? 'لا توجد طلبات بعد'
-                    : 'لا توجد نتائج',
+                title: _all.isEmpty ? 'لا توجد طلبات بعد' : 'لا توجد نتائج',
                 message: _all.isEmpty
                     ? 'ستظهر هنا الطلبات المرسلة إلى جامعتكم.'
                     : 'جرّب تعديل فلتر البحث.'),
@@ -336,16 +391,82 @@ class _UniversityDashboardScreenState
                   app: app,
                   onTap: () => Navigator.of(context)
                       .push(MaterialPageRoute(
-                          builder: (_) =>
-                              UniversityApplicationReviewScreen(
-                                  applicationId: app['_id'] as String,
-                                  initialData: app)))
+                          builder: (_) => UniversityApplicationReviewScreen(
+                              applicationId: app['_id'] as String,
+                              initialData: app)))
                       .then((_) => _load()),
                 );
               },
             ),
           ),
       ],
+    );
+  }
+}
+
+class _UniversityGameCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _UniversityGameCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return Material(
+      color: AppColors.navy,
+      borderRadius: BorderRadius.circular(20),
+      child: InkWell(
+        key: const ValueKey('university-wink-game'),
+        borderRadius: BorderRadius.circular(20),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.green.withValues(alpha: 0.18),
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: const Icon(Icons.sports_esports_rounded,
+                    color: AppColors.green),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isArabic ? 'لعبة الغمّازة' : 'The Winker game',
+                      style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isArabic
+                          ? 'العبوا على جهاز واحد أو أنشئوا غرفة أونلاين.'
+                          : 'Play on one device or create an online room.',
+                      style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.78),
+                          fontSize: 12.5),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                isArabic
+                    ? Icons.arrow_back_rounded
+                    : Icons.arrow_forward_rounded,
+                color: AppColors.greenInk,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -406,8 +527,10 @@ class _HeroBanner extends StatelessWidget {
                                       fit: BoxFit.cover,
                                       width: 58,
                                       height: 58,
-                                      errorWidget: const Icon(Icons.account_balance_rounded,
-                                              color: Colors.white, size: 28)))
+                                      errorWidget: const Icon(
+                                          Icons.account_balance_rounded,
+                                          color: Colors.white,
+                                          size: 28)))
                               : const Icon(Icons.account_balance_rounded,
                                   color: Colors.white, size: 28),
                     ),
@@ -442,8 +565,7 @@ class _HeroBanner extends StatelessWidget {
                         overflow: TextOverflow.ellipsis),
                     const SizedBox(height: 3),
                     const Text('بوابة استعراض وإدارة طلبات القبول',
-                        style: TextStyle(
-                            color: Colors.white70, fontSize: 12)),
+                        style: TextStyle(color: Colors.white70, fontSize: 12)),
                   ],
                 ),
               ),
@@ -495,9 +617,7 @@ class _StatCard extends StatelessWidget {
         children: [
           Text(value,
               style: TextStyle(
-                  color: color,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800)),
+                  color: color, fontSize: 20, fontWeight: FontWeight.w800)),
           const SizedBox(height: 3),
           Text(label,
               style: AppTextStyles.caption.copyWith(fontSize: 11),
@@ -520,10 +640,17 @@ class _AppCard extends StatelessWidget {
     final program = Json.mapOrNull(app['program']);
     final name = student?['name'] as String? ?? '—';
     final email = student?['email'] as String? ?? '';
-    final programName = program?['title'] as String? ?? program?['name'] as String? ?? '—';
+    final programName =
+        program?['title'] as String? ?? program?['name'] as String? ?? '—';
     final meta = appStatusMeta(app);
     final initials = name.isNotEmpty
-        ? name.trim().split(' ').map((w) => w.isNotEmpty ? w[0] : '').take(2).join().toUpperCase()
+        ? name
+            .trim()
+            .split(' ')
+            .map((w) => w.isNotEmpty ? w[0] : '')
+            .take(2)
+            .join()
+            .toUpperCase()
         : '?';
 
     return GestureDetector(
@@ -568,8 +695,7 @@ class _AppCard extends StatelessWidget {
                   if (email.isNotEmpty) ...[
                     const SizedBox(height: 2),
                     Text(email,
-                        style: AppTextStyles.caption
-                            .copyWith(fontSize: 11),
+                        style: AppTextStyles.caption.copyWith(fontSize: 11),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis),
                   ],

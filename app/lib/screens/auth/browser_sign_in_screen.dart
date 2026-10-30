@@ -38,11 +38,14 @@ class _BrowserSignInScreenState extends State<BrowserSignInScreen> {
       id = data['challengeId'] as String;
       url = data['url'] as String;
       if (!await launchUrl(Uri.parse(url!),
-          mode: LaunchMode.externalApplication)) throw Exception('browser');
+          mode: LaunchMode.externalApplication)) {
+        throw Exception('browser');
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() =>
             error = e is ApiException ? e.message : 'تعذر فتح تسجيل الدخول');
+      }
     } finally {
       if (mounted) setState(() => busy = false);
     }
@@ -57,8 +60,9 @@ class _BrowserSignInScreenState extends State<BrowserSignInScreen> {
       final data = Json.rawMap(await ApiClient.instance.post('/identity/mobile/exchange',
           body: {'challengeId': id, 'verifier': verifier}));
       if (data['pending'] == true) {
-        if (mounted)
+        if (mounted) {
           setState(() => error = 'أكمل الدخول والموافقة في المتصفح أولًا.');
+        }
         return;
       }
       await AuthSession.instance.login(
@@ -66,14 +70,16 @@ class _BrowserSignInScreenState extends State<BrowserSignInScreen> {
           authToken: data['token'] as String,
           refreshToken: data['refreshToken'] as String?);
       verifier = null;
-      if (mounted)
+      if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
             MaterialPageRoute(builder: (_) => const RootChooserScreen()),
             (_) => false);
+      }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(
             () => error = e is ApiException ? e.message : 'تعذر إكمال الدخول');
+      }
     } finally {
       if (mounted) setState(() => busy = false);
     }

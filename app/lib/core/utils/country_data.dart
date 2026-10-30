@@ -350,7 +350,7 @@ class _CountryPickerSheetState extends State<_CountryPickerSheet> {
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
-                              color: AppColors.navy.withOpacity(0.07),
+                              color: AppColors.navy.withValues(alpha: 0.07),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text('+${c.dialCode}',

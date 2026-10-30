@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -28,6 +29,9 @@ http.Response json(Object data, [int status = 200]) =>
 Future<void> open(WidgetTester tester, List<StudentStory> stories,
     {Duration duration = const Duration(seconds: 8)}) async {
   await tester.pumpWidget(MaterialApp(
+      locale: const Locale('ar'),
+      supportedLocales: const [Locale('ar'), Locale('en')],
+      localizationsDelegates: GlobalMaterialLocalizations.delegates,
       home: Builder(
           builder: (context) => Scaffold(
               body: TextButton(
@@ -396,5 +400,34 @@ void main() {
               }
               return json({'seen': true});
             }));
+  });
+
+  testWidgets('logout closes the story viewer and removes private story content',
+      (tester) async {
+    final previous = AuthSession.instance.currentUser;
+    AuthSession.instance.currentUser = const AuthUser(
+        id: 'viewer-account',
+        name: 'Viewer',
+        email: 'viewer@example.test',
+        role: UserRole.student);
+    addTearDown(() => AuthSession.instance.currentUser = previous);
+
+    await http.runWithClient(() async {
+      await open(tester, [story('private-on-logout')]);
+      expect(find.byType(StoryViewer), findsOneWidget);
+
+      // Exercise the production logout notification path instead of mutating
+      // the plain currentUser field directly (which does not notify listeners).
+      final logout = AuthSession.instance.logout(revoke: false);
+      await tester.pump();
+      expect(find.text('Story private-on-logout'), findsNothing,
+          reason: 'story content must be hidden as soon as the session ends');
+      await tester.pump(const Duration(milliseconds: 400));
+
+      expect(find.byType(StoryViewer), findsNothing);
+      expect(find.text('Open'), findsOneWidget);
+      unawaited(logout.catchError((_) {}));
+      await tester.pumpWidget(const SizedBox());
+    }, () => MockClient((_) async => json({'seen': true, 'updates': []})));
   });
 }

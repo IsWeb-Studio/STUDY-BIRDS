@@ -7,6 +7,7 @@ import '../../core/config/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/repositories/consultation_repository.dart';
 import 'consultation_outcome.dart';
+import 'support_team_ai_screens.dart';
 
 const kConsultationModes = {
   'online': 'أونلاين',
@@ -30,6 +31,7 @@ class _LiveConsultationScreenState extends State<LiveConsultationScreen> {
   String? error;
   String mode = 'all', advisor = 'all';
   DateTime? day;
+  bool _pickingDay = false, _requesting = false, _requestSent = false;
 
   @override
   void initState() {
@@ -103,7 +105,8 @@ class _LiveConsultationScreenState extends State<LiveConsultationScreen> {
         'تم تأكيد الموعد',
         onSuccess: () {
           widget.onBooked?.call();
-          widget.onSlotBooked?.call({...slot, ...?confirmed, 'advisor': slot['advisor']});
+          widget.onSlotBooked
+              ?.call({...slot, ...?confirmed, 'advisor': slot['advisor']});
         });
   }
 
@@ -143,13 +146,65 @@ class _LiveConsultationScreenState extends State<LiveConsultationScreen> {
   }
 
   Future<void> pickDay() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-        context: context,
-        initialDate: day ?? now,
-        firstDate: DateTime(now.year, now.month, now.day),
-        lastDate: now.add(const Duration(days: 90)));
-    if (picked != null && mounted) setState(() => day = picked);
+    if (_pickingDay) return;
+    _pickingDay = true;
+    try {
+      final now = DateTime.now();
+      final firstDate = DateUtils.dateOnly(now);
+      final lastDate = DateUtils.dateOnly(now.add(const Duration(days: 90)));
+      final dates = slots
+          .where((slot) =>
+              (mode == 'all' || slot['mode'] == mode) &&
+              (advisor == 'all' || '${slot['advisor']?['_id']}' == advisor))
+          .map((slot) => DateTime.tryParse('${slot['startsAt']}')?.toLocal())
+          .whereType<DateTime>()
+          .map(DateUtils.dateOnly)
+          .where((date) => !date.isBefore(firstDate) && !date.isAfter(lastDate))
+          .toSet()
+          .toList()
+        ..sort();
+      final picked = await showDatePicker(
+          context: context,
+          initialDate: dates.isEmpty
+              ? (day ?? firstDate)
+              : dates.contains(day)
+                  ? day
+                  : dates.first,
+          firstDate: firstDate,
+          lastDate: lastDate,
+          selectableDayPredicate: dates.isEmpty ? null : dates.contains);
+      if (picked != null && mounted) setState(() => day = picked);
+    } finally {
+      _pickingDay = false;
+    }
+  }
+
+  Future<void> requestConsultation() async {
+    if (_requesting) return;
+    if (day == null) {
+      await pickDay();
+      if (day == null || !mounted) return;
+    }
+    _requesting = true;
+    try {
+      final selectedAdvisor = slots
+          .map((slot) => slot['advisor'])
+          .whereType<Map>()
+          .where((item) => '${item['_id']}' == advisor)
+          .firstOrNull;
+      final preferredDate =
+          '${day!.year}-${day!.month.toString().padLeft(2, '0')}-${day!.day.toString().padLeft(2, '0')}';
+      final sent = await Navigator.of(context).push<bool>(MaterialPageRoute(
+        builder: (_) => NewSupportTicketScreen(
+          initialSubject: 'طلب تنسيق موعد استشارة',
+          initialMessage:
+              'أرغب في تنسيق موعد استشارة.\nنوع الاستشارة: ${kConsultationModes[mode] ?? 'أي نوع متاح'}\nالمستشار المفضل: ${selectedAdvisor?['name'] ?? 'أي مستشار متاح'}\nالتاريخ المفضل بتوقيتي المحلي: $preferredDate\nهذا طلب تنسيق، والموعد غير مؤكد حتى يرد الفريق.',
+        ),
+      ));
+      if (sent == true && mounted) setState(() => _requestSent = true);
+    } finally {
+      _requesting = false;
+    }
   }
 
   Future<void> openMeeting(String raw) async {
@@ -160,10 +215,12 @@ class _LiveConsultationScreenState extends State<LiveConsultationScreen> {
           !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         throw StateError('Unavailable');
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/live_consultation_screen.dart:162');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/live_consultation_screen.dart:162');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            AppSnackBar(content: Text('تعذر فتح رابط الاجتماع.')));
+            AppSnackBar(content: const Text('تعذر فتح رابط الاجتماع.')));
       }
     }
   }
@@ -283,8 +340,12 @@ class _LiveConsultationScreenState extends State<LiveConsultationScreen> {
                       ...modes.entries.map((e) =>
                           DropdownMenuItem(value: e.key, child: Text(e.value)))
                     ],
-                    onChanged:
-                        busy ? null : (value) => setState(() => mode = value!)),
+                    onChanged: busy
+                        ? null
+                        : (value) => setState(() {
+                              mode = value!;
+                              day = null;
+                            })),
                 DropdownButton<String>(
                     isExpanded: true,
                     value: selectedAdvisor,
@@ -296,13 +357,18 @@ class _LiveConsultationScreenState extends State<LiveConsultationScreen> {
                     ],
                     onChanged: busy
                         ? null
-                        : (value) => setState(() => advisor = value!)),
+                        : (value) => setState(() {
+                              advisor = value!;
+                              day = null;
+                            })),
                 Wrap(children: [
                   TextButton.icon(
                       onPressed: busy ? null : pickDay,
                       icon: const Icon(Icons.calendar_today),
                       label: Text(day == null
-                          ? 'تصفية حسب التاريخ'
+                          ? slots.isEmpty
+                              ? 'اختيار التاريخ المفضل'
+                              : 'تصفية حسب التاريخ'
                           : MaterialLocalizations.of(context)
                               .formatCompactDate(day!))),
                   if (day != null)
@@ -310,9 +376,19 @@ class _LiveConsultationScreenState extends State<LiveConsultationScreen> {
                         onPressed: () => setState(() => day = null),
                         child: const Text('كل التواريخ'))
                 ]),
-                if (available.isEmpty)
-                  const Text(
-                      'لا توجد مواعيد متاحة بهذه الخيارات. حدّث القائمة أو غيّر التصفية.'),
+                if (available.isEmpty && error == null) ...[
+                  const InlineNotice(
+                      'لا توجد مواعيد منشورة بهذه الخيارات. يمكنك اختيار تاريخ مفضل وإرسال طلب تنسيق للفريق. الطلب لا يؤكد حجزًا.'),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: busy ? null : requestConsultation,
+                    icon: const Icon(Icons.support_agent_outlined),
+                    label: const Text('طلب تنسيق استشارة'),
+                  ),
+                  if (_requestSent)
+                    const InlineNotice(
+                        'تم إرسال طلبك. تابع رد الفريق في «تذاكري». لم يتم تأكيد موعد بعد.'),
+                ],
                 for (final slot in available)
                   ListTile(
                       contentPadding: EdgeInsets.zero,

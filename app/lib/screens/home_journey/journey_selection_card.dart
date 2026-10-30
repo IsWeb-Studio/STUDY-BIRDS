@@ -29,7 +29,7 @@ class JourneySelectionCard extends StatelessWidget {
           color: Colors.white,
           shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(24),
-              side: const BorderSide(color: Color(0xFFE2E8F0))),
+              side: const BorderSide(color: AppColors.border)),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onTap,
@@ -73,7 +73,7 @@ class JourneySelectionCard extends StatelessWidget {
                                   Container(
                                       padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                          color: const Color(0xFFF1F5F9),
+                                          color: AppColors.background,
                                           borderRadius:
                                               BorderRadius.circular(16)),
                                       child: const Icon(Icons.school_outlined,
@@ -103,7 +103,7 @@ class JourneySelectionCard extends StatelessWidget {
                             Container(
                                 padding: const EdgeInsets.all(14),
                                 decoration: BoxDecoration(
-                                    color: const Color(0xFFF7F9FC),
+                                    color: AppColors.background,
                                     borderRadius: BorderRadius.circular(16)),
                                 child: Row(children: [
                                   SizedBox(
@@ -117,8 +117,8 @@ class JourneySelectionCard extends StatelessWidget {
                                                     value: progress,
                                                     strokeWidth: 4,
                                                     backgroundColor:
-                                                        const Color(0xFFE3E9F0),
-                                                    color: AppColors.orange,
+                                                        AppColors.border,
+                                                    color: AppColors.greenInk,
                                                     semanticsLabel:
                                                         'تقدم الرحلة',
                                                     semanticsValue:
@@ -150,7 +150,7 @@ class JourneySelectionCard extends StatelessWidget {
                             const SizedBox(height: 14),
                             Row(children: [
                               const Icon(Icons.route_outlined,
-                                  size: 18, color: AppColors.orange),
+                                  size: 18, color: AppColors.greenInk),
                               const SizedBox(width: 8),
                               Expanded(
                                   child: Text('عرض المراحل والتفاصيل',

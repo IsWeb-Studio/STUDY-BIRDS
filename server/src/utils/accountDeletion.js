@@ -27,7 +27,7 @@ function loadModels() {
   }
 }
 async function queueRecordMedia(record) {
-  for (const storage of [record.storage, record.attachmentStorage]) await queueMedia(storage);
+  for (const storage of [record.storage, record.attachmentStorage, record.audio, record.audioStorage]) await queueMedia(storage);
   if (record.image?.publicId) await queueMedia({ publicId: record.image.publicId, deliveryType: 'authenticated' });
   for (const key of ['imageUrl','videoUrl','url','filePath','resultFileUrl','cardFileUrl']) {
     await queueMedia(mediaFromUrl(record[key], ['story-images/','story-videos/','avatars/','documents/','student-documents/','chat-images/','support/','verification/']));
@@ -71,6 +71,9 @@ async function processAccountDeletion(id) {
       await require('../models/CommunityPost').updateOne({ _id: post }, { $set: { commentCount: count } });
     }
     await require('../models/MobileWorkspace').Access.updateMany({ students: id }, { $pull: { students: id } });
+    for await (const ticket of require('../models/SupportTicket').find({ 'replies.user': id }).select('+replies.audioStorage').lean().cursor()) {
+      for (const reply of ticket.replies || []) if (String(reply.user) === String(id)) await queueRecordMedia(reply);
+    }
     await require('../models/SupportTicket').updateMany({ 'replies.user': id }, { $pull: { replies: { user: id } } });
     await require('../models/IdempotencyRecord').deleteMany({ scope: new RegExp(`(?:^|:)${id}(?:$|:)`) });
     await require('../models/WinkRoom').deleteMany({ 'state.players.id': String(id) });
@@ -87,4 +90,8 @@ async function deleteAccountData(user) {
   await Job.updateOne({ key: `account:${user._id}` }, { $setOnInsert: { kind: 'account', owner: user._id, dueAt: new Date() } }, { upsert: true });
   await processAccountDeletion(user._id);
 }
-module.exports = { deleteAccountData, processAccountDeletion };
+async function enqueueDeletion(user) {
+  await Job.updateOne({ key: `account:${user._id}` }, { $setOnInsert: { kind: 'account', owner: user._id, dueAt: new Date() } }, { upsert: true });
+  await User.updateOne({ _id: user._id }, { $set: { isActive: false }, $inc: { tokenVersion: 1 }, $unset: { refreshTokenHash: 1, refreshTokenExpiry: 1 } });
+}
+module.exports = { deleteAccountData, processAccountDeletion, enqueueDeletion };

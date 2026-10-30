@@ -72,7 +72,7 @@ class _EmailChallengeScreenState extends State<EmailChallengeScreen> {
       _startCountdown();
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text('تم إعادة إرسال رمز التحقق')),
+          AppSnackBar(content: const Text('تم إعادة إرسال رمز التحقق')),
         );
       }
     } catch (e) {

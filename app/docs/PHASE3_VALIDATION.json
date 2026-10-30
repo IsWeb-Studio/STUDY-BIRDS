@@ -1,0 +1,508 @@
+{
+  "date": "2026-10-21",
+  "timezone": "Europe/Istanbul",
+  "status": "LOCAL_VALIDATION_COMPLETE_NOT_PRODUCTION_CERTIFIED",
+  "authoritative": {
+    "flutter": "D:\\work\\studybirds_app\\study_birds_app-main",
+    "backend": "D:\\work\\studybirds_session_release\\server",
+    "website": "D:\\work\\studybirds_session_release\\client"
+  },
+  "preservation": {
+    "root": ".git/phase3-20261021",
+    "sourceFiles": 1704,
+    "hashesVerified": true,
+    "privateConfigurationFiles": 5,
+    "privateConfigurationUnchanged": true,
+    "previousCheckpointsRetained": true,
+    "priorHistoryBundlesRetained": true,
+    "finalCheckpoint": [
+      "app-final",
+      "deployment-final"
+    ],
+    "initialFreeBytes": {
+      "C": 32084459520,
+      "D": 5749592064
+    },
+    "offDeviceBackup": false
+  },
+  "concurrentWrites": {
+    "exportExists": false,
+    "observationSeconds": 45,
+    "sourceEvents": 0,
+    "writerIdentified": false,
+    "limitation": "No observed writes does not establish the cause of the historical transient file or rule out future concurrent writers."
+  },
+  "flutter": {
+    "root": "D:\\work\\studybirds_app\\study_birds_app-main",
+    "sdk": "C:/src/flutter/bin/flutter.bat",
+    "pubGet": {
+      "command": "flutter pub get",
+      "exit": 0,
+      "log": "pub-get.log"
+    },
+    "analyze": {
+      "command": "flutter analyze",
+      "exit": 0,
+      "issues": 0,
+      "log": "analyze.log"
+    },
+    "tests": {
+      "command": "flutter test --reporter expanded",
+      "exit": 0,
+      "passed": 445,
+      "failed": 0,
+      "log": "flutter-tests.log"
+    },
+    "debugBuild": {
+      "command": "flutter build apk --debug",
+      "exit": 0,
+      "log": "debug-build.log",
+      "artifact": "build/app/outputs/flutter-apk/app-debug.apk"
+    },
+    "preferencesFocused": {
+      "command": "flutter test test/notification_preferences_test.dart",
+      "exit": 0,
+      "passed": 6,
+      "log": "preferences-focused.log"
+    }
+  },
+  "backend": {
+    "root": "D:\\work\\studybirds_session_release\\server",
+    "tests": {
+      "command": "npm test",
+      "environment": "STUDY_BIRDS_TEST_TOOLS=<existing isolated test-tools directory>; test runner forces isolated database URIs and network isolation",
+      "exit": 0,
+      "passed": 257,
+      "failed": 0,
+      "skipped": 0,
+      "topLevel": 211,
+      "log": "backend-tests.log"
+    },
+    "syntax": {
+      "command": "node --check <each src/scripts/tests JavaScript file>",
+      "files": 329,
+      "exit": 0,
+      "failures": []
+    },
+    "audit": {
+      "command": "npm audit --json",
+      "exit": 0,
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 0,
+      "critical": 0,
+      "total": 0,
+      "log": "backend-audit.json"
+    }
+  },
+  "website": {
+    "root": "D:\\work\\studybirds_session_release\\client",
+    "validationRoot": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\audit-20261021\\client-validation",
+    "matchingSourceFiles": 265,
+    "sourceConfigAndLockMatch": true,
+    "tests": {
+      "command": "npm test",
+      "exit": 0,
+      "passed": 73,
+      "files": 11,
+      "log": "website-tests-final.log"
+    },
+    "build": {
+      "command": "npm run build",
+      "environment": "NODE_OPTIONS=--import=file:///D:/work/studybirds_app/study_birds_app-main/.git/phase3-20261021/seo-offline.mjs; VITE_API_URL=http://127.0.0.1:1/api",
+      "exit": 0,
+      "includes": [
+        "tsc -b",
+        "vite build",
+        "static SEO with empty local fixture"
+      ],
+      "productionContentFetched": false,
+      "log": "website-build-final.log"
+    },
+    "focused": {
+      "command": "npm test -- --run src/lib/seoBuild.test.ts",
+      "exit": 0,
+      "passed": 8,
+      "log": "website-seo-focused.log"
+    },
+    "audit": {
+      "command": "npm audit --json",
+      "exit": 1,
+      "info": 0,
+      "low": 0,
+      "moderate": 7,
+      "high": 6,
+      "critical": 2,
+      "total": 15,
+      "log": "client-audit-final.json"
+    },
+    "productionAudit": {
+      "command": "npm audit --omit=dev --json",
+      "exit": 1,
+      "info": 0,
+      "low": 0,
+      "moderate": 2,
+      "high": 0,
+      "critical": 0,
+      "total": 2,
+      "log": "client-production-audit-final.json"
+    },
+    "compatibleDryRun": {
+      "command": "npm audit fix --package-lock-only --ignore-scripts --dry-run --json",
+      "exit": 1,
+      "added": 0,
+      "removed": 0,
+      "changed": 0,
+      "log": "client-fix-dry-run.json"
+    },
+    "developmentTypes": {
+      "command": "npm install --save-dev @types/node@^22 --ignore-scripts",
+      "executionRoot": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\audit-20261021\\client-validation",
+      "exit": 0,
+      "added": [
+        "@types/node@22.20.5",
+        "undici-types"
+      ],
+      "reviewedLockEntryChanges": [
+        "",
+        "node_modules/@types/node",
+        "node_modules/undici-types"
+      ],
+      "sharedNodeModulesModified": false,
+      "log": "website-node-types-install.log"
+    }
+  },
+  "deploymentParity": {
+    "status": "PROPOSED_REQUIRES_APPROVAL",
+    "actualDeploymentAppModified": false,
+    "unchangedSourceFiles": 525,
+    "patches": [
+      "01-viewer-privacy",
+      "02-material-card",
+      "03-story-deletion-feed",
+      "04-story-fullscreen-layout",
+      "05-account-notification-preferences"
+    ],
+    "applyChecks": {
+      "command": "git apply --check <each patch>, then git apply <each patch> against a private snapshot only",
+      "exit": 0
+    },
+    "fullPrivateCopy": {
+      "root": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase3-20261021\\deployment-app-validation-v2",
+      "pubGetExit": 0,
+      "testCommand": "flutter test --reporter expanded",
+      "exit": 0,
+      "passed": 445,
+      "log": "parity-flutter-tests.log"
+    },
+    "finalRegeneratedSourceComparison": {
+      "checked": 528,
+      "different": []
+    },
+    "withoutFullscreen": {
+      "root": "D:\\work\\studybirds_app\\study_birds_app-main\\.git\\phase3-20261021\\patch-check-v3\\app",
+      "pubGetExit": 0,
+      "command": "flutter test test/story_deletion_test.dart test/story_viewer_test.dart test/story_viewers_test.dart --reporter expanded",
+      "exit": 0,
+      "passed": 19,
+      "log": "parity-deletion-tests-final.log"
+    },
+    "signedBuild": "NOT TESTED"
+  },
+  "initialFailures": [
+    {
+      "area": "website build",
+      "exit": 1,
+      "reason": "New Node-based test had no declared Node type dependency; added only matching development types and reran full tests/build.",
+      "log": "website-build.log"
+    },
+    {
+      "area": "intermediate deletion proposal test",
+      "exit": 1,
+      "passed": 1,
+      "failedLoads": 3,
+      "reason": "Patch-composition helper inserted an extra closing brace; corrected only generated test composition; final 19 focused tests passed.",
+      "log": "parity-deletion-tests.log"
+    },
+    {
+      "area": "initial website focused invocation",
+      "exit": 1,
+      "reason": "Incorrect working-directory-relative copy paths selected no test files. Paths corrected; actual focused suite passed 8 tests. Initial setup output retained in tool transcript."
+    }
+  ],
+  "notificationPolicy": {
+    "optional": [
+      "payments",
+      "admission",
+      "documents",
+      "consultations",
+      "visa",
+      "support",
+      "announcements"
+    ],
+    "mandatory": [
+      "security",
+      "authentication",
+      "urgent/emergency"
+    ],
+    "ownerApprovedMandatoryDelivery": true,
+    "backgroundCrossDeviceLocalReminderCancellation": false,
+    "realProviderDelivery": "NOT TESTED"
+  },
+  "git": {
+    "app": {
+      "head": "3e31e19c5343170056e6d7559c59bfb891f2c624",
+      "branch": "main",
+      "initialCollapsedStatusEntries": 34,
+      "finalCollapsedStatusEntries": 38,
+      "status": [
+        " M README.md",
+        " M lib/core/services/notification_scheduler.dart",
+        " M lib/core/widgets/app_components.dart",
+        " M lib/screens/applications_documents_payments/documents_screens.dart",
+        " M lib/screens/home_journey/notifications_screen.dart",
+        " M lib/screens/home_journey/student_banner_carousel.dart",
+        " M lib/screens/profile_account/notification_preferences_screen.dart",
+        " M lib/screens/roles/employee_dashboard_screen.dart",
+        " M lib/screens/stories/story_viewers_screen.dart",
+        " M test/chat_controls_test.dart",
+        " M test/journey_requirements_test.dart",
+        " M test/post_admission_journey_test.dart",
+        " M test/story_viewers_test.dart",
+        " M tool/check_error_policy.dart",
+        "?? .vscode/StudyBirds.code-workspace",
+        "?? docs/ARCHITECTURE.md",
+        "?? docs/AUDIT_VALIDATION.json",
+        "?? docs/BACKEND_ENVIRONMENT_NAMES.json",
+        "?? docs/DEPLOYMENT_PARITY_REPORT.md",
+        "?? docs/DEVELOPMENT_SETUP.md",
+        "?? docs/DUPLICATE_INVENTORY.json",
+        "?? docs/DUPLICATE_INVENTORY.md",
+        "?? docs/FEATURE_PARITY_REPORT.md",
+        "?? docs/FINAL_CLEANUP_APPROVAL.md",
+        "?? docs/MAINTENANCE_GUIDE.md",
+        "?? docs/PHASE2_FINAL_REPORT.md",
+        "?? docs/PHASE2_SECURITY_REVIEW.md",
+        "?? docs/PHASE2_VALIDATION.json",
+        "?? docs/PHASE3_DEPENDENCY_PLAN.md",
+        "?? docs/PHASE3_FINAL_REPORT.md",
+        "?? docs/PHASE3_VALIDATION.json",
+        "?? docs/PROJECT_AUDIT_REPORT.md",
+        "?? docs/RELEASE_READINESS_CHECKLIST.md",
+        "?? docs/STABILIZATION_20261021.md",
+        "?? docs/WORKSPACE_WORKFLOW.md",
+        "?? docs/proposals/deferred-story-deletion-review.patch",
+        "?? docs/proposals/notification-preferences-review.patch",
+        "?? docs/proposals/phase3/01-viewer-privacy.patch",
+        "?? docs/proposals/phase3/02-material-card.patch",
+        "?? docs/proposals/phase3/03-story-deletion-feed.patch",
+        "?? docs/proposals/phase3/04-story-fullscreen-layout.patch",
+        "?? docs/proposals/phase3/05-account-notification-preferences.patch",
+        "?? docs/proposals/phase3/README.md",
+        "?? lib/core/services/notification_preferences_store.dart",
+        "?? test/notification_preferences_test.dart"
+      ],
+      "staged": [],
+      "worktrees": [
+        "D:/work/studybirds_app/study_birds_app-main  3e31e19 [main]"
+      ]
+    },
+    "deployment": {
+      "head": "e9060536e8dc7a70150da9c42d6dfac901713553",
+      "branch": "DETACHED",
+      "initialCollapsedStatusEntries": 23,
+      "finalCollapsedStatusEntries": 26,
+      "status": [
+        " M client/package-lock.json",
+        " M client/package.json",
+        " M client/scripts/generate-seo-files.mjs",
+        " M server/package-lock.json",
+        " M server/package.json",
+        " M server/src/controllers/adminAgentController.js",
+        " M server/src/controllers/contentController.js",
+        " M server/src/models/Notification.js",
+        " M server/src/models/User.js",
+        " M server/src/routes/alumniRoutes.js",
+        " M server/src/routes/mobileSecurityRoutes.js",
+        " M server/src/routes/scholarshipRoutes.js",
+        " M server/src/seed/seed.js",
+        " M server/src/utils/cashMisrSms.js",
+        " M server/src/utils/pushNotifications.js",
+        " M server/src/utils/supportNotifications.js",
+        " M server/src/utils/whatsappOtp.js",
+        " M server/tests/auditFixes.test.js",
+        " M server/tests/crmIntegration.test.js",
+        " M server/tests/privateDocumentAccess.test.js",
+        "?? client/src/lib/seoBuild.test.ts",
+        "?? server/scripts/run-tests.cjs",
+        "?? server/src/utils/jwtSecret.js",
+        "?? server/src/utils/notificationPreferences.js",
+        "?? server/tests/notificationPreferences.test.js",
+        "?? server/tests/recoveredParity.test.js"
+      ],
+      "staged": [],
+      "worktrees": [
+        "D:/work/studybirds_web                        f42dc7a [main]",
+        "C:/Users/Abood/studybirds-claude              c1ae0df [claude-assistant]",
+        "C:/Users/Abood/studybirds-email-refresh       aac8419 [email-branding-refresh]",
+        "C:/Users/Abood/studybirds-wink                e0aff5b [wink-game]",
+        "D:/work/studybirds-stories-release            a5b118a (detached HEAD)",
+        "D:/work/studybirds_islam_google_password_fix  4fed84c [fix/islam-google-password]",
+        "D:/work/studybirds_session_release            e906053 (detached HEAD)"
+      ]
+    }
+  },
+  "changedSinceCheckpoint": {
+    "app-pre": [
+      "docs/PHASE3_DEPENDENCY_PLAN.md",
+      "docs/PHASE3_FINAL_REPORT.md",
+      "docs/PHASE3_VALIDATION.json",
+      "docs/RELEASE_READINESS_CHECKLIST.md",
+      "docs/proposals/phase3/01-viewer-privacy.patch",
+      "docs/proposals/phase3/02-material-card.patch",
+      "docs/proposals/phase3/03-story-deletion-feed.patch",
+      "docs/proposals/phase3/04-story-fullscreen-layout.patch",
+      "docs/proposals/phase3/05-account-notification-preferences.patch",
+      "docs/proposals/phase3/README.md",
+      "test/notification_preferences_test.dart",
+      "README.md"
+    ],
+    "deployment-pre": [
+      "client/src/lib/seoBuild.test.ts",
+      "server/tests/notificationPreferences.test.js",
+      "client/package-lock.json",
+      "client/package.json",
+      "client/scripts/generate-seo-files.mjs"
+    ]
+  },
+  "diffChecks": {
+    "app": 0,
+    "deployment": 0
+  },
+  "safety": {
+    "deleted": false,
+    "movedAuthoritativeDirectories": false,
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "stashed": false,
+    "reset": false,
+    "rebased": false,
+    "productionDatabaseAccessed": false,
+    "credentialsChanged": false,
+    "sharedDependencyJunctionsModified": false,
+    "allAuthoritativeAndDeploymentSourceFoldersExist": true,
+    "existingWorktreeRelationshipsChanged": false
+  },
+  "notTested": [
+    "Real Google OAuth/SMTP recovery and verification",
+    "Physical device push/background/OS permission behavior",
+    "iOS compilation/signing/device behavior",
+    "Signed Android release/store install and upgrade",
+    "Full manual browser/device discovery/application/document/story/scholarship/alumni end-to-end flow",
+    "Production cloud/media/OCR providers and database state",
+    "Measured messaging/frame/memory performance",
+    "Private deployment snapshot signed build"
+  ],
+  "approvalRequired": [
+    "Apply actual deployment patches 01/02/03/05",
+    "Apply separate fullscreen design patch 04 (depends on 03)",
+    "Separate React Router/Vitest/Tailwind major migrations",
+    "Later toolchain/release/device QA actions"
+  ],
+  "manualQAReady": true,
+  "productionReady": false,
+  "approvedDeploymentFollowUp": {
+    "date": "2026-10-21",
+    "ownerApproval": "01, 02, 03, 05 only",
+    "root": "D:/work/studybirds_session_release/app",
+    "applied": [
+      "01-viewer-privacy",
+      "02-material-card",
+      "03-story-deletion-feed",
+      "05-account-notification-preferences"
+    ],
+    "excluded": [
+      "04-story-fullscreen-layout"
+    ],
+    "checkExit": 0,
+    "applyExit": 0,
+    "pubGet": {
+      "command": "C:/src/flutter/bin/flutter.bat pub get",
+      "exit": 0
+    },
+    "analyze": {
+      "command": "C:/src/flutter/bin/flutter.bat analyze",
+      "exit": 1,
+      "info": 279,
+      "warning": 0,
+      "error": 0,
+      "unchangedFileDiagnostics": 276,
+      "remainingThreeReportedLinesExistedBefore": true,
+      "baselineFullAnalysisNotRerun": true
+    },
+    "tests": {
+      "command": "C:/src/flutter/bin/flutter.bat test --reporter expanded",
+      "exit": 0,
+      "passed": 444,
+      "failed": 0
+    },
+    "approvedVariantMatches": 528,
+    "cardLayoutRetained": true,
+    "backendWebsiteSourceUnchanged": true,
+    "primaryFlutterProductionSourceUnchanged": true,
+    "logs": ".git/approved-parity-20261021",
+    "checkpointBefore": [
+      ".git/approved-parity-20261021/app-final",
+      ".git/approved-parity-20261021/deployment-final"
+    ],
+    "checkpointAfter": ".git/approved-parity-20261021/post-application",
+    "gitStatus": [
+      " M app/lib/core/repositories/stories_repository.dart",
+      " M app/lib/core/services/notification_scheduler.dart",
+      " M app/lib/core/widgets/app_components.dart",
+      " M app/lib/screens/profile_account/notification_preferences_screen.dart",
+      " M app/lib/screens/stories/story_viewer.dart",
+      " M app/lib/screens/stories/story_viewers_screen.dart",
+      " M app/lib/screens/stories/student_stories.dart",
+      " M app/test/story_viewer_test.dart",
+      " M app/test/story_viewers_test.dart",
+      " M client/package-lock.json",
+      " M client/package.json",
+      " M client/scripts/generate-seo-files.mjs",
+      " M server/package-lock.json",
+      " M server/package.json",
+      " M server/src/controllers/adminAgentController.js",
+      " M server/src/controllers/contentController.js",
+      " M server/src/models/Notification.js",
+      " M server/src/models/User.js",
+      " M server/src/routes/alumniRoutes.js",
+      " M server/src/routes/mobileSecurityRoutes.js",
+      " M server/src/routes/scholarshipRoutes.js",
+      " M server/src/seed/seed.js",
+      " M server/src/utils/cashMisrSms.js",
+      " M server/src/utils/pushNotifications.js",
+      " M server/src/utils/supportNotifications.js",
+      " M server/src/utils/whatsappOtp.js",
+      " M server/tests/auditFixes.test.js",
+      " M server/tests/crmIntegration.test.js",
+      " M server/tests/privateDocumentAccess.test.js",
+      "?? app/lib/core/services/notification_preferences_store.dart",
+      "?? app/test/notification_preferences_test.dart",
+      "?? app/test/story_deletion_test.dart",
+      "?? client/src/lib/seoBuild.test.ts",
+      "?? server/scripts/run-tests.cjs",
+      "?? server/src/utils/jwtSecret.js",
+      "?? server/src/utils/notificationPreferences.js",
+      "?? server/tests/notificationPreferences.test.js",
+      "?? server/tests/recoveredParity.test.js"
+    ],
+    "staged": [],
+    "committed": false,
+    "pushed": false,
+    "deployed": false,
+    "newApkBuilt": false,
+    "initialPrimaryRootInvocation": "Interrupted and not counted as deployment validation; target commands rerun with explicit deployment-app working directory."
+  }
+}

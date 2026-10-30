@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -16,13 +17,17 @@ void main() {
     AuthSession.instance.token = 'community-controls';
     addTearDown(() => AuthSession.instance.token = null);
     await http.runWithClient(() async {
-      await tester.pumpWidget(const MaterialApp(home: StudentCommunityHub()));
+      await tester.pumpWidget(const MaterialApp(
+          locale: Locale('ar'),
+          supportedLocales: [Locale('ar'), Locale('en')],
+          localizationsDelegates: GlobalMaterialLocalizations.delegates,
+          home: StudentCommunityHub()));
       await tester.pumpAndSettle();
       expect(find.text('عرض الكل'), findsNothing);
       expect(find.byIcon(Icons.refresh), findsNothing);
       expect(find.byIcon(Icons.edit_square), findsNothing);
       expect(find.text('محادثة جديدة'), findsOneWidget);
-      expect(find.text('مجتمع الطلاب'), findsOneWidget);
+      expect(find.text('المجتمع'), findsOneWidget);
       expect(find.byType(RefreshIndicator), findsOneWidget);
       await tester.tap(find.byType(StoryRing));
       await tester.pump();

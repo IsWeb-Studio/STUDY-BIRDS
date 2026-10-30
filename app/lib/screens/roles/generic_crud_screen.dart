@@ -14,7 +14,11 @@ class CrudField {
   final String label;
   final CrudFieldType type;
   final bool required;
-  const CrudField(this.key, this.label, {this.type = CrudFieldType.text, this.required = false});
+  final bool initialBoolValue;
+  const CrudField(this.key, this.label,
+      {this.type = CrudFieldType.text,
+      this.required = false,
+      this.initialBoolValue = false});
 }
 
 /// A generic "list + create/edit/delete" screen driven by a field spec.
@@ -93,7 +97,9 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
     final boolValues = <String, bool>{};
     for (final f in widget.fields) {
       if (f.type == CrudFieldType.boolean) {
-        boolValues[f.key] = existing?[f.key] == true;
+        boolValues[f.key] = existing == null
+            ? f.initialBoolValue
+            : existing[f.key] == true;
       } else {
         controllers[f.key] = TextEditingController(text: existing?[f.key]?.toString() ?? '');
       }

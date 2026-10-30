@@ -53,7 +53,7 @@ class _ServicesCenterViewState extends State<ServicesCenterView> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
-                  color: const Color(0xFFFFEEDD),
+                  color: AppColors.greenSoft,
                   borderRadius: BorderRadius.circular(20)),
               child: Text('${widget.services.length} خدمات',
                   style: const TextStyle(
@@ -120,7 +120,7 @@ class _ServicesWelcome extends StatelessWidget {
             gradient: LinearGradient(
                 begin: AlignmentDirectional.centerStart,
                 end: AlignmentDirectional.centerEnd,
-                colors: [Color(0xF20C223A), Color(0x990C223A)]),
+                colors: [Color(0xF2041E4A), Color(0x99041E4A)]),
           ))),
           Padding(
             padding: const EdgeInsets.all(24),
@@ -134,7 +134,7 @@ class _ServicesWelcome extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20)),
                 child: const Row(mainAxisSize: MainAxisSize.min, children: [
                   Icon(Icons.auto_awesome_rounded,
-                      color: Color(0xFFFFC58A), size: 15),
+                      color: AppColors.greenSoft, size: 15),
                   SizedBox(width: 6),
                   Text('معك في كل خطوة',
                       style: TextStyle(color: Colors.white, fontSize: 12)),
@@ -246,7 +246,7 @@ class _ServicePhotoCard extends StatelessWidget {
                   begin: AlignmentDirectional.centerStart,
                   end: AlignmentDirectional.centerEnd,
                   stops: [0, .55, 1],
-                  colors: [Colors.white, Color(0xF5FFFFFF), Color(0x200C223A)]),
+                  colors: [Colors.white, Color(0xF5FFFFFF), Color(0x20041E4A)]),
             ))),
             Material(
               color: Colors.transparent,
@@ -266,11 +266,11 @@ class _ServicePhotoCard extends StatelessWidget {
                                 Container(
                                     padding: const EdgeInsets.all(9),
                                     decoration: BoxDecoration(
-                                        color: const Color(0xFFFFEEDD),
+                                        color: AppColors.greenSoft,
                                         borderRadius:
                                             BorderRadius.circular(12)),
                                     child: Icon(icon,
-                                        color: AppColors.orange, size: 21)),
+                                        color: AppColors.green, size: 21)),
                                 const SizedBox(height: 12),
                                 Text(title,
                                     style: AppTextStyles.cardTitle

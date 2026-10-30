@@ -25,7 +25,7 @@ class _ImportantDatesScreenState extends State<ImportantDatesScreen> {
     if (days < 0) return AppColors.danger;
     if (days <= 3) return AppColors.danger;
     if (days <= 7) return AppColors.warning;
-    if (days <= 30) return AppColors.orange;
+    if (days <= 30) return AppColors.green;
     return AppColors.navy;
   }
 

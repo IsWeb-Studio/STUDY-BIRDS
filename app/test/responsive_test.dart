@@ -88,7 +88,13 @@ void main() {
         MaterialApp(theme: AppTheme.light, home: const StudentAppShell()));
     await tester.pump();
     expect(find.byType(NavigationRail), findsNothing);
-    expect(find.text('الرحلة'), findsWidgets);
+    expect(find.byKey(const ValueKey('main-tab-0')), findsOneWidget);
+    expect(find.byKey(const ValueKey('main-tab-1')), findsNothing);
+    expect(find.byKey(const ValueKey('main-tab-2')), findsNothing);
+    expect(find.byKey(const ValueKey('main-tab-6')), findsNothing);
+    setSize(tester, 320, 640);
+    await tester.pump();
+    expect(tester.takeException(), isNull);
 
     setSize(tester, 1024, 768);
     await tester.pump();

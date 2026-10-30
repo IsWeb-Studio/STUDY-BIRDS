@@ -15,12 +15,12 @@ class LoadingState extends StatelessWidget {
     Widget item(int i) => Padding(
           padding: const EdgeInsets.only(bottom: 12),
           child: i == 0 && message != null
-              ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+              ? const Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
+                    padding: EdgeInsets.only(bottom: 12),
                     child: SkeletonBox(height: 14, width: 140),
                   ),
-                  const SkeletonCard(),
+                  SkeletonCard(),
                 ])
               : const SkeletonCard(),
         );
@@ -99,10 +99,10 @@ class _SkeletonBoxState extends State<SkeletonBox>
 class SkeletonCard extends StatelessWidget {
   const SkeletonCard({super.key});
   @override
-  Widget build(BuildContext context) => AppCard(
+  Widget build(BuildContext context) => const AppCard(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: const [
+          children: [
             SkeletonBox(height: 14, width: 160),
             SizedBox(height: 10),
             SkeletonBox(height: 12),
@@ -190,8 +190,8 @@ class _ErrorStateState extends State<ErrorState> {
               duration: const Duration(milliseconds: 450),
               curve: Curves.easeOutBack,
               builder: (context, scale, child) => Opacity(opacity: scale.clamp(0, 1), child: Transform.scale(scale: scale, child: child)),
-              child: Container(padding: const EdgeInsets.all(18), decoration: const BoxDecoration(color: AppColors.orangeSoft, shape: BoxShape.circle),
-                child: Icon(offline ? Icons.wifi_off_rounded : Icons.cloud_off_rounded, size: 34, color: AppColors.orange)),
+              child: Container(padding: const EdgeInsets.all(18), decoration: const BoxDecoration(color: AppColors.greenSoft, shape: BoxShape.circle),
+                child: Icon(offline ? Icons.wifi_off_rounded : Icons.cloud_off_rounded, size: 34, color: AppColors.green)),
             ),
             const SizedBox(height: 20),
             Text(offline ? context.l10n.offlineTitle : context.l10n.errorGenericTitle, style: AppTextStyles.cardTitle, textAlign: TextAlign.center),
@@ -263,7 +263,7 @@ Future<bool> showAppConfirmDialog(
             onPressed: () => Navigator.pop(context, true),
             child: Text(confirmLabel,
                 style: TextStyle(
-                    color: danger ? AppColors.danger : AppColors.orange,
+                    color: danger ? AppColors.danger : AppColors.green,
                     fontWeight: FontWeight.w700)),
           ),
         ],

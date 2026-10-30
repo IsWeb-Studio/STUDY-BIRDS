@@ -148,7 +148,7 @@ class _EmployeeConsultationsScreenState
     } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/employee_consultations_screen.dart:147');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            AppSnackBar(content: Text('تعذر فتح رابط الاجتماع.')));
+            AppSnackBar(content: const Text('تعذر فتح رابط الاجتماع.')));
       }
     }
   }

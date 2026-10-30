@@ -1,3 +1,4 @@
+import '../../core/config/app_theme.dart';
 import '../community/student_profile_link.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
 import 'dart:async';
@@ -247,7 +248,7 @@ class _FriendsScreenState extends State<FriendsScreen> {
                               padding: const EdgeInsets.only(top: 40),
                               child: Column(children: [
                                 const Icon(Icons.people_outline,
-                                    size: 56, color: Colors.blueGrey),
+                                    size: 56, color: AppColors.textSecondary),
                                 const SizedBox(height: 12),
                                 Text(
                                     _search.text.trim().length == 1

@@ -83,6 +83,7 @@ test('CRM accounts, explicit links, applications and invoice balances use real w
     const supportAdvisor=await User.create({name:'Support Advisor',email:'support@crm.test',role:'employee',employeeRole:'educational_consultant',permissions:['support']});
     const assignees=await request('/support-assignees');assert.equal(assignees.status,200);assert.ok(assignees.body.some(row=>row._id===String(supportAdvisor._id)));assert.ok(!assignees.body.some(row=>row._id===String(employee._id)));assert.equal(assignees.body[0].password,undefined);
     assert.equal((await request('/support-assignees','GET',undefined,employee)).status,403);
+    await require('../src/models/StudentSupportTeam').create({student:student._id,members:[supportAdvisor._id]});
     const ticket=await require('../src/models/SupportTicket').create({user:student._id,requesterRole:'student',subject:'CRM support',message:'Help'});
     assert.equal((await request(`/support/${ticket._id}/assign`,'PATCH',{assignedTo:String(employee._id)})).status,400);
     assert.equal((await request(`/support/${ticket._id}/assign`,'PATCH',{assignedTo:String(supportAdvisor._id)})).status,200);

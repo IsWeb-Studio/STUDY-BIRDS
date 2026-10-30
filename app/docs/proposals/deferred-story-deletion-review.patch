@@ -1,0 +1,80 @@
+diff --git a/server/src/routes/storyRoutes.js b/server/src/routes/storyRoutes.js
+index 83bbf3b..e5616c2 100644
+--- a/server/src/routes/storyRoutes.js
++++ b/server/src/routes/storyRoutes.js
+@@ -117,19 +117,13 @@ router.post('/', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req =>
+ }));
+ router.param('id', (req, res, next, id) => /^[a-f0-9]{24}$/i.test(id) ? next() : res.status(400).json({ message: 'Invalid story' }));
+ router.delete('/:id', asyncHandler(async (req, res) => {
+-  await atomic(async session => {
+-    const story = await Story.findOne({ _id: req.params.id, author: req.user._id }).session(session);
+-    if (!story) fail(404, 'Story unavailable');
+-    if (story.deletedAt) return;
+-    const { queueMedia, mediaFromUrl } = require('../utils/mediaMaintenance');
+-    for (const url of [story.imageUrl, story.videoUrl]) await queueMedia(mediaFromUrl(url), new Date(), session);
+-    if (story.videoUrl) await StoryVideo.deleteMany({ owner: req.user._id, url: story.videoUrl }).session(session);
+-    // Keep the operation id and awarded points: deleting and reposting cannot farm rewards.
+-    story.deletedAt = new Date(); story.expiresAt = story.deletedAt;
+-    story.text = ''; story.imageUrl = ''; story.videoUrl = ''; story.mediaCleanupQueued = true;
+-    await story.save({ session });
+-    await StoryInteraction.deleteMany({ story: story._id }).session(session);
+-  });
++  // One durable write immediately removes it from every read/love/view query.
++  // Retained media references form a crash-safe cleanup outbox for the worker.
++  const now = new Date();
++  const story = await Story.findOneAndUpdate({ _id: req.params.id, author: req.user._id },
++    { $set: { deletedAt: now, expiresAt: now, mediaCleanupQueued: false } }, { new: false }).select('_id');
++  if (!story) fail(404, 'Story unavailable');
++  // Keep the operation id and awarded points: deletion cannot farm rewards.
+   res.json({ deleted: true });
+ }));
+ router.post('/:id/seen', asyncHandler(async (req, res) => {
+diff --git a/server/src/utils/mediaMaintenance.js b/server/src/utils/mediaMaintenance.js
+index d879b5c..b2868e3 100644
+--- a/server/src/utils/mediaMaintenance.js
++++ b/server/src/utils/mediaMaintenance.js
+@@ -39,14 +39,22 @@ async function cleanMedia(job) {
+   if (!['ok', 'not found'].includes(result?.result)) throw new Error('Media deletion not confirmed');
+   await Job.deleteOne({ _id: job._id });
+ }
+-async function runMaintenance() {
+-  return withLease('media-account-maintenance', async () => {
+-    // Backfill existing expired stories, retaining their replay-protection records.
++async function queueExpiredStoryMedia() {
++    // Retain replay protection while finishing deferred deletion safely after crashes.
+     const expired = await Story.find({ expiresAt: { $lte: new Date() }, mediaCleanupQueued: { $ne: true } }).limit(100).lean();
+     for (const story of expired) {
+       for (const url of [story.imageUrl, story.videoUrl]) await queueMedia(mediaFromUrl(url));
+-      await Story.updateOne({ _id: story._id }, { $set: { mediaCleanupQueued: true } });
++      if (story.deletedAt) {
++        await require('../models/Stories').StoryInteraction.deleteMany({ story: story._id });
++        if (story.videoUrl) await require('../models/StoryVideo').deleteMany({ owner: story.author, url: story.videoUrl });
++      }
++      await Story.updateOne({ _id: story._id }, { $set: { mediaCleanupQueued: true,
++        ...(story.deletedAt ? { text: '', imageUrl: '', videoUrl: '' } : {}) } });
+     }
++}
++async function runMaintenance() {
++  return withLease('media-account-maintenance', async () => {
++    await queueExpiredStoryMedia();
+     for (const job of await Job.find({ dueAt: { $lte: new Date() } }).sort({ dueAt: 1 }).limit(30).lean()) {
+       try {
+         if (job.kind === 'account') await require('./accountDeletion').processAccountDeletion(job.owner);
+@@ -63,4 +71,4 @@ function startMaintenance() {
+   tick(); const timer = setInterval(tick, 60000); timer.unref();
+   return () => clearInterval(timer);
+ }
+-module.exports = { queueMedia, mediaFromUrl, runMaintenance, startMaintenance };
++module.exports = { queueMedia, mediaFromUrl, queueExpiredStoryMedia, runMaintenance, startMaintenance };
+diff --git a/server/tests/stories.test.js b/server/tests/stories.test.js
+index 09d6a64..66126df 100644
+--- a/server/tests/stories.test.js
++++ b/server/tests/stories.test.js
+@@ -132,6 +132,7 @@ test('stories: authorization, concurrent rewards, durable replay, seen, expiry a
+     assert.equal((await call('POST', `/${photoId}/seen`, 9)).status, 404);
+     assert.equal((await call('GET', `/updates?ids=${photoId}`, 9)).data.updates.length, 0);
+     assert.ok((await Story.findById(photoId)).deletedAt);
++    await require('../src/utils/mediaMaintenance').queueExpiredStoryMedia();
+     assert.ok(await require('../src/models/MaintenanceJob').exists({ publicId: `story-images/${users[8]._id}/photo` }));
+     assert.equal((await call('POST', '', 8, { operationId: 'photo-story-test', text: 'Replay' })).data.awarded, 0);
+     assert.equal((await call('GET', '/progress', 8)).data.total_points, balance);

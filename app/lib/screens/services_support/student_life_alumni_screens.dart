@@ -2,7 +2,7 @@ import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../core/widgets/external_link.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
 import '../../core/config/app_theme.dart';
@@ -59,8 +59,8 @@ class _StudentLifeOffersScreenState extends State<StudentLifeOffersScreen> {
       });
     } catch (e) {
       if (mounted) {
-        setState(
-            () => _error = 'تعذر تحميل الفعاليات. تحقق من الاتصال وأعد المحاولة.');
+        setState(() =>
+            _error = 'تعذر تحميل الفعاليات. تحقق من الاتصال وأعد المحاولة.');
       }
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -82,7 +82,7 @@ class _StudentLifeOffersScreenState extends State<StudentLifeOffersScreen> {
           body: {'name': userName, 'email': userEmail});
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-            AppSnackBar(content: Text('تم تسجيل حضورك بنجاح ✓')));
+            AppSnackBar(content: const Text('تم تسجيل حضورك بنجاح ✓')));
       }
     } catch (e) {
       if (mounted) {
@@ -98,8 +98,12 @@ class _StudentLifeOffersScreenState extends State<StudentLifeOffersScreen> {
   @override
   Widget build(BuildContext context) => AppScaffold(
         title: 'الحياة الطلابية والفعاليات',
-        actions: [TextButton(onPressed: () => Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => const StudentListingsScreen(kind: 'offer'))), child: const Text('عروض الطلاب'))],
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.of(context).push(MaterialPageRoute(
+                  builder: (_) => const StudentListingsScreen(kind: 'offer'))),
+              child: const Text('عروض الطلاب'))
+        ],
         body: RefreshIndicator(
           onRefresh: _load,
           color: AppColors.navy,
@@ -109,7 +113,8 @@ class _StudentLifeOffersScreenState extends State<StudentLifeOffersScreen> {
                   ? ErrorState(message: _error!, onRetry: _load)
                   : ListView(
                       padding: const EdgeInsets.all(16),
-                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics()),
                       children: [
                         const Text(
                             'اكتشف الفعاليات الطلابية والأنشطة المتاحة لك.',
@@ -201,11 +206,11 @@ class _UpcomingEventCard extends StatelessWidget {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-              color: AppColors.orange.withValues(alpha: 0.12),
+              color: AppColors.green.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(6)),
           child: const Text('الفعالية القادمة',
               style: TextStyle(
-                  color: AppColors.orange,
+                  color: AppColors.greenInk,
                   fontSize: 12,
                   fontWeight: FontWeight.w600)),
         ),
@@ -259,8 +264,7 @@ class _PastEventCard extends StatelessWidget {
             child:
                 Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Text('${event['title'] ?? ''}', style: AppTextStyles.cardTitle),
-          if (date.isNotEmpty)
-            Text(date, style: AppTextStyles.caption),
+          if (date.isNotEmpty) Text(date, style: AppTextStyles.caption),
         ])),
       ]),
     );
@@ -272,8 +276,7 @@ class _PastEventCard extends StatelessWidget {
       decoration: BoxDecoration(
           color: AppColors.navy.withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8)),
-      child:
-          const Icon(Icons.event_rounded, color: AppColors.navy, size: 24));
+      child: const Icon(Icons.event_rounded, color: AppColors.navy, size: 24));
 }
 
 // ─── بند 57: شبكة الخريجين ─────────────────────────────────────────────────────
@@ -313,7 +316,9 @@ class _AlumniNetworkScreenState extends State<AlumniNetworkScreen> {
             : null;
         _past = results[1] is List ? Json.list(results[1]) : [];
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/student_life_alumni_screens.dart:314');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/student_life_alumni_screens.dart:314');
       if (mounted) setState(() => _error = 'تعذر التحميل. أعد المحاولة.');
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -332,37 +337,42 @@ class _AlumniNetworkScreenState extends State<AlumniNetworkScreen> {
                   ? ErrorState(message: _error!, onRetry: _load)
                   : ListView(
                       padding: const EdgeInsets.all(16),
-                      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                      physics: const BouncingScrollPhysics(
+                          parent: AlwaysScrollableScrollPhysics()),
                       children: [
                         AppCard(
                           child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                            Row(children: [
-                              Container(
-                                width: 44,
-                                height: 44,
-                                decoration: BoxDecoration(
-                                    color: AppColors.navy.withValues(alpha: 0.08),
-                                    shape: BoxShape.circle),
-                                child: const Icon(Icons.workspace_premium_rounded,
-                                    color: AppColors.navy, size: 22),
-                              ),
-                              const SizedBox(width: 12),
-                              const Expanded(
-                                  child: Text('برنامج السفراء',
-                                      style: AppTextStyles.cardTitle)),
-                            ]),
-                            const SizedBox(height: 10),
-                            const Text(
-                                'انضم لبرنامج سفراء Study Birds بعد تخرجك وساعد الطلاب الجدد في رحلتهم الدراسية.',
-                                style: AppTextStyles.body),
-                          ]),
+                                Row(children: [
+                                  Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                        color: AppColors.navy
+                                            .withValues(alpha: 0.08),
+                                        shape: BoxShape.circle),
+                                    child: const Icon(
+                                        Icons.workspace_premium_rounded,
+                                        color: AppColors.navy,
+                                        size: 22),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Expanded(
+                                      child: Text('برنامج السفراء',
+                                          style: AppTextStyles.cardTitle)),
+                                ]),
+                                const SizedBox(height: 10),
+                                const Text(
+                                    'انضم لبرنامج سفراء COVEY بعد تخرجك وساعد الطلاب الجدد في رحلتهم الدراسية.',
+                                    style: AppTextStyles.body),
+                              ]),
                         ),
                         const SizedBox(height: 12),
                         ..._alumniCards(context),
                         if (_upcoming != null &&
-                            (_upcoming!['title'] as String? ?? '').isNotEmpty) ...[
+                            (_upcoming!['title'] as String? ?? '')
+                                .isNotEmpty) ...[
                           const SizedBox(height: 20),
                           const Text('الفعالية القادمة',
                               style: AppTextStyles.sectionLabel),
@@ -379,7 +389,8 @@ class _AlumniNetworkScreenState extends State<AlumniNetworkScreen> {
                                   Text('${_upcoming!['description']}',
                                       style: AppTextStyles.body),
                                 ],
-                                if (_fmtDate(_upcoming!['date']).isNotEmpty) ...[
+                                if (_fmtDate(_upcoming!['date'])
+                                    .isNotEmpty) ...[
                                   const SizedBox(height: 6),
                                   Text(_fmtDate(_upcoming!['date']),
                                       style: AppTextStyles.caption),
@@ -446,21 +457,25 @@ class _AlumniNetworkScreenState extends State<AlumniNetworkScreen> {
           icon: Icons.people_outline,
           title: 'دليل الخريجين وملفي',
           body: 'تعرّف على الخريجين المتاحين للإرشاد وأدر ظهور ملفك.',
-          onTap: (ctx) => Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const AlumniDirectoryScreen())),
+          onTap: (ctx) => Navigator.of(ctx).push(
+              MaterialPageRoute(builder: (_) => const AlumniDirectoryScreen())),
         ),
         const SizedBox(height: 12),
         _TappableInfoCard(
           icon: Icons.work_outline_rounded,
           title: 'وظائف وتدريب الخريجين',
-          body: 'فرص نشرها خريجو Study Birds — تقديم مباشر.',
-          onTap: (ctx) => Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const JobPostsScreen())),
+          body: 'فرص نشرها خريجو COVEY — تقديم مباشر.',
+          onTap: (ctx) => Navigator.of(ctx)
+              .push(MaterialPageRoute(builder: (_) => const JobPostsScreen())),
         ),
         const SizedBox(height: 12),
         _TappableInfoCard(
           icon: Icons.format_list_bulleted_rounded,
           title: 'إعلانات وفرص الطلاب',
           body: 'استعرض الفرص المنشورة وشروطها ورابط التقديم.',
-          onTap: (ctx) => Navigator.of(ctx).push(MaterialPageRoute(builder: (_) => const StudentListingsScreen(kind: 'opportunity'))),
+          onTap: (ctx) => Navigator.of(ctx).push(MaterialPageRoute(
+              builder: (_) =>
+                  const StudentListingsScreen(kind: 'opportunity'))),
         ),
         const SizedBox(height: 12),
         _TappableInfoCard(
@@ -619,9 +634,7 @@ class _AllScholarshipsTab extends StatelessWidget {
   final Set<String> appliedIds;
   final VoidCallback onApplied;
   const _AllScholarshipsTab(
-      {required this.items,
-      required this.appliedIds,
-      required this.onApplied});
+      {required this.items, required this.appliedIds, required this.onApplied});
 
   @override
   Widget build(BuildContext context) {
@@ -636,7 +649,8 @@ class _AllScholarshipsTab extends StatelessWidget {
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics:
+          const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       itemCount: items.length,
       itemBuilder: (ctx, i) {
         final item = Json.rawMap(items[i]);
@@ -677,7 +691,7 @@ class _ScholarshipCardState extends State<_ScholarshipCard> {
       );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text('تم تقديم طلب المنحة بنجاح')),
+          AppSnackBar(content: const Text('تم تقديم طلب المنحة بنجاح')),
         );
         widget.onApplied();
       }
@@ -686,10 +700,12 @@ class _ScholarshipCardState extends State<_ScholarshipCard> {
         ScaffoldMessenger.of(context)
             .showSnackBar(AppSnackBar(content: Text(e.message)));
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/student_life_alumni_screens.dart:717');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/student_life_alumni_screens.dart:717');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: Text('حدث خطأ. أعد المحاولة.')),
+          AppSnackBar(content: const Text('حدث خطأ. أعد المحاولة.')),
         );
       }
     } finally {
@@ -733,27 +749,27 @@ class _ScholarshipCardState extends State<_ScholarshipCard> {
         if ('${s['eligibility']}'.isNotEmpty) ...[
           const SizedBox(height: 2),
           Text('الشروط: ${s['eligibility']}',
-              style: AppTextStyles.body, maxLines: 2, overflow: TextOverflow.ellipsis),
+              style: AppTextStyles.body,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis),
           const SizedBox(height: 4),
         ],
         if (deadline.isNotEmpty) ...[
           Row(children: [
-            const Icon(Icons.event_rounded,
-                size: 14, color: AppColors.warning),
+            const Icon(Icons.event_rounded, size: 14, color: AppColors.warning),
             const SizedBox(width: 4),
             Text('آخر موعد: $deadline',
-                style: const TextStyle(
-                    color: AppColors.warning, fontSize: 12)),
+                style: const TextStyle(color: AppColors.warning, fontSize: 12)),
           ]),
           const SizedBox(height: 8),
         ] else
           const SizedBox(height: 8),
         widget.applied
-            ? Row(children: [
-                const Icon(Icons.check_circle_rounded,
+            ? const Row(children: [
+                Icon(Icons.check_circle_rounded,
                     size: 18, color: AppColors.success),
-                const SizedBox(width: 6),
-                const Text('تم التقديم',
+                SizedBox(width: 6),
+                Text('تم التقديم',
                     style: TextStyle(
                         color: AppColors.success, fontWeight: FontWeight.w600)),
               ])
@@ -767,11 +783,12 @@ class _ScholarshipCardState extends State<_ScholarshipCard> {
                 : ElevatedButton(
                     onPressed: _apply,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.navy,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.green,
+                      foregroundColor: AppColors.navy,
                       minimumSize: const Size(double.infinity, 40),
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppRadius.button)),
+                          borderRadius:
+                              BorderRadius.circular(AppRadius.button)),
                     ),
                     child: const Text('تقديم طلب المنحة'),
                   ),
@@ -810,11 +827,13 @@ class _MyScholarshipsTab extends StatelessWidget {
     }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
-      physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+      physics:
+          const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
       itemCount: items.length,
       itemBuilder: (ctx, i) {
         final e = Json.rawMap(items[i]);
-        final s = e['scholarship'] is Map ? Json.rawMap(e['scholarship']) : null;
+        final s =
+            e['scholarship'] is Map ? Json.rawMap(e['scholarship']) : null;
         final status = '${e['status'] ?? 'submitted'}';
         return Padding(
           padding: const EdgeInsets.only(bottom: 10),
@@ -827,8 +846,7 @@ class _MyScholarshipsTab extends StatelessWidget {
                     Text(s != null ? '${s['title']}' : 'منحة',
                         style: AppTextStyles.cardTitle),
                     if (s != null && '${s['university']}'.isNotEmpty)
-                      Text('${s['university']}',
-                          style: AppTextStyles.caption),
+                      Text('${s['university']}', style: AppTextStyles.caption),
                     Text(_fmtDate(e['createdAt']),
                         style: AppTextStyles.caption),
                   ])),
@@ -868,7 +886,7 @@ class _JobPostsScreenState extends State<JobPostsScreen> {
     'internship': AppColors.navy,
     'part-time': AppColors.info,
     'full-time': AppColors.success,
-    'freelance': AppColors.orange,
+    'freelance': AppColors.green,
     'volunteer': AppColors.warning,
   };
 
@@ -879,9 +897,13 @@ class _JobPostsScreenState extends State<JobPostsScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
-      final data = await ApiClient.instance.get('/alumni/jobs', token: AuthSession.instance.token);
+      final data = await ApiClient.instance
+          .get('/alumni/jobs', token: AuthSession.instance.token);
       if (mounted) setState(() => _posts = data is List ? data : []);
     } catch (e) {
       if (mounted) setState(() => _error = 'تعذر تحميل الوظائف. أعد المحاولة.');
@@ -897,115 +919,183 @@ class _JobPostsScreenState extends State<JobPostsScreen> {
         title: const Text('حذف الإعلان'),
         content: const Text('سيتم حذف هذا الإعلان نهائيًا. متابعة؟'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('حذف', style: TextStyle(color: Colors.red))),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('إلغاء')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('حذف', style: TextStyle(color: Colors.red))),
         ],
       ),
     );
     if (yes != true || !mounted) return;
     try {
-      await ApiClient.instance.delete('/alumni/jobs/$id', token: AuthSession.instance.token);
+      await ApiClient.instance
+          .delete('/alumni/jobs/$id', token: AuthSession.instance.token);
       await _load();
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر الحذف')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+            content: Text(e is ApiException ? e.message : 'تعذر الحذف')));
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) => AppScaffold(
-    title: 'وظائف وتدريب الخريجين',
-    actions: [
-      IconButton(
-        tooltip: 'نشر إعلان',
-        icon: const Icon(Icons.add_rounded),
-        onPressed: () async {
-          final posted = await Navigator.of(context).push<bool>(MaterialPageRoute(builder: (_) => const _PostJobScreen()));
-          if (posted == true) _load();
-        },
-      ),
-    ],
-    body: _loading
-        ? const LoadingState(message: 'جاري تحميل الوظائف...')
-        : _error != null
-            ? ErrorState(message: _error!, onRetry: _load)
-            : RefreshIndicator(
-                onRefresh: _load,
-                color: AppColors.navy,
-                child: _posts.isEmpty
-                    ? const EmptyState(icon: Icons.work_outline_rounded, title: 'لا توجد وظائف منشورة بعد', message: 'كن أول من ينشر فرصة للطلاب!')
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(16),
-                        physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
-                        separatorBuilder: (_, __) => const SizedBox(height: 10),
-                        itemCount: _posts.length,
-                        itemBuilder: (_, i) {
-                          final p = Map<String, dynamic>.from(Json.rawMap(_posts[i]));
-                          final type = p['type'] as String? ?? 'internship';
-                          final myId = AuthSession.instance.currentUser?.id ?? '';
-                          final postedById = p['postedBy'] is Map ? '${(Json.rawMap(p['postedBy']))['_id']}' : '${p['postedBy']}';
-                          final isOwn = postedById == myId;
-                          return AppCard(
-                            child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                              Row(children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                                  decoration: BoxDecoration(
-                                    color: (_typeColors[type] ?? AppColors.navy).withValues(alpha: 0.12),
-                                    borderRadius: BorderRadius.circular(6),
-                                  ),
-                                  child: Text(_typeLabels[type] ?? type, style: TextStyle(color: _typeColors[type] ?? AppColors.navy, fontSize: 11, fontWeight: FontWeight.w600)),
-                                ),
-                                const Spacer(),
-                                if (isOwn) IconButton(icon: const Icon(Icons.delete_outline_rounded, size: 18, color: Colors.red), tooltip: 'حذف', onPressed: () => _delete('${p['_id']}')),
-                              ]),
-                              const SizedBox(height: 6),
-                              Text('${p['title'] ?? ''}', style: AppTextStyles.cardTitle),
-                              if ('${p['company'] ?? ''}'.isNotEmpty) ...[
-                                const SizedBox(height: 4),
-                                Row(children: [
-                                  const Icon(Icons.business_rounded, size: 14, color: AppColors.textSecondary),
-                                  const SizedBox(width: 4),
-                                  Text('${p['company']}', style: AppTextStyles.caption),
-                                  if ('${p['location'] ?? ''}'.isNotEmpty) ...[
-                                    const Text(' · ', style: AppTextStyles.caption),
-                                    Text('${p['location']}', style: AppTextStyles.caption),
-                                  ],
-                                ]),
-                              ],
-                              if ('${p['description'] ?? ''}'.isNotEmpty) ...[
-                                const SizedBox(height: 8),
-                                Text('${p['description']}', style: AppTextStyles.body, maxLines: 3, overflow: TextOverflow.ellipsis),
-                              ],
-                              if ('${p['contactEmail'] ?? ''}'.isNotEmpty || '${p['externalUrl'] ?? ''}'.isNotEmpty) ...[
+        title: 'وظائف وتدريب الخريجين',
+        actions: [
+          IconButton(
+            tooltip: 'نشر إعلان',
+            icon: const Icon(Icons.add_rounded),
+            onPressed: () async {
+              final posted = await Navigator.of(context).push<bool>(
+                  MaterialPageRoute(builder: (_) => const _PostJobScreen()));
+              if (posted == true) _load();
+            },
+          ),
+        ],
+        body: _loading
+            ? const LoadingState(message: 'جاري تحميل الوظائف...')
+            : _error != null
+                ? ErrorState(message: _error!, onRetry: _load)
+                : RefreshIndicator(
+                    onRefresh: _load,
+                    color: AppColors.navy,
+                    child: _posts.isEmpty
+                        ? const EmptyState(
+                            icon: Icons.work_outline_rounded,
+                            title: 'لا توجد وظائف منشورة بعد',
+                            message: 'كن أول من ينشر فرصة للطلاب!')
+                        : ListView.separated(
+                            padding: const EdgeInsets.all(16),
+                            physics: const BouncingScrollPhysics(
+                                parent: AlwaysScrollableScrollPhysics()),
+                            separatorBuilder: (_, __) =>
                                 const SizedBox(height: 10),
-                                Row(children: [
-                                  if ('${p['externalUrl'] ?? ''}'.isNotEmpty)
-                                    TextButton.icon(
-                                      icon: const Icon(Icons.open_in_new_rounded, size: 14),
-                                      label: const Text('التقديم'),
-                                      onPressed: () async {
-                                        final uri = Uri.tryParse('${p['externalUrl']}');
-                                        if (uri == null || (!uri.scheme.startsWith('http'))) return;
-                                        try { await launchUrl(uri, mode: LaunchMode.externalApplication); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/student_life_alumni_screens.dart:1017');}
-                                      },
-                                    ),
-                                  if ('${p['contactEmail'] ?? ''}'.isNotEmpty)
-                                    TextButton.icon(
-                                      icon: const Icon(Icons.email_outlined, size: 14),
-                                      label: Text('${p['contactEmail']}', overflow: TextOverflow.ellipsis),
-                                      onPressed: () async {
-                                        final uri = Uri.parse('mailto:${p['contactEmail']}');
-                                        try { await launchUrl(uri); } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/student_life_alumni_screens.dart:1026');}
-                                      },
-                                    ),
-                                ]),
-                              ],
-                            ]),
-                          );
-                        },
-                      ),
-              ),
-  );
+                            itemCount: _posts.length,
+                            itemBuilder: (_, i) {
+                              final p = Map<String, dynamic>.from(
+                                  Json.rawMap(_posts[i]));
+                              final type = p['type'] as String? ?? 'internship';
+                              final myId =
+                                  AuthSession.instance.currentUser?.id ?? '';
+                              final postedById = p['postedBy'] is Map
+                                  ? '${(Json.rawMap(p['postedBy']))['_id']}'
+                                  : '${p['postedBy']}';
+                              final isOwn = postedById == myId;
+                              return AppCard(
+                                child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 8, vertical: 3),
+                                          decoration: BoxDecoration(
+                                            color: (_typeColors[type] ??
+                                                    AppColors.navy)
+                                                .withValues(alpha: 0.12),
+                                            borderRadius:
+                                                BorderRadius.circular(6),
+                                          ),
+                                          child: Text(_typeLabels[type] ?? type,
+                                              style: TextStyle(
+                                                  color: _typeColors[type] ??
+                                                      AppColors.navy,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w600)),
+                                        ),
+                                        const Spacer(),
+                                        if (isOwn)
+                                          IconButton(
+                                              icon: const Icon(
+                                                  Icons.delete_outline_rounded,
+                                                  size: 18,
+                                                  color: Colors.red),
+                                              tooltip: 'حذف',
+                                              onPressed: () =>
+                                                  _delete('${p['_id']}')),
+                                      ]),
+                                      const SizedBox(height: 6),
+                                      Text('${p['title'] ?? ''}',
+                                          style: AppTextStyles.cardTitle),
+                                      if ('${p['company'] ?? ''}'
+                                          .isNotEmpty) ...[
+                                        const SizedBox(height: 4),
+                                        Row(children: [
+                                          const Icon(Icons.business_rounded,
+                                              size: 14,
+                                              color: AppColors.textSecondary),
+                                          const SizedBox(width: 4),
+                                          Text('${p['company']}',
+                                              style: AppTextStyles.caption),
+                                          if ('${p['location'] ?? ''}'
+                                              .isNotEmpty) ...[
+                                            const Text(' · ',
+                                                style: AppTextStyles.caption),
+                                            Text('${p['location']}',
+                                                style: AppTextStyles.caption),
+                                          ],
+                                        ]),
+                                      ],
+                                      if ('${p['description'] ?? ''}'
+                                          .isNotEmpty) ...[
+                                        const SizedBox(height: 8),
+                                        Text('${p['description']}',
+                                            style: AppTextStyles.body,
+                                            maxLines: 3,
+                                            overflow: TextOverflow.ellipsis),
+                                      ],
+                                      if ('${p['contactEmail'] ?? ''}'
+                                              .isNotEmpty ||
+                                          '${p['externalUrl'] ?? ''}'
+                                              .isNotEmpty) ...[
+                                        const SizedBox(height: 10),
+                                        Row(children: [
+                                          if ('${p['externalUrl'] ?? ''}'
+                                              .isNotEmpty)
+                                            TextButton.icon(
+                                              icon: const Icon(
+                                                  Icons.open_in_new_rounded,
+                                                  size: 14),
+                                              label: const Text('التقديم'),
+                                              onPressed: () async {
+                                                final uri = Uri.tryParse(
+                                                    '${p['externalUrl']}');
+                                                await openExternalLink(context,
+                                                    uri?.toString() ?? '');
+                                              },
+                                            ),
+                                          if ('${p['contactEmail'] ?? ''}'
+                                              .isNotEmpty)
+                                            TextButton.icon(
+                                              icon: const Icon(
+                                                  Icons.email_outlined,
+                                                  size: 14),
+                                              label: Text(
+                                                  '${p['contactEmail']}',
+                                                  overflow:
+                                                      TextOverflow.ellipsis),
+                                              onPressed: () async {
+                                                await openExternalLink(
+                                                    context,
+                                                    Uri(
+                                                            scheme: 'mailto',
+                                                            path:
+                                                                '${p['contactEmail']}')
+                                                        .toString());
+                                              },
+                                            ),
+                                        ]),
+                                      ],
+                                    ]),
+                              );
+                            },
+                          ),
+                  ),
+      );
 }
 
 class _PostJobScreen extends StatefulWidget {
@@ -1025,23 +1115,47 @@ class _PostJobScreenState extends State<_PostJobScreen> {
   String _type = 'internship';
   bool _submitting = false;
 
-  static const _types = ['internship', 'part-time', 'full-time', 'freelance', 'volunteer'];
-  static const _typeLabels = {'internship': 'تدريب', 'part-time': 'دوام جزئي', 'full-time': 'دوام كامل', 'freelance': 'عمل حر', 'volunteer': 'تطوع'};
+  static const _types = [
+    'internship',
+    'part-time',
+    'full-time',
+    'freelance',
+    'volunteer'
+  ];
+  static const _typeLabels = {
+    'internship': 'تدريب',
+    'part-time': 'دوام جزئي',
+    'full-time': 'دوام كامل',
+    'freelance': 'عمل حر',
+    'volunteer': 'تطوع'
+  };
 
   @override
   void dispose() {
-    for (final c in [_title, _company, _location, _description, _requirements, _email, _url]) c.dispose();
+    for (final c in [
+      _title,
+      _company,
+      _location,
+      _description,
+      _requirements,
+      _email,
+      _url
+    ]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (_title.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('أدخل عنوان الوظيفة')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(AppSnackBar(content: const Text('أدخل عنوان الوظيفة')));
       return;
     }
     setState(() => _submitting = true);
     try {
-      await ApiClient.instance.post('/alumni/jobs', token: AuthSession.instance.token, body: {
+      await ApiClient.instance
+          .post('/alumni/jobs', token: AuthSession.instance.token, body: {
         'title': _title.text.trim(),
         'company': _company.text.trim(),
         'location': _location.text.trim(),
@@ -1053,7 +1167,12 @@ class _PostJobScreenState extends State<_PostJobScreen> {
       });
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر النشر. تأكد من وجود ملف خريج عام.')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+            content: Text(e is ApiException
+                ? e.message
+                : 'تعذر النشر. تأكد من وجود ملف خريج عام.')));
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -1061,34 +1180,64 @@ class _PostJobScreenState extends State<_PostJobScreen> {
 
   @override
   Widget build(BuildContext context) => AppScaffold(
-    title: 'نشر إعلان وظيفة',
-    body: SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        TextField(controller: _title, decoration: const InputDecoration(labelText: 'عنوان الوظيفة *'), maxLength: 200),
-        const SizedBox(height: 10),
-        TextField(controller: _company, decoration: const InputDecoration(labelText: 'الشركة/المؤسسة'), maxLength: 200),
-        const SizedBox(height: 10),
-        TextField(controller: _location, decoration: const InputDecoration(labelText: 'الموقع (مدينة/دولة)'), maxLength: 200),
-        const SizedBox(height: 10),
-        DropdownButtonFormField<String>(
-          value: _type,
-          decoration: const InputDecoration(labelText: 'نوع الفرصة'),
-          items: _types.map((t) => DropdownMenuItem(value: t, child: Text(_typeLabels[t] ?? t))).toList(),
-          onChanged: (v) => setState(() => _type = v ?? _type),
+        title: 'نشر إعلان وظيفة',
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child:
+              Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            TextField(
+                controller: _title,
+                decoration: const InputDecoration(labelText: 'عنوان الوظيفة *'),
+                maxLength: 200),
+            const SizedBox(height: 10),
+            TextField(
+                controller: _company,
+                decoration: const InputDecoration(labelText: 'الشركة/المؤسسة'),
+                maxLength: 200),
+            const SizedBox(height: 10),
+            TextField(
+                controller: _location,
+                decoration:
+                    const InputDecoration(labelText: 'الموقع (مدينة/دولة)'),
+                maxLength: 200),
+            const SizedBox(height: 10),
+            DropdownButtonFormField<String>(
+              initialValue: _type,
+              decoration: const InputDecoration(labelText: 'نوع الفرصة'),
+              items: _types
+                  .map((t) => DropdownMenuItem(
+                      value: t, child: Text(_typeLabels[t] ?? t)))
+                  .toList(),
+              onChanged: (v) => setState(() => _type = v ?? _type),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+                controller: _description,
+                decoration: const InputDecoration(labelText: 'وصف الوظيفة'),
+                maxLines: 4,
+                maxLength: 3000),
+            const SizedBox(height: 10),
+            TextField(
+                controller: _requirements,
+                decoration: const InputDecoration(labelText: 'المتطلبات'),
+                maxLines: 3,
+                maxLength: 2000),
+            const SizedBox(height: 10),
+            TextField(
+                controller: _email,
+                decoration: const InputDecoration(labelText: 'البريد للتواصل'),
+                keyboardType: TextInputType.emailAddress),
+            const SizedBox(height: 10),
+            TextField(
+                controller: _url,
+                decoration: const InputDecoration(
+                    labelText: 'رابط التقديم (https://...)'),
+                keyboardType: TextInputType.url),
+            const SizedBox(height: 20),
+            PrimaryButton(
+                label: _submitting ? 'جاري النشر...' : 'نشر الإعلان',
+                onPressed: _submitting ? null : _submit),
+          ]),
         ),
-        const SizedBox(height: 10),
-        TextField(controller: _description, decoration: const InputDecoration(labelText: 'وصف الوظيفة'), maxLines: 4, maxLength: 3000),
-        const SizedBox(height: 10),
-        TextField(controller: _requirements, decoration: const InputDecoration(labelText: 'المتطلبات'), maxLines: 3, maxLength: 2000),
-        const SizedBox(height: 10),
-        TextField(controller: _email, decoration: const InputDecoration(labelText: 'البريد للتواصل'), keyboardType: TextInputType.emailAddress),
-        const SizedBox(height: 10),
-        TextField(controller: _url, decoration: const InputDecoration(labelText: 'رابط التقديم (https://...)'), keyboardType: TextInputType.url),
-        const SizedBox(height: 20),
-        PrimaryButton(label: _submitting ? 'جاري النشر...' : 'نشر الإعلان', onPressed: _submitting ? null : _submit),
-      ]),
-    ),
-  );
+      );
 }
-

@@ -1,4 +1,10 @@
+import 'student_menu.dart';
+export 'student_menu.dart' show showStudentMenu;
+import '../services_support/community_screen.dart';
 import '../../core/widgets/current_user_avatar.dart';
+import '../stories/student_stories.dart';
+import '../games/wink_screen.dart';
+import '../ai/assistant_avatar.dart';
 import 'home_journey_summary_card.dart';
 import 'journey_preview_card.dart';
 import '../../core/network/api_client.dart';
@@ -7,14 +13,12 @@ import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import '../../core/widgets/external_link.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/utils/animations.dart';
 import '../../core/repositories/student_repository.dart';
-import '../../core/services/auth_session.dart';
 import '../../core/services/analytics_service.dart';
 import '../../core/services/realtime_sync_service.dart';
-import '../../main.dart' show RootChooserScreen;
 import '../profile_account/profile_account_screens.dart';
 import 'notifications_screen.dart';
 import 'global_search_screen.dart';
@@ -29,7 +33,6 @@ import '../services_support/services_consultation_screens.dart';
 import '../services_support/support_team_ai_screens.dart';
 import '../community/student_community_hub.dart';
 import '../universities_programs_countries/programs_screens.dart';
-import '../universities_programs_countries/explore_hub_screen.dart';
 import '../visa_travel_accommodation/accommodation_arrival_screens.dart';
 import '../visa_travel_accommodation/visa_travel_screens.dart'
     show
@@ -67,7 +70,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     {'label': 'الجامعات', 'icon': Icons.account_balance_outlined},
     {'label': 'مستنداتي', 'icon': Icons.folder_open_outlined},
     {'label': 'المدفوعات', 'icon': Icons.payments_outlined},
-    {'label': 'Bird AI', 'icon': null},
+    {'label': 'COVEY AI', 'icon': null},
     {'label': 'استشارة', 'icon': Icons.support_agent_outlined},
     {'label': 'الدعم', 'icon': Icons.headset_mic_outlined},
     {'label': 'المجتمع', 'icon': Icons.forum_outlined},
@@ -117,207 +120,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     }
   }
 
-  void _openMenu(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (sheetContext) {
-        void go(Widget screen) {
-          Navigator.pop(sheetContext);
-          Navigator.of(context).push(MaterialPageRoute(builder: (_) => screen));
-        }
-
-        final user = AuthSession.instance.currentUser;
-        // 2-column grid tile
-        Widget gridTile(IconData icon, String label, VoidCallback onTap) {
-          return Material(
-            color: Colors.transparent,
-            borderRadius: BorderRadius.circular(14),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: onTap,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: AppColors.border),
-                ),
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                          color: AppColors.orangeSoft,
-                          borderRadius: BorderRadius.circular(10)),
-                      child: Icon(icon, color: AppColors.orange, size: 18),
-                    ),
-                    const SizedBox(width: 8),
-                    Flexible(
-                      child: Text(label,
-                          style: const TextStyle(
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
-                              color: AppColors.textPrimary)),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
-        }
-
-        // Slim list tile for secondary items
-        Widget listTile(IconData icon, String label, VoidCallback onTap,
-            {bool danger = false}) {
-          final color = danger ? AppColors.danger : AppColors.orange;
-          return ListTile(
-            onTap: onTap,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 4),
-            minLeadingWidth: 0,
-            leading: Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10)),
-              child: Icon(icon, color: color, size: 18),
-            ),
-            title: Text(label,
-                style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: danger ? AppColors.danger : AppColors.textPrimary)),
-            trailing: Icon(Icons.chevron_left_rounded,
-                color: Colors.grey.shade400, size: 20),
-          );
-        }
-
-        return SafeArea(
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-                maxHeight: MediaQuery.sizeOf(context).height * 0.82),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Drag handle
-                Container(
-                  margin: const EdgeInsets.only(top: 10, bottom: 4),
-                  width: 36,
-                  height: 4,
-                  decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2)),
-                ),
-
-                // User header
-                if (user != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(20, 10, 20, 12),
-                    child: Row(
-                      children: [
-                        const CurrentUserAvatar(),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(user.name,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 15,
-                                      color: AppColors.textPrimary)),
-                              const SizedBox(height: 1),
-                              Text(user.email,
-                                  style: AppTextStyles.caption,
-                                  overflow: TextOverflow.ellipsis),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                const Divider(height: 1),
-
-                Flexible(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // 2-column quick nav grid
-                        GridView.count(
-                          crossAxisCount: 2,
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          crossAxisSpacing: 10,
-                          mainAxisSpacing: 10,
-                          childAspectRatio: 2.6,
-                          children: [
-                            gridTile(Icons.description_outlined, 'طلباتي',
-                                () => go(const ApplicationsListScreen())),
-                            gridTile(Icons.account_balance_outlined, 'الجامعات',
-                                () => go(const UniversitiesExplorerScreen())),
-                            gridTile(Icons.menu_book_outlined, 'البرامج',
-                                () => go(const ProgramsExplorerScreen())),
-                            gridTile(Icons.school_outlined, 'المنح',
-                                () => go(const ScholarshipsScreen())),
-                          ],
-                        ),
-
-                        const SizedBox(height: 12),
-                        const Divider(height: 1),
-
-                        // Secondary items
-                        listTile(Icons.person_outline_rounded, 'حسابي',
-                            () => go(const ProfileScreen())),
-                        listTile(Icons.notifications_outlined, 'الإشعارات',
-                            () => go(const NotificationsScreen())),
-                        listTile(Icons.headset_mic_outlined, 'مركز الدعم',
-                            () => go(const SupportCenterScreen())),
-                        listTile(Icons.forum_outlined, 'المجتمع',
-                            () => go(const StudentCommunityHub())),
-
-                        const Divider(height: 8),
-
-                        listTile(Icons.logout_rounded, 'تسجيل الخروج',
-                            () async {
-                          Navigator.pop(sheetContext);
-                          final confirmed = await showAppConfirmDialog(
-                            context,
-                            title: 'تسجيل الخروج',
-                            message: 'هل تريد تسجيل الخروج من حسابك؟',
-                            confirmLabel: 'تسجيل الخروج',
-                            danger: true,
-                          );
-                          if (!confirmed || !context.mounted) return;
-                          await AuthSession.instance.logout();
-                          if (context.mounted) {
-                            Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(
-                                    builder: (_) => const RootChooserScreen()),
-                                (route) => false);
-                          }
-                        }, danger: true),
-
-                        const SizedBox(height: 8),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+  void _openMenu(BuildContext context) => showStudentMenu(context);
 
   /// Opens a home destination key sent by the server (context card, dates,
   /// sections, quick actions).
@@ -396,7 +199,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     'الجامعات': 'universities',
     'مستنداتي': 'documents',
     'المدفوعات': 'payments',
-    'Bird AI': 'bird-ai',
+    'COVEY AI': 'bird-ai',
     'استشارة': 'consultation',
     'الدعم': 'support',
     'المجتمع': 'community',
@@ -423,37 +226,26 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             ? null
             : BottomNavigationBar(
                 currentIndex: 0,
-                selectedItemColor: AppColors.navy,
+                selectedItemColor: AppColors.greenInk,
                 unselectedItemColor: AppColors.textSecondary,
                 type: BottomNavigationBarType.fixed,
                 onTap: (i) {
-                  switch (i) {
-                    case 1:
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const JourneyTrackerScreen()));
-                    case 2:
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const ExploreHubScreen()));
-                    case 3:
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const ServicesCenterScreen()));
-                    case 4:
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (_) => const ProfileScreen()));
+                  if (i == 1) {
+                    Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) => const StudentCommunityScreen()));
+                  } else if (i == 2) {
+                    Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const WinkScreen()));
                   }
                 },
                 items: const [
                   BottomNavigationBarItem(
                       icon: Icon(Icons.home_rounded), label: 'الرئيسية'),
                   BottomNavigationBarItem(
-                      icon: Icon(Icons.timeline_rounded), label: 'الرحلة'),
+                      icon: Icon(Icons.forum_outlined), label: 'مجتمع الطلاب'),
                   BottomNavigationBarItem(
-                      icon: Icon(Icons.explore_outlined), label: 'استكشاف'),
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.miscellaneous_services_outlined),
-                      label: 'الخدمات'),
-                  BottomNavigationBarItem(
-                      icon: Icon(Icons.person_outline_rounded), label: 'حسابي'),
+                      icon: Icon(Icons.sports_esports_outlined),
+                      label: 'الغمّازة'),
                 ],
               ),
       ),
@@ -467,8 +259,8 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           ? overview.stages.last
           : const DashboardStage(
               key: '',
-              titleAr: 'رحلتك الدراسية',
-              descriptionAr: 'مرحبًا بك في Study Birds',
+              titleAr: 'اختر برنامجك الدراسي',
+              descriptionAr: 'استكشف الجامعات والبرامج وابدأ طلبك.',
               status: 'current'),
     );
     final completedCount =
@@ -482,9 +274,6 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
         : overview.stages.isEmpty
             ? 0.0
             : completedCount / overview.stages.length;
-    final greetingName = home?['greeting'] is Map
-        ? '${(Json.rawMap(home!['greeting']))['name'] ?? ''}'.trim()
-        : '';
 
     String journeyPathLabel = 'لم تبدأ رحلة تقديم بعد';
     final journey = home?['currentJourney'];
@@ -520,40 +309,39 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
               end: Alignment.bottomCenter,
               colors: [AppColors.navy, AppColors.navy.withValues(alpha: 0.92)],
             ),
-            borderRadius:
-                const BorderRadius.vertical(bottom: Radius.circular(28)),
           ),
           child: Column(
             children: [
               Row(
                 children: [
+                  Semantics(
+                    button: true,
+                    label: 'حسابي',
+                    child: Tooltip(
+                      message: 'حسابي',
+                      child: InkWell(
+                        key: const ValueKey('student-home-account'),
+                        customBorder: const CircleBorder(),
+                        onTap: () => Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const ProfileScreen())),
+                        child: Container(
+                            padding: const EdgeInsets.all(3),
+                            decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                    color: AppColors.green, width: 2)),
+                            child: const CurrentUserAvatar(radius: 22)),
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
                   _HeroIconButton(
+                      key: const ValueKey('student-home-menu'),
                       icon: Icons.menu_rounded,
                       tooltip: 'القائمة',
                       onPressed: () => _openMenu(context)),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                            greetingName.isEmpty
-                                ? 'مرحباً بك'
-                                : 'مرحباً $greetingName',
-                            style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 18,
-                                fontWeight: FontWeight.w700,
-                                letterSpacing: 0.2)),
-                        const SizedBox(height: 2),
-                        Text(
-                            '${homeStatus?['labelAr'] ?? ''}'.isNotEmpty
-                                ? '${homeStatus!['labelAr']}'
-                                : currentStage.titleAr,
-                            style: const TextStyle(
-                                color: Colors.white60, fontSize: 12)),
-                      ],
-                    ),
-                  ),
+                  const SizedBox(width: 8),
                   _HeroIconButton(
                     icon: Icons.notifications_none_rounded,
                     tooltip: 'الإشعارات',
@@ -590,6 +378,18 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
           ),
         ),
 
+        Container(
+          key: const ValueKey('dashboard-stories'),
+          padding: const EdgeInsets.only(top: 8, bottom: 8),
+          color: AppColors.navy,
+          child: DefaultTextStyle.merge(
+              style: const TextStyle(color: Colors.white),
+              child: StudentStories(
+                  isActive: widget.isActive,
+                  showCommunityButton: false,
+                  compact: true)),
+        ),
+        const SizedBox(height: 16),
         // ── Journey card(s) ───────────────────────────────────────────────────
         _buildJourneySection(context, overview, currentStage, journeyPathLabel,
             progress, homeStatus),
@@ -643,14 +443,14 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                             fit: BoxFit.contain,
                             errorWidget: const Icon(
                               Icons.verified_outlined,
-                              color: AppColors.orange,
+                              color: AppColors.green,
                               size: 24,
                             ),
                           ),
                         )
                       else
                         const Icon(Icons.verified_outlined,
-                            color: AppColors.orange, size: 24),
+                            color: AppColors.green, size: 24),
                       const SizedBox(height: 4),
                       Text(
                         title,
@@ -670,11 +470,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 if (link.isEmpty) return card;
                 return GestureDetector(
                   onTap: () async {
-                    final uri = Uri.tryParse(link);
-                    if (uri != null) {
-                      await launchUrl(uri,
-                          mode: LaunchMode.externalApplication);
-                    }
+                    await openExternalLink(context, link);
                   },
                   child: card,
                 );
@@ -731,8 +527,10 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                             border: Border.all(color: AppColors.border),
                           ),
                           child: Center(
-                            child: AppIconTile(q['icon'] as IconData? ??
-                                Icons.auto_awesome_rounded),
+                            child: q['destination'] == 'bird-ai'
+                                ? const AssistantAvatar(size: 44)
+                                : AppIconTile(q['icon'] as IconData? ??
+                                    Icons.auto_awesome_rounded),
                           ),
                         ),
                         const SizedBox(height: 6),
@@ -782,7 +580,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                     builder: (_) => const ScholarshipsScreen())),
                 child: const Text('عرض الكل',
                     style: TextStyle(
-                        color: AppColors.orange,
+                        color: AppColors.greenInk,
                         fontSize: 12.5,
                         fontWeight: FontWeight.w700)),
               ),
@@ -820,7 +618,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                   child: Row(
                     children: [
                       const Icon(Icons.notifications_active_outlined,
-                          color: AppColors.orange, size: 18),
+                          color: AppColors.green, size: 18),
                       const SizedBox(width: 8),
                       Expanded(
                           child: Text(
@@ -873,7 +671,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
     if (apps.length <= 1) {
       return Transform.translate(
-        offset: const Offset(0, -20),
+        offset: Offset.zero,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: _buildMainJourneyCard(context, overview, currentStage,
@@ -884,7 +682,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
     // Multiple journeys — horizontal PageView + dots indicator.
     return Transform.translate(
-      offset: const Offset(0, -20),
+      offset: Offset.zero,
       child: Column(
         children: [
           SizedBox(
@@ -920,7 +718,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
                 height: 6,
                 decoration: BoxDecoration(
                   color: _selectedJourneyIndex == i
-                      ? AppColors.orange
+                      ? AppColors.green
                       : AppColors.border,
                   borderRadius: BorderRadius.circular(3),
                 ),
@@ -957,7 +755,14 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
             homeStatus),
       );
     }
+    final currentJourney = Json.mapOrNull(overview.home?['currentJourney']);
+    final applicationId = currentJourney?['applicationId']?.toString() ??
+        overview.journeys?.firstOrNull?['applicationId']?.toString();
+    final hasJourney = overview.stats.currentApplications > 0 ||
+        (applicationId != null && applicationId.isNotEmpty) ||
+        (overview.journeys?.isNotEmpty ?? false);
     return HomeJourneySummaryCard(
+      compact: true,
       path: journeyPathLabel,
       stepLabel: overview.nextAction?['waiting'] == true
           ? 'متابعة الفريق'
@@ -970,9 +775,12 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
       applications: overview.stats.currentApplications,
       documents: overview.stats.acceptedDocuments,
       onTap: () => Navigator.of(context).push(MaterialPageRoute(
-          builder: (_) => JourneyTrackerScreen(
-              currentStageKey: overview.journeyStage,
-              journeyPathLabel: journeyPathLabel))),
+          builder: (_) => hasJourney
+              ? JourneyTrackerScreen(
+                  applicationId: applicationId,
+                  currentStageKey: overview.journeyStage,
+                  journeyPathLabel: journeyPathLabel)
+              : const ProgramsExplorerScreen())),
     );
   }
 
@@ -1094,7 +902,8 @@ class _HeroIconButton extends StatelessWidget {
   final int badgeCount;
   final String? tooltip;
   const _HeroIconButton(
-      {required this.icon,
+      {super.key,
+      required this.icon,
       required this.onPressed,
       this.badgeCount = 0,
       this.tooltip});
@@ -1123,12 +932,12 @@ class _HeroIconButton extends StatelessWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
                     decoration: BoxDecoration(
-                        color: AppColors.orange,
+                        color: AppColors.green,
                         borderRadius: BorderRadius.circular(10)),
                     child: Text(
                       badgeCount > 99 ? '99+' : '$badgeCount',
                       style: const TextStyle(
-                          color: Colors.white,
+                          color: AppColors.navy,
                           fontSize: 9,
                           fontWeight: FontWeight.w800),
                     ),
@@ -1137,7 +946,7 @@ class _HeroIconButton extends StatelessWidget {
                     width: 7,
                     height: 7,
                     decoration: const BoxDecoration(
-                        color: AppColors.orange, shape: BoxShape.circle)),
+                        color: AppColors.greenInk, shape: BoxShape.circle)),
           ),
       ],
     );

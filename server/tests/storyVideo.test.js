@@ -23,7 +23,7 @@ test('video story upload validates media, ownership, metadata and existing rewar
     let uploads = 0;
     videoUpload.uploadStoryVideo = async (file, owner) => {
       uploads++; assert.equal(file.mimetype, 'video/mp4');
-      return { videoUrl: `https://res.cloudinary.com/test/video/upload/story-videos/${owner}/clip.mp4`, duration: 12.5 };
+      return { publicId: `story-videos/${owner}/clip`, videoUrl: `https://res.cloudinary.com/test/video/upload/story-videos/${owner}/clip.mp4`, duration: 12.5 };
     };
     const app = express(); app.use(express.json()); app.use('/stories', require('../src/routes/storyRoutes'));
     app.use(require('../src/middleware/errorMiddleware').errorHandler);
@@ -47,7 +47,8 @@ test('video story upload validates media, ownership, metadata and existing rewar
     assert.equal((await post({ operationId: 'stolen-video', videoUrl: asset.data.videoUrl }, 1)).status, 400);
     assert.equal((await post({ operationId: 'fake-video-url', videoUrl: 'https://example.com/fake.mp4' })).status, 400);
     assert.equal((await post({ operationId: 'mixed-story-media', videoUrl: asset.data.videoUrl, imageUrl: 'https://example.com/a.png' })).status, 400);
-    const first = await post({ operationId: 'video-story-one', videoUrl: asset.data.videoUrl, videoDuration: 9999 });
+    assert.equal((await post({ operationId: 'forged-duration', videoUrl: asset.data.videoUrl, videoDuration: 9999 })).status, 400);
+    const first = await post({ operationId: 'video-story-one', videoUrl: asset.data.videoUrl });
     assert.equal(first.status, 201); assert.equal(first.data.awarded, 100);
     assert.equal((await Story.findById(first.data.id)).videoDuration, 12.5, 'duration is server trusted');
     assert.equal((await post({ operationId: 'video-story-one', videoUrl: asset.data.videoUrl })).data.id, first.data.id);

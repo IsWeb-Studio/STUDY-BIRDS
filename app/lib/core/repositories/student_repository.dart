@@ -79,7 +79,7 @@ class DashboardOverview {
   /// servers, in which case the home screen keeps its previous layout.
   final Map<String, dynamic>? home;
 
-  /// Study Birds recognitions / accreditations shown on the home slider.
+  /// COVEY recognitions / accreditations shown on the home slider.
   /// Each entry: { _id, title, image, link }
   final List<Map<String, dynamic>> recognitions;
 
@@ -150,7 +150,7 @@ const List<Map<String, String>> kJourneyStageOrder = [
   {'key': 'studies-started', 'title': 'بدء الدراسة'},
 ];
 
-/// Talks to the real Study Birds backend for everything under
+/// Talks to the real COVEY backend for everything under
 /// server/src/routes/studentRoutes.js. Every call requires a valid session
 /// token (student or partner role, per the backend's `protect` middleware).
 class StudentRepository {
@@ -173,7 +173,7 @@ class StudentRepository {
   String get _token {
     final token = AuthSession.instance.token;
     if (token == null) {
-      throw ApiException(401, 'لا توجد جلسة دخول نشطة');
+      throw const ApiException(401, 'لا توجد جلسة دخول نشطة');
     }
     return token;
   }
@@ -200,7 +200,9 @@ class StudentRepository {
     } catch (error) {
       if (error is ApiException &&
           error.statusCode < 500 &&
-          error.statusCode != 0) rethrow;
+          error.statusCode != 0) {
+        rethrow;
+      }
       if (!forceRefresh && AuthSession.instance.currentUser?.id == owner) {
         try {
           final cached = await SecureDataCache.read(owner, resource);
@@ -239,13 +241,16 @@ class StudentRepository {
       'passportNumber',
       'dateOfBirth',
       'nationality',
+      'nationalityCountryCode',
       'currentEducation',
       'currentEducationLevel',
       'currentResidenceCountry',
+      'currentResidenceCountryCode',
       'currentResidenceRegion',
       'gpa',
       'englishTest',
       'targetCountries',
+      'targetCountryCodes',
       'intake',
       'bio',
       'address',
@@ -339,8 +344,9 @@ class StudentRepository {
     void Function()? onPassportValidated,
     Map<String, Object>? passportReview,
   }) async {
-    if (cancellation?.cancelled == true)
+    if (cancellation?.cancelled == true) {
       throw const ApiException(499, 'Upload cancelled');
+    }
     Map<String, dynamic>? existing;
     try {
       final lookup = await ApiClient.instance
@@ -356,8 +362,9 @@ class StudentRepository {
       // uncertain extra upload; the user can safely retry instead.
       if (error.statusCode != 404) rethrow;
     }
-    if (cancellation?.cancelled == true)
+    if (cancellation?.cancelled == true) {
       throw const ApiException(499, 'Upload cancelled');
+    }
     if (existing != null && !(type == 'passport' && passportReview != null && existing['passportReview'] == null)) {
       _documentConfirmed({...existing, 'reused': true}, session);
       return {...existing, 'reused': true};
@@ -553,7 +560,8 @@ class StudentRepository {
   }
 
   Future<List<Map<String, dynamic>>> getSupportTeam() async {
-    final data = await ApiClient.instance.get('/students/support-team', token: _token);
+    final data = await ApiClient.instance
+        .get('/students/support-team', token: _token, cached: false);
     return Json.list(data).map(Json.map).toList();
   }
 

@@ -1,3 +1,4 @@
+import { PushAnnouncementComposer } from "../../components/admin/PushAnnouncementComposer";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { Bell, Search, Send, Users } from "lucide-react";
 import { adminService } from "../../services/adminService";
@@ -128,6 +129,7 @@ export const AdminStudentNotificationsPage = () => {
 
   return (
     <div className="space-y-6">
+      <PushAnnouncementComposer />
       <section className="panel p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>

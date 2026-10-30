@@ -72,7 +72,7 @@ void main() {
         },
             () => MockClient((request) async {
                   Object? data = {};
-                  if (request.url.path.endsWith('financials'))
+                  if (request.url.path.endsWith('financials')) {
                     data = {
                       'invoices': [
                         {
@@ -82,15 +82,18 @@ void main() {
                         }
                       ]
                     };
-                  if (request.url.path.endsWith('arrival-services'))
+                  }
+                  if (request.url.path.endsWith('arrival-services')) {
                     data = null;
-                  if (request.url.path.endsWith('profile'))
+                  }
+                  if (request.url.path.endsWith('profile')) {
                     data = {
                       'englishFullName': 'Tarek Ahmed',
                       'nationality': 'مصر',
                       'currentResidenceCountry': 'تركيا'
                     };
-                  if (request.url.path.endsWith('universities'))
+                  }
+                  if (request.url.path.endsWith('universities')) {
                     data = [
                       {
                         '_id': 'a',
@@ -105,8 +108,10 @@ void main() {
                         'city': 'أنقرة'
                       }
                     ];
-                  if (request.url.path.endsWith('site-settings'))
+                  }
+                  if (request.url.path.endsWith('site-settings')) {
                     data = {'contactEmail': 'support@example.test'};
+                  }
                   return http.Response(jsonEncode(data), 200, headers: {
                     'content-type': 'application/json; charset=utf-8'
                   });
