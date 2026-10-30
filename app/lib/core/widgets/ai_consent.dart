@@ -1,10 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../services/auth_session.dart';
 import 'privacy_links.dart';
 
-/// Consent is deliberately scoped to the current assistant screen session.
+/// Increment only when the disclosed AI processing or consent terms change.
+const aiConsentVersion = 1;
+
+/// Both assistant entry points share an account-scoped, durable consent.
 Future<bool> requestAiConsent(BuildContext context) async {
+  final owner = AuthSession.instance.currentUser?.id;
+  final token = AuthSession.instance.token;
+  bool sameSession() =>
+      AuthSession.instance.currentUser?.id == owner &&
+      AuthSession.instance.token == token;
+  final key = 'ai_consent_v$aiConsentVersion:$owner';
+  final SharedPreferences prefs;
+  try {
+    prefs = await SharedPreferences.getInstance();
+    if (!context.mounted || !sameSession()) return false;
+    if (owner != null && owner.isNotEmpty && prefs.getBool(key) == true) {
+      return true;
+    }
+  } catch (_) {
+    if (context.mounted) _storageError(context);
+    return false;
+  }
   final ar = Localizations.localeOf(context).languageCode == 'ar';
-  return await showDialog<bool>(
+  final accepted = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
           title:
@@ -28,4 +50,23 @@ Future<bool> requestAiConsent(BuildContext context) async {
         ),
       ) ??
       false;
+  if (!accepted || !context.mounted || !sameSession()) return false;
+  // Anonymous acceptance is not inherited by any signed-in account.
+  if (owner == null || owner.isEmpty) return true;
+  try {
+    final saved = await prefs.setBool(key, true);
+    if (!saved) throw StateError('Consent was not saved');
+    return context.mounted && sameSession();
+  } catch (_) {
+    if (context.mounted) _storageError(context);
+    return false;
+  }
+}
+
+void _storageError(BuildContext context) {
+  final ar = Localizations.localeOf(context).languageCode == 'ar';
+  ScaffoldMessenger.maybeOf(context)?.showSnackBar(SnackBar(
+      content: Text(ar
+          ? 'تعذر حفظ موافقتك. حاول مجددًا.'
+          : 'Could not save your consent. Please try again.')));
 }
