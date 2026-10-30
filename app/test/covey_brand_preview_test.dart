@@ -2,7 +2,9 @@ import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:study_birds/core/config/app_theme.dart';
 import 'package:study_birds/screens/auth/splash_screen.dart';
 
 void main() {
@@ -12,13 +14,22 @@ void main() {
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
     final key = GlobalKey();
+    await tester.runAsync(() => (FontLoader('Tajawal')
+          ..addFont(rootBundle.load('assets/fonts/Tajawal-Regular.ttf'))
+          ..addFont(rootBundle.load('assets/fonts/Tajawal-Bold.ttf')))
+        .load());
     await tester.pumpWidget(RepaintBoundary(
         key: key,
-        child: const MaterialApp(
-            debugShowCheckedModeBanner: false, home: SplashScreen())));
+        child: MaterialApp(
+            theme: AppTheme.light,
+            debugShowCheckedModeBanner: false,
+            home: const SplashScreen())));
     await tester.pumpAndSettle();
     await tester.runAsync(() => precacheImage(
         const AssetImage('assets/images/branding/covey_splash.png'),
+        tester.element(find.byType(SplashScreen))));
+    await tester.runAsync(() => precacheImage(
+        const AssetImage('assets/images/branding/covey_splash_mark.png'),
         tester.element(find.byType(SplashScreen))));
     await tester.pumpAndSettle();
     await tester.runAsync(() async {
