@@ -1,4 +1,4 @@
-// Retrieval helpers for Bird AI — grounds replies in the platform's own
+// Retrieval helpers for COVEY AI — grounds replies in the platform's own
 // knowledge base and the asking student's own data. Read-only; only ever
 // built from the caller's own data, never another user's.
 const Application  = require("../models/Application");

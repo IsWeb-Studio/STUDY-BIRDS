@@ -1,3 +1,4 @@
+import { VoiceReply } from "../../components/VoiceReply";
 import { DocumentFileLink } from "../../components/DocumentFileLink";
 import { useEffect, useMemo, useState } from "react";
 import { Search, Send } from "lucide-react";
@@ -142,7 +143,7 @@ export const AdminSupportTicketsEnhancedPage = () => {
                       <div className="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">{reply.fromRole}</div>
                       <div className="text-xs text-slate-400">{formatDate(reply.createdAt)}</div>
                     </div>
-                    <div className="mt-2 text-sm text-slate-700">{reply.message}</div>
+                    <div className="mt-2 text-sm text-slate-700">{reply.audioPath ? <VoiceReply path={reply.audioPath} /> : reply.message}</div>
                   </div>
                 ))}
               </div>

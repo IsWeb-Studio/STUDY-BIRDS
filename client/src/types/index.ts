@@ -350,9 +350,11 @@ export interface StudentProfile {
   passportNumber?: string;
   dateOfBirth?: string;
   nationality?: string;
+  nationalityCountryCode?: string;
   currentEducation?: string;
   currentEducationLevel?: "high-school" | "bachelor" | "master" | "phd" | "";
   currentResidenceCountry?: string;
+  currentResidenceCountryCode?: string;
   currentResidenceRegion?: string;
   nativeLanguage?: string;
   otherLanguages?: string[];
@@ -361,6 +363,7 @@ export interface StudentProfile {
   bio?: string;
   address?: string;
   targetCountries?: string[];
+  targetCountryCodes?: string[];
   englishTest?: {
     exam?: string;
     score?: string;
@@ -496,6 +499,8 @@ export interface VerificationOverview {
 }
 
 export interface SupportTicketReply {
+  audioPath?: string;
+  audioDuration?: number;
   _id?: string;
   message: string;
   fromRole: "student" | "partner" | "admin";

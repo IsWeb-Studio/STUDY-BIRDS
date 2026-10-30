@@ -45,7 +45,7 @@ const programTemplates = [
 ];
 
 const testimonialData = [
-  { studentName: "Lina Hassan", destination: "Canada", quote: "Study Birds turned a confusing process into a clear plan I could trust." },
+  { studentName: "Lina Hassan", destination: "Canada", quote: "COVEY turned a confusing process into a clear plan I could trust." },
   { studentName: "Omar Nabil", destination: "Germany", quote: "I found a program that matched both my budget and career goals." },
   { studentName: "Priya Menon", destination: "Ireland", quote: "The dashboard made every deadline and document easy to manage." },
   { studentName: "Yousef Adel", destination: "UK", quote: "I applied with confidence because everything was organized in one place." },
@@ -72,7 +72,7 @@ const faqData = [
     sortOrder: 2,
   },
   {
-    question: "Can Study Birds help me track my application after submission?",
+    question: "Can COVEY help me track my application after submission?",
     answer: "Yes. Students can organize documents, submit applications, and follow status updates from one place.",
     featured: true,
     sortOrder: 3,

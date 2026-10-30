@@ -9,6 +9,9 @@ const { accountPayload, safeAccount } = require('../utils/crmAccountPolicy');
 const router = express.Router();
 const fail = (status, message) => { throw Object.assign(new Error(message), {status}); };
 router.use(protect);
+router.put('/students/:id/advisor', (req, res, next) => req.user.role === 'admin' ? next() : res.status(403).json({ message: 'Forbidden' }), require('../controllers/studentSupportTeamController').saveAdvisor);
+router.get('/students/:id/support-team', requireSection('students'), require('../controllers/studentSupportTeamController').read);
+router.put('/students/:id/support-team', (req, res, next) => req.user.role === 'admin' ? next() : res.status(403).json({ message: 'Forbidden' }), require('../controllers/studentSupportTeamController').save);
 router.use('/sync/:companyId',require('./crmSyncRoutes'));
 router.get('/support-assignees',requireSection('support'),run(async(req,res)=>{
   const staff=await User.find({isActive:true,$or:[{role:'admin'},{role:'employee',permissions:'support'}]})

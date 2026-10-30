@@ -11,6 +11,7 @@ let stopConsultationReminders;
 let stopEmailDelivery;
 let stopWinkGames;
 let stopFinancialOutbox;
+let stopAccountDeletion;
 async function runStartupMigrations() {
   try {
     const OurService = require('./models/OurService');
@@ -29,6 +30,7 @@ async function runStartupMigrations() {
 const startDatabaseConnection = async () => {
   try {
     await connectDatabase();
+    if (!stopAccountDeletion) stopAccountDeletion = require('./utils/accountDeletion').startDeletionWorker();
     if (!stopFinancialOutbox) stopFinancialOutbox = require("./utils/financialOutbox").startFinancialOutbox();
     if (!stopWinkGames) stopWinkGames = require('./games/winkStore').startWinkScheduler();
     await runStartupMigrations();

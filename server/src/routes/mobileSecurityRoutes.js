@@ -39,6 +39,22 @@ router.post('/reset/confirm', run(async (req, res) => {
   res.json({ message: 'تم تغيير كلمة المرور. سجّل الدخول مجدداً.' });
 }));
 router.use(protect);
+const notificationCategories = ['payments', 'admission', 'documents', 'consultations', 'visa', 'support', 'announcements', 'community'];
+const preferenceResponse = (values) => ({
+  ...Object.fromEntries(notificationCategories.map(key => [key, values?.get(key) ?? true])),
+  _initialized: values !== undefined,
+});
+router.get('/notification-preferences', run(async (req, res) => {
+  res.json(preferenceResponse(req.user.notificationPreferences));
+}));
+router.put('/notification-preferences', run(async (req, res) => {
+  const entries = Object.entries(req.body);
+  if (!entries.length || entries.some(([key, value]) => !notificationCategories.includes(key) || typeof value !== 'boolean')) {
+    return res.status(400).json({ message: 'Invalid notification preferences.' });
+  }
+  const user = await User.findByIdAndUpdate(req.user._id, { $set: Object.fromEntries(entries.map(([key, value]) => [`notificationPreferences.${key}`, value])) }, { new: true });
+  res.json(preferenceResponse(user.notificationPreferences));
+}));
 router.get('/two-factor', run(async (req, res) => res.json({ enabled: req.user.twoFactorEnabled === true })));
 router.post('/two-factor/request', run(async (req, res) => {
   const user = await User.findById(req.user._id);
@@ -75,7 +91,7 @@ router.post('/email/change/request', run(async (req, res) => {
     email: newEmail, digest: digest(`${req.user._id}:email-change:${code}`),
     attempts: 0, expiresAt: new Date(Date.now() + 10 * 60 * 1000),
   }}, { new: true, upsert: true });
-  await sendContactEmail({ to: newEmail, subject: 'Study Birds — تأكيد البريد الإلكتروني الجديد', text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.`, emailContent: { title: 'تأكيد البريد الإلكتروني الجديد', code, bodyText: 'أدخل الرمز التالي لتأكيد بريدك الجديد. صالح لمدة 10 دقائق. لا تشاركه مع أحد.' } });
+  await sendContactEmail({ to: newEmail, subject: 'COVEY — تأكيد البريد الإلكتروني الجديد', text: `رمز التحقق: ${code}\nصالح لمدة 10 دقائق. لا تشاركه مع أحد.`, emailContent: { title: 'تأكيد البريد الإلكتروني الجديد', code, bodyText: 'أدخل الرمز التالي لتأكيد بريدك الجديد. صالح لمدة 10 دقائق. لا تشاركه مع أحد.' } });
   res.json({ sent: true });
 }));
 router.post('/email/change/confirm', run(async (req, res) => {
@@ -94,7 +110,7 @@ router.post('/email/change/confirm', run(async (req, res) => {
   if (!consumed.deletedCount) fail(res, 'تم استخدام الرمز بالفعل');
   const oldEmail = req.user.email;
   await User.updateOne({ _id: req.user._id }, { $set: { email: newEmail, emailVerified: true } });
-  sendContactEmail({ to: oldEmail, subject: 'Study Birds — إشعار أمني: تغيير البريد الإلكتروني', text: `تم تغيير البريد الإلكتروني لحسابك إلى ${newEmail}.\nإذا لم تكن أنت من أجرى هذا التغيير، تواصل مع الدعم فوراً.` }).catch(() => {});
+  sendContactEmail({ to: oldEmail, subject: 'COVEY — إشعار أمني: تغيير البريد الإلكتروني', text: `تم تغيير البريد الإلكتروني لحسابك إلى ${newEmail}.\nإذا لم تكن أنت من أجرى هذا التغيير، تواصل مع الدعم فوراً.` }).catch(() => {});
   res.json({ email: newEmail, emailVerified: true });
 }));
 router.get('/sessions', run(async (req, res) => {

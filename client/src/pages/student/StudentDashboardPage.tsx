@@ -80,8 +80,8 @@ export const StudentDashboardPage = () => {
               <h1 className="mt-4 text-3xl font-semibold sm:text-4xl">{isArabic ? `مرحباً ${overview.profile?.user?.name || ""}` : `Welcome ${overview.profile?.user?.name || ""}`}</h1>
               <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-300">
                 {isArabic
-                  ? "مرحباً بك في لوحة تحكم Study Birds، تتبع حالة قبولك الجامعي، أدر مستنداتك، وابدأ رحلتك التعليمية معنا."
-                  : "Welcome to the Study Birds dashboard. Track your university admission progress, manage documents, and continue your study journey with us."}
+                  ? "مرحباً بك في لوحة تحكم COVEY، تتبع حالة قبولك الجامعي، أدر مستنداتك، وابدأ رحلتك التعليمية معنا."
+                  : "Welcome to the COVEY dashboard. Track your university admission progress, manage documents, and continue your study journey with us."}
               </p>
             </div>
             <div className="min-w-[220px] rounded-3xl border border-white/10 bg-white/5 p-4">

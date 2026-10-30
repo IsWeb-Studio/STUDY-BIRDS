@@ -1,6 +1,6 @@
 const ExhibitionArticle = require("../models/ExhibitionArticle");
 
-const SITE_NAME = process.env.SITE_NAME || "Study Birds";
+const SITE_NAME = process.env.SITE_NAME || "COVEY";
 const DEFAULT_SITE_URL = "https://studybirds.net";
 
 const getSiteUrl = () =>

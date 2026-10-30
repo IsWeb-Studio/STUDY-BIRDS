@@ -55,6 +55,8 @@ router.get("/exhibitions/:slug", getExhibitionArticleBySlug);
 router.get("/site-settings", cacheRoute(300_000), getSiteSettings);
 router.get("/study-fields", cacheRoute(120_000), getStudyFields);
 router.get("/notifications", protect, getNotifications);
+router.patch('/notifications/read-all', protect, require('../controllers/studentController').markAllStudentNotificationsRead);
+router.patch('/notifications/:id/read', protect, require('../controllers/studentController').markStudentNotificationAsRead);
 router.get("/file-open", openCloudinaryDocument);
 router.get("/seo/sitemap.xml", cacheRoute(120_000), getSitemapXml);
 router.get("/seo/robots.txt", cacheRoute(300_000), getRobotsTxt);

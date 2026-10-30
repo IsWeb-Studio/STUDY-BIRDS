@@ -15,6 +15,7 @@ const messageSchema = new mongoose.Schema({
   sender: { ...id('User'), required: true, index: true }, recipient: { ...id('User'), required: true, index: true },
   body: { type: String, default: '', maxlength: 4000 }, readAt: Date,
   image: { publicId: String, format: String },
+  audio: { publicId: String, format: String, duration: Number, resourceType: String, deliveryType: String },
   deletedAt: Date,
   hiddenFor: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   operationId: String,
@@ -44,7 +45,7 @@ const Credit = mongoose.model('MobileCredit', new mongoose.Schema({
 }, { timestamps: true }));
 const emailCodeSchema = new mongoose.Schema({
   user: { ...id('User'), required: true }, email: { type: String, required: true },
-  purpose: { type: String, enum: ['verify', 'reset', 'login', 'security', 'email-change', 'emaillogin'], required: true },
+  purpose: { type: String, enum: ['verify', 'reset', 'login', 'security', 'email-change', 'emaillogin', 'delete-account'], required: true },
   digest: String, attempts: { type: Number, default: 0 }, expiresAt: { type: Date, expires: 0 },
 }, { timestamps: true });
 emailCodeSchema.index({ user: 1, purpose: 1 }, { unique: true });

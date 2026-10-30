@@ -35,10 +35,10 @@ test('mobile release: authentication, ownership, email codes, sessions, and mess
     const staff = await call('POST','/auth/login',null,{email:'employee@example.test',password:'TestPassword123!'});
     assert.deepEqual(staff.user.permissions,['students']);
     assert.equal((await call('GET','/auth/me',a.token)).user.role,'student');
-    const webResponse = await fetch(origin + '/auth/me', { headers: { Authorization: `Bearer ${b.token}`, 'X-Study-Birds-Client': 'web', 'User-Agent': 'Study Birds browser test' } });
+    const webResponse = await fetch(origin + '/auth/me', { headers: { Authorization: `Bearer ${b.token}`, 'X-Study-Birds-Client': 'web', 'User-Agent': 'COVEY browser test' } });
     assert.equal(webResponse.status, 200);
     const webSessions = await call('GET','/mobile-security/sessions',b.token);
-    assert.ok(webSessions.some(session => session.current && session.device === 'Study Birds browser test'));
+    assert.ok(webSessions.some(session => session.current && session.device === 'COVEY browser test'));
 
     assert.equal((await call('GET','/mobile/capabilities')).messaging,true);
     await call('GET','/mobile-security/sessions','bad-token',undefined,401);

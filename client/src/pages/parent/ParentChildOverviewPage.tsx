@@ -81,8 +81,8 @@ export const ParentChildOverviewPage = () => {
 
       <p className="text-center text-xs text-slate-400">
         {isArabic
-          ? "هذه نسخة للقراءة فقط. للتواصل بخصوص أي تفاصيل، تواصل مع فريق Study Birds."
-          : "This is a read-only view. Contact the Study Birds team for further details."}
+          ? "هذه نسخة للقراءة فقط. للتواصل بخصوص أي تفاصيل، تواصل مع فريق COVEY."
+          : "This is a read-only view. Contact the COVEY team for further details."}
       </p>
     </div>
   );

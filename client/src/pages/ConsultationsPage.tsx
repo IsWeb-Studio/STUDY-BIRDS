@@ -112,7 +112,7 @@ export const ConsultationsPage = ({ staff = false }: { staff?: boolean }) => {
               const advisor = b.advisor?.name || "المستشار";
               const meetingUrl = b.slot?.meetingUrl || "";
               const details = meetingUrl ? `استشارة مع ${advisor}\nرابط: ${meetingUrl}` : `استشارة مع ${advisor}`;
-              return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`استشارة Study Birds`)}&dates=${fmt(start)}/${fmt(end)}&details=${encodeURIComponent(details)}`;
+              return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(`استشارة COVEY`)}&dates=${fmt(start)}/${fmt(end)}&details=${encodeURIComponent(details)}`;
             })()}
           >📅 {t("Google Calendar", "Google Calendar")}</a>
           <a className={button} style={{ textDecoration: "none" }}

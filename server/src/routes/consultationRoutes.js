@@ -204,7 +204,7 @@ router.get('/bookings/:id/ics', run(async (req, res) => {
   const meetingUrl = booking.slot?.meetingUrl || '';
   const modeLabel = { online: 'عبر الإنترنت', phone: 'هاتفياً', office: 'في المكتب' }[booking.slot?.mode] || '';
   const description = [
-    `استشارة Study Birds مع ${advisorName}`,
+    `استشارة COVEY مع ${advisorName}`,
     modeLabel && `النوع: ${modeLabel}`,
     meetingUrl && `رابط الاجتماع: ${meetingUrl}`,
     booking.slot?.instructions && `تعليمات: ${booking.slot.instructions}`,
@@ -213,7 +213,7 @@ router.get('/bookings/:id/ics', run(async (req, res) => {
   const ics = [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Study Birds//Consultation//AR',
+    'PRODID:-//COVEY//Consultation//AR',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     'BEGIN:VEVENT',
@@ -221,7 +221,7 @@ router.get('/bookings/:id/ics', run(async (req, res) => {
     `DTSTAMP:${fmt(new Date())}`,
     `DTSTART:${fmt(start)}`,
     `DTEND:${fmt(end)}`,
-    `SUMMARY:استشارة Study Birds`,
+    `SUMMARY:استشارة COVEY`,
     `DESCRIPTION:${description}`,
     meetingUrl ? `URL:${meetingUrl}` : '',
     `STATUS:${booking.status === 'cancelled' ? 'CANCELLED' : 'CONFIRMED'}`,

@@ -16,7 +16,7 @@ function applicationEmail(application, kind = 'submitted') {
   const info = applicationStatusInfo(application);
   const title = kind === 'submitted' ? 'تم استلام طلب رحلتك الدراسية' : `تحديث رحلتك: ${info.ar.label}`;
   const message = kind === 'submitted'
-    ? 'شكرًا لاختيارك Study Birds. استلمنا طلبك بنجاح، وسيقوم فريقنا بمراجعته ومتابعة الخطوات القادمة معك.'
+    ? 'شكرًا لاختيارك COVEY. استلمنا طلبك بنجاح، وسيقوم فريقنا بمراجعته ومتابعة الخطوات القادمة معك.'
     : `${info.ar.meaning} ${info.ar.nextStep}`;
   const details = [
     ['اسم الطالب', student.name || application.applicantProfile?.name || 'الطالب'],
@@ -26,10 +26,10 @@ function applicationEmail(application, kind = 'submitted') {
     ...(university?.country ? [['الدولة', displayName(university.country.name || university.country)]] : []),
     ['حالة الطلب', info.ar.label],
   ];
-  const text = `مرحبًا ${student.name || 'بك'}،\n\n${message}\n\n${details.map(([key, value]) => `${key}: ${value}`).join('\n')}\n\nمتابعة الطلب: ${websiteOrigin()}/student/applications\nمع أطيب التحيات، فريق Study Birds`;
+  const text = `مرحبًا ${student.name || 'بك'}،\n\n${message}\n\n${details.map(([key, value]) => `${key}: ${value}`).join('\n')}\n\nمتابعة الطلب: ${websiteOrigin()}/student/applications\nمع أطيب التحيات، فريق COVEY`;
   return {
     key: `application:${application._id}:${kind}:${kind === 'submitted' ? 0 : application.statusTimeline?.length || 0}`,
-    to: student.email, subject: `Study Birds — ${title}`, text,
+    to: student.email, subject: `COVEY — ${title}`, text,
     emailContent: { title, bodyText: `مرحبًا ${student.name || 'بك'}،\n\n${message}`,
       details, actionPath: '/student/applications', actionLabel: 'متابعة طلبي', preview: message },
   };

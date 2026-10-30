@@ -12,6 +12,9 @@ const {
   refresh,
   logout,
   deleteAccount,
+  verifyAccountDeletion,
+  requestWebDeletion,
+  confirmWebDeletion,
 } = require("../controllers/authController");
 const { protect } = require("../middleware/authMiddleware");
 
@@ -31,6 +34,8 @@ router.post("/otp/verify", verifyOtp);
 router.post("/email-otp/request", requestEmailOtp);
 router.post("/email-otp/verify", verifyEmailOtp);
 router.get("/me", protect, me);
+router.patch('/me/profile', protect, require('../controllers/accountProfileController').updateName);
+router.post('/avatar', protect, require('../middleware/uploadMiddleware').single('file'), require('../controllers/accountProfileController').uploadAvatar);
 router.post("/change-password", protect, changePassword);
 router.post("/refresh", refresh);
 router.post("/logout", (req, res, next) => {
@@ -39,5 +44,8 @@ router.post("/logout", (req, res, next) => {
   next();
 }, logout);
 router.delete("/account", protect, deleteAccount);
+router.post('/account/verification', protect, verifyAccountDeletion);
+router.post('/account-deletion/request', authAttempts, requestWebDeletion);
+router.post('/account-deletion/confirm', authAttempts, confirmWebDeletion);
 
 module.exports = router;

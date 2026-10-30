@@ -28,6 +28,7 @@ const serializeUser = (user) => ({
   linkedUniversity: user.linkedUniversity || null,
 });
 
+
 const ensureStudentProfile = async (userId) => {
   const existingProfile = await StudentProfile.findOne({ user: userId });
   if (!existingProfile) {
@@ -505,17 +506,42 @@ const deleteAccount = asyncHandler(async (req, res) => {
       res.status(401);
       throw new Error('كلمة المرور غير صحيحة');
     }
+  } else {
+    await consume(user, 'delete-account', req.body.emailCode, res);
   }
 
   // Remove associated data
-  await StudentProfile.deleteOne({ user: user._id });
-  await Challenge.deleteMany({ key: new RegExp(`:${user._id}`) });
-  await User.deleteOne({ _id: user._id });
+  await require('../utils/accountDeletion').enqueueDeletion(user);
+  res.status(202).json({ ok: true, deletionPending: true });
+});
 
-  res.json({ ok: true });
+const verifyAccountDeletion = asyncHandler(async (req, res) => {
+  await sendCode(req.user, 'delete-account', res);
+  res.json({ sent: true });
+});
+
+// Public web flow also works after uninstalling the mobile app. A generic
+// response prevents disclosure of whether an email address has an account.
+const requestWebDeletion = asyncHandler(async (req, res) => {
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) {
+    return res.status(400).json({ message: 'Enter a valid email address' });
+  }
+  const user = await User.findOne({ email, isActive: true });
+  if (user) await sendCode(user, 'delete-account', res);
+  res.json({ sent: true });
+});
+
+const confirmWebDeletion = asyncHandler(async (req, res) => {
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const user = await User.findOne({ email, isActive: true });
+  await consume(user, 'delete-account', req.body.code, res);
+  await require('../utils/accountDeletion').enqueueDeletion(user);
+  res.status(202).json({ ok: true, deletionPending: true });
 });
 
 module.exports = {
+  serializeUser,
   serializeUser,
   ensureStudentProfile,
   issueTokenPair,
@@ -531,4 +557,7 @@ module.exports = {
   refresh,
   logout,
   deleteAccount,
+  verifyAccountDeletion,
+  requestWebDeletion,
+  confirmWebDeletion,
 };

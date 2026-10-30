@@ -9,20 +9,27 @@ const Notification = require('../models/Notification');
 const { Message } = require('../models/MobileWorkspace');
 const sse = require('../utils/sseClients');
 const ChatPreference = require('../models/ChatPreference');
+const { blockedIds, isBlocked } = require('../utils/userBlocks');
 const chatImages = require('../utils/chatImages');
+const voiceNotes = require('../utils/voiceNotes');
+const voiceUpload = require('../middleware/voiceUpload');
 const upload = require('../middleware/uploadMiddleware');
 const { rateLimit } = require('express-rate-limit');
 const router = express.Router();
+const SupportTeam = require('../models/StudentSupportTeam');
+const { membersFor } = require('../controllers/studentSupportTeamController');
 router.use(protect);
 
 async function contactFilter(user) {
-  if (user.role === 'admin') return { isActive: true, _id: { $ne: user._id } };
+  const excluded = await blockedIds(user._id);
+  if (user.role === 'admin') return { isActive: true, _id: { $ne: user._id, $nin: excluded } };
   const ids = [];
   if (user.role === 'parent') {
     const links = await ParentLink.find({ parent: user._id, status: 'approved' }).select('student').lean();
     ids.push(...links.map(link => link.student));
   }
   if (user.role === 'student') {
+    ids.push(...(await membersFor(user._id)).map(member => member._id));
     const links = await ParentLink.find({ student: user._id, status: 'approved' }).select('parent').lean();
     ids.push(...links.map(link => link.parent));
     const universities = await Application.distinct('university', { student: user._id });
@@ -32,16 +39,30 @@ async function contactFilter(user) {
   if (user.role === 'university' && user.linkedUniversity) {
     ids.push(...await Application.distinct('student', { university: user.linkedUniversity }));
   }
-  return { isActive: true, _id: { $ne: user._id }, $or: [{ role: 'admin' }, ...(user.role === 'student' ? [{ role: 'student' }] : []), { _id: { $in: ids } }] };
+  if (user.role === 'employee' && user.permissions?.includes('support')) ids.push(...await SupportTeam.distinct('student', { $or: [{ members: user._id }, { crmAdvisor: user._id }] }));
+  return { isActive: true, _id: { $ne: user._id, $nin: excluded }, $or: [{ role: 'admin' }, ...(user.role === 'student' ? [{ role: 'student' }] : []), { _id: { $in: ids } }] };
 }
 async function requireContact(user, recipient, res) {
   if (!mongoose.isValidObjectId(recipient)) { res.status(400); throw new Error('Invalid recipient'); }
+  if (await isBlocked(user._id, recipient)) { res.status(403); throw new Error('This contact is unavailable'); }
+  const target = await User.findOne({ _id: recipient, isActive: true }).select('_id name role avatar');
+  const student = user.role === 'student' ? user : target?.role === 'student' ? target : null;
+  const staff = user.role === 'student' ? target : user;
+  if (student && ['admin', 'employee'].includes(staff?.role)) {
+    if ((await membersFor(student._id)).some(member => String(member._id) === String(staff._id))) return target;
+    res.status(403); throw new Error('This support contact is not assigned to this student');
+  }
   const filter = await contactFilter(user);
   const contact = await User.findOne({ $and: [filter, { _id: recipient }] }).select('_id name role avatar');
   if (!contact) { res.status(403); throw new Error('This contact is unavailable'); }
   return contact;
 }
 router.get('/contacts', run(async (req, res) => {
+  if (req.query.supportTeam === 'true') {
+    if (req.user.role !== 'student') return res.status(403).json({ message: 'Students only' });
+    const members = await membersFor(req.user._id);
+    return res.set('Cache-Control', 'no-store').json(await User.find({ _id: { $in: members.map(member => member._id) } }).select('_id name role avatar').sort({ name: 1 }).lean());
+  }
   res.json(await User.find(await contactFilter(req.user)).select('name role avatar').sort({ name: 1 }).limit(200).lean());
 }));
 router.get('/contacts/:id', run(async (req, res) => {
@@ -54,7 +75,9 @@ function present(message) {
   return { _id: message._id, sender: message.sender, recipient: message.recipient,
     body: message.deletedAt ? '' : message.body || '', createdAt: message.createdAt,
     readAt: message.readAt, deletedAt: message.deletedAt,
-    imagePath: !message.deletedAt && message.image?.publicId ? `/mobile-workspace/messages/${message._id}/image` : null };
+    imagePath: !message.deletedAt && message.image?.publicId ? `/mobile-workspace/messages/${message._id}/image` : null,
+    audioPath: !message.deletedAt && message.audio?.publicId ? `/mobile-workspace/messages/${message._id}/audio` : null,
+    audioDuration: !message.deletedAt && message.audio?.publicId ? message.audio.duration : null };
 }
 async function threadFilter(user, contact) {
   const pref = await ChatPreference.findOne({ user, contact }).lean();
@@ -85,7 +108,8 @@ router.get('/conversations', run(async (req, res) => {
   const exclusions = prefs.filter(p => p.clearedAt).map(p => ({ $and: [
     { createdAt: { $lte: p.clearedAt } }, { $or: [{ sender: p.contact }, { recipient: p.contact }] },
   ] }));
-  const match = { ...visible(req.user._id), ...(exclusions.length ? { $nor: exclusions } : {}),
+  const blocked = await blockedIds(req.user._id);
+  const match = { ...visible(req.user._id), sender: { $nin: blocked }, recipient: { $nin: blocked }, ...(exclusions.length ? { $nor: exclusions } : {}),
     $or: [{ sender: req.user._id }, { recipient: req.user._id }] };
   const activeContact = [
     { $lookup: { from: User.collection.name, localField: '_id', foreignField: '_id',
@@ -155,18 +179,18 @@ router.get('/messages', run(async (req, res) => {
   const rows = await Message.find(filter).sort({ _id: -1 }).limit(req.query.ids ? 100 : 50).lean();
   res.set('Cache-Control', 'no-store').json(rows.reverse().map(present));
 }));
-async function saveMessage(req, res, image) {
+async function saveMessage(req, res, image, audio) {
   const contact = await requireContact(req.user, req.body.recipient, res);
   const body = req.body.body ?? '';
-  if (typeof body !== 'string' || body.length > 4000 || (!body.trim() && !image)) fail(400, 'Message must contain text or an image');
+  if (typeof body !== 'string' || body.length > 4000 || (!body.trim() && !image && !audio)) fail(400, 'Message must contain text or an attachment');
   const recent = await Message.countDocuments({ sender: req.user._id, createdAt: { $gt: new Date(Date.now() - 60000) } });
   if (recent >= 30) fail(429, 'Too many messages. Please wait.');
   let message;
   try {
-    message = await Message.create({ sender: req.user._id, recipient: contact._id, body: body.trim(), image,
-      ...(image && req.body.operationId ? { operationId: req.body.operationId } : {}) });
+    message = await Message.create({ sender: req.user._id, recipient: contact._id, body: body.trim(), image, audio,
+      ...((image || audio) && req.body.operationId ? { operationId: req.body.operationId } : {}) });
   } catch (error) {
-    if (error.code !== 11000 || !image || !req.body.operationId) throw error;
+    if (error.code !== 11000 || (!image && !audio) || !req.body.operationId) throw error;
     const existing = await Message.findOne({ sender: req.user._id, recipient: contact._id, operationId: req.body.operationId }).lean();
     if (!existing) fail(409, 'Operation already used');
     return res.json(present(existing));
@@ -183,6 +207,28 @@ async function saveMessage(req, res, image) {
   res.status(201).json(data);
 }
 router.post('/messages', run((req, res) => saveMessage(req, res)));
+router.post('/messages/audio', rateLimit({ windowMs: 3600000, limit: 60, keyGenerator: req => String(req.user._id) }), voiceUpload, run(async (req, res) => {
+  await requireContact(req.user, req.body.recipient, res);
+  if (typeof req.body.operationId !== 'string' || !/^[A-Za-z0-9_-]{8,100}$/.test(req.body.operationId)) fail(400, 'Invalid operation');
+  if (typeof (req.body.body ?? '') !== 'string' || (req.body.body || '').length > 4000) fail(400, 'Invalid caption');
+  const existing = await Message.findOne({ sender: req.user._id, operationId: req.body.operationId }).lean();
+  if (existing) {
+    if (String(existing.recipient) !== String(req.body.recipient)) fail(409, 'Operation already used');
+    return res.json(present(existing));
+  }
+  if (await Message.countDocuments({ sender: req.user._id, createdAt: { $gt: new Date(Date.now() - 60000) } }) >= 30) fail(429, 'Too many messages');
+  const audio = await voiceNotes.uploadVoice(req.file, req.user._id);
+  try { await saveMessage(req, res, undefined, audio); }
+  finally {
+    try { if (!await Message.exists({ 'audio.publicId': audio.publicId })) await voiceNotes.removeVoice(audio); }
+    catch (_) { console.warn('Voice attachment cleanup needs retry'); }
+  }
+}));
+router.get('/messages/:id/audio', run(async (req, res) => {
+  const { message } = await permittedMessage(req, res);
+  if (message.deletedAt || !message.audio?.publicId) fail(404, 'Voice recording unavailable');
+  voiceNotes.sendVoice(res, await voiceNotes.readVoice(message.audio));
+}));
 router.post('/messages/image', rateLimit({ windowMs: 3600000, limit: 30, keyGenerator: req => String(req.user._id) }),
   upload.single('file'), run(async (req, res) => {
     await requireContact(req.user, req.body.recipient, res);
@@ -211,7 +257,8 @@ router.delete('/messages/:id', run(async (req, res) => {
   const { message, peer } = await permittedMessage(req, res);
   if (req.query.scope === 'everyone') {
     if (String(message.sender) !== String(req.user._id)) fail(403, 'Only the sender can unsend');
-    await Message.updateOne({ _id: message._id, sender: req.user._id }, { $set: { body: '', deletedAt: message.deletedAt || new Date() }, $unset: { image: 1 } });
+    await voiceNotes.removeVoice(message.audio);
+    await Message.updateOne({ _id: message._id, sender: req.user._id }, { $set: { body: '', deletedAt: message.deletedAt || new Date() }, $unset: { image: 1, audio: 1 } });
     const data = present(await Message.findById(message._id).lean());
     sse.push(peer, 'message-updated', data); sse.push(req.user._id, 'message-updated', data);
   } else if (!req.query.scope || req.query.scope === 'me') {

@@ -152,7 +152,7 @@ app.get('/api/mobile/app-config', (req, res) => {
 app.get('/api/mobile/capabilities', (req, res) => {
   const { isMailerConfigured } = require('./utils/mailer');
   const { isPushEnabled } = require('./utils/pushNotifications');
-  res.set('Cache-Control', 'no-store').json({ security: true, email: isMailerConfigured(), messaging: true, push: isPushEnabled(), assistant: require("./routes/assistantRoutes").ready() });
+  res.set('Cache-Control', 'no-store').json({ communityPosts: require('./routes/communityRoutes').capabilities, security: true, email: isMailerConfigured(), messaging: true, push: isPushEnabled(), assistant: require("./routes/assistantRoutes").ready() });
 });
 app.use('/api/mobile-security', requireDatabaseConnection, require('./routes/mobileSecurityRoutes'));
 app.use('/api/mobile-workspace', requireDatabaseConnection, require('./routes/mobileMessagingRoutes'));
@@ -175,8 +175,11 @@ app.use('/api/consultations', requireDatabaseConnection, require('./routes/consu
 app.use('/api/accommodation', requireDatabaseConnection, require('./routes/accommodationRoutes'));
 app.use('/api/push-tokens', requireDatabaseConnection, require('./routes/pushRoutes'));
 app.use('/api/community', requireDatabaseConnection, require('./routes/communityRoutes'));
+app.use('/api/safety', requireDatabaseConnection, require('./routes/safetyRoutes'));
+app.use('/api/voice', requireDatabaseConnection, require('./routes/voiceRoutes'));
 app.use('/api/stories', requireDatabaseConnection, require('./routes/storyRoutes'));
 app.use('/api/friends', requireDatabaseConnection, require('./routes/friendRoutes'));
+app.use('/api/admin/push-announcements', requireDatabaseConnection, require('./routes/pushAnnouncementRoutes'));
 app.use("/api/admin", requireDatabaseConnection, adminRoutes);
 app.use('/api/crm', requireDatabaseConnection, require('./routes/crmRoutes'));
 app.use("/api/content", requireDatabaseConnection, contentRoutes);

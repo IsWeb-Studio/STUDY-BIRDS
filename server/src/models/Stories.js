@@ -9,6 +9,7 @@ const storySchema = new Schema({
   videoDuration: { type: Number, default: 0 },
   loveCount: { type: Number, default: 0 },
   expiresAt: { type: Date, required: true },
+  deletedAt: Date,
 }, { timestamps: true });
 storySchema.index({ author: 1, operationId: 1 }, { unique: true });
 storySchema.index({ expiresAt: 1, _id: -1 });

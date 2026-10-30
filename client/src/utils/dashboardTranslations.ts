@@ -26,11 +26,11 @@ const translations: Record<Language, Dictionary> = {
     documentsDesc: "Uploads and verification progress",
     applicationsDescStudent: "Track your submitted applications",
     becomeAgentNav: "Become an Agent",
-    becomeAgentNavDesc: "Start your request to become a Study Birds agent",
+    becomeAgentNavDesc: "Start your request to become a COVEY agent",
     agencyRequestsNav: "Agency Requests",
     agencyRequestsNavDesc: "Review incoming student requests to become agents",
     adminMissionControl: "Admin Mission Control",
-    professionalDashboard: "Professional dashboard to manage the entire Study Birds platform.",
+    professionalDashboard: "Professional dashboard to manage the entire COVEY platform.",
     monitorEverything:
       "Monitor users, review incoming applications, and keep universities, programs, and content aligned from one place.",
     submittedTodayFocus: "Submitted today focus",
@@ -215,8 +215,8 @@ const translations: Record<Language, Dictionary> = {
     uploadedStatusPending: "pending",
     uploadedStatusVerified: "verified",
     uploadedStatusRejected: "rejected",
-    adminTitle: "Study Birds Admin",
-    profileTitle: "Study Birds Profile",
+    adminTitle: "COVEY Admin",
+    profileTitle: "COVEY Profile",
     saveContentFailed: "Unable to save content.",
     saveUniversityFailed: "Unable to save university.",
     saveProgramFailed: "Unable to save program.",
@@ -292,11 +292,11 @@ const translations: Record<Language, Dictionary> = {
     documentsDesc: "الملفات المرفوعة وحالة التحقق",
     applicationsDescStudent: "متابعة الطلبات المرسلة",
     becomeAgentNav: "كن وكيلاً",
-    becomeAgentNavDesc: "ابدأ طلبك للانضمام كوكيل مع Study Birds",
+    becomeAgentNavDesc: "ابدأ طلبك للانضمام كوكيل مع COVEY",
     agencyRequestsNav: "طلبات الوكالة",
     agencyRequestsNavDesc: "مراجعة طلبات الطلاب للانضمام كوكلاء",
     adminMissionControl: "لوحة الإدارة الرئيسية",
-    professionalDashboard: "لوحة احترافية لإدارة منصة Study Birds بالكامل.",
+    professionalDashboard: "لوحة احترافية لإدارة منصة COVEY بالكامل.",
     monitorEverything: "تابع المستخدمين، وراجع الطلبات، ونظّم الجامعات والبرامج والمحتوى من لوحة واحدة.",
     submittedTodayFocus: "طلبات جديدة تحتاج متابعة",
     underReview: "قيد المراجعة",
@@ -478,8 +478,8 @@ const translations: Record<Language, Dictionary> = {
     uploadedStatusPending: "قيد المراجعة",
     uploadedStatusVerified: "تم التحقق",
     uploadedStatusRejected: "مرفوض",
-    adminTitle: "إدارة Study Birds",
-    profileTitle: "ملف Study Birds",
+    adminTitle: "إدارة COVEY",
+    profileTitle: "ملف COVEY",
     saveContentFailed: "تعذر حفظ المحتوى.",
     saveUniversityFailed: "تعذر حفظ الجامعة.",
     saveProgramFailed: "تعذر حفظ البرنامج.",
@@ -536,4 +536,4 @@ const translations: Record<Language, Dictionary> = {
 };
 
 export const dt = (language: Language, key: string) =>
-  (translations[language][key] || key).replace(/Study Birds/g, SITE_NAME);
+  (translations[language][key] || key).replace(/COVEY/g, SITE_NAME);

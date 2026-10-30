@@ -244,6 +244,9 @@ router.put("/knowledge-base/:id", updateKnowledgeBaseItemAdmin);
 router.delete("/knowledge-base/:id", deleteKnowledgeBaseItemAdmin);
 router.get("/student-financials", getStudentFinancialsAdmin);
 router.get("/students/:id", getStudentDetailsAdmin);
+router.get('/students/:id/support-team', require('../controllers/studentSupportTeamController').read);
+router.put('/students/:id/support-team', (req, res, next) => req.user.role === 'admin'
+  ? next() : res.status(403).json({ message: 'Forbidden' }), require('../controllers/studentSupportTeamController').save);
 router.get("/student-documents", getStudentDocumentsAdmin);
 router.patch("/student-documents/:id", reviewStudentDocumentAdmin);
 router.get("/student-notifications", getStudentNotificationsAdmin);
@@ -266,6 +269,7 @@ router.post('/student-financials/reward-rules', rewardRules.saveRule);
 router.put('/student-financials/reward-rules/:id', rewardRules.saveRule);
 router.post("/student-financials/wallet-entries", createWalletAdjustmentAdmin);
 router.get("/community-posts", listPostsAdmin);
+router.get('/community-overview', require('../controllers/communityController').getOverviewAdmin);
 router.get("/community-posts/:id", getPostAdmin);
 router.patch("/community-posts/:id", moderatePost);
 router.patch("/community-comments/:id", moderateComment);

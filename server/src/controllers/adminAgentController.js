@@ -261,7 +261,7 @@ const reviewVerificationDocumentAdmin = asyncHandler(async (req, res) => {
   const verifyMessages = {
     approved: "تمت الموافقة على وثائق التحقق من هويتك. حسابك الآن موثّق بالكامل ويمكنك الاستفادة من جميع مزايا الوكيل.",
     rejected: `تم رفض وثيقة التحقق الخاصة بك.${document.reviewNote ? ` السبب: ${document.reviewNote}` : ""} يرجى رفع وثيقة جديدة صحيحة.`,
-    pending: "وثيقة التحقق قيد المراجعة من فريق Study Birds. سيتم إشعارك بالنتيجة قريباً.",
+    pending: "وثيقة التحقق قيد المراجعة من فريق COVEY. سيتم إشعارك بالنتيجة قريباً.",
   };
   await Notification.create({
     user: document.agent,
@@ -312,7 +312,7 @@ const replySupportTicketAdmin = asyncHandler(async (req, res) => {
   await Notification.create({
     user: ticket.user || ticket.agent,
     title: "رد جديد على تذكرة الدعم",
-    message: `وصل ردٌّ من فريق Study Birds على تذكرة الدعم الخاصة بك "${ticket.subject}". افتح التذكرة للاطلاع على الرد.`,
+    message: `وصل ردٌّ من فريق COVEY على تذكرة الدعم الخاصة بك "${ticket.subject}". افتح التذكرة للاطلاع على الرد.`,
     type: "info",
   });
 

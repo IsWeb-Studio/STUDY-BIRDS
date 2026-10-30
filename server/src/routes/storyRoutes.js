@@ -10,8 +10,9 @@ const { uploadFileToCloudinary } = require('../utils/uploadToCloudinary');
 const { canReadStory } = require('../utils/storyAudience');
 const User = require('../models/User');
 const StoryVideo = require('../models/StoryVideo');
+const { blockedIds, isBlocked } = require('../utils/userBlocks');
 const { parseVideo, validateVideo, uploadStoryVideo } = require('../utils/storyVideoUpload');
-router.use(protect, authorize('student'));
+router.use(protect, authorize('student', 'parent', 'university', 'employee'));
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 router.use(rateLimit({ windowMs: 60000, limit: 120, keyGenerator: req => String(req.user._id), standardHeaders: 'draft-7', legacyHeaders: false }));
 const fail = (status, message) => { throw Object.assign(new Error(message), { statusCode: status }); };
@@ -42,8 +43,8 @@ router.put('/preferences', asyncHandler(async (req, res) => {
 router.get('/updates', asyncHandler(async (req, res) => {
   const ids = typeof req.query.ids === 'string' ? [...new Set(req.query.ids.split(','))] : [];
   if (!ids.length || ids.length > 120 || ids.some(id => !/^[a-f0-9]{24}$/i.test(id))) fail(400, 'Invalid stories');
-  const stories = await Story.find({ _id: { $in: ids }, expiresAt: { $gt: new Date() } }).select('_id author loveCount')
-    .populate({ path: 'author', select: '_id', match: { isActive: true, role: 'student' } }).lean();
+  const stories = await Story.find({ _id: { $in: ids }, expiresAt: { $gt: new Date() }, author: { $nin: await blockedIds(req.user._id) } }).select('_id author loveCount')
+    .populate({ path: 'author', select: '_id', match: { isActive: true, role: { $in: ['student', 'parent', 'university', 'employee'] } } }).lean();
   const readable = stories.filter(s => s.author);
   const edges = await StoryInteraction.find({ story: { $in: readable.map(s => s._id) }, user: req.user._id }).select('story lovedAt seenAt').lean();
   const byId = new Map(edges.map(e => [String(e.story), e]));
@@ -54,7 +55,7 @@ router.get('/updates', asyncHandler(async (req, res) => {
   })) });
 }));
 router.get('/', asyncHandler(async (req, res) => {
-  const filter = { expiresAt: { $gt: new Date() } };
+  const filter = { expiresAt: { $gt: new Date() }, author: { $nin: await blockedIds(req.user._id) } };
   if (req.query.before) {
     if (!/^[a-f0-9]{24}$/i.test(req.query.before)) fail(400, 'Invalid cursor');
     filter._id = { $lt: new mongoose.Types.ObjectId(req.query.before) };
@@ -62,7 +63,7 @@ router.get('/', asyncHandler(async (req, res) => {
   const rows = await Story.aggregate([
     { $match: filter }, { $sort: { _id: -1 } },
     { $lookup: { from: User.collection.name, localField: 'author', foreignField: '_id',
-      pipeline: [{ $match: { isActive: true, role: 'student' } }, { $project: { name: 1, avatar: 1 } }], as: 'author' } },
+      pipeline: [{ $match: { isActive: true, role: { $in: ['student', 'parent', 'university', 'employee'] } } }, { $project: { name: 1, avatar: 1, role: 1 } }], as: 'author' } },
     { $unwind: '$author' }, { $limit: 61 },
   ]);
   const page = rows.slice(0, 60);
@@ -76,7 +77,7 @@ router.get('/', asyncHandler(async (req, res) => {
     id: String(s._id), text: s.text, imageUrl: s.imageUrl, videoUrl: s.videoUrl || '', videoDuration: s.videoDuration || 0, createdAt: s.createdAt, expiresAt: s.expiresAt,
     loveCount: s.loveCount, seen: !!interactions.get(String(s._id))?.seenAt,
     loved: !!interactions.get(String(s._id))?.lovedAt,
-    author: { id: String(s.author._id), name: s.author.name, avatar: s.author.avatar || '', total_points: balances.get(String(s.author._id)) || 0 },
+    author: { id: String(s.author._id), name: s.author.name, avatar: s.author.avatar || '', role: s.author.role, total_points: balances.get(String(s.author._id)) || 0 },
   })), nextCursor: rows.length > 60 ? String(page.at(-1)._id) : null });
 }));
 router.post('/image', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => String(req.user._id) }), upload.single('file'), asyncHandler(async (req, res) => {
@@ -105,7 +106,7 @@ router.post('/', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => 
     const video = videoUrl ? await StoryVideo.findOne({ owner: req.user._id, url: videoUrl, expiresAt: { $gt: new Date(now) } }).session(session) : null;
     if (videoUrl && !video) fail(400, 'Upload your own video first');
     const stats = await statsFor(req.user._id, session);
-    const awarded = rules.postReward(stats, now);
+    const awarded = req.user.role === 'student' ? rules.postReward(stats, now) : 0;
     await stats.save({ session });
     const [story] = await Story.create([{ author: req.user._id, operationId, text: text.trim(), imageUrl, videoUrl,
       videoDuration: video?.duration || 0, expiresAt: new Date(now + 24 * rules.HOUR) }], { session });
@@ -113,7 +114,62 @@ router.post('/', rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => 
   });
   res.status(201).json(result);
 }));
-router.param('id', (req, res, next, id) => /^[a-f0-9]{24}$/i.test(id) ? next() : res.status(400).json({ message: 'Invalid story' }));
+router.param('id', async (req, res, next, id) => {
+  try {
+    if (!/^[a-f0-9]{24}$/i.test(id)) return res.status(400).json({ message: 'Invalid story' });
+    const story = await Story.findById(id).select('author').lean();
+    if (story && await isBlocked(req.user._id, story.author)) return res.status(404).json({ message: 'Story unavailable' });
+    next();
+  } catch (error) { next(error); }
+});
+router.get('/:id/viewers', asyncHandler(async (req, res) => {
+  const story = await Story.findOne({ _id: req.params.id, author: req.user._id,
+    expiresAt: { $gt: new Date() }, deletedAt: null }).lean();
+  if (!story) return res.status(404).json({ message: 'Story unavailable' });
+  if (req.query.before && !mongoose.isValidObjectId(req.query.before)) fail(400, 'Invalid cursor');
+  const filter = { story: story._id, seenAt: { $ne: null },
+    user: { $nin: [req.user._id, ...await blockedIds(req.user._id)] } };
+  const total = await StoryInteraction.countDocuments(filter);
+  if (req.query.before) filter._id = { $lt: new mongoose.Types.ObjectId(req.query.before) };
+  const rows = await StoryInteraction.find(filter).sort({ _id: -1 }).limit(61)
+    .populate({ path: 'user', model: User, select: 'name avatar role isActive' }).lean();
+  const page = rows.slice(0, 60);
+  res.json({ total, nextCursor: rows.length > 60 ? String(page.at(-1)._id) : null,
+    viewers: page.filter(row => row.user?.isActive).map(row => ({
+      id: String(row.user._id), name: row.user.name, avatar: row.user.avatar || '',
+      role: row.user.role, seenAt: row.seenAt,
+    })) });
+}));
+
+router.delete('/:id', asyncHandler(async (req, res) => {
+  // Retain an empty tombstone so retrying an earlier publish cannot resurrect it.
+  const story = await Story.findOneAndUpdate({ _id: req.params.id, author: req.user._id },
+    { $set: { expiresAt: new Date(0), deletedAt: new Date() } }, { new: true });
+  if (!story) return res.status(404).json({ message: 'Story unavailable' });
+  const storage = require('../config/cloudinary');
+  for (const [url, type, folder] of [[story.imageUrl, 'image', 'story-images'], [story.videoUrl, 'video', 'story-videos']]) {
+    if (!url) continue;
+    const field = type === 'image' ? 'imageUrl' : 'videoUrl';
+    if (await Story.exists({ _id: { $ne: story._id }, author: req.user._id, [field]: url, deletedAt: null })) continue;
+    const parsed = new URL(url);
+    const marker = `/${type}/upload/`;
+    const tail = parsed.pathname.split(marker)[1]?.replace(/^v\d+\//, '');
+    const publicId = tail?.replace(/\.[^/.]+$/, '');
+    if (parsed.hostname !== 'res.cloudinary.com' || !publicId?.startsWith(`${folder}/${req.user._id}/`)) {
+      fail(503, 'Media deletion needs support');
+    }
+    storage.ensureCloudinaryConfigured();
+    const result = await storage.cloudinary.uploader.destroy(publicId, { resource_type: type, invalidate: true });
+    if (!['ok', 'not found'].includes(result.result)) fail(503, 'Media deletion pending');
+  }
+  if (story.videoUrl && !await Story.exists({ _id: { $ne: story._id }, videoUrl: story.videoUrl, deletedAt: null })) {
+    await StoryVideo.deleteMany({ owner: req.user._id, url: story.videoUrl });
+  }
+  await StoryInteraction.deleteMany({ story: story._id });
+  await Story.updateOne({ _id: story._id }, { $set: { text: '', imageUrl: '', videoUrl: '', loveCount: 0 } });
+  res.json({ deleted: true });
+}));
+
 router.post('/:id/seen', asyncHandler(async (req, res) => {
   const story = await Story.findOne({ _id: req.params.id, expiresAt: { $gt: new Date() } }).select('author').lean();
   if (!story || !await canReadStory(req.user._id, story.author)) fail(404, 'Story unavailable');

@@ -18,7 +18,7 @@ function hash(phone, code) {
 async function send(phone, code) {
   const from = `whatsapp:${process.env.TWILIO_WHATSAPP_FROM}`;
   const to   = `whatsapp:${phone}`;
-  const body = `رمز التحقق من Study Birds: *${code}*\n\nصالح 10 دقائق. لا تشاركه مع أحد.`;
+  const body = `رمز التحقق من COVEY: *${code}*\n\nصالح 10 دقائق. لا تشاركه مع أحد.`;
   const auth = Buffer.from(
     `${process.env.TWILIO_ACCOUNT_SID}:${process.env.TWILIO_AUTH_TOKEN}`
   ).toString('base64');

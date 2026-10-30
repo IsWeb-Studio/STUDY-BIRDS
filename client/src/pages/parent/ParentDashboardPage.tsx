@@ -62,7 +62,7 @@ export const ParentDashboardPage = () => {
             <p className="mt-1 text-sm text-slate-500">
               {isArabic
                 ? "تابع رحلة أبنائك الدراسية بعد موافقة الإدارة على ربط حسابك بحسابهم."
-                : "Follow your children's study journey once Study Birds approves the link to their account."}
+                : "Follow your children's study journey once COVEY approves the link to their account."}
             </p>
           </div>
         </div>

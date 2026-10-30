@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Bell, Search } from "lucide-react";
+import { PushAnnouncementComposer } from '../../components/admin/PushAnnouncementComposer';
 import { adminService } from "../../services/adminService";
 import type { NotificationItem } from "../../types";
 import { AdminPagination } from "../../components/admin/AdminPagination";
@@ -48,6 +49,7 @@ export const AdminStudentNotificationsPage = () => {
 
   return (
     <div className="space-y-6">
+      <PushAnnouncementComposer />
       <section className="panel p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>

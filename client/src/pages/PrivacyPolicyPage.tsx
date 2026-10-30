@@ -8,7 +8,7 @@ const policy = {
   ar: {
     title: "سياسة الخصوصية",
     home: "الرئيسية",
-    updated: "آخر تحديث: 13 سبتمبر 2026",
+    updated: "آخر تحديث: 28 أكتوبر 2026",
     intro: `توضح هذه السياسة كيفية التعامل مع بياناتك عند استخدام ${SITE_NAME} للاستفسار عن الدراسة بالخارج، وإنشاء حساب، ومتابعة التقديم إلى الجامعات. تختلف البيانات المطلوبة بحسب الخدمة التي تختارها والمعلومات التي تقدمها لنا.`,
     sections: [
       {
@@ -55,7 +55,7 @@ const policy = {
   en: {
     title: "Privacy Policy",
     home: "Home",
-    updated: "Last updated: September 13, 2026",
+    updated: "Last updated: October 28, 2026",
     intro: `This policy explains how your information is handled when you use ${SITE_NAME} to explore studying abroad, create an account, and manage university applications. The information requested depends on the services you choose and the details you provide.`,
     sections: [
       {
@@ -118,10 +118,35 @@ export const PrivacyPolicyPage = () => {
         <header className="border-b border-slate-200 pb-8">
           <p className="text-sm font-semibold text-brand-700">{SITE_NAME}</p>
           <h1 className="mt-3 text-3xl font-semibold text-slate-900 sm:text-4xl">{content.title}</h1>
-          <p className="mt-3 text-sm text-slate-500"><time dateTime="2026-09-13">{content.updated}</time></p>
+          <p className="mt-3 text-sm text-slate-500"><time dateTime="2026-10-28">{content.updated}</time></p>
           <p className="mt-6 leading-8 text-slate-600">{content.intro}</p>
         </header>
         <div className="space-y-8 pt-8">
+          <section aria-labelledby="community-rules">
+            <h2 id="community-rules" className="text-xl font-semibold text-slate-900">{language === 'ar' ? 'قواعد المجتمع وحماية الأطفال' : 'Community rules and child safety'}</h2>
+            <p className="mt-3 leading-8 text-slate-600">{language === 'ar'
+              ? 'نحظر التحرش والتنمر وخطاب الكراهية والتهديدات والمحتوى الجنسي واستغلال الأطفال أو الاعتداء عليهم وأي محتوى غير قانوني. لا تنشر معلومات خاصة أو مستندات هوية أو محتوى لا تملك حق نشره. يمكن إزالة المحتوى وإيقاف الحسابات المخالفة. أبلغ عن المخالفات من زر الإبلاغ في التطبيق أو من صفحة التواصل. يمكنك حظر المستخدم المسيء من ملفه وإلغاء الحظر من الأمان. تنطبق القواعد على المنشورات والتعليقات والستوريات والرسائل.'
+              : 'Harassment, bullying, hate speech, threats, sexual content, child sexual abuse or exploitation, and illegal content are prohibited. Do not publish private information, identity documents or content you have no right to share. Violating content may be removed and accounts suspended. Report violations using Report in the app or the contact page. Block abusive users from their profile and unblock from Security. These rules apply to posts, comments, stories and messages.'}</p>
+          </section>
+          <section aria-labelledby="mobile-privacy">
+            <p className="mt-3 leading-8 text-slate-600">{language === 'ar'
+              ? 'الميكروفون والتعرف على الكلام اختياريان ويعملان عند اختيارك التسجيل أو الإملاء. تُرفع الرسائل الصوتية المرسلة إلى تخزين Cloudinary خاص، وتُتاح لأطراف المحادثة أو صاحب التذكرة وفريق الدعم المخول. تبقى مع المحادثة؛ إلغاء التسجيل قبل الإرسال لا يرفعه، وإلغاء إرسال رسالة صوتية يحذف تسجيلها، وتشمل عملية حذف الحساب تسجيلاته وفق قواعد الاحتفاظ المبينة هنا. يستخدم إملاء COVEY AI خدمة التعرف على الكلام في جهازك، وقد تعالج Apple أو Google الصوت عبر الإنترنت وفق إعدادات الجهاز وسياساتهما؛ تراجع النص وتعدله قبل إرساله للمساعد.'
+              : 'Microphone and speech recognition are optional and start when you choose recording or dictation. Sent voice messages are uploaded to private Cloudinary storage and are accessible to conversation participants, or the ticket owner and authorized support staff. They remain with the conversation; cancelling before sending does not upload a recording, unsending a voice message deletes its recording, and account deletion includes its recordings under the retention rules described here. COVEY AI dictation uses your device speech service, which may process audio through Apple or Google over the internet under your device settings and their policies. Review and edit the text before sending it to the assistant.'}</p>
+            <h2 id="mobile-privacy" className="text-xl font-semibold text-slate-900">{language === 'ar' ? 'خصوصية تطبيق COVEY' : 'COVEY mobile app privacy'}</h2>
+            <p className="mt-3 leading-8 text-slate-600">{language === 'ar'
+              ? 'تنطبق هذه السياسة أيضًا على تطبيق أندرويد وآيفون. يمكنك اختيار الصور والملفات التي ترفعها، ولا يلزم منح إذن الكاميرا أو الإشعارات لاستخدام الحساب. نستخدم Google وApple عند اختيار تسجيل الدخول بهما، وOneSignal لإرسال الإشعارات عند تفعيلها. تُستخدم بيانات الجهاز واشتراك الإشعارات لإيصال التنبيهات. يظهر المحتوى الذي تنشره في المجتمع أو الستوريات للجمهور المحدد؛ تجنب نشر معلومات خاصة.'
+              : 'This policy also applies to the Android and iPhone app. You choose the photos and files you upload; camera and notification permission are optional for account access. Google and Apple are used when you choose their sign-in services. OneSignal delivers notifications when enabled, using device and notification subscription information. Community posts and stories are visible to their selected audience; avoid publishing private information.'}</p>
+            <p className="mt-3 leading-8 text-slate-600">{language === 'ar'
+              ? 'مشاركة تحليلات الاستخدام وتقارير الأعطال اختيارية ومطفأة افتراضيًا في إصدار التطبيق الذي يتضمن إعداد الخصوصية. إذا وافقت، تُرسل أحداث الاستخدام ومعرّف الحساب إلى PostHog وتقارير الأعطال إلى Sentry في الولايات المتحدة. لا نفعل تسجيل الشاشة أو إعادة تشغيل الجلسة. يمكنك سحب الموافقة من إعدادات أمان الحساب. قبل استخدام المساعد نطلب موافقتك على إرسال الرسائل وسياق الشاشة إلى خوادم COVEY واستخدام مزود ذكاء اصطناعي خارجي. تُحفظ المحادثات في حسابك. لا ترسل مستندات هوية أو كلمات مرور للمساعد؛ تحقّق من الإجابات مع الدعم.'
+              : 'Sharing usage analytics and error reports is optional and off by default in the mobile release with privacy controls. If you opt in, usage events and account ID go to PostHog and error reports to Sentry in the United States. Screen recording and session replay are disabled. Withdraw consent in Account security. Before using the assistant, we request permission to send messages and screen context to COVEY servers and use an external AI provider. Conversations are saved to your account. Do not send identity documents or passwords to the assistant; verify answers with Support.'}</p>
+          </section>
+          <section aria-labelledby="delete-account">
+            <h2 id="delete-account" className="text-xl font-semibold text-slate-900">{language === 'ar' ? 'حذف الحساب والبيانات' : 'Account and data deletion'}</h2>
+            <p className="mt-3 leading-8 text-slate-600">{language === 'ar'
+              ? 'يمكن بدء الحذف من أمان الحساب في التطبيق أو من صفحة الحذف أدناه دون تنزيله. نتحقق من ملكيتك بكلمة المرور أو رمز البريد. بعد التأكيد يتوقف الوصول وتبدأ إزالة البيانات الشخصية والمستندات والمحادثات والمحتوى المنشور آليًا، مع إعادة المحاولة عند تعطل التخزين. قد تُحتفظ سجلات المحاسبة الضرورية بعد إزالة بيانات الملف الشخصي. تواصل معنا للاستفسار عن مدة الاحتفاظ والسجلات التي ينطبق عليها التزام قانوني، أو لطلب معالجة بيانات وصلت إلى جهة خارجية ضمن خدمة طلبتها.'
+              : 'Start deletion in the app’s Account security or on the deletion page below without installing the app. Ownership is verified by password or email code. Confirmation disables access and starts automated removal of personal data, documents, conversations and published content; storage failures are retried. Necessary accounting records may be retained with profile information removed. Contact us about applicable retention periods, legally required records, or information sent to an external organization for a service you requested.'}</p>
+            <Link to="/delete-account" className="mt-3 inline-block font-semibold underline">{language === 'ar' ? 'طلب حذف حساب COVEY' : 'Request deletion of your COVEY account'}</Link>
+          </section>
           {content.sections.map((section, index) => (
             <section key={index} aria-labelledby={`privacy-section-${index}`}>
               <h2 id={`privacy-section-${index}`} className="text-xl font-semibold text-slate-900">{section.title}</h2>

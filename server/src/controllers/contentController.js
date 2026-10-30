@@ -378,7 +378,7 @@ const createContactMessage = asyncHandler(async (req, res) => {
       sendContactEmail({
         to: process.env.CONTACT_FORM_TO,
         replyTo: email,
-        subject: `[Study Birds] ${subject || name}`,
+        subject: `[COVEY] ${subject || name}`,
         text: textBody,
         html: htmlBody,
       })
@@ -540,7 +540,7 @@ const getRobotsTxt = asyncHandler(async (req, res) => {
 const getNotifications = asyncHandler(async (req, res) => {
   const notifications = await timedOperation("Notification.userList", () =>
     Notification.find({ user: req.user._id })
-      .select("title message type isRead createdAt")
+      .select("title message type isRead createdAt link")
       .sort({ createdAt: -1 })
       .limit(30)
       .lean()

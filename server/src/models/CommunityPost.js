@@ -5,9 +5,13 @@ const COMMUNITY_TOPICS = ["experience", "housing", "tips", "student_life", "faq"
 const communityPostSchema = new mongoose.Schema(
   {
     author: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-    title: { type: String, required: true, trim: true, maxlength: 150 },
+    title: { type: String, default: '', trim: true, maxlength: 150 },
     body: { type: String, required: true, trim: true, maxlength: 5000 },
     topic: { type: String, enum: COMMUNITY_TOPICS, default: "other", index: true },
+    image: { type: new mongoose.Schema({ publicId: String, format: String,
+      resourceType: String, deliveryType: String }, { _id: false }), select: false },
+    hasImage: { type: Boolean, default: false },
+    operationId: String,
     country: { type: mongoose.Schema.Types.ObjectId, ref: "Country" },
     university: { type: mongoose.Schema.Types.ObjectId, ref: "University" },
     studyField: { type: mongoose.Schema.Types.ObjectId, ref: "StudyField" },
@@ -23,6 +27,8 @@ const communityPostSchema = new mongoose.Schema(
 );
 
 communityPostSchema.index({ status: 1, createdAt: -1 });
+communityPostSchema.index({ author: 1, operationId: 1 }, { unique: true,
+  partialFilterExpression: { operationId: { $type: 'string' } } });
 communityPostSchema.index({ reportCount: -1, createdAt: -1 });
 
 module.exports = mongoose.model("CommunityPost", communityPostSchema);

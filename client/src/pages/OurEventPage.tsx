@@ -218,7 +218,7 @@ export const OurEventPage = () => {
               {language === "ar" ? "فعاليتنا" : "Our Event"}
             </div>
             <h1 className="mt-5 text-4xl font-semibold leading-tight sm:text-5xl">
-              {upcomingEvent?.title || (language === "ar" ? "الفعالية القادمة من Study Birds" : "The next Study Birds event")}
+              {upcomingEvent?.title || (language === "ar" ? "الفعالية القادمة من COVEY" : "The next COVEY event")}
             </h1>
             <p className="mt-5 max-w-3xl text-base leading-8 text-slate-200 sm:text-lg">
               {upcomingEvent?.subtitle ||

@@ -4,9 +4,22 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 const asyncHandler = require('../utils/asyncHandler');
 const Friendship = require('../models/Friendship');
 const User = require('../models/User');
+const { blockedIds, isBlocked } = require('../utils/userBlocks');
 const { StoryStats, Story, StoryInteraction } = require('../models/Stories');
 const rules = require('../utils/storyRules');
 router.use(protect, authorize('student'));
+router.param('profileId', async (req, res, next, id) => {
+  try {
+    if (!/^[a-f0-9]{24}$/i.test(id) || await isBlocked(req.user._id, id)) return res.status(404).json({ message: 'Profile unavailable' });
+    next();
+  } catch (error) { next(error); }
+});
+router.param('userId', async (req, res, next, id) => {
+  try {
+    if (!/^[a-f0-9]{24}$/i.test(id) || await isBlocked(req.user._id, id)) return res.status(404).json({ message: 'Student unavailable' });
+    next();
+  } catch (error) { next(error); }
+});
 router.use((req, res, next) => { res.set('Cache-Control', 'no-store'); next(); });
 router.use(rateLimit({ windowMs: 60000, limit: 100, keyGenerator: req => String(req.user._id), standardHeaders: 'draft-7', legacyHeaders: false }));
 const fail = (status, message) => { throw Object.assign(new Error(message), { statusCode: status }); };
@@ -25,6 +38,7 @@ router.get('/search', asyncHandler(async (req, res) => {
   if (q.length < 2 || q.length > 60) fail(400, 'Search requires 2 to 60 characters');
   const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const filter = { _id: { $ne: req.user._id }, role: 'student', isActive: true, name: { $regex: escaped, $options: 'i' } };
+  filter._id.$nin = await blockedIds(req.user._id);
   if (req.query.before) {
     if (!/^[a-f0-9]{24}$/i.test(req.query.before)) fail(400, 'Invalid cursor');
     filter._id.$lt = req.query.before;
@@ -44,6 +58,8 @@ router.get('/', asyncHandler(async (req, res) => {
   const kind = req.query.kind || 'friends';
   if (!Object.hasOwn(filters, kind)) fail(400, 'Invalid friends list');
   const filter = { ...filters[kind] };
+  const excluded = await blockedIds(me);
+  filter.$and = [{ requester: { $nin: excluded } }, { recipient: { $nin: excluded } }];
   if (req.query.before) {
     if (!/^[a-f0-9]{24}:[a-f0-9]{24}$/i.test(req.query.before)) fail(400, 'Invalid cursor');
     filter._id = { $lt: req.query.before };

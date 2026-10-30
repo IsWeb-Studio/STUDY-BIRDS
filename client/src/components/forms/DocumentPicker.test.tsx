@@ -1,7 +1,7 @@
 import { act } from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
-import { DocumentPicker } from "./DocumentPicker";
+import { DOCUMENT_FILE_LIMIT_BYTES, DocumentPicker, validateDocumentFile } from "./DocumentPicker";
 
 vi.mock("../../hooks/useLanguage", () => ({ useLanguage: () => ({ language: "en" }) }));
 let host: HTMLDivElement;
@@ -35,6 +35,29 @@ it("offers separate live camera, photo library and file selection without submit
     expect(click).toHaveBeenCalledOnce();
     expect(button.type).toBe("button");
   });
+});
+
+it("validates file size, emptiness, accept rules, and MIME consistency before selecting", () => {
+  const accepted = new File(["pdf"], "record.pdf", { type: "application/pdf" });
+  const wrongMime = new File(["plain text"], "record.pdf", { type: "text/plain" });
+  const empty = new File([], "empty.pdf", { type: "application/pdf" });
+  const oversized = new File([new Uint8Array(DOCUMENT_FILE_LIMIT_BYTES + 1)], "large.pdf", { type: "application/pdf" });
+  expect(validateDocumentFile(accepted, ".pdf,.txt")).toBeNull();
+  expect(validateDocumentFile(wrongMime, ".pdf,.txt")).toBe("unsupported");
+  expect(validateDocumentFile(empty, ".pdf")).toBe("empty");
+  expect(validateDocumentFile(oversized, ".pdf")).toBe("too-large");
+  expect(validateDocumentFile(new File(["x"], "photo.png", { type: "image/png" }), "image/*")).toBeNull();
+});
+
+it("shows an accessible file error and does not submit an invalid selection", () => {
+  const selected = vi.fn();
+  act(() => root.render(<DocumentPicker onSelect={selected} />));
+  const input = host.querySelectorAll("input")[2];
+  const file = new File(["bad"], "record.pdf", { type: "text/plain" });
+  Object.defineProperty(input, "files", { configurable: true, value: [file] });
+  act(() => input.dispatchEvent(new Event("change", { bubbles: true })));
+  expect(selected).not.toHaveBeenCalled();
+  expect(host.querySelector('[role="alert"]')?.textContent).toContain("file type is not supported");
 });
 
 it("opens a live preview instead of the file chooser and releases the camera on cancel", async () => {

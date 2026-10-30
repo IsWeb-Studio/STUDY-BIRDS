@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { Language } from "../../context/LanguageContext";
+import { daysInMonth, isValidPastDateOnly } from "../../utils/formValidation";
 
 type DateOfBirthFieldProps = {
   label: string;
@@ -19,7 +20,17 @@ export const DateOfBirthField = ({
   value,
   onChange,
 }: DateOfBirthFieldProps) => {
-  const { year, month, day } = parseDateValue(value);
+  const [draft, setDraft] = useState(() => parseDateValue(value));
+  const lastReportedValue = useRef(value || "");
+  useEffect(() => {
+    const incoming = value || "";
+    if (incoming !== lastReportedValue.current) {
+      setDraft(parseDateValue(incoming));
+      lastReportedValue.current = incoming;
+    }
+  }, [value]);
+  const { year, month, day } = draft;
+  const now = new Date();
   const currentYear = new Date().getFullYear();
 
   const monthFormatter = useMemo(
@@ -37,9 +48,24 @@ export const DateOfBirthField = ({
   );
 
   const years = useMemo(
-    () => Array.from({ length: 100 }, (_, index) => String(currentYear - index)),
+    () => Array.from({ length: currentYear - 1900 + 1 }, (_, index) => String(currentYear - index)),
     [currentYear]
   );
+
+  const monthOptions = useMemo(
+    () => months.map((item) => ({
+      ...item,
+      disabled: Number(year) === now.getFullYear() && Number(item.value) > now.getMonth() + 1,
+    })),
+    [months, year, now]
+  );
+
+  const maxDay = year && month
+    ? Math.min(
+        daysInMonth(Number(year), Number(month)),
+        Number(year) === now.getFullYear() && Number(month) === now.getMonth() + 1 ? now.getDate() : 31,
+      )
+    : 31;
 
   const placeholders =
     language === "ar"
@@ -49,14 +75,18 @@ export const DateOfBirthField = ({
   const updateValue = (next: { year?: string; month?: string; day?: string }) => {
     const nextYear = next.year ?? year;
     const nextMonth = next.month ?? month;
-    const nextDay = next.day ?? day;
-
-    if (nextYear && nextMonth && nextDay) {
-      onChange(`${nextYear}-${nextMonth}-${nextDay}`);
-      return;
+    let nextDay = next.day ?? day;
+    if (nextYear && nextMonth && nextDay && Number(nextDay) > daysInMonth(Number(nextYear), Number(nextMonth))) {
+      nextDay = "";
     }
-
-    onChange("");
+    const updated = { year: nextYear, month: nextMonth, day: nextDay };
+    setDraft(updated);
+    const candidate = nextYear && nextMonth && nextDay
+      ? `${nextYear}-${nextMonth}-${nextDay}`
+      : "";
+    const nextValue = candidate && isValidPastDateOnly(candidate) ? candidate : "";
+    lastReportedValue.current = nextValue;
+    onChange(nextValue);
   };
 
   return (
@@ -65,11 +95,12 @@ export const DateOfBirthField = ({
       <div className="grid gap-3 sm:grid-cols-3">
         <select
           value={day}
+          aria-label={placeholders.day}
           onChange={(event) => updateValue({ day: event.target.value })}
           className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none ring-brand-300 focus:ring"
         >
           <option value="">{placeholders.day}</option>
-          {Array.from({ length: 31 }, (_, index) => {
+          {Array.from({ length: maxDay }, (_, index) => {
             const optionValue = String(index + 1).padStart(2, "0");
             return (
               <option key={optionValue} value={optionValue}>
@@ -81,12 +112,13 @@ export const DateOfBirthField = ({
 
         <select
           value={month}
+          aria-label={placeholders.month}
           onChange={(event) => updateValue({ month: event.target.value })}
           className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none ring-brand-300 focus:ring"
         >
           <option value="">{placeholders.month}</option>
-          {months.map((item) => (
-            <option key={item.value} value={item.value}>
+          {monthOptions.map((item) => (
+            <option key={item.value} value={item.value} disabled={item.disabled}>
               {item.label}
             </option>
           ))}
@@ -94,6 +126,7 @@ export const DateOfBirthField = ({
 
         <select
           value={year}
+          aria-label={placeholders.year}
           onChange={(event) => updateValue({ year: event.target.value })}
           className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none ring-brand-300 focus:ring"
         >

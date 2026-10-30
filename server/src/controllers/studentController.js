@@ -434,6 +434,7 @@ const getStudentNotifications = asyncHandler(async (req, res) => {
 });
 
 const markStudentNotificationAsRead = asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) return res.status(404).json({ message: 'Notification not found' });
   const notification = await Notification.findOne({ _id: req.params.id, user: req.user._id });
   if (!notification) {
     res.status(404);

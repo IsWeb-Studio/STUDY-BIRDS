@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const { MongoMemoryServer } = require(path.join(process.env.STUDY_BIRDS_TEST_TOOLS, 'node_modules/mongodb-memory-server-core'));
 
-test('Bird AI grounds replies in the knowledge base and the asking student\'s own application, never another user\'s', async () => {
+test('COVEY AI grounds replies in the knowledge base and the asking student\'s own application, never another user\'s', async () => {
   process.env.JWT_SECRET = 'assistant-grounding-isolated-test';
   Object.assign(process.env, { AI_API_KEY: 'test-only', AI_BASE_URL: 'https://provider.example.test/v1/', AI_MODEL: 'test-model' });
   const originalFetch = global.fetch;
