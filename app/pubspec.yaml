@@ -69,6 +69,7 @@ flutter:
           weight: 700
   assets:
     - assets/images/branding/
+    - assets/images/branding/recognitions/
     - assets/images/assistant/
     - assets/audio/wink/
     - assets/certs/

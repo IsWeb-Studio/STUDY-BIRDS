@@ -87,6 +87,13 @@ void main() {
       expect(find.byType(StudentPublicProfileScreen), findsOneWidget);
       expect(find.byType(CommunityThreadScreen), findsNothing);
       expect(authorFilter, 'peer');
+      expect(find.byIcon(Icons.auto_stories_outlined), findsNothing);
+      final grid = tester
+          .widget<GridView>(find.byKey(const ValueKey('profile-post-grid')));
+      expect(
+          (grid.gridDelegate as SliverGridDelegateWithFixedCrossAxisCount)
+              .crossAxisCount,
+          3);
       await tester
           .ensureVisible(find.byKey(const ValueKey('profile-post-post-one')));
       await tester.tap(find.byKey(const ValueKey('profile-post-post-one')));

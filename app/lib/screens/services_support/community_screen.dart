@@ -642,36 +642,68 @@ class _CommunityAuthorPostsState extends State<CommunityAuthorPosts> {
           else if (posts.isEmpty)
             Text(_communityText(context, 'لا توجد منشورات بعد', 'No posts yet'))
           else
-            for (final post in posts)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Card(
-                    child: InkWell(
-                  key: ValueKey('profile-post-${post['_id']}'),
-                  onTap: () async {
-                    await Navigator.of(context).push(MaterialPageRoute(
-                        builder: (_) =>
-                            CommunityThreadScreen(postId: '${post['_id']}')));
-                    if (mounted) load();
-                  },
-                  child: Padding(
-                      padding: const EdgeInsets.all(14),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          if ('${post['title'] ?? ''}'.isNotEmpty)
-                            Text('${post['title']}',
-                                style: AppTextStyles.cardTitle),
-                          Text('${post['body'] ?? ''}',
-                              maxLines: 4, overflow: TextOverflow.ellipsis),
-                          if (post['imagePath'] != null)
-                            CommunityPostImage(path: '${post['imagePath']}'),
-                        ],
-                      )),
-                )),
-              ),
+            GridView.builder(
+              key: const ValueKey('profile-post-grid'),
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3, crossAxisSpacing: 4, mainAxisSpacing: 4),
+              itemCount: posts.length,
+              itemBuilder: (context, index) {
+                final post = posts[index];
+                return CommunityProfilePostTile(
+                    post: post,
+                    onTap: () async {
+                      await Navigator.of(context).push(MaterialPageRoute(
+                          builder: (_) =>
+                              CommunityThreadScreen(postId: '${post['_id']}')));
+                      if (mounted) load();
+                    });
+              },
+            ),
         ],
       );
+}
+
+/// Square preview; the full post opens on tap.
+class CommunityProfilePostTile extends StatelessWidget {
+  final Map<String, dynamic> post;
+  final VoidCallback onTap;
+  const CommunityProfilePostTile(
+      {super.key, required this.post, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    final title = '${post['title'] ?? ''}'.trim();
+    final body = '${post['body'] ?? ''}'.trim();
+    final image = '${post['imagePath'] ?? ''}'.trim();
+    return Semantics(
+      button: true,
+      label: title.isEmpty ? body : title,
+      child: Material(
+        color: AppColors.greenSoft,
+        clipBehavior: Clip.antiAlias,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          key: ValueKey('profile-post-${post['_id']}'),
+          onTap: onTap,
+          child: image.isNotEmpty
+              ? CommunityPostImage(path: image, thumbnail: true)
+              : Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Center(
+                      child: Text(title.isEmpty ? body : title,
+                          maxLines: 4,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                              fontSize: 12,
+                              height: 1.4,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.navy)))),
+        ),
+      ),
+    );
+  }
 }
 
 class _FilterSheet extends StatefulWidget {

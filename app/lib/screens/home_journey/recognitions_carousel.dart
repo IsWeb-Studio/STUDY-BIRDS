@@ -8,16 +8,16 @@ class RecognitionsCarousel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final fontSize = MediaQuery.textScalerOf(context).scale(14);
+    final fontSize = MediaQuery.textScalerOf(context).scale(11);
     return SizedBox(
-      height: 64 + fontSize * 2.8,
+      height: 54 + fontSize * 2.8,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: recognitions.length,
         separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, index) => SizedBox(
-          width: 144,
+          width: 130,
           child: RecognitionCard(recognition: recognitions[index]),
         ),
       ),
@@ -28,6 +28,17 @@ class RecognitionsCarousel extends StatelessWidget {
 class RecognitionCard extends StatelessWidget {
   final Map<String, dynamic> recognition;
   const RecognitionCard({super.key, required this.recognition});
+
+  // Artwork only for records already supplied by the server; never inserts
+  // additional accreditations. An admin-uploaded image takes precedence.
+  static String? artworkFor(String title) {
+    final name = title.toLowerCase().replaceAll(RegExp(r'[^a-z0-9]'), '');
+    if (name.startsWith('iso10002')) return 'iso-10002.png';
+    if (name.startsWith('iso9001')) return 'iso-9001.png';
+    if (name.startsWith('britishcouncil')) return 'british-council.png';
+    if (name == 'technesummit') return 'techne-summit.png';
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,9 +55,16 @@ class RecognitionCard extends StatelessWidget {
     final caption = title.isEmpty
         ? (ar ? 'شهادة أو اعتراف' : 'Certificate or recognition')
         : title;
-    const fallback = Center(
-        child: Icon(Icons.workspace_premium_outlined,
-            size: 36, color: AppColors.greenInk));
+    final artwork = artworkFor(title);
+    final fallback = artwork == null
+        ? const Center(
+            child: Icon(Icons.workspace_premium_outlined,
+                size: 30, color: AppColors.greenInk))
+        : Image.asset(
+            'assets/images/branding/recognitions/$artwork',
+            fit: BoxFit.contain,
+            color: artwork == 'techne-summit.png' ? AppColors.navy : null,
+          );
     return Material(
       color: Colors.white,
       clipBehavior: Clip.antiAlias,
@@ -63,9 +81,9 @@ class RecognitionCard extends StatelessWidget {
         child:
             Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           SizedBox(
-            height: 60,
+            height: 52,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 12, 2),
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 2),
               child: image.isEmpty
                   ? fallback
                   : AppNetworkImage(image,

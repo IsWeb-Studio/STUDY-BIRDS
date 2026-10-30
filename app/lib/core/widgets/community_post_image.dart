@@ -6,7 +6,9 @@ import '../config/app_theme.dart';
 
 class CommunityPostImage extends StatefulWidget {
   final String path;
-  const CommunityPostImage({super.key, required this.path});
+  final bool thumbnail;
+  const CommunityPostImage(
+      {super.key, required this.path, this.thumbnail = false});
   @override
   State<CommunityPostImage> createState() => _PostImageState();
 }
@@ -44,17 +46,22 @@ class _PostImageState extends State<CommunityPostImage> {
 
   @override
   Widget build(BuildContext context) => AspectRatio(
-      aspectRatio: 1.6,
+      aspectRatio: widget.thumbnail ? 1 : 1.6,
       child: FutureBuilder<Uint8List>(
           future: _bytes,
           builder: (context, snapshot) {
             if (snapshot.hasData) {
               return Image.memory(snapshot.data!,
                   fit: BoxFit.cover,
+                  cacheWidth: widget.thumbnail ? 400 : null,
                   errorBuilder: (_, __, ___) =>
                       const Icon(Icons.broken_image_outlined));
             }
             if (snapshot.hasError) {
+              if (widget.thumbnail) {
+                return const Center(
+                    child: Icon(Icons.image_not_supported_outlined));
+              }
               return Center(
                   child: TextButton.icon(
                       onPressed: () => setState(() => _bytes = _load()),

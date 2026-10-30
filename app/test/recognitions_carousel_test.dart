@@ -5,6 +5,22 @@ import 'package:study_birds/core/config/app_theme.dart';
 import 'package:study_birds/screens/home_journey/recognitions_carousel.dart';
 
 void main() {
+  testWidgets('existing records use bundled artwork without uploaded images',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+        home: Scaffold(
+            body: RecognitionsCarousel(recognitions: [
+      {'title': 'ISO 9001 CERTIFIED'},
+      {'title': 'ISO 10002 CERTIFIED'},
+      {'title': 'BRITISH COUNCIL CERTIFIED'},
+      {'title': 'Techne Summit'},
+    ]))));
+    await tester.pumpAndSettle();
+    expect(find.byIcon(Icons.workspace_premium_outlined), findsNothing);
+    expect(find.byType(Image), findsWidgets);
+    expect(RecognitionCard.artworkFor('Unknown accreditation'), isNull);
+    expect(tester.takeException(), isNull);
+  });
   for (final language in ['ar', 'en']) {
     testWidgets(
         '$language recognition cards use compact logo cards and fit large text on a narrow screen',
@@ -32,7 +48,7 @@ void main() {
       expect(find.byIcon(Icons.workspace_premium_outlined), findsWidgets);
       expect(tester.getSize(find.byType(RecognitionCard).first).height,
           lessThan(150));
-      expect(tester.getSize(find.byType(RecognitionCard).first).width, 144);
+      expect(tester.getSize(find.byType(RecognitionCard).first).width, 130);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     });
