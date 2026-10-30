@@ -11,13 +11,18 @@ class CurrentUserAvatar extends StatefulWidget {
   const CurrentUserAvatar({super.key, this.radius = 22});
   static final _changes = ValueNotifier<int>(0);
   static final _photos = <String, Uint8List>{};
+  static final _photoUrls = <String, String>{};
 
   static Future<void> save(String userId, Uint8List bytes) async {
+    if (AuthSession.instance.currentUser?.id != userId) return;
+    final url = AuthSession.instance.currentUser?.avatar ?? '';
     _photos[userId] = bytes;
+    _photoUrls[userId] = url;
     _changes.value++;
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('profile_avatar_b64_$userId', base64Encode(bytes));
+      await prefs.setString('profile_avatar_url_$userId', url);
     } catch (_) {
       // Keep both visible avatars updated even if local persistence fails.
     }
@@ -51,10 +56,12 @@ class _CurrentUserAvatarState extends State<CurrentUserAvatar> {
       final prefs = await SharedPreferences.getInstance();
       final key = 'profile_avatar_b64_$id';
       final data = prefs.getString(key);
+      final savedUrl = prefs.getString('profile_avatar_url_$id') ?? '';
       // The legacy global photo has no trustworthy owner on shared devices.
       await prefs.remove('profile_avatar_b64');
       if (data != null && !CurrentUserAvatar._photos.containsKey(id)) {
         CurrentUserAvatar._photos[id] = base64Decode(data);
+        CurrentUserAvatar._photoUrls[id] = savedUrl;
       }
       if (mounted) setState(() {});
     } catch (_) {
@@ -74,6 +81,8 @@ class _CurrentUserAvatarState extends State<CurrentUserAvatar> {
     final user = AuthSession.instance.currentUser;
     final bytes = CurrentUserAvatar._photos[user?.id];
     final url = user?.avatar;
+    final currentPhoto =
+        bytes != null && CurrentUserAvatar._photoUrls[user?.id] == (url ?? '');
     final initial =
         user?.name.trim().characters.firstOrNull?.toUpperCase() ?? '؟';
     return CircleAvatar(
@@ -82,14 +91,18 @@ class _CurrentUserAvatarState extends State<CurrentUserAvatar> {
       child: ClipOval(
           child: SizedBox.square(
         dimension: widget.radius * 2,
-        child: url != null && url.isNotEmpty
-            ? AppNetworkImage(url,
-                width: widget.radius * 2, height: widget.radius * 2,
-                fit: BoxFit.cover, errorWidget: _initial(initial))
-            : bytes != null
-                ? Image.memory(bytes,
+        child: currentPhoto
+            ? Image.memory(bytes,
+                key: ValueKey(
+                    'local-avatar-${user?.id}-${CurrentUserAvatar._changes.value}'),
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _initial(initial))
+            : url != null && url.isNotEmpty
+                ? AppNetworkImage(url,
+                    width: widget.radius * 2,
+                    height: widget.radius * 2,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _initial(initial))
+                    errorWidget: _initial(initial))
                 : _initial(initial),
       )),
     );

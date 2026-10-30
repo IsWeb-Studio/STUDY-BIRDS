@@ -12,6 +12,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
+import '../../core/widgets/current_user_avatar.dart';
 import '../../core/repositories/employee_repository.dart';
 import 'employee_extra_screens.dart';
 import 'admin_users_access_screen.dart';
@@ -84,10 +85,22 @@ const _partnerKeys = [
   'payouts',
 ];
 const _managementKeys = [
-  'app-notifications', 'university-accounts', 'universities', 'programs', 'content',
-  'consultations', 'community', 'knowledge-base', 'testimonials',
-  'recognitions', 'services', 'faqs', 'site-settings',
-  'our-story', 'exhibitions', 'events',
+  'app-notifications',
+  'university-accounts',
+  'universities',
+  'programs',
+  'content',
+  'consultations',
+  'community',
+  'knowledge-base',
+  'testimonials',
+  'recognitions',
+  'services',
+  'faqs',
+  'site-settings',
+  'our-story',
+  'exhibitions',
+  'events',
 ];
 
 const _allTabDefs = [
@@ -103,11 +116,19 @@ const _allTabDefs = [
 
 // ─── Section registry ─────────────────────────────────────────────────────────
 final List<_SectionEntry> _allSections = [
-  _SectionEntry('app-notifications', Icons.campaign_rounded, const Color(0xFFF97316),
-      'إشعارات التطبيق', 'إرسال إعلان إلى جميع الحسابات النشطة',
+  _SectionEntry(
+      'app-notifications',
+      Icons.campaign_rounded,
+      const Color(0xFFF97316),
+      'إشعارات التطبيق',
+      'إرسال إعلان إلى جميع الحسابات النشطة',
       (_) => const AdminAppNotificationScreen()),
-  _SectionEntry('students', Icons.person_search_rounded, AppColors.navy,
-      'ملفات الطلاب', 'استعراض وإدارة ملفات الطلاب الكاملة',
+  _SectionEntry(
+      'students',
+      Icons.person_search_rounded,
+      AppColors.navy,
+      'ملفات الطلاب',
+      'استعراض وإدارة ملفات الطلاب الكاملة',
       (_) => const MyStudentsQueueScreen()),
   _SectionEntry(
       'applications',
@@ -340,13 +361,8 @@ final List<_SectionEntry> _allSections = [
       'الخدمات',
       'إدارة الخدمات المقدمة للطلاب',
       (_) => const EmployeeServicesHubScreen()),
-  _SectionEntry(
-      'faqs',
-      Icons.help_rounded,
-      AppColors.green,
-      'الأسئلة الشائعة',
-      'إدارة الأسئلة الشائعة وإجاباتها',
-      (_) => const AdminFaqsScreen()),
+  _SectionEntry('faqs', Icons.help_rounded, AppColors.green, 'الأسئلة الشائعة',
+      'إدارة الأسئلة الشائعة وإجاباتها', (_) => const AdminFaqsScreen()),
   _SectionEntry(
       'site-settings',
       Icons.settings_rounded,
@@ -368,13 +384,8 @@ final List<_SectionEntry> _allSections = [
       'المعارض',
       'إدارة محطات المعارض الدراسية',
       (_) => const AdminExhibitionsScreen()),
-  _SectionEntry(
-      'events',
-      Icons.event_rounded,
-      AppColors.greenInk,
-      'الفعاليات',
-      'إدارة الفعاليات القادمة والسابقة',
-      (_) => const AdminEventsHubScreen()),
+  _SectionEntry('events', Icons.event_rounded, AppColors.greenInk, 'الفعاليات',
+      'إدارة الفعاليات القادمة والسابقة', (_) => const AdminEventsHubScreen()),
 ];
 
 // ─── Main widget ──────────────────────────────────────────────────────────────
@@ -386,9 +397,11 @@ class EmployeeDashboardScreen extends StatefulWidget {
       _EmployeeDashboardScreenState();
 }
 
-class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> with CachedResource<EmployeeDashboardScreen> {
+class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
+    with CachedResource<EmployeeDashboardScreen> {
   @override
-  Iterable<String> get cachedPaths => const ["/admin/overview","/admin/my-kpis"];
+  Iterable<String> get cachedPaths =>
+      const ["/admin/overview", "/admin/my-kpis"];
   @override
   Future<void> reloadCachedResource() => _load();
   Map<String, dynamic>? _overview;
@@ -434,6 +447,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> with 
   void initState() {
     super.initState();
     _avatarUrl = widget.user.avatar;
+    AuthSession.instance.addListener(_accountPhotoChanged);
     if (_isAdmin) {
       _load();
     } else if (widget.user.permissions.contains('applications')) {
@@ -506,6 +520,8 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> with 
   }
 
   Future<void> _pickAvatar() async {
+    if (_avatarUploading) return;
+    final owner = AuthSession.instance.currentUser?.id;
     final img = await ImagePicker().pickImage(
         source: ImageSource.gallery, imageQuality: 80, maxWidth: 512);
     if (img == null || !mounted) return;
@@ -521,6 +537,11 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> with 
         token: AuthSession.instance.token!,
       );
       final url = (Json.map(data))['avatar'] as String;
+      final user = AuthSession.instance.currentUser;
+      if (user == null || user.id != owner) return;
+      await AuthSession.instance
+          .updateAccount({...user.toJson(), 'avatar': url});
+      await CurrentUserAvatar.save(user.id, bytes);
       if (mounted) setState(() => _avatarUrl = url);
     } catch (swallowedError, swallowedStack) {
       ErrorReporter.swallowed(swallowedError, swallowedStack,
@@ -533,6 +554,19 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> with 
     } finally {
       if (mounted) setState(() => _avatarUploading = false);
     }
+  }
+
+  void _accountPhotoChanged() {
+    final user = AuthSession.instance.currentUser;
+    if (mounted && user?.id == widget.user.id) {
+      setState(() => _avatarUrl = user?.avatar);
+    }
+  }
+
+  @override
+  void dispose() {
+    AuthSession.instance.removeListener(_accountPhotoChanged);
+    super.dispose();
   }
 
   Future<void> _logout() async {

@@ -45,7 +45,8 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> with CachedResource<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen>
+    with CachedResource<ProfileScreen> {
   @override
   Iterable<String> get cachedPaths => const ["/students/profile"];
   @override
@@ -137,8 +138,12 @@ class _ProfileScreenState extends State<ProfileScreen> with CachedResource<Profi
         token: AuthSession.instance.token,
       );
       if (ownerId != AuthSession.instance.currentUser?.id) return;
-      await AuthSession.instance
-          .updateAccount(Map<String, dynamic>.from(result['user']));
+      final account = Json.map(result['user']);
+      if ('${account['avatar'] ?? ''}'.trim().isEmpty ||
+          '${account['_id'] ?? account['id']}' != ownerId) {
+        throw const ApiException(502, 'لم يرجع السيرفر صورة الحساب الجديدة.');
+      }
+      await AuthSession.instance.updateAccount(account);
       if (ownerId != null) await CurrentUserAvatar.save(ownerId, bytes);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -365,8 +370,7 @@ class _ProfileScreenState extends State<ProfileScreen> with CachedResource<Profi
             child: const ListTile(
               contentPadding: EdgeInsets.zero,
               leading: Icon(Icons.campaign_rounded, color: AppColors.orange),
-              title: Text('نشر إشعار للتطبيق',
-                  style: AppTextStyles.cardTitle),
+              title: Text('نشر إشعار للتطبيق', style: AppTextStyles.cardTitle),
               subtitle: Text('إرسال إعلان إلى جميع الحسابات النشطة',
                   style: AppTextStyles.caption),
               trailing: Icon(Icons.chevron_left_rounded),
@@ -774,7 +778,8 @@ class _ReferralProgramScreenState extends State<ReferralProgramScreen> {
                           mode: LaunchMode.externalApplication)) {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                              AppSnackBar(content: const Text('تعذر فتح واتساب')));
+                              AppSnackBar(
+                                  content: const Text('تعذر فتح واتساب')));
                         }
                       }
                     },
@@ -803,7 +808,8 @@ class FavoritesScreen extends StatefulWidget {
   State<FavoritesScreen> createState() => _FavoritesScreenState();
 }
 
-class _FavoritesScreenState extends State<FavoritesScreen> with CachedResource<FavoritesScreen> {
+class _FavoritesScreenState extends State<FavoritesScreen>
+    with CachedResource<FavoritesScreen> {
   @override
   Iterable<String> get cachedPaths => const ["/students/favorites"];
   @override

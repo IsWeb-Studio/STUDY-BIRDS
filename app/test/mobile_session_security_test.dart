@@ -82,6 +82,33 @@ void main() {
             }));
   });
 
+  test(
+      'late refresh cannot replace a successfully uploaded avatar for the same account',
+      () async {
+    session.token = 'same-access';
+    session.currentUser = oldUser;
+    final reply = Completer<http.Response>();
+    final started = Completer<void>();
+    await http.runWithClient(() async {
+      final pending = session.refreshCurrentUser();
+      await started.future;
+      await session.updateAccount({
+        ...oldUser.toJson(),
+        'avatar': 'https://example.test/new-avatar.png',
+      });
+      reply.complete(userResponse('old'));
+      await pending;
+      expect(
+          session.currentUser?.avatar, 'https://example.test/new-avatar.png');
+      expect(
+          await storage.read(key: 'cached_user'), contains('new-avatar.png'));
+    },
+        () => MockClient((_) {
+              started.complete();
+              return reply.future;
+            }));
+  });
+
   test('late startup restore cannot recreate credentials after logout',
       () async {
     await storage.write(key: 'active_session_token', value: 'old-access');

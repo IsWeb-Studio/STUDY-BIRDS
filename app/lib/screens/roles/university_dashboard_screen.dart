@@ -9,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
+import '../../core/widgets/current_user_avatar.dart';
 import '../../core/repositories/university_repository.dart';
 import '../applications_documents_payments/applications_screens.dart'
     show appStatusMeta;
@@ -27,7 +28,8 @@ class UniversityDashboardScreen extends StatefulWidget {
       _UniversityDashboardScreenState();
 }
 
-class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> with CachedResource<UniversityDashboardScreen> {
+class _UniversityDashboardScreenState extends State<UniversityDashboardScreen>
+    with CachedResource<UniversityDashboardScreen> {
   @override
   Iterable<String> get cachedPaths => const ["/university-portal"];
   @override
@@ -57,17 +59,21 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> w
   void initState() {
     super.initState();
     _avatarUrl = AuthSession.instance.currentUser?.avatar;
+    AuthSession.instance.addListener(_accountPhotoChanged);
     _load();
     _searchCtrl.addListener(_applyFilter);
   }
 
   @override
   void dispose() {
+    AuthSession.instance.removeListener(_accountPhotoChanged);
     _searchCtrl.dispose();
     super.dispose();
   }
 
   Future<void> _pickAvatar() async {
+    if (_avatarUploading) return;
+    final owner = AuthSession.instance.currentUser?.id;
     final img = await ImagePicker().pickImage(
         source: ImageSource.gallery, imageQuality: 80, maxWidth: 512);
     if (img == null || !mounted) return;
@@ -78,11 +84,14 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> w
       final url = await UniversityRepository.instance
           .uploadAvatar(fileBytes: bytes, fileName: img.name);
       final user = AuthSession.instance.currentUser;
-      if (user != null) {
+      if (user != null && user.id == owner) {
         await AuthSession.instance
             .updateAccount({...user.toJson(), 'avatar': url});
+        await CurrentUserAvatar.save(user.id, bytes);
       }
-      if (mounted) setState(() => _avatarUrl = url);
+      if (mounted && AuthSession.instance.currentUser?.id == owner) {
+        setState(() => _avatarUrl = url);
+      }
     } catch (swallowedError, swallowedStack) {
       ErrorReporter.swallowed(swallowedError, swallowedStack,
           'screens/roles/university_dashboard_screen.dart:69');
@@ -93,6 +102,12 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> w
       }
     } finally {
       if (mounted) setState(() => _avatarUploading = false);
+    }
+  }
+
+  void _accountPhotoChanged() {
+    if (mounted) {
+      setState(() => _avatarUrl = AuthSession.instance.currentUser?.avatar);
     }
   }
 
@@ -180,7 +195,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> w
       showBackButton: false,
       actions: [
         const NotificationInboxButton(),
-PopupMenuButton<String>(
+        PopupMenuButton<String>(
           icon: const Icon(Icons.more_vert_rounded),
           onSelected: (value) async {
             if (value == 'security') {

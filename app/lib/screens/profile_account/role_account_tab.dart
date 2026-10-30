@@ -70,19 +70,23 @@ class _RoleAccountTabState extends State<RoleAccountTab> {
       if (user == null || token == null) {
         throw const ApiException(401, 'يلزم تسجيل الدخول مجددًا.');
       }
+      final bytes = await picked.readAsBytes();
       final response = Json.map(await ApiClient.instance.postMultipart(
         '/auth/avatar',
-        fileBytes: await picked.readAsBytes(),
+        fileBytes: bytes,
         fileName: picked.name,
         fields: const {},
         token: token,
       ));
       final account = Json.mapOrNull(response['user']);
       if (owner != AuthSession.instance.currentUser?.id) return;
-      if (account == null) {
+      if (account == null ||
+          '${account['avatar'] ?? ''}'.trim().isEmpty ||
+          '${account['_id'] ?? account['id']}' != owner) {
         throw const ApiException(500, 'تعذر تحديث بيانات الحساب.');
       }
       await AuthSession.instance.updateAccount(account);
+      if (owner != null) await CurrentUserAvatar.save(owner, bytes);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
         content:

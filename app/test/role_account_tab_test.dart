@@ -1,15 +1,70 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:study_birds/core/services/auth_session.dart';
+import 'package:study_birds/core/widgets/current_user_avatar.dart';
 import 'package:study_birds/screens/profile_account/my_streak.dart';
 import 'package:study_birds/screens/profile_account/role_account_tab.dart';
 
 void main() {
+  testWidgets(
+      'successful avatar upload updates the account and dashboard avatar together',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    FlutterSecureStorage.setMockInitialValues({});
+    final previousPicker = ImagePickerPlatform.instance;
+    ImagePickerPlatform.instance = _AvatarPicker();
+    AuthSession.instance.token = 'avatar-upload-test';
+    AuthSession.instance.currentUser = const AuthUser(
+        id: 'avatar-role',
+        name: 'Owner',
+        email: 'owner@example.test',
+        role: UserRole.parent);
+    addTearDown(() {
+      ImagePickerPlatform.instance = previousPicker;
+      AuthSession.instance.token = null;
+      AuthSession.instance.currentUser = null;
+    });
+    await http.runWithClient(() async {
+      await tester.pumpWidget(const MaterialApp(
+          home: Scaffold(
+              body: Column(children: [
+        CurrentUserAvatar(),
+        Expanded(child: RoleAccountTab(onLogout: _noLogout)),
+      ]))));
+      await tester.pumpAndSettle();
+      await tester
+          .tap(find.byKey(const ValueKey('role-account-change-avatar')));
+      await tester.pumpAndSettle();
+      expect(AuthSession.instance.currentUser?.avatar,
+          'https://example.test/new-photo.png');
+      expect(find.text('Profile photo updated'), findsOneWidget);
+      final photos = tester
+          .widgetList<Image>(find.byType(Image))
+          .where((image) => image.image is MemoryImage);
+      expect(photos.length, 2);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+        () => MockClient((request) async => http.Response(
+            jsonEncode({
+              'user': {
+                '_id': 'avatar-role',
+                'name': 'Owner',
+                'email': 'owner@example.test',
+                'role': 'parent',
+                'avatar': 'https://example.test/new-photo.png'
+              },
+            }),
+            200,
+            headers: {'content-type': 'application/json; charset=utf-8'})));
+  });
   for (final role
       in UserRole.values.where((role) => role != UserRole.student)) {
     testWidgets(
@@ -56,7 +111,8 @@ void main() {
         expect(find.byKey(const ValueKey('role-account-wink-game')),
             role == UserRole.agent ? findsNothing : findsOneWidget);
         if (role != UserRole.agent) {
-          expect(find.text('7'), findsNothing, reason: 'The activity dashboard is hidden.');
+          expect(find.text('7'), findsNothing,
+              reason: 'The activity dashboard is hidden.');
           expect(find.text('1,234 points'), findsNothing,
               reason:
                   'The account must display the server-owned point balance.');
@@ -178,6 +234,17 @@ void main() {
               headers: {'content-type': 'application/json'},
             )));
   });
+}
+
+class _AvatarPicker extends ImagePickerPlatform {
+  @override
+  Future<XFile?> getImageFromSource(
+          {required ImageSource source,
+          ImagePickerOptions options = const ImagePickerOptions()}) async =>
+      XFile.fromData(
+          base64Decode(
+              'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4z8DwHwAFgAI/ScLbtAAAAABJRU5ErkJggg=='),
+          path: 'avatar.png');
 }
 
 Future<void> _noLogout() async {}

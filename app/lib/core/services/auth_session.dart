@@ -350,7 +350,9 @@ class AuthSession extends ChangeNotifier {
       final permissions = [...user.permissions]..sort();
       return '${user.id}:${user.role.name}:${user.employeeRole ?? ''}:${user.linkedUniversityId ?? ''}:${permissions.join(',')}';
     };
-    ApiClient.instance.activeCacheOwner = () => token == null ? null : ApiClient.instance.cacheOwnerForToken?.call(token!);
+    ApiClient.instance.activeCacheOwner = () => token == null
+        ? null
+        : ApiClient.instance.cacheOwnerForToken?.call(token!);
   }
   static final AuthSession instance = AuthSession._();
 
@@ -694,12 +696,18 @@ class AuthSession extends ChangeNotifier {
   /// Fetches fresh user data from /auth/me and updates the session in-place.
   Future<void> refreshCurrentUser() async {
     final revision = _revision;
+    final previousUser = currentUser;
     final t = token;
     if (t == null) return;
     try {
       final user = await AuthService.instance.fetchCurrentUser(t);
       await _serializeSession(() async {
-        if (revision != _revision || token != t || user == null) return;
+        if (revision != _revision ||
+            token != t ||
+            user == null ||
+            !identical(currentUser, previousUser)) {
+          return;
+        }
         currentUser = user;
         await _cacheUser(user);
         if (revision == _revision) notifyListeners();
@@ -848,7 +856,7 @@ class AuthSession extends ChangeNotifier {
     try {
       PaintingBinding.instance.imageCache.clear();
       PaintingBinding.instance.imageCache.clearLiveImages();
-    } catch (_) { /* No image binding in headless authentication tests. */ }
+    } catch (_) {/* No image binding in headless authentication tests. */}
     await SecureDataCache.clear(owner);
     await NotificationScheduler.instance.cancelAll();
     final prefs = await SharedPreferences.getInstance();
