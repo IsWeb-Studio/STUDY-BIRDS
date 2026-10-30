@@ -56,7 +56,7 @@ class DisplayGame extends WinkController {
   @override
   Future<void> start() async {}
   @override
-  Future<void> refresh() async {}
+  Future<void> refresh({bool force = true}) async {}
 }
 
 Future<void> mount(WidgetTester tester, WinkController game,

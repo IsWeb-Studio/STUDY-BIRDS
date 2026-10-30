@@ -30,7 +30,8 @@ class KnowledgeBaseScreen extends StatefulWidget {
   State<KnowledgeBaseScreen> createState() => _KnowledgeBaseScreenState();
 }
 
-class _KnowledgeBaseScreenState extends State<KnowledgeBaseScreen> with CachedResource<KnowledgeBaseScreen> {
+class _KnowledgeBaseScreenState extends State<KnowledgeBaseScreen>
+    with CachedResource<KnowledgeBaseScreen> {
   @override
   Iterable<String> get cachedPaths => const ["/students/knowledge-base"];
   @override
@@ -47,7 +48,7 @@ class _KnowledgeBaseScreenState extends State<KnowledgeBaseScreen> with CachedRe
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      _loading = _items.isEmpty && !isRefreshingCachedResource;
       _error = null;
     });
     try {
@@ -57,7 +58,9 @@ class _KnowledgeBaseScreenState extends State<KnowledgeBaseScreen> with CachedRe
         _items = data;
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/knowledge_base_screen.dart:53');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/knowledge_base_screen.dart:53');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل مركز المعرفة.';
@@ -78,7 +81,8 @@ class _KnowledgeBaseScreenState extends State<KnowledgeBaseScreen> with CachedRe
                 padding: const EdgeInsets.all(16),
                 itemCount: 5,
                 itemBuilder: (_, __) => const Padding(
-                    padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: SkeletonCard()))
             : _error != null
                 ? ErrorState(message: _error!, onRetry: _load)
                 : _items.isEmpty
@@ -87,36 +91,53 @@ class _KnowledgeBaseScreenState extends State<KnowledgeBaseScreen> with CachedRe
                         title: 'لا يوجد محتوى بعد',
                         message: 'سيتم إضافة مقالات ومصادر مفيدة قريبًا.')
                     : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _items.length,
-                      itemBuilder: (context, i) {
-                        final item = Json.map(_items[i]);
-                        return AppCard(
-                          onTap: () => Navigator.of(context).push(MaterialPageRoute(builder: (_) => KnowledgeBaseArticleScreen(item: item))),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 40,
-                                height: 40,
-                                decoration: BoxDecoration(color: AppColors.navy.withValues(alpha: 0.08), borderRadius: BorderRadius.circular(10)),
-                                child: Icon(_resourceIcon(item['resourceType'] as String?), color: AppColors.navy, size: 19),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(item['title'] as String? ?? '—', style: AppTextStyles.cardTitle),
-                                    if ((item['summary'] as String?)?.isNotEmpty == true)
-                                      Text(item['summary'] as String, style: AppTextStyles.caption, maxLines: 1, overflow: TextOverflow.ellipsis),
-                                  ],
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _items.length,
+                        itemBuilder: (context, i) {
+                          final item = Json.map(_items[i]);
+                          return AppCard(
+                            onTap: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (_) => KnowledgeBaseArticleScreen(
+                                        item: item))),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  decoration: BoxDecoration(
+                                      color: AppColors.navy
+                                          .withValues(alpha: 0.08),
+                                      borderRadius: BorderRadius.circular(10)),
+                                  child: Icon(
+                                      _resourceIcon(
+                                          item['resourceType'] as String?),
+                                      color: AppColors.navy,
+                                      size: 19),
                                 ),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(item['title'] as String? ?? '—',
+                                          style: AppTextStyles.cardTitle),
+                                      if ((item['summary'] as String?)
+                                              ?.isNotEmpty ==
+                                          true)
+                                        Text(item['summary'] as String,
+                                            style: AppTextStyles.caption,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
       ),
     );
   }
@@ -146,7 +167,8 @@ class ExhibitionsScreen extends StatefulWidget {
   State<ExhibitionsScreen> createState() => _ExhibitionsScreenState();
 }
 
-class _ExhibitionsScreenState extends State<ExhibitionsScreen> with CachedResource<ExhibitionsScreen> {
+class _ExhibitionsScreenState extends State<ExhibitionsScreen>
+    with CachedResource<ExhibitionsScreen> {
   @override
   Iterable<String> get cachedPaths => const ["/content/exhibitions"];
   @override
@@ -163,7 +185,7 @@ class _ExhibitionsScreenState extends State<ExhibitionsScreen> with CachedResour
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      _loading = _items.isEmpty && !isRefreshingCachedResource;
       _error = null;
     });
     try {
@@ -176,8 +198,15 @@ class _ExhibitionsScreenState extends State<ExhibitionsScreen> with CachedResour
             .toList();
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/knowledge_base_screen.dart:168');
-      if (mounted) setState(() { _error = 'تعذر تحميل المقالات. أعد المحاولة.'; _loading = false; });
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/knowledge_base_screen.dart:168');
+      if (mounted) {
+        setState(() {
+          _error = 'تعذر تحميل المقالات. أعد المحاولة.';
+          _loading = false;
+        });
+      }
     }
   }
 
@@ -192,7 +221,8 @@ class _ExhibitionsScreenState extends State<ExhibitionsScreen> with CachedResour
                   padding: const EdgeInsets.all(16),
                   itemCount: 4,
                   itemBuilder: (_, __) => const Padding(
-                      padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: SkeletonCard()))
               : _error != null
                   ? ErrorState(message: _error!, onRetry: _load)
                   : _items.isEmpty
@@ -202,11 +232,14 @@ class _ExhibitionsScreenState extends State<ExhibitionsScreen> with CachedResour
                           message: 'ستظهر المقالات والمحتوى التعليمي هنا.')
                       : ListView.separated(
                           padding: const EdgeInsets.all(16),
-                          physics: const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics()),
+                          physics: const BouncingScrollPhysics(
+                              parent: AlwaysScrollableScrollPhysics()),
                           itemCount: _items.length,
-                          separatorBuilder: (_, __) => const SizedBox(height: 10),
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 10),
                           itemBuilder: (context, i) {
-                            final item = Map<String, dynamic>.from(Json.rawMap(_items[i]));
+                            final item = Map<String, dynamic>.from(
+                                Json.rawMap(_items[i]));
                             return _ExhibitionCard(
                               item: item,
                               onTap: () => Navigator.of(context).push(
@@ -278,8 +311,8 @@ class _ExhibitionCard extends StatelessWidget {
               size: 12, color: AppColors.textSecondary),
           const SizedBox(width: 4),
           Text('اقرأ المزيد',
-              style: AppTextStyles.caption.copyWith(color: AppColors.navy,
-                  fontWeight: FontWeight.w600)),
+              style: AppTextStyles.caption.copyWith(
+                  color: AppColors.navy, fontWeight: FontWeight.w600)),
         ]),
       ]),
     );
@@ -290,7 +323,8 @@ class ExhibitionArticleScreen extends StatefulWidget {
   final Map<String, dynamic> item;
   const ExhibitionArticleScreen({super.key, required this.item});
   @override
-  State<ExhibitionArticleScreen> createState() => _ExhibitionArticleScreenState();
+  State<ExhibitionArticleScreen> createState() =>
+      _ExhibitionArticleScreenState();
 }
 
 class _ExhibitionArticleScreenState extends State<ExhibitionArticleScreen> {
@@ -304,8 +338,8 @@ class _ExhibitionArticleScreenState extends State<ExhibitionArticleScreen> {
     if (uri == null) return;
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: const Text('تعذر فتح الرابط.')));
+        ScaffoldMessenger.of(context)
+            .showSnackBar(AppSnackBar(content: const Text('تعذر فتح الرابط.')));
       }
     }
   }
@@ -319,10 +353,12 @@ class _ExhibitionArticleScreenState extends State<ExhibitionArticleScreen> {
       final res = await StudentRepository.instance.toggleFavorite(
           itemType: 'article', articleSlug: slug, articleTitle: title);
       if (mounted) setState(() => _favorited = res['removed'] != true);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/services_support/knowledge_base_screen.dart:309');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/services_support/knowledge_base_screen.dart:309');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          AppSnackBar(content: const Text('تعذر تحديث المفضلة.')));
+            AppSnackBar(content: const Text('تعذر تحديث المفضلة.')));
       }
     } finally {
       if (mounted) setState(() => _toggling = false);
@@ -369,7 +405,8 @@ class _ExhibitionArticleScreenState extends State<ExhibitionArticleScreen> {
                 errorWidget: const SizedBox.shrink(),
               ),
             ),
-          if (imageUrl != null && imageUrl.isNotEmpty) const SizedBox(height: 16),
+          if (imageUrl != null && imageUrl.isNotEmpty)
+            const SizedBox(height: 16),
           Text(widget.item['title'] as String? ?? '',
               style: AppTextStyles.screenTitle
                   .copyWith(fontSize: 20, height: 1.4)),

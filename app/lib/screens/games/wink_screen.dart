@@ -90,7 +90,7 @@ class _WinkScreenState extends State<WinkScreen> {
         _started = true;
         unawaited(game.start());
       } else {
-        unawaited(game.refresh());
+        unawaited(game.refresh(force: false));
       }
     }
   }
@@ -333,7 +333,8 @@ class _WinkScreenState extends State<WinkScreen> {
         if (detail != null)
           Text(detail,
               textDirection: TextDirection.ltr,
-              style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+              style: const TextStyle(
+                  color: AppColors.textSecondary, fontSize: 12)),
       ]));
 
   Widget _players(String phase, bool selfAlive) => _panel(
@@ -478,7 +479,7 @@ class _WinkScreenState extends State<WinkScreen> {
 
   Future<void> _recoverRoom() async {
     setState(() => _recoveryNotice = null);
-    await game.start();
+    await game.refresh();
     if (mounted &&
         game.room == null &&
         game.errorCode == null &&
@@ -495,8 +496,8 @@ class _WinkScreenState extends State<WinkScreen> {
         const SizedBox(width: 6),
         Flexible(
             child: Text(label,
-                style:
-                    const TextStyle(color: AppColors.textSecondary, fontSize: 12))),
+                style: const TextStyle(
+                    color: AppColors.textSecondary, fontSize: 12))),
       ]);
   List<Widget> _room() {
     final r = game.room!;
@@ -710,7 +711,8 @@ class _WinkScreenState extends State<WinkScreen> {
         Text(
             t('جولة ${game.room?['round'] ?? 0}',
                 'Round ${game.room?['round'] ?? 0}'),
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            style:
+                const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
       ]),
       const SizedBox(height: 14),
       if (practice)
@@ -757,9 +759,11 @@ class _WinkScreenState extends State<WinkScreen> {
       const SizedBox(height: 12),
       Wrap(spacing: 14, runSpacing: 6, children: [
         Text(t('$alive في الجولة', '$alive in play'),
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            style:
+                const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
         Text(t('بدون وقت محدد', 'No time limit'),
-            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
+            style:
+                const TextStyle(color: AppColors.textSecondary, fontSize: 12)),
       ]),
     ]));
   }
@@ -832,7 +836,9 @@ class _WinkScreenState extends State<WinkScreen> {
                           : 'Hold your card to open it. It stays visible until you hide it.'),
                   textAlign: wide ? TextAlign.start : TextAlign.center,
                   style: const TextStyle(
-                      fontSize: 12, height: 1.6, color: AppColors.textSecondary)),
+                      fontSize: 12,
+                      height: 1.6,
+                      color: AppColors.textSecondary)),
               if (revealing) ...[
                 const SizedBox(height: 12),
                 FilledButton.icon(
@@ -893,8 +899,7 @@ class _WinkScreenState extends State<WinkScreen> {
               decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                      color:
-                          !other ? AppColors.greenSoft : Colors.transparent,
+                      color: !other ? AppColors.greenSoft : Colors.transparent,
                       width: 2)),
               child: Stack(clipBehavior: Clip.none, children: [
                 WinkAvatar(
@@ -934,9 +939,7 @@ class _WinkScreenState extends State<WinkScreen> {
                       style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: !other
-                              ? AppColors.greenInk
-                              : WinkSky.navy)))),
+                          color: !other ? AppColors.greenInk : WinkSky.navy)))),
           Text(caption,
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 10, color: WinkSky.muted)),

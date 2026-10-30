@@ -110,7 +110,10 @@ class _StudentAppShellState extends State<StudentAppShell> {
       _index == kTabAccount ? const ProfileScreen() : const SizedBox.shrink(),
     ];
 
-    final content = IndexedStack(index: _index, children: tabs);
+    final content = IndexedStack(index: _index, children: [
+      for (var i = 0; i < tabs.length; i++)
+        TickerMode(enabled: _index == i, child: tabs[i]),
+    ]);
     return Directionality(
       textDirection: appTextDirection,
       child: Scaffold(

@@ -12,7 +12,12 @@ import 'connectivity_service.dart';
 /// expose a WS endpoint and the polling approach satisfies all current use cases
 /// (dashboard KPIs, notifications badge, journey stage updates).
 class RealtimeSyncService with WidgetsBindingObserver {
-  RealtimeSyncService._();
+  RealtimeSyncService._() : _clock = DateTime.now;
+  RealtimeSyncService.forTesting({required DateTime Function() clock})
+      : _clock = clock;
+  final DateTime Function() _clock;
+  DateTime? _lastSync;
+  bool _backgrounded = false;
   static final RealtimeSyncService instance = RealtimeSyncService._();
 
   static const _interval = Duration(seconds: 30);
@@ -30,6 +35,7 @@ class RealtimeSyncService with WidgetsBindingObserver {
   void start() {
     if (_started) return;
     _started = true;
+    _lastSync = _clock();
     WidgetsBinding.instance.addObserver(this);
     // Refresh subscribed screens once when verified connectivity returns.
     _reconnectSub =
@@ -51,6 +57,7 @@ class RealtimeSyncService with WidgetsBindingObserver {
   /// Manually trigger a tick (e.g. after a user action that should immediately
   /// refresh all subscribed screens).
   void forceSync() {
+    _lastSync = _clock();
     _controller.add(DateTime.now());
   }
 
@@ -58,15 +65,23 @@ class RealtimeSyncService with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       _startTimer();
-      forceSync(); // immediate refresh on resume
+      if (_backgrounded &&
+          (_lastSync == null ||
+              _clock().difference(_lastSync!) >= const Duration(seconds: 15))) {
+        forceSync();
+      }
+      _backgrounded = false;
     } else if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.hidden) {
+      if (state != AppLifecycleState.inactive) _backgrounded = true;
       _timer?.cancel();
       _timer = null;
     }
   }
 
   void _startTimer() {
+    if (!_started) return;
     _timer?.cancel();
     _timer = Timer.periodic(_interval, (_) {
       // No point polling a network that is known to be down; the

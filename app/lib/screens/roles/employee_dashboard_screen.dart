@@ -458,7 +458,7 @@ class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen>
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      _loading = _overview == null && !isRefreshingCachedResource;
       _error = null;
     });
     try {

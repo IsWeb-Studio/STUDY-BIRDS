@@ -130,7 +130,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen>
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      _loading = _all.isEmpty && !isRefreshingCachedResource;
       _error = null;
     });
     try {

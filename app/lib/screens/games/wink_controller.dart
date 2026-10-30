@@ -6,12 +6,17 @@ import '../../core/utils/json_safe.dart';
 
 class WinkController extends ChangeNotifier with WidgetsBindingObserver {
   final ApiClient api;
-  WinkController({ApiClient? api}) : api = api ?? ApiClient.instance;
+  final DateTime Function() _clock;
+  WinkController({ApiClient? api, DateTime Function()? clock})
+      : api = api ?? ApiClient.instance,
+        _clock = clock ?? DateTime.now;
+  DateTime? _lastCheckedAt;
   Map<String, dynamic>? room;
   bool busy = false, connected = true, initialized = false, active = true;
   String? errorCode;
   Timer? _timer;
   bool _polling = false, _disposed = false;
+  Completer<void>? _refreshDone;
   Duration _clockOffset = Duration.zero;
   String? _pendingOperation;
   String? _pendingAction;
@@ -53,12 +58,18 @@ class WinkController extends ChangeNotifier with WidgetsBindingObserver {
       (_owner == null || _owner == _identity);
 
   Future<void> start() async {
+    if (initialized && _owner == _identity) {
+      await refresh(force: false);
+      return;
+    }
     if (_timer == null) {
       WidgetsBinding.instance.addObserver(this);
       _timer = Timer.periodic(const Duration(seconds: 1), (_) {
         if (!active || _disposed) return;
         if (visible) notifyListeners();
-        if (++_ticks % 2 == 0 && (room != null || (visible && !connected))) {
+        if (++_ticks % 2 == 0 &&
+            !_polling &&
+            (room != null || (visible && !connected))) {
           unawaited(refresh());
         }
       });
@@ -67,6 +78,7 @@ class WinkController extends ChangeNotifier with WidgetsBindingObserver {
       final current = Json.map(await _call(
           () => api.get('/games/wink/current', token: token, cached: false)));
       connected = true;
+      _lastCheckedAt = _clock();
       if (current['code'] is String) {
         await _load('${current['code']}');
       } else {
@@ -105,8 +117,16 @@ class WinkController extends ChangeNotifier with WidgetsBindingObserver {
     _accept(data);
   }
 
-  Future<void> refresh() async {
-    if (_polling || busy || !active || _disposed) return;
+  Future<void> refresh({bool force = true}) async {
+    if (busy || !active || _disposed) return;
+    if (_polling) {
+      await _refreshDone?.future;
+      return;
+    }
+    if (!initialized) {
+      await start();
+      return;
+    }
     if (_owner != null && _owner != _identity) {
       room = null;
       _pendingOperation = null;
@@ -115,23 +135,41 @@ class WinkController extends ChangeNotifier with WidgetsBindingObserver {
       await start();
       return;
     }
-    if (room == null) {
-      await start();
+    if (!force &&
+        room == null &&
+        connected &&
+        _lastCheckedAt != null &&
+        _clock().difference(_lastCheckedAt!) < const Duration(seconds: 15)) {
       return;
     }
     _polling = true;
+    _refreshDone = Completer<void>();
     final readEpoch = _stateEpoch;
     try {
       if (_pendingOperation != null) {
         await _sendAction(
             _pendingAction!, _pendingPayload!, _pendingOperation!);
-      } else {
+      } else if (room != null) {
         await _load('${room!['code']}', readEpoch: readEpoch);
+      } else {
+        final current = Json.map(await _call(
+            () => api.get('/games/wink/current', token: token, cached: false)));
+        if (readEpoch != _stateEpoch) return;
+        if (current['code'] is String) {
+          await _load('${current['code']}', readEpoch: readEpoch);
+        } else {
+          connected = true;
+          errorCode = null;
+        }
       }
+      _lastCheckedAt = _clock();
     } catch (e) {
       if (readEpoch == _stateEpoch) _error(e);
     } finally {
       _polling = false;
+      final done = _refreshDone;
+      _refreshDone = null;
+      done?.complete();
       _emit();
     }
   }
@@ -248,7 +286,7 @@ class WinkController extends ChangeNotifier with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     active = state == AppLifecycleState.resumed;
-    if (active) unawaited(refresh());
+    if (active) unawaited(refresh(force: false));
     _emit();
   }
 

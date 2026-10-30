@@ -21,13 +21,19 @@ mixin CachedResource<T extends StatefulWidget> on State<T> {
   ApiClient get resourceCacheClient => ApiClient.instance;
   Iterable<String> get cachedPaths;
   Future<void> reloadCachedResource();
+  bool get isRefreshingCachedResource => _cacheRefreshing;
   @override
   void initState() {
     super.initState();
-    _cacheLifecycle = _CacheLifecycle(() { if (_cacheDirty) _scheduleCacheRefresh(); });
+    _cacheLifecycle = _CacheLifecycle(() {
+      if (_cacheDirty) _scheduleCacheRefresh();
+    });
     WidgetsBinding.instance.addObserver(_cacheLifecycle);
     _cacheSubscription = resourceCacheClient.cacheChanges.listen((path) {
-      if (!mounted || !cachedPaths.any((p) => path.startsWith(p) || p.startsWith(path))) return;
+      if (!mounted ||
+          !cachedPaths.any((p) => path.startsWith(p) || p.startsWith(path))) {
+        return;
+      }
       _cacheDirty = true;
       _scheduleCacheRefresh();
     });
@@ -42,16 +48,21 @@ mixin CachedResource<T extends StatefulWidget> on State<T> {
   void _scheduleCacheRefresh() {
     _cacheDebounce?.cancel();
     _cacheDebounce = Timer(const Duration(milliseconds: 100), () async {
-      if (!mounted || _cacheRefreshing || !(ModalRoute.isCurrentOf(context) ?? true) ||
+      if (!mounted ||
+          _cacheRefreshing ||
+          !(ModalRoute.isCurrentOf(context) ?? true) ||
+          !TickerMode.valuesOf(context).enabled ||
           WidgetsBinding.instance.lifecycleState == AppLifecycleState.paused ||
-          WidgetsBinding.instance.lifecycleState == AppLifecycleState.inactive ||
+          WidgetsBinding.instance.lifecycleState ==
+              AppLifecycleState.inactive ||
           WidgetsBinding.instance.lifecycleState == AppLifecycleState.hidden) {
         return;
       }
       _cacheRefreshing = true;
       _cacheDirty = false;
-      try { await reloadCachedResource(); } catch (_) { /* The screen owns its error UI. */ }
-      finally {
+      try {
+        await reloadCachedResource();
+      } catch (_) {/* The screen owns its error UI. */} finally {
         _cacheRefreshing = false;
         if (mounted && _cacheDirty) _scheduleCacheRefresh();
       }

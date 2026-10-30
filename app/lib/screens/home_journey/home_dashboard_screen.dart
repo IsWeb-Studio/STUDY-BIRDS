@@ -57,7 +57,8 @@ class HomeDashboardScreen extends StatefulWidget {
   State<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
 }
 
-class _HomeDashboardScreenState extends State<HomeDashboardScreen> with CachedResource<HomeDashboardScreen> {
+class _HomeDashboardScreenState extends State<HomeDashboardScreen>
+    with CachedResource<HomeDashboardScreen> {
   @override
   Iterable<String> get cachedPaths => const ["/students/overview"];
   @override
@@ -66,6 +67,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> with CachedRe
   bool _loading = true;
   String? _error;
   StreamSubscription<DateTime>? _syncSub;
+  bool _syncRefreshing = false;
   int _selectedJourneyIndex = 0;
   late final PageController _journeyPageController;
 
@@ -88,12 +90,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> with CachedRe
     _load();
     AnalyticsService.instance.screenView('home_dashboard');
     _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
-      StudentRepository.instance
-          .getOverview(forceRefresh: true)
-          .then<void>((data) {
-        if (mounted) setState(() => _overview = data);
-      }).catchError(ErrorReporter.silent(
-              'screens/home_journey/home_dashboard_screen.dart:72'));
+      _refreshVisibleOverview();
     });
   }
 
@@ -122,6 +119,27 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> with CachedRe
         _error = 'تعذر تحميل بيانات الرئيسية — تحقق من الاتصال وحاول مرة أخرى.';
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _refreshVisibleOverview() async {
+    if (!mounted ||
+        !widget.isActive ||
+        _syncRefreshing ||
+        _loading ||
+        !(ModalRoute.isCurrentOf(context) ?? true) ||
+        !TickerMode.valuesOf(context).enabled) {
+      return;
+    }
+    _syncRefreshing = true;
+    try {
+      final data =
+          await StudentRepository.instance.getOverview(forceRefresh: true);
+      if (mounted) setState(() => _overview = data);
+    } catch (error, stack) {
+      ErrorReporter.swallowed(error, stack, 'home.overview.refresh');
+    } finally {
+      _syncRefreshing = false;
     }
   }
 
