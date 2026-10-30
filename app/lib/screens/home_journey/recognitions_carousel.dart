@@ -60,11 +60,29 @@ class RecognitionCard extends StatelessWidget {
         ? const Center(
             child: Icon(Icons.workspace_premium_outlined,
                 size: 30, color: AppColors.greenInk))
-        : Image.asset(
-            'assets/images/branding/recognitions/$artwork',
-            fit: BoxFit.contain,
-            color: artwork == 'techne-summit.png' ? AppColors.navy : null,
-          );
+        : Center(
+            child: artwork == 'techne-summit.png'
+                ? Column(mainAxisSize: MainAxisSize.min, children: [
+                    Image.asset('assets/images/branding/recognitions/$artwork',
+                        width: 88,
+                        height: 23,
+                        fit: BoxFit.contain,
+                        color: AppColors.navy),
+                    const Text('SUMMIT',
+                        textScaler: TextScaler.noScaling,
+                        style: TextStyle(
+                            fontFamily: 'Tajawal',
+                            fontSize: 15,
+                            height: 1.1,
+                            letterSpacing: 2.5,
+                            color: AppColors.navy)),
+                  ])
+                : Image.asset(
+                    'assets/images/branding/recognitions/$artwork',
+                    width: artwork == 'british-council.png' ? 106 : 42,
+                    height: 42,
+                    fit: BoxFit.contain,
+                  ));
     return Material(
       color: Colors.white,
       clipBehavior: Clip.antiAlias,
