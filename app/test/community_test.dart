@@ -114,7 +114,7 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('feed author avatar opens the topic; thread avatar opens profile',
+  testWidgets('feed author avatar opens the author profile directly',
       (tester) async {
     phone(tester);
     await http.runWithClient(() async {
@@ -123,10 +123,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byType(CircleAvatar).first);
       await tester.pumpAndSettle();
-      expect(find.byType(CommunityThreadScreen), findsOneWidget);
-      expect(find.byType(StudentPublicProfileScreen), findsNothing);
-      await tester.tap(find.byType(CircleAvatar).first);
-      await tester.pumpAndSettle();
+      expect(find.byType(CommunityThreadScreen), findsNothing);
       expect(find.byType(StudentPublicProfileScreen), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
@@ -224,7 +221,8 @@ void main() {
       expect(find.text('منشور جديد'), findsNothing);
       expect(find.text('سكن قريب من الجامعة'), findsOneWidget);
 
-      await tester.tap(find.text('سكن قريب من الجامعة'));
+      await tester.ensureVisible(find.byTooltip('فتح المنشور'));
+      await tester.tap(find.byTooltip('فتح المنشور'));
       await tester.pumpAndSettle();
       expect(find.byType(CommunityThreadScreen), findsOneWidget);
       expect(find.text('إبلاغ'), findsNothing);

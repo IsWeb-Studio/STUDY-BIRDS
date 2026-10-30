@@ -55,18 +55,20 @@ class CommunityRepository {
       String? university,
       String? studyField,
       bool mine = false,
-      bool adminOnly = false}) async {
+      bool adminOnly = false,
+      String? author}) async {
     final query = <String, String>{
       if (mine) 'mine': '1',
       if (adminOnly) 'admin': '1',
+      if (author != null) 'author': author,
       if (!mine && topic != null) 'topic': topic,
       if (!mine && country != null) 'country': country,
       if (!mine && university != null) 'university': university,
       if (!mine && studyField != null) 'studyField': studyField,
     };
     final suffix = query.isEmpty ? '' : '?${Uri(queryParameters: query).query}';
-    final rows = _rows(await ApiClient.instance
-        .get('/community/posts$suffix', token: _token));
+    final rows = _rows(
+        await ApiClient.instance.get('/community/posts$suffix', token: _token));
     // Older servers may ignore the author filter. Never show ordinary users'
     // posts in this feed, even if an inconsistent response marks them official.
     if (adminOnly) {
@@ -75,12 +77,18 @@ class CommunityRepository {
         return author is Map && author['role'] == 'admin';
       }).toList();
     }
-    return rows;
+    return author == null
+        ? rows
+        : rows.where((post) {
+            final owner = post['author'];
+            return '${owner is Map ? owner['_id'] ?? owner['id'] : owner}' ==
+                author;
+          }).toList();
   }
 
   Future<Map<String, dynamic>> thread(String postId) async {
-    final data = await ApiClient.instance
-        .get('/community/posts/$postId', token: _token);
+    final data =
+        await ApiClient.instance.get('/community/posts/$postId', token: _token);
     return {
       'post': Map<String, dynamic>.from(Json.rawMap(data['post'])),
       'comments': _rows(data['comments']),

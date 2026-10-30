@@ -50,6 +50,7 @@ test('store safety: ownership verification, durable deletion, storage retry and 
     assert.equal((await call(`/safety/blocks/${bob._id}`, { user: alice, method: 'PUT' })).status, 200);
     assert.equal((await call('/safety/blocks', { user: alice })).data.length, 1);
     assert.equal((await call(`/community/posts/${bobPost._id}`, { user: alice })).status, 404);
+    assert.deepEqual((await call(`/community/posts?author=${bob._id}`, { user: alice })).data, []);
     assert.equal((await call('/mobile-workspace/messages', { user: bob, method: 'POST', body: { recipient: String(alice._id), body: 'blocked' } })).status, 403);
     assert.equal((await call(`/safety/blocks/${alice._id}`, { user: alice, method: 'PUT' })).status, 400);
     assert.equal((await call(`/safety/blocks/${bob._id}`, { user: alice, method: 'DELETE' })).status, 200);

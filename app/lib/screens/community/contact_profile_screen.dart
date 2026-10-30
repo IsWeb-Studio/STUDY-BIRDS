@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services_support/community_screen.dart';
 import '../../core/widgets/safety_controls.dart';
 
 import '../../core/network/api_client.dart';
@@ -88,7 +89,8 @@ class _ContactProfileScreenState extends State<ContactProfileScreen> {
     try {
       final data = await ApiClient.instance.get(
         Uri(
-          path: '/mobile-workspace/contacts/${Uri.encodeComponent(widget.userId)}',
+          path:
+              '/mobile-workspace/contacts/${Uri.encodeComponent(widget.userId)}',
           queryParameters:
               widget.communityMode ? const {'community': '1'} : null,
         ).toString(),
@@ -178,7 +180,7 @@ class _ContactProfileScreenState extends State<ContactProfileScreen> {
                     ],
                   ),
                 )
-              : Center(
+              : SingleChildScrollView(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 520),
                     child: Padding(
@@ -191,22 +193,26 @@ class _ContactProfileScreenState extends State<ContactProfileScreen> {
                             children: [
                               _avatar(_profile!['avatar']?.toString() ?? ''),
                               const SizedBox(height: 16),
-                              Row(mainAxisAlignment: MainAxisAlignment.center, children: [
-                                Flexible(
-                                  child: Text(
-                                    _profile!['name'].toString(),
-                                    textAlign: TextAlign.center,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleLarge
-                                        ?.copyWith(fontWeight: FontWeight.w700),
-                                  ),
-                                ),
-                                if (_profile!['role'] == 'admin') ...[
-                                  const SizedBox(width: 6),
-                                  const VerifiedAdminBadge(role: 'admin', size: 19),
-                                ],
-                              ]),
+                              Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        _profile!['name'].toString(),
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(
+                                                fontWeight: FontWeight.w700),
+                                      ),
+                                    ),
+                                    if (_profile!['role'] == 'admin') ...[
+                                      const SizedBox(width: 6),
+                                      const VerifiedAdminBadge(
+                                          role: 'admin', size: 19),
+                                    ],
+                                  ]),
                               const SizedBox(height: 8),
                               Chip(
                                 avatar: const Icon(Icons.verified_user_outlined,
@@ -214,6 +220,10 @@ class _ContactProfileScreenState extends State<ContactProfileScreen> {
                                 label: Text(
                                     _roleLabel(_profile!['role']?.toString())),
                               ),
+                              if (widget.communityMode) ...[
+                                const SizedBox(height: 24),
+                                CommunityAuthorPosts(authorId: widget.userId),
+                              ],
                             ],
                           ),
                         ),

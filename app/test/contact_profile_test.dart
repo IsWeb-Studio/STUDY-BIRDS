@@ -87,7 +87,16 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('Taylor University'), findsOneWidget);
-      expect(requests.single.queryParameters['community'], '1');
+      expect(
+          requests
+              .singleWhere((uri) => uri.path.endsWith('/contacts/$userId'))
+              .queryParameters['community'],
+          '1');
+      expect(
+          requests
+              .singleWhere((uri) => uri.path.endsWith('/community/posts'))
+              .queryParameters['author'],
+          userId);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     },

@@ -8,6 +8,7 @@ import '../../core/repositories/stories_repository.dart';
 import '../../core/services/auth_session.dart';
 import '../../core/widgets/student_achievements.dart';
 import '../stories/student_stories.dart';
+import '../services_support/community_screen.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
 
 class StudentPublicProfileScreen extends StatefulWidget {
@@ -166,7 +167,8 @@ class _StudentPublicProfileScreenState
                 ]))),
         const SizedBox(height: 3),
         Text(label,
-            style: const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
+            style:
+                const TextStyle(fontSize: 12, color: AppColors.textSecondary)),
       ]));
   Widget _friendButton(String relation) => switch (relation) {
         'friends' => OutlinedButton.icon(
@@ -248,11 +250,11 @@ class _StudentPublicProfileScreenState
                                                     .isNotEmpty
                                             ? Image.network(p['avatar'],
                                                 fit: BoxFit.cover,
-                                                errorBuilder: (ctx, error,
-                                                        stack) =>
+                                                errorBuilder: (ctx, error, stack) =>
                                                     const Icon(Icons.person,
                                                         size: 55,
-                                                        color: AppColors.textSecondary))
+                                                        color: AppColors
+                                                            .textSecondary))
                                             : const ColoredBox(
                                                 color: AppColors.greenSoft,
                                                 child: Icon(
@@ -274,7 +276,8 @@ class _StudentPublicProfileScreenState
                                     ]),
                                 const SizedBox(height: 6),
                                 const Text('طالب في مجتمع COVEY',
-                                    style: TextStyle(color: AppColors.textSecondary)),
+                                    style: TextStyle(
+                                        color: AppColors.textSecondary)),
                                 if (p['relation'] == 'self')
                                   const Padding(
                                       padding: EdgeInsets.only(top: 8),
@@ -303,6 +306,8 @@ class _StudentPublicProfileScreenState
                                 ],
                               ])),
                           const SizedBox(height: 24),
+                          CommunityAuthorPosts(authorId: widget.studentId),
+                          const SizedBox(height: 24),
                           Row(children: [
                             const Icon(Icons.auto_stories_outlined, size: 21),
                             const SizedBox(width: 8),
@@ -313,8 +318,8 @@ class _StudentPublicProfileScreenState
                                         fontSize: 19))),
                             if (canView)
                               Text('${p['storyCount'] ?? _stories.length}',
-                                  style:
-                                      const TextStyle(color: AppColors.textSecondary))
+                                  style: const TextStyle(
+                                      color: AppColors.textSecondary))
                           ]),
                           const SizedBox(height: 12),
                           if (!canView)
@@ -351,11 +356,13 @@ class _StudentPublicProfileScreenState
                                                 if (story.imageUrl.isNotEmpty)
                                                   Image.network(story.imageUrl,
                                                       fit: BoxFit.cover,
-                                                      errorBuilder: (ctx, error, stack) => const ColoredBox(
-                                                          color:
-                                                              AppColors.border,
-                                                          child: Icon(Icons
-                                                              .image_outlined)))
+                                                      errorBuilder: (ctx, error,
+                                                              stack) =>
+                                                          const ColoredBox(
+                                                              color: AppColors
+                                                                  .border,
+                                                              child: Icon(Icons
+                                                                  .image_outlined)))
                                                 else
                                                   Container(
                                                       color: story.videoUrl.isNotEmpty
@@ -363,9 +370,8 @@ class _StudentPublicProfileScreenState
                                                               0xFF24385C)
                                                           : const Color(
                                                               0xFF4169E1),
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              12),
+                                                      padding: const EdgeInsets.all(
+                                                          12),
                                                       alignment:
                                                           Alignment.center,
                                                       child: story.videoUrl.isNotEmpty
@@ -375,8 +381,7 @@ class _StudentPublicProfileScreenState
                                                                   Colors.white)
                                                           : Text(story.text,
                                                               maxLines: 5,
-                                                              overflow: TextOverflow
-                                                                  .ellipsis,
+                                                              overflow: TextOverflow.ellipsis,
                                                               textAlign: TextAlign.center,
                                                               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600))),
                                                 Positioned(

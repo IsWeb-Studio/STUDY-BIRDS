@@ -103,7 +103,8 @@ class StudentCommunityScreen extends StatefulWidget {
   State<StudentCommunityScreen> createState() => _StudentCommunityScreenState();
 }
 
-class _StudentCommunityScreenState extends State<StudentCommunityScreen> with CachedResource<StudentCommunityScreen> {
+class _StudentCommunityScreenState extends State<StudentCommunityScreen>
+    with CachedResource<StudentCommunityScreen> {
   @override
   Iterable<String> get cachedPaths => const ['/community'];
   @override
@@ -411,32 +412,53 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen> with Ca
     );
   }
 
-  Widget _post(int index) => _PostCard(
-      post: posts[index],
-      canReact: canWrite && posts[index]['status'] != 'hidden',
-      onReaction: (result) {
-        if (mounted) {
-          setState(() => posts[index] = {...posts[index], ...result});
-        }
-      },
-      onTap: posts[index]['status'] == 'hidden'
-          ? null
-          : () async {
-              await Navigator.of(context).push(MaterialPageRoute(
-                  builder: (_) => CommunityThreadScreen(
-                      postId: '${posts[index]['_id']}', canWrite: canWrite)));
-              load();
-              loadStatus();
-            });
+  Widget _post(int index) {
+    final post = posts[index];
+    return _PostCard(
+        key: ValueKey('feed-post-${post['_id']}'),
+        post: post,
+        canReact: canWrite && post['status'] != 'hidden',
+        onReaction: (result) {
+          if (mounted) {
+            final current =
+                posts.indexWhere((item) => item['_id'] == post['_id']);
+            if (current >= 0) {
+              setState(() => posts[current] = {...posts[current], ...result});
+            }
+          }
+        },
+        onTap: post['status'] == 'hidden'
+            ? null
+            : () async {
+                await Navigator.of(context).push(MaterialPageRoute(
+                    builder: (_) => CommunityThreadScreen(
+                        postId: '${post['_id']}', canWrite: canWrite)));
+                if (!mounted) return;
+                load();
+                loadStatus();
+              });
+  }
 }
 
-class _PostCard extends StatelessWidget {
+class _PostCard extends StatefulWidget {
   final Map<String, dynamic> post;
   final VoidCallback? onTap;
   final bool canReact;
   final ValueChanged<Map<String, dynamic>>? onReaction;
   const _PostCard(
-      {required this.post, this.onTap, this.canReact = false, this.onReaction});
+      {super.key,
+      required this.post,
+      this.onTap,
+      this.canReact = false,
+      this.onReaction});
+
+  @override
+  State<_PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends State<_PostCard> {
+  bool commentsOpen = false;
+  Map<String, dynamic> get post => widget.post;
 
   @override
   Widget build(BuildContext context) {
@@ -451,14 +473,13 @@ class _PostCard extends StatelessWidget {
               BorderSide(color: hidden ? AppColors.warning : AppColors.border)),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: onTap,
+        onTap: null,
         child: Padding(
           padding: const EdgeInsets.all(14),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               StudentIdentity(
-                  linkToProfile: false,
                   id: _id(post['author']),
                   name: _communityName(author),
                   role: author is Map
@@ -494,10 +515,7 @@ class _PostCard extends StatelessWidget {
               if ('${post['title'] ?? ''}'.isNotEmpty)
                 Text('${post['title']}', style: AppTextStyles.cardTitle),
               const SizedBox(height: 4),
-              Text('${post['body'] ?? ''}',
-                  maxLines: 6,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppTextStyles.body),
+              Text('${post['body'] ?? ''}', style: AppTextStyles.body),
               const SizedBox(height: 8),
               Text(
                   [
@@ -517,9 +535,38 @@ class _PostCard extends StatelessWidget {
               CommunityReactions(
                   key: ValueKey('reactions-${post['_id']}'),
                   post: post,
-                  enabled: canReact,
+                  enabled: widget.canReact,
                   buttonKey: ValueKey('community-like-${post['_id']}'),
-                  onChanged: onReaction ?? (_) {}),
+                  onChanged: widget.onReaction ?? (_) {}),
+              if (!hidden) ...[
+                Row(children: [
+                  TextButton.icon(
+                    key: ValueKey('feed-comments-${post['_id']}'),
+                    onPressed: () =>
+                        setState(() => commentsOpen = !commentsOpen),
+                    icon: Icon(commentsOpen
+                        ? Icons.expand_less
+                        : Icons.chat_bubble_outline),
+                    label:
+                        Text(_communityText(context, 'التعليقات', 'Comments')),
+                  ),
+                  const Spacer(),
+                  IconButton(
+                    tooltip:
+                        _communityText(context, 'فتح المنشور', 'Open post'),
+                    onPressed: widget.onTap,
+                    icon: const Icon(Icons.open_in_new_rounded),
+                  ),
+                ]),
+                if (commentsOpen)
+                  CommunityThreadScreen(
+                    key: ValueKey('feed-thread-${post['_id']}'),
+                    postId: '${post['_id']}',
+                    canWrite: widget.canReact,
+                    inline: true,
+                    onPostChanged: widget.onReaction,
+                  ),
+              ],
               if (hidden) ...[
                 const SizedBox(height: 8),
                 Container(
@@ -540,6 +587,91 @@ class _PostCard extends StatelessWidget {
       ),
     );
   }
+}
+
+/// Public, published posts belonging to this profile, never comment activity.
+class CommunityAuthorPosts extends StatefulWidget {
+  final String authorId;
+  const CommunityAuthorPosts({super.key, required this.authorId});
+  @override
+  State<CommunityAuthorPosts> createState() => _CommunityAuthorPostsState();
+}
+
+class _CommunityAuthorPostsState extends State<CommunityAuthorPosts> {
+  List<Map<String, dynamic>> posts = [];
+  bool loading = true;
+  String? error;
+  @override
+  void initState() {
+    super.initState();
+    load();
+  }
+
+  Future<void> load() async {
+    try {
+      final result =
+          await CommunityRepository.instance.posts(author: widget.authorId);
+      if (mounted) {
+        setState(() {
+          posts = result;
+          loading = false;
+          error = null;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          error = communityError(e, 'تعذر تحميل المنشورات');
+          loading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(_communityText(context, 'المنشورات', 'Posts'),
+              style: AppTextStyles.sectionLabel),
+          const SizedBox(height: 12),
+          if (loading)
+            const Center(child: CircularProgressIndicator())
+          else if (error != null)
+            TextButton(onPressed: load, child: Text(error!))
+          else if (posts.isEmpty)
+            Text(_communityText(context, 'لا توجد منشورات بعد', 'No posts yet'))
+          else
+            for (final post in posts)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Card(
+                    child: InkWell(
+                  key: ValueKey('profile-post-${post['_id']}'),
+                  onTap: () async {
+                    await Navigator.of(context).push(MaterialPageRoute(
+                        builder: (_) =>
+                            CommunityThreadScreen(postId: '${post['_id']}')));
+                    if (mounted) load();
+                  },
+                  child: Padding(
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if ('${post['title'] ?? ''}'.isNotEmpty)
+                            Text('${post['title']}',
+                                style: AppTextStyles.cardTitle),
+                          Text('${post['body'] ?? ''}',
+                              maxLines: 4, overflow: TextOverflow.ellipsis),
+                          if (post['imagePath'] != null)
+                            CommunityPostImage(path: '${post['imagePath']}'),
+                        ],
+                      )),
+                )),
+              ),
+        ],
+      );
 }
 
 class _FilterSheet extends StatefulWidget {
@@ -889,8 +1021,14 @@ class CommunityThreadScreen extends StatefulWidget {
 
   /// False for a suspended student: reading only, no comment/report controls.
   final bool canWrite;
+  final bool inline;
+  final ValueChanged<Map<String, dynamic>>? onPostChanged;
   const CommunityThreadScreen(
-      {super.key, required this.postId, this.canWrite = true});
+      {super.key,
+      required this.postId,
+      this.canWrite = true,
+      this.inline = false,
+      this.onPostChanged});
   @override
   State<CommunityThreadScreen> createState() => _CommunityThreadScreenState();
 }
@@ -927,6 +1065,7 @@ class _CommunityThreadScreenState extends State<CommunityThreadScreen> {
         post = Json.map(data['post']);
         comments = data['comments'] as List<Map<String, dynamic>>;
       });
+      widget.onPostChanged?.call({...post!, 'commentCount': comments.length});
     } catch (e) {
       if (mounted) {
         setState(() => error = communityError(e, 'تعذر فتح المنشور.'));
@@ -1070,168 +1209,169 @@ class _CommunityThreadScreenState extends State<CommunityThreadScreen> {
                   foregroundColor: AppColors.textSecondary));
 
   @override
-  Widget build(BuildContext context) => AppScaffold(
-        title: _communityText(context, 'المنشور', 'Post'),
-        body: loading
-            ? const LoadingState()
-            : error != null
-                ? ErrorState(message: error!, onRetry: load)
-                : Column(children: [
-                    Expanded(
-                      child: RefreshIndicator(
-                        onRefresh: load,
-                        color: AppColors.navy,
-                        child: ListView(
-                          physics: const BouncingScrollPhysics(
+  Widget build(BuildContext context) {
+    final content = loading
+        ? const LoadingState()
+        : error != null
+            ? ErrorState(message: error!, onRetry: load)
+            : Column(mainAxisSize: MainAxisSize.min, children: [
+                _expandThread(
+                  child: RefreshIndicator(
+                    onRefresh: load,
+                    color: AppColors.navy,
+                    child: ListView(
+                      shrinkWrap: widget.inline,
+                      physics: widget.inline
+                          ? const NeverScrollableScrollPhysics()
+                          : const BouncingScrollPhysics(
                               parent: AlwaysScrollableScrollPhysics()),
-                          padding: const EdgeInsets.all(16),
-                          children: [
-                            Text('${post!['title'] ?? ''}',
-                                style: AppTextStyles.screenTitle),
-                            const SizedBox(height: 4),
-                            StudentIdentity(
-                                id: _id(post!['author']),
-                                name: _communityName(post!['author']),
-                                role: post!['author'] is Map
-                                    ? '${post!['author']['role'] ?? 'student'}'
-                                    : 'student',
-                                avatar: post!['author'] is Map
-                                    ? '${post!['author']['avatar'] ?? ''}'
-                                    : '',
-                                organizationName: post!['author'] is Map &&
-                                        post!['author']['linkedUniversity']
-                                            is Map
-                                    ? '${post!['author']['linkedUniversity']['name'] ?? ''}'
-                                    : '',
-                                organizationLogo: post!['author'] is Map &&
-                                        post!['author']['linkedUniversity']
-                                            is Map
-                                    ? '${post!['author']['linkedUniversity']['logo'] ?? ''}'
-                                    : '',
-                                showRoleBadge: true),
-                            Text(
-                                [_postMeta(post!, arabic: _isArabic(context))]
-                                    .where((p) => p.isNotEmpty)
-                                    .join(' · '),
-                                style: AppTextStyles.caption),
-                            const SizedBox(height: 12),
-                            Text('${post!['body'] ?? ''}',
-                                style: AppTextStyles.body),
-                            if (post!['imagePath'] != null)
-                              CommunityPostImage(
-                                  key: ValueKey('thread-image-${post!['_id']}'),
-                                  path: '${post!['imagePath']}'),
-                            CommunityReactions(
-                                key: ValueKey(
-                                    'thread-reactions-${post!['_id']}'),
-                                post: post!,
-                                enabled: widget.canWrite && !busy,
-                                buttonKey:
-                                    const ValueKey('community-thread-like'),
-                                onChanged: (result) {
-                                  if (mounted) {
-                                    setState(
-                                        () => post = {...post!, ...result});
-                                  }
-                                }),
-                            Align(
-                                alignment: AlignmentDirectional.centerStart,
-                                child: ownerAction(post!, 'post')),
-                            const Divider(height: 24),
-                            Text(
-                                _communityText(
-                                    context,
-                                    'التعليقات (${comments.length})',
-                                    'Comments (${comments.length})'),
-                                style: AppTextStyles.sectionLabel),
-                            const SizedBox(height: 8),
-                            if (comments.isEmpty)
-                              Text(
-                                  _communityText(
-                                      context,
-                                      'لا توجد تعليقات بعد. شارك برأيك.',
-                                      'No comments yet. Share your thoughts.'),
-                                  style: AppTextStyles.caption),
-                            for (final comment in comments)
-                              Container(
-                                margin: const EdgeInsets.only(bottom: 8),
-                                padding:
-                                    const EdgeInsets.fromLTRB(12, 10, 12, 0),
-                                decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(10),
-                                    border:
-                                        Border.all(color: AppColors.border)),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    StudentIdentity(
-                                        id: _id(comment['author']),
-                                        name: _communityName(comment['author']),
-                                        role: comment['author'] is Map
-                                            ? '${comment['author']['role'] ?? 'student'}'
-                                            : 'student',
-                                        avatar: comment['author'] is Map
-                                            ? '${comment['author']['avatar'] ?? ''}'
-                                            : '',
-                                        organizationName: comment['author']
-                                                    is Map &&
-                                                comment['author']
-                                                    ['linkedUniversity'] is Map
-                                            ? '${comment['author']['linkedUniversity']['name'] ?? ''}'
-                                            : '',
-                                        organizationLogo: comment['author']
-                                                    is Map &&
-                                                comment['author']
-                                                    ['linkedUniversity'] is Map
-                                            ? '${comment['author']['linkedUniversity']['logo'] ?? ''}'
-                                            : '',
-                                        showRoleBadge: true),
-                                    const SizedBox(height: 2),
-                                    Text('${comment['body'] ?? ''}',
-                                        style: AppTextStyles.body),
-                                    Align(
-                                        alignment:
-                                            AlignmentDirectional.centerEnd,
-                                        child: ownerAction(comment, 'comment')),
-                                  ],
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
+                      padding: const EdgeInsets.all(16),
+                      children: [
+                        if (!widget.inline) ...[
+                          Text('${post!['title'] ?? ''}',
+                              style: AppTextStyles.screenTitle),
+                          const SizedBox(height: 4),
+                          StudentIdentity(
+                              id: _id(post!['author']),
+                              name: _communityName(post!['author']),
+                              role: post!['author'] is Map
+                                  ? '${post!['author']['role'] ?? 'student'}'
+                                  : 'student',
+                              avatar: post!['author'] is Map
+                                  ? '${post!['author']['avatar'] ?? ''}'
+                                  : '',
+                              organizationName: post!['author'] is Map &&
+                                      post!['author']['linkedUniversity'] is Map
+                                  ? '${post!['author']['linkedUniversity']['name'] ?? ''}'
+                                  : '',
+                              organizationLogo: post!['author'] is Map &&
+                                      post!['author']['linkedUniversity'] is Map
+                                  ? '${post!['author']['linkedUniversity']['logo'] ?? ''}'
+                                  : '',
+                              showRoleBadge: true),
+                          Text(
+                              [_postMeta(post!, arabic: _isArabic(context))]
+                                  .where((p) => p.isNotEmpty)
+                                  .join(' · '),
+                              style: AppTextStyles.caption),
+                          const SizedBox(height: 12),
+                          Text('${post!['body'] ?? ''}',
+                              style: AppTextStyles.body),
+                          if (post!['imagePath'] != null)
+                            CommunityPostImage(
+                                key: ValueKey('thread-image-${post!['_id']}'),
+                                path: '${post!['imagePath']}'),
+                          CommunityReactions(
+                              key: ValueKey('thread-reactions-${post!['_id']}'),
+                              post: post!,
+                              enabled: widget.canWrite && !busy,
+                              buttonKey:
+                                  const ValueKey('community-thread-like'),
+                              onChanged: (result) {
+                                if (mounted) {
+                                  setState(() => post = {...post!, ...result});
+                                }
+                              }),
+                          Align(
+                              alignment: AlignmentDirectional.centerStart,
+                              child: ownerAction(post!, 'post')),
+                          const Divider(height: 24),
+                        ],
+                        Text(
+                            _communityText(
+                                context,
+                                'التعليقات (${comments.length})',
+                                'Comments (${comments.length})'),
+                            style: AppTextStyles.sectionLabel),
+                        const SizedBox(height: 8),
+                        if (comments.isEmpty)
+                          Text(
+                              _communityText(
+                                  context,
+                                  'لا توجد تعليقات بعد. شارك برأيك.',
+                                  'No comments yet. Share your thoughts.'),
+                              style: AppTextStyles.caption),
+                        for (final comment in comments)
+                          Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.fromLTRB(12, 10, 12, 0),
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(color: AppColors.border)),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                StudentIdentity(
+                                    id: _id(comment['author']),
+                                    name: _communityName(comment['author']),
+                                    role: comment['author'] is Map
+                                        ? '${comment['author']['role'] ?? 'student'}'
+                                        : 'student',
+                                    avatar: comment['author'] is Map
+                                        ? '${comment['author']['avatar'] ?? ''}'
+                                        : '',
+                                    organizationName: comment['author']
+                                                is Map &&
+                                            comment['author']
+                                                ['linkedUniversity'] is Map
+                                        ? '${comment['author']['linkedUniversity']['name'] ?? ''}'
+                                        : '',
+                                    organizationLogo: comment['author']
+                                                is Map &&
+                                            comment['author']
+                                                ['linkedUniversity'] is Map
+                                        ? '${comment['author']['linkedUniversity']['logo'] ?? ''}'
+                                        : '',
+                                    showRoleBadge: true),
+                                const SizedBox(height: 2),
+                                Text('${comment['body'] ?? ''}',
+                                    style: AppTextStyles.body),
+                                Align(
+                                    alignment: AlignmentDirectional.centerEnd,
+                                    child: ownerAction(comment, 'comment')),
+                              ],
+                            ),
+                          ),
+                      ],
                     ),
-                    if (widget.canWrite)
-                      SafeArea(
-                        top: false,
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-                          child: Row(children: [
-                            Expanded(
-                                child: TextField(
-                                    controller: commentText,
-                                    maxLength: 2000,
-                                    minLines: 1,
-                                    maxLines: 4,
-                                    onChanged: (_) => setState(() {}),
-                                    decoration: InputDecoration(
-                                        hintText: _communityText(context,
-                                            'أضف تعليقًا', 'Add a comment'),
-                                        counterText: ''))),
-                            const SizedBox(width: 8),
-                            IconButton.filled(
-                                tooltip:
-                                    _communityText(context, 'إرسال', 'Send'),
-                                onPressed:
-                                    busy || commentText.text.trim().isEmpty
-                                        ? null
-                                        : sendComment,
-                                icon: const Icon(Icons.send_rounded)),
-                          ]),
-                        ),
-                      ),
-                  ]),
-      );
+                  ),
+                ),
+                if (widget.canWrite)
+                  SafeArea(
+                    top: false,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
+                      child: Row(children: [
+                        Expanded(
+                            child: TextField(
+                                controller: commentText,
+                                maxLength: 2000,
+                                minLines: 1,
+                                maxLines: 4,
+                                onChanged: (_) => setState(() {}),
+                                decoration: InputDecoration(
+                                    hintText: _communityText(context,
+                                        'أضف تعليقًا', 'Add a comment'),
+                                    counterText: ''))),
+                        const SizedBox(width: 8),
+                        IconButton.filled(
+                            tooltip: _communityText(context, 'إرسال', 'Send'),
+                            onPressed: busy || commentText.text.trim().isEmpty
+                                ? null
+                                : sendComment,
+                            icon: const Icon(Icons.send_rounded)),
+                      ]),
+                    ),
+                  ),
+              ]);
+    if (widget.inline) return content;
+    return AppScaffold(
+        title: _communityText(context, 'المنشور', 'Post'), body: content);
+  }
+
+  Widget _expandThread({required Widget child}) =>
+      widget.inline ? child : Expanded(child: child);
 }
 
 /// Returns {'reason', 'details'} or null when cancelled.

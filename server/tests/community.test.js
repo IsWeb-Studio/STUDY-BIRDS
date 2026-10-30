@@ -37,6 +37,12 @@ test('community posts support eligible authors and staff moderation, keeping hid
     assert.equal(created.author.name, 'Author');
 
     const list = await call('GET', '/community/posts', other);
+    const authorFeed = await call('GET', `/community/posts?author=${author._id}`, other);
+    assert.equal(authorFeed.length, 1);
+    assert.equal(String(authorFeed[0].author._id), String(author._id));
+    assert.deepEqual(await call('GET', `/community/posts?author=${moderator._id}`, other), []);
+    await call('GET', '/community/posts?author=invalid', other, null, 400);
+    await call('GET', `/community/posts?author=${author._id}&mine=1`, other, null, 400);
     assert.equal(list.length, 1);
 
     // Comments: one from another student, isolation of unrelated post IDs.
@@ -58,6 +64,7 @@ test('community posts support eligible authors and staff moderation, keeping hid
 
     // Hidden posts disappear from the student feed and can't be opened or commented on.
     assert.equal((await call('GET', '/community/posts', other)).length, 0);
+    assert.deepEqual(await call('GET', `/community/posts?author=${author._id}`, other), []);
     await call('GET', `/community/posts/${created._id}`, other, null, 404);
     await call('POST', `/community/posts/${created._id}/comments`, other, { body: 'still here?' }, 404);
 

@@ -74,7 +74,8 @@ const getMyStatus = asyncHandler(async (req, res) => {
 });
 
 const listPosts = asyncHandler(async (req, res) => {
-  const { topic, country, university, studyField, mine, admin } = req.query;
+  const { topic, country, university, studyField, mine, admin, author } = req.query;
+  if (author !== undefined && (!validId(author) || mine === '1' || admin === '1')) return res.status(400).json({ message: 'Invalid author filter' });
   if (admin && admin !== "1" || admin === "1" && mine === "1") return res.status(400).json({ message: "Invalid author filter" });
   if (topic && !COMMUNITY_TOPICS.includes(topic)) return res.status(400).json({ message: "Invalid topic" });
   for (const value of [country, university, studyField]) {
@@ -84,6 +85,7 @@ const listPosts = asyncHandler(async (req, res) => {
   // note, so a hidden post never silently disappears from its author.
   const query = mine === "1" ? { author: req.user._id } : { status: "published" };
   if (mine !== '1') query.author = { $nin: await blockedIds(req.user._id) };
+  if (author) query.author.$eq = author;
   if (admin === '1') query.author.$in = await User.distinct('_id', { role: 'admin', isActive: true });
   if (topic) query.topic = topic;
   if (country) query.country = country;

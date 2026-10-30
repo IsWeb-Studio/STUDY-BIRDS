@@ -48,7 +48,10 @@ void main() {
     },
         () => MockClient((request) async {
               final path = request.url.path;
-              if (path.endsWith('/contacts/peer')) return response({'_id': 'peer', 'name': 'Sara', 'role': 'student'});
+              if (path.endsWith('/contacts/peer')) {
+                return response(
+                    {'_id': 'peer', 'name': 'Sara', 'role': 'student'});
+              }
               if (path.endsWith('/profile')) return response(profile('none'));
               if (path.endsWith('/conversations')) {
                 return response({
@@ -138,6 +141,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Study day'), findsOneWidget);
       await tester.ensureVisible(find.text('Study day'));
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Study day'));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 350));
