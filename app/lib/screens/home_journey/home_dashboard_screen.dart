@@ -1,3 +1,4 @@
+import 'recognitions_carousel.dart';
 import '../../core/widgets/cached_resource.dart';
 import 'student_menu.dart';
 export 'student_menu.dart' show showStudentMenu;
@@ -14,7 +15,6 @@ import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../core/widgets/external_link.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/utils/animations.dart';
 import '../../core/repositories/student_repository.dart';
@@ -435,72 +435,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen>
             ),
           ),
           const SizedBox(height: 10),
-          SizedBox(
-            height: 80,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: overview.recognitions.length,
-              itemBuilder: (context, i) {
-                final rec = overview.recognitions[i];
-                final image = rec['image'] as String? ?? '';
-                final title = rec['title'] as String? ?? '';
-                final link = rec['link'] as String? ?? '';
-                final card = Container(
-                  margin: EdgeInsets.only(
-                      left: i < overview.recognitions.length - 1 ? 10 : 0),
-                  width: 130,
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.border),
-                  ),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      if (image.isNotEmpty)
-                        Expanded(
-                          child: AppNetworkImage(
-                            image,
-                            fit: BoxFit.contain,
-                            errorWidget: const Icon(
-                              Icons.verified_outlined,
-                              color: AppColors.green,
-                              size: 24,
-                            ),
-                          ),
-                        )
-                      else
-                        const Icon(Icons.verified_outlined,
-                            color: AppColors.green, size: 24),
-                      const SizedBox(height: 4),
-                      Text(
-                        title,
-                        textAlign: TextAlign.center,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.textPrimary,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-                if (link.isEmpty) return card;
-                return GestureDetector(
-                  onTap: () async {
-                    await openExternalLink(context, link);
-                  },
-                  child: card,
-                );
-              },
-            ),
-          ),
+          RecognitionsCarousel(recognitions: overview.recognitions),
         ],
 
         const SizedBox(height: 4),
