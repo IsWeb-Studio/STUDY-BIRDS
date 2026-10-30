@@ -2,6 +2,9 @@ const {crmPagination,crmPage}=require('../utils/crmPagination');
 const mongoose = require("mongoose");
 const asyncHandler = require("../utils/asyncHandler");
 const CommunityPost = require("../models/CommunityPost");
+const Reaction = require("../models/CommunityReaction");
+const images = require("../utils/chatImages");
+const mediaStorage = require("../config/cloudinary");
 const CommunityComment = require("../models/CommunityComment");
 const CommunityReport = require("../models/CommunityReport");
 const CommunityModerationLog = require("../models/CommunityModerationLog");
@@ -13,13 +16,39 @@ const User = require("../models/User");
 const CommunitySuspension = require("../models/CommunitySuspension");
 const CommunitySettings = require("../models/CommunitySettings");
 const { findBlockedTerm } = require("../utils/communityTerms");
+const { blockedIds, isBlocked } = require('../utils/userBlocks');
 
 const { COMMUNITY_TOPICS } = CommunityPost;
 const { REPORT_REASONS } = CommunityReport;
+async function removeImage(image) {
+  const storage = mediaStorage;
+  storage.ensureCloudinaryConfigured();
+  const result = await storage.cloudinary.uploader.destroy(image.publicId,
+    { resource_type: 'image', type: 'authenticated', invalidate: true });
+  if (!['ok', 'not found'].includes(result.result)) throw new Error('Image deletion pending');
+}
+async function presentPosts(posts, user) {
+  const ids = posts.map(post => post._id);
+  const [totals, mine] = await Promise.all([
+    Reaction.aggregate([{ $match: { post: { $in: ids } } },
+      { $group: { _id: { post: '$post', reaction: '$reaction' }, count: { $sum: 1 } } }]),
+    Reaction.find({ post: { $in: ids }, user }).select('post reaction').lean(),
+  ]);
+  return posts.map(post => {
+    const reactionCounts = {};
+    for (const row of totals) if (String(row._id.post) === String(post._id)) reactionCounts[row._id.reaction] = row.count;
+    const myReaction = mine.find(row => String(row.post) === String(post._id))?.reaction || null;
+    return { ...post, isAdminPost: post.author?.role === 'admin',
+      imagePath: post.hasImage ? `/community/posts/${post._id}/image` : null,
+      reactionCounts, reactionTotal: Object.values(reactionCounts).reduce((sum, value) => sum + value, 0),
+      myReaction, likedByMe: myReaction === 'like',
+      likeCount: Object.values(reactionCounts).reduce((sum, value) => sum + value, 0) };
+  });
+}
 const STUDENT_POST_FIELDS = "-moderationNote -moderatedBy -reportCount";
 const validId = (value) => typeof value === "string" && mongoose.isValidObjectId(value);
 const populatePost = (query) => query
-  .populate("author", "name avatar").populate("country", "name").populate("university", "name").populate("studyField", "name");
+  .populate({ path: "author", select: "name avatar role linkedUniversity", populate: { path: "linkedUniversity", select: "name logo" } }).populate("country", "name").populate("university", "name").populate("studyField", "name");
 
 // Suspended students can still read, but not post, comment or report.
 async function rejectIfSuspended(req, res) {
@@ -45,7 +74,8 @@ const getMyStatus = asyncHandler(async (req, res) => {
 });
 
 const listPosts = asyncHandler(async (req, res) => {
-  const { topic, country, university, studyField, mine } = req.query;
+  const { topic, country, university, studyField, mine, admin } = req.query;
+  if (admin && admin !== "1" || admin === "1" && mine === "1") return res.status(400).json({ message: "Invalid author filter" });
   if (topic && !COMMUNITY_TOPICS.includes(topic)) return res.status(400).json({ message: "Invalid topic" });
   for (const value of [country, university, studyField]) {
     if (value && !validId(value)) return res.status(400).json({ message: "Invalid filter" });
@@ -53,18 +83,20 @@ const listPosts = asyncHandler(async (req, res) => {
   // "mine" shows the student's own posts in every status, with the moderation
   // note, so a hidden post never silently disappears from its author.
   const query = mine === "1" ? { author: req.user._id } : { status: "published" };
+  if (mine !== '1') query.author = { $nin: await blockedIds(req.user._id) };
+  if (admin === '1') query.author.$in = await User.distinct('_id', { role: 'admin', isActive: true });
   if (topic) query.topic = topic;
   if (country) query.country = country;
   if (university) query.university = university;
   if (studyField) query.studyField = studyField;
   const posts = await populatePost(CommunityPost.find(query).select(mine === "1" ? "-moderatedBy -reportCount" : STUDENT_POST_FIELDS))
     .sort({ createdAt: -1 }).limit(100).lean();
-  res.json(posts);
+  res.json(await presentPosts(posts, req.user._id));
 });
 
 const createPost = asyncHandler(async (req, res) => {
-  const { title, body, topic = "other", country, university, studyField } = req.body;
-  if (typeof title !== "string" || !title.trim() || title.length > 150
+  const { title = "", body, topic = "other", country, university, studyField, operationId } = req.body;
+  if (typeof title !== "string" || title.length > 150
     || typeof body !== "string" || !body.trim() || body.length > 5000
     || !COMMUNITY_TOPICS.includes(topic)
     || (country && !validId(country)) || (university && !validId(university)) || (studyField && !validId(studyField))) {
@@ -77,26 +109,102 @@ const createPost = asyncHandler(async (req, res) => {
   ]);
   if (!countryOk || !universityOk || !fieldOk) return res.status(400).json({ message: "Invalid post" });
   if (await rejectIfSuspended(req, res) || await rejectIfBlocked(res, `${title}\n${body}`)) return;
-  const post = await CommunityPost.create({
-    author: req.user._id, title: title.trim(), body: body.trim(), topic,
-    country: country || undefined, university: university || undefined, studyField: studyField || undefined,
-  });
-  res.status(201).json(await populatePost(CommunityPost.findById(post._id).select(STUDENT_POST_FIELDS)).lean());
+  if (operationId != null && (typeof operationId !== 'string' || !/^[A-Za-z0-9_-]{8,100}$/.test(operationId))) return res.status(400).json({ message: 'Invalid operation' });
+  if (req.file && !operationId) return res.status(400).json({ message: 'Operation required' });
+  if (operationId) {
+    const existing = await CommunityPost.findOne({ author: req.user._id, operationId });
+    if (existing) return res.json((await presentPosts([await populatePost(CommunityPost.findById(existing._id).select(STUDENT_POST_FIELDS)).lean()], req.user._id))[0]);
+  }
+  if (req.file && !['image/jpeg', 'image/png', 'image/webp'].includes(req.file.mimetype)) return res.status(415).json({ message: 'Choose a JPEG, PNG or WebP image' });
+  let image;
+  try {
+    await CommunityPost.init();
+    if (req.file) image = { ...await images.uploadChatImage(req.file, req.user._id), resourceType: 'image', deliveryType: 'authenticated' };
+    let post;
+    try {
+      post = await CommunityPost.create({ author: req.user._id, title: title.trim(), body: body.trim(), topic,
+        country: country || undefined, university: university || undefined, studyField: studyField || undefined,
+        operationId, image, hasImage: !!image });
+    } catch (error) {
+      if (error.code !== 11000 || !operationId) throw error;
+      post = await CommunityPost.findOne({ author: req.user._id, operationId });
+      if (!post) throw error;
+    }
+    const data = await populatePost(CommunityPost.findById(post._id).select(STUDENT_POST_FIELDS)).lean();
+    res.status(201).json((await presentPosts([data], req.user._id))[0]);
+  } finally {
+    try { if (image && !await CommunityPost.exists({ 'image.publicId': image.publicId })) await removeImage(image); }
+    catch (_) { console.warn('Community image cleanup needs retry'); }
+  }
 });
 
 const getPost = asyncHandler(async (req, res) => {
   if (!validId(req.params.id)) return res.status(404).json({ message: "Post not found" });
   const post = await populatePost(CommunityPost.findOne({ _id: req.params.id, status: "published" }).select(STUDENT_POST_FIELDS)).lean();
   if (!post) return res.status(404).json({ message: "Post not found" });
-  const comments = await CommunityComment.find({ post: post._id, status: "published" })
+  if (post.author && await isBlocked(req.user._id, post.author._id)) return res.status(404).json({ message: 'Post not found' });
+  const comments = await CommunityComment.find({ post: post._id, status: "published", author: { $nin: await blockedIds(req.user._id) } })
     .select("-moderationNote -moderatedBy -reportCount").populate("author", "name avatar").sort({ createdAt: 1 }).lean();
-  res.json({ post, comments });
+  res.json({ post: (await presentPosts([post], req.user._id))[0], comments });
+});
+
+const getPostImage = asyncHandler(async (req, res) => {
+  if (!validId(req.params.id)) return res.status(404).json({ message: 'Post unavailable' });
+  const post = await CommunityPost.findById(req.params.id).select('+image');
+  const staff = require('../middleware/employeeAccess').hasSection(req.user, 'community');
+  if (!post || !post.image?.publicId || (!staff && String(post.author) !== String(req.user._id) && post.status !== 'published')
+      || (!staff && await isBlocked(req.user._id, post.author))) return res.status(404).json({ message: 'Image unavailable' });
+  const bytes = await images.readChatImage(post.image);
+  res.set({ 'Content-Type': 'image/jpeg', 'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff' }).send(bytes);
+});
+
+const setReaction = asyncHandler(async (req, res) => {
+  if (!validId(req.params.id)) return res.status(404).json({ message: 'Post unavailable' });
+  const reaction = req.method === 'DELETE' ? null : req.path.endsWith('/like') ? 'like' : req.body.reaction;
+  if (reaction !== null && !Reaction.REACTIONS.includes(reaction)) return res.status(400).json({ message: 'Invalid reaction' });
+  const post = await CommunityPost.findOne({ _id: req.params.id, status: 'published' }).lean();
+  if (!post || await isBlocked(req.user._id, post.author)) return res.status(404).json({ message: 'Post unavailable' });
+  if (await rejectIfSuspended(req, res)) return;
+  await Reaction.init();
+  const filter = { post: post._id, user: req.user._id };
+  if (reaction === null) await Reaction.deleteOne(filter);
+  else {
+    try { await Reaction.findOneAndUpdate(filter, { $set: { reaction } }, { upsert: true, runValidators: true }); }
+    catch (error) { if (error.code !== 11000) throw error; await Reaction.updateOne(filter, { $set: { reaction } }); }
+  }
+  const result = (await presentPosts([post], req.user._id))[0];
+  res.json({ reactionCounts: result.reactionCounts, reactionTotal: result.reactionTotal,
+    myReaction: result.myReaction, liked: result.likedByMe, likeCount: result.likeCount });
+});
+
+const editOwnPost = asyncHandler(async (req, res) => {
+  if (!validId(req.params.id)) return res.status(404).json({ message: 'Post unavailable' });
+  const { title = '', body } = req.body;
+  if (typeof title !== 'string' || title.length > 150 || typeof body !== 'string' || !body.trim() || body.length > 5000) return res.status(400).json({ message: 'Invalid post' });
+  const post = await CommunityPost.findOne({ _id: req.params.id, author: req.user._id });
+  if (!post) return res.status(404).json({ message: 'Post unavailable' });
+  if (await rejectIfSuspended(req, res) || await rejectIfBlocked(res, `${title}\n${body}`)) return;
+  await CommunityPost.updateOne({ _id: post._id, author: req.user._id }, { $set: { title: title.trim(), body: body.trim() } });
+  res.json({ updated: true });
+});
+const editOwnComment = asyncHandler(async (req, res) => {
+  if (!validId(req.params.id)) return res.status(404).json({ message: 'Comment unavailable' });
+  const { body } = req.body;
+  if (typeof body !== 'string' || !body.trim() || body.length > 2000) return res.status(400).json({ message: 'Invalid comment' });
+  const comment = await CommunityComment.findOne({ _id: req.params.id, author: req.user._id });
+  if (!comment || !await CommunityPost.exists({ _id: comment.post, status: 'published' })) return res.status(404).json({ message: 'Comment unavailable' });
+  if (await rejectIfSuspended(req, res) || await rejectIfBlocked(res, body)) return;
+  await CommunityComment.updateOne({ _id: comment._id, author: req.user._id }, { $set: { body: body.trim() } });
+  res.json({ updated: true });
 });
 
 const deleteOwnPost = asyncHandler(async (req, res) => {
   if (!validId(req.params.id)) return res.status(404).json({ message: "Post not found" });
-  const post = await CommunityPost.findOneAndDelete({ _id: req.params.id, author: req.user._id });
+  const post = await CommunityPost.findOne({ _id: req.params.id, author: req.user._id }).select('+image');
   if (!post) return res.status(404).json({ message: "Post not found" });
+  if (post.image?.publicId) await removeImage(post.image);
+  await CommunityPost.deleteOne({ _id: post._id, author: req.user._id });
+  await Reaction.deleteMany({ post: post._id });
   await CommunityComment.deleteMany({ post: post._id });
   await CommunityReport.deleteMany({ post: post._id });
   res.json({ message: "Post deleted" });
@@ -108,6 +216,7 @@ const createComment = asyncHandler(async (req, res) => {
   if (typeof body !== "string" || !body.trim() || body.length > 2000) return res.status(400).json({ message: "Invalid comment" });
   const post = await CommunityPost.findOne({ _id: req.params.id, status: "published" });
   if (!post) return res.status(404).json({ message: "Post not found" });
+  if (await isBlocked(req.user._id, post.author)) return res.status(404).json({ message: 'Post not found' });
   if (await rejectIfSuspended(req, res) || await rejectIfBlocked(res, body)) return;
   const comment = await CommunityComment.create({ post: post._id, author: req.user._id, body: body.trim() });
   await CommunityPost.updateOne({ _id: post._id }, { $inc: { commentCount: 1 } });
@@ -189,7 +298,7 @@ const getPostAdmin = asyncHandler(async (req, res) => {
     CommunityReport.find({ post: post._id }).populate("reporter", "name email").populate("reviewedBy", "name").sort({ createdAt: -1 }).lean(),
     CommunityModerationLog.find({ post: post._id }).populate("actor", "name").sort({ createdAt: -1 }).lean(),
   ]);
-  res.json({ post, comments, reports, log });
+  res.json({ post: (await presentPosts([post], req.user._id))[0], comments, reports, log });
 });
 
 const listReportsAdmin = asyncHandler(async (req, res) => {
@@ -342,6 +451,17 @@ const moderatePost = asyncHandler((req, res) => moderate(req, res, "post"));
 const moderateComment = asyncHandler((req, res) => moderate(req, res, "comment"));
 
 module.exports = {
+  getOverviewAdmin: asyncHandler(async (req, res) => {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [publishedPosts, activeStories, openReports, recentActivity] = await Promise.all([
+      CommunityPost.countDocuments({ status: 'published' }),
+      require('../models/Stories').Story.countDocuments({ expiresAt: { $gt: new Date() } }),
+      CommunityReport.countDocuments({ status: 'open' }),
+      CommunityModerationLog.countDocuments({ createdAt: { $gte: since } }),
+    ]);
+    res.json({ publishedPosts, activeStories, openReports, recentActivity });
+  }),
+  getPostImage, setReaction, editOwnPost, editOwnComment,
   getMyStatus, listPosts, createPost, getPost, deleteOwnPost, createComment, deleteOwnComment, reportPost, reportComment,
   listPostsAdmin, getPostAdmin, listReportsAdmin, listModerationLogAdmin, moderatePost, moderateComment,
   listSuspensionsAdmin, suspendUser, liftSuspension, getSettingsAdmin, updateSettingsAdmin,

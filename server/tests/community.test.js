@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const jwt = require('jsonwebtoken');
 const { MongoMemoryServer } = require(path.join(process.env.STUDY_BIRDS_TEST_TOOLS, 'node_modules/mongodb-memory-server-core'));
 
-test('community posts are student-authored, staff-moderated, and hidden content is never visible to other students', async () => {
+test('community posts support eligible authors and staff moderation, keeping hidden content private', async () => {
   process.env.JWT_SECRET = 'community-isolated-test';
   const mongo = await MongoMemoryServer.create({ instance: { ip: '127.0.0.1' } });
   let server;
@@ -26,10 +26,11 @@ test('community posts are student-authored, staff-moderated, and hidden content 
       const data = await response.json(); assert.equal(response.status, expected, JSON.stringify(data)); return data;
     }
 
-    // Only students can post; staff and unauthenticated requests are refused.
+    // Eligible staff can post too; unauthenticated requests remain refused.
     await call('POST', '/community/posts', null, { title: 'T', body: 'B' }, 401);
-    await call('POST', '/community/posts', moderator, { title: 'T', body: 'B' }, 403);
-    for (const invalid of [{ title: '', body: 'B' }, { title: 'T', body: '' }, { title: 'x'.repeat(151), body: 'B' }]) {
+    const staffPost = await call('POST', '/community/posts', moderator, { title: 'T', body: 'B' }, 201);
+    await call('DELETE', `/community/posts/${staffPost._id}`, moderator);
+    for (const invalid of [{ title: [], body: 'B' }, { title: 'T', body: '' }, { title: 'x'.repeat(151), body: 'B' }]) {
       await call('POST', '/community/posts', author, invalid, 400);
     }
     const created = await call('POST', '/community/posts', author, { title: 'أفضل جامعات تركيا؟', body: 'حدا يعرف يرشحلي جامعة؟' }, 201);
@@ -151,7 +152,7 @@ test('community topics and filters, student reports, audited moderation and auth
     await call('GET', '/admin/community-reports', outsiderStaff, null, 403);
     await call('GET', '/admin/community-moderation-log', outsiderStaff, null, 403);
     await call('GET', `/admin/community-posts/${housing._id}`, outsiderStaff, null, 403);
-    await call('POST', '/community/posts/x/report', moderator, { reason: 'spam' }, 403);
+    await call('POST', '/community/posts/x/report', moderator, { reason: 'spam' }, 404);
 
     // The moderator sees the reported queue with per-post open report counts.
     const openReports = await call('GET', '/admin/community-reports', moderator);

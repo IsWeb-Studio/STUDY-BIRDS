@@ -159,7 +159,7 @@ app.get('/api/mobile/app-config', (req, res) => {
 app.get('/api/mobile/capabilities', (req, res) => {
   const { isMailerConfigured } = require('./utils/mailer');
   const { isPushEnabled } = require('./utils/pushNotifications');
-  res.set('Cache-Control', 'no-store').json({ security: true, email: isMailerConfigured(), messaging: true, push: isPushEnabled(), assistant: require("./routes/assistantRoutes").ready() });
+  res.set('Cache-Control', 'no-store').json({ communityPosts: require('./routes/communityRoutes').capabilities, security: true, email: isMailerConfigured(), messaging: true, push: isPushEnabled(), assistant: require("./routes/assistantRoutes").ready() });
 });
 app.use('/api/mobile-security', requireDatabaseConnection, require('./routes/mobileSecurityRoutes'));
 app.use('/api/mobile-workspace', requireDatabaseConnection, require('./routes/mobileMessagingRoutes'));

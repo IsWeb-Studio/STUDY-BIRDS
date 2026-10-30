@@ -17,7 +17,7 @@ const owned = {
   ServiceRequest: ['student'], Consultation: ['student'], AccommodationBooking: ['student'],
   AgencyRequest: ['student'], SupportTicket: ['user','agent'], VerificationDocument: ['agent'],
   CommunityPost: ['author'], CommunityComment: ['author'], CommunityReport: ['reporter'],
-  CommunitySuspension: ['user'],
+  CommunitySuspension: ['user'], CommunityReaction: ['user'], UserBlock: ['user', 'blocked'],
   ActivityLog: ['user'], SharedReadReceipt: ['readBy'],
 };
 function loadModels() {
@@ -46,6 +46,7 @@ async function processAccountDeletion(id) {
     const posts = await require('../models/CommunityPost').find({ author: id }).select('_id').lean();
     await require('../models/CommunityComment').deleteMany({ post: { $in: posts.map(p => p._id) } });
     await require('../models/CommunityReport').deleteMany({ post: { $in: posts.map(p => p._id) } });
+    await require('../models/CommunityReaction').deleteMany({ post: { $in: posts.map(p => p._id) } });
     const stories = await Story.find({ author: id }).select('_id').lean();
     const applications = await require('../models/Application').find({ student: id }).select('_id').lean();
     await require('../models/MobileWorkspace').Decision.deleteMany({ application: { $in: applications.map(a => a._id) } });
@@ -58,7 +59,7 @@ async function processAccountDeletion(id) {
       if (!model) continue;
       const query = { $or: fields.map(field => ({ [field]: id })) };
       // Queue remote assets before removing records. Retry is idempotent.
-      for await (const row of model.find(query).select('+storage +attachmentStorage').lean().cursor()) await queueRecordMedia(row);
+      for await (const row of model.find(query).select('+storage +attachmentStorage +image').lean().cursor()) await queueRecordMedia(row);
       await model.deleteMany(query);
     }
     for (const story of affectedStories) {
