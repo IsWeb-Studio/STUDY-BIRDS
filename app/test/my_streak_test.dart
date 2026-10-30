@@ -51,6 +51,44 @@ Widget host(Widget body,
       home: Scaffold(body: SingleChildScrollView(child: body)),
     );
 void main() {
+  for (final language in ['ar', 'en']) {
+    for (final gameAccount in [false, true]) {
+      testWidgets(
+          '$language points rules distinguish student rewards from game-account streaks ($gameAccount)',
+          (tester) async {
+        await tester.pumpWidget(host(
+            StreakRulesSheet(
+              timeZone: 'Europe/Istanbul',
+              isGameActivity: gameAccount,
+            ),
+            locale: language));
+        await tester.pumpAndSettle();
+        final ar = language == 'ar';
+        expect(find.text(ar ? 'كيف تجمع النقاط؟' : 'How do you earn points?'),
+            findsOneWidget);
+        expect(
+            find.textContaining(ar
+                ? 'اللايك على ستوريك لا يمنح نقاطًا'
+                : 'Liking your own story earns no points'),
+            findsOneWidget);
+        expect(
+            find.textContaining(
+                ar ? 'بحد أقصى 50 نقطة في اليوم' : 'up to 50 points per day'),
+            findsOneWidget);
+        expect(find.textContaining(ar ? '+300 نقطة' : '+300 bonus points'),
+            gameAccount ? findsNothing : findsOneWidget);
+        expect(
+            find.textContaining(ar
+                ? 'مكافأة الـ10 نقاط الخاصة بحساب الطالب'
+                : '10-point student bonus'),
+            gameAccount ? findsOneWidget : findsNothing);
+        expect(find.byType(GridView), findsNothing);
+        expect(find.byType(StreakRestore), findsNothing);
+        expect(tester.takeException(), isNull);
+        await tester.pumpWidget(const SizedBox());
+      });
+    }
+  }
   test(
       'successful story post returns its server-awarded points and refreshes profile listeners',
       () async {

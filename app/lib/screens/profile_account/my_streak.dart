@@ -295,31 +295,68 @@ class _StreakRulesCard extends StatelessWidget {
     final rules = isGameActivity
         ? (isArabic
             ? [
-                'تُحتسب مشاركة فعلية في لعبة أونلاين مرة واحدة في اليوم؛ اللعب التدريبي أو دون اتصال لا يُحتسب.',
-                'تنتهي السلسلة بعد 36 ساعة من آخر مشاركة، وتبدأ بعدها مهلة استرجاع مدتها 24 ساعة.',
+                'تزيد السلسلة يومًا واحدًا عند المشاركة في جولة أونلاين فعلية، مرة في اليوم حسب $timeZone. فتح اللعبة أو انتظار الغرفة أو التدريب أو اللعب دون اتصال لا يُحتسب.',
+                'تنتهي السلسلة بعد 36 ساعة من آخر مشاركة محتسبة، وتبدأ بعدها مهلة استرجاع مدتها 24 ساعة. انقطاع السلسلة لا يحذف نقاطك.',
                 'لك 3 استرجاعات في الشهر حسب $timeZone. لا ينتقل المتبقي للشهر التالي، وتجديد الرصيد لا يعيد مهلة استرجاع انتهت.',
+                'نشر الستوريات واللايكات لا يمدّد ستريك اللعب. استرجاع السلسلة لا يمنح نقاطًا إضافية.',
               ]
             : [
-                'One real online game participation counts per day; practice or offline play does not count.',
-                'The streak expires 36 hours after your last qualifying game, followed by a 24-hour recovery window.',
+                'Your streak advances once per calendar day in $timeZone through a real online round. Opening the game, waiting in a lobby, practice and offline play do not count.',
+                'The streak expires 36 hours after your last qualifying game, followed by a 24-hour recovery window. Your points remain when a streak breaks.',
                 'You get 3 restores per calendar month in $timeZone. Unused restores do not roll over, and a monthly reset never reopens an expired recovery window.',
+                'Stories and likes do not extend the game streak. Restoring a streak awards no extra points.',
               ])
         : (isArabic
             ? [
-                'ينمو ستريك الطالب عند نشر ستوري: يُحتسب يوم نشاط واحد كحد أقصى في اليوم.',
-                'تنتهي السلسلة بعد 36 ساعة من آخر ستوري، وتبدأ بعدها مهلة استرجاع مدتها 24 ساعة.',
+                'انشر ستوري ليزيد الستريك يومًا واحدًا، مرة في اليوم حسب $timeZone. نشر ستوريات إضافية في اليوم نفسه لا يزيد عدد الأيام.',
+                'تنتهي السلسلة بعد 36 ساعة من آخر ستوري، وتبدأ بعدها مهلة استرجاع مدتها 24 ساعة. انقطاع السلسلة لا يحذف نقاطك.',
                 'لك 3 استرجاعات في الشهر حسب $timeZone. لا ينتقل المتبقي للشهر التالي، وتجديد الرصيد لا يعيد مهلة استرجاع انتهت.',
+                'اللايكات واللعبة لا يمدّدان ستريك الستوريات. استرجاع السلسلة لا يمنح نقاطًا إضافية.',
               ]
             : [
-                'Student story streaks advance from story publishing, at most once per calendar day.',
-                'The streak expires 36 hours after your last story, followed by a 24-hour recovery window.',
+                'Publish a story to advance your streak once per calendar day in $timeZone. Extra stories on the same day do not add more streak days.',
+                'The streak expires 36 hours after your last story, followed by a 24-hour recovery window. Your points remain when a streak breaks.',
                 'You get 3 restores per calendar month in $timeZone. Unused restores do not roll over, and a monthly reset never reopens an expired recovery window.',
+                'Likes and games do not extend your story streak. Restoring a streak awards no extra points.',
               ]);
-    return _RulesPanel(
-      icon: Icons.local_fire_department_outlined,
-      title: isArabic ? 'قواعد الستريك' : 'Streak rules',
-      lines: rules,
-    );
+    final points = isArabic
+        ? [
+            'أول ستوري تنشره يوميًا: +100 نقطة. الستوريات الإضافية في اليوم نفسه لا تمنح نقاط نشر جديدة.',
+            if (!isGameActivity)
+              'كل 7 أيام ستريك: +300 نقطة إضافية، عند الوصول إلى اليوم 7 و14 و21 وهكذا.',
+            if (!isGameActivity)
+              'اللعب أونلاين: +10 نقاط لأول مشاركة مؤهلة يوميًا في جولة بدأت وبها لاعبان حقيقيان على الأقل. فتح اللعبة أو الانتظار أو التدريب أو اللعب دون اتصال لا يمنح هذه النقاط.'
+            else
+              'اللعب أونلاين يحافظ على ستريك اللعب لهذا الحساب، لكنه لا يمنح مكافأة الـ10 نقاط الخاصة بحساب الطالب.',
+            'لايك لستوري شخص آخر: +5 نقاط لأول 10 لايكات يوميًا على ستوريات مختلفة، بحد أقصى 50 نقطة في اليوم.',
+            'استقبال لايك جديد على ستوريك من شخص آخر: +50 نقطة لك.',
+            'اللايك على ستوريك لا يمنح نقاطًا. تكرار اللايك على الستوري نفسه لا يمنح نقاطًا إضافية. يبدأ الحد اليومي من جديد حسب $timeZone.',
+          ]
+        : [
+            'First story each day: +100 points. Extra stories on the same day earn no additional publishing points.',
+            if (!isGameActivity)
+              'Every 7 streak days: +300 bonus points at days 7, 14, 21 and so on.',
+            if (!isGameActivity)
+              'Online play: +10 points for your first qualifying participation each day in a started round with at least two real players. Opening the game, waiting in a lobby, practice and offline play earn none.'
+            else
+              'Online play maintains this account’s game streak, but does not award the 10-point student bonus.',
+            'Like another person’s story: +5 points for your first 10 likes on different stories each day, up to 50 points per day.',
+            'Receive a new like on your story from another person: +50 points for you.',
+            'Liking your own story earns no points. Repeated likes on the same story earn no extra points. Daily limits reset by the calendar day in $timeZone.',
+          ];
+    return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      _RulesPanel(
+        icon: Icons.local_fire_department_outlined,
+        title: isArabic ? 'قواعد الستريك' : 'Streak rules',
+        lines: rules,
+      ),
+      const SizedBox(height: 16),
+      _RulesPanel(
+        icon: Icons.stars_outlined,
+        title: isArabic ? 'كيف تجمع النقاط؟' : 'How do you earn points?',
+        lines: points,
+      ),
+    ]);
   }
 }
 
@@ -349,7 +386,7 @@ class _RulesPanel extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context)
                         .textTheme
-                        .titleSmall
+                        .titleMedium
                         ?.copyWith(fontWeight: FontWeight.w700)),
               ),
             ]),
@@ -366,7 +403,10 @@ class _RulesPanel extends StatelessWidget {
                       const SizedBox(width: 9),
                       Expanded(
                           child: Text(line,
-                              style: Theme.of(context).textTheme.bodySmall)),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodyMedium
+                                  ?.copyWith(height: 1.5))),
                     ],
                   ),
                 )),
