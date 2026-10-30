@@ -10,14 +10,14 @@ class RecognitionsCarousel extends StatelessWidget {
   Widget build(BuildContext context) {
     final fontSize = MediaQuery.textScalerOf(context).scale(14);
     return SizedBox(
-      height: 140 + fontSize * 2.8 + 24,
+      height: 64 + fontSize * 2.8,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         itemCount: recognitions.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 12),
+        separatorBuilder: (_, __) => const SizedBox(width: 10),
         itemBuilder: (context, index) => SizedBox(
-          width: (MediaQuery.sizeOf(context).width * .55).clamp(184.0, 260.0),
+          width: 144,
           child: RecognitionCard(recognition: recognitions[index]),
         ),
       ),
@@ -46,12 +46,12 @@ class RecognitionCard extends StatelessWidget {
         : title;
     const fallback = Center(
         child: Icon(Icons.workspace_premium_outlined,
-            size: 52, color: AppColors.greenInk));
+            size: 36, color: AppColors.greenInk));
     return Material(
       color: Colors.white,
       clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(14),
           side: const BorderSide(color: AppColors.border)),
       child: InkWell(
         key: ValueKey('recognition-${recognition['_id'] ?? caption}'),
@@ -63,45 +63,27 @@ class RecognitionCard extends StatelessWidget {
         child:
             Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           SizedBox(
-              height: 132,
-              child: Stack(fit: StackFit.expand, children: [
-                Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: image.isEmpty
-                        ? fallback
-                        : AppNetworkImage(image,
-                            height: 108,
-                            fit: BoxFit.contain,
-                            errorWidget: fallback)),
-                PositionedDirectional(
-                    top: 8,
-                    end: 8,
-                    child: Tooltip(
-                      message:
-                          ar ? 'شهادة أو اعتراف' : 'Certificate or recognition',
-                      child: Container(
-                        key: const ValueKey('recognition-seal'),
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                            color: Colors.white, shape: BoxShape.circle),
-                        child: const Icon(Icons.verified,
-                            size: 24, color: AppColors.greenInk),
-                      ),
-                    )),
-              ])),
-          const Divider(height: 1, color: AppColors.border),
+            height: 60,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 10, 12, 2),
+              child: image.isEmpty
+                  ? fallback
+                  : AppNetworkImage(image,
+                      height: 48, fit: BoxFit.contain, errorWidget: fallback),
+            ),
+          ),
           Expanded(
               child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             child: Center(
                 child: Text(caption,
                     textAlign: TextAlign.center,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w700,
-                        height: 1.4,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        height: 1.2,
                         color: AppColors.navy))),
           )),
         ]),

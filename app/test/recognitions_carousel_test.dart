@@ -7,7 +7,7 @@ import 'package:study_birds/screens/home_journey/recognitions_carousel.dart';
 void main() {
   for (final language in ['ar', 'en']) {
     testWidgets(
-        '$language recognition cards keep their seal and fit large text on a narrow screen',
+        '$language recognition cards use compact logo cards and fit large text on a narrow screen',
         (tester) async {
       tester.view.physicalSize = const Size(320, 900);
       tester.view.devicePixelRatio = 1;
@@ -28,10 +28,11 @@ void main() {
         ])),
       ));
       await tester.pumpAndSettle();
-      expect(find.byIcon(Icons.verified), findsWidgets);
+      expect(find.byIcon(Icons.verified), findsNothing);
       expect(find.byIcon(Icons.workspace_premium_outlined), findsWidgets);
       expect(tester.getSize(find.byType(RecognitionCard).first).height,
-          greaterThan(200));
+          lessThan(150));
+      expect(tester.getSize(find.byType(RecognitionCard).first).width, 144);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     });
