@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
@@ -16,8 +17,11 @@ class AccommodationScreen extends StatefulWidget {
   State<AccommodationScreen> createState() => _AccommodationScreenState();
 }
 
-class _AccommodationScreenState extends State<AccommodationScreen>
-    with SingleTickerProviderStateMixin {
+class _AccommodationScreenState extends State<AccommodationScreen> with SingleTickerProviderStateMixin, CachedResource<AccommodationScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/accommodation"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   late final TabController _tabs;
   List<dynamic> _listings = [];
   List<dynamic> _bookings = [];
@@ -46,9 +50,9 @@ class _AccommodationScreenState extends State<AccommodationScreen>
       final token = AuthSession.instance.token;
       final results = await Future.wait([
         ApiClient.instance
-            .get('/accommodation/listings', token: token, cached: false),
+            .get('/accommodation/listings', token: token),
         ApiClient.instance
-            .get('/accommodation/bookings/mine', token: token, cached: false),
+            .get('/accommodation/bookings/mine', token: token),
       ]);
       if (!mounted) return;
       setState(() {

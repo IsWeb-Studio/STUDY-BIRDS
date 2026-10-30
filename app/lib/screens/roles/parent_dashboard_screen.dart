@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/services/error_reporter.dart';
@@ -43,7 +44,11 @@ class ParentDashboardScreen extends StatefulWidget {
   State<ParentDashboardScreen> createState() => _ParentDashboardScreenState();
 }
 
-class _ParentDashboardScreenState extends State<ParentDashboardScreen> {
+class _ParentDashboardScreenState extends State<ParentDashboardScreen> with CachedResource<ParentDashboardScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/parents"];
+  @override
+  Future<void> reloadCachedResource() => _loadChildren();
   int _tab = 0; // 0 = overview, 1 = payments, 2 = account
 
   List<dynamic> _children = [];

@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/config/app_theme.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -14,7 +15,11 @@ class ProfileStoryScore extends StatefulWidget {
   State<ProfileStoryScore> createState() => _ProfileStoryScoreState();
 }
 
-class _ProfileStoryScoreState extends State<ProfileStoryScore> {
+class _ProfileStoryScoreState extends State<ProfileStoryScore> with CachedResource<ProfileStoryScore> {
+  @override
+  Iterable<String> get cachedPaths => const ["/stories/progress"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   StoryProgress? _progress;
   bool _loading = false, _failed = false, _opening = false;
   StreamSubscription<DateTime>? _subscription;

@@ -66,7 +66,7 @@ class CommunityRepository {
     };
     final suffix = query.isEmpty ? '' : '?${Uri(queryParameters: query).query}';
     final rows = _rows(await ApiClient.instance
-        .get('/community/posts$suffix', token: _token, cached: false));
+        .get('/community/posts$suffix', token: _token));
     // Older servers may ignore the author filter. Never show ordinary users'
     // posts in this feed, even if an inconsistent response marks them official.
     if (adminOnly) {
@@ -80,7 +80,7 @@ class CommunityRepository {
 
   Future<Map<String, dynamic>> thread(String postId) async {
     final data = await ApiClient.instance
-        .get('/community/posts/$postId', token: _token, cached: false);
+        .get('/community/posts/$postId', token: _token);
     return {
       'post': Map<String, dynamic>.from(Json.rawMap(data['post'])),
       'comments': _rows(data['comments']),

@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import 'my_streak.dart';
 import '../../core/widgets/current_user_avatar.dart';
 import '../../core/widgets/gallery_access.dart';
@@ -44,7 +45,11 @@ class ProfileScreen extends StatefulWidget {
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
-class _ProfileScreenState extends State<ProfileScreen> {
+class _ProfileScreenState extends State<ProfileScreen> with CachedResource<ProfileScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/students/profile"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   Map<String, dynamic>? _profile;
   bool _loading = true;
   String? _error;
@@ -63,7 +68,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      _loading = _profile == null;
       _error = null;
     });
     try {
@@ -798,7 +803,11 @@ class FavoritesScreen extends StatefulWidget {
   State<FavoritesScreen> createState() => _FavoritesScreenState();
 }
 
-class _FavoritesScreenState extends State<FavoritesScreen> {
+class _FavoritesScreenState extends State<FavoritesScreen> with CachedResource<FavoritesScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/students/favorites"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   List<dynamic> _favorites = [];
   bool _loading = true;
   String? _error;

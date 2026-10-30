@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
@@ -27,7 +28,11 @@ class StudentLifeOffersScreen extends StatefulWidget {
       _StudentLifeOffersScreenState();
 }
 
-class _StudentLifeOffersScreenState extends State<StudentLifeOffersScreen> {
+class _StudentLifeOffersScreenState extends State<StudentLifeOffersScreen> with CachedResource<StudentLifeOffersScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/content/upcoming-event","/content/past-events"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   Map<String, dynamic>? _upcoming;
   List<dynamic> _past = [];
   bool _loading = true;
@@ -287,7 +292,11 @@ class AlumniNetworkScreen extends StatefulWidget {
   State<AlumniNetworkScreen> createState() => _AlumniNetworkScreenState();
 }
 
-class _AlumniNetworkScreenState extends State<AlumniNetworkScreen> {
+class _AlumniNetworkScreenState extends State<AlumniNetworkScreen> with CachedResource<AlumniNetworkScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/content/upcoming-event","/content/past-events"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   Map<String, dynamic>? _upcoming;
   List<dynamic> _past = [];
   bool _loading = true;
@@ -533,8 +542,11 @@ class ScholarshipsScreen extends StatefulWidget {
   State<ScholarshipsScreen> createState() => _ScholarshipsScreenState();
 }
 
-class _ScholarshipsScreenState extends State<ScholarshipsScreen>
-    with SingleTickerProviderStateMixin {
+class _ScholarshipsScreenState extends State<ScholarshipsScreen> with SingleTickerProviderStateMixin, CachedResource<ScholarshipsScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/scholarships"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   late final TabController _tabs;
   List<dynamic> _all = [];
   List<dynamic> _mine = [];
@@ -870,7 +882,11 @@ class JobPostsScreen extends StatefulWidget {
   State<JobPostsScreen> createState() => _JobPostsScreenState();
 }
 
-class _JobPostsScreenState extends State<JobPostsScreen> {
+class _JobPostsScreenState extends State<JobPostsScreen> with CachedResource<JobPostsScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/alumni/jobs"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   List<dynamic> _posts = [];
   bool _loading = true;
   String? _error;

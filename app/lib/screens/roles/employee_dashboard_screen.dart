@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/services/error_reporter.dart';
@@ -385,7 +386,11 @@ class EmployeeDashboardScreen extends StatefulWidget {
       _EmployeeDashboardScreenState();
 }
 
-class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> {
+class _EmployeeDashboardScreenState extends State<EmployeeDashboardScreen> with CachedResource<EmployeeDashboardScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/admin/overview","/admin/my-kpis"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   Map<String, dynamic>? _overview;
   bool _loading = true;
   String? _error;

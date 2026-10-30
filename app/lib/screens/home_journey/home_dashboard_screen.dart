@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import 'student_menu.dart';
 export 'student_menu.dart' show showStudentMenu;
 import '../services_support/community_screen.dart';
@@ -56,7 +57,11 @@ class HomeDashboardScreen extends StatefulWidget {
   State<HomeDashboardScreen> createState() => _HomeDashboardScreenState();
 }
 
-class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
+class _HomeDashboardScreenState extends State<HomeDashboardScreen> with CachedResource<HomeDashboardScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/students/overview"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   DashboardOverview? _overview;
   bool _loading = true;
   String? _error;
@@ -101,7 +106,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      _loading = _overview == null;
       _error = null;
     });
     try {
@@ -300,6 +305,7 @@ class _HomeDashboardScreenState extends State<HomeDashboardScreen> {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
+        const CachedDataNotice(paths: ['/students/overview']),
         // ── Hero ──────────────────────────────────────────────────────────────
         Container(
           padding: const EdgeInsets.fromLTRB(16, 14, 16, 34),

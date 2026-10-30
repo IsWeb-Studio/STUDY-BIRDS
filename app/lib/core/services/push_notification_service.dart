@@ -1,3 +1,4 @@
+import 'realtime_sync_service.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'notification_preferences_store.dart';
@@ -67,7 +68,12 @@ class PushNotificationService implements NotificationAccess {
     // the app is open. Without calling display() OneSignal 5.x suppresses it.
     OneSignal.Notifications.addForegroundWillDisplayListener((event) {
       event.preventDefault();
-      if (_deliveryAllowed) event.notification.display();
+      if (_deliveryAllowed) {
+        ApiClient.instance.invalidateResource('/content/notifications');
+        ApiClient.instance.invalidateResource('/students/overview');
+        RealtimeSyncService.instance.forceSync();
+        event.notification.display();
+      }
     });
     _ready = true;
   }

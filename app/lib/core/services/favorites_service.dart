@@ -16,18 +16,23 @@ class FavoritesService {
   static const _keyUniversities = 'favs_universities';
   static const _keyPrograms = 'favs_programs';
 
+  String _scoped(String key) =>
+      '$key:${AuthSession.instance.currentUser?.id ?? 'guest'}';
+
   String? get _token => AuthSession.instance.token;
 
   // ── Local cache helpers ───────────────────────────────────────────────────
 
   Future<Set<String>> _localLoad(String key) async {
+    final scoped = _scoped(key);
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getStringList(key)?.toSet() ?? {};
+    return prefs.getStringList(scoped)?.toSet() ?? {};
   }
 
   Future<void> _localSave(String key, Set<String> ids) async {
+    final scoped = _scoped(key);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(key, ids.toList());
+    await prefs.setStringList(scoped, ids.toList());
   }
 
   /// Parses the server's FavoriteItem list and updates local cache.
@@ -60,9 +65,14 @@ class FavoritesService {
     final key = university ? _keyUniversities : _keyPrograms;
     final set = await _localLoad(key);
     final wasIn = set.contains(id);
+    final owner = AuthSession.instance.currentUser?.id;
 
     // Optimistic local update
-    if (wasIn) { set.remove(id); } else { set.add(id); }
+    if (wasIn) {
+      set.remove(id);
+    } else {
+      set.add(id);
+    }
     await _localSave(key, set);
 
     // Background sync with server
@@ -80,8 +90,18 @@ class FavoritesService {
         // { removed: true } means item was deleted → not a favorite
         // anything else means it was added → is a favorite
         return res['removed'] != true;
-      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/favorites_service.dart:81');
-        // Server error — local optimistic state stands
+      } catch (swallowedError, swallowedStack) {
+        ErrorReporter.swallowed(swallowedError, swallowedStack,
+            'core/services/favorites_service.dart:81');
+        if (AuthSession.instance.currentUser?.id == owner) {
+          if (wasIn) {
+            set.add(id);
+          } else {
+            set.remove(id);
+          }
+          await _localSave(key, set);
+        }
+        rethrow;
       }
     }
     return !wasIn;
@@ -94,8 +114,10 @@ class FavoritesService {
     final token = _token;
     if (token != null) {
       try {
-        final res = await ApiClient.instance.get('/students/favorites', token: token);
+        final res =
+            await ApiClient.instance.get('/students/favorites', token: token);
         final list = Json.list(res);
+        if (token != _token) return <String>{};
         await _cacheFromServerList(list);
         final type = university ? 'university' : 'program';
         return list
@@ -107,7 +129,9 @@ class FavoritesService {
             })
             .where((id) => id.isNotEmpty)
             .toSet();
-      } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'core/services/favorites_service.dart:108');
+      } catch (swallowedError, swallowedStack) {
+        ErrorReporter.swallowed(swallowedError, swallowedStack,
+            'core/services/favorites_service.dart:108');
         // Fall through to local cache
       }
     }
@@ -116,7 +140,7 @@ class FavoritesService {
 
   Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyUniversities);
-    await prefs.remove(_keyPrograms);
+    await prefs.remove(_scoped(_keyUniversities));
+    await prefs.remove(_scoped(_keyPrograms));
   }
 }

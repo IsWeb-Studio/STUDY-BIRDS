@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/document_picker.dart';
 import '../../core/utils/document_eligibility.dart';
 import '../profile_account/passport_scanner_screen.dart';
@@ -328,7 +329,7 @@ class _DocThumb extends StatelessWidget {
     if (isImg && thumbUrl != null && thumbUrl.isNotEmpty) {
       return ClipRRect(
           borderRadius: BorderRadius.circular(10),
-          child: AppNetworkImage(thumbUrl,
+          child: AppNetworkImage(thumbUrl, cacheOnDisk: false,
               width: 40,
               height: 40,
               fit: BoxFit.cover,
@@ -358,7 +359,11 @@ class MyDocumentsScreen extends StatefulWidget {
   State<MyDocumentsScreen> createState() => _MyDocumentsScreenState();
 }
 
-class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
+class _MyDocumentsScreenState extends State<MyDocumentsScreen> with CachedResource<MyDocumentsScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ['/students/documents'];
+  @override
+  Future<void> reloadCachedResource() => _refreshVisible();
   List<dynamic> _docs = [];
   bool _loading = true;
   String? _error;
@@ -498,6 +503,7 @@ class _MyDocumentsScreenState extends State<MyDocumentsScreen> {
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
+      cachedPaths: const ['/students/documents'],
       title: 'مستنداتي',
       actions: [
         const AssistantHelpButton(screen: 'documents'),
@@ -785,6 +791,7 @@ class _DocumentDetailScreenState extends State<DocumentDetailScreen> {
                   : _previewUri != null
                       ? AppNetworkImage(
                           _previewUri.toString(),
+                          cacheOnDisk: false,
                           fit: BoxFit.cover,
                           width: double.infinity,
                           errorWidget: const Center(

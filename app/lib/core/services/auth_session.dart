@@ -115,7 +115,8 @@ class AuthUser {
   final bool emailVerified;
   final String? authProvider;
   final bool hasPassword;
-  bool get needsEmailVerification => !emailVerified &&
+  bool get needsEmailVerification =>
+      !emailVerified &&
       !(authProvider == 'phone' && email.endsWith('@phone.studybirds.net'));
 
   const AuthUser({
@@ -343,6 +344,13 @@ class AuthService {
 class AuthSession extends ChangeNotifier {
   AuthSession._() {
     ApiClient.instance.refreshSession = refreshAccessToken;
+    ApiClient.instance.cacheOwnerForToken = (credential) {
+      final user = currentUser;
+      if (credential != token || user == null) return null;
+      final permissions = [...user.permissions]..sort();
+      return '${user.id}:${user.role.name}:${user.employeeRole ?? ''}:${user.linkedUniversityId ?? ''}:${permissions.join(',')}';
+    };
+    ApiClient.instance.activeCacheOwner = () => token == null ? null : ApiClient.instance.cacheOwnerForToken?.call(token!);
   }
   static final AuthSession instance = AuthSession._();
 
@@ -485,6 +493,8 @@ class AuthSession extends ChangeNotifier {
         await storage.write(key: 'active_session_token', value: legacy);
       }
       await prefs.remove('session_token');
+      await prefs.remove('favs_universities');
+      await prefs.remove('favs_programs');
       for (final key in [
         'sb_overview_cache',
         'sb_apps_cache',
@@ -834,10 +844,19 @@ class AuthSession extends ChangeNotifier {
     final refresh = await storage.read(key: 'refresh_token');
     // Persist retry intent, then erase local credentials before network I/O.
     if (revoke && refresh != null) await _queueRevocation(refresh);
+    await ApiClient.instance.clearPrivateCache();
+    try {
+      PaintingBinding.instance.imageCache.clear();
+      PaintingBinding.instance.imageCache.clearLiveImages();
+    } catch (_) { /* No image binding in headless authentication tests. */ }
     await SecureDataCache.clear(owner);
     await NotificationScheduler.instance.cancelAll();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('session_token');
+    await prefs.remove('favs_universities');
+    await prefs.remove('favs_programs');
+    await prefs.remove('favs_universities:$owner');
+    await prefs.remove('favs_programs:$owner');
     for (final key in [
       'sb_overview_cache',
       'sb_apps_cache',
@@ -913,8 +932,6 @@ Widget getHomeRouteForUser(AuthUser user) {
           child: EmployeeDashboardScreen(user: user));
   }
 }
-
-
 
 /// Maps the string key from the "Who Are You?" screen to a [UserRole] for
 /// comparison against the REAL authenticated role. This claimed value is

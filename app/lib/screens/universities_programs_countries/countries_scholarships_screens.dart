@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
@@ -19,7 +20,11 @@ class CountriesExplorerScreen extends StatefulWidget {
       _CountriesExplorerScreenState();
 }
 
-class _CountriesExplorerScreenState extends State<CountriesExplorerScreen> {
+class _CountriesExplorerScreenState extends State<CountriesExplorerScreen> with CachedResource<CountriesExplorerScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/content/countries","/universities"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   List<dynamic> _countries = [];
   bool _loading = true;
   String? _error;
@@ -89,7 +94,11 @@ class CountryDetailScreen extends StatefulWidget {
   State<CountryDetailScreen> createState() => _CountryDetailScreenState();
 }
 
-class _CountryDetailScreenState extends State<CountryDetailScreen> {
+class _CountryDetailScreenState extends State<CountryDetailScreen> with CachedResource<CountryDetailScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/content/countries","/universities"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   late Map<String, dynamic> _country;
   bool _loading = false;
 
@@ -289,7 +298,11 @@ class ScholarshipsScreen extends StatefulWidget {
   State<ScholarshipsScreen> createState() => _ScholarshipsScreenState();
 }
 
-class _ScholarshipsScreenState extends State<ScholarshipsScreen> {
+class _ScholarshipsScreenState extends State<ScholarshipsScreen> with CachedResource<ScholarshipsScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/scholarships"];
+  @override
+  Future<void> reloadCachedResource() => load();
   List<dynamic> rows = [], entries = [];
   bool loading = true, sending = false;
   String? error;
@@ -309,7 +322,7 @@ class _ScholarshipsScreenState extends State<ScholarshipsScreen> {
         // Scholarship publication is updated by admins outside this session.
         // Always ask the server for the current public list instead of showing
         // a cached response from before the latest publication.
-        ApiClient.instance.get('/scholarships', cached: false),
+        ApiClient.instance.get('/scholarships'),
         if (AuthSession.instance.currentUser?.role == UserRole.student)
           ApiClient.instance
               .get('/scholarships/mine', token: AuthSession.instance.token),

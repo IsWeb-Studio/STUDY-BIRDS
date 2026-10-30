@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'package:flutter/material.dart';
@@ -169,7 +170,11 @@ class CatalogBrowser extends StatefulWidget {
   State<CatalogBrowser> createState() => _CatalogBrowserState();
 }
 
-class _CatalogBrowserState extends State<CatalogBrowser> {
+class _CatalogBrowserState extends State<CatalogBrowser> with CachedResource<CatalogBrowser> {
+  @override
+  Iterable<String> get cachedPaths => const ["/universities","/programs","/content/countries"];
+  @override
+  Future<void> reloadCachedResource() => load();
   final search = TextEditingController();
   List<Map<String, dynamic>> rows = [];
   List<Map<String, dynamic>> countries = [], universityOptions = [];
@@ -201,7 +206,7 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
 
   Future<void> load() async {
     setState(() {
-      loading = true;
+      loading = rows.isEmpty;
       error = null;
     });
     try {
@@ -297,6 +302,7 @@ class _CatalogBrowserState extends State<CatalogBrowser> {
     final filtered =
         filterCatalog(rows, selection, search.text, widget.universities);
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      const CachedDataNotice(paths: ['/universities', '/programs', '/content/countries']),
       Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
           child:
@@ -724,7 +730,7 @@ class _CatalogCard extends StatefulWidget {
 }
 
 class _CatalogCardState extends State<_CatalogCard> {
-  bool _isFav = false;
+  bool _isFav = false, _favoriteBusy = false;
 
   @override
   void initState() {
@@ -742,10 +748,14 @@ class _CatalogCardState extends State<_CatalogCard> {
 
   Future<void> _toggle() async {
     final id = '${widget.row['_id'] ?? ''}';
-    if (id.isEmpty) return;
-    final nowFav = await FavoritesService.instance
-        .toggle(id, university: widget.universities);
-    if (mounted) setState(() => _isFav = nowFav);
+    if (id.isEmpty || _favoriteBusy) return;
+    _favoriteBusy = true;
+    try {
+      final nowFav = await FavoritesService.instance.toggle(id, university: widget.universities);
+      if (mounted) setState(() => _isFav = nowFav);
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(cl('\u062a\u0639\u0630\u0631 \u062d\u0641\u0638 \u0627\u0644\u0645\u0641\u0636\u0644\u0629. \u062d\u0627\u0648\u0644 \u0645\u062c\u062f\u062f\u0627.', 'Could not save favorite. Please retry.'))));
+    } finally { _favoriteBusy = false; }
   }
 
   @override

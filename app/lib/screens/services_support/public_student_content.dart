@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import 'package:flutter/material.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/network/api_client.dart';
@@ -10,12 +11,16 @@ class PublicStudentContentScreen extends StatefulWidget {
   State<PublicStudentContentScreen> createState() => _PublicContentState();
 }
 
-class _PublicContentState extends State<PublicStudentContentScreen> {
+class _PublicContentState extends State<PublicStudentContentScreen> with CachedResource<PublicStudentContentScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/content/site-settings","/content/testimonials"];
+  @override
+  Future<void> reloadCachedResource() => _refreshContent();
+  Future<void> _refreshContent() async { if (mounted) setState(() => _content = _load()); }
   late Future<dynamic> _content;
   Future<dynamic> _load() async {
     final data = await ApiClient.instance.get(
-        widget.offices ? '/content/site-settings' : '/content/testimonials',
-        cached: false);
+        widget.offices ? '/content/site-settings' : '/content/testimonials');
     if (widget.offices
         ? data is! Map
         : !(data is List ||
@@ -38,11 +43,12 @@ class _PublicContentState extends State<PublicStudentContentScreen> {
         ? (ar ? 'مكاتبنا' : 'Our offices')
         : (ar ? 'قصص النجاح' : 'Success stories');
     return AppScaffold(
+        cachedPaths: [widget.offices ? '/content/site-settings' : '/content/testimonials'],
         title: title,
         body: FutureBuilder<dynamic>(
           future: _content,
           builder: (context, snapshot) {
-            if (snapshot.connectionState != ConnectionState.done) {
+            if (snapshot.connectionState != ConnectionState.done && !snapshot.hasData) {
               return const LoadingState();
             }
             if (snapshot.hasError) {

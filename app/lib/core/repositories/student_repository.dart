@@ -180,40 +180,8 @@ class StudentRepository {
 
   Future<dynamic> _loadSnapshot(String resource,
       {bool forceRefresh = false}) async {
-    final owner = AuthSession.instance.currentUser?.id ?? '';
-    final sessionToken = _token;
-    try {
-      final data = await ApiClient.instance.get('/students/$resource',
-          token: sessionToken, cached: !forceRefresh);
-      // A response from the account that just signed out must not refill its cache.
-      if (owner.isNotEmpty &&
-          AuthSession.instance.currentUser?.id == owner &&
-          AuthSession.instance.token != null) {
-        try {
-          await SecureDataCache.write(owner, resource, data as Object);
-        } catch (swallowedError, swallowedStack) {
-          ErrorReporter.swallowed(swallowedError, swallowedStack,
-              'core/repositories/student_repository.dart:166');
-        }
-      }
-      return data;
-    } catch (error) {
-      if (error is ApiException &&
-          error.statusCode < 500 &&
-          error.statusCode != 0) {
-        rethrow;
-      }
-      if (!forceRefresh && AuthSession.instance.currentUser?.id == owner) {
-        try {
-          final cached = await SecureDataCache.read(owner, resource);
-          if (cached != null) return cached;
-        } catch (swallowedError, swallowedStack) {
-          ErrorReporter.swallowed(swallowedError, swallowedStack,
-              'core/repositories/student_repository.dart:175');
-        }
-      }
-      rethrow;
-    }
+    return ApiClient.instance.get('/students/$resource',
+        token: _token, cached: !forceRefresh);
   }
 
   Future<DashboardOverview> getOverview({bool forceRefresh = false}) async =>
@@ -365,7 +333,10 @@ class StudentRepository {
     if (cancellation?.cancelled == true) {
       throw const ApiException(499, 'Upload cancelled');
     }
-    if (existing != null && !(type == 'passport' && passportReview != null && existing['passportReview'] == null)) {
+    if (existing != null &&
+        !(type == 'passport' &&
+            passportReview != null &&
+            existing['passportReview'] == null)) {
       _documentConfirmed({...existing, 'reused': true}, session);
       return {...existing, 'reused': true};
     }
@@ -447,7 +418,7 @@ class StudentRepository {
 
   Future<List<dynamic>> getNotifications() async {
     final data = await ApiClient.instance
-        .get('/content/notifications', token: _token, cached: false);
+        .get('/content/notifications', token: _token);
     return Json.list(data);
   }
 
@@ -561,7 +532,7 @@ class StudentRepository {
 
   Future<List<Map<String, dynamic>>> getSupportTeam() async {
     final data = await ApiClient.instance
-        .get('/students/support-team', token: _token, cached: false);
+        .get('/students/support-team', token: _token);
     return Json.list(data).map(Json.map).toList();
   }
 

@@ -1,3 +1,4 @@
+import 'cached_resource.dart';
 import '../../l10n/l10n.dart';
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
@@ -6,6 +7,7 @@ import '../utils/responsive.dart';
 /// Standard scaffold wrapper: navy app bar, RTL, background color.
 class AppScaffold extends StatelessWidget {
   final String title;
+  final List<String> cachedPaths;
   final Widget body;
   final List<Widget>? actions;
   final Widget? floatingActionButton;
@@ -16,6 +18,7 @@ class AppScaffold extends StatelessWidget {
   const AppScaffold({
     super.key,
     required this.title,
+    this.cachedPaths = const [],
     required this.body,
     this.actions,
     this.floatingActionButton,
@@ -48,7 +51,13 @@ class AppScaffold extends StatelessWidget {
           actions: actions,
         ),
         body: SafeArea(
-          child: MaxWidthBody(child: body),
+          child: MaxWidthBody(
+              child: cachedPaths.isEmpty
+                  ? body
+                  : Column(children: [
+                      CachedDataNotice(paths: cachedPaths),
+                      Expanded(child: body),
+                    ])),
         ),
         floatingActionButton: floatingActionButton,
         bottomNavigationBar: bottomBar,
@@ -56,4 +65,3 @@ class AppScaffold extends StatelessWidget {
     );
   }
 }
-

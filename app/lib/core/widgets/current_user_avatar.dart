@@ -83,9 +83,9 @@ class _CurrentUserAvatarState extends State<CurrentUserAvatar> {
           child: SizedBox.square(
         dimension: widget.radius * 2,
         child: url != null && url.isNotEmpty
-            ? Image.network(url,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _initial(initial))
+            ? AppNetworkImage(url,
+                width: widget.radius * 2, height: widget.radius * 2,
+                fit: BoxFit.cover, errorWidget: _initial(initial))
             : bytes != null
                 ? Image.memory(bytes,
                     fit: BoxFit.cover,

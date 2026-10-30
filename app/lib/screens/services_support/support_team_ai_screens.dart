@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import 'dart:async';
 import '../../core/utils/json_safe.dart';
 import '../../core/network/api_client.dart';
@@ -612,7 +613,11 @@ class MyTeamScreen extends StatefulWidget {
   State<MyTeamScreen> createState() => _MyTeamScreenState();
 }
 
-class _MyTeamScreenState extends State<MyTeamScreen> {
+class _MyTeamScreenState extends State<MyTeamScreen> with CachedResource<MyTeamScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/students/support-team"];
+  @override
+  Future<void> reloadCachedResource() => _load(showLoading: false);
   List<Map<String, dynamic>> _members = [];
   bool _loading = true;
   String? _error;

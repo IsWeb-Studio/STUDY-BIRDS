@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
@@ -26,7 +27,11 @@ class UniversityDashboardScreen extends StatefulWidget {
       _UniversityDashboardScreenState();
 }
 
-class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> {
+class _UniversityDashboardScreenState extends State<UniversityDashboardScreen> with CachedResource<UniversityDashboardScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/university-portal"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   List<dynamic> _all = [];
   List<dynamic> _filtered = [];
   bool _loading = true;

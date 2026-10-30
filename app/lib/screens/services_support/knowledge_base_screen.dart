@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
@@ -29,7 +30,11 @@ class KnowledgeBaseScreen extends StatefulWidget {
   State<KnowledgeBaseScreen> createState() => _KnowledgeBaseScreenState();
 }
 
-class _KnowledgeBaseScreenState extends State<KnowledgeBaseScreen> {
+class _KnowledgeBaseScreenState extends State<KnowledgeBaseScreen> with CachedResource<KnowledgeBaseScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/students/knowledge-base"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   List<dynamic> _items = [];
   bool _loading = true;
   String? _error;
@@ -141,7 +146,11 @@ class ExhibitionsScreen extends StatefulWidget {
   State<ExhibitionsScreen> createState() => _ExhibitionsScreenState();
 }
 
-class _ExhibitionsScreenState extends State<ExhibitionsScreen> {
+class _ExhibitionsScreenState extends State<ExhibitionsScreen> with CachedResource<ExhibitionsScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/content/exhibitions"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   List<dynamic> _items = [];
   bool _loading = true;
   String? _error;

@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import '../../core/widgets/community_reactions.dart';
@@ -102,7 +103,11 @@ class StudentCommunityScreen extends StatefulWidget {
   State<StudentCommunityScreen> createState() => _StudentCommunityScreenState();
 }
 
-class _StudentCommunityScreenState extends State<StudentCommunityScreen> {
+class _StudentCommunityScreenState extends State<StudentCommunityScreen> with CachedResource<StudentCommunityScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ['/community'];
+  @override
+  Future<void> reloadCachedResource() => load();
   final repo = CommunityRepository.instance;
   List<Map<String, dynamic>> posts = [];
   List<Map<String, dynamic>> countries = [], universities = [], fields = [];
@@ -154,7 +159,7 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen> {
   Future<void> load() async {
     final version = ++_loadVersion;
     setState(() {
-      loading = true;
+      loading = posts.isEmpty;
       error = null;
     });
     try {

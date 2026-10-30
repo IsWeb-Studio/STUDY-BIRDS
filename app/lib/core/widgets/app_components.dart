@@ -1,3 +1,4 @@
+import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import '../config/app_theme.dart';
@@ -44,7 +45,11 @@ class AppCard extends StatelessWidget {
 /// Drop-in replacement for Image.network with persistent disk caching.
 /// Avoids re-downloading the same image on every widget rebuild.
 class AppNetworkImage extends StatelessWidget {
+  static final publicCache = CacheManager(Config('covey_public_images_v2',
+      stalePeriod: const Duration(days: 7), maxNrOfCacheObjects: 180));
+  static Future<void> clearDownloadedImages() => publicCache.emptyCache();
   final String url;
+  final bool cacheOnDisk;
   final double? width;
   final double? height;
   final BoxFit fit;
@@ -55,18 +60,32 @@ class AppNetworkImage extends StatelessWidget {
     super.key,
     this.width,
     this.height,
+    this.cacheOnDisk = true,
     this.fit = BoxFit.cover,
     this.errorWidget,
   });
 
   @override
   Widget build(BuildContext context) {
+    final uri = Uri.tryParse(url);
+    final restricted = !cacheOnDisk || uri?.host == 'api.cloudinary.com' ||
+        RegExp(r'/(authenticated|private)/').hasMatch(uri?.path ?? '') ||
+        (uri?.queryParameters.keys.any((k) => k.contains('signature') || k == '__cld_token__') ?? false);
+    if (restricted) {
+      return Image.network(url, width: width, height: height, fit: fit,
+        cacheWidth: width != null && width!.isFinite ? (width! * MediaQuery.devicePixelRatioOf(context)).ceil() : 900,
+        errorBuilder: (_, __, ___) => errorWidget ?? const Icon(Icons.broken_image_outlined));
+    }
     return CachedNetworkImage(
       imageUrl: url,
+      cacheManager: publicCache,
       // Decode at roughly the displayed size, not the full camera resolution.
       memCacheWidth: (width != null && width!.isFinite)
           ? (width! * MediaQuery.devicePixelRatioOf(context)).round()
           : 900,
+      maxWidthDiskCache: width != null && width!.isFinite
+          ? (width! * MediaQuery.devicePixelRatioOf(context)).ceil()
+          : 1200,
       width: width,
       height: height,
       fit: fit,
@@ -150,8 +169,8 @@ class PrimaryButton extends StatelessWidget {
     final button = ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.green,
-          foregroundColor: AppColors.navy,
+        backgroundColor: AppColors.green,
+        foregroundColor: AppColors.navy,
         minimumSize: const Size(48, 48),
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
         shape: RoundedRectangleBorder(

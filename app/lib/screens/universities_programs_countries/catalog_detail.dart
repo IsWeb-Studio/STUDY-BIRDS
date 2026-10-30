@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/feature_ui.dart';
@@ -51,7 +52,11 @@ class CatalogDetailPage extends StatefulWidget {
   State<CatalogDetailPage> createState() => _CatalogDetailPageState();
 }
 
-class _CatalogDetailPageState extends State<CatalogDetailPage> {
+class _CatalogDetailPageState extends State<CatalogDetailPage> with CachedResource<CatalogDetailPage> {
+  @override
+  Iterable<String> get cachedPaths => const ["/universities","/programs"];
+  @override
+  Future<void> reloadCachedResource() => load();
   Map<String, dynamic>? data;
   bool loading = true, favorite = false, savingFavorite = false;
   String? error;
@@ -65,7 +70,7 @@ class _CatalogDetailPageState extends State<CatalogDetailPage> {
 
   Future<void> load() async {
     setState(() {
-      loading = true;
+      loading = data == null;
       error = null;
     });
     try {

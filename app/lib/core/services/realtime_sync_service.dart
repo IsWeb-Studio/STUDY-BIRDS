@@ -2,13 +2,12 @@ import 'dart:async';
 import 'package:flutter/widgets.dart';
 
 import 'connectivity_service.dart';
-import '../network/api_client.dart';
 
 /// Lightweight foreground-only polling bus.
 /// Screens subscribe to [onTick] and refresh their data when called.
 /// Polling pauses automatically when the app goes to background.
 ///
-/// Foreground data sync polls every ten seconds.
+/// Foreground data sync polls every thirty seconds.
 /// True WebSocket is intentionally deferred — the Render.com server does not
 /// expose a WS endpoint and the polling approach satisfies all current use cases
 /// (dashboard KPIs, notifications badge, journey stage updates).
@@ -16,12 +15,12 @@ class RealtimeSyncService with WidgetsBindingObserver {
   RealtimeSyncService._();
   static final RealtimeSyncService instance = RealtimeSyncService._();
 
-  static const _interval = Duration(seconds: 10);
+  static const _interval = Duration(seconds: 30);
 
   Timer? _timer;
   final _controller = StreamController<DateTime>.broadcast();
 
-  /// Subscribe to receive a tick every ten seconds while foregrounded.
+  /// Subscribe to receive a tick every thirty seconds while foregrounded.
   Stream<DateTime> get onTick => _controller.stream;
 
   StreamSubscription<void>? _reconnectSub;
@@ -33,8 +32,8 @@ class RealtimeSyncService with WidgetsBindingObserver {
     _started = true;
     WidgetsBinding.instance.addObserver(this);
     // Refresh subscribed screens once when verified connectivity returns.
-    _reconnectSub = ConnectivityService.instance.onReconnected
-        .listen((_) => forceSync());
+    _reconnectSub =
+        ConnectivityService.instance.onReconnected.listen((_) => forceSync());
     _startTimer();
   }
 
@@ -52,7 +51,6 @@ class RealtimeSyncService with WidgetsBindingObserver {
   /// Manually trigger a tick (e.g. after a user action that should immediately
   /// refresh all subscribed screens).
   void forceSync() {
-    ApiClient.instance.clearCache();
     _controller.add(DateTime.now());
   }
 

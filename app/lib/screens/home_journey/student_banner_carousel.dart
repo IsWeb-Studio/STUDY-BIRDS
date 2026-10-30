@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
@@ -30,8 +31,11 @@ class StudentBannerCarousel extends StatefulWidget {
   State<StudentBannerCarousel> createState() => _StudentBannerCarouselState();
 }
 
-class _StudentBannerCarouselState extends State<StudentBannerCarousel>
-    with WidgetsBindingObserver {
+class _StudentBannerCarouselState extends State<StudentBannerCarousel> with WidgetsBindingObserver, CachedResource<StudentBannerCarousel> {
+  @override
+  Iterable<String> get cachedPaths => const ["/content/banners"];
+  @override
+  Future<void> reloadCachedResource() => _loadBanners();
   final _pages = PageController();
   Timer? _timer;
   int _index = 0;
@@ -93,7 +97,7 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
   Future<void> _loadBanners() async {
     try {
       final raw =
-          await ApiClient.instance.get('/content/banners', cached: false);
+          await ApiClient.instance.get('/content/banners');
       final list = Json.list(raw);
       if (list.isEmpty) return;
       final slides = list
@@ -287,12 +291,10 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
   Widget _buildBg(_BannerSlide slide, String localImg) {
     final url = slide.imageUrl ?? '';
     if (url.isNotEmpty) {
-      return Image.network(
+      return AppNetworkImage(
         url,
-        cacheWidth: 900,
         fit: BoxFit.cover,
-        excludeFromSemantics: true,
-        errorBuilder: (_, __, ___) => Image.asset(
+        errorWidget: Image.asset(
           'assets/images/dashboard/$localImg.jpg',
           cacheWidth: 900,
           fit: BoxFit.cover,

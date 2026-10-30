@@ -1,3 +1,4 @@
+import '../../core/widgets/clear_cache_tile.dart';
 import '../../core/widgets/app_notice.dart';
 import '../../core/widgets/privacy_links.dart';
 import '../../core/widgets/analytics_consent_tile.dart';
@@ -39,6 +40,7 @@ class _SecuritySettingsScreenState extends State<SecuritySettingsScreen> {
             onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
                 builder: (_) => const DeleteAccountScreen())),
           ),
+          const ClearCacheTile(),
           const SecurityIntro(
               title: 'حسابك تحت سيطرتك',
               subtitle: 'راجع وسائل حماية حسابك وحافظ على خصوصية بياناتك.',

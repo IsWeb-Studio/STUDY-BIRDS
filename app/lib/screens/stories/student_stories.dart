@@ -562,8 +562,8 @@ class _StoryAvatar extends StatelessWidget {
                 style: const TextStyle(fontSize: 23, color: AppColors.navy))));
     return url.isEmpty
         ? fallback
-        : Image.network(url,
-            fit: BoxFit.cover, errorBuilder: (_, __, ___) => fallback);
+        : AppNetworkImage(url, width: 66, height: 66,
+            fit: BoxFit.cover, errorWidget: fallback);
   }
 }
 

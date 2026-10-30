@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../ai/assistant_help_button.dart';
 import '../../core/services/error_reporter.dart';
@@ -83,7 +84,13 @@ class ApplicationsListScreen extends StatefulWidget {
 }
 
 class _ApplicationsListScreenState extends State<ApplicationsListScreen>
-    with SingleTickerProviderStateMixin {
+    with
+        SingleTickerProviderStateMixin,
+        CachedResource<ApplicationsListScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/students/applications"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   List<dynamic> _apps = [];
   bool _loading = true;
   String? _error;
@@ -114,7 +121,7 @@ class _ApplicationsListScreenState extends State<ApplicationsListScreen>
 
   Future<void> _load() async {
     setState(() {
-      _loading = true;
+      _loading = _apps.isEmpty;
       _error = null;
     });
     try {
@@ -138,6 +145,7 @@ class _ApplicationsListScreenState extends State<ApplicationsListScreen>
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
+      cachedPaths: const ['/students/applications'],
       title: 'طلباتي',
       actions: const [AssistantHelpButton(screen: 'applications')],
       body: Column(
@@ -439,7 +447,12 @@ class ApplicationDetailScreen extends StatefulWidget {
       _ApplicationDetailScreenState();
 }
 
-class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
+class _ApplicationDetailScreenState extends State<ApplicationDetailScreen>
+    with CachedResource<ApplicationDetailScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ['/applications'];
+  @override
+  Future<void> reloadCachedResource() => _refresh(force: false);
   StreamSubscription<DateTime>? _syncSub;
   bool _refreshing = false;
   Object? _loadError;
@@ -448,11 +461,13 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _syncSub = RealtimeSyncService.instance.onTick.listen((_) => _refresh());
-    _refresh();
+    _syncSub = RealtimeSyncService.instance.onTick.listen((_) {
+      if (mounted && (ModalRoute.isCurrentOf(context) ?? true)) _refresh();
+    });
+    _refresh(force: false);
   }
 
-  Future<void> _refresh() async {
+  Future<void> _refresh({bool force = true}) async {
     if (_refreshing) return;
     final id = widget.applicationId ?? widget.application['_id'];
     if (id == null) return;
@@ -462,7 +477,7 @@ class _ApplicationDetailScreenState extends State<ApplicationDetailScreen> {
     });
     try {
       final data = await ApiClient.instance.get('/applications/$id',
-          token: AuthSession.instance.token, cached: false);
+          token: AuthSession.instance.token, cached: !force);
       if (data is! Map<String, dynamic> || data.isEmpty) {
         throw const ApiException(502, 'Invalid application response');
       }

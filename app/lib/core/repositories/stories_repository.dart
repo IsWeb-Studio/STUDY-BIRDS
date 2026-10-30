@@ -162,7 +162,7 @@ class StoriesRepository {
           cached: false));
   Future<StoryProgress> progress() async =>
       StoryProgress.fromJson(Map<String, dynamic>.from(
-          await _api.get('/stories/progress', token: _token, cached: false)));
+          await _api.get('/stories/progress', token: _token)));
   Future<StoryProgress> setScoreEmoji(String emoji) async =>
       StoryProgress.fromJson(Map<String, dynamic>.from(await _api.put(
           '/stories/preferences',

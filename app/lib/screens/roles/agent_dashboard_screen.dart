@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/utils/responsive.dart';
 import '../../core/services/error_reporter.dart';
@@ -46,7 +47,11 @@ class AgentDashboardScreen extends StatefulWidget {
   State<AgentDashboardScreen> createState() => _AgentDashboardScreenState();
 }
 
-class _AgentDashboardScreenState extends State<AgentDashboardScreen> {
+class _AgentDashboardScreenState extends State<AgentDashboardScreen> with CachedResource<AgentDashboardScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/partners/overview"];
+  @override
+  Future<void> reloadCachedResource() => _load();
   Map<String, dynamic>? _overview;
   List<dynamic> _students = [];
   List<dynamic> _filtered = [];

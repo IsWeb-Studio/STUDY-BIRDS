@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import 'dart:async';
@@ -275,7 +276,11 @@ class NotificationInboxButton extends StatelessWidget {
       );
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> {
+class _NotificationsScreenState extends State<NotificationsScreen> with CachedResource<NotificationsScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ['/content/notifications'];
+  @override
+  Future<void> reloadCachedResource() => _refreshVisible();
   List<dynamic> _notifications = [];
   bool _loading = true;
   String? _error;

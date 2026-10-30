@@ -1,3 +1,4 @@
+import '../../core/widgets/cached_resource.dart';
 import '../../core/utils/json_safe.dart';
 import '../../core/services/error_reporter.dart';
 import '../../core/widgets/app_notice.dart';
@@ -358,7 +359,11 @@ class MyServiceRequestsScreen extends StatefulWidget {
       _MyServiceRequestsScreenState();
 }
 
-class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> {
+class _MyServiceRequestsScreenState extends State<MyServiceRequestsScreen> with CachedResource<MyServiceRequestsScreen> {
+  @override
+  Iterable<String> get cachedPaths => const ["/service-requests/mine"];
+  @override
+  Future<void> reloadCachedResource() => _refresh();
   late Future<List<dynamic>> _future;
 
   @override

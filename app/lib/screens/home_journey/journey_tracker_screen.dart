@@ -195,7 +195,7 @@ class _LiveJourneyScreenState extends State<LiveJourneyScreen> with WidgetsBindi
 
   Future<void> _load() async {
     try {
-      final overview = await StudentRepository.instance.getOverview(forceRefresh: true);
+      final overview = await StudentRepository.instance.getOverview(forceRefresh: _overview != null);
       if (!mounted) return;
       setState(() {
         _overview = overview;

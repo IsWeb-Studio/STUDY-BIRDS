@@ -229,11 +229,9 @@ class _ServicePhotoCard extends StatelessWidget {
           child: Stack(children: [
             Positioned.fill(
                 child: hasRemote
-                    ? Image.network(remote,
-                        cacheWidth: 900,
+                    ? AppNetworkImage(remote,
                         fit: BoxFit.cover,
-                        excludeFromSemantics: true,
-                        errorBuilder: (_, __, ___) => Image.asset(photo,
+                        errorWidget: Image.asset(photo,
                             cacheWidth: 900, fit: BoxFit.cover))
                     : Image.asset(photo,
                         cacheWidth: 900,

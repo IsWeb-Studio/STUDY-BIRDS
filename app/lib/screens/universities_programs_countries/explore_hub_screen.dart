@@ -216,8 +216,12 @@ class _FavoritesScreenState extends State<FavoritesScreen>
   }
 
   Future<void> _removeFav(String id, bool isUniversity) async {
-    await FavoritesService.instance.toggle(id, university: isUniversity);
-    await _load();
+    try {
+      await FavoritesService.instance.toggle(id, university: isUniversity);
+      await _load();
+    } catch (_) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not save favorite. Please retry.')));
+    }
   }
 
   @override
