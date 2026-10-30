@@ -822,6 +822,7 @@ class _CommunityComposeScreenState extends State<CommunityComposeScreen> {
   String topic = 'experience';
   String? country, university, studyField, error;
   bool busy = false, picking = false;
+  bool _bodyTouched = false;
   Uint8List? _image;
   String? _imageName;
   String _operation = ApiClient.newOperationId();
@@ -873,6 +874,11 @@ class _CommunityComposeScreenState extends State<CommunityComposeScreen> {
   }
 
   Future<void> submit() async {
+    if (busy) return;
+    if (!ready) {
+      setState(() => _bodyTouched = true);
+      return;
+    }
     if (busy || !await requireCommunityTerms(context) || !mounted) return;
     if (busy || !ready) return;
     setState(() {
@@ -928,14 +934,33 @@ class _CommunityComposeScreenState extends State<CommunityComposeScreen> {
                     labelText: _communityText(
                         context, 'العنوان (اختياري)', 'Title (optional)'))),
             TextField(
+                key: const ValueKey('community-post-body'),
                 controller: body,
                 enabled: !busy,
                 maxLength: 5000,
                 minLines: 4,
                 maxLines: 8,
-                onChanged: (_) => _changed(() {}),
+                onChanged: (_) => _changed(() => _bodyTouched = true),
                 decoration: InputDecoration(
-                    labelText: _communityText(context, 'النص', 'Text'))),
+                    label: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Text(_communityText(context, 'النص', 'Text')),
+                      const SizedBox(width: 6),
+                      Text(_communityText(context, '* إجباري', '* Required'),
+                          key: const ValueKey('community-body-required'),
+                          style: const TextStyle(color: AppColors.danger)),
+                    ]),
+                    helperText: _communityText(
+                        context,
+                        'اكتب نص المنشور لتفعيل زر النشر.',
+                        'Write your post to enable Publish.'),
+                    helperMaxLines: 2,
+                    errorText: _bodyTouched && !ready
+                        ? _communityText(
+                            context,
+                            'نص المنشور إجباري ولا يمكن أن يكون مسافات فقط.',
+                            'Post text is required and cannot contain only spaces.')
+                        : null,
+                    errorMaxLines: 2)),
             if (_image != null)
               Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -966,7 +991,11 @@ class _CommunityComposeScreenState extends State<CommunityComposeScreen> {
               isExpanded: true,
               initialValue: topic,
               decoration: InputDecoration(
-                  labelText: _communityText(context, 'التصنيف', 'Topic')),
+                  labelText: _communityText(context, 'التصنيف', 'Topic'),
+                  helperText: _communityText(
+                      context,
+                      'محدد مسبقًا، ويمكنك تغييره.',
+                      'Preselected; you can change it.')),
               items: [
                 for (final entry in CommunityRepository.topicLabels(
                         arabic: _isArabic(context))
