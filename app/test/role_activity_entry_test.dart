@@ -79,7 +79,7 @@ void main() {
       expect(find.byKey(const ValueKey('parent-my-streak-parent-1')),
           findsOneWidget);
       expect(find.byKey(const ValueKey('parent-wink-game')), findsOneWidget);
-      expect(find.text('Start a new streak by playing online'), findsOneWidget);
+      expect(find.text('Start a new streak by playing online'), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     },
@@ -114,7 +114,7 @@ void main() {
 
       expect(find.byKey(const ValueKey('employee-my-streak-employee-1')),
           findsOneWidget);
-      expect(find.text('Start a new streak by playing online'), findsOneWidget);
+      expect(find.text('Start a new streak by playing online'), findsNothing);
       final appBar = find.byType(AppBar);
       expect(find.descendant(of: appBar, matching: find.byType(BackButton)),
           findsNothing);

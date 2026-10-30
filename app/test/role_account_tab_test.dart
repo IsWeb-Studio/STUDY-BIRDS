@@ -56,9 +56,8 @@ void main() {
         expect(find.byKey(const ValueKey('role-account-wink-game')),
             role == UserRole.agent ? findsNothing : findsOneWidget);
         if (role != UserRole.agent) {
-          expect(find.text('7'), findsOneWidget,
-              reason: 'The account page must show its own live streak count.');
-          expect(find.text('1,234 points'), findsOneWidget,
+          expect(find.text('7'), findsNothing, reason: 'The activity dashboard is hidden.');
+          expect(find.text('1,234 points'), findsNothing,
               reason:
                   'The account must display the server-owned point balance.');
         }
@@ -159,38 +158,9 @@ void main() {
       ));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 80));
-      expect(find.text('7'), findsOneWidget);
-
-      await tester.ensureVisible(
-          find.byKey(const ValueKey('role-account-streak-admin-streak-rules')));
-      await tester.tap(
-          find.byKey(const ValueKey('role-account-streak-admin-streak-rules')));
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 350));
-      await tester.scrollUntilVisible(find.text('Streak rules'), 300,
-          scrollable: find.byType(Scrollable).last);
-
-      expect(
-          find.textContaining(
-              'One real online game participation counts per day; practice or offline play does not count.'),
-          findsOneWidget);
-      expect(
-          find.textContaining(
-              'The streak expires 36 hours after your last qualifying game, followed by a 24-hour recovery window.'),
-          findsOneWidget);
-      await tester.scrollUntilVisible(
-          find.text('My points and how they count'), 300,
-          scrollable: find.byType(Scrollable).last);
-      expect(
-          find.textContaining(
-              'Stories earn points but do not advance your game streak'),
-          findsOneWidget);
-      expect(find.textContaining('Your first story each day earns 100 points.'),
-          findsOneWidget);
-      await tester.scrollUntilVisible(
-          find.text('3 of 3 restores left this month'), 300,
-          scrollable: find.byType(Scrollable).last);
-      expect(find.text('3 of 3 restores left this month'), findsOneWidget);
+      expect(find.text('7'), findsNothing);
+      expect(find.text('My Streak'), findsNothing);
+      expect(find.text('My points and how they count'), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     },

@@ -113,7 +113,7 @@ void main() {
           .pumpWidget(host(MyStreakCard(load: () async => snapshot('empty'))));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 20));
-      expect(find.text('Start a new streak by playing online'), findsOneWidget);
+      expect(find.text('Start a new streak by playing online'), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     });
@@ -193,25 +193,13 @@ void main() {
               dark: dark,
               scale: 1.8));
           await tester.pumpAndSettle();
-          expect(find.text(locale == 'ar' ? 'أطول سلسلة' : 'Longest streak'),
-              findsOneWidget);
-          final rulesTitle = locale == 'ar' ? 'قواعد الستريك' : 'Streak rules';
-          final pointsTitle = locale == 'ar'
-              ? 'نقاطي وقواعد احتسابها'
-              : 'My points and how they count';
-          final scrollable = find.byType(Scrollable).last;
-          await tester.scrollUntilVisible(find.text(rulesTitle), 240,
-              scrollable: scrollable);
-          expect(find.text(locale == 'ar' ? 'قواعد الستريك' : 'Streak rules'),
-              findsOneWidget);
-          await tester.scrollUntilVisible(find.text(pointsTitle), 240,
-              scrollable: scrollable);
-          expect(find.text(pointsTitle), findsOneWidget);
           expect(
-              find.textContaining(locale == 'ar'
-                  ? 'أول ستوري في اليوم يمنحك 100 نقطة'
-                  : 'Your first story each day earns 100 points'),
+              find.text(locale == 'ar'
+                  ? '\u0642\u0648\u0627\u0639\u062f \u0627\u0644\u0633\u062a\u0631\u064a\u0643'
+                  : 'Streak rules'),
               findsOneWidget);
+          expect(find.byType(GridView), findsNothing);
+          expect(find.byType(StreakRestore), findsNothing);
           expect(tester.takeException(), isNull);
           await tester.pumpWidget(const SizedBox());
         });

@@ -95,7 +95,7 @@ void main() {
       final entry = find.byKey(const ValueKey('university-wink-game'));
       expect(find.byKey(const ValueKey('university-my-streak-university-1')),
           findsOneWidget);
-      expect(find.text('Start a new streak by playing online'), findsOneWidget);
+      expect(find.text('Start a new streak by playing online'), findsNothing);
       await tester.ensureVisible(entry);
       expect(entry, findsOneWidget);
       await tester.tap(entry);

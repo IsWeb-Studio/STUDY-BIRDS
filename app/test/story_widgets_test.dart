@@ -7,7 +7,8 @@ import 'package:study_birds/core/services/auth_session.dart';
 import 'package:study_birds/screens/stories/student_stories.dart';
 
 void main() {
-  testWidgets('achievement ring keeps its brand color when viewing ring becomes grey',
+  testWidgets(
+      'achievement ring keeps its brand color when viewing ring becomes grey',
       (tester) async {
     Future<void> render(bool seen, int points) => tester.pumpWidget(MaterialApp(
         home: Scaffold(
@@ -62,14 +63,11 @@ void main() {
                     points: 12000, days: 8, loves: 10, posted: true),
                 onPost: () {}))));
     expect(
-        tester
-            .widget<LinearProgressIndicator>(
-                find.byType(LinearProgressIndicator))
-            .value,
-        1);
-    expect(find.text('12000 / 10,000'), findsOneWidget);
-    expect(find.text('✓'), findsOneWidget);
-    expect(find.text('10 / 10'), findsOneWidget);
+        find.text(
+            '\u0642\u0648\u0627\u0639\u062f \u0627\u0644\u0633\u062a\u0631\u064a\u0643'),
+        findsOneWidget);
+    expect(find.byType(LinearProgressIndicator), findsNothing);
+    expect(find.text('12000 / 10,000'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 

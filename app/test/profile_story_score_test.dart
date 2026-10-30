@@ -54,8 +54,10 @@ void main() {
       await tester.tap(find.byType(ProfileStoryScore));
       await tester.pumpAndSettle();
       expect(find.byType(StoryProgressSheet), findsOneWidget);
-      expect(find.text('6500 / 10,000'), findsOneWidget);
-      expect(find.text('Points and activity'), findsOneWidget);
+      expect(find.text('6500 / 10,000'), findsNothing);
+      expect(find.text('Streak rules'), findsOneWidget);
+      expect(find.text('My Streak'), findsNothing);
+      expect(find.byType(GridView), findsNothing);
       expect(find.byType(OutlinedButton), findsNothing);
       expect(writes, isEmpty);
       expect(tester.takeException(), isNull);

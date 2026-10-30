@@ -1,5 +1,5 @@
+import '../profile_account/my_streak.dart';
 import '../../core/config/app_theme.dart';
-import '../../core/widgets/bird_points.dart';
 import '../../core/widgets/community_terms.dart';
 import '../../core/widgets/gallery_access.dart';
 import '../../core/widgets/current_user_avatar.dart';
@@ -567,158 +567,17 @@ class _StoryAvatar extends StatelessWidget {
   }
 }
 
-class StoryProgressSheet extends StatefulWidget {
+class StoryProgressSheet extends StatelessWidget {
   final StoryProgress progress;
   final VoidCallback onPost;
   const StoryProgressSheet(
       {super.key, required this.progress, required this.onPost});
   @override
-  State<StoryProgressSheet> createState() => _StoryProgressSheetState();
-}
-
-class _StoryProgressSheetState extends State<StoryProgressSheet> {
-  @override
-  Widget build(BuildContext context) {
-    final p = widget.progress;
-    final isStudent =
-        AuthSession.instance.currentUser?.role == UserRole.student;
-    return SafeArea(
-        child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-            child: Column(mainAxisSize: MainAxisSize.min, children: [
-              Text(_storyText(context, 'إنجازات النقاط', 'Points and activity'),
-                  style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 22),
-              Text(
-                  p.points >= 200000
-                      ? _storyText(context, 'فتحت شارة الإنجاز الزرقاء ✓',
-                          'Blue achievement badge unlocked ✓')
-                      : p.points >= 100000
-                          ? _storyText(context, 'فتحت الحلقة البنفسجية 💜',
-                              'Purple ring unlocked 💜')
-                          : p.points >= 10000
-                              ? _storyText(context, 'فتحت الحلقة البرتقالية 🟠',
-                                  'Orange ring unlocked 🟠')
-                              : _storyText(
-                                  context,
-                                  'اجمع 10,000 لفتح الحلقة البرتقالية',
-                                  'Earn 10,000 points to unlock the orange ring'),
-                  textAlign: TextAlign.center),
-              const SizedBox(height: 12),
-              LinearProgressIndicator(
-                  value: (p.points / 10000).clamp(0.0, 1.0),
-                  minHeight: 10,
-                  borderRadius: BorderRadius.circular(10),
-                  color: AppColors.greenInk),
-              const SizedBox(height: 10),
-              BirdPoints('${p.points} / 10,000',
-                  style: const TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 18),
-              if (p.points >= 10000)
-                Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: Column(mainAxisSize: MainAxisSize.min, children: [
-                      if (p.points < 200000)
-                        BirdPoints(
-                            '${p.points} / ${p.points >= 100000 ? '200,000' : '100,000'}'),
-                      Text(
-                          p.points >= 200000
-                              ? _storyText(
-                                  context,
-                                  'شارة إنجاز شكلية للمميزين بالنقاط',
-                                  'A special badge for top point earners')
-                              : p.points >= 100000
-                                  ? _storyText(
-                                      context,
-                                      'الشارة الشكلية القادمة',
-                                      'Next: the special badge')
-                                  : _storyText(
-                                      context,
-                                      'الحلقة البنفسجية القادمة',
-                                      'Next: the purple ring'),
-                          textAlign: TextAlign.center)
-                    ])),
-              if (isStudent)
-                ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: Icon(
-                        p.posted
-                            ? Icons.check_circle
-                            : Icons.add_circle_outline,
-                        color: AppColors.navy),
-                    title: Text(_storyText(
-                        context, 'انشر ستوري اليوم', 'Post a story today')),
-                    subtitle: Wrap(
-                        crossAxisAlignment: WrapCrossAlignment.center,
-                        spacing: 6,
-                        children: [
-                          const BirdPoints('+100'),
-                          Text(_storyText(context, 'لأول ستوري فقط',
-                              'For your first story only'))
-                        ]),
-                    trailing: p.posted
-                        ? const Text('✓')
-                        : TextButton(
-                            onPressed: widget.onPost,
-                            child: Text(_storyText(context, 'انشر', 'Post')))),
-              ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.favorite, color: Colors.pink),
-                  title: Text(_storyText(
-                      context, 'اعمل لاف لزمايلك', 'Like other stories')),
-                  subtitle: Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 6,
-                      children: [
-                        const BirdPoints('+5'),
-                        Text(_storyText(context, 'لكل لاف • أول 10 يوميًا',
-                            'Per like • first 10 each day'))
-                      ]),
-                  trailing: Text('${p.loves} / 10')),
-              ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.favorite_border,
-                      color: AppColors.greenInk),
-                  title: Text(_storyText(context, 'استقبل لاف من زميل',
-                      'Receive a like from another member')),
-                  subtitle: Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 6,
-                      children: [
-                        const BirdPoints('+50'),
-                        Text(_storyText(
-                            context,
-                            'لكل طالب مختلف على نفس الستوري',
-                            'From each different member on the same story'))
-                      ])),
-              ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.sports_esports,
-                      color: Colors.deepPurple),
-                  title: Text(_storyText(
-                      context, 'العب الغمّازة اليوم', 'Play Wink today')),
-                  subtitle: Wrap(
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      spacing: 6,
-                      children: [
-                        const BirdPoints('+10'),
-                        Text(_storyText(
-                            context,
-                            'مرة واحدة يوميًا عند بدء اللعب',
-                            'Once per day when online play begins'))
-                      ]),
-                  trailing: Text(p.playedToday ? '✓' : '+10')),
-              const SizedBox(height: 8),
-              Text(
-                  _storyText(
-                      context,
-                      'نقاطك محفوظة لحسابك. اعرض سلسلة نشاطك من بطاقتها في ملفك الشخصي.',
-                      'Points belong to your account. Open your profile streak card to see your activity streak.'),
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall),
-            ])));
-  }
+  Widget build(BuildContext context) => StreakRulesSheet(
+        timeZone: progress.timeZone,
+        isGameActivity:
+            AuthSession.instance.currentUser?.role != UserRole.student,
+      );
 }
 
 class StoryComposer extends StatefulWidget {

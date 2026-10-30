@@ -5,7 +5,6 @@ import '../../core/repositories/stories_repository.dart';
 import '../../core/services/realtime_sync_service.dart';
 import '../../core/widgets/bird_points.dart';
 import '../stories/student_stories.dart';
-import '../community/student_community_hub.dart';
 
 class ProfileStoryScore extends StatefulWidget {
   final bool isActive;
@@ -73,23 +72,15 @@ class _ProfileStoryScoreState extends State<ProfileStoryScore> {
       if (!mounted || _progress == null) return;
     }
     _opening = true;
-    bool visitCommunity = false;
     try {
-      await showModalBottomSheet(
+      await showModalBottomSheet<void>(
           context: context,
           showDragHandle: true,
           isScrollControlled: true,
-          builder: (ctx) => StoryProgressSheet(
-              progress: _progress!,
-              onPost: () {
-                visitCommunity = true;
-                Navigator.pop(ctx);
-              }));
-      if (mounted) await _load();
-      if (visitCommunity && mounted) {
-        await Navigator.of(context).push(
-            MaterialPageRoute(builder: (_) => const StudentCommunityHub()));
-      }
+          useSafeArea: true,
+          constraints: const BoxConstraints(maxWidth: 600),
+          builder: (_) =>
+              StoryProgressSheet(progress: _progress!, onPost: () {}));
     } finally {
       _opening = false;
     }
@@ -97,11 +88,11 @@ class _ProfileStoryScoreState extends State<ProfileStoryScore> {
 
   @override
   Widget build(BuildContext context) => Tooltip(
-      message:
-          _failed ? 'تعذر تحديث السكور، اضغط للمحاولة' : 'السكور والاستمرارية',
+      message: _failed ? 'تعذر تحديث السكور، اضغط للمحاولة' : 'قواعد الستريك',
       child: Semantics(
           button: true,
-          label: 'السكور: ${_progress?.points ?? 'جارٍ التحميل'}، عرض التقدم',
+          label:
+              'السكور: ${_progress?.points ?? 'جارٍ التحميل'}، عرض قواعد الستريك',
           child: Material(
               color: Colors.white,
               borderRadius: BorderRadius.circular(16),
