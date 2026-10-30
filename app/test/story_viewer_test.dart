@@ -121,8 +121,9 @@ void main() {
               return json({'seen': true});
             }));
   });
+  var sessionNumber = 0;
   setUp(() {
-    AuthSession.instance.token = 'story-viewer-test';
+    AuthSession.instance.token = 'story-viewer-test-${sessionNumber++}';
   });
   tearDown(() {
     AuthSession.instance.token = null;

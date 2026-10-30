@@ -85,6 +85,7 @@ class _StoryViewerState extends State<StoryViewer>
   int _loveRevision = 0;
   late final AnimationController _clock;
   Timer? _liveTimer;
+  StreamSubscription<String>? _reactionSub;
   VideoPlayerController? _video;
   String? _sessionIdentity;
   bool _videoFailed = false;
@@ -129,6 +130,21 @@ class _StoryViewerState extends State<StoryViewer>
         }
       });
     AuthSession.instance.addListener(_onSessionChanged);
+    _reactionSub = StoriesRepository.instance.reactionChanges.listen((id) {
+      if (!mounted || _closing || _currentSessionIdentity != _sessionIdentity) {
+        return;
+      }
+      final reaction = StoriesRepository.instance.reactionFor(id);
+      if (reaction == null) return;
+      setState(() {
+        _counts[id] = reaction.count;
+        if (reaction.loved) {
+          _loved.add(id);
+        } else {
+          _loved.remove(id);
+        }
+      });
+    });
     _liveTimer =
         Timer.periodic(const Duration(seconds: 2), (_) => _refreshLive());
     _begin();
@@ -192,6 +208,7 @@ class _StoryViewerState extends State<StoryViewer>
     WidgetsBinding.instance.removeObserver(this);
     AuthSession.instance.removeListener(_onSessionChanged);
     _liveTimer?.cancel();
+    _reactionSub?.cancel();
     _heartTimer?.cancel();
     _disposeVideo();
     _clock.dispose();
@@ -279,6 +296,11 @@ class _StoryViewerState extends State<StoryViewer>
     _ready = false;
     _held = false;
     final story = _story;
+    final reaction = StoriesRepository.instance.reactionFor(story.id);
+    if (reaction != null) {
+      _counts[story.id] = reaction.count;
+      if (reaction.loved) _loved.add(story.id);
+    }
     if (story.videoUrl.isNotEmpty && story.expiresAt.isAfter(DateTime.now())) {
       unawaited(_loadVideo(story));
     } else if (story.imageUrl.isEmpty ||
@@ -395,7 +417,8 @@ class _StoryViewerState extends State<StoryViewer>
       if (mounted) setState(() => _showHeart = false);
     });
     try {
-      final result = await StoriesRepository.instance.love(story.id);
+      final result = await StoriesRepository.instance
+          .love(story.id, previousCount: previous);
       if (mounted) {
         setState(() => _counts[story.id] =
             max(previous + 1, (result['loveCount'] as num).toInt()));
@@ -731,14 +754,22 @@ class _StoryViewerState extends State<StoryViewer>
                                                   name: story.name,
                                                   avatar: story.avatar,
                                                   role: story.authorRole,
-                                                  showRoleBadge: story.authorRole == 'admin',
+                                                  showRoleBadge:
+                                                      story.authorRole ==
+                                                          'admin',
                                                 ),
                                                 if (story.authorId ==
-                                                    AuthSession.instance.currentUser?.id)
+                                                    AuthSession.instance
+                                                        .currentUser?.id)
                                                   Padding(
-                                                    padding: const EdgeInsetsDirectional.only(start: 42, bottom: 3),
+                                                    padding:
+                                                        const EdgeInsetsDirectional
+                                                            .only(
+                                                            start: 42,
+                                                            bottom: 3),
                                                     child: Text(
-                                                      _viewerExpiryText(context, story.expiresAt),
+                                                      _viewerExpiryText(context,
+                                                          story.expiresAt),
                                                       style: const TextStyle(
                                                         color: Colors.white70,
                                                         fontSize: 10,
@@ -761,16 +792,26 @@ class _StoryViewerState extends State<StoryViewer>
                                                     : _deleteStory,
                                                 icon: const Icon(Icons
                                                     .delete_outline_rounded)),
-                                          if (story.authorId != AuthSession.instance.currentUser?.id)
+                                          if (story.authorId !=
+                                              AuthSession
+                                                  .instance.currentUser?.id)
                                             IconButton(
-                                              tooltip: _viewerText(context, 'إبلاغ عن الستوري', 'Report story'),
-                                              icon: const Icon(Icons.flag_outlined),
+                                              tooltip: _viewerText(
+                                                  context,
+                                                  'إبلاغ عن الستوري',
+                                                  'Report story'),
+                                              icon: const Icon(
+                                                  Icons.flag_outlined),
                                               onPressed: () async {
                                                 _held = true;
                                                 _clock.stop();
-                                                if (_video != null) await _video!.pause();
+                                                if (_video != null) {
+                                                  await _video!.pause();
+                                                }
                                                 if (!context.mounted) return;
-                                                await reportUnsafeContent(context, 'Story ID: ${story.id}\nAuthor: ${story.authorId}\n${story.text}');
+                                                await reportUnsafeContent(
+                                                    context,
+                                                    'Story ID: ${story.id}\nAuthor: ${story.authorId}\n${story.text}');
                                                 if (!mounted) return;
                                                 _held = false;
                                                 _resume();
@@ -798,8 +839,8 @@ class _StoryViewerState extends State<StoryViewer>
                                   const EdgeInsets.symmetric(horizontal: 16),
                               child: Text(_error!,
                                   textAlign: TextAlign.center,
-                                  style:
-                                      const TextStyle(color: AppColors.greenInk))),
+                                  style: const TextStyle(
+                                      color: AppColors.greenInk))),
                         if (story.authorId ==
                             AuthSession.instance.currentUser?.id)
                           TextButton.icon(

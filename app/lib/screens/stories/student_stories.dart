@@ -101,6 +101,7 @@ class StudentStoriesState extends State<StudentStories>
   bool _liveRefreshing = false;
   final _liveCounts = <String, int>{};
   StreamSubscription<void>? _friendsSub;
+  StreamSubscription<String>? _reactionSub;
   bool _openingFriends = false;
   bool _publishingStory = false;
   bool _reloadAfterFriends = false;
@@ -121,6 +122,12 @@ class StudentStoriesState extends State<StudentStories>
       _loading = false;
     }
     _load();
+    _reactionSub = _repo.reactionChanges.listen((id) {
+      final reaction = _repo.reactionFor(id);
+      if (mounted && reaction != null) {
+        setState(() => _liveCounts[id] = reaction.count);
+      }
+    });
     _friendsSub = FriendsRepository.instance.changes.listen((_) {
       if (_refreshing) {
         _reloadAfterFriends = true;
@@ -141,6 +148,7 @@ class StudentStoriesState extends State<StudentStories>
     _timer?.cancel();
     _liveTimer?.cancel();
     _friendsSub?.cancel();
+    _reactionSub?.cancel();
     super.dispose();
   }
 
@@ -189,10 +197,13 @@ class StudentStoriesState extends State<StudentStories>
       return;
     }
     _liveRefreshing = true;
+    final requestToken = AuthSession.instance.token;
     final requested = _stories.take(120).map((s) => s.id).toSet();
     try {
       final data = await _repo.updates(requested.toList());
-      if (!mounted || !_visible) return;
+      if (!mounted || !_visible || requestToken != AuthSession.instance.token) {
+        return;
+      }
       final updates = (data['updates'] as List).cast<Map<String, dynamic>>();
       final available = updates.map((s) => s['id'] as String).toSet();
       setState(() {
@@ -536,7 +547,9 @@ class StudentStoriesState extends State<StudentStories>
                                       size: 12, color: Colors.pinkAccent),
                                   const SizedBox(width: 3),
                                   Text(
-                                      '${stories.fold<int>(0, (sum, story) => sum + (_liveCounts[story.id] ?? story.loveCount))}',
+                                      '${stories.fold<int>(0, (sum, story) => sum + (_repo.reactionFor(story.id)?.count ?? _liveCounts[story.id] ?? story.loveCount))}',
+                                      key: ValueKey(
+                                          'story-loves-${stories.first.authorId}'),
                                       style: const TextStyle(fontSize: 11)),
                                 ]),
                           ]))),
@@ -562,8 +575,8 @@ class _StoryAvatar extends StatelessWidget {
                 style: const TextStyle(fontSize: 23, color: AppColors.navy))));
     return url.isEmpty
         ? fallback
-        : AppNetworkImage(url, width: 66, height: 66,
-            fit: BoxFit.cover, errorWidget: fallback);
+        : AppNetworkImage(url,
+            width: 66, height: 66, fit: BoxFit.cover, errorWidget: fallback);
   }
 }
 
@@ -821,8 +834,8 @@ class _StoryComposerState extends State<StoryComposer> {
                 const VerifiedAdminBadge(role: 'admin', size: 20),
                 const SizedBox(width: 7),
                 Text(
-                  _storyText(context, 'قصة رسمية من COVEY',
-                      'Official COVEY story'),
+                  _storyText(
+                      context, 'قصة رسمية من COVEY', 'Official COVEY story'),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
               ]),

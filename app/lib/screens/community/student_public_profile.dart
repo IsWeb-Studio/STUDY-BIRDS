@@ -1,4 +1,5 @@
 import '../../core/config/app_theme.dart';
+import 'dart:async';
 import '../../core/widgets/bird_points.dart';
 import '../../core/widgets/safety_controls.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +28,7 @@ class _StudentPublicProfileScreenState
   String? _cursor, _error;
   bool _loading = true, _busy = false, _opening = false;
   int _generation = 0;
+  StreamSubscription<String>? _reactionSub;
   Future<void> _load({bool more = false}) async {
     if (more && (_busy || _cursor == null)) return;
     final generation = ++_generation;
@@ -74,12 +76,16 @@ class _StudentPublicProfileScreenState
   @override
   void initState() {
     super.initState();
+    _reactionSub = StoriesRepository.instance.reactionChanges.listen((_) {
+      if (mounted) setState(() {});
+    });
     _load();
   }
 
   @override
   void dispose() {
     _generation++;
+    _reactionSub?.cancel();
     super.dispose();
   }
 
@@ -414,7 +420,7 @@ class _StudentPublicProfileScreenState
                                                               const SizedBox(
                                                                   width: 3),
                                                               Text(
-                                                                  '${story.loveCount}',
+                                                                  '${StoriesRepository.instance.reactionFor(story.id)?.count ?? story.loveCount}',
                                                                   style: const TextStyle(
                                                                       color: Colors
                                                                           .white,

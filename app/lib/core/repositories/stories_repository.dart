@@ -155,11 +155,62 @@ class StoriesRepository {
   bool isHidden(String id) => _hidden[_scope]?.contains(id) ?? false;
   bool isDeleting(String id) => _deleting.containsKey('$_scope:$id');
   String? get _token => AuthSession.instance.token;
-  Future<Map<String, dynamic>> updates(List<String> ids) async =>
-      Map<String, dynamic>.from(await _api.get(
-          '/stories/updates?ids=${ids.take(120).join(',')}',
-          token: _token,
-          cached: false));
+  final _reactionChanges = StreamController<String>.broadcast();
+  Stream<String> get reactionChanges => _reactionChanges.stream;
+  final _reactions = <String, ({int count, bool loved})>{};
+  String? _reactionScope;
+  int _reactionRevision = 0;
+  final _pendingReactions = <String, Future<Map<String, dynamic>>>{};
+
+  String _syncReactionScope() {
+    final scope = '${AuthSession.instance.currentUser?.id ?? ''}:$_token';
+    if (_reactionScope != scope) {
+      _reactionScope = scope;
+      _reactions.clear();
+      _reactionRevision++;
+    }
+    return scope;
+  }
+
+  ({int count, bool loved})? reactionFor(String id) {
+    _syncReactionScope();
+    return _reactions[id];
+  }
+
+  void _rememberReaction(String id, int count, bool loved) {
+    _reactions.remove(id);
+    _reactions[id] = (count: count, loved: loved);
+    while (_reactions.length > 240) {
+      _reactions.remove(_reactions.keys.first);
+    }
+  }
+
+  Future<Map<String, dynamic>> updates(List<String> ids) async {
+    final scope = _syncReactionScope(), revision = _reactionRevision;
+    final data = Map<String, dynamic>.from(await _api.get(
+        '/stories/updates?ids=${ids.take(120).join(',')}',
+        token: _token,
+        cached: false));
+    if (scope != _syncReactionScope()) return data;
+    data['updates'] = (data['updates'] as List).map((row) {
+      final update = Map<String, dynamic>.from(row as Map);
+      final id = '${update['id']}';
+      final known = _reactions[id];
+      // A poll started before a successful like must not undo that like.
+      if ((revision != _reactionRevision ||
+              _pendingReactions.containsKey('$scope:$id')) &&
+          known != null) {
+        update['loveCount'] = known.count;
+        update['loved'] = known.loved;
+      } else if (update['loveCount'] is num) {
+        _rememberReaction(
+            id, (update['loveCount'] as num).toInt(), update['loved'] == true);
+      }
+      return update;
+    }).toList();
+    return data;
+  }
+
   Future<StoryProgress> progress() async =>
       StoryProgress.fromJson(Map<String, dynamic>.from(
           await _api.get('/stories/progress', token: _token)));
@@ -235,12 +286,54 @@ class StoriesRepository {
     await _api.delete('/stories/$id', token: _token);
   }
 
-  Future<Map<String, dynamic>> love(String id) async =>
-      Map<String, dynamic>.from(
+  Future<Map<String, dynamic>> love(String id, {int? previousCount}) {
+    final scope = _syncReactionScope();
+    final key = '$scope:$id';
+    final pending = _pendingReactions[key];
+    if (pending != null) return pending;
+    final operation = _love(id, scope, key, previousCount);
+    _pendingReactions[key] = operation;
+    return operation;
+  }
+
+  Future<Map<String, dynamic>> _love(
+      String id, String scope, String key, int? previousCount) async {
+    final previous =
+        _reactions[id] ?? (count: previousCount ?? 0, loved: false);
+    _reactionRevision++;
+    _rememberReaction(id, previous.count + (previous.loved ? 0 : 1), true);
+    _reactionChanges.add(id);
+    try {
+      final result = Map<String, dynamic>.from(
           await _api.post('/stories/$id/love', token: _token));
-  Future<String> upload(List<int> bytes, String name, {void Function(double)? onProgress}) async {
+      if (result['loveCount'] is! num || (result['loveCount'] as num) < 0) {
+        throw const FormatException('Invalid story reaction response');
+      }
+      if (scope == _syncReactionScope() && result['loveCount'] is num) {
+        _reactionRevision++;
+        _rememberReaction(id, (result['loveCount'] as num).toInt(), true);
+        _reactionChanges.add(id);
+      }
+      return result;
+    } catch (_) {
+      if (scope == _syncReactionScope()) {
+        _reactionRevision++;
+        _rememberReaction(id, previous.count, previous.loved);
+        _reactionChanges.add(id);
+      }
+      rethrow;
+    } finally {
+      _pendingReactions.remove(key);
+    }
+  }
+
+  Future<String> upload(List<int> bytes, String name,
+      {void Function(double)? onProgress}) async {
     final j = await _api.postMultipart('/stories/image',
-        token: _token, fileBytes: bytes, fileName: name, onProgress: onProgress);
+        token: _token,
+        fileBytes: bytes,
+        fileName: name,
+        onProgress: onProgress);
     return j['imageUrl'] as String;
   }
 
