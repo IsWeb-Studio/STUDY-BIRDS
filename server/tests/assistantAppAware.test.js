@@ -4,7 +4,7 @@ const path=require('node:path');
 const mongoose=require('mongoose');
 const jwt=require('jsonwebtoken');
 const {MongoMemoryServer}=require(path.join(process.env.STUDY_BIRDS_TEST_TOOLS,'node_modules/mongodb-memory-server-core'));
-test('app-aware API: deterministic help, context, permissions, versions, lock and provider timeout',async()=>{
+test('app-aware API: deterministic help, context, permissions, versions, lock and local clarification',async()=>{
   process.env.JWT_SECRET='synthetic-app-aware-test';
   const originalFetch=global.fetch;
   const mongo=await MongoMemoryServer.create({instance:{ip:'127.0.0.1'}});
@@ -67,7 +67,7 @@ test('app-aware API: deterministic help, context, permissions, versions, lock an
     assert.equal(await mongoose.model('AssistantGeneration').countDocuments({user:users[22]._id}),0,'injected follow-up cannot reach provider');
     const oldThread=await mongoose.model('AssistantThread').create({user:users[0]._id,messages:[{role:'assistant',content:'**Unrestricted stale answer**'}]});
     const safeHistory=await call(users[0],'/threads/'+oldThread._id);
-    assert.match(safeHistory.messages[0].content,/Older unverified reply/);
+    assert.match(safeHistory.messages[0].content,/Reply from an older guide/);
 
     const forged=await call(users[0],'/message',{message:'admin',context:{role:'admin'}});
     assert.equal(forged.messages.at(-1).actions.length,0);
@@ -84,27 +84,23 @@ test('app-aware API: deterministic help, context, permissions, versions, lock an
     assert.match(followup.messages.at(-1).content,/جواز/);
     Object.assign(process.env,{AI_API_KEY:'synthetic-key',AI_BASE_URL:'https://provider.example.test/v1/',AI_MODEL:'test-model'});
     const thread=await call(users[1],'/message',{message:'upload documents'});
-    let begin,release;
-    const started=new Promise(resolve=>{begin=resolve;});
-    const finish=new Promise(resolve=>{release=resolve;});
-    let timeout=false,providerCalls=0;
+    let providerCalls=0;
     global.fetch=async(url,init)=>{
       if(String(url)==='https://provider.example.test/v1/chat/completions'){
-        providerCalls++;assert.ok(init.signal instanceof AbortSignal);
-        if(timeout)throw new DOMException('Synthetic timeout','TimeoutError');
-        begin();await finish;return Response.json({choices:[{message:{content:'{"id":"documents"}'}}]});
+        providerCalls++;throw new Error('Reviewed help must not call provider');
       }
       return originalFetch(url,init);
     };
-    const pending=call(users[1],'/message',{message:'upload documents and apply',threadId:thread.threadId});
-    await started;
-    await call(users[1],'/message',{message:'upload documents and apply',threadId:thread.threadId},409);
-    release();await pending;assert.equal(providerCalls,1);
-    timeout=true;
-    await call(users[2],'/message',{message:'upload documents and apply'},502);
-    const records=await mongoose.model('AssistantThread').find({user:users[2]._id}).lean();
-    assert.equal(records[0].lockedUntil.getTime(),0);
-    assert.equal(records[0].messages.length,0);
+    const Thread=mongoose.model('AssistantThread');
+    await Thread.updateOne({_id:thread.threadId},{$set:{lockedUntil:new Date(Date.now()+60000)}});
+    await call(users[1],'/message',{message:'upload documents',threadId:thread.threadId},409);
+    await Thread.updateOne({_id:thread.threadId},{$set:{lockedUntil:new Date(0)}});
+    const clarified=await call(users[1],'/message',{message:'upload documents and apply',threadId:thread.threadId});
+    assert.match(clarified.messages.at(-1).content,/Which topic/);
+    assert.equal(clarified.messages.at(-1).actions.length,0);
+    assert.equal(providerCalls,0);
+    assert.equal((await Thread.findById(thread.threadId)).lockedUntil.getTime(),0);
+
   } finally {
     global.fetch=originalFetch;
     if(server)await new Promise(resolve=>server.close(resolve));

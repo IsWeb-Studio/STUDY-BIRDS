@@ -29,6 +29,10 @@ jobs:
         working-directory: server
         run: node --check src/server.js
 
+      - name: Verify reviewed assistant knowledge matches current sources
+        working-directory: server
+        run: node scripts/assistant-knowledge-tools.cjs --mobile-root ../app --website-root ../client
+
       - name: Install isolated test tools
         run: npm install --prefix "$RUNNER_TEMP/studybirds-test-tools" --no-save mongodb-memory-server-core@10.4.3
 

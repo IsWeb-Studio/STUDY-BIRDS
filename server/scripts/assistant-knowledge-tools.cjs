@@ -12,7 +12,9 @@ function scan(root, prefix, extensions) {
       if (stat.isDirectory()) visit(file);
       else if (stat.isFile() && extensions.includes(path.extname(file))) {
         const bytes = fs.readFileSync(file), text = bytes.toString('utf8');
-        rows.push({ path: prefix + path.relative(root, file).replace(/\\/g, '/'), sha256: hash(bytes),
+        // Git may check out CRLF on Windows and LF in CI. Fingerprint content,
+        // not the local line ending convention.
+        rows.push({ path: prefix + path.relative(root, file).replace(/\\/g, '/'), sha256: hash(text.replace(/\r\n/g, '\n')),
           dependencies: [...text.matchAll(/(?:require\(\s*['"]([^'"]+)['"]|(?:import|export)\s+(?:[^;]*?from\s+)?['"]([^'"]+)['"])/g)]
             .map(m=>m[1]||m[2]).filter(ref=>ref.startsWith('.'))
             .map(ref=>{

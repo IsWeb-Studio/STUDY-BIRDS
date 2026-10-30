@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "version": "2026.10.23.3",
-  "reviewedAt": "2026-10-22",
+  "reviewedAt": "2026-10-30",
   "entries": [
     {
       "id": "applications",
@@ -244,15 +244,17 @@
       ],
       "pattern": "notification|push|إشعار|اشعار|تنبيه|تنبيهات",
       "description": {
-        "ar": "افتح الإشعارات لعرض تنبيهاتك، وتفضيلات الإشعارات لاختيار الفئات المتاحة لحسابك. تنبيهات الأمان والمساعدة العاجلة تبقى مفعّلة. إذا لم تصل التنبيهات، تحقق أيضًا من إذن إشعارات Study Birds في إعدادات الجهاز.",
-        "en": "Open Notifications to see alerts and Notification Preferences to choose the categories for your account. Security and urgent help alerts remain enabled. If notifications do not arrive, also check Study Birds notification permission in device settings."
+        "ar": "افتح أيقونة الإشعارات أعلى التطبيق لعرض تنبيهاتك، أو حسابي ثم الإعدادات ثم تفضيلات الإشعارات لاختيار الفئات المتاحة.",
+        "en": "Open the top notification icon to see alerts, or My Account, Settings, Notification preferences for available categories."
       },
       "steps": {
         "ar": [
-          "افتح الإشعارات لعرض تنبيهاتك، وتفضيلات الإشعارات لاختيار الفئات المتاحة لحسابك. تنبيهات الأمان والمساعدة العاجلة تبقى مفعّلة. إذا لم تصل التنبيهات، تحقق أيضًا من إذن إشعارات Study Birds في إعدادات الجهاز."
+          "افتح أيقونة الإشعارات أعلى التطبيق لعرض تنبيهاتك، أو حسابي ثم الإعدادات ثم تفضيلات الإشعارات لاختيار الفئات المتاحة.",
+          "إذا لم تصل التنبيهات تحقق من إذن إشعارات COVEY في إعدادات الجهاز والاتصال وتفضيلات الحساب. لا يمكن ضمان وصول تنبيه لجهاز رفض الإذن. تنبيهات الأمان والمساعدة العاجلة تتبع الخيارات الإلزامية المعروضة."
         ],
         "en": [
-          "Open Notifications to see alerts and Notification Preferences to choose the categories for your account. Security and urgent help alerts remain enabled. If notifications do not arrive, also check Study Birds notification permission in device settings."
+          "Open the top notification icon to see alerts, or My Account, Settings, Notification preferences for available categories.",
+          "If alerts do not arrive, check the device notification permission for COVEY, connectivity and your account preferences. Delivery cannot be guaranteed for a device that denies permission. Security and urgent-support alerts follow the mandatory settings shown."
         ]
       },
       "location": {
@@ -289,20 +291,24 @@
       ],
       "pattern": "community|stor(y|ies)|streak|مجتمع|ستوري|قصص|ستريك|سلسلة",
       "description": {
-        "ar": "استخدم مجتمع الطلاب للمنشورات والنقاشات والقصص. سلسلة نشاطي موجودة في ملفك الشخصي؛ اضغط البطاقة لعرض التفاصيل والاسترجاع المتاح حسب توقيت السيرفر. لا أستطيع نشر محتوى أو استرجاع السلسلة نيابة عنك.",
-        "en": "Use Student Community for posts, discussions and stories. My Streak is in your profile; tap its card for details and recovery eligibility determined by the server. I cannot publish content or restore a streak on your behalf."
+        "ar": "افتح مجتمع الطلاب من الشريط السفلي لعرض المنشورات والتعليقات والتفاعلات.",
+        "en": "Open Student Community from bottom navigation to see posts, comments and reactions."
       },
       "steps": {
         "ar": [
-          "استخدم مجتمع الطلاب للمنشورات والنقاشات والقصص. سلسلة نشاطي موجودة في ملفك الشخصي؛ اضغط البطاقة لعرض التفاصيل والاسترجاع المتاح حسب توقيت السيرفر. لا أستطيع نشر محتوى أو استرجاع السلسلة نيابة عنك."
+          "افتح مجتمع الطلاب من الشريط السفلي لعرض المنشورات والتعليقات والتفاعلات.",
+          "زر منشور جديد موجود أسفل صفحة المجتمع مع بقاء مساعد COVEY AI. النص مطلوب والصورة اختيارية.",
+          "اضغط اسم الناشر أو صورته لفتح حسابه؛ منشوراته بطاقات صغيرة والضغط عليها يفتح المنشور الأصلي."
         ],
         "en": [
-          "Use Student Community for posts, discussions and stories. My Streak is in your profile; tap its card for details and recovery eligibility determined by the server. I cannot publish content or restore a streak on your behalf."
+          "Open Student Community from bottom navigation to see posts, comments and reactions.",
+          "New post is at the bottom of Community alongside COVEY AI. Post text is required; an image is optional.",
+          "Tap an author name or avatar to open their profile. Their posts are compact tiles; tap one to open the original post."
         ]
       },
       "location": {
-        "ar": "الشريط السفلي ← المجتمع",
-        "en": "Bottom navigation → Community"
+        "ar": "الشريط السفلي ← مجتمع الطلاب",
+        "en": "Bottom navigation → Student Community"
       },
       "screen": "stories/student_stories.dart",
       "sources": [
@@ -339,20 +345,22 @@
       ],
       "pattern": "support|troubleshoot|error|setting|دعم|مشكلة|خطأ|إعداد|اعداد|مساعدة",
       "description": {
-        "ar": "من حسابي افتح مركز الدعم. اختر تذكرة دعم جديدة لشرح المشكلة، ثم تابع الردود في تذاكري. لا تضف كلمات مرور أو أكواد تحقق. ما الشاشة التي تواجه فيها المشكلة؟",
-        "en": "From My Account, open Support Center. Choose a new support ticket to describe the issue and follow replies in My Tickets. Do not include passwords or verification codes. Which screen has the problem?"
+        "ar": "افتح القائمة من الرئيسية ثم المساعدة والدعم للوصول لمركز الدعم، أو استخدم اختصار الدعم الظاهر لحسابك.",
+        "en": "Open the Home menu and Help and support to reach Support Center, or use the support shortcut available to your account."
       },
       "steps": {
         "ar": [
-          "من حسابي افتح مركز الدعم. اختر تذكرة دعم جديدة لشرح المشكلة، ثم تابع الردود في تذاكري. لا تضف كلمات مرور أو أكواد تحقق. ما الشاشة التي تواجه فيها المشكلة؟"
+          "افتح القائمة من الرئيسية ثم المساعدة والدعم للوصول لمركز الدعم، أو استخدم اختصار الدعم الظاهر لحسابك.",
+          "اختر تذكرة دعم جديدة لشرح المشكلة، وتابع الردود في تذاكري. اذكر الشاشة ورسالة الخطأ دون كلمات مرور أو أكواد تحقق."
         ],
         "en": [
-          "From My Account, open Support Center. Choose a new support ticket to describe the issue and follow replies in My Tickets. Do not include passwords or verification codes. Which screen has the problem?"
+          "Open the Home menu and Help and support to reach Support Center, or use the support shortcut available to your account.",
+          "Choose New support ticket and follow replies in My tickets. Include the screen and error message, without passwords or verification codes."
         ]
       },
       "location": {
-        "ar": "حسابي ← مركز الدعم",
-        "en": "My Account → Support Center"
+        "ar": "الرئيسية ← القائمة ← المساعدة والدعم",
+        "en": "Home → Menu → Help and support"
       },
       "screen": "services_support/support_team_ai_screens.dart",
       "sources": [
@@ -628,22 +636,22 @@
         "كيف اعدل حسابي"
       ],
       "description": {
-        "ar": "افتح حسابي واضغط الصورة لتغييرها، أو اختر المعلومات الشخصية أو الأكاديمية أو تفضيلات الدراسة.",
-        "en": "Open My Account and tap the photo to change it, or select Personal information, Academic information or Study preferences."
+        "ar": "اضغط صورة حسابك أعلى التطبيق لفتح حسابي، ثم اضغط الصورة لتغييرها أو افتح تعديل الملف.",
+        "en": "Tap your account avatar at the top to open My Account, then tap the picture to change it or open Edit profile."
       },
       "steps": {
         "ar": [
-          "افتح حسابي واضغط الصورة لتغييرها، أو اختر المعلومات الشخصية أو الأكاديمية أو تفضيلات الدراسة.",
-          "عدّل الحقول في القسم المطلوب واحفظ من شاشة التعديل."
+          "اضغط صورة حسابك أعلى التطبيق لفتح حسابي، ثم اضغط الصورة لتغييرها أو افتح تعديل الملف.",
+          "اختر القسم المطلوب واحفظ التعديلات. بعد نجاح رفع الصورة يفترض أن تظهر في الحساب والداشبورد؛ إذا لم تتغير حدّث الشاشة وتحقق من الاتصال، ولا تحذف حسابك أو تعيد الرفع المتكرر."
         ],
         "en": [
-          "Open My Account and tap the photo to change it, or select Personal information, Academic information or Study preferences.",
-          "Edit the relevant section and save on its edit screen."
+          "Tap your account avatar at the top to open My Account, then tap the picture to change it or open Edit profile.",
+          "Choose the section and save. After a successful upload the avatar should update in the profile and dashboard. If it does not, refresh and check connectivity; do not delete your account or repeatedly upload."
         ]
       },
       "location": {
-        "ar": "حسابي",
-        "en": "My Account"
+        "ar": "صورة الحساب بالأعلى ← حسابي",
+        "en": "Top account avatar → My Account"
       },
       "screen": "profile_account/profile_account_screens.dart",
       "sources": [
@@ -667,8 +675,8 @@
     {
       "id": "streak",
       "name": {
-        "ar": "سلسلة نشاطي",
-        "en": "My Streak"
+        "ar": "الستريك وقواعد النقاط",
+        "en": "Streak and points rules"
       },
       "aliases": [
         "streak",
@@ -679,29 +687,37 @@
         "سلسلة نشاطي",
         "استرجاع السلسلة",
         "كيف ارجع الستريك",
-        "ارجع الستريك"
+        "ارجع الستريك",
+        "كيف اكسب نقاط الستريك",
+        "كيف آخذ عشر نقاط",
+        "earn streak points",
+        "streak points",
+        "10 points",
+        "نقاط الستريك"
       ],
       "description": {
-        "ar": "افتح حسابي واضغط بطاقة سلسلة نشاطي أسفل رأس الملف الشخصي.",
-        "en": "Open My Account and tap My Streak below the profile header."
+        "ar": "افتح حسابك من صورة الحساب بالأعلى ثم اضغط رقم أو أيقونة الستريك لعرض القواعد.",
+        "en": "Open your account using the top avatar, then tap the streak number or icon to see its rules."
       },
       "steps": {
         "ar": [
-          "افتح حسابي واضغط بطاقة سلسلة نشاطي أسفل رأس الملف الشخصي.",
-          "تعرض التفاصيل السلسلة الحالية والأطول والنشاط الأخير والموعد الفعلي من السيرفر.",
-          "يمكن استرجاع السلسلة خلال 24 ساعة بعد انتهائها، حتى 3 استرجاعات ناجحة في الشهر حسب منطقة توقيت السيرفر؛ المتبقي لا يتراكم.",
-          "راجع الوقت والمتبقي في ورقة التأكيد قبل الاسترجاع. بداية الشهر لا تعيد فتح مهلة انتهت."
+          "افتح حسابك من صورة الحساب بالأعلى ثم اضغط رقم أو أيقونة الستريك لعرض القواعد.",
+          "للطالب: أول ستوري يوميًا +100 نقطة، وكل 7 أيام ستريك +300 إضافية. أول مشاركة يومية مؤهلة بجولة أونلاين بدأت وبها لاعبان حقيقيان على الأقل تمنح +10؛ فتح اللعبة أو التدريب لا يمنحها.",
+          "لايك لستوري شخص آخر: +5 لأول 10 لايكات يوميًا على قصص مختلفة، بحد 50 يوميًا. استقبال لايك جديد من شخص آخر على ستوريك يمنحك +50؛ لايك نفسك والتكرار لا يمنحان نقاطًا جديدة.",
+          "ستريك الطالب يتجدد بالستوري، وليس اللعب. للأدوار الأخرى مشاركة اللعبة المؤهلة تحفظ ستريك اللعب دون مكافأة الطالب +10.",
+          "تنتهي السلسلة بعد 36 ساعة من النشاط المؤهل. بعدها مهلة استرجاع 24 ساعة، حتى 3 استرجاعات ناجحة شهريًا؛ المتبقي لا يتراكم والاسترجاع لا يمنح نقاطًا. انقطاع السلسلة لا يمسح النقاط."
         ],
         "en": [
-          "Open My Account and tap My Streak below the profile header.",
-          "Details show your current and longest streak, recent activity and the server deadline.",
-          "Recovery is available for 24 hours after expiry, up to 3 successful restores per calendar month in the server timezone; unused restores do not roll over.",
-          "Check time and remaining allowance in the confirmation sheet. A monthly reset does not reopen an expired window."
+          "Open your account using the top avatar, then tap the streak number or icon to see its rules.",
+          "For students: the first story each day earns 100 points and each 7-day streak milestone earns 300 extra. The first daily qualifying online round that has started with at least two real players earns 10; opening the game or practice earns none.",
+          "Liking another person’s story earns 5 for the first 10 different stories daily, capped at 50. A new like from another person on your story earns you 50; self-likes and repeats earn no new points.",
+          "Student streaks advance through stories, not games. Other roles maintain their game streak through qualifying participation without the student 10-point bonus.",
+          "A streak expires after 36 hours of no qualifying activity, followed by a 24-hour recovery window. Up to 3 successful recoveries per month, with no rollover or recovery points. Broken streaks do not erase points."
         ]
       },
       "location": {
-        "ar": "حسابي ← سلسلة نشاطي",
-        "en": "My Account → My Streak"
+        "ar": "صورة الحساب ← الستريك ← القواعد",
+        "en": "Top account avatar → Streak → Rules"
       },
       "screen": "profile_account/my_streak.dart",
       "sources": [
@@ -739,22 +755,24 @@
         "مين شاف"
       ],
       "description": {
-        "ar": "افتح القصص في مجتمع الطلاب لعرض القصص أو نشر قصتك من أدوات النشر المعروضة.",
-        "en": "Open Stories in Student Community to view stories or use the displayed publishing controls."
+        "ar": "تظهر الستوريات أعلى الرئيسية. اضغط ستوري جديدة واختر الصورة لنشرها مباشرة وفق التأكيدات والصلاحيات المعروضة؛ حساب الأدمن مستثنى من هذا المسار.",
+        "en": "Stories appear above the home dashboard. Tap New story and choose an image to publish directly using the shown permissions and confirmations; this flow excludes administrators."
       },
       "steps": {
         "ar": [
-          "افتح القصص في مجتمع الطلاب لعرض القصص أو نشر قصتك من أدوات النشر المعروضة.",
-          "لمعرفة المشاهدين، افتح قصتك واضغط عدد المشاهدات لعرض القائمة. لا تُتاح قائمة مشاهدي قصة طالب آخر لك."
+          "تظهر الستوريات أعلى الرئيسية. اضغط ستوري جديدة واختر الصورة لنشرها مباشرة وفق التأكيدات والصلاحيات المعروضة؛ حساب الأدمن مستثنى من هذا المسار.",
+          "لعرض قصة اضغط صورتها. تفاعل القلب يظهر فورًا مبدئيًا ثم يؤكده السيرفر؛ فشل الاتصال يعيد الحالة السابقة.",
+          "لعرض مشاهدين قصتك افتحها واضغط عدد المشاهدات. لا يمكنك الاطلاع على مشاهدي قصة شخص آخر."
         ],
         "en": [
-          "Open Stories in Student Community to view stories or use the displayed publishing controls.",
-          "Open your own story and tap the viewer count to see its list. Another student’s private viewer list is not available to you."
+          "Stories appear above the home dashboard. Tap New story and choose an image to publish directly using the shown permissions and confirmations; this flow excludes administrators.",
+          "Tap a story to view it. A heart updates immediately while the server confirms it; a failed request rolls it back.",
+          "Open your own story and tap the view count for its viewers. Other people’s viewer lists are private."
         ]
       },
       "location": {
-        "ar": "مجتمع الطلاب ← القصص",
-        "en": "Student Community → Stories"
+        "ar": "الرئيسية ← الستوريات",
+        "en": "Home → Stories"
       },
       "screen": "stories/student_stories.dart",
       "sources": [
@@ -1163,22 +1181,22 @@
         "شو بعد"
       ],
       "description": {
-        "ar": "افتح رحلتي واختر طلبك إذا كان لديك أكثر من طلب.",
-        "en": "Open My Journey and select an application if you have several."
+        "ar": "افتح القائمة بجانب الإشعارات ثم الرحلة، أو اضغط متابعة الرحلة في الداشبورد.",
+        "en": "Open the menu beside notifications and choose Journey, or tap Continue journey on the dashboard."
       },
       "steps": {
         "ar": [
-          "افتح رحلتي واختر طلبك إذا كان لديك أكثر من طلب.",
-          "راجع المرحلة الحالية والمتطلبات والإجراء التالي المعروض. لا يعني اكتمال خطوة محلية حصولك على قبول رسمي."
+          "افتح القائمة بجانب الإشعارات ثم الرحلة، أو اضغط متابعة الرحلة في الداشبورد.",
+          "راجع المراحل والإجراء التالي المعروض لحسابك. حالة الطلب المسجلة هي المرجع؛ المساعد لا يغير المراحل أو يضمن القبول."
         ],
         "en": [
-          "Open My Journey and select an application if you have several.",
-          "Review the current stage, requirements and next action displayed. Completing a local step is not an official admission decision."
+          "Open the menu beside notifications and choose Journey, or tap Continue journey on the dashboard.",
+          "Review your recorded stages and next action. Your saved application status is authoritative; the assistant cannot change stages or guarantee admission."
         ]
       },
       "location": {
-        "ar": "الشريط السفلي ← رحلتي",
-        "en": "Bottom navigation → My Journey"
+        "ar": "الرئيسية ← القائمة ← الرحلة",
+        "en": "Home → Menu → Journey"
       },
       "screen": "home_journey/journey_tracker_screen.dart",
       "sources": [
@@ -1215,7 +1233,13 @@
         "فواتير",
         "دفع",
         "ايصال",
-        "إيصال"
+        "إيصال",
+        "unpaid invoices",
+        "my unpaid invoices",
+        "payment status",
+        "مستحقاتي",
+        "فواتيري",
+        "فواتير غير مدفوعة"
       ],
       "description": {
         "ar": "افتح ملخص المدفوعات واختر الفاتورة لعرض المبلغ والحالة المسجلين.",
@@ -1224,11 +1248,13 @@
       "steps": {
         "ar": [
           "افتح ملخص المدفوعات واختر الفاتورة لعرض المبلغ والحالة المسجلين.",
-          "عند توفر رفع إثبات الدفع، راجع الفاتورة قبل إرفاق الإثبات. رفع الإثبات لا يعني اعتماده تلقائيًا."
+          "عند توفر رفع إثبات الدفع، راجع الفاتورة قبل إرفاق الإثبات. رفع الإثبات لا يعني اعتماده تلقائيًا.",
+          "لحالة فاتورة أو مستحقاتك الحالية افتح الفاتورة نفسها؛ هذه الإجابة تشرح المسار ولا تقرأ رصيدك أو تؤكد الدفع."
         ],
         "en": [
           "Open Payments summary and select an invoice to view its recorded amount and status.",
-          "When payment-proof upload is offered, check the invoice before attaching proof. Upload does not mean automatic approval."
+          "When payment-proof upload is offered, check the invoice before attaching proof. Upload does not mean automatic approval.",
+          "For your current invoice status or amount due, open the invoice itself. This answer explains navigation; it does not read your balance or confirm payment."
         ]
       },
       "location": {
@@ -1270,22 +1296,22 @@
         "طلب خدمة"
       ],
       "description": {
-        "ar": "افتح الخدمات واختر خدمة منشورة لقراءة التفاصيل.",
-        "en": "Open Services and select a published service to read its details."
+        "ar": "من الرئيسية افتح القائمة بجانب الإشعارات ثم القسم المطلوب مثل حجز استشارة أو السكن أو السفر والوصول.",
+        "en": "From Home, open the menu beside notifications and choose the relevant service such as consultation, accommodation or travel and arrival."
       },
       "steps": {
         "ar": [
-          "افتح الخدمات واختر خدمة منشورة لقراءة التفاصيل.",
-          "راجع الشروط والبيانات قبل إرسال الطلب بنفسك. تابع حالته من طلباتي داخل مركز الخدمات."
+          "من الرئيسية افتح القائمة بجانب الإشعارات ثم القسم المطلوب مثل حجز استشارة أو السكن أو السفر والوصول.",
+          "افتح تفاصيل الخدمة المتاحة، وراجع الشروط والبيانات المطلوبة قبل إرسال طلبك بنفسك. لا تفترض توفر خدمة أو سعر غير منشور."
         ],
         "en": [
-          "Open Services and select a published service to read its details.",
-          "Review conditions and inputs before submitting the request yourself. Follow its status from My Requests in the service center."
+          "From Home, open the menu beside notifications and choose the relevant service such as consultation, accommodation or travel and arrival.",
+          "Open the available service details and review conditions and required information before submitting yourself. Do not assume an unpublished service or price is available."
         ]
       },
       "location": {
-        "ar": "الشريط السفلي ← الخدمات",
-        "en": "Bottom navigation → Services"
+        "ar": "الرئيسية ← القائمة ← الخدمات المطلوبة",
+        "en": "Home → Menu → Relevant service"
       },
       "screen": "services_support/services_consultation_screens.dart",
       "sources": [
@@ -2502,22 +2528,30 @@
         "discussion",
         "منشور",
         "تعليق",
-        "نقاش"
+        "نقاش",
+        "منشور جديد",
+        "نشر منشور",
+        "منشوراتي",
+        "new post",
+        "create a new post",
+        "خدمة نشر المنشورات غير متاحة"
       ],
       "description": {
-        "ar": "افتح مجتمع الطلاب ثم المنشورات لقراءة النقاشات.",
-        "en": "Open Student Community and Posts to read discussions."
+        "ar": "من مجتمع الطلاب اضغط منشور جديد أسفل الصفحة.",
+        "en": "In Student Community, tap New post at the bottom."
       },
       "steps": {
         "ar": [
-          "افتح مجتمع الطلاب ثم المنشورات لقراءة النقاشات.",
-          "افتح منشورًا للرد أو استخدم إنشاء منشور عندما يظهر لحسابك، وراجع المحتوى قبل النشر.",
-          "صفحة الطالب العامة لا تعرض بياناته الخاصة أو قائمة المشاهدات الخاصة به."
+          "من مجتمع الطلاب اضغط منشور جديد أسفل الصفحة.",
+          "املأ نص المنشور المعلّم بإجباري؛ العنوان والصورة اختياريان. راجع المحتوى ثم انشر؛ لا يستطيع المساعد نشره عنك.",
+          "كل المنشورات يعرض المحتوى المتاح، ومنشوراتي يعرض منشوراتك، ومنشورات الإدارة يعرض منشورات الأدمن فقط.",
+          "إذا ظهرت خدمة النشر غير متاحة، احتفظ بالنص ولا تكرر الإرسال؛ تحقق من الاتصال وتحديث التطبيق وتواصل مع الدعم. قد يحتاج السيرفر تحديثًا؛ لا يعني ذلك أن منشورك نُشر."
         ],
         "en": [
-          "Open Student Community and Posts to read discussions.",
-          "Open a post to reply or use Create post when offered, reviewing content before publishing.",
-          "A public student profile does not expose private account data or private viewer lists."
+          "In Student Community, tap New post at the bottom.",
+          "Fill in the post text marked Required. The title and image are optional. Review and publish yourself; the assistant cannot publish for you.",
+          "All posts shows available content, My posts shows yours, and Administration posts shows only posts authored by an administrator.",
+          "If publishing is unavailable, keep your text and avoid duplicate submissions. Check connectivity and app updates, then contact support. The server may need an update; this message does not confirm publication."
         ]
       },
       "location": {
@@ -3244,20 +3278,23 @@
         "what can you do",
         "assistant",
         "شو بتقدر",
-        "مساعد"
+        "مساعد",
+        "COVEY AI"
       ],
       "description": {
-        "ar": "إرشادات Study Birds الموثقة فقط.",
-        "en": "Verified Study Birds guidance only."
+        "ar": "اسأل مساعد COVEY AI عن استخدام ميزة داخل التطبيق أو اذكر اسم الشاشة والمشكلة.",
+        "en": "Ask COVEY AI about using an app feature, naming the screen and problem."
       },
       "steps": {
         "ar": [
-          "اسأل عن الشاشة أو الميزة التي تريد استخدامها داخل Study Birds.",
-          "للأسئلة العامة أو ميزة غير موثقة لن أخمّن جوابًا. حالات طلباتك تأتي من حسابك المصرّح فقط، ولا تنفّذ المحادثة إجراءً حساسًا."
+          "اسأل مساعد COVEY AI عن استخدام ميزة داخل التطبيق أو اذكر اسم الشاشة والمشكلة.",
+          "يعرض المساعد إرشادًا معتمدًا وقد يطلب توضيحًا؛ لا ينفذ النشر أو الدفع أو الحذف أو الاسترجاع عنك. عند غياب معلومة لا يخمنها؛ افتح مركز الدعم.",
+          "الموافقة على استخدام AI محفوظة لهذا الحساب على الجهاز؛ لا تعاد كل مرة إلا عند تغيير الإفصاح أو مسح البيانات. لا ترسل كلمات مرور أو أكواد أو صور هوية."
         ],
         "en": [
-          "Ask about a screen or feature you want to use inside Study Birds.",
-          "I will not guess answers to general questions or unverified features. Your application statuses come only from your authorized account, and chat performs no sensitive actions."
+          "Ask COVEY AI about using an app feature, naming the screen and problem.",
+          "The assistant provides reviewed guidance and may ask a clarifying question. It cannot publish, pay, delete or restore for you. If information is unavailable it will not guess; use Support Center.",
+          "AI consent is remembered for this account on the device, unless the disclosure changes or app data is cleared. Never send passwords, codes or identity images."
         ]
       },
       "location": {
@@ -3288,6 +3325,478 @@
       ],
       "action": null,
       "reviewed": true
+    },
+    {
+      "id": "home-menu",
+      "name": {
+        "ar": "الرئيسية والقائمة",
+        "en": "Home and menu"
+      },
+      "aliases": [
+        "القائمة",
+        "المينيو",
+        "الداشبورد",
+        "وين حسابي",
+        "home menu",
+        "dashboard",
+        "where is my account",
+        "where is the journey button"
+      ],
+      "description": {
+        "ar": "الرئيسية هي الداشبورد والستوريات في أعلاها. صورة الحساب بالأعلى تفتح حسابي.",
+        "en": "Home is the dashboard with stories above it. The top account avatar opens My Account."
+      },
+      "steps": {
+        "ar": [
+          "الرئيسية هي الداشبورد والستوريات في أعلاها. صورة الحساب بالأعلى تفتح حسابي.",
+          "القائمة بجانب الإشعارات تضم الاستكشاف والخدمات والرحلة وبقية الأقسام. الشريط السفلي للرئيسية ومجتمع الطلاب والغمازة."
+        ],
+        "en": [
+          "Home is the dashboard with stories above it. The top account avatar opens My Account.",
+          "The menu beside notifications contains Explore, services, Journey and other sections. Bottom navigation contains Home, Student Community and Winker."
+        ]
+      },
+      "location": {
+        "ar": "الرئيسية والقائمة",
+        "en": "Home and menu"
+      },
+      "screen": "home_journey/home_dashboard_screen.dart",
+      "sources": [
+        "mobile:lib/app_shell.dart",
+        "mobile:lib/screens/home_journey/home_dashboard_screen.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك؛ المساعد يشرح ولا ينفذ الإجراء عنك.",
+        "en": "Requires connectivity and your account permissions; the assistant explains but does not perform the action."
+      },
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "blocked-users",
+      "name": {
+        "ar": "المستخدمون المحظورون",
+        "en": "Blocked users"
+      },
+      "aliases": [
+        "المحظورين",
+        "المحظورون",
+        "فك الحظر",
+        "قائمة الحظر",
+        "حظرت شخص",
+        "blocked list",
+        "blocked users",
+        "unblock",
+        "remove someone from my blocked list"
+      ],
+      "description": {
+        "ar": "من صورة حسابك افتح حسابي ثم الإعدادات ثم الأمان ثم المستخدمون المحظورون.",
+        "en": "From your top avatar, open My Account, Settings, Security, then Blocked users."
+      },
+      "steps": {
+        "ar": [
+          "من صورة حسابك افتح حسابي ثم الإعدادات ثم الأمان ثم المستخدمون المحظورون.",
+          "تعرض القائمة الحسابات التي حظرتها؛ اختر إلغاء الحظر للحساب المطلوب. لحظر مستخدم افتح ملفه واستخدم زر الحظر مع التأكيد."
+        ],
+        "en": [
+          "From your top avatar, open My Account, Settings, Security, then Blocked users.",
+          "The list shows accounts you blocked. Choose Unblock for the relevant account. To block someone, open their profile and use the block button and confirmation."
+        ]
+      },
+      "location": {
+        "ar": "المستخدمون المحظورون",
+        "en": "Blocked users"
+      },
+      "screen": "profile_account/security_settings_screen.dart",
+      "sources": [
+        "mobile:lib/screens/profile_account/security_settings_screen.dart",
+        "mobile:lib/core/widgets/safety_controls.dart"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك؛ المساعد يشرح ولا ينفذ الإجراء عنك.",
+        "en": "Requires connectivity and your account permissions; the assistant explains but does not perform the action."
+      },
+      "action": "security",
+      "reviewed": true
+    },
+    {
+      "id": "recognitions",
+      "name": {
+        "ar": "الشهادات والاعترافات",
+        "en": "Certificates and recognitions"
+      },
+      "aliases": [
+        "الشهادات",
+        "الاعترافات",
+        "الاعتمادات",
+        "recognitions",
+        "certificates",
+        "accreditations",
+        "british council",
+        "techne summit",
+        "iso 9001",
+        "iso 10002"
+      ],
+      "description": {
+        "ar": "تظهر الشهادات والاعترافات في الداشبورد أسفل البنر، كبطاقات صغيرة تحتوي صور الجهات وأسماءها.",
+        "en": "Certificates and recognitions appear below the banner on the home dashboard as compact cards with organization images and names."
+      },
+      "steps": {
+        "ar": [
+          "تظهر الشهادات والاعترافات في الداشبورد أسفل البنر، كبطاقات صغيرة تحتوي صور الجهات وأسماءها.",
+          "اضغط البطاقة لفتح رابطها إن وجد، أو معاينة الصورة المرفوعة إن كانت متاحة. وجود الشعار ليس تأكيدًا جديدًا لشهادة أو صلاحيتها؛ راجع بيانات الجهة أو الدعم للتحقق."
+        ],
+        "en": [
+          "Certificates and recognitions appear below the banner on the home dashboard as compact cards with organization images and names.",
+          "Tap a card to open its link when present, or preview an uploaded image when available. A logo is not new proof of certification or validity; check the organization record or support."
+        ]
+      },
+      "location": {
+        "ar": "الشهادات والاعترافات",
+        "en": "Certificates and recognitions"
+      },
+      "screen": "home_journey/recognitions_carousel.dart",
+      "sources": [
+        "mobile:lib/screens/home_journey/recognitions_carousel.dart",
+        "mobile:lib/screens/home_journey/home_dashboard_screen.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك؛ المساعد يشرح ولا ينفذ الإجراء عنك.",
+        "en": "Requires connectivity and your account permissions; the assistant explains but does not perform the action."
+      },
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "community-interactions",
+      "name": {
+        "ar": "التعليقات والتفاعلات",
+        "en": "Comments and reactions"
+      },
+      "aliases": [
+        "تعليق",
+        "التعليقات",
+        "رياكسن",
+        "رياكشن",
+        "تفاعل",
+        "comments",
+        "comment",
+        "reactions",
+        "reaction"
+      ],
+      "description": {
+        "ar": "افتح التعليقات من المنشور داخل صفحة مجتمع الطلاب لقراءتها أو إضافة تعليق دون مغادرة المجتمع.",
+        "en": "Open a post’s comments within Student Community to read or add a comment without leaving the feed."
+      },
+      "steps": {
+        "ar": [
+          "افتح التعليقات من المنشور داخل صفحة مجتمع الطلاب لقراءتها أو إضافة تعليق دون مغادرة المجتمع.",
+          "اختر التفاعل من أدوات المنشور أو التعليق. إذا تعذر حفظه تحقق من الاتصال وحاول مرة؛ إذا تكرر الخطأ افتح الدعم واذكر نص الرسالة دون بيانات حساسة."
+        ],
+        "en": [
+          "Open a post’s comments within Student Community to read or add a comment without leaving the feed.",
+          "Choose a reaction using the post or comment controls. If saving fails, check connectivity and retry once; if it persists contact support with the error text, excluding sensitive data."
+        ]
+      },
+      "location": {
+        "ar": "التعليقات والتفاعلات",
+        "en": "Comments and reactions"
+      },
+      "screen": "services_support/community_screen.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/community_screen.dart",
+        "mobile:lib/core/widgets/community_reactions.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك؛ المساعد يشرح ولا ينفذ الإجراء عنك.",
+        "en": "Requires connectivity and your account permissions; the assistant explains but does not perform the action."
+      },
+      "action": "community",
+      "reviewed": true
+    },
+    {
+      "id": "community-admin-posts",
+      "name": {
+        "ar": "منشورات الإدارة",
+        "en": "Administration posts"
+      },
+      "aliases": [
+        "منشورات الإدارة",
+        "منشورات الادارة",
+        "فلتر الإدارة",
+        "administration posts",
+        "admin posts"
+      ],
+      "description": {
+        "ar": "من فلاتر مجتمع الطلاب اختر منشورات الإدارة لعرض المنشورات التي نشرها حساب أدمن فقط.",
+        "en": "Choose Administration posts in the community filters to see only posts authored by an administrator."
+      },
+      "steps": {
+        "ar": [
+          "من فلاتر مجتمع الطلاب اختر منشورات الإدارة لعرض المنشورات التي نشرها حساب أدمن فقط.",
+          "منشورات الطلاب والمستخدمين العاديين ليست منشورات إدارة. اختر كل المنشورات للعودة للمحتوى المتاح كاملًا."
+        ],
+        "en": [
+          "Choose Administration posts in the community filters to see only posts authored by an administrator.",
+          "Student and ordinary-user posts are not administration posts. Choose All posts to return to the full available feed."
+        ]
+      },
+      "location": {
+        "ar": "منشورات الإدارة",
+        "en": "Administration posts"
+      },
+      "screen": "services_support/community_screen.dart",
+      "sources": [
+        "mobile:lib/screens/services_support/community_screen.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك؛ المساعد يشرح ولا ينفذ الإجراء عنك.",
+        "en": "Requires connectivity and your account permissions; the assistant explains but does not perform the action."
+      },
+      "action": "community",
+      "reviewed": true
+    },
+    {
+      "id": "public-profile",
+      "name": {
+        "ar": "ملف الناشر",
+        "en": "Author profile"
+      },
+      "aliases": [
+        "حساب الناشر",
+        "بروفايل شخص",
+        "ملف الناشر",
+        "شبكة المنشورات",
+        "author profile",
+        "public profile",
+        "profile grid",
+        "post tiles"
+      ],
+      "description": {
+        "ar": "اضغط اسم صاحب المنشور أو التعليق أو صورته لفتح ملف ذلك الشخص.",
+        "en": "Tap a post or comment author’s name or avatar to open that person’s profile."
+      },
+      "steps": {
+        "ar": [
+          "اضغط اسم صاحب المنشور أو التعليق أو صورته لفتح ملف ذلك الشخص.",
+          "المنشورات تظهر كبطاقات صغيرة مرتبة في شبكة؛ اضغط بطاقة لفتح المنشور نفسه وتعليقاته. قسم اليوميات مخفي من صفحة الملف، ولا تُعرض بيانات الشخص الخاصة."
+        ],
+        "en": [
+          "Tap a post or comment author’s name or avatar to open that person’s profile.",
+          "Posts appear as compact grid tiles. Tap a tile to open the original post and its comments. The separate diary section is hidden and private account data is not shown."
+        ]
+      },
+      "location": {
+        "ar": "ملف الناشر",
+        "en": "Author profile"
+      },
+      "screen": "community/student_public_profile.dart",
+      "sources": [
+        "mobile:lib/screens/community/student_public_profile.dart",
+        "mobile:lib/screens/community/contact_profile_screen.dart",
+        "mobile:lib/screens/services_support/community_screen.dart"
+      ],
+      "roles": [
+        "student"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك؛ المساعد يشرح ولا ينفذ الإجراء عنك.",
+        "en": "Requires connectivity and your account permissions; the assistant explains but does not perform the action."
+      },
+      "action": "community",
+      "reviewed": true
+    },
+    {
+      "id": "voice-disabled",
+      "name": {
+        "ar": "المايك والتسجيل الصوتي",
+        "en": "Microphone and voice recording"
+      },
+      "aliases": [
+        "المايك",
+        "الميكروفون",
+        "فويس",
+        "تسجيل صوت",
+        "microphone",
+        "voice recording",
+        "voice message",
+        "mic button"
+      ],
+      "description": {
+        "ar": "التسجيل الصوتي وأزرار المايك أُلغيت من حقول المحادثات في هذه النسخة؛ اكتب الرسالة وأرسلها نصيًا.",
+        "en": "Voice recording and microphone controls were removed from chat inputs in this version. Type and send text instead."
+      },
+      "steps": {
+        "ar": [
+          "التسجيل الصوتي وأزرار المايك أُلغيت من حقول المحادثات في هذه النسخة؛ اكتب الرسالة وأرسلها نصيًا.",
+          "لا يوجد زر مايك لتفعيله داخل COVEY AI أو المحادثات. إملاء لوحة مفاتيح الجهاز إن توفر يتبع إعدادات الجهاز، وليس تسجيلًا داخل التطبيق."
+        ],
+        "en": [
+          "Voice recording and microphone controls were removed from chat inputs in this version. Type and send text instead.",
+          "There is no in-app mic button to enable in COVEY AI or chats. Keyboard dictation, when available, belongs to device settings rather than app voice recording."
+        ]
+      },
+      "location": {
+        "ar": "المايك والتسجيل الصوتي",
+        "en": "Microphone and voice recording"
+      },
+      "screen": "ai/birds_ai_screen.dart",
+      "sources": [
+        "mobile:lib/screens/ai/birds_ai_screen.dart",
+        "mobile:lib/screens/services_support/bird_ai_screen.dart",
+        "mobile:lib/screens/services_support/messaging_and_emergency_screens.dart"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك؛ المساعد يشرح ولا ينفذ الإجراء عنك.",
+        "en": "Requires connectivity and your account permissions; the assistant explains but does not perform the action."
+      },
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "local-cache",
+      "name": {
+        "ar": "البيانات المحفوظة والتحديث",
+        "en": "Saved data and refresh"
+      },
+      "aliases": [
+        "الكاش",
+        "كاش",
+        "تحميل من جديد",
+        "بيانات محلية",
+        "cache",
+        "cached data",
+        "offline",
+        "reload every time"
+      ],
+      "description": {
+        "ar": "يعرض التطبيق البيانات المحفوظة محليًا عند توفرها لتقليل إعادة التحميل، ويحدّثها وفق نوع الصفحة والاتصال.",
+        "en": "The app reuses available local data to reduce loading and refreshes it according to the page and connectivity."
+      },
+      "steps": {
+        "ar": [
+          "يعرض التطبيق البيانات المحفوظة محليًا عند توفرها لتقليل إعادة التحميل، ويحدّثها وفق نوع الصفحة والاتصال.",
+          "اسحب للتحديث أو استخدم زر التحديث عند الحاجة. البيانات المحفوظة قديمة حتى ينجح التحقق؛ المدفوعات والحالات الحساسة تحتاج اتصالًا ولا يؤكدها الكاش. مسح الكاش يؤدي لإعادة تنزيل البيانات ولا يعني حذف الحساب."
+        ],
+        "en": [
+          "The app reuses available local data to reduce loading and refreshes it according to the page and connectivity.",
+          "Pull to refresh or use Refresh when needed. Saved data may be stale until verification succeeds; financial or sensitive statuses require connectivity and cannot be confirmed from cache. Clearing cache causes redownload, not account deletion."
+        ]
+      },
+      "location": {
+        "ar": "البيانات المحفوظة والتحديث",
+        "en": "Saved data and refresh"
+      },
+      "screen": "home_journey/home_dashboard_screen.dart",
+      "sources": [
+        "mobile:lib/core/services/response_cache.dart",
+        "mobile:lib/core/widgets/cached_resource.dart",
+        "mobile:lib/core/widgets/clear_cache_tile.dart",
+        "mobile:lib/screens/home_journey/home_dashboard_screen.dart"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك؛ المساعد يشرح ولا ينفذ الإجراء عنك.",
+        "en": "Requires connectivity and your account permissions; the assistant explains but does not perform the action."
+      },
+      "action": null,
+      "reviewed": true
+    },
+    {
+      "id": "ai-consent",
+      "name": {
+        "ar": "موافقة المساعد",
+        "en": "AI consent"
+      },
+      "aliases": [
+        "موافقة المساعد",
+        "قبل استخدام المساعد",
+        "رسالة الموافقة",
+        "ai consent",
+        "consent every time"
+      ],
+      "description": {
+        "ar": "عند أول استخدام للمساعد اقرأ الإفصاح ثم وافق إذا رغبت. تُحفظ الموافقة لكل حساب وإصدار إفصاح على الجهاز.",
+        "en": "Read the disclosure on first use and accept if you choose. Consent is stored per account and disclosure version on this device."
+      },
+      "steps": {
+        "ar": [
+          "عند أول استخدام للمساعد اقرأ الإفصاح ثم وافق إذا رغبت. تُحفظ الموافقة لكل حساب وإصدار إفصاح على الجهاز.",
+          "لا يفترض أن تظهر في كل زيارة بعد القبول. قد تظهر عند تغيير الحساب أو الإفصاح أو مسح بيانات التطبيق؛ فشل حفظ الموافقة يظهر رسالة لإعادة المحاولة."
+        ],
+        "en": [
+          "Read the disclosure on first use and accept if you choose. Consent is stored per account and disclosure version on this device.",
+          "It should not repeat on every visit after acceptance. It can reappear after switching accounts, changing the disclosure or clearing app data; a storage failure displays a retry message."
+        ]
+      },
+      "location": {
+        "ar": "موافقة المساعد",
+        "en": "AI consent"
+      },
+      "screen": "ai/birds_ai_screen.dart",
+      "sources": [
+        "mobile:lib/core/widgets/ai_consent.dart",
+        "mobile:lib/screens/ai/birds_ai_screen.dart"
+      ],
+      "roles": [
+        "student",
+        "parent",
+        "partner",
+        "employee",
+        "admin",
+        "university"
+      ],
+      "availability": "available",
+      "restrictions": {
+        "ar": "تحتاج اتصالًا وصلاحيات حسابك؛ المساعد يشرح ولا ينفذ الإجراء عنك.",
+        "en": "Requires connectivity and your account permissions; the assistant explains but does not perform the action."
+      },
+      "action": null,
+      "reviewed": true
     }
-  ]
+  ],
+  "revision": "2026.10.30.1"
 }

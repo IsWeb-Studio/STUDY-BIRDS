@@ -46,6 +46,7 @@ void main() {
             'admin', UserRole.student, AssistantNavigation.knowledgeVersion),
         isFalse);
     final context = AssistantNavigation.context('documents', 'en');
+    expect(context['knowledgeRevision'], AssistantNavigation.knowledgeRevision);
     expect(context.containsKey('userId'), isFalse);
     expect(context.containsKey('role'), isFalse);
   });

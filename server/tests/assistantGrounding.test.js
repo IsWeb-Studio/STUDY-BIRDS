@@ -53,11 +53,8 @@ test('COVEY AI grounds replies in the knowledge base and the asking student\'s o
     assert.doesNotMatch(own.messages.at(-1).content, /Final admission/);
     assert.equal(capturedMessages, undefined, 'personal records never reach provider');
     const answer=await call(student, 'How do I upload documents and apply?');
-    assert.match(answer.messages.at(-1).content, /cannot verify/); // unstructured provider answer rejected
-    const payload=JSON.stringify(capturedMessages);
-    assert.doesNotMatch(payload, /Computer Science|under-review|visa requirements|passport|example.test/);
-    assert.deepEqual(JSON.parse(capturedMessages[1].content), {approvedTopicIds:['applications','documents']});
-    assert.match(capturedMessages[0].content, /NOT a general chatbot/);
+    assert.match(answer.messages.at(-1).content, /Which topic/);
+    assert.equal(capturedMessages,undefined,'ambiguous questions are clarified locally');
     capturedMessages=undefined;
     const declined=await call(student, 'What is the capital of France?');
     assert.match(declined.messages.at(-1).content, /COVEY assistant/);

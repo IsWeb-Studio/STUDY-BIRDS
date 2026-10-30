@@ -13,6 +13,13 @@ void main() {
     };
     expect(AssistantContract.accepts(good), isTrue);
     expect(AssistantContract.acceptsResponse(good), isTrue);
+    // Content updates keep the same screen/action protocol for installed apps.
+    expect(
+        AssistantContract.accepts({
+          ...good,
+          'knowledgeRevision': AssistantNavigation.knowledgeRevision
+        }),
+        isTrue);
     for (final bad in [
       <String, Object>{},
       {...good, 'scopePolicy': 'general-chat'},

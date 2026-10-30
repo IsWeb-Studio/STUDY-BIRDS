@@ -44,6 +44,8 @@ class AssistantNavigation {
         }
       }();
   static const knowledgeVersion = '2026.10.23.3';
+  // Content can evolve without changing the allowlisted navigation protocol.
+  static const knowledgeRevision = '2026.10.30.1';
   static const ids = {
     'applications',
     'documents',
@@ -128,6 +130,7 @@ class AssistantNavigation {
         'screen': screen,
         'language': language,
         'knowledgeVersion': knowledgeVersion,
+        'knowledgeRevision': knowledgeRevision,
         if (_appVersion != null) 'appVersion': _appVersion,
         'flags': {'englishEnabled': LocaleController.englishEnabled},
       };

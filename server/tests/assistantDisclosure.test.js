@@ -14,7 +14,7 @@ test('all roles and languages get concise reviewed text and useful details only'
  assert.match(response.content,/Tap Upload document/);assert.match(response.details,/document type/);
 });
 test('minimal server-owned followups cannot escape roles or knowledge version',()=>{
- const prior={topicId:'passport',knowledgeVersion:k.catalog.version};
+ const prior={topicId:'passport',knowledgeVersion:k.catalog.version,knowledgeRevision:k.catalog.revision};
  assert.equal(k.followup('طيب وين الزر؟',prior,'student',{}).id,'passport');
  assert.equal(k.followup('مش ظاهر عندي',prior,'student',{}).id,'passport');
  assert.equal(k.followup('where is the button',prior,'student',{}).id,'passport');

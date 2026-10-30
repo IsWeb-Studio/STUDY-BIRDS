@@ -39,6 +39,12 @@ const screens = Object.freeze({
   documents: ['مستنداتي', 'My Documents'], applications: ['طلباتي', 'My Applications'],
   passport: ['جواز السفر', 'Passport'], settings: ['الإعدادات', 'Settings'],
   notifications: ['الإشعارات', 'Notifications'], game: ['الغمّازة', 'The Winker'],
+  profile: ['الملف الشخصي', 'Profile'], support: ['مركز الدعم', 'Support Center'],
+  payments: ['المدفوعات', 'Payments'], universities: ['الجامعات', 'Universities'],
+  programs: ['البرامج', 'Programs'], countries: ['الدول', 'Countries'],
+  security: ['الأمان', 'Security'], scholarships: ['المنح', 'Scholarships'],
+  friends: ['الأصدقاء', 'Friends'], rewards: ['المكافآت', 'Rewards'],
+  events: ['الحياة الطلابية', 'Student life'], alumni: ['الخريجون', 'Alumni'],
 });
 function validateContext(body = {}) {
   const raw = body.context && typeof body.context === 'object' && !Array.isArray(body.context) ? body.context : {};
@@ -48,6 +54,7 @@ function validateContext(body = {}) {
     language: ['ar', 'en'].includes(raw.language) ? raw.language : null,
     appVersion: typeof raw.appVersion === 'string' && /^\d+\.\d+\.\d+(?:\+\d+)?$/.test(raw.appVersion) && raw.appVersion.length < 32 ? raw.appVersion : null,
     knowledgeVersion: typeof raw.knowledgeVersion === 'string' && raw.knowledgeVersion.length < 40 ? raw.knowledgeVersion : null,
+    knowledgeRevision: typeof raw.knowledgeRevision === 'string' && raw.knowledgeRevision.length < 40 ? raw.knowledgeRevision : null,
     // Client flags are advisory only. They cannot enable a backend operation,
     // expand role access, or make an unavailable feature available.
     englishEnabled: raw.flags?.englishEnabled === true,
@@ -66,7 +73,10 @@ function retrieve(message, { role = 'student', context = {} } = {}) {
   if (/^(where do i tap|where do i go|how do i do it|what next|وين اضغط|وين اكبس|وين اروح|شو اعمل|كيف اعملها)$/.test(text)) {
     const id = ({ documents: 'documents', passport: 'passport', applications: 'applications',
       settings: 'account', account: 'profile', journey: 'journey', community: 'community',
-      services: 'services', notifications: 'notifications', game: 'game', explore: 'catalog' })[context.screen];
+      services: 'services', notifications: 'notifications', game: 'game', explore: 'catalog',
+      profile: 'profile', support: 'support', payments: 'payments', universities: 'catalog',
+      programs: 'catalog', countries: 'countries', security: 'security', scholarships: 'scholarships',
+      friends: 'friends', rewards: 'rewards', events: 'events', alumni: 'alumni' })[context.screen];
     const entry=byId.get(id);
     return entry?.reviewed&&entry.roles.includes(role)?[entry]:[];
   }
@@ -96,6 +106,7 @@ function followup(message, previous, role, context) {
   const text=normalize(message);
   if(!/^(طيب )?(وين الزر|وين اضغط|وين اكبس|مش ظاهر عندي|مش لاقيه|ما ظهر|where is the button|i cant see it|i cannot see it|what next)$/.test(text))return null;
   if(previous?.knowledgeVersion!==catalog.version || (context.knowledgeVersion && context.knowledgeVersion!==catalog.version))return null;
+  if(previous.knowledgeRevision!==catalog.revision)return null;
   const entry=byId.get(previous.topicId);
   return entry?.reviewed && entry.roles.includes(role)?entry:null;
 }

@@ -4,7 +4,7 @@ import '../services/auth_session.dart';
 import 'privacy_links.dart';
 
 /// Increment only when the disclosed AI processing or consent terms change.
-const aiConsentVersion = 1;
+const aiConsentVersion = 2;
 
 /// Both assistant entry points share an account-scoped, durable consent.
 Future<bool> requestAiConsent(BuildContext context) async {
@@ -34,8 +34,8 @@ Future<bool> requestAiConsent(BuildContext context) async {
           content: SingleChildScrollView(
             child: Column(mainAxisSize: MainAxisSize.min, children: [
               Text(ar
-                  ? 'تُرسل رسائلك وسياق الشاشة إلى خوادم COVEY وتُحفظ المحادثة في حسابك. تستخدم الخدمة مزود ذكاء اصطناعي خارجي لمعالجة المواضيع المعتمدة. لا ترسل كلمات مرور أو جوازات أو بيانات حساسة. قد تكون الإجابات غير دقيقة؛ تحقق من التفاصيل مع فريق الدعم. المتابعة اختيارية، ويمكنك التوقف بإغلاق المساعد واستخدام الدعم.'
-                  : 'Your messages and screen context are sent to COVEY servers and conversations are saved to your account. The service uses an external AI provider to process approved topics. Do not send passwords, passports or sensitive information. Answers may be inaccurate; verify details with Support. Use is optional. Close the assistant to stop and use Support instead.'),
+                  ? 'تُرسل رسائلك وسياق الشاشة إلى خوادم COVEY وتُحفظ المحادثة في حسابك. هذه النسخة تجيب من دليل التطبيق المعتمد وتطلب توضيحًا عند الالتباس؛ لا ترسل محادثتك إلى مزود ذكاء اصطناعي خارجي ضمن هذا المسار. لا ترسل كلمات مرور أو جوازات أو بيانات حساسة. قد تكون الإجابات غير دقيقة؛ تحقق من التفاصيل مع فريق الدعم. المتابعة اختيارية، ويمكنك التوقف بإغلاق المساعد واستخدام الدعم.'
+                  : 'Your messages and screen context are sent to COVEY servers and conversations are saved to your account. This version uses the reviewed app guide and asks for clarification when needed; this flow does not send your conversation to an external AI provider. Do not send passwords, passports or sensitive information. Answers may be inaccurate; verify details with Support. Use is optional. Close the assistant to stop and use Support instead.'),
               const PrivacyLinks(),
             ]),
           ),

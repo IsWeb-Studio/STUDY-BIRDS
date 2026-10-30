@@ -6,20 +6,20 @@ const Application=require('../models/Application');
 const knowledge=require('../utils/assistantKnowledge');
 const run=require('../utils/asyncHandler');
 const {rateLimit}=require('express-rate-limit');
-const {configuration,ready,generateReply}=require('../utils/assistantProvider');
-const threadSchema=new mongoose.Schema({user:{type:mongoose.Schema.Types.ObjectId,required:true,index:true},title:String,lockedUntil:{type:Date,default:()=>new Date(0)},messages:[{role:{type:String,enum:['user','assistant']},content:String,details:String,topicId:String,knowledgeVersion:String,actions:[{_id:false,id:String,label:String}],createdAt:{type:Date,default:Date.now}}]},{timestamps:true});
+const {ready}=require('../utils/assistantProvider');
+const threadSchema=new mongoose.Schema({user:{type:mongoose.Schema.Types.ObjectId,required:true,index:true},title:String,lockedUntil:{type:Date,default:()=>new Date(0)},messages:[{role:{type:String,enum:['user','assistant']},content:String,details:String,topicId:String,knowledgeVersion:String,knowledgeRevision:String,actions:[{_id:false,id:String,label:String}],createdAt:{type:Date,default:Date.now}}]},{timestamps:true});
 const Thread=mongoose.model('AssistantThread',threadSchema);
 const Generation=mongoose.model('AssistantGeneration',new mongoose.Schema({user:mongoose.Schema.Types.ObjectId,thread:mongoose.Schema.Types.ObjectId,model:String,inputTokens:Number,outputTokens:Number,response:String,status:{type:String,enum:['pending','complete','failed']}},{timestamps:true}));
 const Quota=mongoose.model('AssistantQuota',new mongoose.Schema({key:{type:String,unique:true},count:{type:Number,default:0},expiresAt:{type:Date,expires:0}}));
-const contract={scopePolicy:'studybirds-only-v1',responseFormat:'verified-help-v1',knowledgeVersion:knowledge.catalog.version};
+const contract={scopePolicy:'studybirds-only-v1',responseFormat:'verified-help-v1',knowledgeVersion:knowledge.catalog.version,knowledgeRevision:knowledge.catalog.revision};
 function safeMessages(messages){return messages.map(message=>{
  const row=typeof message.toObject==='function'?message.toObject():message;
- if(row.role==='assistant'&&!row.knowledgeVersion)return {...row,content:'رسالة قديمة غير موثقة. أعد سؤالك للحصول على إرشاد COVEY الموثق. / Older unverified reply. Ask again for verified COVEY help.',details:'',actions:[]};
+ if(row.role==='assistant'&&(!row.knowledgeVersion||row.knowledgeRevision!==knowledge.catalog.revision))return {...row,content:'إجابة من دليل سابق. أعد سؤالك للحصول على إرشاد COVEY المحدّث. / Reply from an older guide. Ask again for current COVEY help.',details:'',actions:[]};
  return row;
 });}
 const router=express.Router();router.use(protect);
-router.get('/config',(req,res)=>res.json({enabled:knowledge.verified,scopePolicy:'studybirds-only-v1',responseFormat:'verified-help-v1',providerAvailable:ready(),knowledgeVersion:knowledge.catalog.version}));
-router.get('/help-catalog',(req,res)=>res.json({version:knowledge.catalog.version,entries:knowledge.entries.filter(e=>e.roles.includes(req.user.role)).map(e=>({id:e.id,name:e.name,availability:e.availability}))}));
+router.get('/config',(req,res)=>res.json({enabled:knowledge.verified,...contract,providerAvailable:ready()}));
+router.get('/help-catalog',(req,res)=>res.json({version:knowledge.catalog.version,revision:knowledge.catalog.revision,entries:knowledge.entries.filter(e=>e.roles.includes(req.user.role)).map(e=>({id:e.id,name:e.name,availability:e.availability}))}));
 router.get('/suggested-questions',run(async(req,res)=>{
   if(req.user.role!=='student')return res.json([]);
   const ar=req.query.language!=='en';
@@ -34,18 +34,20 @@ router.post('/message',rateLimit({windowMs:60000,limit:5,keyGenerator:req=>Strin
  const decision=scope.classify(req.body.message.trim(),{role:req.user.role,context});
  if(decision.kind==='clarify'&&(!context.knowledgeVersion||context.knowledgeVersion===knowledge.catalog.version))decision.text=scope.screenContext(context.screen,decision.ar)||decision.text;
 
- // Reject unavailable ambiguity before creating an empty conversation.
- if(!req.body.threadId&&decision.kind==='help'&&decision.candidates.length>1&&!ready())return res.status(503).json({message:decision.ar?'المساعد غير متاح حاليًا؛ يمكنك التواصل مع مركز الدعم.':'The assistant is unavailable. Please contact Support Center.'});
  let thread;
  if(req.body.threadId){if(!mongoose.isValidObjectId(req.body.threadId))return res.status(400).json({message:'Invalid thread'});thread=await Thread.findOne({_id:req.body.threadId,user:req.user._id});if(!thread)return res.status(404).json({message:'Conversation not found'});}
  else thread=await Thread.create({user:req.user._id,title:req.body.message.slice(0,80)});
  const previous=[...thread.messages].reverse().find(row=>row.role==='assistant');
  const followup=knowledge.followup(req.body.message,previous,req.user.role,context);
  if(followup){decision.kind='help';decision.candidates=[followup];}
- if(decision.kind==='help'&&decision.candidates.length>1&&!ready())return res.status(503).json({message:decision.ar?'المساعد غير متاح حاليًا؛ يمكنك التواصل مع مركز الدعم.':'The assistant is unavailable. Please contact Support Center.'});
+ // Topic IDs alone cannot convey intent to a model. Ask for clarification.
+ if(decision.kind==='help' && decision.candidates.length>1){
+   decision.kind='clarify';
+   const names=decision.candidates.map(item=>item.name[decision.ar?'ar':'en']);
+   decision.text=decision.ar?'تقصد أي موضوع: '+names.join('، ')+'؟ اكتب اسم الموضوع أو وضح سؤالك.':'Which topic do you mean: '+names.join(', ')+'? Please name it or clarify your question.';
+ }
  const locked=await Thread.findOneAndUpdate({_id:thread._id,user:req.user._id,lockedUntil:{$lt:new Date()}},{$set:{lockedUntil:new Date(Date.now()+60000)}},{new:true});
  if(!locked)return res.status(409).json({message:'انتظر اكتمال الرد السابق.'});
- let generation;
  let released = false;
  try{
   const quota=await Quota.findOneAndUpdate({key:`${req.user._id}:${new Date().toISOString().slice(0,10)}`},{$inc:{count:1},$setOnInsert:{expiresAt:new Date(Date.now()+48*60*60*1000)}},{upsert:true,new:true});
@@ -54,7 +56,6 @@ router.post('/message',rateLimit({windowMs:60000,limit:5,keyGenerator:req=>Strin
   let answer=decision.text;
   let selected=null;
   let details='';
-  let reply={model:'studybirds-approved-help',inputTokens:0,outputTokens:0};
   if(decision.kind==='personal'){
     if(req.user.role!=='student') answer=scope.decline(decision.ar);
     else {
@@ -68,27 +69,18 @@ router.post('/message',rateLimit({windowMs:60000,limit:5,keyGenerator:req=>Strin
     }
   } else if(decision.kind==='help'){
     if(decision.candidates.length===1)selected=decision.candidates[0];
-    else {
-    generation=await Generation.create({user:req.user._id,thread:thread._id,model:configuration().model,status:'pending'});
-    // No account records, free-form messages, previous conversations, screen
-    // strings or document bodies are sent to the external provider.
-    reply=await generateReply([{role:'system',content:scope.system},{role:'user',content:JSON.stringify({approvedTopicIds:decision.candidates.map(item=>item.id)})}]);
-    selected=scope.validateSelection(reply.text,decision.candidates);
-    }
     answer=selected?knowledge.answer(selected,context,decision.ar):(decision.ar?'لا أستطيع تأكيد إجابة موثوقة لهذا السؤال. افتح مركز الدعم من حسابي وأرسل تذكرة.':'I cannot verify a reliable answer. Open Support Center from My Account and create a ticket.');
   }
   if(selected){const response=knowledge.presentation(selected,context,decision.ar);answer=response.content;details=response.details;}
-  if(generation)await Generation.updateOne({_id:generation._id},{$set:{status:'complete',response:answer,model:reply.model,inputTokens:reply.inputTokens,outputTokens:reply.outputTokens}});
   const allowedActions=new Set(['applications','documents','universities','programs','countries','compare','favorites','profile','passport','settings','security','notifications','support','community','friends','game','journey','payments','services','scholarships','events','alumni','rewards']);
   const action=selected?.availability!=='unavailable'&&selected?.roles.includes(req.user.role)&&allowedActions.has(selected?.action)?selected.action:null;
   const alreadyHere=action===context.screen || (action==='profile' && context.screen==='account');
   const actions=action&&!alreadyHere&&req.user.role==='student'?[{id:action,label:decision.ar?'فتح الشاشة':'Open screen'}]:[];
-  const updated=await Thread.findByIdAndUpdate(thread._id,{$set:{lockedUntil:new Date(0)},$push:{messages:{$each:[{role:'user',content:req.body.message.trim()},{role:'assistant',content:answer,details,topicId:selected?.id,actions,knowledgeVersion:knowledge.catalog.version}],$slice:-100}}},{new:true});
+  const updated=await Thread.findByIdAndUpdate(thread._id,{$set:{lockedUntil:new Date(0)},$push:{messages:{$each:[{role:'user',content:req.body.message.trim()},{role:'assistant',content:answer,details,topicId:selected?.id,actions,knowledgeVersion:knowledge.catalog.version,knowledgeRevision:knowledge.catalog.revision}],$slice:-100}}},{new:true});
   released = true;
-  res.json({threadId:thread._id,generationId:generation?._id,...contract,messages:safeMessages(updated.messages)});
- }catch(e){if(generation)await Generation.updateOne({_id:generation._id,status:'pending'},{$set:{status:'failed'}});if(res.statusCode===200)res.status(502);throw new Error(res.statusCode===429?e.message:'تعذر الحصول على رد من المساعد. حاول لاحقًا.');}
+  res.json({threadId:thread._id,...contract,messages:safeMessages(updated.messages)});
+ }catch(e){if(res.statusCode===200)res.status(502);throw new Error(res.statusCode===429?e.message:'تعذر الحصول على رد من المساعد. حاول لاحقًا.');}
  finally{try{if(!released)await Thread.updateOne({_id:thread._id},{$set:{lockedUntil:new Date(0)}});}catch(e){console.error('Failed to release assistant thread lock',e.message);}}
 }));
-// Public capability means reviewed app help is available; provider readiness
-// remains separate for the optional disambiguation path above.
+// Reviewed help and local clarification remain available without a provider.
 module.exports={router,ready:()=>knowledge.verified};
