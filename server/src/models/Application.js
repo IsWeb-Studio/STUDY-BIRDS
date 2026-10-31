@@ -73,6 +73,9 @@ const visaCaseSchema = new mongoose.Schema({
 
 const applicationSchema = new mongoose.Schema(
   {
+    referringAgent: { type: mongoose.Schema.Types.ObjectId, ref:'User', index:true },
+    agentReferralCode: { type:String, trim:true, maxlength:64 },
+    referringAgentName: String,
     student: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

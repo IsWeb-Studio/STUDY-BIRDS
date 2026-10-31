@@ -16,6 +16,10 @@ const { enqueueApplicationEmail } = require('../utils/applicationEmails');
 
 const createApplication = asyncHandler(async (req, res) => {
   const { programId, documentIds = [], notes, applicantProfile } = req.body;
+  if(req.body.agentReferralCode!==undefined && (typeof req.body.agentReferralCode!=='string'||req.body.agentReferralCode.length>64))return res.status(400).json({message:'Invalid agent referral code'});
+  const agentReferralCode=(req.body.agentReferralCode || '').trim();
+  const referringAgent=agentReferralCode?await require('../utils/agentReferral').resolveAgentReferral(agentReferralCode):null;
+  if(agentReferralCode&&!referringAgent)return res.status(400).json({message:'كود الوكيل غير صحيح أو غير فعّال. راجعه أو اتركه فارغًا. / Invalid or inactive agent code.'});
 
   if (!mongoose.isValidObjectId(programId) || !Array.isArray(documentIds) || documentIds.length > 30 ||
       documentIds.some((value) => typeof value !== 'string' || !mongoose.isValidObjectId(value)) ||
@@ -55,6 +59,7 @@ const createApplication = asyncHandler(async (req, res) => {
   }
 
   const application = await Application.create({
+    ...(referringAgent?{referringAgent:referringAgent._id,agentReferralCode,referringAgentName:referringAgent.name}:{}),
     student: req.user._id,
     program: program._id,
     university: program.university._id,

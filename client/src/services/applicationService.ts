@@ -2,7 +2,7 @@ import { api } from "../lib/api";
 import type { ApplicantProfileSnapshot, Application } from "../types";
 
 export const applicationService = {
-  create: async (payload: { programId: string; notes?: string; documentIds?: string[]; applicantProfile?: ApplicantProfileSnapshot }) => {
+  create: async (payload: { programId: string; notes?: string; documentIds?: string[]; applicantProfile?: ApplicantProfileSnapshot; agentReferralCode?: string }) => {
     const { data } = await api.post<Application>("/applications", payload);
     return data;
   },

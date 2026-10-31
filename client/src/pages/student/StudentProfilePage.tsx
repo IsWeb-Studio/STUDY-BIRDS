@@ -41,6 +41,8 @@ export const StudentProfilePage = () => {
   const ar = language === "ar";
   const [formMessage, setFormMessage] = useState("");
   const [formError, setFormError] = useState("");
+  const [agentReferralCode,setAgentReferralCode]=useState('');
+  const [codeCopied,setCodeCopied]=useState(false);
   const [passwordMessage, setPasswordMessage] = useState("");
   const [passwordError, setPasswordError] = useState("");
 
@@ -135,6 +137,7 @@ export const StudentProfilePage = () => {
     const loadProfile = isPartner ? partnerService.getProfile : studentService.getProfile;
 
     loadProfile().then((data) => {
+      if(isPartner)setAgentReferralCode(data.referralCode || '');
       const { dialCode, phoneNumber: savedPhone } = splitPhoneNumber(data.phone);
       setPhoneDialCode(savedPhone ? dialCode : DEFAULT_PHONE_DIAL_CODE);
       setPhoneNumber(savedPhone);
@@ -343,6 +346,11 @@ export const StudentProfilePage = () => {
             <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">
               <span className="font-semibold">{t("role")}:</span> {accountTypeLabel}
             </div>
+            {isPartner && agentReferralCode && <div className="space-y-3 rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">
+              <p className="font-semibold">{ar?'كود الإحالة الخاص بك':'Your referral code'}</p><code dir="ltr" className="block break-all text-lg font-bold">{agentReferralCode}</code>
+              <p>{ar?'يمكن للطالب إدخال هذا الكود اختياريًا عند التقديم على جامعة، أو التسجيل من رابط الإحالة الخاص بك.':'Students can optionally enter this code when applying to a university, or register through your referral link.'}</p>
+              <button type="button" className="rounded-xl border px-3 py-2" onClick={async()=>{try{await navigator.clipboard.writeText(agentReferralCode);setCodeCopied(true);}catch{setFormError(ar?'تعذر النسخ. يمكنك نسخ الكود يدويًا.':'Unable to copy. Copy the code manually.');}}}>{codeCopied?(ar?'تم النسخ':'Copied'):(ar?'نسخ الكود':'Copy code')}</button>
+            </div>}
             {isPartner ? (
               <div className="rounded-2xl bg-white px-4 py-3 text-sm text-slate-700">
                 <span className="font-semibold">{ar ? "حالة التوثيق" : "Verification status"}:</span>{" "}

@@ -58,6 +58,7 @@ export const ProgramDetailsPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [agentReferralCode,setAgentReferralCode]=useState('');
   const [applicationForm, setApplicationForm] = useState<ApplicationFormState>(emptyForm);
   const [phoneDialCode, setPhoneDialCode] = useState(DEFAULT_PHONE_DIAL_CODE);
   const [phoneNumber, setPhoneNumber] = useState("");
@@ -167,6 +168,7 @@ export const ProgramDetailsPage = () => {
 
       await applicationService.create({
         programId: program._id,
+        agentReferralCode:agentReferralCode.trim() || undefined,
         notes: applicationForm.notes,
         documentIds: uploadedDocuments.map(document => document._id),
         applicantProfile: {
@@ -188,6 +190,7 @@ export const ProgramDetailsPage = () => {
 
       await refreshSession();
       setMessage(t("submitApplicationSuccess"));
+      setAgentReferralCode('');
       setApplicationForm((current) => ({ ...current, notes: "" }));
       setDocumentFiles({});
       setUploadKey(current => current + 1);
@@ -472,6 +475,11 @@ export const ProgramDetailsPage = () => {
             />
           </label>
 
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-700">{language==='ar'?'كود الوكيل (اختياري)':'Agent referral code (optional)'}</span>
+            <input value={agentReferralCode} onChange={event=>setAgentReferralCode(event.target.value)} maxLength={64} autoComplete="off" spellCheck={false} disabled={submitting} dir="ltr" className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none ring-brand-300 focus:ring" aria-describedby="agent-code-help" />
+            <span id="agent-code-help" className="mt-2 block text-sm text-slate-500">{language==='ar'?'أدخل كود الوكيل الذي ساعدك في هذا الطلب إن وجد، أو اترك الخانة فارغة.':'Enter the code of the agent who helped with this application, or leave this blank.'}</span>
+          </label>
           <div key={uploadKey} className="grid gap-4 md:grid-cols-2">
             {requiredTypes.map(type => <div className="block" key={type}>
               <span className="mb-2 block text-sm font-medium text-slate-700">{documentLabels[type]?.[language === 'ar' ? 0 : 1] || type}</span>

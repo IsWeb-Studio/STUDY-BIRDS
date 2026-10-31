@@ -250,6 +250,7 @@ export const AdminApplicationsPage = () => {
                     </div>
                   </div>
 
+                  {application.agentReferralCode && <p className="text-sm text-slate-600"><span className="font-semibold text-slate-800">{language==='ar'?'كود الوكيل:':'Agent code:'}</span> <span dir="ltr">{application.agentReferralCode}</span>{application.referringAgentName?` — ${application.referringAgentName}`:''}</p>}
                   {application.notes ? (
                     <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
                       <span className="font-semibold text-slate-800">{dt(language, "studentNotesLabel")}:</span> {application.notes}

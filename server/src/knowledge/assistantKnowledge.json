@@ -2408,12 +2408,14 @@
         "ar": [
           "افتح تفاصيل البرنامج واختر التقديم على البرنامج.",
           "راجع المعلومات والمستندات المطلوبة لهذا البرنامج تحديدًا، ثم اضغط مراجعة وإرسال الطلب.",
-          "اقرأ نافذة التأكيد قبل إرسال الطلب بنفسك؛ المساعد لا يرسله."
+          "اقرأ نافذة التأكيد قبل إرسال الطلب بنفسك؛ المساعد لا يرسله.",
+          "في نموذج التقديم على الموقع، كود الوكيل اختياري. أدخله إن وجد أو اتركه فارغًا. يُتحقق من الكود ويُحفظ مع الطلب دون تغيير إحالة تسجيل الطالب. يمكن للوكيل نسخ كوده من ملفه الشخصي في الموقع."
         ],
         "en": [
           "Open program details and choose Apply to program.",
           "Check your information and the documents required for that specific program, then choose Review and submit.",
-          "Read the confirmation before sending it yourself; the assistant cannot submit it."
+          "Read the confirmation before sending it yourself; the assistant cannot submit it.",
+          "On the website application form, Agent referral code is optional. Enter the agent code if provided, or leave it blank. The code is verified and saved with this application; it does not replace the student signup referral. Agents can copy their code from their website profile."
         ]
       },
       "location": {

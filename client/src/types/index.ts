@@ -326,6 +326,9 @@ export interface ApplicationCard {
 
 export interface Application {
   _id: string;
+  agentReferralCode?: string;
+  referringAgent?: string;
+  referringAgentName?: string;
   card?: ApplicationCard;
   status: string;
   // NEW — already present in the API response; added here so the

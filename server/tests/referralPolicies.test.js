@@ -55,6 +55,25 @@ test('referral attribution, Google signup, configurable rewards and financial pe
     const summary=await call('GET','/partners/referral',agent);assert.equal(summary.summary.signups,1);assert.equal(summary.registrations[0].name,'google-student');
     await call('POST','/auth/register',null,{name:'Local agent referral',email:'local-agent@test.example',password:'Sparrow!Secure2026',referralCode:'AGENT1234'},201);
     assert.equal((await call('GET','/partners/referral',agent)).summary.signups,2);
+    // Application-level agent attribution is optional and cannot rewrite the
+    // student's signup referral or award the student reward to the agent.
+    const university=await require('../src/models/University').create({name:'Agent code university',country:new mongoose.Types.ObjectId()});
+    const Program=require('../src/models/Program');
+    const makeProgram=title=>Program.create({title,university:university._id,degreeLevel:'Bachelor',fieldOfStudy:'Science',requiredDocumentTypes:[]});
+    const blankProgram=await makeProgram('Without agent'),agentProgram=await makeProgram('With agent'),invalidProgram=await makeProgram('Invalid agent');
+    const before=await require('../src/models/Application').countDocuments();
+    await call('POST','/applications',signup.user,{programId:String(invalidProgram._id),agentReferralCode:'STUDENT1234'},400);
+    await call('POST','/applications',signup.user,{programId:String(invalidProgram._id),agentReferralCode:'NO-SUCH-AGENT'},400);
+    await call('POST','/applications',signup.user,{programId:String(invalidProgram._id),agentReferralCode:{code:'AGENT1234'}},400);
+    assert.equal(await require('../src/models/Application').countDocuments(),before);
+    const blank=await call('POST','/applications',signup.user,{programId:String(blankProgram._id),agentReferralCode:'   ',referringAgent:String(agent._id)},201);
+    assert.equal(blank.referringAgent,undefined);
+    const tagged=await call('POST','/applications',signup.user,{programId:String(agentProgram._id),agentReferralCode:' AGENT1234 '},201);
+    assert.equal(String(tagged.referringAgent),String(agent._id));assert.equal(tagged.agentReferralCode,'AGENT1234');assert.equal(tagged.referringAgentName,'Agent');
+    assert.equal(String((await Referral.findById(referral._id)).referrer),String(referrer._id));
+    assert.equal(await Wallet.countDocuments({relatedReferral:referral._id}),1);
+    await User.updateOne({_id:agent._id},{$set:{isActive:false}});
+    await call('POST','/applications',signup.user,{programId:String(invalidProgram._id),agentReferralCode:'AGENT1234'},400);
     await call('DELETE',`${endpoint}/${global._id}`,staff,{expectedVersion:1},409);
     await call('DELETE',`${endpoint}/${override._id}`,staff,{expectedVersion:1});
     assert.equal(await require('../src/utils/referralPolicy').resolveReferralReward(referrer._id),25);

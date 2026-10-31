@@ -1,6 +1,6 @@
 {
   "version": "2026.10.23.3",
-  "catalogSHA256": "2b8a6dd846f70628ea0855b4a97b777b4d20f89e2aec33b83a9565659d98d1ea",
+  "catalogSHA256": "8de6d8f81707f4df04464c3657827e6c096a78772f7a0b524a166ce68b1ffce0",
   "sources": [
     {
       "path": "mobile:lib/app_shell.dart",
@@ -4366,7 +4366,7 @@
     },
     {
       "path": "server:src/models/Application.js",
-      "sha256": "4ec33f680a0c564c6982df241b6dd44be97bf0500430976cde9bcd9ec6fc3e2f",
+      "sha256": "01ff2ebdd58ef6149e6009c9471e59dff812c4f28578dd890bfe75c6a5dca102",
       "dependencies": [
         "server:src/constants/roles.js",
         "server:src/utils/postAdmissionJourney.js",
@@ -5071,7 +5071,7 @@
     },
     {
       "path": "server:src/controllers/applicationController.js",
-      "sha256": "6639d17477f3dd8681f60a700b64fd9e7e7fdd7257d08e1a5858d6d4a2cc370c",
+      "sha256": "142ccd571a9428a14b01fe1344fc27fb02216d8eea8f21fc118f5130647a8b67",
       "dependencies": [
         "server:src/utils/applicationRequirements.js",
         "server:src/utils/journeyAutomation.js",
@@ -5085,6 +5085,7 @@
         "server:src/utils/hydrateApplications.js",
         "server:src/utils/studentWallet.js",
         "server:src/utils/applicationEmails.js",
+        "server:src/utils/agentReferral.js",
         "server:src/models/Invoice.js"
       ],
       "screens": [],
@@ -5548,6 +5549,16 @@
         "server:src/models/Invoice.js",
         "server:src/models/PaymentProof.js",
         "server:src/models/StudentWalletEntry.js"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "server:src/utils/agentReferral.js",
+      "sha256": "5937c5f351feae1b32369952379762db7ac636a03f7500838fa53a49016abb7d",
+      "dependencies": [
+        "server:src/models/StudentProfile.js",
+        "server:src/models/User.js"
       ],
       "screens": [],
       "routes": []
@@ -7428,7 +7439,7 @@
     },
     {
       "path": "website:src/pages/admin/AdminApplicationsPage.tsx",
-      "sha256": "4d8076ae5c8a93138661286dddd659cbd6c324454d1c18f72c99a040be1ca8a4",
+      "sha256": "85d6717d1f4d36ea082733bf27a2c3fed80c397d8dfe2407487cea9e04bcc85d",
       "dependencies": [
         "website:src/components/admin/FollowUpReminders.tsx",
         "website:src/components/admin/ApplicationAssignment.tsx",
@@ -8634,7 +8645,7 @@
     },
     {
       "path": "website:src/pages/ProgramDetailsPage.tsx",
-      "sha256": "1bcb8665e4e0768e01c62827c566a4e9e800f759de3757bf0baf5f848ca13d53",
+      "sha256": "a520b1d49c5342272d96fe3353f906c9d17d2832100d89eec0c5c1a52b6524f2",
       "dependencies": [
         "website:src/components/forms/DocumentPicker.tsx",
         "website:src/components/forms/FormInput.tsx",
@@ -8950,7 +8961,7 @@
     },
     {
       "path": "website:src/pages/student/StudentProfilePage.tsx",
-      "sha256": "29b86a3fe9c0ec32ae803c175aa3b2cf412512b45708fd07f4e70876ec57618e",
+      "sha256": "7a4b05c6435211b4c95c7f991aa221ec37621bf8ce25adf5b9e8eaf273d716ed",
       "dependencies": [
         "website:src/components/forms/DateOfBirthField.tsx",
         "website:src/components/forms/FormInput.tsx",
@@ -9286,7 +9297,7 @@
     },
     {
       "path": "website:src/services/applicationService.ts",
-      "sha256": "2e02bf1bad13dbd0566698fae788c9370f53c3dcb5e045efd0fa7913786f13d7",
+      "sha256": "4a6e1bc8c3d21c81621889fb9f26a12d8393ade6d3940b4e7574854708779717",
       "dependencies": [
         "website:src/lib/api.ts"
       ],
@@ -9393,7 +9404,7 @@
     },
     {
       "path": "website:src/types/index.ts",
-      "sha256": "ab2161e920dabed406ce64b1238defe39f9f7731b985f56e67338434c57f3791",
+      "sha256": "eb31269d44a331235910e2138f7b141d297accc9f0b3fa5efa4ddb99e7595678",
       "dependencies": [
         "website:src/hooks/useStatusCatalog.ts"
       ],
