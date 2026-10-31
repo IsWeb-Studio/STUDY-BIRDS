@@ -244,7 +244,7 @@ export const DashboardLayout = () => {
     user?.role === "admin"
       ? seoText(language, "Admin Dashboard", "لوحة الإدارة")
       : isPartner
-        ? seoText(language, "Agent Dashboard", "لوحة وكيل COVEY")
+        ? seoText(language, "Agent Dashboard", "لوحة وكيل Study Birds")
         : isParent
           ? seoText(language, "Parent Dashboard", "لوحة ولي الأمر")
           : isUniversity
@@ -253,14 +253,14 @@ export const DashboardLayout = () => {
 
   const seoDescription =
     user?.role === "admin"
-      ? seoText(language, "Private admin workspace for COVEY.", "مساحة إدارية خاصة لمنصة COVEY.")
+      ? seoText(language, "Private admin workspace for Study Birds.", "مساحة إدارية خاصة لمنصة Study Birds.")
       : isPartner
-        ? seoText(language, "Private agent workspace for COVEY.", "مساحة وكيل خاصة داخل COVEY.")
+        ? seoText(language, "Private agent workspace for Study Birds.", "مساحة وكيل خاصة داخل Study Birds.")
         : isParent
-          ? seoText(language, "Private parent workspace for COVEY.", "مساحة خاصة لولي الأمر داخل COVEY.")
+          ? seoText(language, "Private parent workspace for Study Birds.", "مساحة خاصة لولي الأمر داخل Study Birds.")
           : isUniversity
-            ? seoText(language, "Private university workspace for COVEY.", "مساحة خاصة للجامعة داخل COVEY.")
-            : seoText(language, "Private student workspace for COVEY.", "مساحة خاصة للطالب داخل COVEY.");
+            ? seoText(language, "Private university workspace for Study Birds.", "مساحة خاصة للجامعة داخل Study Birds.")
+            : seoText(language, "Private student workspace for Study Birds.", "مساحة خاصة للطالب داخل Study Birds.");
 
   return (
     <div className="dashboard-workspace min-h-screen bg-slate-50">

@@ -54,7 +54,7 @@ type ExhibitionForm = {
   seoUpdatedAt: string;
 };
 
-const SITE_NAME = "COVEY";
+const SITE_NAME = "Study Birds";
 const SITE_URL = getSiteUrl();
 
 const emptyForm: ExhibitionForm = {
@@ -368,7 +368,7 @@ export const AdminExhibitionsPage = () => {
             </label>
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{language === "ar" ? "اسم الكاتب" : "Author"}</span>
-              <input value={form.authorName} onChange={(event) => setForm((current) => ({ ...current, authorName: event.target.value }))} placeholder="COVEY" className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
+              <input value={form.authorName} onChange={(event) => setForm((current) => ({ ...current, authorName: event.target.value }))} placeholder="Study Birds" className="w-full rounded-2xl border border-slate-200 px-4 py-3 outline-none focus:ring" />
             </label>
           </div>
 

@@ -30,10 +30,10 @@ export const AccountDeletionRequestPage = () => {
     } finally { setBusy(false); }
   };
   return <main className="mx-auto max-w-xl space-y-6 py-8" dir={ar ? 'rtl' : 'ltr'}>
-    <Seo title={ar ? 'حذف حساب COVEY' : 'Delete your COVEY account'}
-      description="Request deletion of your COVEY account and associated personal data without installing the app."
+    <Seo title={ar ? 'حذف حساب Study Birds' : 'Delete your Study Birds account'}
+      description="Request deletion of your Study Birds account and associated personal data without installing the app."
       canonicalPath="/delete-account" />
-    <h1 className="text-3xl font-semibold">{ar ? 'حذف حساب COVEY' : 'Delete your COVEY account'}</h1>
+    <h1 className="text-3xl font-semibold">{ar ? 'حذف حساب Study Birds' : 'Delete your Study Birds account'}</h1>
     <p>{ar
       ? 'يمكنك طلب حذف حسابك وبياناتك الشخصية والمستندات والمحادثات والمحتوى الذي نشرته دون تنزيل التطبيق. نؤكد ملكيتك للحساب برمز يُرسل إلى بريدك. الحذف نهائي.'
       : 'Request deletion of your account, personal data, documents, conversations and published content without installing the app. We verify ownership using a code sent to your email. Deletion is permanent.'}</p>

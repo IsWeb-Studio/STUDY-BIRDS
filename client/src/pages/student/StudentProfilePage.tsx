@@ -332,8 +332,8 @@ export const StudentProfilePage = () => {
             {isPartner
               ? dt(language, "profilePageSubtitle")
               : ar
-                ? "مرحباً بك في لوحة تحكم COVEY، تتبع حالة قبولك الجامعي، أدر مستنداتك، وابدأ رحلتك التعليمية معنا."
-                : "Welcome to the COVEY dashboard. Track your admission progress, manage your documents, and continue your study journey with us."}
+                ? "مرحباً بك في لوحة تحكم Study Birds، تتبع حالة قبولك الجامعي، أدر مستنداتك، وابدأ رحلتك التعليمية معنا."
+                : "Welcome to the Study Birds dashboard. Track your admission progress, manage your documents, and continue your study journey with us."}
           </p>
           <div className="mt-6 space-y-3 rounded-3xl bg-slate-50 p-5">
             <p className="text-sm text-slate-500">{dt(language, "profileNote")}</p>

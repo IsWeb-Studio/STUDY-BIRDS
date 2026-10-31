@@ -1,6 +1,6 @@
 import type { Language } from "../context/LanguageContext";
 
-export const SITE_NAME = "COVEY";
+export const SITE_NAME = "Study Birds";
 export const BRAND_LOGO_PATH = "/logo.jpeg";
 const DEFAULT_SITE_URL = "https://studybirds.net";
 const env = import.meta.env as Record<string, string | undefined>;

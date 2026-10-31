@@ -41,8 +41,8 @@ export const AboutPage = () => {
       title: language === "ar" ? "من نحن" : "About Us",
       body:
         language === "ar"
-          ? "تعرّف على رؤية COVEY وطريقتنا في مرافقة الطالب من أول استشارة حتى بداية الرحلة الجامعية."
-          : "Get to know the COVEY vision and the way we guide students from first consultation to university arrival.",
+          ? "تعرّف على رؤية Study Birds وطريقتنا في مرافقة الطالب من أول استشارة حتى بداية الرحلة الجامعية."
+          : "Get to know the Study Birds vision and the way we guide students from first consultation to university arrival.",
     },
     {
       href: "/our-event",
