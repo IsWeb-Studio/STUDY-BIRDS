@@ -218,7 +218,7 @@ const createStudentInvoiceAdmin = asyncHandler(async (req, res) => {
     title: "فاتورة جديدة",
     message: `تمت إضافة فاتورة جديدة (${invoiceNumber}) إلى حسابك. يرجى مراجعة تفاصيلها وسدادها في الوقت المحدد.`,
     type: "info",
-    link: "/student/payments",
+    link: `/student/payments/${invoice._id}`,
   });
 
   res.status(201).json(await Invoice.findById(invoice._id).populate("student", "name email"));

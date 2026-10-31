@@ -293,6 +293,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   Map<String, double>? _rates;
   bool _loading = false;
   String? _error;
+  int _ratesRequest = 0;
 
   @override
   void initState() {
@@ -302,19 +303,30 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
   }
 
   Future<void> _fetchRates() async {
+    final request = ++_ratesRequest;
+    final base = _from;
+    if (_from == _to) {
+      setState(() {
+        _rates = {base: 1.0};
+        _loading = false;
+        _error = null;
+      });
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final rates = await CurrencyService.instance.fetchRates(_from);
-      if (mounted) setState(() => _rates = rates);
+      final rates = await CurrencyService.instance.fetchRates(base);
+      if (mounted && request == _ratesRequest) setState(() => _rates = rates);
     } catch (swallowedError, swallowedStack) {
       ErrorReporter.swallowed(swallowedError, swallowedStack,
           'screens/profile_account/student_rewards_currency_screens.dart:245');
-      if (mounted) setState(() => _error = 'تعذر جلب أسعار الصرف.');
+      if (mounted && request == _ratesRequest)
+        setState(() => _error = 'تعذر جلب أسعار الصرف.');
     } finally {
-      if (mounted) setState(() => _loading = false);
+      if (mounted && request == _ratesRequest) setState(() => _loading = false);
     }
   }
 
@@ -396,6 +408,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
                         onChanged: (v) {
                           if (v == null) return;
                           setState(() => _to = v);
+                          _fetchRates();
                         },
                       )),
                     ]),

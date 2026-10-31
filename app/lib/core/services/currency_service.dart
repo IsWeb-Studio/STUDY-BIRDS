@@ -102,11 +102,11 @@ class CurrencyService {
     }
   }
 
-  /// Fetches live rates from frankfurter.app (base = any currency).
+  /// Fetches daily reference rates from Frankfurter v2 (base = any currency).
   /// Also refreshes [_ratesFromUsd] when base is USD.
   Map<String, double>? _savedRates(SharedPreferences prefs, String base) {
     try {
-      final raw = prefs.getString('exchange_rates_v2:$base');
+      final raw = prefs.getString('exchange_rates_v3:$base');
       if (raw == null) return null;
       final j = jsonDecode(raw) as Map<String, dynamic>;
       final at = DateTime.parse(j['at'] as String);
@@ -121,6 +121,7 @@ class CurrencyService {
   }
 
   Future<Map<String, double>> fetchRates(String base) async {
+    if (!supportedCurrencies.containsKey(base)) throw ArgumentError.value(base, 'base');
     final prefs = await SharedPreferences.getInstance();
     final saved = _savedRates(prefs, base);
     if (saved != null) {
@@ -146,23 +147,30 @@ class CurrencyService {
 
   Future<Map<String, double>> _downloadRates(String base) async {
     final others = supportedCurrencies.keys.where((c) => c != base).join(',');
-    final uri =
-        Uri.parse('https://api.frankfurter.app/latest?from=$base&to=$others');
+    final uri = Uri.https(
+        'api.frankfurter.dev', '/v2/rates', {'base': base, 'quotes': others});
     final resp = await http.get(uri).timeout(const Duration(seconds: 8));
     if (resp.statusCode != 200) throw Exception('Failed to fetch rates');
-    final body = Json.rawMap(jsonDecode(resp.body));
-    final rates = Map<String, double>.from((Json.rawMap(body['rates']))
-        .map((k, v) => MapEntry(k as String, (v as num).toDouble())));
-    rates[base] = 1.0;
-    if (rates.values.any((v) => !v.isFinite || v <= 0)) {
-      throw const FormatException('Invalid exchange rates');
+    final rows = Json.list(jsonDecode(resp.body));
+    final rates = <String, double>{base: 1.0};
+    for (final row in rows) {
+      final item = Json.map(row);
+      if (item['base'] != base ||
+          !supportedCurrencies.containsKey(item['quote'])) continue;
+      final rate = item['rate'];
+      if (rate is num && rate.isFinite && rate > 0) {
+        rates[item['quote'] as String] = rate.toDouble();
+      }
+    }
+    if (!supportedCurrencies.keys.every(rates.containsKey)) {
+      throw const FormatException('Incomplete exchange rates');
     }
     if (base == 'USD') _ratesFromUsd = rates;
     ratesUpdatedAt = DateTime.now();
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
-          'exchange_rates_v2:$base',
+          'exchange_rates_v3:$base',
           jsonEncode({
             'at': ratesUpdatedAt!.toUtc().toIso8601String(),
             'rates': rates

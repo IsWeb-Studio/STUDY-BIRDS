@@ -73,13 +73,16 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
       _error = null;
     });
     try {
-      final data = await StudentRepository.instance.getFinancials();
+      final data =
+          await StudentRepository.instance.getFinancials(forceRefresh: true);
       if (!mounted) return;
       setState(() {
         _financials = data;
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:80');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/applications_documents_payments/payments_screens.dart:80');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل بيانات المدفوعات.';
@@ -108,7 +111,8 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
                 padding: const EdgeInsets.all(16),
                 itemCount: 4,
                 itemBuilder: (_, __) => const Padding(
-                    padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: SkeletonCard()))
             : _error != null
                 ? ErrorState(message: _error!, onRetry: _load)
                 : _buildContent(context, _financials!),
@@ -126,6 +130,13 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
     final remainingFees = summary['remainingFees'] as num?;
 
     final hasGroups = groups.isNotEmpty;
+    final groupedIds = groups
+        .expand((g) => Json.list(Json.map(g)['invoices']))
+        .map((i) => Json.map(i)['_id']?.toString())
+        .toSet();
+    final ungroupedInvoices = flatInvoices
+        .where((i) => !groupedIds.contains(Json.map(i)['_id']?.toString()))
+        .toList();
 
     return ListView(
       padding: const EdgeInsets.all(16),
@@ -143,12 +154,17 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
                       color: AppColors.success),
                   _SummaryStat(
                       label: 'قيد التحقق',
-                      value: _money(summary['pendingConfirmationAmount'] as num?),
+                      value:
+                          _money(summary['pendingConfirmationAmount'] as num?),
                       color: AppColors.info),
                   _SummaryStat(
                       label: remainingFees != null ? 'المتبقي' : 'مستحق',
-                      value: remainingFees != null ? _money(remainingFees) : _money(summary['outstandingAmount'] as num?),
-                      color: remainingFees == 0 ? AppColors.success : AppColors.warning),
+                      value: remainingFees != null
+                          ? _money(remainingFees)
+                          : _money(summary['outstandingAmount'] as num?),
+                      color: remainingFees == 0
+                          ? AppColors.success
+                          : AppColors.warning),
                 ],
               ),
               if (totalProgramFees != null && totalProgramFees > 0) ...[
@@ -166,6 +182,8 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
         if (hasGroups) ...[
           // ── قسم لكل برنامج/جامعة ──
           ...groups.map((g) => _buildApplicationGroup(context, Json.map(g))),
+          ...ungroupedInvoices
+              .map((inv) => _invoiceCard(context, Json.map(inv))),
         ] else if (flatInvoices.isEmpty)
           const EmptyState(
               icon: Icons.receipt_long_outlined,
@@ -180,7 +198,8 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
     );
   }
 
-  Widget _buildApplicationGroup(BuildContext context, Map<String, dynamic> group) {
+  Widget _buildApplicationGroup(
+      BuildContext context, Map<String, dynamic> group) {
     final title = group['programTitle'] as String? ?? 'طلب دراسي';
     final tuition = group['tuition'] as num? ?? 0;
     final paid = group['paidAmount'] as num? ?? 0;
@@ -210,22 +229,31 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(title,
-                        style: AppTextStyles.cardTitle.copyWith(color: Colors.white, fontSize: 14)),
+                        style: AppTextStyles.cardTitle
+                            .copyWith(color: Colors.white, fontSize: 14)),
                     if (tuition > 0)
                       Padding(
                         padding: const EdgeInsets.only(top: 4),
                         child: Row(
                           children: [
-                            _GroupStat(label: 'المدفوع', value: _money(paid), color: AppColors.success),
+                            _GroupStat(
+                                label: 'المدفوع',
+                                value: _money(paid),
+                                color: AppColors.success),
                             const SizedBox(width: 16),
                             if (pending > 0)
-                              _GroupStat(label: 'قيد التحقق', value: _money(pending), color: AppColors.info),
+                              _GroupStat(
+                                  label: 'قيد التحقق',
+                                  value: _money(pending),
+                                  color: AppColors.info),
                             if (pending > 0) const SizedBox(width: 16),
                             if (remaining != null)
                               _GroupStat(
                                 label: 'المتبقي',
                                 value: _money(remaining),
-                                color: remaining == 0 ? AppColors.success : AppColors.warning,
+                                color: remaining == 0
+                                    ? AppColors.success
+                                    : AppColors.warning,
                               ),
                           ],
                         ),
@@ -242,7 +270,8 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
           Padding(
             padding: const EdgeInsets.only(bottom: 16, left: 8),
             child: Text('لا توجد فواتير لهذا البرنامج بعد',
-                style: AppTextStyles.caption.copyWith(color: AppColors.neutral)),
+                style:
+                    AppTextStyles.caption.copyWith(color: AppColors.neutral)),
           )
         else
           ...invoices.map((inv) => Padding(
@@ -278,7 +307,8 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(_money(invoice['amount'] as num?), style: AppTextStyles.cardTitle),
+              Text(_money(invoice['amount'] as num?),
+                  style: AppTextStyles.cardTitle),
               const SizedBox(height: 4),
               StatusBadge(label: meta.label, color: meta.color),
             ],
@@ -290,24 +320,37 @@ class _PaymentsSummaryScreenState extends State<PaymentsSummaryScreen> {
 
   Color _paymentGroupColor(String status) {
     switch (status) {
-      case 'completed': return AppColors.success;
-      case 'partial': return AppColors.info;
-      case 'action-required': return AppColors.green;
-      case 'overdue': return AppColors.danger;
-      case 'waiting': return AppColors.info;
-      default: return AppColors.neutral;
+      case 'completed':
+        return AppColors.success;
+      case 'partial':
+        return AppColors.info;
+      case 'action-required':
+        return AppColors.green;
+      case 'overdue':
+        return AppColors.danger;
+      case 'waiting':
+        return AppColors.info;
+      default:
+        return AppColors.neutral;
     }
   }
 
   String _paymentGroupLabel(String status) {
     switch (status) {
-      case 'completed': return 'مكتمل';
-      case 'partial': return 'مدفوع جزئياً';
-      case 'action-required': return 'يستلزم الدفع';
-      case 'overdue': return 'متأخر';
-      case 'waiting': return 'قيد التحقق';
-      case 'not-issued': return 'لا فواتير';
-      default: return 'متابعة';
+      case 'completed':
+        return 'مكتمل';
+      case 'partial':
+        return 'مدفوع جزئياً';
+      case 'action-required':
+        return 'يستلزم الدفع';
+      case 'overdue':
+        return 'متأخر';
+      case 'waiting':
+        return 'قيد التحقق';
+      case 'not-issued':
+        return 'لا فواتير';
+      default:
+        return 'متابعة';
     }
   }
 }
@@ -336,15 +379,19 @@ class _GroupStat extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-  const _GroupStat({required this.label, required this.value, required this.color});
+  const _GroupStat(
+      {required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(value, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w700)),
-        Text(label, style: const TextStyle(color: Colors.white60, fontSize: 10)),
+        Text(value,
+            style: TextStyle(
+                color: color, fontSize: 12, fontWeight: FontWeight.w700)),
+        Text(label,
+            style: const TextStyle(color: Colors.white60, fontSize: 10)),
       ],
     );
   }
@@ -358,7 +405,8 @@ class PaymentDetailScreen extends StatefulWidget {
   State<PaymentDetailScreen> createState() => _PaymentDetailScreenState();
 }
 
-class _PaymentDetailScreenState extends State<PaymentDetailScreen> with WidgetsBindingObserver {
+class _PaymentDetailScreenState extends State<PaymentDetailScreen>
+    with WidgetsBindingObserver {
   bool _uploading = false;
   bool _paying = false;
   bool _stripeEnabled = false;
@@ -370,8 +418,7 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> with WidgetsB
     _invoice = widget.invoice;
     WidgetsBinding.instance.addObserver(this);
     _loadPaymentAvailability();
-    AnalyticsService.instance.paymentInitiated(
-        '${widget.invoice['_id'] ?? ''}',
+    AnalyticsService.instance.paymentInitiated('${widget.invoice['_id'] ?? ''}',
         widget.invoice['amount']?.toDouble() ?? 0.0);
     _schedulePaymentReminder();
   }
@@ -390,34 +437,58 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> with WidgetsB
   Future<void> _loadPaymentAvailability() async {
     try {
       final status = await ApiClient.instance.get('/payments/stripe/status');
-      if (mounted) setState(() => _stripeEnabled = status is Map && status['enabled'] == true);
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:392'); /* Bank transfer remains available when card payment is disabled. */ }
+      if (mounted)
+        setState(
+            () => _stripeEnabled = status is Map && status['enabled'] == true);
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/applications_documents_payments/payments_screens.dart:392'); /* Bank transfer remains available when card payment is disabled. */
+    }
   }
 
   Future<void> _refreshInvoice() async {
     try {
-      final data = await StudentRepository.instance.getFinancials(forceRefresh: true);
-      final matches = (Json.listOrNull(data['invoices']) ?? []).whereType<Map>().where((row) => row['_id'] == _invoice['_id']);
+      final data =
+          await StudentRepository.instance.getFinancials(forceRefresh: true);
+      final matches = (Json.listOrNull(data['invoices']) ?? [])
+          .whereType<Map>()
+          .where((row) => row['_id'] == _invoice['_id']);
       if (mounted && matches.isNotEmpty) {
         setState(() => _invoice = Map<String, dynamic>.from(matches.first));
-        if (_invoice['status'] == 'paid') await NotificationScheduler.instance.cancel('payment:${_invoice['_id']}');
+        if (_invoice['status'] == 'paid')
+          await NotificationScheduler.instance
+              .cancel('payment:${_invoice['_id']}');
       }
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:403');
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: const Text('تعذر تحديث حالة الدفع. حاول مجددًا.')));
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/applications_documents_payments/payments_screens.dart:403');
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+            content: const Text('تعذر تحديث حالة الدفع. حاول مجددًا.')));
     }
   }
 
   Future<void> _payByCard() async {
     setState(() => _paying = true);
     try {
-      final result = await ApiClient.instance.post('/payments/stripe/checkout', token: AuthSession.instance.token, body: {'invoiceId': _invoice['_id']});
+      final result = await ApiClient.instance.post('/payments/stripe/checkout',
+          token: AuthSession.instance.token,
+          body: {'invoiceId': _invoice['_id']});
       final uri = Uri.parse('${result['url']}');
-      if (uri.scheme != 'https' || uri.host != 'checkout.stripe.com' || !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (uri.scheme != 'https' ||
+          uri.host != 'checkout.stripe.com' ||
+          !await launchUrl(uri, mode: LaunchMode.externalApplication)) {
         throw const ApiException(0, 'تعذر فتح صفحة الدفع');
       }
     } catch (error) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(error is ApiException ? error.message : 'تعذر بدء الدفع. حاول مجددًا.')));
-    } finally { if (mounted) setState(() => _paying = false); }
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+            content: Text(error is ApiException
+                ? error.message
+                : 'تعذر بدء الدفع. حاول مجددًا.')));
+    } finally {
+      if (mounted) setState(() => _paying = false);
+    }
   }
 
   void _schedulePaymentReminder() {
@@ -459,7 +530,9 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> with WidgetsB
           content: const Text('تم رفع إيصال الدفع بنجاح'),
           backgroundColor: AppColors.success));
       Navigator.of(context).pop();
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:460');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/applications_documents_payments/payments_screens.dart:460');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
           content: const Text('تعذر رفع الإيصال، حاول مرة أخرى'),
@@ -478,14 +551,20 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> with WidgetsB
 
     return AppScaffold(
       title: 'تفاصيل الدفعة',
-      actions: [IconButton(onPressed: _refreshInvoice, icon: const Icon(Icons.refresh), tooltip: 'تحديث حالة الدفع')],
+      actions: [
+        IconButton(
+            onPressed: _refreshInvoice,
+            icon: const Icon(Icons.refresh),
+            tooltip: 'تحديث حالة الدفع')
+      ],
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Center(
-                child: Text('${invoice['amount'] ?? 0} ${invoice['currency'] ?? 'USD'}',
+                child: Text(
+                    '${invoice['amount'] ?? 0} ${invoice['currency'] ?? 'USD'}',
                     style: const TextStyle(
                         fontSize: 34,
                         fontWeight: FontWeight.w800,
@@ -514,7 +593,10 @@ class _PaymentDetailScreenState extends State<PaymentDetailScreen> with WidgetsB
             ),
             const SizedBox(height: 20),
             if (_stripeEnabled && invoice['status'] == 'unpaid') ...[
-              PrimaryButton(label: _paying ? 'جاري فتح الدفع...' : 'الدفع بالبطاقة', onPressed: _paying ? null : _payByCard, icon: Icons.credit_card),
+              PrimaryButton(
+                  label: _paying ? 'جاري فتح الدفع...' : 'الدفع بالبطاقة',
+                  onPressed: _paying ? null : _payByCard,
+                  icon: Icons.credit_card),
               const SizedBox(height: 12),
             ],
             if (canUpload)
@@ -585,7 +667,9 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
         _proofs = Json.listOrNull(data['paymentProofs']) ?? [];
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:586');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/applications_documents_payments/payments_screens.dart:586');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل سجل الدفعات.';
@@ -606,7 +690,8 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                 padding: const EdgeInsets.all(16),
                 itemCount: 4,
                 itemBuilder: (_, __) => const Padding(
-                    padding: EdgeInsets.only(bottom: 12), child: SkeletonCard()))
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: SkeletonCard()))
             : _error != null
                 ? ErrorState(message: _error!, onRetry: _load)
                 : _proofs.isEmpty
@@ -615,74 +700,79 @@ class _PaymentHistoryScreenState extends State<PaymentHistoryScreen> {
                         title: 'لا يوجد سجل بعد',
                         message: 'ستظهر هنا كل إيصالات الدفع اللي رفعتها.')
                     : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _proofs.length,
-                      itemBuilder: (context, i) {
-                        final p = Json.map(_proofs[i]);
-                        final meta =
-                            paymentProofStatusMeta(p['status'] as String?);
-                        final invoice = Json.mapOrNull(p['invoice']);
-                        return AppCard(
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _proofs.length,
+                        itemBuilder: (context, i) {
+                          final p = Json.map(_proofs[i]);
+                          final meta =
+                              paymentProofStatusMeta(p['status'] as String?);
+                          final invoice = Json.mapOrNull(p['invoice']);
+                          return AppCard(
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                          invoice?['description'] as String? ??
+                                              p['fileName'] as String? ??
+                                              '—',
+                                          style: AppTextStyles.cardTitle),
+                                      Text(
+                                          (p['createdAt'] as String?)
+                                                  ?.split('T')
+                                                  .first ??
+                                              '—',
+                                          style: AppTextStyles.caption),
+                                    ],
+                                  ),
+                                ),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
-                                    Text(
-                                        invoice?['description'] as String? ??
-                                            p['fileName'] as String? ??
-                                            '—',
+                                    Text(_money(p['amount'] as num?),
                                         style: AppTextStyles.cardTitle),
-                                    Text(
-                                        (p['createdAt'] as String?)
-                                                ?.split('T')
-                                                .first ??
-                                            '—',
-                                        style: AppTextStyles.caption),
+                                    const SizedBox(height: 4),
+                                    StatusBadge(
+                                        label: meta.label, color: meta.color),
+                                    if (p['filePath'] is String)
+                                      IconButton(
+                                          tooltip: 'فتح إثبات الدفع',
+                                          icon: const Icon(
+                                              Icons.download_rounded),
+                                          onPressed: () async {
+                                            try {
+                                              final uri =
+                                                  await resolveDocumentDownload(
+                                                      p['filePath'] as String);
+                                              if (!await launchUrl(uri,
+                                                  mode: LaunchMode
+                                                      .externalApplication)) {
+                                                throw Exception(
+                                                    'Cannot open file');
+                                              }
+                                            } catch (swallowedError, swallowedStack) {
+                                              ErrorReporter.swallowed(
+                                                  swallowedError,
+                                                  swallowedStack,
+                                                  'screens/applications_documents_payments/payments_screens.dart:668');
+                                              if (context.mounted) {
+                                                ScaffoldMessenger.of(context)
+                                                    .showSnackBar(AppSnackBar(
+                                                        content: const Text(
+                                                            'تعذر فتح إثبات الدفع. تحقق من الجلسة والصلاحيات.')));
+                                              }
+                                            }
+                                          }),
                                   ],
                                 ),
-                              ),
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.end,
-                                children: [
-                                  Text(_money(p['amount'] as num?),
-                                      style: AppTextStyles.cardTitle),
-                                  const SizedBox(height: 4),
-                                  StatusBadge(
-                                      label: meta.label, color: meta.color),
-                                  if (p['filePath'] is String)
-                                    IconButton(
-                                        tooltip: 'فتح إثبات الدفع',
-                                        icon:
-                                            const Icon(Icons.download_rounded),
-                                        onPressed: () async {
-                                          try {
-                                            final uri =
-                                                await resolveDocumentDownload(
-                                                    p['filePath'] as String);
-                                            if (!await launchUrl(uri,
-                                                mode: LaunchMode
-                                                    .externalApplication)) {
-                                              throw Exception(
-                                                  'Cannot open file');
-                                            }
-                                          } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/applications_documents_payments/payments_screens.dart:668');
-                                            if (context.mounted) {
-                                              ScaffoldMessenger.of(context)
-                                                  .showSnackBar(AppSnackBar(
-                                                      content: const Text(
-                                                          'تعذر فتح إثبات الدفع. تحقق من الجلسة والصلاحيات.')));
-                                            }
-                                          }
-                                        }),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
       ),
     );
   }

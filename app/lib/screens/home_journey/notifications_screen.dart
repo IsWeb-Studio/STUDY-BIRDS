@@ -196,12 +196,21 @@ class _PaymentById extends StatefulWidget {
 
 class _PaymentByIdState extends State<_PaymentById> {
   bool _loading = true;
+  bool _failed = false;
   Map<String, dynamic>? _invoice;
 
   @override
   void initState() {
     super.initState();
-    StudentRepository.instance.getFinancials().then((fin) {
+    _load();
+  }
+
+  void _load() {
+    setState(() {
+      _loading = true;
+      _failed = false;
+    });
+    StudentRepository.instance.getFinancials(forceRefresh: true).then((fin) {
       final list = (Json.listOrNull(fin['invoices']) ?? []);
       final match = list
           .whereType<Map<String, dynamic>>()
@@ -218,7 +227,11 @@ class _PaymentByIdState extends State<_PaymentById> {
     }).catchError((Object e_, StackTrace s_) {
       ErrorReporter.swallowed(
           e_, s_, 'screens/home_journey/notifications_screen.dart:163');
-      if (mounted) setState(() => _loading = false);
+      if (mounted)
+        setState(() {
+          _loading = false;
+          _failed = true;
+        });
     });
   }
 
@@ -227,7 +240,30 @@ class _PaymentByIdState extends State<_PaymentById> {
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
-    if (_invoice == null) return const PaymentsSummaryScreen();
+    if (_failed) {
+      return AppScaffold(
+          title: 'الفاتورة',
+          body: ErrorState(
+              message: 'تعذر الاتصال لتحميل الفاتورة. أعد المحاولة.',
+              onRetry: _load));
+    }
+    if (_invoice == null) {
+      return AppScaffold(
+          title: 'الفاتورة',
+          body: Center(
+              child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                  'هذه الفاتورة لم تعد متاحة. يمكنك مراجعة فواتيرك الحالية.'),
+              TextButton(
+                  onPressed: () => Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                          builder: (_) => const PaymentsSummaryScreen())),
+                  child: const Text('عرض الفواتير الحالية')),
+            ],
+          )));
+    }
     return PaymentDetailScreen(invoice: _invoice!);
   }
 }
@@ -276,7 +312,8 @@ class NotificationInboxButton extends StatelessWidget {
       );
 }
 
-class _NotificationsScreenState extends State<NotificationsScreen> with CachedResource<NotificationsScreen> {
+class _NotificationsScreenState extends State<NotificationsScreen>
+    with CachedResource<NotificationsScreen> {
   @override
   Iterable<String> get cachedPaths => const ['/content/notifications'];
   @override
@@ -432,8 +469,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> with CachedRe
                                   '';
 
                           final link = n['link'] as String?;
-                          final isStudent = AuthSession.instance.currentUser?.role ==
-                              UserRole.student;
+                          final isStudent =
+                              AuthSession.instance.currentUser?.role ==
+                                  UserRole.student;
                           final canOpenLink = notificationLinkAllowedForRole(
                             link,
                             isStudent: isStudent,
@@ -452,7 +490,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> with CachedRe
                             // Capture navigator before any await so it stays valid.
                             final navigator = Navigator.of(context);
                             await _markRead(n, i);
-                            await navigator.push(MaterialPageRoute(builder: (_) => screen));
+                            await navigator.push(
+                                MaterialPageRoute(builder: (_) => screen));
                           }
 
                           return AppCard(

@@ -264,7 +264,7 @@
     },
     {
       "path": "mobile:lib/core/services/currency_service.dart",
-      "sha256": "d885a95051e95a239cc9ef7245fc0c16890d831748a3090b0d6dfe988bdeb54f",
+      "sha256": "70b038adc7fe2941f26d1ef72e091f0e3d6e6f2a0e9bfae4360704a66fb2c102",
       "dependencies": [
         "mobile:lib/core/utils/json_safe.dart"
       ],
@@ -999,7 +999,7 @@
     },
     {
       "path": "mobile:lib/screens/applications_documents_payments/payments_screens.dart",
-      "sha256": "e1ce9ef464ca667cf611a5975c9ab9876d7585bbc23b7361969eede0722927ab",
+      "sha256": "fc6f6635f856ff4f264f779f811cce042e991b1c59eb0857953434aa81217601",
       "dependencies": [
         "mobile:lib/core/utils/json_safe.dart",
         "mobile:lib/core/services/error_reporter.dart",
@@ -1509,7 +1509,7 @@
     },
     {
       "path": "mobile:lib/screens/home_journey/notifications_screen.dart",
-      "sha256": "08513ca304d194aa6a2fb8c1385b4abae43ba845d4ef96cc5d25274e115835d3",
+      "sha256": "32ea411d7cd7d4a50cc5afacd687d9069a77764d9619da8f71bb4af5988f2ca4",
       "dependencies": [
         "mobile:lib/core/widgets/cached_resource.dart",
         "mobile:lib/core/utils/json_safe.dart",
@@ -1814,7 +1814,7 @@
     },
     {
       "path": "mobile:lib/screens/profile_account/student_rewards_currency_screens.dart",
-      "sha256": "c0ab695c341266306b141bb52ab265b1107ce8300e211d60c02845c5c4b56126",
+      "sha256": "617f57f06ffce33582e211c24a5ce338794ec4039a0ff086e179c69aca72a067",
       "dependencies": [
         "mobile:lib/core/utils/json_safe.dart",
         "mobile:lib/core/services/error_reporter.dart",
@@ -3498,14 +3498,15 @@
     },
     {
       "path": "server:src/routes/contentRoutes.js",
-      "sha256": "b9dc958246d805407bdff8b788b0b3d26930c703743eea38b4abca0fcd356b79",
+      "sha256": "abe448bd18db0809134a3f34568abe8ebf10d61cd08b7b2be70077d73b6e3d55",
       "dependencies": [
         "server:src/controllers/contentController.js",
         "server:src/controllers/bannerController.js",
         "server:src/middleware/authMiddleware.js",
         "server:src/utils/responseCache.js",
         "server:src/controllers/notificationInboxController.js",
-        "server:src/constants/statusCatalog.js"
+        "server:src/constants/statusCatalog.js",
+        "server:src/controllers/exchangeRatesController.js"
       ],
       "screens": [],
       "routes": [
@@ -4974,7 +4975,7 @@
     },
     {
       "path": "server:src/controllers/adminStudentModulesController.js",
-      "sha256": "de1dc8258e07737a1f210b6efb217daa02c605c2bf4b1f364ddc0534fb15ac61",
+      "sha256": "00a220f10e968afeb99b7393a2ecc048130e33c24dcfe0a8fe353384fc29565c",
       "dependencies": [
         "server:src/utils/journeyAutomation.js",
         "server:src/utils/pushNotifications.js",
@@ -5165,6 +5166,13 @@
         "server:src/models/ServiceRequest.js",
         "server:src/models/SupportTicket.js"
       ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "server:src/controllers/exchangeRatesController.js",
+      "sha256": "6e0d4be80590879a675641e4ed63caf7a41316b93202955780dba9498cdf1ce1",
+      "dependencies": [],
       "screens": [],
       "routes": []
     },
