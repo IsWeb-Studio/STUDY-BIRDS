@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ContentLoading } from '../components/ContentLoading';
 import { ChevronLeft, ChevronRight, MapPinned, ScrollText } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { ArticleContentSection } from "../components/content/ArticleContentSection";
@@ -49,6 +50,7 @@ export const UniversitiesPage = () => {
   };
 
   useEffect(() => {
+    let active = true;
     setLoading(true);
 
     Promise.all([
@@ -60,11 +62,13 @@ export const UniversitiesPage = () => {
       contentService.getCountries(),
     ])
       .then(([universitiesData, countriesData]) => {
+        if (!active) return;
         setUniversities(getPaginatedItems(universitiesData));
         setPagination(getPaginationMeta(universitiesData));
         setCountries(getPaginatedItems(countriesData));
       })
-      .finally(() => setLoading(false));
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [page, selectedCountryId]);
 
   useEffect(() => {
@@ -176,8 +180,8 @@ export const UniversitiesPage = () => {
         </div>
       ) : null}
       {selectedCountry ? <ArticleContentSection article={selectedCountry} language={language} /> : null}
-      {loading ? <div className="panel mt-8 p-8 text-sm text-slate-500">{language === "ar" ? "جاري تحميل الجامعات..." : "Loading universities..."}</div> : null}
-      <div ref={universitiesSectionRef} className="mt-8 grid gap-5 lg:grid-cols-3">
+      {loading && <ContentLoading layout="cards" compact={universities.length > 0} />}
+      <div ref={universitiesSectionRef} aria-busy={loading} className="mt-8 grid gap-5 lg:grid-cols-3">
         {universities.map((university) => (
           <UniversityCard key={university._id} university={university} />
         ))}
@@ -195,7 +199,7 @@ export const UniversitiesPage = () => {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              disabled={!pagination.hasPreviousPage}
+              disabled={loading || !pagination.hasPreviousPage}
               onClick={() => setPage((current) => Math.max(1, current - 1))}
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
             >
@@ -204,7 +208,7 @@ export const UniversitiesPage = () => {
             </button>
             <button
               type="button"
-              disabled={!pagination.hasNextPage}
+              disabled={loading || !pagination.hasNextPage}
               onClick={() => setPage((current) => current + 1)}
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
             >

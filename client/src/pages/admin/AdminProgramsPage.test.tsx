@@ -31,6 +31,19 @@ beforeEach(()=>{
 afterEach(()=>{act(()=>root.unmount());host.remove();vi.useRealTimers();});
 const render=async()=>{await act(async()=>{root.render(<AdminProgramsPage/>);});};
 const button=(text:string)=>[...host.querySelectorAll('button')].find(b=>b.textContent?.trim()===text)!;
+it('shows placeholders on first load and retains existing results while the next page loads',async()=>{
+  let resolveFirst!:(value:typeof response)=>void;
+  vi.mocked(programService.getAll).mockReturnValueOnce(new Promise(resolve=>{resolveFirst=resolve;}));
+  await render();
+  expect(host.querySelector('[role="status"]')?.textContent).toContain('Loading data');
+  expect(host.textContent).not.toContain('No programs to display');
+  await act(async()=>{resolveFirst(response);});
+  expect(host.querySelector('[role="status"]')).toBeNull();
+  vi.mocked(programService.getAll).mockReturnValueOnce(new Promise(()=>{}));
+  await act(async()=>{button('Next').click();});
+  expect(host.querySelector('[role="status"]')?.textContent).toContain('Updating data');
+  expect(host.textContent).toContain('Physics');
+});
 it('loads a bounded page even if a lookup fails, with paging and debounced server search',async()=>{
   vi.mocked(universityService.getOptions).mockRejectedValue(new Error('Lookup unavailable'));
   await render();expect(host.textContent).toContain('Physics');

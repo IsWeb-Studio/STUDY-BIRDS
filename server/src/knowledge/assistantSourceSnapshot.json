@@ -5278,7 +5278,7 @@
     },
     {
       "path": "server:src/controllers/programController.js",
-      "sha256": "d4f4963a9201b7064444fcf888a3ff29077863a581efa32526d46538495a20e7",
+      "sha256": "ec79d431ccd198dd3cca30c25a066518b1ede47ed1cd8beabdca2a34761d7c2a",
       "dependencies": [
         "server:src/utils/catalogRevision.js",
         "server:src/middleware/requestSafety.js",
@@ -5290,6 +5290,7 @@
         "server:src/utils/responseCache.js",
         "server:src/utils/programDegreeFilter.js",
         "server:src/constants/programLanguageAliases.json",
+        "server:src/utils/programPage.js",
         "server:src/utils/uploadToCloudinary.js",
         "server:src/models/Application.js"
       ],
@@ -5958,6 +5959,17 @@
       "routes": []
     },
     {
+      "path": "server:src/utils/programPage.js",
+      "sha256": "a398910fb9a1c8c3abc00938bcd4bbf93dc5a0e9b9057fe141fec7034286bb2a",
+      "dependencies": [
+        "server:src/models/University.js",
+        "server:src/models/Country.js",
+        "server:src/models/Program.js"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
       "path": "server:src/utils/publicError.js",
       "sha256": "a0199bddebaf316563f62defa29091db629279d1606ed34648479889b8d842d9",
       "dependencies": [],
@@ -5987,7 +5999,7 @@
     },
     {
       "path": "server:src/utils/responseCache.js",
-      "sha256": "8c2b5ae26f0bf3d5ff6c8f52daf853cb0fb2b104070a2c5f7278d45b346fc357",
+      "sha256": "19169815aa42e9bfedf6b48632d9538eb36810e035eab5bfa77700a08fe8f00c",
       "dependencies": [],
       "screens": [],
       "routes": []
@@ -6516,6 +6528,15 @@
       "routes": []
     },
     {
+      "path": "website:src/components/ContentLoading.tsx",
+      "sha256": "73bbc6090f93d6b90f1d987e54aa4efe54d8f1d0185d5f9e0dfc3eee09e93493",
+      "dependencies": [
+        "website:src/hooks/useLanguage.ts"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
       "path": "website:src/components/dashboard/DashboardBottomNav.tsx",
       "sha256": "fde8ad033e00dc0e03724e50ccf23d2a7c9ee23f884e25787eb11594eeee6411",
       "dependencies": [
@@ -6676,8 +6697,10 @@
     },
     {
       "path": "website:src/components/LoadingSpinner.tsx",
-      "sha256": "7d149b14d4a06bf889faf85bf24319dfc1fae30b26c047c48267ecebc47422f9",
-      "dependencies": [],
+      "sha256": "71a5844a84ea792bf3508228506dacb0dada8e69fe6b11105ac31e41a4a3e9e2",
+      "dependencies": [
+        "website:src/components/ContentLoading.tsx"
+      ],
       "screens": [],
       "routes": []
     },
@@ -7642,7 +7665,7 @@
     },
     {
       "path": "website:src/pages/admin/AdminProgramsPage.test.tsx",
-      "sha256": "726a418aa265707329177f429d55f25eaa03a7b7402b079946b0ad778773449d",
+      "sha256": "1992e374859f13028229c20e5d4e11034ec1e174f77fc0d9949c042ee59aca39",
       "dependencies": [
         "website:src/pages/admin/AdminProgramsPage.tsx",
         "website:src/services/programService.ts",
@@ -7654,9 +7677,10 @@
     },
     {
       "path": "website:src/pages/admin/AdminProgramsPage.tsx",
-      "sha256": "0d7fafc62283c7df3d6868f92ef6fd300ef8bfb36060bb7f7c591d8055728b8d",
+      "sha256": "dfbdcbd9dec2821ad35036710a8696f65b7f0a6fa05af6be608eaae409176dc2",
       "dependencies": [
         "website:src/lib/sharedReadState.ts",
+        "website:src/components/ContentLoading.tsx",
         "website:src/components/admin/ArticleContentFields.tsx",
         "website:src/hooks/useLanguage.ts",
         "website:src/services/adminService.ts",
@@ -8250,7 +8274,7 @@
     },
     {
       "path": "website:src/pages/HomePage.tsx",
-      "sha256": "106b8a55aa6347cefd23bb8ace1bb54bf04815e0d4ba6e1cce0817342b1d20e7",
+      "sha256": "2e23f962064477b787038d0eb9461e20f3c654f6242fe13bc4882bc9240509e5",
       "dependencies": [
         "website:src/utils/roleHome.ts",
         "website:src/components/marketing/HeroSection.tsx",
@@ -8574,8 +8598,9 @@
     },
     {
       "path": "website:src/pages/ProgramsPage.tsx",
-      "sha256": "436b6db36a77cd216edfdf1077603f1c9c614b807cecf0186893d4d95e343dcc",
+      "sha256": "03055017aeb71d490647e4a992c7380d6445e0561704fd88e5ae6b40987707ad",
       "dependencies": [
+        "website:src/components/ContentLoading.tsx",
         "website:src/components/marketing/ProgramCard.tsx",
         "website:src/components/marketing/SearchFilter.tsx",
         "website:src/constants/programOptions.ts",
@@ -8989,8 +9014,9 @@
     },
     {
       "path": "website:src/pages/UniversitiesPage.tsx",
-      "sha256": "05e6551ba1f6d7ae99f6f610d7846ab9700382831196ef00504c43ed4f793ced",
+      "sha256": "f009681c388c4fa5d04cf03d52b55c05d8c7ffaec5dbec5f3969fa0f7a3d5450",
       "dependencies": [
+        "website:src/components/ContentLoading.tsx",
         "website:src/components/content/ArticleContentSection.tsx",
         "website:src/components/marketing/UniversityCard.tsx",
         "website:src/components/seo/Seo.tsx",
@@ -9055,12 +9081,12 @@
     },
     {
       "path": "website:src/routes/AppRoutes.tsx",
-      "sha256": "9236e7f1a04214ab746437914a09975f0ea4928007d3876d70a28079320a480a",
+      "sha256": "f06177a9814de6338deca86cc1264eccb565e560a069218a97bb1fb6e132ab59",
       "dependencies": [
         "website:src/layouts/MainLayout.tsx",
         "website:src/layouts/DashboardLayout.tsx",
         "website:src/components/ProtectedRoute.tsx",
-        "website:src/hooks/useLanguage.ts"
+        "website:src/components/ContentLoading.tsx"
       ],
       "screens": [],
       "routes": [

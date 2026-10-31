@@ -1,4 +1,5 @@
 import { markStaffRecord } from "../../lib/sharedReadState";
+import { ContentLoading } from '../../components/ContentLoading';
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { BookOpenText, Check, ChevronDown, PencilLine, Plus, Search, Trash2, X } from "lucide-react";
 import { ArticleContentFields } from "../../components/admin/ArticleContentFields";
@@ -152,7 +153,7 @@ export const AdminProgramsPage = () => {
   const [page, setPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [pagination, setPagination] = useState<PaginationMeta | null>(null);
-  const [listLoading, setListLoading] = useState(false);
+  const [listLoading, setListLoading] = useState(true);
   const [listError, setListError] = useState("");
   const [lookupError, setLookupError] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
@@ -648,6 +649,7 @@ export const AdminProgramsPage = () => {
             <button type="button" disabled={listLoading || !pagination?.hasNextPage} onClick={() => setPage(value => value + 1)}>{language === "ar" ? "التالي" : "Next"}</button>
           </div>
         </div>
+        {listLoading && <ContentLoading compact={programs.length > 0} />}
         {filteredPrograms.map((program) => (
           <div key={program._id} className="panel min-w-0 p-5 transition-shadow hover:shadow-md">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">

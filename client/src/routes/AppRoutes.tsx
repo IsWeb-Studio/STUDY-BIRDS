@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { MainLayout } from "../layouts/MainLayout";
 import { DashboardLayout } from "../layouts/DashboardLayout";
 import { ProtectedRoute } from "../components/ProtectedRoute";
-import { useLanguage } from "../hooks/useLanguage";
+import { ContentLoading } from '../components/ContentLoading';
 
 const ConsultationsPage = lazy(() => import("../pages/ConsultationsPage").then(m => ({ default: m.ConsultationsPage })));
 const VisaCenterPage = lazy(() => import("../pages/admin/VisaCenterPage").then(m => ({ default: m.VisaCenterPage })));
@@ -109,10 +109,7 @@ const ParentChildOverviewPage = lazy(() => import("../pages/parent/ParentChildOv
 const UniversityApplicationsPage = lazy(() => import("../pages/university/UniversityApplicationsPage").then((module) => ({ default: module.UniversityApplicationsPage })));
 const UniversityApplicationDetailPage = lazy(() => import("../pages/university/UniversityApplicationDetailPage").then((module) => ({ default: module.UniversityApplicationDetailPage })));
 
-const RouteFallback = () => {
-  const { language } = useLanguage();
-  return <div className="panel p-8 text-sm text-slate-500">{language === "ar" ? "جارٍ التحميل..." : "Loading..."}</div>;
-};
+const RouteFallback = () => <ContentLoading />;
 
 export const AppRoutes = () => (
   <Suspense fallback={<RouteFallback />}>

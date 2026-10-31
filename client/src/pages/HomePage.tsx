@@ -241,9 +241,8 @@ export const HomePage = () => {
       <HeroSection />
 
       {contentLoading ? (
-        <div className="panel flex items-center gap-3 p-6 text-sm text-slate-500">
+        <div aria-busy="true">
           <LoadingSpinner />
-          <span>{language === "ar" ? "جارٍ تحميل المحتوى الديناميكي..." : "Loading dynamic content..."}</span>
         </div>
       ) : null}
       {contentLoadFailed ? (
