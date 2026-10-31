@@ -13,7 +13,7 @@ async function queueMedia(media, dueAt = new Date(), session = null) {
   }, { upsert: true, session });
 }
 // Only our Cloudinary originals, with an explicitly allowed folder, may be deleted.
-function mediaFromUrl(value, folders = ['story-images/', 'story-videos/', 'avatars/']) {
+function mediaFromUrl(value, folders = ['story-images/', 'story-videos/', 'story-audio/', 'avatars/']) {
   try {
     const url = new URL(value);
     const parts = url.pathname.split('/').filter(Boolean);
@@ -31,7 +31,7 @@ async function cleanMedia(job) {
     await Job.deleteOne({ _id: job._id }); return;
   }
   if (job.url) {
-    const active = await Story.findOne({ $or: [{ imageUrl: job.url }, { videoUrl: job.url }], expiresAt: { $gt: new Date() } }).sort({ expiresAt: -1 }).lean();
+    const active = await Story.findOne({ $or: [{ imageUrl: job.url }, { videoUrl: job.url }, { audioUrl: job.url }], expiresAt: { $gt: new Date() } }).sort({ expiresAt: -1 }).lean();
     if (active) { await Job.updateOne({ _id: job._id }, { $set: { dueAt: active.expiresAt } }); return; }
   }
   ensureCloudinaryConfigured();
@@ -44,7 +44,7 @@ async function runMaintenance() {
     // Backfill existing expired stories, retaining their replay-protection records.
     const expired = await Story.find({ expiresAt: { $lte: new Date() }, mediaCleanupQueued: { $ne: true } }).limit(100).lean();
     for (const story of expired) {
-      for (const url of [story.imageUrl, story.videoUrl]) await queueMedia(mediaFromUrl(url));
+      for (const url of [story.imageUrl, story.videoUrl, story.audioUrl]) await queueMedia(mediaFromUrl(url));
       await Story.updateOne({ _id: story._id }, { $set: { mediaCleanupQueued: true } });
     }
     for (const job of await Job.find({ dueAt: { $lte: new Date() } }).sort({ dueAt: 1 }).limit(30).lean()) {

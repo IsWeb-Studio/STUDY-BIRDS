@@ -30,7 +30,7 @@ function publicationAudienceFor(role, body) {
   if (!body || typeof body !== 'object' || !COMMUNITY_ROLES.includes(role)) return null;
   const isAdmin = role === 'admin';
   const allowedFields = new Set([
-    'text', 'imageUrl', 'videoUrl', 'operationId',
+    'text', 'imageUrl', 'videoUrl', 'audioUrl', 'operationId',
     ...(isAdmin ? ['audience', 'notifyAudience'] : []),
   ]);
   if (Object.keys(body).some(key => !allowedFields.has(key))) return null;

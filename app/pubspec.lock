@@ -949,6 +949,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "5.50.5"
+  pro_image_editor:
+    dependency: "direct main"
+    description:
+      name: pro_image_editor
+      sha256: bfdd44371a2b1ce6e2d48c367942d1010239cae6715679967ca719fc57c92d58
+      url: "https://pub.dev"
+    source: hosted
+    version: "11.0.0"
   pub_semver:
     dependency: transitive
     description:

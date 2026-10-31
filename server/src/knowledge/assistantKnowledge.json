@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "version": "2026.10.23.3",
-  "reviewedAt": "2026-10-30",
+  "reviewedAt": "2026-10-31",
   "entries": [
     {
       "id": "applications",
@@ -755,17 +755,17 @@
         "مين شاف"
       ],
       "description": {
-        "ar": "تظهر الستوريات أعلى الرئيسية. اضغط ستوري جديدة واختر الصورة لنشرها مباشرة وفق التأكيدات والصلاحيات المعروضة؛ حساب الأدمن مستثنى من هذا المسار.",
-        "en": "Stories appear above the home dashboard. Tap New story and choose an image to publish directly using the shown permissions and confirmations; this flow excludes administrators."
+        "ar": "تظهر الستوري أعلى الرئيسية. اختر صورة ثم عدّلها بالكتابة والرسم وملصقات الإيموجي والقص والفلاتر. يمكنك إضافة ملف صوت MP3 أو M4A أو WAV من الجهاز، حتى 60 ثانية و10 ميجابايت. راجع المعاينة ثم اضغط نشر الستوري. الإلغاء لا ينشر شيئًا. للأدمن يبقى اختيار الجمهور قبل النشر.",
+        "en": "Stories appear above Home. Choose a photo, then edit text, drawing, emoji stickers, crop and filters. Optionally attach a device MP3, M4A or WAV file up to 60 seconds and 10 MB. Review the preview and tap Publish story. Cancel publishes nothing. Administrators still select an audience before publishing."
       },
       "steps": {
         "ar": [
-          "تظهر الستوريات أعلى الرئيسية. اضغط ستوري جديدة واختر الصورة لنشرها مباشرة وفق التأكيدات والصلاحيات المعروضة؛ حساب الأدمن مستثنى من هذا المسار.",
+          "تظهر الستوري أعلى الرئيسية. اختر صورة ثم عدّلها بالكتابة والرسم وملصقات الإيموجي والقص والفلاتر. يمكنك إضافة ملف صوت MP3 أو M4A أو WAV من الجهاز، حتى 60 ثانية و10 ميجابايت. راجع المعاينة ثم اضغط نشر الستوري. الإلغاء لا ينشر شيئًا. للأدمن يبقى اختيار الجمهور قبل النشر.",
           "لعرض قصة اضغط صورتها. تفاعل القلب يظهر فورًا مبدئيًا ثم يؤكده السيرفر؛ فشل الاتصال يعيد الحالة السابقة.",
           "لعرض مشاهدين قصتك افتحها واضغط عدد المشاهدات. لا يمكنك الاطلاع على مشاهدي قصة شخص آخر."
         ],
         "en": [
-          "Stories appear above the home dashboard. Tap New story and choose an image to publish directly using the shown permissions and confirmations; this flow excludes administrators.",
+          "Stories appear above Home. Choose a photo, then edit text, drawing, emoji stickers, crop and filters. Optionally attach a device MP3, M4A or WAV file up to 60 seconds and 10 MB. Review the preview and tap Publish story. Cancel publishes nothing. Administrators still select an audience before publishing.",
           "Tap a story to view it. A heart updates immediately while the server confirms it; a failed request rolls it back.",
           "Open your own story and tap the view count for its viewers. Other people’s viewer lists are private."
         ]
@@ -778,7 +778,9 @@
       "sources": [
         "mobile:lib/screens/stories/student_stories.dart",
         "server:src/routes/storyRoutes.js",
-        "mobile:lib/screens/stories/story_viewers_screen.dart"
+        "mobile:lib/screens/stories/story_viewers_screen.dart",
+        "mobile:lib/screens/stories/story_photo_editor.dart",
+        "server:src/utils/storyAudioUpload.js"
       ],
       "roles": [
         "student"
@@ -3798,5 +3800,5 @@
       "reviewed": true
     }
   ],
-  "revision": "2026.10.30.1"
+  "revision": "2026.10.31.1"
 }

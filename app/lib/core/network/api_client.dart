@@ -114,7 +114,9 @@ class ApiClient {
     if (at == null) {
       _cachedReads.remove(path);
     } else {
-      while (_cachedReads.length >= 160) { _cachedReads.remove(_cachedReads.keys.first); }
+      while (_cachedReads.length >= 160) {
+        _cachedReads.remove(_cachedReads.keys.first);
+      }
       _cachedReads[path] = at;
     }
     _statusChanges.add(null);
@@ -145,7 +147,8 @@ class ApiClient {
     _cache.remove(key);
     _cacheSizes.removeWhere((key, _) => !_cache.containsKey(key));
     var bytes = _cacheSizes.values.fold<int>(0, (a, b) => a + b);
-    while (_cache.isNotEmpty && (_cache.length >= 160 || bytes + size > 8 * 1024 * 1024)) {
+    while (_cache.isNotEmpty &&
+        (_cache.length >= 160 || bytes + size > 8 * 1024 * 1024)) {
       final oldest = _cache.keys.first;
       _cache.remove(oldest);
       bytes -= _cacheSizes.remove(oldest) ?? 0;
@@ -324,7 +327,8 @@ class ApiClient {
         try {
           saved = await _store.read(scope!, '$baseUrl$canonical');
           final latest = _cache[key];
-          if (latest != null && (saved == null || !latest.at.isBefore(saved.savedAt))) {
+          if (latest != null &&
+              (saved == null || !latest.at.isBefore(saved.savedAt))) {
             saved = CachedResponse(latest.data, latest.at);
           }
         } catch (_) {}
@@ -336,8 +340,7 @@ class ApiClient {
         _remember(key, saved);
         _readStatus(canonical, saved.savedAt);
         // Paint saved content first, then revalidate once on each new process.
-        if (!saved.valid(policy.freshFor, _clock()) ||
-            (memory == null)) {
+        if (!saved.valid(policy.freshFor, _clock()) || (memory == null)) {
           unawaited(_fetchCached(
                   path, token, canonical, scope, key, policy, generation,
                   background: true)
@@ -475,7 +478,8 @@ class ApiClient {
   }
 
   String? _lastPrivateScope;
-  String? _scopeForCurrentSession() => activeCacheOwner?.call() ?? _lastPrivateScope;
+  String? _scopeForCurrentSession() =>
+      activeCacheOwner?.call() ?? _lastPrivateScope;
 
   /// [idempotencyKey]: reuse the same key when the user re-sends the SAME
   /// draft after an uncertain failure, so a supporting server can de-duplicate.
@@ -531,6 +535,10 @@ class ApiClient {
         return MediaType('image', 'webp');
       case 'mp4':
         return MediaType('video', 'mp4');
+      case 'mp3':
+        return MediaType('audio', 'mpeg');
+      case 'wav':
+        return MediaType('audio', 'wav');
       case 'm4a':
         return MediaType('audio', 'mp4');
       case 'mov':
@@ -607,7 +615,8 @@ class ApiClient {
 
   /// Decodes and records failures: every non-2xx leaves a breadcrumb, and
   /// server-side faults (5xx, unparseable 2xx) become de-duplicated Sentry events.
-  dynamic _decodeReporting(http.Response response, String method, String path, {String? owner}) {
+  dynamic _decodeReporting(http.Response response, String method, String path,
+      {String? owner}) {
     try {
       final data = _decode(response);
       if (method != 'GET') {

@@ -1,3 +1,4 @@
+import 'story_sound.dart';
 import '../../core/config/app_theme.dart';
 import '../community/student_profile_link.dart';
 import '../../core/widgets/safety_controls.dart';
@@ -32,10 +33,12 @@ class StoryViewer extends StatefulWidget {
   final List<StudentStory> stories;
   final ValueChanged<String> onSeen;
   final Duration storyDuration;
+  final StorySound Function()? soundFactory;
   const StoryViewer(
       {super.key,
       required this.stories,
       required this.onSeen,
+      this.soundFactory,
       this.storyDuration = const Duration(seconds: 5)})
       : assert(stories.length > 0);
   @override
@@ -58,6 +61,7 @@ class _StoryViewerState extends State<StoryViewer>
   void _dragStart(DragStartDetails details) {
     _held = true;
     _clock.stop();
+    if (_audio != null) unawaited(_audio!.pause());
     if (_video != null) unawaited(_video!.pause());
   }
 
@@ -87,6 +91,7 @@ class _StoryViewerState extends State<StoryViewer>
   Timer? _liveTimer;
   StreamSubscription<String>? _reactionSub;
   VideoPlayerController? _video;
+  StorySound? _audio;
   String? _sessionIdentity;
   bool _videoFailed = false;
   final _loved = <String>{};
@@ -99,6 +104,7 @@ class _StoryViewerState extends State<StoryViewer>
     _held = true;
     _clock.stop();
     try {
+      await _audio?.pause();
       await _video?.pause();
       if (!mounted) return;
       await Navigator.of(context).push(
@@ -192,7 +198,9 @@ class _StoryViewerState extends State<StoryViewer>
   @override
   void deactivate() {
     _attached = false;
+    if (_audio != null) unawaited(_audio!.pause());
     _clock.stop();
+    if (_audio != null) unawaited(_audio!.pause());
     if (_video != null) unawaited(_video!.pause());
     super.deactivate();
   }
@@ -218,6 +226,7 @@ class _StoryViewerState extends State<StoryViewer>
   void _resume() {
     if (!mounted || !_attached || _closing) return;
     if (_ready && !_held && _visible) {
+      if (_audio != null) unawaited(_audio!.play().catchError((Object _) {}));
       if (_video != null && !_videoFailed) {
         unawaited(_video!.play());
       } else if (!_clock.isAnimating) {
@@ -225,11 +234,15 @@ class _StoryViewerState extends State<StoryViewer>
       }
     } else {
       _clock.stop();
+      if (_audio != null) unawaited(_audio!.pause());
       if (_video != null) unawaited(_video!.pause());
     }
   }
 
   void _disposeVideo() {
+    final oldAudio = _audio;
+    _audio = null;
+    if (oldAudio != null) unawaited(oldAudio.dispose());
     final old = _video;
     _video = null;
     if (old != null) {
@@ -288,6 +301,21 @@ class _StoryViewerState extends State<StoryViewer>
             .clamp(0.0, .999999);
   }
 
+  Future<void> _loadAudio(StudentStory story) async {
+    final player = widget.soundFactory?.call() ?? DeviceStorySound();
+    _audio = player;
+    try {
+      await player.load(story.audioUrl).timeout(const Duration(seconds: 20));
+      if (!mounted || _audio != player || _closing) return;
+      _resume();
+    } catch (_) {
+      if (_audio == player) {
+        _audio = null;
+        await player.dispose();
+      }
+    }
+  }
+
   void _begin() {
     _disposeVideo();
     _videoFailed = false;
@@ -296,6 +324,11 @@ class _StoryViewerState extends State<StoryViewer>
     _ready = false;
     _held = false;
     final story = _story;
+    if (story.audioUrl.isNotEmpty && story.expiresAt.isAfter(DateTime.now())) {
+      _clock.duration = Duration(
+          milliseconds: (story.audioDuration.clamp(1, 60) * 1000).round());
+      unawaited(_loadAudio(story));
+    }
     final reaction = StoriesRepository.instance.reactionFor(story.id);
     if (reaction != null) {
       _counts[story.id] = reaction.count;
@@ -373,6 +406,7 @@ class _StoryViewerState extends State<StoryViewer>
     if (next >= widget.stories.length) {
       _closing = true;
       _clock.stop();
+      if (_audio != null) unawaited(_audio!.pause());
       if (_video != null) unawaited(_video!.pause());
       _liveTimer?.cancel();
       final navigator = Navigator.of(context);
@@ -450,6 +484,7 @@ class _StoryViewerState extends State<StoryViewer>
     _clock.stop();
     final id = _story.id;
     try {
+      await _audio?.pause();
       await _video?.pause();
       if (!mounted) return;
       final confirm = await showDialog<bool>(
@@ -639,6 +674,7 @@ class _StoryViewerState extends State<StoryViewer>
                         onLongPressStart: (_) {
                           _held = true;
                           _clock.stop();
+                          if (_audio != null) unawaited(_audio!.pause());
                           if (_video != null) unawaited(_video!.pause());
                         },
                         onLongPressEnd: (_) {

@@ -8,12 +8,17 @@ Work is delivered in separate testable phases.
 - Exact `Sponsored by Study Birds` credit below the COVEY splash identity and below the menu sign-out action.
 - Small-screen, large-text, splash geometry and menu navigation checks. No backend behavior change or new permissions.
 
-## Phase 2 — story photo editor (pending)
+## Phase 2 — story photo editor (implemented)
 
-- Shared editor for writing, stickers, drawing and visual adjustments following the supplied reference.
+- Shared photo editor for text, drawing, emoji stickers, crop/rotate, filters, blur and visual adjustments, using pro_image_editor 11 (compatible with the current Flutter app). Source photos are never overwritten.
 - User explicitly selected a local audio file, not a licensed online music library.
 - Preview and explicit publication after editing; cancel must preserve the source and never publish.
-- Audio with a still image requires a real playable media export/upload/viewing path. Do not ship a decorative music button or claim audio works before this is implemented and verified.
+- Optional local MP3/M4A/WAV up to 60 seconds and 10 MB. Preview supports playback/removal. This phase does not include an online music library, audio trimming or recording.
+- Edited photo bytes are uploaded as the story image. The soundtrack is a separate Cloudinary MP3, with an owner/expiry upload record. Only the uploader can attach it to a photo story; arbitrary URLs and client-supplied duration are rejected. The viewer plays it alongside the image and pauses it on hold, navigation and backgrounding. A failed soundtrack leaves the image readable.
+- Image/video stories without audio and administrator audience selection remain supported. Admin photos use the same editor and return to the existing publish form.
+- Story deletion, expiry and account deletion include audio cleanup. Pending abandoned uploads are queued for expiry cleanup.
+- Backend deployment on Render is required for `/stories/audio` and the audio fields. Old clients can still read the image without the soundtrack.
+- Automated validation covers exported byte handoff, cancel, narrow Arabic layout, soundtrack lifecycle, media validation, ownership, expiry, idempotency, cleanup and existing story regressions. Native playback on a real phone and a real Cloudinary upload still need a device smoke test after deployment.
 
 ## Phase 3 — community post image editor (pending)
 

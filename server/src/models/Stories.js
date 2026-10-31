@@ -6,6 +6,8 @@ const storySchema = new Schema({
   text: { type: String, maxlength: 1000, default: '' },
   audience: { type: String, enum: ['students', 'guardians', 'universities', 'employees', 'allEligible'], default: 'allEligible' },
   imageUrl: { type: String, default: '' },
+  audioUrl: { type: String, default: '' },
+  audioDuration: { type: Number, default: 0 },
   videoUrl: { type: String, default: '' },
   videoDuration: { type: Number, default: 0 },
   mediaCleanupQueued: Boolean,

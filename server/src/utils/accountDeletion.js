@@ -6,7 +6,7 @@ const { queueMedia, mediaFromUrl } = require('./mediaMaintenance');
 
 const owned = {
   StudentProfile: ['user'], Document: ['student'], Application: ['student'],
-  Story: ['author'], StoryStats: ['user'], StoryVideo: ['owner'], StoryInteraction: ['user'],
+  Story: ['author'], StoryStats: ['user'], StoryVideo: ['owner'], StoryAudio: ['owner'], StoryInteraction: ['user'],
   ParentLink: ['parent','student'], Friendship: ['requester','recipient'],
   ChatPreference: ['user','contact'], MobileMessage: ['sender','recipient'],
   MobileAccess: ['user'], MobileTask: ['assignedTo','student'], MobilePreferences: ['user'],
@@ -29,8 +29,8 @@ function loadModels() {
 async function queueRecordMedia(record) {
   for (const storage of [record.storage, record.attachmentStorage, record.audio, record.audioStorage]) await queueMedia(storage);
   if (record.image?.publicId) await queueMedia({ publicId: record.image.publicId, deliveryType: 'authenticated' });
-  for (const key of ['imageUrl','videoUrl','url','filePath','resultFileUrl','cardFileUrl']) {
-    await queueMedia(mediaFromUrl(record[key], ['story-images/','story-videos/','avatars/','documents/','student-documents/','chat-images/','support/','verification/']));
+  for (const key of ['imageUrl','videoUrl','audioUrl','url','filePath','resultFileUrl','cardFileUrl']) {
+    await queueMedia(mediaFromUrl(record[key], ['story-images/','story-videos/','story-audio/','avatars/','documents/','student-documents/','chat-images/','support/','verification/']));
   }
 }
 async function processAccountDeletion(id) {

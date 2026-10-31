@@ -1,3 +1,5 @@
+const StoryAudio = require('../models/StoryAudio');
+const { parseAudio, uploadStoryAudio } = require('../utils/storyAudioUpload');
 const router = require('express').Router();
 const mongoose = require('mongoose');
 const { rateLimit } = require('express-rate-limit');
@@ -122,7 +124,7 @@ router.get('/', communityAccess, asyncHandler(async (req, res) => {
   const balances = new Map(stats.map(s => [String(s.user), s.total_points]));
   const interactions = new Map(edges.map(e => [String(e.story), e]));
   res.json({ stories: page.filter(s => s.author).map(s => ({
-    id: String(s._id), text: s.text, imageUrl: s.imageUrl, videoUrl: s.videoUrl || '', videoDuration: s.videoDuration || 0, createdAt: s.createdAt, expiresAt: s.expiresAt, audience: s.audience || 'allEligible',
+    id: String(s._id), text: s.text, imageUrl: s.imageUrl, audioUrl: s.audioUrl || '', audioDuration: s.audioDuration || 0, videoUrl: s.videoUrl || '', videoDuration: s.videoDuration || 0, createdAt: s.createdAt, expiresAt: s.expiresAt, audience: s.audience || 'allEligible',
     loveCount: s.loveCount, seen: !!interactions.get(String(s._id))?.seenAt,
     ...(String(s.author._id) === String(req.user._id) ? { viewCount: views.get(String(s._id)) || 0 } : {}),
     loved: !!interactions.get(String(s._id))?.lovedAt,
@@ -134,6 +136,13 @@ router.post('/image', storyPublisherAccess, rateLimit({ windowMs: 3600000, limit
   const media = await uploadFileToCloudinary(req.file, `story-images/${req.user._id}`);
   await require('../utils/mediaMaintenance').queueMedia(media, new Date(Date.now() + 86400000));
   res.json({ imageUrl: media.url });
+}));
+router.post('/audio', storyPublisherAccess, rateLimit({ windowMs: 3600000, limit: 20, keyGenerator: req => String(req.user._id) }), parseAudio, asyncHandler(async (req, res) => {
+  const media = await uploadStoryAudio(req.file, req.user._id);
+  const expiresAt = new Date(Date.now() + 86400000);
+  await require('../utils/mediaMaintenance').queueMedia({ publicId: media.publicId, resourceType: 'video', url: media.audioUrl }, expiresAt);
+  await StoryAudio.create({ owner: req.user._id, url: media.audioUrl, duration: media.duration, expiresAt });
+  res.json(media);
 }));
 router.post('/video', storyPublisherAccess, rateLimit({ windowMs: 3600000, limit: 10, keyGenerator: req => String(req.user._id) }), parseVideo, asyncHandler(async (req, res) => {
   validateVideo(req.file);
@@ -147,8 +156,8 @@ router.post('/', storyPublisherAccess, rateLimit({ windowMs: 3600000, limit: 20,
   const audience = publicationAudienceFor(req.user.role, body);
   if (!audience) fail(400, 'Invalid story audience or identity fields');
   if (req.user.role === 'admin' && body.notifyAudience === true) fail(400, 'Story audience notifications are not available yet');
-  const { text = '', imageUrl = '', videoUrl = '', operationId } = body;
-  if (typeof operationId !== 'string' || !/^[A-Za-z0-9-]{8,100}$/.test(operationId) || typeof text !== 'string' || text.length > 1000 || typeof imageUrl !== 'string' || typeof videoUrl !== 'string' || (imageUrl && videoUrl) || (!text.trim() && !imageUrl && !videoUrl)) fail(400, 'Invalid story');
+  const { text = '', imageUrl = '', videoUrl = '', audioUrl = '', operationId } = body;
+  if (typeof operationId !== 'string' || !/^[A-Za-z0-9-]{8,100}$/.test(operationId) || typeof text !== 'string' || text.length > 1000 || typeof imageUrl !== 'string' || typeof videoUrl !== 'string' || typeof audioUrl !== 'string' || (audioUrl && (!imageUrl || videoUrl)) || (imageUrl && videoUrl) || (!text.trim() && !imageUrl && !videoUrl)) fail(400, 'Invalid story');
   if (imageUrl) {
     // Only accept this student's own uploaded Cloudinary images, never arbitrary URLs.
     let url; try { url = new URL(imageUrl); } catch { fail(400, 'Invalid image'); }
@@ -160,10 +169,12 @@ router.post('/', storyPublisherAccess, rateLimit({ windowMs: 3600000, limit: 20,
     if (existing) return { id: existing.id, audience: existing.audience || 'allEligible', progress: rules.progress(await statsFor(req.user._id, session), now, streakSource(req.user.role)), awarded: 0 };
     const video = videoUrl ? await StoryVideo.findOne({ owner: req.user._id, url: videoUrl, expiresAt: { $gt: new Date(now) } }).session(session) : null;
     if (videoUrl && !video) fail(400, 'Upload your own video first');
+    const audio = audioUrl ? await StoryAudio.findOne({ owner: req.user._id, url: audioUrl, expiresAt: { $gt: new Date(now) } }).session(session) : null;
+    if (audioUrl && !audio) fail(400, 'Upload your own audio first');
     const stats = await statsFor(req.user._id, session);
     const awarded = rules.storyPostReward(stats, now, req.user.role);
     await stats.save({ session });
-    const [story] = await Story.create([{ author: req.user._id, operationId, text: text.trim(), audience, imageUrl, videoUrl,
+    const [story] = await Story.create([{ author: req.user._id, operationId, text: text.trim(), audience, imageUrl, videoUrl, audioUrl, audioDuration: audio?.duration || 0,
       videoDuration: video?.duration || 0, expiresAt: new Date(now + 24 * rules.HOUR) }], { session });
     return { id: story.id, audience: story.audience, progress: rules.progress(stats, now, streakSource(req.user.role)), awarded };
   });
@@ -195,10 +206,12 @@ router.delete('/:id', communityAccess, asyncHandler(async (req, res) => {
     if (!story) fail(404, 'Story unavailable');
     if (story.deletedAt) return;
     const { queueMedia, mediaFromUrl } = require('../utils/mediaMaintenance');
-    for (const url of [story.imageUrl, story.videoUrl]) await queueMedia(mediaFromUrl(url), new Date(), session);
+    for (const url of [story.imageUrl, story.videoUrl, story.audioUrl]) await queueMedia(mediaFromUrl(url), new Date(), session);
     if (story.videoUrl) await StoryVideo.deleteMany({ owner: req.user._id, url: story.videoUrl }).session(session);
     // Keep the operation id and awarded points: deleting and reposting cannot farm rewards.
     story.deletedAt = new Date(); story.expiresAt = story.deletedAt;
+    if (story.audioUrl) await StoryAudio.deleteMany({ owner: req.user._id, url: story.audioUrl }).session(session);
+    story.audioUrl = ''; story.audioDuration = 0;
     story.text = ''; story.imageUrl = ''; story.videoUrl = ''; story.mediaCleanupQueued = true;
     await story.save({ session });
     await StoryInteraction.deleteMany({ story: story._id }).session(session);

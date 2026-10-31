@@ -28,7 +28,7 @@ test('reviewed assistant: clarification, persistence, ownership, quota and faile
   await call('/message',b,{message:'x'.repeat(2001)},400);
   const config=await call('/config',a);
   assert.equal(config.enabled,true);
-  assert.equal(config.knowledgeRevision,'2026.10.30.1');
+  assert.equal(config.knowledgeRevision,'2026.10.31.1');
   const answer=await call('/message',a,{message:'How do I upload documents and apply?'});
   assert.match(answer.messages.at(-1).content,/Which topic/);
   assert.equal(answer.messages.at(-1).actions.length,0);

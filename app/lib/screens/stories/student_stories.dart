@@ -1,3 +1,4 @@
+import 'story_photo_editor.dart';
 import '../profile_account/my_streak.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/widgets/community_terms.dart';
@@ -322,15 +323,30 @@ class StudentStoriesState extends State<StudentStories>
         throw Exception(_storyText(context, 'حجم الصورة أكبر من 5 ميجابايت',
             'Choose an image smaller than 5 MB.'));
       }
-      final bytes = await image.readAsBytes();
+      final original = await image.readAsBytes();
+      if (!mounted || !valid()) return null;
+      final edited = await Navigator.of(context).push<EditedStoryPhoto>(
+          MaterialPageRoute(
+              builder: (_) =>
+                  StoryPhotoEditor(bytes: original, publishOnConfirm: true)));
+      if (edited == null || !valid()) return null;
+      final bytes = edited.image;
       final operation = ApiClient.newOperationId();
       String? url;
+      String? audioUrl;
       while (valid()) {
         try {
-          url ??= await _repo.upload(bytes, image.name);
+          url ??= await _repo.upload(bytes, edited.imageName);
+          if (edited.audio != null) {
+            audioUrl ??=
+                await _repo.uploadAudio(edited.audio!, edited.audioName!);
+          }
           if (!valid()) return null;
           return await _repo.post(
-              text: '', imageUrl: url, operationId: operation);
+              text: '',
+              imageUrl: url,
+              audioUrl: audioUrl ?? '',
+              operationId: operation);
         } catch (error) {
           if (!mounted || !valid()) return null;
           final retry = await showDialog<bool>(
@@ -603,6 +619,8 @@ class _StoryComposerState extends State<StoryComposer> {
   final _text = TextEditingController();
   String _operationId = ApiClient.newOperationId();
   String _imageUrl = '';
+  EditedStoryPhoto? _editedPhoto;
+  String _audioUrl = '';
   String _videoUrl = '';
   bool _isVideo = false, _picking = false;
   double _uploadProgress = 0;
@@ -659,7 +677,14 @@ class _StoryComposerState extends State<StoryComposer> {
           throw Exception('اختر فيديو لا تتجاوز مدته دقيقة واحدة');
         }
       }
-      final bytes = await image.readAsBytes();
+      var bytes = await image.readAsBytes();
+      EditedStoryPhoto? edited;
+      if (!video && mounted) {
+        edited = await Navigator.of(context).push<EditedStoryPhoto>(
+            MaterialPageRoute(builder: (_) => StoryPhotoEditor(bytes: bytes)));
+        if (edited == null) return;
+        bytes = edited.image;
+      }
       if (mounted) {
         final old = _preview;
         setState(() {
@@ -669,7 +694,9 @@ class _StoryComposerState extends State<StoryComposer> {
           _videoUrl = '';
           _error = null;
           _bytes = bytes;
-          _name = image.name;
+          _name = video ? image.name : edited!.imageName;
+          _editedPhoto = edited;
+          _audioUrl = '';
           _imageUrl = '';
           _operationId = ApiClient.newOperationId();
         });
@@ -739,10 +766,15 @@ class _StoryComposerState extends State<StoryComposer> {
           if (mounted) setState(() => _uploadProgress = value);
         });
       }
+      if (_editedPhoto?.audio != null && _audioUrl.isEmpty) {
+        _audioUrl = await repo.uploadAudio(
+            _editedPhoto!.audio!, _editedPhoto!.audioName!);
+      }
       final progress = await repo.post(
           text: _text.text.trim(),
           imageUrl: _imageUrl,
           videoUrl: _videoUrl,
+          audioUrl: _audioUrl,
           operationId: _operationId,
           audience: _isAdmin ? _audience : null,
           notifyAudience: _isAdmin ? _notifyAudience : null);
@@ -948,6 +980,8 @@ class _StoryComposerState extends State<StoryComposer> {
                             _bytes = null;
                             _imageUrl = '';
                             _videoUrl = '';
+                            _audioUrl = '';
+                            _editedPhoto = null;
                             _isVideo = false;
                             final old = _preview;
                             _preview = null;

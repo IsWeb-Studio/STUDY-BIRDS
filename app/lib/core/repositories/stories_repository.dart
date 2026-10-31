@@ -116,15 +116,17 @@ class StreakDay {
 }
 
 class StudentStory {
-  final String videoUrl;
-  final double videoDuration;
+  final String videoUrl, audioUrl;
+  final double videoDuration, audioDuration;
   final String id, text, imageUrl, authorId, name, avatar, authorRole, audience;
   final int authorPoints, loveCount;
   final int? viewCount;
   final bool seen, loved;
   final DateTime expiresAt;
   StudentStory.fromJson(Map<String, dynamic> j)
-      : videoUrl = j['videoUrl'] as String? ?? '',
+      : audioDuration = (j['audioDuration'] as num?)?.toDouble() ?? 0,
+        audioUrl = j['audioUrl'] as String? ?? '',
+        videoUrl = j['videoUrl'] as String? ?? '',
         videoDuration = (j['videoDuration'] as num?)?.toDouble() ?? 0,
         id = j['id'] as String,
         text = j['text'] as String? ?? '',
@@ -337,6 +339,12 @@ class StoriesRepository {
     return j['imageUrl'] as String;
   }
 
+  Future<String> uploadAudio(List<int> bytes, String name) async {
+    final j = await _api.postMultipart('/stories/audio',
+        token: _token, fileBytes: bytes, fileName: name);
+    return j['audioUrl'] as String;
+  }
+
   Future<String> uploadVideo(List<int> bytes, String name,
       {void Function(double)? onProgress}) async {
     final j = await _api.postMultipart('/stories/video',
@@ -351,6 +359,7 @@ class StoriesRepository {
       {required String text,
       required String imageUrl,
       String videoUrl = '',
+      String audioUrl = '',
       required String operationId,
       String? audience,
       bool? notifyAudience}) async {
@@ -358,6 +367,7 @@ class StoriesRepository {
       'text': text,
       'imageUrl': imageUrl,
       'videoUrl': videoUrl,
+      if (audioUrl.isNotEmpty) 'audioUrl': audioUrl,
       'operationId': operationId,
       if (audience != null) 'audience': audience,
       if (notifyAudience != null) 'notifyAudience': notifyAudience,

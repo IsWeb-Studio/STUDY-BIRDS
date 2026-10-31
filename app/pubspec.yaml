@@ -39,6 +39,7 @@ dependencies:
   sign_in_with_apple: ^8.1.0
   just_audio: ^0.10.6
   path_provider: ^2.1.6
+  pro_image_editor: 11.0.0
 
 dev_dependencies:
   image: ^4.10.1
