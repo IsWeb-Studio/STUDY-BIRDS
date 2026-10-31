@@ -1,4 +1,5 @@
 import '../home_journey/student_banner_carousel.dart';
+import '../../core/widgets/keep_alive_section.dart';
 import '../universities_programs_countries/universities_screens.dart';
 import '../universities_programs_countries/programs_screens.dart';
 import '../applications_documents_payments/applications_screens.dart';
@@ -299,13 +300,15 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen>
             child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
-                  if (widget.header != null)
-                    SliverToBoxAdapter(child: widget.header),
-                  SliverToBoxAdapter(
-                      child: StudentBannerCarousel(
-                          placement: 'community',
-                          refreshVersion: _bannerVersion,
-                          onExplore: _openAdDestination)),
+                  SliverList.list(children: [
+                    if (widget.header != null)
+                      KeepAliveSection(child: widget.header!),
+                    KeepAliveSection(
+                        child: StudentBannerCarousel(
+                            placement: 'community',
+                            refreshVersion: _bannerVersion,
+                            onExplore: _openAdDestination)),
+                  ]),
                   SliverToBoxAdapter(child: _controls()),
                   if (loading || error != null || posts.isEmpty)
                     SliverToBoxAdapter(

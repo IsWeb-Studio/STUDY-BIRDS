@@ -1,4 +1,11 @@
 import '../../core/repositories/stories_repository.dart';
+import 'dart:convert';
+import '../../core/widgets/keep_alive_section.dart';
+import '../home_journey/student_banner_carousel.dart';
+import '../universities_programs_countries/universities_screens.dart';
+import '../universities_programs_countries/programs_screens.dart';
+import '../applications_documents_payments/applications_screens.dart';
+import '../services_support/services_consultation_screens.dart';
 import '../../core/config/app_theme.dart';
 import 'contact_profile_screen.dart';
 import 'dart:async';
@@ -140,9 +147,21 @@ class StudentCommunityHub extends StatefulWidget {
 class _StudentCommunityHubState extends State<StudentCommunityHub>
     with WidgetsBindingObserver {
   final _storiesKey = GlobalKey<StudentStoriesState>();
+  int _bannerVersion = 0;
+  void _openAdDestination(String destination) {
+    final Widget page = switch (destination) {
+      'universities' => const UniversitiesExplorerScreen(),
+      'programs' => const ProgramsExplorerScreen(),
+      'services' => const ServicesCenterScreen(),
+      _ => const ApplicationsListScreen(),
+    };
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  }
+
   Completer<void>? _loadDone;
 
   Future<void> _refreshPage() async {
+    setState(() => _bannerVersion++);
     await Future.wait([
       _load(),
       _storiesKey.currentState?.refresh() ?? Future<void>.value(),
@@ -248,6 +267,13 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
             action: SnackBarAction(
                 label: _hubText(context, 'فتح', 'Open'),
                 onPressed: () => _open(row['contact']))));
+      }
+      if (quiet &&
+          !_loading &&
+          _error == null &&
+          _cursor == nextCursor &&
+          jsonEncode(_rows) == jsonEncode(incoming)) {
+        return;
       }
       setState(() {
         _rows = more
@@ -473,12 +499,19 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
               child: ListView(
                   physics: const AlwaysScrollableScrollPhysics(),
                   children: [
-                    if (AuthSession.instance.currentUser?.role == UserRole.admin)
+                    if (AuthSession.instance.currentUser?.role ==
+                        UserRole.admin)
                       const AdminCommunityControlCenter(),
-                    StudentStories(
-                        key: _storiesKey,
-                        showCommunityButton: false,
-                        isActive: widget.isActive),
+                    KeepAliveSection(
+                        child: StudentStories(
+                            key: _storiesKey,
+                            showCommunityButton: false,
+                            isActive: widget.isActive)),
+                    KeepAliveSection(
+                        child: StudentBannerCarousel(
+                            placement: 'community',
+                            refreshVersion: _bannerVersion,
+                            onExplore: _openAdDestination)),
                     Padding(
                         padding: const EdgeInsets.all(16),
                         child: Row(children: [
@@ -531,6 +564,8 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
                               textAlign: TextAlign.center)),
                     for (final row in _rows)
                       ListTile(
+                          key:
+                              ValueKey('conversation-${row['contact']['_id']}'),
                           onTap: () => _open(row['contact']),
                           onLongPress: () => _options(row),
                           leading: ContactProfileLink(

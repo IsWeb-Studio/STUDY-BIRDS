@@ -576,7 +576,7 @@
     },
     {
       "path": "mobile:lib/core/widgets/community_post_image.dart",
-      "sha256": "cf0def60a25783a053731f43573b418f6da3aeeccf1a7e204ec2128cd60abbda",
+      "sha256": "3e5dbcd9bbecc41561a70d9141a68b6e7f05dbefe2af1d72e093034cdda98480",
       "dependencies": [
         "mobile:lib/core/network/api_client.dart",
         "mobile:lib/core/services/auth_session.dart",
@@ -641,6 +641,13 @@
     {
       "path": "mobile:lib/core/widgets/gallery_access.dart",
       "sha256": "1de9d7bf05f3191c488bc880422421b06eb9c7a3ba2831b303ac7cc357b9ae4a",
+      "dependencies": [],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "mobile:lib/core/widgets/keep_alive_section.dart",
+      "sha256": "13ac43b71685eb6a21eef0a297705a7a10d8594cffc1dfb9a3cc3e6efa29eba4",
       "dependencies": [],
       "screens": [],
       "routes": []
@@ -1198,9 +1205,15 @@
     },
     {
       "path": "mobile:lib/screens/community/student_community_hub.dart",
-      "sha256": "e7534f2480b28bb20186c5b27639337ca4860837e31394efcd0c8f2ce23af74e",
+      "sha256": "62933802e4606fbd91ef81e50702a7c431d2493700719035ce243a532d009be8",
       "dependencies": [
         "mobile:lib/core/repositories/stories_repository.dart",
+        "mobile:lib/core/widgets/keep_alive_section.dart",
+        "mobile:lib/screens/home_journey/student_banner_carousel.dart",
+        "mobile:lib/screens/universities_programs_countries/universities_screens.dart",
+        "mobile:lib/screens/universities_programs_countries/programs_screens.dart",
+        "mobile:lib/screens/applications_documents_payments/applications_screens.dart",
+        "mobile:lib/screens/services_support/services_consultation_screens.dart",
         "mobile:lib/core/config/app_theme.dart",
         "mobile:lib/core/network/api_client.dart",
         "mobile:lib/core/services/auth_session.dart",
@@ -2573,9 +2586,10 @@
     },
     {
       "path": "mobile:lib/screens/services_support/community_screen.dart",
-      "sha256": "2809d57e5f165d55773c811c938acfcdc97199cee9bfa8b4263740e315c21518",
+      "sha256": "a8989a5c3a07a643072d5078d701fa19dcc0304fc52e8591c1df15e4580e0725",
       "dependencies": [
         "mobile:lib/screens/home_journey/student_banner_carousel.dart",
+        "mobile:lib/core/widgets/keep_alive_section.dart",
         "mobile:lib/screens/universities_programs_countries/universities_screens.dart",
         "mobile:lib/screens/universities_programs_countries/programs_screens.dart",
         "mobile:lib/screens/applications_documents_payments/applications_screens.dart",
