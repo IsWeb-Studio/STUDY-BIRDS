@@ -250,11 +250,13 @@
       "steps": {
         "ar": [
           "افتح أيقونة الإشعارات أعلى التطبيق لعرض تنبيهاتك، أو حسابي ثم الإعدادات ثم تفضيلات الإشعارات لاختيار الفئات المتاحة.",
-          "إذا لم تصل التنبيهات تحقق من إذن إشعارات COVEY في إعدادات الجهاز والاتصال وتفضيلات الحساب. لا يمكن ضمان وصول تنبيه لجهاز رفض الإذن. تنبيهات الأمان والمساعدة العاجلة تتبع الخيارات الإلزامية المعروضة."
+          "إذا لم تصل التنبيهات تحقق من إذن إشعارات COVEY في إعدادات الجهاز والاتصال وتفضيلات الحساب. لا يمكن ضمان وصول تنبيه لجهاز رفض الإذن. تنبيهات الأمان والمساعدة العاجلة تتبع الخيارات الإلزامية المعروضة.",
+          "الرسائل غير المكتومة ولايكات الستوري تظهر في صندوق الإشعارات. وصول إشعار النظام يحتاج إذن الهاتف واشتراك الإشعارات؛ فئة المجتمع تتحكم بلايكات الستوري ورسائل الطلاب، وفئة الدعم برسائل الدعم. الضغط على إشعار الرسالة يفتح المحادثة للحساب المخوّل، وإشعار إعجاب الستوري يفتح المشاهدات والتفاعلات لصاحبها."
         ],
         "en": [
           "Open the top notification icon to see alerts, or My Account, Settings, Notification preferences for available categories.",
-          "If alerts do not arrive, check the device notification permission for COVEY, connectivity and your account preferences. Delivery cannot be guaranteed for a device that denies permission. Security and urgent-support alerts follow the mandatory settings shown."
+          "If alerts do not arrive, check the device notification permission for COVEY, connectivity and your account preferences. Delivery cannot be guaranteed for a device that denies permission. Security and urgent-support alerts follow the mandatory settings shown.",
+          "Unmuted messages and story likes appear in the inbox. System push requires device permission and a subscribed device. Community preferences control story likes and student messages; Support preferences control support messages. Message taps open the authorized conversation; a story-like tap opens the owner-only viewer list."
         ]
       },
       "location": {
@@ -264,7 +266,11 @@
       "screen": "profile_account/notification_preferences_screen.dart",
       "sources": [
         "mobile:lib/screens/profile_account/notification_preferences_screen.dart",
-        "mobile:lib/screens/home_journey/notifications_screen.dart"
+        "mobile:lib/screens/home_journey/notifications_screen.dart",
+        "server:src/models/Notification.js",
+        "server:src/routes/mobileMessagingRoutes.js",
+        "server:src/routes/storyRoutes.js",
+        "mobile:lib/core/utils/notification_links.dart"
       ],
       "roles": [
         "student"
@@ -766,12 +772,14 @@
         "ar": [
           "تظهر الستوري أعلى الرئيسية. اختر صورة ثم عدّلها بالكتابة والرسم وملصقات الإيموجي والقص والفلاتر. يمكنك إضافة ملف صوت MP3 أو M4A أو WAV من الجهاز، حتى 60 ثانية و10 ميجابايت. راجع المعاينة ثم اضغط نشر الستوري. الإلغاء لا ينشر شيئًا. للأدمن يبقى اختيار الجمهور قبل النشر.",
           "لعرض قصة اضغط صورتها. تفاعل القلب يظهر فورًا مبدئيًا ثم يؤكده السيرفر؛ فشل الاتصال يعيد الحالة السابقة.",
-          "لعرض مشاهدين قصتك افتحها واضغط عدد المشاهدات. لا يمكنك الاطلاع على مشاهدي قصة شخص آخر."
+          "لعرض مشاهدين قصتك افتحها واضغط عدد المشاهدات. لا يمكنك الاطلاع على مشاهدي قصة شخص آخر.",
+          "لايك الستوري ينشئ إشعارًا لصاحب الستوري مرة واحدة؛ إعجابك بستوريك لا ينبهك. في قائمة المشاهدات يظهر قلب بجانب الشخص الذي أعجب بالستوري."
         ],
         "en": [
           "Stories appear above Home. Choose a photo, then edit text, drawing, emoji stickers, crop and filters. Optionally attach a device MP3, M4A or WAV file up to 60 seconds and 10 MB. Review the preview and tap Publish story. Cancel publishes nothing. Administrators still select an audience before publishing.",
           "Tap a story to view it. A heart updates immediately while the server confirms it; a failed request rolls it back.",
-          "Open your own story and tap the view count for its viewers. Other people’s viewer lists are private."
+          "Open your own story and tap the view count for its viewers. Other people’s viewer lists are private.",
+          "A first story like notifies its author once. Liking your own story does not notify you. A heart in the viewer list marks a viewer who liked it."
         ]
       },
       "location": {
@@ -929,13 +937,15 @@
           "افتح الغمّازة من الشريط السفلي.",
           "اختر اللعب بجهاز واحد لأربعة أشخاص حقيقيين على الأقل وتناوبوا على الكروت سرًا؛ أو أنشئ غرفة بالكود لأجهزة متعددة.",
           "لعب المجموعة يحتاج 4 لاعبين على الأقل والجميع جاهز؛ لا تشارك دورك السري.",
-          "افتح زر قواعد اللعبة؛ ويمكن تفعيل مؤثرات التوزيع والخروج والتصويت من الصوت والاهتزاز."
+          "افتح زر قواعد اللعبة؛ ويمكن تفعيل مؤثرات التوزيع والخروج والتصويت من الصوت والاهتزاز.",
+          "من الصوت والاهتزاز فعّل اهتزاز خفيف لتجربة نبضة قصيرة. الخيار يعمل فقط على جهاز يدعم الاهتزاز؛ إعدادات الهاتف قد تؤثر عليه. الصوت والاهتزاز خياران مستقلان."
         ],
         "en": [
           "Open The Winker from bottom navigation.",
           "Choose one-device play for at least four real people and pass private cards in turn, or create a code room for multiple devices.",
           "Group play requires at least 4 ready players. Keep your secret role private.",
-          "Open Game rules. Enable dealing, elimination and voting effects from Sound and vibration."
+          "Open Game rules. Enable dealing, elimination and voting effects from Sound and vibration.",
+          "Enable Light vibration in Sound and vibration to try a short pulse. A supported physical device is required and device settings may affect it. Sound and vibration are independent options."
         ]
       },
       "location": {
@@ -948,7 +958,8 @@
         "server:src/routes/winkRoutes.js",
         "mobile:lib/screens/games/wink_local_screen.dart",
         "mobile:lib/screens/games/wink_local_game.dart",
-        "mobile:lib/screens/games/wink_feedback.dart"
+        "mobile:lib/screens/games/wink_feedback.dart",
+        "mobile:lib/screens/games/wink_haptics.dart"
       ],
       "roles": [
         "student"
@@ -3824,5 +3835,5 @@
       "reviewed": true
     }
   ],
-  "revision": "2026.10.31.4"
+  "revision": "2026.10.31.5"
 }

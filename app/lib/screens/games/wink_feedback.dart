@@ -1,5 +1,5 @@
+import 'wink_haptics.dart';
 import 'dart:async';
-import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import '../../core/services/error_reporter.dart';
 
@@ -18,7 +18,8 @@ class WinkFeedback {
       {required bool sound, required bool vibration}) async {
     if (_disposed) return;
     final generation = ++_generation;
-    if (vibration) unawaited(HapticFeedback.lightImpact());
+    if (vibration) await WinkHaptics.lightImpact();
+    if (_disposed || generation != _generation) return;
     final old = _player;
     _player = null;
     if (old != null) await _release(old);

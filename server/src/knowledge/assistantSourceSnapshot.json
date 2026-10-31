@@ -1,6 +1,6 @@
 {
   "version": "2026.10.23.3",
-  "catalogSHA256": "38dcb347abf53539d38327f3aabd8cbd3940ecf21428870f71e040bd54c719fb",
+  "catalogSHA256": "d950546fac7641da1527f3f557ae2de65ef6f6bb0ebc8a31cc44b3cb7ce6e461",
   "sources": [
     {
       "path": "mobile:lib/app_shell.dart",
@@ -334,7 +334,7 @@
     },
     {
       "path": "mobile:lib/core/services/push_notification_service.dart",
-      "sha256": "aea20e8a42c7a5ab2432a50a58f65978caa03170c2c696ace9ce5405f795e477",
+      "sha256": "c105e3733d98f5f735f801eb9a98b702d59c56711f614e5cbb98b3af70fae4b8",
       "dependencies": [
         "mobile:lib/core/network/api_client.dart"
       ],
@@ -443,7 +443,7 @@
     },
     {
       "path": "mobile:lib/core/utils/notification_links.dart",
-      "sha256": "8e8abb377832d22e128884a5cd435e7c2aa85ae7b788b25bdcfad76fb99268a2",
+      "sha256": "b001ce3a25549e54843a56270cd73354af1fe44741b5cd82dd0465ec4f0ed825",
       "dependencies": [],
       "screens": [],
       "routes": []
@@ -882,7 +882,7 @@
     },
     {
       "path": "mobile:lib/screens/ai/assistant_navigation.dart",
-      "sha256": "24ee317589fe584bc0c6589567f172e2dd24ece54e187837bec278f4cee36737",
+      "sha256": "b7441b18f01f3673e275d5abb2ebff87de9d7c79c4d7c7a577373f33038a7b23",
       "dependencies": [
         "mobile:lib/core/services/auth_session.dart",
         "mobile:lib/core/services/locale_controller.dart",
@@ -1295,10 +1295,17 @@
     },
     {
       "path": "mobile:lib/screens/games/wink_feedback.dart",
-      "sha256": "14f8b77d47e8960d44748a27d7f1b222415cae702f039fd86834ca96891fda95",
+      "sha256": "47ce1c4edc567f40da6b998f2dfafa3d8c73ccf4ed5051fc81dba7ecc1d5c2b7",
       "dependencies": [
         "mobile:lib/core/services/error_reporter.dart"
       ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "mobile:lib/screens/games/wink_haptics.dart",
+      "sha256": "06ec31a967eb3ed2411784e47e371fde32537fe9ffc2ed5c0dc061c83a67e6f9",
+      "dependencies": [],
       "screens": [],
       "routes": []
     },
@@ -1327,7 +1334,7 @@
     },
     {
       "path": "mobile:lib/screens/games/wink_screen.dart",
-      "sha256": "64f1e55dc44c065625eb3ba4b751170aae9d7dcf00b365b04e7cf3d1c6a92230",
+      "sha256": "20cbde61befcb12c31b768a10db5403e341ed6a78e2776e405fb3f5095672ab8",
       "dependencies": [
         "mobile:lib/core/config/app_theme.dart",
         "mobile:lib/core/utils/json_safe.dart",
@@ -1518,7 +1525,7 @@
     },
     {
       "path": "mobile:lib/screens/home_journey/notifications_screen.dart",
-      "sha256": "32ea411d7cd7d4a50cc5afacd687d9069a77764d9619da8f71bb4af5988f2ca4",
+      "sha256": "d182fd9e2a09addb9ab09d388835db0bea919c5913b10c2ec1d3dd1bbbf6c239",
       "dependencies": [
         "mobile:lib/core/widgets/cached_resource.dart",
         "mobile:lib/core/utils/json_safe.dart",
@@ -1532,6 +1539,7 @@
         "mobile:lib/screens/services_support/services_consultation_screens.dart",
         "mobile:lib/screens/services_support/support_team_ai_screens.dart",
         "mobile:lib/screens/community/student_community_hub.dart",
+        "mobile:lib/screens/stories/story_viewers_screen.dart",
         "mobile:lib/screens/services_support/messaging_and_emergency_screens.dart",
         "mobile:lib/screens/applications_documents_payments/applications_screens.dart",
         "mobile:lib/screens/applications_documents_payments/documents_screens.dart",
@@ -2880,7 +2888,7 @@
     },
     {
       "path": "mobile:lib/screens/stories/story_viewers_screen.dart",
-      "sha256": "e2723236f73f8cfeb630e73d1141bf06177fc91c4c3fd8af92630f284877c1da",
+      "sha256": "8c6fb6eefea6769657fdb1bbe9e9d4d6d04cc9bf4384080f2a5b98c7a5d9dd43",
       "dependencies": [
         "mobile:lib/core/config/app_theme.dart",
         "mobile:lib/core/repositories/stories_repository.dart",
@@ -3752,7 +3760,7 @@
     },
     {
       "path": "server:src/routes/mobileMessagingRoutes.js",
-      "sha256": "1615b776f0f759db509887dbc1eae2fc2461812658a4f0d0ffb765fc2ac9d492",
+      "sha256": "263d0b1a9a2c718563e0c56c8442d3c48ea37a3850fe8209c4737569c202d2e0",
       "dependencies": [
         "server:src/middleware/authMiddleware.js",
         "server:src/utils/asyncHandler.js",
@@ -4047,9 +4055,10 @@
     },
     {
       "path": "server:src/routes/storyRoutes.js",
-      "sha256": "c82b9af1ccb9e7045066363a5ed5a0c547fe8b2ff28f187229289ce6cd63903d",
+      "sha256": "c17f4c8761271861124ff0b752d4dcc23d66584f8d64b23f46c00576d1e3f824",
       "dependencies": [
         "server:src/models/StoryAudio.js",
+        "server:src/models/Notification.js",
         "server:src/utils/storyAudioUpload.js",
         "server:src/middleware/authMiddleware.js",
         "server:src/utils/asyncHandler.js",
@@ -4588,9 +4597,11 @@
     },
     {
       "path": "server:src/models/Notification.js",
-      "sha256": "1a61d7f4dc09b93d8eec73e9ccb3bcc2a6f5484bd622ce5104279ab48cdc1363",
+      "sha256": "fbf3c33287f102a712a877dafe8e1706f4461fae5d86eae91fd6caa3f23c76b2",
       "dependencies": [
-        "server:src/utils/pushNotifications.js"
+        "server:src/utils/notificationPreferences.js",
+        "server:src/utils/pushNotifications.js",
+        "server:src/models/User.js"
       ],
       "screens": [],
       "routes": []
@@ -5978,7 +5989,7 @@
     },
     {
       "path": "server:src/utils/pushNotifications.js",
-      "sha256": "1ab53174ba8a1d526b288217340812c4f1a346cbb0189b6e68dd944a8805c569",
+      "sha256": "98e87f05e5e0c582aee91f4c7b6ac7830c02817b8282a05556b710def18a9d88",
       "dependencies": [],
       "screens": [],
       "routes": []

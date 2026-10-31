@@ -1,4 +1,5 @@
 const StoryAudio = require('../models/StoryAudio');
+const Notification = require('../models/Notification');
 const { parseAudio, uploadStoryAudio } = require('../utils/storyAudioUpload');
 const router = require('express').Router();
 const mongoose = require('mongoose');
@@ -189,14 +190,14 @@ router.get('/:id/viewers', communityAccess, asyncHandler(async (req, res) => {
   const [total, rows] = await Promise.all([
     StoryInteraction.countDocuments(filter),
     StoryInteraction.find({ ...filter, ...(req.query.before ? { _id: { $lt: new mongoose.Types.ObjectId(req.query.before) } } : {}) })
-      .sort({ _id: -1 }).limit(51).select('_id user seenAt').lean(),
+      .sort({ _id: -1 }).limit(51).select('_id user seenAt lovedAt').lean(),
   ]);
   const page = rows.slice(0, 50);
   const users = await User.find({ _id: { $in: page.map(row => row.user) }, isActive: true, role: { $in: COMMUNITY_ROLES } }).select('_id name avatar role').lean();
   const byId = new Map(users.map(user => [String(user._id), user]));
   res.json({ total, viewers: page.map(row => {
     const user = byId.get(String(row.user));
-    return { id: user ? String(user._id) : null, name: user?.name || 'حساب غير متاح', avatar: user?.avatar || '', viewedAt: row.seenAt };
+    return { id: user ? String(user._id) : null, name: user?.name || 'حساب غير متاح', avatar: user?.avatar || '', role: user?.role, viewedAt: row.seenAt, loved: Boolean(row.lovedAt) };
   }), nextCursor: rows.length > 50 ? String(page.at(-1)._id) : null });
 }));
 router.delete('/:id', communityAccess, asyncHandler(async (req, res) => {
@@ -241,16 +242,24 @@ router.post('/:id/love', communityAccess, asyncHandler(async (req, res) => {
     const edge = await StoryInteraction.findOneAndUpdate({ story: story._id, user: req.user._id }, { $setOnInsert: { story: story._id, user: req.user._id } }, { upsert: true, new: true, session });
     const giver = await statsFor(req.user._id, session);
     if (edge.lovedAt) return { loved: true, loveCount: story.loveCount, awarded: 0, progress: rules.progress(giver, now, streakSource(req.user.role)) };
-    edge.lovedAt = new Date(now); await edge.save({ session });
+    edge.lovedAt = new Date(now); edge.seenAt ||= new Date(now); await edge.save({ session });
     let awarded = 0;
+    let notification;
     if (!selfLove) {
       const owner = await statsFor(story.author, session);
       owner.total_points += 50; await owner.save({ session });
       awarded = rules.loveReward(giver, now); await giver.save({ session });
+      notification = new Notification({ user: story.author, title: 'إعجاب جديد بالستوري',
+        message: `أعجب ${req.user.name} بالستوري الخاص بك.`, type: 'success', category: 'community',
+        link: `/student/stories/${story._id}/viewers` });
+      notification.$locals.deferPush = true;
+      await notification.save({ session });
     }
     story.loveCount++; await story.save({ session });
-    return { loved: true, loveCount: story.loveCount, awarded, progress: rules.progress(giver, now, streakSource(req.user.role)) };
+    return { loved: true, loveCount: story.loveCount, awarded, progress: rules.progress(giver, now, streakSource(req.user.role)), notification };
   });
-  res.json(result);
+  const { notification, ...response } = result;
+  if (notification) Notification.dispatchPush(notification).catch(error => console.error('Story notification push failed:', error.message));
+  res.json(response);
 }));
 module.exports = router;

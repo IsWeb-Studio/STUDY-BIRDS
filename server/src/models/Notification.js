@@ -21,6 +21,7 @@ const notificationSchema = new mongoose.Schema(
       default: "info",
     },
     link: String,
+    category: { type: String, enum: require('../utils/notificationPreferences').categories },
     // Present only for admin announcements. Prevents a retried request from
     // inserting the same announcement twice for the same account.
     broadcastId: { type: String, select: false },
@@ -48,16 +49,20 @@ notificationSchema.pre("save", function captureIsNew(next) {
   next();
 });
 notificationSchema.post("save", function sendPush(doc) {
-  if (!doc.$locals.wasNew) return;
+  if (!doc.$locals.wasNew || doc.$locals.deferPush) return;
+  notificationSchema.statics.dispatchPush(doc).catch(error => console.error('[Push] send failed:', error.message));
+});
+notificationSchema.statics.dispatchPush = async function dispatchPush(doc) {
   const { sendPushToUser, isPushEnabled } = require("../utils/pushNotifications");
   if (!isPushEnabled()) {
     console.log(`[Push] skipped — env vars not set (notif: ${doc._id}, user: ${doc.user})`);
     return;
   }
-  console.log(`[Push] sending to user ${doc.user}: "${doc.title}"`);
-  sendPushToUser(doc.user, { title: doc.title, body: doc.message, link: doc.link })
-    .then(r => console.log(`[Push] sent, recipients: ${r.sent}`))
-    .catch((error) => console.error("[Push] send failed:", error.message));
-});
+  if (doc.category) {
+    const user = await require('./User').findById(doc.user).select('isActive notificationPreferences').lean();
+    if (!user || user.isActive === false || user.notificationPreferences?.[doc.category] === false) return;
+  }
+  return sendPushToUser(doc.user, { title: doc.title, body: doc.message, link: doc.link, category: doc.category, notificationId: String(doc._id) });
+};
 
 module.exports = mongoose.model("Notification", notificationSchema);

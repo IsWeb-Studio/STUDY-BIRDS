@@ -6,11 +6,14 @@ String? notificationPath(String raw) {
   if (uri.scheme == 'studybirds') {
     path = '/${uri.host}${uri.path}';
   } else if (uri.scheme == 'https' &&
-      ['studybirds.app', 'studybirds.net', 'www.studybirds.net'].contains(uri.host)) {
+      ['studybirds.app', 'studybirds.net', 'www.studybirds.net']
+          .contains(uri.host)) {
     path = uri.path;
   } else if (!uri.hasScheme && !uri.hasAuthority) {
     path = uri.path.startsWith('/') ? uri.path : '/student/${uri.path}';
-  } else { return null; }
+  } else {
+    return null;
+  }
   if (path == '/student/consultation') path = '/student/consultations';
   return path.startsWith('/student/') ? path : null;
 }
@@ -20,5 +23,9 @@ String? notificationPath(String raw) {
 bool notificationLinkAllowedForRole(String? raw, {required bool isStudent}) {
   final path = notificationPath(raw ?? '');
   if (path == null) return false;
-  return isStudent || path == '/student/notifications';
+  return isStudent ||
+      path == '/student/notifications' ||
+      RegExp(r'^/student/(?:community/)?messages/[a-fA-F0-9]{24}$')
+          .hasMatch(path) ||
+      RegExp(r'^/student/stories/[a-fA-F0-9]{24}/viewers$').hasMatch(path);
 }

@@ -1,3 +1,4 @@
+import 'wink_haptics.dart';
 import '../../core/config/app_theme.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -1150,7 +1151,7 @@ class _WinkScreenState extends State<WinkScreen> {
                         value: vibration,
                         onChanged: (v) async {
                           update(() => vibration = v);
-                          if (v) unawaited(HapticFeedback.lightImpact());
+                          if (v) unawaited(WinkHaptics.lightImpact());
                           await (await SharedPreferences.getInstance())
                               .setBool('wink_vibration', v);
                         }),

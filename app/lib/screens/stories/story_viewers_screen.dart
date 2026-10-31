@@ -119,7 +119,8 @@ class _StoryViewersScreenState extends State<StoryViewersScreen> {
                     ],
                     if (_busy && _viewers.isEmpty)
                       const Center(
-                          child: StoryLoadingIndicator(color: AppColors.greenInk)),
+                          child:
+                              StoryLoadingIndicator(color: AppColors.greenInk)),
                     if (!_busy && _error == null && _viewers.isEmpty)
                       Padding(
                           padding: const EdgeInsets.all(24),
@@ -132,12 +133,18 @@ class _StoryViewersScreenState extends State<StoryViewersScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           child: viewer['id'] == null
                               ? Text(viewer['name'] as String)
-                              : StudentIdentity(
-                                  id: viewer['id'] as String,
-                                  name: viewer['name'] as String,
-                                  avatar: viewer['avatar'] as String,
-                                  role:
-                                      viewer['role'] as String? ?? 'student')),
+                              : Row(children: [
+                                  Expanded(
+                                      child: StudentIdentity(
+                                          id: viewer['id'] as String,
+                                          name: viewer['name'] as String,
+                                          avatar: viewer['avatar'] as String,
+                                          role: viewer['role'] as String? ??
+                                              'student')),
+                                  if (viewer['loved'] == true)
+                                    const Icon(Icons.favorite,
+                                        color: Colors.pink, size: 20),
+                                ])),
                     if (_next != null)
                       TextButton(
                           onPressed: _busy ? null : () => _load(more: true),

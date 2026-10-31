@@ -211,7 +211,7 @@ async function saveMessage(req, res, image, audio) {
   try {
     const recipientPref = await ChatPreference.findOne({ user: contact._id, contact: req.user._id }).lean();
     if (!recipientPref?.muted) {
-      await Notification.create({ user: contact._id, title: 'رسالة جديدة', message: `لديك رسالة من ${req.user.name}`, type: 'info', link: `/student/messages/${req.user._id}` });
+      await Notification.create({ user: contact._id, title: 'رسالة جديدة', message: `لديك رسالة من ${req.user.name}`, type: 'info', category: req.user.role === 'student' && contact.role === 'student' ? 'community' : 'support', link: `/student/messages/${req.user._id}` });
     }
   } catch (error) { console.error('Message notification creation failed:', error.name); }
   res.status(201).json(data);

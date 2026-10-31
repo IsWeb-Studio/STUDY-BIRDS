@@ -9,7 +9,7 @@ function isPushEnabled() {
 }
 
 // buttons: [{ id, text, url? }]  — OneSignal action buttons (Android/iOS)
-async function sendPushToUser(userId, { title, body, link, buttons = [] }) {
+async function sendPushToUser(userId, { title, body, link, category, notificationId, buttons = [] }) {
   if (!isPushEnabled()) return { sent: 0, disabled: true };
 
   const payload = {
@@ -18,11 +18,17 @@ async function sendPushToUser(userId, { title, body, link, buttons = [] }) {
     target_channel: 'push',
     headings: { en: title, ar: title },
     contents: { en: body, ar: body },
-    data: { screen: link || '', link: link || '' },
+    data: { screen: link || '', link: link || '', recipientId: String(userId), ...(category ? { category } : {}), ...(notificationId ? { notificationId } : {}) },
     ios_sound: 'default',
     android_sound: 'default',
     priority: 10,
   };
+  if (notificationId) {
+    const bytes = require('node:crypto').createHash('sha256').update(`notification:${notificationId}`).digest().subarray(0, 16);
+    bytes[6] = (bytes[6] & 15) | 64; bytes[8] = (bytes[8] & 63) | 128;
+    const h = bytes.toString('hex');
+    payload.idempotency_key = `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+  }
   if (Array.isArray(buttons) && buttons.length > 0) {
     payload.buttons = buttons.slice(0, 3).map(b => ({ id: String(b.id), text: String(b.text), ...(b.url ? { url: String(b.url) } : {}) }));
   }
@@ -30,6 +36,7 @@ async function sendPushToUser(userId, { title, body, link, buttons = [] }) {
   try {
     const res = await fetch('https://api.onesignal.com/notifications', {
       method: 'POST',
+      signal: AbortSignal.timeout(8000),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Key ${process.env.ONESIGNAL_REST_API_KEY}`,
@@ -41,7 +48,7 @@ async function sendPushToUser(userId, { title, body, link, buttons = [] }) {
       console.error('[Push] OneSignal error:', JSON.stringify(json));
       return { sent: 0 };
     }
-    return { sent: json.recipients ?? 1 };
+    return { sent: Number.isInteger(json.recipients) ? json.recipients : 0, accepted: Boolean(json.id) };
   } catch (err) {
     console.error('[Push] Failed to send push:', err.message);
     return { sent: 0 };

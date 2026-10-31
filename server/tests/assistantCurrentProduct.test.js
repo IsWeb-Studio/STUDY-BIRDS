@@ -38,7 +38,7 @@ test('current answers explain real navigation, required text, optional image and
  assert.match(get('payments').en,/does not read your balance/);
 });
 test('content revision is separate from compatible protocol and stale followups are rejected',()=>{
- assert.equal(k.catalog.revision,'2026.10.31.4');
+ assert.equal(k.catalog.revision,'2026.10.31.5');
  assert.equal(k.catalog.version,'2026.10.23.3');
  const previous={topicId:'passport',knowledgeVersion:k.catalog.version,knowledgeRevision:'old'};
  assert.equal(k.followup('وين الزر',previous,'student',{}),null);

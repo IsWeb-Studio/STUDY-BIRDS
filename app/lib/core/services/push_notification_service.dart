@@ -56,6 +56,7 @@ class PushNotificationService implements NotificationAccess {
     OneSignal.Notifications.addClickListener((event) {
       final data =
           Map<String, dynamic>.from(event.notification.additionalData ?? {});
+      if (_userId != null && data['recipientId'] != null && data['recipientId'] != _userId) return;
       final screen = data['screen']?.toString() ?? '';
       if (_tapHandler == null) {
         _pendingTap = data;
@@ -66,8 +67,17 @@ class PushNotificationService implements NotificationAccess {
 
     // Foreground: display the system banner so the user sees it even while
     // the app is open. Without calling display() OneSignal 5.x suppresses it.
-    OneSignal.Notifications.addForegroundWillDisplayListener((event) {
+    OneSignal.Notifications.addForegroundWillDisplayListener((event) async {
       event.preventDefault();
+      final owner = _userId;
+      final data = event.notification.additionalData ?? {};
+      if (data['recipientId'] != null && data['recipientId'] != owner) return;
+      final category = data['category'];
+      if (owner != null && category is String && NotificationPreferencesStore.categories.contains(category)) {
+        final preferences = await NotificationPreferencesStore.read(owner);
+        if (preferences[category] == false) return;
+      }
+      if (_userId != owner) return;
       if (_deliveryAllowed) {
         ApiClient.instance.invalidateResource('/content/notifications');
         ApiClient.instance.invalidateResource('/students/overview');
@@ -156,6 +166,7 @@ class PushNotificationService implements NotificationAccess {
 
   /// Unlink device from user on logout.
   void clearUser() {
+    _pendingTap = null;
     _userId = null;
     _token = null;
     _deliveryAllowed = false;

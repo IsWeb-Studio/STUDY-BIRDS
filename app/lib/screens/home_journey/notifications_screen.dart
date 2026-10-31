@@ -12,6 +12,7 @@ import '../../core/utils/notification_links.dart';
 import '../services_support/services_consultation_screens.dart';
 import '../services_support/support_team_ai_screens.dart';
 import '../community/student_community_hub.dart';
+import '../stories/story_viewers_screen.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
 import '../applications_documents_payments/applications_screens.dart';
 import '../applications_documents_payments/documents_screens.dart';
@@ -29,6 +30,7 @@ import 'journey_tracker_screen.dart';
 String? notificationActionLabel(String? link) {
   if (link == null || !link.startsWith('/student/')) return null;
   final dest = link.replaceFirst('/student/', '');
+  if (dest.startsWith('stories/')) return 'عرض تفاعلات الستوري';
   if (dest.startsWith('community/messages/')) {
     return '\u0641\u062a\u062d \u0627\u0644\u0645\u062d\u0627\u062f\u062b\u0629';
   }
@@ -65,6 +67,12 @@ Widget? notificationScreenForLink(String? link) {
       contactId: parts[2],
       communityMode: true,
     );
+  }
+  if (base == 'stories' &&
+      id != null &&
+      parts.length == 3 &&
+      parts[2] == 'viewers') {
+    return StoryViewersScreen(storyId: id);
   }
 
   // Deep link to a specific record by ID.
@@ -476,7 +484,7 @@ class _NotificationsScreenState extends State<NotificationsScreen>
                             link,
                             isStudent: isStudent,
                           );
-                          final actionLabel = canOpenLink && isStudent
+                          final actionLabel = canOpenLink
                               ? notificationActionLabel(link)
                               : null;
                           final screen = canOpenLink
