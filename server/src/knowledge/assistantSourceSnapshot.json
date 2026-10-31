@@ -1299,10 +1299,8 @@
     },
     {
       "path": "mobile:lib/screens/games/wink_playing_card.dart",
-      "sha256": "d61705095934b244849592001e521e25ad92e461683ededb80b0c02c8a98c216",
-      "dependencies": [
-        "mobile:lib/core/config/app_theme.dart"
-      ],
+      "sha256": "7a634ffd70cd76d55c61c8d3649edd2f4968503cc0d1e288922a8cf6614ecb48",
+      "dependencies": [],
       "screens": [],
       "routes": []
     },

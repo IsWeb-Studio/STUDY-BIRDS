@@ -7,7 +7,31 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:study_birds/screens/games/wink_playing_card.dart';
 
 void main() {
-  testWidgets('ten numbered cards, private eye and a common hidden back render',
+  testWidgets('hiding a known role mounts only the common back image',
+      (tester) async {
+    await tester.pumpWidget(const MaterialApp(
+        home: Scaffold(body: WinkPlayingCard(revealed: true, number: 7))));
+    expect(find.byKey(const ValueKey('assets/images/games/covey_card_7.png')),
+        findsOneWidget);
+    await tester.pumpWidget(const MaterialApp(
+        home: Scaffold(body: WinkPlayingCard(revealed: false, number: 7))));
+    expect(find.byKey(const ValueKey('assets/images/games/covey_card_7.png')),
+        findsNothing);
+    expect(
+        find.byKey(const ValueKey('assets/images/games/covey_card_back.png')),
+        findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
+  test('complete numbered artwork 1 through 11 is bundled at 2:3 aspect',
+      () async {
+    for (var i = 1; i <= 11; i++) {
+      final data =
+          await rootBundle.load('assets/images/games/covey_card_$i.png');
+      expect(data.getUint32(16) / data.getUint32(20), closeTo(2 / 3, .001));
+    }
+  });
+  testWidgets(
+      'numbered image cards, private winker face and common photo back render',
       (tester) async {
     tester.view.physicalSize = const Size(1200, 1320);
     tester.view.devicePixelRatio = 1;
@@ -43,17 +67,24 @@ void main() {
                                     number: i == 12 ? null : i))
                         ])))))));
     await tester.pumpAndSettle();
-    // Decode the bundled ornament before inspecting/capturing the actual widgets.
+    // Decode bundled card artwork before inspecting/capturing the widgets.
     await tester.runAsync(() async {
       await Future<void>.delayed(const Duration(milliseconds: 250));
     });
     await tester.pumpAndSettle();
     expect(find.byType(WinkPlayingCard), findsNWidgets(12));
     for (var i = 1; i <= 10; i++) {
-      expect(find.text('$i'), findsOneWidget);
+      expect(find.byKey(ValueKey('assets/images/games/covey_card_$i.png')),
+          findsOneWidget);
     }
     expect(find.text('11'), findsNothing,
-        reason: 'The eleventh face is the eye, not another numeral.');
+        reason: 'Protocol card 11 is the winker, not a numbered face.');
+    expect(
+        find.byKey(const ValueKey('assets/images/games/covey_card_winker.png')),
+        findsOneWidget);
+    expect(
+        find.byKey(const ValueKey('assets/images/games/covey_card_back.png')),
+        findsOneWidget);
     expect(tester.takeException(), isNull);
     final output = Platform.environment['WINK_PREVIEW_OUT'];
     if (output != null) {
