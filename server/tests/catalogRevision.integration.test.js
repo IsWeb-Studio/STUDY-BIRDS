@@ -50,6 +50,20 @@ test('catalog writes preserve fields and reject stale edits and deletions', {ski
     assert.equal((await call(`/programs/${program._id}`,{tuition:400,expectedVersion:-1})).status,400);
     assert.equal((await call(`/programs/${program._id}`,{$set:{tuition:400},expectedVersion:1})).status,400);
     const list=await call('/programs',undefined,'GET');assert.equal(list.body.find(row=>row._id===String(program._id)).__v,1);
+    const page=await call('/programs?page=1&limit=20',undefined,'GET');
+    assert.equal(page.status,200);
+    assert.deepEqual(page.body.items,list.body);
+    assert.equal(page.body.pagination.total,list.body.length);
+    for(const filter of [`university=${university._id}`,`country=${country._id}`,'language=Turkish','tuitionMin=250&tuitionMax=350','degreeLevel=Bachelor','keyword=Revision&adminSearch=true']) {
+      const filtered=await call(`/programs?page=1&limit=20&${filter}`,undefined,'GET');
+      assert.equal(filtered.status,200);assert.equal(filtered.body.pagination.total,1,filter);
+      assert.deepEqual(filtered.body.items,page.body.items);
+    }
+    assert.equal((await call('/programs?page=99&limit=20',undefined,'GET')).body.items.length,0);
+    assert.equal((await call('/programs?page=1&keyword=absent-program',undefined,'GET')).body.pagination.total,0);
+    assert.equal((await call('/programs?page=1&university=invalid',undefined,'GET')).status,400);
+    const preflight=await fetch(`http://127.0.0.1:${server.address().port}/api/programs`,{method:'OPTIONS',headers:{Origin:'https://studybirds.net','Access-Control-Request-Method':'GET','Access-Control-Request-Headers':'authorization'}});
+    assert.equal(preflight.status,204);assert.equal(preflight.headers.get('access-control-max-age'),'600');
     assert.equal((await call(`/programs/${program._id}`,{expectedVersion:0},'DELETE')).status,409);
     assert.ok(await Program.exists({_id:program._id}));
     assert.equal((await call(`/programs/${program._id}`,{expectedVersion:1},'DELETE')).status,200);

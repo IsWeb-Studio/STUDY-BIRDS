@@ -8,6 +8,8 @@ const { timedOperation } = require("../utils/perf");
 const { clearResponseCache } = require("../utils/responseCache");
 const { buildProgramDegreeFilter } = require("../utils/programDegreeFilter");
 const programLanguageAliases = require("../constants/programLanguageAliases.json");
+const mongoose = require('mongoose');
+const { readProgramPage } = require('../utils/programPage');
 const { uploadFileToCloudinary } = require("../utils/uploadToCloudinary");
 
 const getPrograms = asyncHandler(async (req, res) => {
@@ -35,7 +37,11 @@ const getPrograms = asyncHandler(async (req, res) => {
   }
 
   if (req.query.university) {
-    query.university = req.query.university;
+    if (!mongoose.isObjectIdOrHexString(req.query.university)) {
+      res.status(400);
+      throw new Error('Invalid university');
+    }
+    query.university = new mongoose.Types.ObjectId(req.query.university);
   }
 
   if (req.query.degreeLevel) {
@@ -89,7 +95,9 @@ const getPrograms = asyncHandler(async (req, res) => {
   }
 
   const [programs, total] = await Promise.all([
-    timedOperation("programs.listQuery", () => listQuery.lean()),
+    timedOperation("programs.listQuery", () => shouldPaginate
+      ? readProgramPage(query, sortMap[req.query.sortBy] || { featured: -1, createdAt: -1, _id: -1 }, skip, limit)
+      : listQuery.lean()),
     shouldPaginate ? timedOperation("programs.countQuery", () => Program.countDocuments(query)) : Promise.resolve(0),
   ]);
 

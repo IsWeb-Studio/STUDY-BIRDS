@@ -70,6 +70,8 @@ app.use(
       callback(new Error("Origin not allowed by CORS"));
     },
     credentials: true,
+      // Reuse successful browser preflights without caching application data.
+      maxAge: 600,
   })
 );
 app.use(express.json({ limit: '100kb', verify: (req, res, buffer) => {

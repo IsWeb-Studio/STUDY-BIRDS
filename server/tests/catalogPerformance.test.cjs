@@ -12,6 +12,8 @@ function chain(rows, calls) {
 function response(){return {set(){},json(data){this.data=data;}};}
 test('program admin pages remain bounded and preserve search, filter, and revision metadata',async()=>{
   const oldFind=Program.find,oldCount=Program.countDocuments,oldUniversity=University.find;
+  const oldAggregate=Program.aggregate;
+  Program.aggregate=async()=>[{_id:'p',__v:9}];
   const calls=[];let filter;
   Program.find=query=>{filter=query;return chain([{_id:'p',__v:9}],calls);};
   Program.countDocuments=async()=>3751;
@@ -26,7 +28,7 @@ test('program admin pages remain bounded and preserve search, filter, and revisi
     assert.equal(res.data.items[0].__v,9);
     calls.length=0;await getPrograms({query:{}},response(),error=>{throw error;});
     assert(!calls.some(c=>c[0]==='limit'),'legacy CRM reads must not silently become a partial page');
-  }finally{Program.find=oldFind;Program.countDocuments=oldCount;University.find=oldUniversity;}
+  }finally{Program.find=oldFind;Program.countDocuments=oldCount;University.find=oldUniversity;Program.aggregate=oldAggregate;}
 });
 test('university selectors return all names without loading articles or populating countries',async()=>{
   const old=University.find,calls=[];
