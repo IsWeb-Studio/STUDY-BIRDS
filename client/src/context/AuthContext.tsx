@@ -14,7 +14,7 @@ interface AuthContextValue {
   loading: boolean;
   login: (email: string, password: string, twoFactorCode?: string) => Promise<User>;
   acceptIdentity: (response: { token: string; user: User }) => Promise<User>;
-  googleLogin: (credential: string, emailCode?: string) => Promise<User>;
+  googleLogin: (credential: string, emailCode?: string, referralCode?: string) => Promise<User>;
   emailOtpLogin: (email: string, code: string) => Promise<User>;
   register: (payload: { name: string; email: string; password: string; referralCode?: string }) => Promise<User>;
   logout: () => void;
@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return accept(await request(), generation);
   };
   const login = (email: string, password: string, twoFactorCode?: string) => authenticate(() => authService.login({ email, password, twoFactorCode }));
-  const googleLogin = (credential: string, emailCode?: string) => authenticate(() => authService.googleLogin({ credential, emailCode }));
+  const googleLogin = (credential: string, emailCode?: string, referralCode?: string) => authenticate(() => authService.googleLogin({ credential, emailCode, referralCode }));
   const emailOtpLogin = (email: string, code: string) => authenticate(() => authService.verifyEmailOtp(email, code));
   const register = (payload: { name: string; email: string; password: string; referralCode?: string }) => authenticate(() => authService.register(payload));
   const acceptIdentity = (response: { token: string; user: User }) => accept(response, beginSession());

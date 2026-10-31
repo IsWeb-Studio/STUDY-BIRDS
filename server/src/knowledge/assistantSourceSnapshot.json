@@ -1,6 +1,6 @@
 {
   "version": "2026.10.23.3",
-  "catalogSHA256": "d950546fac7641da1527f3f557ae2de65ef6f6bb0ebc8a31cc44b3cb7ce6e461",
+  "catalogSHA256": "2b8a6dd846f70628ea0855b4a97b777b4d20f89e2aec33b83a9565659d98d1ea",
   "sources": [
     {
       "path": "mobile:lib/app_shell.dart",
@@ -3153,7 +3153,7 @@
     },
     {
       "path": "server:src/routes/adminRoutes.js",
-      "sha256": "9f81e011e8bdf889189f8af05e9232364d5e8cccfe9c4d52238ab13e12d67473",
+      "sha256": "8d10f1083a6c03f4b84ca36a4dea24253940388206fe768222c166056787c073",
       "dependencies": [
         "server:src/controllers/adminController.js",
         "server:src/controllers/studyFieldController.js",
@@ -3174,6 +3174,7 @@
         "server:src/controllers/studentServicesController.js",
         "server:src/controllers/studentSupportTeamController.js",
         "server:src/controllers/studentSupportTeamController.js",
+        "server:src/controllers/referralPolicyController.js",
         "server:src/controllers/agentWalletController.js",
         "server:src/controllers/agentWalletController.js",
         "server:src/models/SupportTicket.js",
@@ -3217,6 +3218,11 @@
         "PUT /countries/:id",
         "DELETE /countries/:id",
         "GET /site-settings",
+        "GET /student-financials/referral-students",
+        "GET /student-financials/referral-policies",
+        "POST /student-financials/referral-policies",
+        "PUT /student-financials/referral-policies/:id",
+        "DELETE /student-financials/referral-policies/:id",
         "PUT /site-settings",
         "GET /study-fields",
         "POST /study-fields/upload-image",
@@ -4700,6 +4706,13 @@
       "routes": []
     },
     {
+      "path": "server:src/models/ReferralPolicy.js",
+      "sha256": "111700093f1f17f3375ecc8405e0121a700fcc2d7086db511db4fcebae0c274d",
+      "dependencies": [],
+      "screens": [],
+      "routes": []
+    },
+    {
       "path": "server:src/models/ServiceRequest.js",
       "sha256": "02a59805e86fde5ecdc17617396c3c0479ac29ae6460a0f83421d98b284c3009",
       "dependencies": [],
@@ -4782,7 +4795,7 @@
     },
     {
       "path": "server:src/models/StudentReferral.js",
-      "sha256": "cadaf6b158140980c02e9b7fc3fd4c9951af7dc4506f3c3ba61876610069e328",
+      "sha256": "d8c4ebaddf1800abc009b85ddc0fbcbe892c0d4780c9d165ab9e68616359b3b2",
       "dependencies": [],
       "screens": [],
       "routes": []
@@ -5093,7 +5106,7 @@
     },
     {
       "path": "server:src/controllers/authController.js",
-      "sha256": "b0a5a1b8d9e7caeef6890d73e32116432f298a87de8209b66f8cd9eaf52f0907",
+      "sha256": "abedb3d220764db1fcf46e8852a5483c1e2b530cf12f01d444a91667fb030b03",
       "dependencies": [
         "server:src/utils/mobileEmailCodes.js",
         "server:src/utils/passwordPolicy.js",
@@ -5247,7 +5260,7 @@
     },
     {
       "path": "server:src/controllers/partnerController.js",
-      "sha256": "33f396658c3a33241410514e8aa19a27bd69375de3e7c04ba8899c8765b96110",
+      "sha256": "1fa7538f7f0bd3dc83e9cb5a0a1d5e950143065fbf90e01513cca340df6d0caf",
       "dependencies": [
         "server:src/utils/privateDocumentStorage.js",
         "server:src/models/StudentProfile.js",
@@ -5269,6 +5282,7 @@
         "server:src/utils/agentWallet.js",
         "server:src/utils/agentWallet.js",
         "server:src/utils/financialPolicy.js",
+        "server:src/models/StudentReferral.js",
         "server:src/utils/knowledgeLinks.js"
       ],
       "screens": [],
@@ -5304,6 +5318,19 @@
         "server:src/utils/programPage.js",
         "server:src/utils/uploadToCloudinary.js",
         "server:src/models/Application.js"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "server:src/controllers/referralPolicyController.js",
+      "sha256": "f86aef91d7939e95a2bde5ce0d8c26e6f24b3809feb1bf96336370ab5c589205",
+      "dependencies": [
+        "server:src/utils/asyncHandler.js",
+        "server:src/models/ReferralPolicy.js",
+        "server:src/models/User.js",
+        "server:src/utils/referralPolicy.js",
+        "server:src/utils/logActivity.js"
       ],
       "screens": [],
       "routes": []
@@ -5399,7 +5426,7 @@
     },
     {
       "path": "server:src/controllers/studentWalletController.js",
-      "sha256": "c701a06113b7076d767bd88a736cf78051d6e871a5de1bad2ece8a51b3b8b967",
+      "sha256": "f2fbe152a7237457c63d0d39add325ef5c892f8511780eb33083d899430772db",
       "dependencies": [
         "server:src/utils/crmPagination.js",
         "server:src/utils/asyncHandler.js",
@@ -5410,6 +5437,7 @@
         "server:src/utils/financialTransaction.js",
         "server:src/utils/financialPolicy.js",
         "server:src/controllers/studentRewardsController.js",
+        "server:src/utils/referralPolicy.js",
         "server:src/models/User.js"
       ],
       "screens": [],
@@ -6009,6 +6037,15 @@
       "routes": []
     },
     {
+      "path": "server:src/utils/referralPolicy.js",
+      "sha256": "0b962e15532c0bb52de55e74774d0019ec64894a014a6121da212653aa55ee45",
+      "dependencies": [
+        "server:src/models/ReferralPolicy.js"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
       "path": "server:src/utils/responseCache.js",
       "sha256": "19169815aa42e9bfedf6b48632d9538eb36810e035eab5bfa77700a08fe8f00c",
       "dependencies": [],
@@ -6125,7 +6162,7 @@
     },
     {
       "path": "server:src/utils/studentWallet.js",
-      "sha256": "c18240cbcb6c91d16c3916d42d9ee6feded0adff94c2de53a3fa9272cf59a998",
+      "sha256": "273999f873c5212e9336504bbd668d9136f3ed4a6fdbdc3efd95298f0ed7ea7e",
       "dependencies": [
         "server:src/models/User.js",
         "server:src/models/StudentReferral.js",
@@ -6133,6 +6170,8 @@
         "server:src/utils/financialTransaction.js",
         "server:src/utils/financialPolicy.js",
         "server:src/utils/financialOutbox.js",
+        "server:src/utils/referralPolicy.js",
+        "server:src/models/StudentProfile.js",
         "server:src/models/Application.js"
       ],
       "screens": [],
@@ -6369,6 +6408,17 @@
       "dependencies": [
         "website:src/lib/api.ts",
         "website:src/hooks/useAuth.ts",
+        "website:src/hooks/useLanguage.ts",
+        "website:src/utils/errors.ts"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "website:src/components/admin/ReferralPolicies.tsx",
+      "sha256": "dabdbcd1fc263eb8d608290922b8b3c22a4856f3e0d85d40a43067448895cbaa",
+      "dependencies": [
+        "website:src/lib/api.ts",
         "website:src/hooks/useLanguage.ts",
         "website:src/utils/errors.ts"
       ],
@@ -6998,7 +7048,7 @@
     },
     {
       "path": "website:src/context/AuthContext.tsx",
-      "sha256": "40fab683ae58c926b0004036d63daf71c91dd069e34e562d1fa1646839ca1865",
+      "sha256": "5c2ac89045b19d3e53a45bc37886d7c872803b26e424cc3f373f181f27ed844e",
       "dependencies": [
         "website:src/lib/api.ts",
         "website:src/lib/sessionStore.ts",
@@ -8075,9 +8125,10 @@
     },
     {
       "path": "website:src/pages/admin/AdminWalletPage.tsx",
-      "sha256": "9fc73b47eecba0aba31296184c9ce2d28049eea330607715ca17739e32b7daee",
+      "sha256": "8784be9f561fdced84bed3ea7c572afe16d83d4540c4eca7bbdabce9fb1e647d",
       "dependencies": [
         "website:src/lib/api.ts",
+        "website:src/components/admin/ReferralPolicies.tsx",
         "website:src/hooks/useLanguage.ts",
         "website:src/utils/errors.ts"
       ],
@@ -8167,7 +8218,7 @@
     },
     {
       "path": "website:src/pages/auth/RegisterPage.tsx",
-      "sha256": "96673228c189222c3596dd828bdd226f40e8e0c9a53f3b9499dbee6cead27b17",
+      "sha256": "787a6fb2a3f1c4131576a05e5112c30995e5b698a334b1ab0d294b051c4cd9df",
       "dependencies": [
         "website:src/components/auth/GoogleSignInButton.tsx",
         "website:src/components/forms/FormInput.tsx",
@@ -8449,7 +8500,7 @@
     },
     {
       "path": "website:src/pages/partner/PartnerReferralPage.tsx",
-      "sha256": "9e92f0ed42604e4b69844f50424df5b97d04e304f5b15d56c727d8723e6bc1c2",
+      "sha256": "59f6dccc632fff4ada2a75c97049900f4402b2e3868210e7e8c08adaa4edfad1",
       "dependencies": [
         "website:src/components/dashboard/StatsCard.tsx",
         "website:src/services/partnerService.ts",
@@ -8989,7 +9040,7 @@
     },
     {
       "path": "website:src/pages/student/StudentWalletPage.tsx",
-      "sha256": "e659b089d8681beb6ba9785343e675f9a34897434cf3205b89b4a875bf20ca8c",
+      "sha256": "7e662454d5ed43a10e55f0e9d9ff2ea617035e92f239950949e3fe7878478c85",
       "dependencies": [
         "website:src/lib/api.ts",
         "website:src/services/studentService.ts",
@@ -9244,7 +9295,7 @@
     },
     {
       "path": "website:src/services/authService.ts",
-      "sha256": "420325fdca128f8d59eff67556b90d6b07a8d57a897a5c1f2d5e998e91cef616",
+      "sha256": "76ec7f5934f31b989ae852e84eadc0021439230cd6d14f5e4c101c8a6bf1b2c5",
       "dependencies": [
         "website:src/lib/api.ts"
       ],
@@ -9342,7 +9393,7 @@
     },
     {
       "path": "website:src/types/index.ts",
-      "sha256": "ab8dfb36b6c7ef59e2409329c4c669ee9aff70a7ea47c9f0c3982289765172a5",
+      "sha256": "ab2161e920dabed406ce64b1238defe39f9f7731b985f56e67338434c57f3791",
       "dependencies": [
         "website:src/hooks/useStatusCatalog.ts"
       ],

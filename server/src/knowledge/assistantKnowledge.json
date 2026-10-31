@@ -3169,11 +3169,13 @@
       "steps": {
         "ar": [
           "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
-          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات."
+          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات.",
+          "في الموقع، افتح محفظة الطلاب لإدارة مكافأة الإحالة الافتراضية بالدولار وتخصيص مبلغ لصاحب كود معيّن. تُثبّت القيمة عند تسجيل الإحالة وتُصرف عند أول طلب جامعة؛ التعديل لا يغيّر مكافآت الإحالات السابقة."
         ],
         "en": [
           "Open the authorized section visible in your administration dashboard.",
-          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls."
+          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls.",
+          "On the website, open Student Wallets to manage the default referral reward in USD and student-specific overrides. Values are fixed when a new referral signs up and credited on their first university application. Changes do not rewrite existing referral rewards."
         ]
       },
       "location": {

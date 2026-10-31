@@ -6,6 +6,7 @@ import { getErrorMessage } from "../../utils/errors";
 import type { InvoiceItem } from "../../types";
 
 type Wallet = {
+  referralRewardAmount?: number;
   referralCode: string; balance: number;
   referrals: { _id: string; name: string; status: string; createdAt: string; qualifiedAt?: string | null }[];
   transactions: { _id: string; direction: string; kind: string; amount: number; notes?: string; createdAt: string }[];
@@ -63,6 +64,7 @@ export const StudentWalletPage = () => {
 
     <section className="rounded-2xl border bg-white p-5">
       <h2 className="text-xl font-semibold">{t("ادعُ أصدقاءك", "Invite your friends")}</h2>
+      <p className="mt-2 font-medium">{t('مكافأتك للإحالات الجديدة:','Your reward for new referrals:')} {wallet?.referralRewardAmount ?? '—'} USD</p>
       <p className="mt-2 text-sm text-slate-600">{t("عندما يقدّم صديقك أول طلب باستخدام كودك، تحصل على رصيد في محفظتك.", "When a friend submits their first application using your code, you get wallet credit.")}</p>
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <code className="rounded-xl bg-slate-100 px-3 py-2 font-mono">{wallet?.referralCode}</code>

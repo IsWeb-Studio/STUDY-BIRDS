@@ -13,7 +13,7 @@ export const authService = {
     const { data } = await api.post<AuthResponse>("/auth/login", payload);
     return data;
   },
-  googleLogin: async (payload: { credential: string; emailCode?: string }) => {
+  googleLogin: async (payload: { credential: string; emailCode?: string; referralCode?: string }) => {
     const { data } = await api.post<AuthResponse>("/auth/google", payload);
     return data;
   },

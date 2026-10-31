@@ -457,6 +457,7 @@ export interface PayoutRequestItem {
 }
 
 export interface ReferralSummary {
+  registrations?: {id:string;name:string;createdAt:string}[];
   referralCode: string;
   referralLink: string;
   summary: {

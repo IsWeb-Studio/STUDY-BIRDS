@@ -72,7 +72,7 @@ const register = asyncHandler(async (req, res) => {
   });
 
   if (role === "student") await ensureStudentProfile(user._id);
-  if (typeof req.body.referralCode === "string" && req.body.referralCode.trim()) {
+  if (role === 'student' && typeof req.body.referralCode === "string" && req.body.referralCode.trim()) {
     await recordReferralSignup(user._id, req.body.referralCode).catch((error) => console.error("Referral signup failed", error.message));
   }
 
@@ -153,6 +153,7 @@ const googleLogin = asyncHandler(async (req, res) => {
   let user = await User.findOne({
     $or: [{ googleId: payload.sub }, { email: normalizedEmail }],
   });
+  const newGoogleAccount = !user;
 
   if (!user) {
     user = await User.create({
@@ -207,6 +208,9 @@ const googleLogin = asyncHandler(async (req, res) => {
   }
 
   const tokens = await issueTokenPair(user, { googlePasswordVerifiedAt: Date.now() });
+  if (newGoogleAccount && user.role==='student' && typeof req.body.referralCode==='string') {
+    await recordReferralSignup(user._id,req.body.referralCode).catch(error=>console.error('Referral signup failed',error.message));
+  }
   res.json({ ...tokens, user: serializeUser(user) });
 });
 

@@ -44,6 +44,7 @@ export const PartnerReferralPage = () => {
       </div>
 
       <section className="panel p-6">
+        {!!data.registrations?.length && <div className="mb-6 space-y-2"><h2 className="font-semibold">{isArabic?'التسجيلات عبر رابطك':'Registrations through your link'}</h2>{data.registrations.map(row=><p key={row.id} className="rounded-xl bg-slate-50 p-3 text-sm">{row.name} · {new Date(row.createdAt).toLocaleDateString(isArabic?'ar':'en')}</p>)}</div>}
         <h1 className="text-3xl font-semibold text-slate-900">{isArabic ? "رابط الإحالة" : "Affiliate & Referral Link"}</h1>
         <p className="mt-2 text-sm text-slate-500">
           {isArabic ? "شارك هذا الرابط لربط التسجيلات الجديدة بحسابك مباشرة." : "Share this link to associate new registrations with your account."}

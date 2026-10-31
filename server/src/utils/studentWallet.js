@@ -8,6 +8,7 @@ const StudentWalletEntry = require("../models/StudentWalletEntry");
 const { financialTransaction } = require('./financialTransaction');
 const { minorUnits } = require('./financialPolicy');
 const { enqueueFinancialNotice, drainFinancialOutbox } = require('./financialOutbox');
+const { resolveReferralReward, legacyAmount } = require('./referralPolicy');
 
 const REFERRAL_REWARD_AMOUNT = process.env.STUDENT_REFERRAL_REWARD_AMOUNT === undefined ? 15 : Number(process.env.STUDENT_REFERRAL_REWARD_AMOUNT);
 
@@ -32,10 +33,17 @@ async function ensureReferralCode(userId) {
 async function recordReferralSignup(referredUserId, code) {
   const trimmed = String(code || "").trim();
   if (!trimmed) return null;
-  const referrer = await User.findOne({ referralCode: trimmed }).select("_id").lean();
+  if (!await User.exists({_id:referredUserId,role:'student'})) return null;
+  let referrer = await User.findOne({ referralCode: trimmed, isActive:true, role:'student' }).select('_id role').lean();
+  const profiles = await require('../models/StudentProfile').find({referralCode:trimmed}).select('user').limit(2).lean();
+  const agents = await User.find({_id:{$in:profiles.map(p=>p.user)},role:'partner',isActive:true}).select('_id role').lean();
+  if(agents.length>1 || (referrer && agents.length))return null;
+  if(!referrer)referrer=agents[0];
   if (!referrer || String(referrer._id) === String(referredUserId)) return null;
   try {
-    return await StudentReferral.create({ referrer: referrer._id, referredUser: referredUserId, code: trimmed });
+    const kind=referrer.role==='partner'?'agent':'student';
+    const rewardAmount=kind==='student'?await resolveReferralReward(referrer._id):0;
+    return await StudentReferral.create({ referrer: referrer._id, referredUser: referredUserId, code: trimmed,kind,rewardAmount });
   } catch (error) {
     if (error.code === 11000) return null; // already referred by someone else
     throw error;
@@ -46,13 +54,15 @@ async function recordReferralSignup(referredUserId, code) {
 // referrer once the referred student takes this real step, not at signup.
 async function qualifyReferral(referredUserId) {
   const candidate = await StudentReferral.findOne({ referredUser: referredUserId }).lean();
-  if (!candidate) return null;
-  const reward = minorUnits(REFERRAL_REWARD_AMOUNT) / 100;
+  if (!candidate || candidate.kind==='agent') return null;
+  // Old pending referrals retain the pre-policy configured amount.
+  const reward = minorUnits(candidate.rewardAmount ?? legacyAmount()) / 100;
   const result = await financialTransaction([`wallet:${candidate.referrer}`], async session => {
     const referral = await StudentReferral.findById(candidate._id).session(session);
     if (!referral || !await require('../models/Application').exists({ student: referredUserId }).session(session)) return null;
     const existing = await StudentWalletEntry.findOne({ relatedReferral: referral._id, kind: 'referral-reward' }).session(session);
-    if (!existing) {
+    const creditedReward = existing?.amount ?? referral.rewardAmount ?? reward;
+    if (!existing && reward > 0) {
       await StudentWalletEntry.create([{
         student: referral.referrer, direction: 'credit', kind: 'referral-reward', amount: reward,
         relatedReferral: referral._id, operationKey: `referral:${referral._id}`, notes: 'Referral application reward',
@@ -62,6 +72,7 @@ async function qualifyReferral(referredUserId) {
       }, session);
     }
     referral.status = 'qualified';
+    referral.rewardAmount = creditedReward;
     referral.qualifiedAt = referral.qualifiedAt || new Date();
     await referral.save({ session });
     return referral;
@@ -74,6 +85,7 @@ async function qualifyReferral(referredUserId) {
 // filtering prevents old successful referrals from starving the retry queue.
 async function reconcileReferralRewards() {
   const rows = await StudentReferral.aggregate([
+    { $match: { kind:{$ne:'agent'}, rewardAmount:{$ne:0} } },
     { $lookup: { from: StudentWalletEntry.collection.name, localField: '_id', foreignField: 'relatedReferral', as: 'rewards' } },
     { $match: { 'rewards.0': { $exists: false } } },
     { $lookup: { from: 'applications', localField: 'referredUser', foreignField: 'student', as: 'applications' } },

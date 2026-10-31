@@ -61,7 +61,7 @@ export const RegisterPage = () => {
     setGoogleSubmitting(true);
 
     try {
-      const user = await googleLogin(credential);
+      const user = await googleLogin(credential, undefined, referralCode);
       navigate(getHomeRouteForRole(user.role, user.permissions));
     } catch (error) {
       setFormError(

@@ -1,0 +1,70 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const path=require('node:path');
+const mongoose=require('mongoose');
+const {MongoMemoryReplSet}=require(path.join(process.env.STUDY_BIRDS_TEST_TOOLS,'node_modules/mongodb-memory-server-core'));
+test('referral attribution, Google signup, configurable rewards and financial permissions',async()=>{
+  process.env.JWT_SECRET='isolated-referral-policies';process.env.GOOGLE_CLIENT_ID='test-client';
+  const mongo=await MongoMemoryReplSet.create({replSet:{count:1},instanceOpts:[{ip:'127.0.0.1'}]});
+  const {OAuth2Client}=require('google-auth-library');const verify=OAuth2Client.prototype.verifyIdToken;
+  OAuth2Client.prototype.verifyIdToken=async({idToken})=>({getPayload:()=>({sub:idToken,email:`${idToken}@example.test`,email_verified:true,name:idToken})});
+  let server;
+  try{
+    await mongoose.connect(mongo.getUri());
+    const User=require('../src/models/User'),Profile=require('../src/models/StudentProfile'),Referral=require('../src/models/StudentReferral'),Policy=require('../src/models/ReferralPolicy');
+    const Wallet=require('../src/models/StudentWalletEntry');
+    const staff=await User.create({name:'Finance',email:'finance@test.example',role:'employee',permissions:['student-financials']});
+    const outsider=await User.create({name:'Support',email:'support@test.example',role:'employee',permissions:['support']});
+    const referrer=await User.create({name:'Inviter',email:'inviter@test.example',role:'student',referralCode:'STUDENT1234'});
+    const agent=await User.create({name:'Agent',email:'agent@test.example',role:'partner'});
+    await Profile.create({user:agent._id,referralCode:'AGENT1234'});
+    await Promise.all([Policy.init(),Referral.init(),Wallet.init()]);
+    server=await new Promise(resolve=>{const s=require('../src/app').listen(0,'127.0.0.1',()=>resolve(s));});
+    const base=`http://127.0.0.1:${server.address().port}/api`;
+    async function call(method,url,user,body,status=200){
+      const response=await fetch(base+url,{method,headers:{'Content-Type':'application/json',...(user?{Authorization:`Bearer ${require('jsonwebtoken').sign({userId:user._id},process.env.JWT_SECRET)}`}:{})},body:body===undefined?undefined:JSON.stringify(body)});
+      const data=await response.json();assert.equal(response.status,status,JSON.stringify(data));return data;
+    }
+    const endpoint='/admin/student-financials/referral-policies';
+    await call('GET',endpoint,outsider,undefined,403);
+    await call('GET','/admin/student-financials/referral-students',outsider,undefined,403);
+    const students=await call('GET','/admin/student-financials/referral-students',staff);
+    assert(students.some(row=>row._id===String(referrer._id)));assert(students.every(row=>Object.keys(row).every(key=>['_id','name','email'].includes(key))));
+    const global=(await call('GET',endpoint,staff))[0];
+    await call('PUT',`${endpoint}/${global._id}`,staff,{amount:-1,enabled:true,expectedVersion:0},400);
+    await call('PUT',`${endpoint}/${global._id}`,staff,{amount:1.001,enabled:true,expectedVersion:0},400);
+    const results=await Promise.all([1,2].map(()=>fetch(base+`${endpoint}/${global._id}`,{method:'PUT',headers:{'Content-Type':'application/json',Authorization:`Bearer ${require('jsonwebtoken').sign({userId:staff._id},process.env.JWT_SECRET)}`},body:JSON.stringify({amount:25,enabled:true,expectedVersion:global.__v})})));
+    assert.deepEqual(results.map(r=>r.status).sort(),[200,409]);await Promise.all(results.map(r=>r.text()));
+    const override=await call('POST',endpoint,staff,{studentId:String(referrer._id),amount:7.5,enabled:true});
+    await call('POST',endpoint,staff,{studentId:String(agent._id),amount:7.5,enabled:true},400);
+    const signup=await call('POST','/auth/register',null,{name:'Referred',email:'referred@test.example',password:'Sparrow!Secure2026',referralCode:'STUDENT1234'},201);
+    const referral=await Referral.findOne({referredUser:signup.user._id});assert.equal(referral.rewardAmount,7.5);
+    await call('PUT',`${endpoint}/${override._id}`,staff,{amount:99,enabled:true,expectedVersion:override.__v});
+    const program=new mongoose.Types.ObjectId();
+    await require('../src/models/Application').collection.insertOne({student:new mongoose.Types.ObjectId(signup.user._id),program});
+    const {qualifyReferral,recordReferralSignup}=require('../src/utils/studentWallet');
+    await Promise.all([qualifyReferral(signup.user._id),qualifyReferral(signup.user._id)]);
+    const credits=await Wallet.find({relatedReferral:referral._id});assert.equal(credits.length,1);assert.equal(credits[0].amount,7.5);
+    const google=await call('POST','/auth/google',null,{credential:'google-student',referralCode:'AGENT1234'});
+    const agentReferral=await Referral.findOne({referredUser:google.user._id});assert.equal(agentReferral.kind,'agent');assert.equal(String(agentReferral.referrer),String(agent._id));
+    await call('POST','/auth/google',null,{credential:'google-student',referralCode:'STUDENT1234'});
+    assert.equal(await Referral.countDocuments({referredUser:google.user._id}),1);
+    assert.equal(await recordReferralSignup(referrer._id,'STUDENT1234'),null);
+    await require('../src/models/Application').collection.insertOne({student:new mongoose.Types.ObjectId(google.user._id),program});
+    assert.equal(await qualifyReferral(google.user._id),null);assert.equal(await Wallet.countDocuments({student:agent._id}),0);
+    const summary=await call('GET','/partners/referral',agent);assert.equal(summary.summary.signups,1);assert.equal(summary.registrations[0].name,'google-student');
+    await call('POST','/auth/register',null,{name:'Local agent referral',email:'local-agent@test.example',password:'Sparrow!Secure2026',referralCode:'AGENT1234'},201);
+    assert.equal((await call('GET','/partners/referral',agent)).summary.signups,2);
+    await call('DELETE',`${endpoint}/${global._id}`,staff,{expectedVersion:1},409);
+    await call('DELETE',`${endpoint}/${override._id}`,staff,{expectedVersion:1});
+    assert.equal(await require('../src/utils/referralPolicy').resolveReferralReward(referrer._id),25);
+    await call('PUT',`${endpoint}/${global._id}`,staff,{amount:25,enabled:false,expectedVersion:1});
+    assert.equal(await require('../src/utils/referralPolicy').resolveReferralReward(referrer._id),0);
+    assert.equal((await Referral.findById(referral._id)).rewardAmount,7.5);
+    // A legacy paid row must retain its historical ledger value on replay.
+    await Referral.collection.updateOne({_id:referral._id},{$unset:{rewardAmount:''}});
+    await qualifyReferral(signup.user._id);
+    assert.equal((await Referral.findById(referral._id)).rewardAmount,7.5);
+    assert.ok(await require('../src/models/ActivityLog').exists({action:'referral-policy.updated'}));
+  }finally{OAuth2Client.prototype.verifyIdToken=verify;if(server){server.closeAllConnections();await new Promise(resolve=>server.close(resolve));}await mongoose.disconnect();await mongo.stop();}
+});

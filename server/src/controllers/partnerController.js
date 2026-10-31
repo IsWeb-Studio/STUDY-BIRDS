@@ -353,9 +353,15 @@ const getReferralSummary = asyncHandler(async (req, res) => {
     generatedCommissions: events.filter((event) => event.type === "commission").reduce((sum, event) => sum + Number(event.amount || 0), 0),
   };
 
+  const referrals = await require('../models/StudentReferral').find({referrer:req.user._id,kind:'agent'}).populate('referredUser','name email').sort({createdAt:-1}).lean();
+  const signupKeys=new Set(referrals.map(row=>row.referredUser?.email || String(row.referredUser?._id)));
+  for(const event of events.filter(row=>row.type==='signup'))signupKeys.add(event.studentEmail?.toLowerCase() || `legacy:${event._id}`);
+  summary.signups = signupKeys.size;
+
   res.json({
     referralCode: profile.referralCode,
     referralLink,
+    registrations:referrals.slice(0,100).map(row=>({id:row._id,name:row.referredUser?.name || '',createdAt:row.createdAt})),
     summary,
   });
 });

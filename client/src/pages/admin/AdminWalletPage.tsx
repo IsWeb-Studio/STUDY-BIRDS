@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "../../lib/api";
+import { ReferralPolicies } from '../../components/admin/ReferralPolicies';
 import { useLanguage } from "../../hooks/useLanguage";
 import { getErrorMessage } from "../../utils/errors";
 
@@ -46,6 +47,7 @@ export const AdminWalletPage = () => {
 
   return <div className="space-y-6" dir={ar ? "rtl" : "ltr"}>
     <h1 className="text-2xl font-bold">{t("محفظة الطلاب", "Student Wallets")}</h1>
+    <ReferralPolicies />
     {error && <p role="alert" className="rounded-xl bg-red-50 p-3 text-red-800">{error}</p>}
     {success && <p role="status" className="rounded-xl bg-green-50 p-3 text-green-800">{success}</p>}
 

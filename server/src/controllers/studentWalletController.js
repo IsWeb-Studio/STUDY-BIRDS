@@ -21,6 +21,8 @@ const getMyWallet = asyncHandler(async (req, res) => {
   ]);
   res.json({
     referralCode, balance,
+    referralRewardAmount:await require('../utils/referralPolicy').resolveReferralReward(req.user._id),
+    referralRewardCurrency:'USD',
     referrals: referrals.map((r) => ({ _id: r._id, name: r.referredUser?.name || "طالب", status: r.status, createdAt: r.createdAt, qualifiedAt: r.qualifiedAt })),
     transactions,
   });
