@@ -1,6 +1,6 @@
 {
   "version": "2026.10.23.3",
-  "catalogSHA256": "2ea1ceb683045e3559a7196f38e326b4f3e4e919c655c8e220ec118ae1ba0c38",
+  "catalogSHA256": "f3790fc2b296134350db6f8a61edfab8202f4458af627939865e1f9790d028e9",
   "sources": [
     {
       "path": "mobile:lib/app_shell.dart",
@@ -866,7 +866,7 @@
     },
     {
       "path": "mobile:lib/screens/ai/assistant_navigation.dart",
-      "sha256": "cc8fb99e368e6ed604b4a3cb4bc5993435273743b205defb64691b62c55504a2",
+      "sha256": "7346d198594628cb8b82caad723d73acfea0b2f8ac34f1f68283b2bba46f2d38",
       "dependencies": [
         "mobile:lib/core/services/auth_session.dart",
         "mobile:lib/core/services/locale_controller.dart",
@@ -1546,7 +1546,7 @@
     },
     {
       "path": "mobile:lib/screens/home_journey/student_banner_carousel.dart",
-      "sha256": "cd2369f30179c8a64b82978b707e755a9862f5a6148f06b81cbeeb22182ab348",
+      "sha256": "af1ad68307e7cc95bba67b07b91dd47e3ea4cda278fcda88303c5daa98b9804d",
       "dependencies": [
         "mobile:lib/core/widgets/cached_resource.dart",
         "mobile:lib/core/utils/json_safe.dart",
@@ -1877,7 +1877,7 @@
     },
     {
       "path": "mobile:lib/screens/roles/admin_content_crud_screens.dart",
-      "sha256": "7d3b5aeb4e2a241cdb89e4c5565dc6f48686a4400f744c92d905746c0c6a71ae",
+      "sha256": "51bee266f6c6c4806b7d1169ef7be2e8bc3dbee1391ac2d2098fceb27e45f572",
       "dependencies": [
         "mobile:lib/core/repositories/admin_modules_repository.dart",
         "mobile:lib/core/repositories/catalog_repository.dart"
@@ -2337,7 +2337,7 @@
     },
     {
       "path": "mobile:lib/screens/roles/generic_crud_screen.dart",
-      "sha256": "c671021656d57392521871b464ff6ca78176cd4b76dc8dd42729812e3e15838c",
+      "sha256": "b207077677aa1d1ed09afb2876ac7e7e11b3dc424d59b86a76e317771ed7e118",
       "dependencies": [
         "mobile:lib/core/utils/json_safe.dart",
         "mobile:lib/core/widgets/feature_ui.dart",
@@ -2573,8 +2573,12 @@
     },
     {
       "path": "mobile:lib/screens/services_support/community_screen.dart",
-      "sha256": "e7fcb2dbc431366272223d5101fa1c01c3efc3f7839f3d48cd05e7f6a2c4100b",
+      "sha256": "2809d57e5f165d55773c811c938acfcdc97199cee9bfa8b4263740e315c21518",
       "dependencies": [
+        "mobile:lib/screens/home_journey/student_banner_carousel.dart",
+        "mobile:lib/screens/universities_programs_countries/universities_screens.dart",
+        "mobile:lib/screens/universities_programs_countries/programs_screens.dart",
+        "mobile:lib/screens/applications_documents_payments/applications_screens.dart",
         "mobile:lib/core/widgets/cached_resource.dart",
         "mobile:lib/screens/stories/story_photo_editor.dart",
         "mobile:lib/core/widgets/community_reactions.dart",
@@ -4337,7 +4341,7 @@
     },
     {
       "path": "server:src/models/Banner.js",
-      "sha256": "e83b794b2a4b3a20356f0eed7b707a04e2050880d907d8e0444ee0bfaf983ceb",
+      "sha256": "b7e265aed87c29270e1b959518bf759c8b8b80ef9cbf5083131c4bdcf63a0885",
       "dependencies": [],
       "screens": [],
       "routes": []
@@ -5071,8 +5075,9 @@
     },
     {
       "path": "server:src/controllers/bannerController.js",
-      "sha256": "99fc760169da0827de44d10c54439df2572c9455b97a1d2f308937f6d1018329",
+      "sha256": "a6bc6d5333028bd3ba4567693c455a5b12930c399bd095e7f624214b2d6b53e7",
       "dependencies": [
+        "server:src/utils/responseCache.js",
         "server:src/utils/asyncHandler.js",
         "server:src/models/Banner.js",
         "server:src/utils/uploadToCloudinary.js"
@@ -7264,7 +7269,7 @@
     },
     {
       "path": "website:src/pages/admin/AdminBannersPage.tsx",
-      "sha256": "5459fcc488838986fee40c431635e53ec5bd2afb6a5fb38502101b5bae37c4b6",
+      "sha256": "3fba8949be645e3f58093c2a810e926ddc7020537b7ac5df309e49a122ebac37",
       "dependencies": [
         "website:src/hooks/useLanguage.ts",
         "website:src/services/adminService.ts",
@@ -9158,7 +9163,7 @@
     },
     {
       "path": "website:src/types/index.ts",
-      "sha256": "dd6fd14af53222d689487a1f70784bb7e2687b9e83218e00ab607d5873ba0db2",
+      "sha256": "ab8dfb36b6c7ef59e2409329c4c669ee9aff70a7ea47c9f0c3982289765172a5",
       "dependencies": [
         "website:src/hooks/useStatusCatalog.ts"
       ],

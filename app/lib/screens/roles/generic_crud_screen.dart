@@ -15,9 +15,11 @@ class CrudField {
   final CrudFieldType type;
   final bool required;
   final bool initialBoolValue;
+  final Map<String, String>? choices;
   const CrudField(this.key, this.label,
       {this.type = CrudFieldType.text,
       this.required = false,
+      this.choices,
       this.initialBoolValue = false});
 }
 
@@ -28,15 +30,19 @@ class GenericCrudScreen extends StatefulWidget {
   final String title;
   final List<CrudField> fields;
   final Future<List<dynamic>> Function() fetchItems;
-  final Future<Map<String, dynamic>> Function(Map<String, dynamic> payload) createItem;
-  final Future<Map<String, dynamic>> Function(String id, Map<String, dynamic> payload) updateItem;
+  final Future<Map<String, dynamic>> Function(Map<String, dynamic> payload)
+      createItem;
+  final Future<Map<String, dynamic>> Function(
+      String id, Map<String, dynamic> payload) updateItem;
   final Future<void> Function(String id)? deleteItem;
   final String Function(Map<String, dynamic> item) itemTitle;
   final String Function(Map<String, dynamic> item) itemSubtitle;
   final String idKey;
+
   /// For fields of type [CrudFieldType.image] — maps the field key to the
   /// backend's real upload endpoint (e.g. '/admin/countries/upload-image').
   final Map<String, String> imageUploadPaths;
+
   /// Override the multipart field name per image field — defaults to
   /// 'file'; the university logo endpoint expects 'files' (array upload).
   final Map<String, String> imageFieldNames;
@@ -97,11 +103,12 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
     final boolValues = <String, bool>{};
     for (final f in widget.fields) {
       if (f.type == CrudFieldType.boolean) {
-        boolValues[f.key] = existing == null
-            ? f.initialBoolValue
-            : existing[f.key] == true;
+        boolValues[f.key] =
+            existing == null ? f.initialBoolValue : existing[f.key] == true;
       } else {
-        controllers[f.key] = TextEditingController(text: existing?[f.key]?.toString() ?? '');
+        controllers[f.key] = TextEditingController(
+            text:
+                existing?[f.key]?.toString() ?? (f.choices?.keys.first ?? ''));
       }
     }
     String? formError;
@@ -111,16 +118,22 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (context) => StatefulBuilder(
         builder: (context, setSheetState) => Padding(
-          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom, left: 16, right: 16, top: 16),
+          padding: EdgeInsets.only(
+              bottom: MediaQuery.viewInsetsOf(context).bottom,
+              left: 16,
+              right: 16,
+              top: 16),
           child: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(existing != null ? 'تعديل' : 'إضافة جديد', style: AppTextStyles.cardTitle),
+                Text(existing != null ? 'تعديل' : 'إضافة جديد',
+                    style: AppTextStyles.cardTitle),
                 const SizedBox(height: 12),
                 ...widget.fields.map((f) {
                   if (f.type == CrudFieldType.boolean) {
@@ -128,8 +141,28 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
                       contentPadding: EdgeInsets.zero,
                       title: Text(f.label),
                       value: boolValues[f.key] ?? false,
-                      onChanged: (v) => setSheetState(() => boolValues[f.key] = v),
+                      onChanged: (v) =>
+                          setSheetState(() => boolValues[f.key] = v),
                     );
+                  }
+                  if (f.choices != null) {
+                    return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: DropdownButtonFormField<String>(
+                          initialValue:
+                              f.choices!.containsKey(controllers[f.key]!.text)
+                                  ? controllers[f.key]!.text
+                                  : f.choices!.keys.first,
+                          isExpanded: true,
+                          decoration: InputDecoration(labelText: f.label),
+                          items: f.choices!.entries
+                              .map((e) => DropdownMenuItem(
+                                  value: e.key, child: Text(e.value)))
+                              .toList(),
+                          onChanged: (value) {
+                            if (value != null) controllers[f.key]!.text = value;
+                          },
+                        ));
                   }
                   if (f.type == CrudFieldType.image) {
                     final uploadPath = widget.imageUploadPaths[f.key];
@@ -146,25 +179,51 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
                               padding: const EdgeInsets.only(bottom: 8),
                               child: ClipRRect(
                                 borderRadius: BorderRadius.circular(10),
-                                child: AppNetworkImage(controllers[f.key]!.text, height: 90, fit: BoxFit.cover,
-                                    errorWidget: const SizedBox(height: 90, child: Center(child: Icon(Icons.broken_image_outlined)))),
+                                child: AppNetworkImage(controllers[f.key]!.text,
+                                    height: 90,
+                                    fit: BoxFit.cover,
+                                    errorWidget: const SizedBox(
+                                        height: 90,
+                                        child: Center(
+                                            child: Icon(
+                                                Icons.broken_image_outlined)))),
                               ),
                             ),
                           OutlinedButton.icon(
-                            icon: isUploading ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.upload_rounded, size: 18),
-                            label: Text(isUploading ? 'جاري الرفع...' : 'اختيار ورفع صورة'),
+                            icon: isUploading
+                                ? const SizedBox(
+                                    width: 16,
+                                    height: 16,
+                                    child: CircularProgressIndicator(
+                                        strokeWidth: 2))
+                                : const Icon(Icons.upload_rounded, size: 18),
+                            label: Text(isUploading
+                                ? 'جاري الرفع...'
+                                : 'اختيار ورفع صورة'),
                             onPressed: (isUploading || uploadPath == null)
                                 ? null
                                 : () async {
-                                    final result = await FilePicker.platform.pickFiles(type: FileType.image, withData: true);
-                                    if (result == null || result.files.isEmpty || result.files.single.bytes == null) return;
-                                    setSheetState(() => uploadingFields[f.key] = true);
+                                    final result = await FilePicker.platform
+                                        .pickFiles(
+                                            type: FileType.image,
+                                            withData: true);
+                                    if (result == null ||
+                                        result.files.isEmpty ||
+                                        result.files.single.bytes == null) {
+                                      return;
+                                    }
+                                    setSheetState(
+                                        () => uploadingFields[f.key] = true);
                                     try {
-                                      final url = await AdminModulesRepository.instance.uploadImage(
+                                      final url = await AdminModulesRepository
+                                          .instance
+                                          .uploadImage(
                                         uploadPath,
                                         fileBytes: result.files.single.bytes!,
                                         fileName: result.files.single.name,
-                                        fileFieldName: widget.imageFieldNames[f.key] ?? 'file',
+                                        fileFieldName:
+                                            widget.imageFieldNames[f.key] ??
+                                                'file',
                                       );
                                       setSheetState(() {
                                         controllers[f.key]!.text = url;
@@ -172,7 +231,9 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
                                       });
                                     } catch (e) {
                                       setSheetState(() {
-                                        formError = e is ApiException ? e.message : 'تعذر رفع الصورة.';
+                                        formError = e is ApiException
+                                            ? e.message
+                                            : 'تعذر رفع الصورة.';
                                         uploadingFields[f.key] = false;
                                       });
                                     }
@@ -186,9 +247,12 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
                     padding: const EdgeInsets.only(bottom: 12),
                     child: TextField(
                       controller: controllers[f.key],
-                      keyboardType: f.type == CrudFieldType.number ? TextInputType.number : TextInputType.text,
+                      keyboardType: f.type == CrudFieldType.number
+                          ? TextInputType.number
+                          : TextInputType.text,
                       maxLines: f.type == CrudFieldType.multiline ? 4 : 1,
-                      decoration: InputDecoration(labelText: f.label + (f.required ? ' *' : '')),
+                      decoration: InputDecoration(
+                          labelText: f.label + (f.required ? ' *' : '')),
                     ),
                   );
                 }),
@@ -204,7 +268,8 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
                       if (f.type == CrudFieldType.boolean) {
                         payload[f.key] = boolValues[f.key] ?? false;
                       } else if (f.type == CrudFieldType.number) {
-                        payload[f.key] = num.tryParse(controllers[f.key]!.text.trim()) ?? 0;
+                        payload[f.key] =
+                            num.tryParse(controllers[f.key]!.text.trim()) ?? 0;
                       } else {
                         final value = controllers[f.key]!.text.trim();
                         if (f.required && value.isEmpty) {
@@ -216,13 +281,15 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
                     }
                     try {
                       if (existing != null) {
-                        await widget.updateItem(existing[widget.idKey] as String, payload);
+                        await widget.updateItem(
+                            existing[widget.idKey] as String, payload);
                       } else {
                         await widget.createItem(payload);
                       }
                       if (context.mounted) Navigator.of(context).pop(true);
                     } catch (e) {
-                      setSheetState(() => formError = e is ApiException ? e.message : 'تعذر الحفظ.');
+                      setSheetState(() => formError =
+                          e is ApiException ? e.message : 'تعذر الحفظ.');
                     }
                   },
                 ),
@@ -240,9 +307,15 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
     if (widget.deleteItem == null) return;
     try {
       await widget.deleteItem!(id);
-      if (mounted) setState(() => _items.removeWhere((i) => (Json.map(i))[widget.idKey] == id));
+      if (mounted) {
+        setState(
+            () => _items.removeWhere((i) => (Json.map(i))[widget.idKey] == id));
+      }
     } catch (e) {
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text(e is ApiException ? e.message : 'تعذر الحذف')));
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+            content: Text(e is ApiException ? e.message : 'تعذر الحذف')));
+      }
     }
   }
 
@@ -250,7 +323,13 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
   Widget build(BuildContext context) {
     return AppScaffold(
       title: widget.title,
-      actions: [IconButton(tooltip: 'إضافة', onPressed: () => _openForm(), icon: const Icon(Icons.add_circle_outline_rounded, color: Colors.white))],
+      actions: [
+        IconButton(
+            tooltip: 'إضافة',
+            onPressed: () => _openForm(),
+            icon: const Icon(Icons.add_circle_outline_rounded,
+                color: Colors.white))
+      ],
       body: RefreshIndicator(
         onRefresh: _load,
         color: AppColors.navy,
@@ -259,35 +338,49 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
             : _error != null
                 ? ErrorState(message: _error!, onRetry: _load)
                 : _items.isEmpty
-                    ? EmptyState(icon: Icons.inbox_outlined, title: 'لا توجد عناصر', message: 'أضف أول عنصر من زر الإضافة أعلى الشاشة.', ctaLabel: 'إضافة', onCta: () => _openForm())
+                    ? EmptyState(
+                        icon: Icons.inbox_outlined,
+                        title: 'لا توجد عناصر',
+                        message: 'أضف أول عنصر من زر الإضافة أعلى الشاشة.',
+                        ctaLabel: 'إضافة',
+                        onCta: () => _openForm())
                     : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: _items.length,
-                      itemBuilder: (context, i) {
-                        final item = Json.map(_items[i]);
-                        return AppCard(
-                          onTap: () => _openForm(existing: item),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(widget.itemTitle(item), style: AppTextStyles.cardTitle),
-                                    Text(widget.itemSubtitle(item), style: AppTextStyles.caption, maxLines: 1, overflow: TextOverflow.ellipsis),
-                                  ],
+                        padding: const EdgeInsets.all(16),
+                        itemCount: _items.length,
+                        itemBuilder: (context, i) {
+                          final item = Json.map(_items[i]);
+                          return AppCard(
+                            onTap: () => _openForm(existing: item),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(widget.itemTitle(item),
+                                          style: AppTextStyles.cardTitle),
+                                      Text(widget.itemSubtitle(item),
+                                          style: AppTextStyles.caption,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                              if (widget.deleteItem != null)
-                                IconButton(tooltip: 'حذف', 
-                                  icon: const Icon(Icons.delete_outline_rounded, color: AppColors.danger),
-                                  onPressed: () => _delete(item[widget.idKey] as String),
-                                ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
+                                if (widget.deleteItem != null)
+                                  IconButton(
+                                    tooltip: 'حذف',
+                                    icon: const Icon(
+                                        Icons.delete_outline_rounded,
+                                        color: AppColors.danger),
+                                    onPressed: () =>
+                                        _delete(item[widget.idKey] as String),
+                                  ),
+                              ],
+                            ),
+                          );
+                        },
+                      ),
       ),
     );
   }

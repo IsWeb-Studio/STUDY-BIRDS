@@ -647,6 +647,7 @@ export interface AgencyRequest {
 }
 
 export interface Banner {
+  placement?: "home" | "community" | "both";
   _id: string;
   tag?: string;
   title: string;

@@ -298,12 +298,14 @@
         "ar": [
           "افتح مجتمع الطلاب من الشريط السفلي لعرض المنشورات والتعليقات والتفاعلات.",
           "زر منشور جديد موجود أسفل صفحة المجتمع مع بقاء مساعد COVEY AI. النص مطلوب والصورة اختيارية.",
-          "اضغط اسم الناشر أو صورته لفتح حسابه؛ منشوراته بطاقات صغيرة والضغط عليها يفتح المنشور الأصلي."
+          "اضغط اسم الناشر أو صورته لفتح حسابه؛ منشوراته بطاقات صغيرة والضغط عليها يفتح المنشور الأصلي.",
+          "إعلانات الإدارة تظهر في بانر فوق فلاتر المنشورات عند وجود إعلان نشط مخصص للمجتمع. اسحب للتحديث لرؤية التغييرات. الإعلان منفصل عن منشورات الإدارة."
         ],
         "en": [
           "Open Student Community from bottom navigation to see posts, comments and reactions.",
           "New post is at the bottom of Community alongside COVEY AI. Post text is required; an image is optional.",
-          "Tap an author name or avatar to open their profile. Their posts are compact tiles; tap one to open the original post."
+          "Tap an author name or avatar to open their profile. Their posts are compact tiles; tap one to open the original post.",
+          "Active administration adverts assigned to Community appear in a banner above the post filters. Pull to refresh changes. Adverts are separate from Administration posts."
         ]
       },
       "location": {
@@ -314,7 +316,9 @@
       "sources": [
         "mobile:lib/screens/stories/student_stories.dart",
         "mobile:lib/screens/profile_account/my_streak.dart",
-        "mobile:lib/screens/community/student_community_hub.dart"
+        "mobile:lib/screens/community/student_community_hub.dart",
+        "mobile:lib/screens/home_journey/student_banner_carousel.dart",
+        "server:src/controllers/bannerController.js"
       ],
       "roles": [
         "student"
@@ -2802,11 +2806,13 @@
       "steps": {
         "ar": [
           "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
-          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات."
+          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات.",
+          "من البنرات في إدارة المحتوى، أضف صورة الإعلان والعنوان ثم اختر مكان العرض: الرئيسية أو مجتمع الطلاب أو المكانين. فعّل الإعلان وحدد ترتيبه واحفظ. يمكنك تعديله أو إخفاؤه أو حذفه من نفس الصفحة على الهاتف والويب."
         ],
         "en": [
           "Open the authorized section visible in your administration dashboard.",
-          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls."
+          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls.",
+          "In Content management → Banners, add the ad image and title, choose Home, Student Community or both, enable it and set its order, then save. Edit, hide or delete it from the same page on mobile or web."
         ]
       },
       "location": {
@@ -2818,7 +2824,9 @@
         "mobile:lib/screens/roles/admin_content_crud_screens.dart",
         "mobile:lib/screens/roles/admin_simple_lists_screens.dart",
         "mobile:lib/screens/roles/generic_crud_screen.dart",
-        "server:src/routes/adminRoutes.js"
+        "server:src/routes/adminRoutes.js",
+        "server:src/controllers/bannerController.js",
+        "website:src/pages/admin/AdminBannersPage.tsx"
       ],
       "roles": [
         "admin"
@@ -3803,5 +3811,5 @@
       "reviewed": true
     }
   ],
-  "revision": "2026.10.31.2"
+  "revision": "2026.10.31.3"
 }

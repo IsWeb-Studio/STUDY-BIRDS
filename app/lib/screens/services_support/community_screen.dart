@@ -1,3 +1,8 @@
+import '../home_journey/student_banner_carousel.dart';
+import '../universities_programs_countries/universities_screens.dart';
+import '../universities_programs_countries/programs_screens.dart';
+import '../applications_documents_payments/applications_screens.dart';
+import 'services_consultation_screens.dart';
 import '../../core/widgets/cached_resource.dart';
 import '../stories/story_photo_editor.dart';
 import 'dart:typed_data';
@@ -116,7 +121,18 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen>
   Map<String, dynamic> suspension = const {'suspended': false};
   bool loading = true, mine = false, adminOnly = false;
   int _loadVersion = 0;
+  int _bannerVersion = 0;
   String? error, topic, country, university, studyField;
+
+  void _openAdDestination(String destination) {
+    final Widget page = switch (destination) {
+      'universities' => const UniversitiesExplorerScreen(),
+      'programs' => const ProgramsExplorerScreen(),
+      'services' => const ServicesCenterScreen(),
+      _ => const ApplicationsListScreen(),
+    };
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) => page));
+  }
 
   bool get canWrite => suspension['suspended'] != true;
 
@@ -275,29 +291,36 @@ class _StudentCommunityScreenState extends State<StudentCommunityScreen>
                     label: Text(
                         _communityText(context, 'منشور جديد', 'New post'))))
             : null,
-        body: widget.header == null
-            ? Column(children: [_controls(), Expanded(child: _list())])
-            : RefreshIndicator(
-                onRefresh: load,
-                child: CustomScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    slivers: [
-                      SliverToBoxAdapter(child: widget.header),
-                      SliverToBoxAdapter(child: _controls()),
-                      if (loading || error != null || posts.isEmpty)
-                        SliverToBoxAdapter(
-                            child: SizedBox(
-                                height: MediaQuery.sizeOf(context).height * .6,
-                                child: _list()))
-                      else
-                        SliverPadding(
-                            padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                            sliver: SliverList.builder(
-                                itemCount: posts.length,
-                                itemBuilder: (context, index) => Padding(
-                                    padding: const EdgeInsets.only(bottom: 10),
-                                    child: _post(index)))),
-                    ])),
+        body: RefreshIndicator(
+            onRefresh: () async {
+              setState(() => _bannerVersion++);
+              await load();
+            },
+            child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  if (widget.header != null)
+                    SliverToBoxAdapter(child: widget.header),
+                  SliverToBoxAdapter(
+                      child: StudentBannerCarousel(
+                          placement: 'community',
+                          refreshVersion: _bannerVersion,
+                          onExplore: _openAdDestination)),
+                  SliverToBoxAdapter(child: _controls()),
+                  if (loading || error != null || posts.isEmpty)
+                    SliverToBoxAdapter(
+                        child: SizedBox(
+                            height: MediaQuery.sizeOf(context).height * .6,
+                            child: _list()))
+                  else
+                    SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
+                        sliver: SliverList.builder(
+                            itemCount: posts.length,
+                            itemBuilder: (context, index) => Padding(
+                                padding: const EdgeInsets.only(bottom: 10),
+                                child: _post(index)))),
+                ])),
       );
 
   Widget _controls() => Column(

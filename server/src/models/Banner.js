@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const bannerSchema = new mongoose.Schema(
   {
+    placement: { type: String, enum: ["home", "community", "both"], default: "home" },
     tag: { type: String, default: "" },
     title: { type: String, required: true },
     subtitle: { type: String, default: "" },

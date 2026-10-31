@@ -6,6 +6,7 @@ import type { Banner } from "../../types";
 import { getErrorMessage } from "../../utils/errors";
 
 const emptyForm: Partial<Banner> = {
+  placement: "home",
   tag: "",
   title: "",
   subtitle: "",
@@ -93,6 +94,15 @@ export const AdminBannersPage = () => {
         </div>
 
         <form onSubmit={submit} className="mt-6 space-y-4">
+          <label className="block">
+            <span className="mb-2 block text-sm font-medium text-slate-700">{ar ? "مكان عرض الإعلان" : "Ad placement"}</span>
+            <select aria-label={ar ? "مكان عرض الإعلان" : "Ad placement"} value={form.placement ?? "home"}
+              onChange={(e) => field("placement", e.target.value)} className="w-full rounded-2xl border border-slate-200 px-4 py-3">
+              <option value="home">{ar ? "الرئيسية" : "Home"}</option>
+              <option value="community">{ar ? "مجتمع الطلاب" : "Student Community"}</option>
+              <option value="both">{ar ? "الرئيسية ومجتمع الطلاب" : "Home and Student Community"}</option>
+            </select>
+          </label>
           <div className="grid gap-4 md:grid-cols-2">
             <label className="block">
               <span className="mb-2 block text-sm font-medium text-slate-700">{ar ? "العنوان *" : "Title *"}</span>
@@ -233,6 +243,7 @@ export const AdminBannersPage = () => {
                   onClick={() => {
                     setEditingId(banner._id);
                     setForm({
+                      placement: banner.placement ?? "home",
                       tag: banner.tag ?? "",
                       title: banner.title,
                       subtitle: banner.subtitle ?? "",

@@ -45,7 +45,7 @@ class AssistantNavigation {
       }();
   static const knowledgeVersion = '2026.10.23.3';
   // Content can evolve without changing the allowlisted navigation protocol.
-  static const knowledgeRevision = '2026.10.31.2';
+  static const knowledgeRevision = '2026.10.31.3';
   static const ids = {
     'applications',
     'documents',
