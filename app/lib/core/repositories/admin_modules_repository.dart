@@ -106,8 +106,8 @@ class AdminModulesRepository {
 
   // ---- app-wide notification broadcasts --------------------------------
   Future<Map<String, dynamic>> getNotificationAudience() async =>
-      Json.map(await ApiClient.instance.get(
-          '/admin/student-notifications/audience', token: _token));
+      Json.map(await ApiClient.instance
+          .get('/admin/student-notifications/audience', token: _token));
 
   Future<Map<String, dynamic>> broadcastAppNotification({
     required String title,
@@ -166,10 +166,11 @@ class AdminModulesRepository {
       Json.list(await ApiClient.instance.get('/admin/partners', token: _token));
 
   Future<Map<String, dynamic>> getPartnerDetails(String partnerId) async =>
-      Json.map(await ApiClient.instance.get('/admin/partners/$partnerId', token: _token));
+      Json.map(await ApiClient.instance
+          .get('/admin/partners/$partnerId', token: _token));
 
-  Future<Map<String, dynamic>> updatePartnerAccountStatus(
-          String partnerId, {required bool isActive}) async =>
+  Future<Map<String, dynamic>> updatePartnerAccountStatus(String partnerId,
+          {required bool isActive}) async =>
       Json.map(await ApiClient.instance.patch(
           '/admin/partners/$partnerId/status',
           token: _token,
@@ -218,12 +219,12 @@ class AdminModulesRepository {
       ));
 
   Future<Map<String, dynamic>> updateMarketingAsset(
-          String id, {
-          required String title,
-          required String description,
-          required String type,
-          required bool published,
-        }) async =>
+    String id, {
+    required String title,
+    required String description,
+    required String type,
+    required bool published,
+  }) async =>
       Json.map(await ApiClient.instance.put(
         '/admin/marketing-assets/$id',
         token: _token,
@@ -578,9 +579,17 @@ class AdminModulesRepository {
         fileFieldName: fileFieldName,
         token: _token);
     final map = Json.map(data);
-    if (map['url'] is String) return map['url'] as String;
-    if (map['urls'] is List && (Json.list(map['urls'])).isNotEmpty) {
-      return (Json.list(map['urls'])).first as String;
+    dynamic value = map['url'];
+    // Older servers returned the storage object under url instead of its URL.
+    if (value is Map) value = value['url'] ?? value['secure_url'];
+    if (value == null &&
+        map['urls'] is List &&
+        Json.list(map['urls']).isNotEmpty) value = Json.list(map['urls']).first;
+    if (value is String && value.trim().isNotEmpty) {
+      final uri = Uri.tryParse(value.trim());
+      if (uri != null &&
+          ((['https', 'http'].contains(uri.scheme) && uri.host.isNotEmpty) ||
+              value.startsWith('/'))) return value.trim();
     }
     throw const ApiException(0, 'Unexpected upload response');
   }

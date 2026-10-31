@@ -524,6 +524,10 @@ export const adminService = {
     const { data } = await api.post<{ url: string }>("/admin/banners/upload-image", formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
-    return data.url;
+    const value: unknown = data.url;
+    const url = typeof value === "string" ? value :
+      value && typeof value === "object" && "url" in value ? value.url : null;
+    if (typeof url !== "string" || !/^https?:\/\//i.test(url)) throw new Error("Invalid image upload response");
+    return url;
   },
 };

@@ -17,49 +17,65 @@ class UniversityRepository {
 
   Future<List<dynamic>> getApplications({String? status}) async {
     final qs = status != null ? '?status=$status' : '';
-    final data = await ApiClient.instance.get('/university-portal/applications$qs', token: _token);
+    final data = await ApiClient.instance
+        .get('/university-portal/applications$qs', token: _token);
     return Json.list(data);
   }
 
   Future<Map<String, dynamic>> getApplicationById(String id) async {
-    final data = await ApiClient.instance.get('/university-portal/applications/$id', token: _token);
+    final data = await ApiClient.instance
+        .get('/university-portal/applications/$id', token: _token);
     return Json.map(data);
   }
 
-  Future<Map<String, dynamic>> updateApplicationStatus(String id, {required String detailedStatus, String? note}) async {
-    final data = await ApiClient.instance.patch('/university-portal/applications/$id/status', token: _token, body: {
-      'detailedStatus': detailedStatus,
-      if (note != null) 'note': note,
-    });
+  Future<Map<String, dynamic>> updateApplicationStatus(String id,
+      {required String detailedStatus, String? note}) async {
+    final data = await ApiClient.instance.patch(
+        '/university-portal/applications/$id/status',
+        token: _token,
+        body: {
+          'detailedStatus': detailedStatus,
+          if (note != null) 'note': note,
+        });
     return Json.map(data);
   }
 
-  Future<void> requestDocument(String id, {String? documentType, String? reason}) async {
-    await ApiClient.instance.post('/university-portal/applications/$id/request-document', token: _token, body: {
-      if (documentType != null) 'documentType': documentType,
-      if (reason != null) 'reason': reason,
-    });
+  Future<void> requestDocument(String id,
+      {String? documentType, String? reason}) async {
+    await ApiClient.instance.post(
+        '/university-portal/applications/$id/request-document',
+        token: _token,
+        body: {
+          if (documentType != null) 'documentType': documentType,
+          if (reason != null) 'reason': reason,
+        });
   }
 
   Future<int> getFavoritesCount() async {
-    final data = await ApiClient.instance.get('/university-portal/favorites-count', token: _token);
+    final data = await ApiClient.instance
+        .get('/university-portal/favorites-count', token: _token);
     return (Json.map(data))['count'] as int? ?? 0;
   }
 
   /// Returns a short-lived signed URL to view/download the document file.
   Future<String> getDocumentAccessUrl(String documentId) async {
-    final data = await ApiClient.instance.post('/documents/$documentId/access', token: _token, body: {});
+    final data = await ApiClient.instance
+        .post('/documents/$documentId/access', token: _token, body: {});
     return (Json.map(data))['url'] as String;
   }
 
-  Future<String> uploadAvatar({required List<int> fileBytes, required String fileName}) async {
+  Future<String> uploadAvatar(
+      {required List<int> fileBytes, required String fileName}) async {
     final data = await ApiClient.instance.postMultipart(
-      '/university-portal/avatar',
+      '/auth/avatar',
       fileBytes: fileBytes,
       fileName: fileName,
       fields: {},
       token: _token,
     );
-    return (Json.map(data))['avatar'] as String;
+    final url = Json.map(Json.map(data)['user'])['avatar'];
+    if (url is! String || url.trim().isEmpty)
+      throw const ApiException(500, 'Invalid avatar upload response');
+    return url;
   }
 }

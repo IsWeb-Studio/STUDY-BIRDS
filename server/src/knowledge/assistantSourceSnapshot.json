@@ -84,7 +84,7 @@
     },
     {
       "path": "mobile:lib/core/repositories/admin_modules_repository.dart",
-      "sha256": "c8b2f8f8bc3ded1292a809b9ddcdf499a876ae531e8abbaab3e5a76f022029ba",
+      "sha256": "4a303c9e43cb7da2c6d4d9e1335b7f875e8a48bb423fc0b892276c142df5e9ae",
       "dependencies": [
         "mobile:lib/core/utils/json_safe.dart",
         "mobile:lib/core/network/api_client.dart",
@@ -197,7 +197,7 @@
     },
     {
       "path": "mobile:lib/core/repositories/university_repository.dart",
-      "sha256": "c7fde4a3dcef35820e93f1d1823faaadcf747dae0250dadc25ebdad6ab782b40",
+      "sha256": "643b5b2567b5f35b59bf3ae1d09e9b82e9632b3dcd93eb7532c7fc2c3ba966a6",
       "dependencies": [
         "mobile:lib/core/utils/json_safe.dart",
         "mobile:lib/core/network/api_client.dart",
@@ -2349,7 +2349,7 @@
     },
     {
       "path": "mobile:lib/screens/roles/generic_crud_screen.dart",
-      "sha256": "b207077677aa1d1ed09afb2876ac7e7e11b3dc424d59b86a76e317771ed7e118",
+      "sha256": "6298656d5b8e278a42425bcb1447c306f9b441d4198e3cfdd636302fb0c27e6d",
       "dependencies": [
         "mobile:lib/core/utils/json_safe.dart",
         "mobile:lib/core/widgets/feature_ui.dart",
@@ -2407,7 +2407,7 @@
     },
     {
       "path": "mobile:lib/screens/roles/university_dashboard_screen.dart",
-      "sha256": "dff59cca6785842fb20e8a4f490de5693db6de3899b66e60d88818943422604b",
+      "sha256": "0b4d6cd8d60cbf0cbb5aab1533f6734b90868fcb69875520b1610c3f10448779",
       "dependencies": [
         "mobile:lib/core/widgets/cached_resource.dart",
         "mobile:lib/core/utils/json_safe.dart",
@@ -7281,8 +7281,18 @@
       "routes": []
     },
     {
+      "path": "website:src/pages/admin/AdminBannersPage.test.tsx",
+      "sha256": "2bf35febb3476fc1a4442f3972c55938bcfadece71fbf5fce27e295a79dfcb0a",
+      "dependencies": [
+        "website:src/pages/admin/AdminBannersPage.tsx",
+        "website:src/services/adminService.ts"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
       "path": "website:src/pages/admin/AdminBannersPage.tsx",
-      "sha256": "3fba8949be645e3f58093c2a810e926ddc7020537b7ac5df309e49a122ebac37",
+      "sha256": "fb866672628a71dcc9b5c41d047cc64429ba978a3ac76f293a49f6e1b321c10c",
       "dependencies": [
         "website:src/hooks/useLanguage.ts",
         "website:src/services/adminService.ts",
@@ -9060,7 +9070,7 @@
     },
     {
       "path": "website:src/services/adminService.ts",
-      "sha256": "680e9f188c844b67477a2a456265d94d50ef8622936b412f5347e1a1c9a2ce42",
+      "sha256": "5a71d47f25676815725565c2d7b69e825bafecdb95983933c6b0503d91b87a0b",
       "dependencies": [
         "website:src/lib/api.ts"
       ],

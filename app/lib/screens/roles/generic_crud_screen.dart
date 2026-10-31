@@ -113,6 +113,8 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
     }
     String? formError;
     final uploadingFields = <String, bool>{};
+    final uploadErrors = <String, String>{};
+    bool saving = false;
 
     final saved = await showModalBottomSheet<bool>(
       context: context,
@@ -200,45 +202,71 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
                             label: Text(isUploading
                                 ? 'جاري الرفع...'
                                 : 'اختيار ورفع صورة'),
-                            onPressed: (isUploading || uploadPath == null)
+                            onPressed: (isUploading ||
+                                    saving ||
+                                    uploadPath == null)
                                 ? null
                                 : () async {
-                                    final result = await FilePicker.platform
-                                        .pickFiles(
-                                            type: FileType.image,
-                                            withData: true);
-                                    if (result == null ||
-                                        result.files.isEmpty ||
-                                        result.files.single.bytes == null) {
-                                      return;
-                                    }
-                                    setSheetState(
-                                        () => uploadingFields[f.key] = true);
+                                    setSheetState(() {
+                                      uploadingFields[f.key] = true;
+                                      uploadErrors.remove(f.key);
+                                      formError = null;
+                                    });
                                     try {
+                                      final result = await FilePicker.platform
+                                          .pickFiles(
+                                              type: FileType.image,
+                                              withData: true);
+                                      if (!context.mounted ||
+                                          result == null ||
+                                          result.files.isEmpty) return;
+                                      final file = result.files.single;
+                                      if (file.size > 5 * 1024 * 1024)
+                                        throw const ApiException(413,
+                                            'اختر صورة أصغر من 5 ميجابايت.');
+                                      final bytes = file.bytes ??
+                                          await file.xFile.readAsBytes();
+                                      if (bytes.isEmpty || bytes.length > 5 * 1024 * 1024)
+                                        throw const ApiException(400,
+                                            'تعذر قراءة الصورة المختارة. اخترها مجددًا.');
+                                      if (!context.mounted) return;
                                       final url = await AdminModulesRepository
                                           .instance
                                           .uploadImage(
                                         uploadPath,
-                                        fileBytes: result.files.single.bytes!,
-                                        fileName: result.files.single.name,
+                                        fileBytes: bytes,
+                                        fileName: file.name,
                                         fileFieldName:
                                             widget.imageFieldNames[f.key] ??
                                                 'file',
                                       );
+                                      if (!context.mounted) return;
                                       setSheetState(() {
                                         controllers[f.key]!.text = url;
-                                        uploadingFields[f.key] = false;
                                       });
                                     } catch (e) {
+                                      if (!context.mounted) return;
                                       setSheetState(() {
-                                        formError = e is ApiException
+                                        uploadErrors[f.key] = e is ApiException
                                             ? e.message
                                             : 'تعذر رفع الصورة.';
-                                        uploadingFields[f.key] = false;
                                       });
+                                    } finally {
+                                      if (context.mounted)
+                                        setSheetState(() =>
+                                            uploadingFields[f.key] = false);
                                     }
                                   },
                           ),
+                          if (uploadErrors[f.key] != null) ...[
+                            InlineNotice(uploadErrors[f.key]!, error: true),
+                            TextButton(
+                                onPressed: () => setSheetState(
+                                    () => uploadErrors.remove(f.key)),
+                                child: Text(controllers[f.key]!.text.isEmpty
+                                    ? 'المتابعة بدون صورة'
+                                    : 'إبقاء الصورة السابقة')),
+                          ],
                         ],
                       ),
                     );
@@ -262,36 +290,55 @@ class _GenericCrudScreenState extends State<GenericCrudScreen> {
                 ],
                 PrimaryButton(
                   label: 'حفظ',
-                  onPressed: () async {
-                    final payload = <String, dynamic>{};
-                    for (final f in widget.fields) {
-                      if (f.type == CrudFieldType.boolean) {
-                        payload[f.key] = boolValues[f.key] ?? false;
-                      } else if (f.type == CrudFieldType.number) {
-                        payload[f.key] =
-                            num.tryParse(controllers[f.key]!.text.trim()) ?? 0;
-                      } else {
-                        final value = controllers[f.key]!.text.trim();
-                        if (f.required && value.isEmpty) {
-                          setSheetState(() => formError = '${f.label} مطلوب');
-                          return;
-                        }
-                        payload[f.key] = value;
-                      }
-                    }
-                    try {
-                      if (existing != null) {
-                        await widget.updateItem(
-                            existing[widget.idKey] as String, payload);
-                      } else {
-                        await widget.createItem(payload);
-                      }
-                      if (context.mounted) Navigator.of(context).pop(true);
-                    } catch (e) {
-                      setSheetState(() => formError =
-                          e is ApiException ? e.message : 'تعذر الحفظ.');
-                    }
-                  },
+                  onPressed: saving ||
+                          uploadErrors.isNotEmpty ||
+                          uploadingFields.values.any((value) => value)
+                      ? null
+                      : () async {
+                          if (saving ||
+                              uploadErrors.isNotEmpty ||
+                              uploadingFields.values.any((value) => value))
+                            return;
+                          final payload = <String, dynamic>{};
+                          for (final f in widget.fields) {
+                            if (f.type == CrudFieldType.boolean) {
+                              payload[f.key] = boolValues[f.key] ?? false;
+                            } else if (f.type == CrudFieldType.number) {
+                              payload[f.key] = num.tryParse(
+                                      controllers[f.key]!.text.trim()) ??
+                                  0;
+                            } else {
+                              final value = controllers[f.key]!.text.trim();
+                              if (f.required && value.isEmpty) {
+                                setSheetState(
+                                    () => formError = '${f.label} مطلوب');
+                                return;
+                              }
+                              payload[f.key] = value;
+                            }
+                          }
+                          try {
+                            setSheetState(() {
+                              saving = true;
+                              formError = null;
+                            });
+                            if (existing != null) {
+                              await widget.updateItem(
+                                  existing[widget.idKey] as String, payload);
+                            } else {
+                              await widget.createItem(payload);
+                            }
+                            if (context.mounted)
+                              Navigator.of(context).pop(true);
+                          } catch (e) {
+                            if (!context.mounted) return;
+                            setSheetState(() => formError =
+                                e is ApiException ? e.message : 'تعذر الحفظ.');
+                          } finally {
+                            if (context.mounted)
+                              setSheetState(() => saving = false);
+                          }
+                        },
                 ),
                 const SizedBox(height: 16),
               ],

@@ -40,7 +40,6 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen>
   String? _error;
   String _statusFilter = 'all';
   int _favoritesCount = 0;
-  String? _avatarUrl;
   bool _avatarUploading = false;
   int _tab = 0;
   final _searchCtrl = TextEditingController();
@@ -58,7 +57,6 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _avatarUrl = AuthSession.instance.currentUser?.avatar;
     AuthSession.instance.addListener(_accountPhotoChanged);
     _load();
     _searchCtrl.addListener(_applyFilter);
@@ -74,30 +72,46 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen>
   Future<void> _pickAvatar() async {
     if (_avatarUploading) return;
     final owner = AuthSession.instance.currentUser?.id;
-    final img = await ImagePicker().pickImage(
-        source: ImageSource.gallery, imageQuality: 80, maxWidth: 512);
-    if (img == null || !mounted) return;
-    final bytes = await img.readAsBytes();
-    if (!mounted) return;
+    final token = AuthSession.instance.token;
     setState(() => _avatarUploading = true);
     try {
+      final img = await ImagePicker().pickImage(
+          source: ImageSource.gallery, imageQuality: 80, maxWidth: 512);
+      if (img == null ||
+          !mounted ||
+          owner != AuthSession.instance.currentUser?.id ||
+          token != AuthSession.instance.token) return;
+      final bytes = await img.readAsBytes();
+      if (!mounted ||
+          owner != AuthSession.instance.currentUser?.id ||
+          token != AuthSession.instance.token) return;
+      if (bytes.isEmpty || bytes.length > 5 * 1024 * 1024)
+        throw const ApiException(413, 'اختر صورة صالحة أصغر من 5 ميجابايت.');
       final url = await UniversityRepository.instance
           .uploadAvatar(fileBytes: bytes, fileName: img.name);
       final user = AuthSession.instance.currentUser;
-      if (user != null && user.id == owner) {
+      if (user != null &&
+          user.id == owner &&
+          token == AuthSession.instance.token) {
         await AuthSession.instance
             .updateAccount({...user.toJson(), 'avatar': url});
         await CurrentUserAvatar.save(user.id, bytes);
       }
-      if (mounted && AuthSession.instance.currentUser?.id == owner) {
-        setState(() => _avatarUrl = url);
+      if (mounted &&
+          AuthSession.instance.currentUser?.id == owner &&
+          token == AuthSession.instance.token) {
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+            content: const Text('تم تحديث صورة الحساب'),
+            backgroundColor: AppColors.success));
       }
     } catch (swallowedError, swallowedStack) {
       ErrorReporter.swallowed(swallowedError, swallowedStack,
           'screens/roles/university_dashboard_screen.dart:69');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
-            content: const Text('تعذر رفع الصورة'),
+            content: Text(swallowedError is ApiException
+                ? swallowedError.message
+                : 'تعذر رفع الصورة. حاول مجددًا.'),
             backgroundColor: AppColors.danger));
       }
     } finally {
@@ -107,7 +121,7 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen>
 
   void _accountPhotoChanged() {
     if (mounted) {
-      setState(() => _avatarUrl = AuthSession.instance.currentUser?.avatar);
+      setState(() {});
     }
   }
 
@@ -280,7 +294,6 @@ class _UniversityDashboardScreenState extends State<UniversityDashboardScreen>
           child: _HeroBanner(
             uniName: uniName,
             favoritesCount: favorites,
-            avatarUrl: _avatarUrl,
             avatarUploading: _avatarUploading,
             onPickAvatar: _pickAvatar,
           ),
@@ -495,14 +508,12 @@ class _UniversityGameCard extends StatelessWidget {
 class _HeroBanner extends StatelessWidget {
   final String uniName;
   final int favoritesCount;
-  final String? avatarUrl;
   final bool avatarUploading;
   final VoidCallback onPickAvatar;
   const _HeroBanner({
     required this.uniName,
     required this.favoritesCount,
     required this.onPickAvatar,
-    this.avatarUrl,
     this.avatarUploading = false,
   });
   @override
@@ -523,6 +534,7 @@ class _HeroBanner extends StatelessWidget {
           Row(
             children: [
               GestureDetector(
+                key: const ValueKey('university-change-avatar'),
                 onTap: avatarUploading ? null : onPickAvatar,
                 child: Stack(
                   children: [
@@ -541,18 +553,7 @@ class _HeroBanner extends StatelessWidget {
                               padding: EdgeInsets.all(14),
                               child: CircularProgressIndicator(
                                   color: Colors.white, strokeWidth: 2))
-                          : avatarUrl != null
-                              ? ClipOval(
-                                  child: AppNetworkImage(avatarUrl!,
-                                      fit: BoxFit.cover,
-                                      width: 58,
-                                      height: 58,
-                                      errorWidget: const Icon(
-                                          Icons.account_balance_rounded,
-                                          color: Colors.white,
-                                          size: 28)))
-                              : const Icon(Icons.account_balance_rounded,
-                                  color: Colors.white, size: 28),
+                          : const CurrentUserAvatar(radius: 29),
                     ),
                     Positioned(
                       bottom: 0,

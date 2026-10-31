@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Image, PencilLine, Plus, Trash2 } from "lucide-react";
 import { useLanguage } from "../../hooks/useLanguage";
 import { adminService } from "../../services/adminService";
@@ -24,6 +24,9 @@ export const AdminBannersPage = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formError, setFormError] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [uploadFailed, setUploadFailed] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const uploadVersion = useRef(0);
 
   const ar = language === "ar";
 
@@ -37,26 +40,38 @@ export const AdminBannersPage = () => {
   }, []);
 
   const reset = () => {
+    uploadVersion.current++;
+    setUploading(false);
+    setUploadFailed(false);
+    setFormError("");
     setEditingId(null);
     setForm(emptyForm);
   };
 
   const handleImageUpload = async (files: FileList | null) => {
     if (!files?.length) return;
+    const version = ++uploadVersion.current;
     setUploading(true);
+    setUploadFailed(false);
     setFormError("");
     try {
+      if (files[0].size > 5 * 1024 * 1024) throw new Error(ar ? "اختر صورة أصغر من 5 ميجابايت" : "Choose an image smaller than 5 MB");
       const url = await adminService.uploadBannerImage(files[0]);
+      if (version !== uploadVersion.current) return;
       setForm((f) => ({ ...f, imageUrl: url }));
     } catch (e) {
+      if (version !== uploadVersion.current) return;
+      setUploadFailed(true);
       setFormError(getErrorMessage(e, ar ? "فشل رفع الصورة" : "Image upload failed"));
     } finally {
-      setUploading(false);
+      if (version === uploadVersion.current) setUploading(false);
     }
   };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
+    if (uploading || uploadFailed || saving) return;
+    setSaving(true);
     setFormError("");
     try {
       if (editingId) {
@@ -68,6 +83,8 @@ export const AdminBannersPage = () => {
       await load();
     } catch (e) {
       setFormError(getErrorMessage(e, ar ? "فشل حفظ البنر" : "Failed to save banner"));
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -178,12 +195,16 @@ export const AdminBannersPage = () => {
             <input
               type="file"
               accept="image/*"
+              disabled={saving}
               onChange={(e) => handleImageUpload(e.target.files)}
               className="mt-4 w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm"
             />
             <p className="mt-2 text-xs text-slate-500">
               {uploading ? (ar ? "جاري الرفع..." : "Uploading...") : ar ? "ارفع صورة البنر (اختياري)" : "Upload banner image (optional)"}
             </p>
+            {uploadFailed ? <button type="button" onClick={() => { setUploadFailed(false); setFormError(""); }}>
+              {ar ? "إبقاء الصورة السابقة أو المتابعة بدون صورة" : "Keep previous image or continue without an image"}
+            </button> : null}
             {form.imageUrl ? (
               <div className="mt-4 rounded-2xl border border-slate-200 p-3">
                 <img src={form.imageUrl} alt="Banner preview" className="h-32 w-full rounded-xl object-cover" />
@@ -199,7 +220,7 @@ export const AdminBannersPage = () => {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button type="submit" className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-3 font-semibold text-white">
+            <button type="submit" disabled={uploading || uploadFailed || saving} className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-3 font-semibold text-white disabled:opacity-50">
               <Plus className="h-4 w-4" />
               {editingId ? (ar ? "تحديث البنر" : "Update Banner") : (ar ? "إضافة بنر" : "Add Banner")}
             </button>
@@ -241,6 +262,9 @@ export const AdminBannersPage = () => {
               <div className="flex shrink-0 flex-wrap gap-2">
                 <button
                   onClick={() => {
+                    uploadVersion.current++;
+                    setUploading(false);
+                    setUploadFailed(false);
                     setEditingId(banner._id);
                     setForm({
                       placement: banner.placement ?? "home",
