@@ -5,6 +5,7 @@ import App from "./app/App";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import "./app/index.css";
+import "./app/admin-layout.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

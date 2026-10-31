@@ -428,14 +428,14 @@ export const AdminStudentFinancialsEnhancedPage = () => {
                   <td className="px-4 py-4">{invoice.description}</td>
                   <td className="px-4 py-4">{formatCurrency(invoice.amount)}</td>
                   <td className="px-4 py-4">
-                    <span className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                    <span className={`inline-flex whitespace-nowrap rounded-full px-2 py-1 text-xs font-semibold ${
                       invoice.status === "paid" ? "bg-emerald-100 text-emerald-700" :
                       invoice.status === "rejected" ? "bg-rose-100 text-rose-700" :
                       invoice.status === "pending-confirmation" ? "bg-amber-100 text-amber-700" :
                       "bg-slate-100 text-slate-700"
-                    }`}>{invoice.status}</span>
+                    }`}>{isArabic?({paid:'مدفوعة',unpaid:'غير مدفوعة',rejected:'مرفوضة','pending-confirmation':'بانتظار التأكيد'}[invoice.status]):({paid:'Paid',unpaid:'Unpaid',rejected:'Rejected','pending-confirmation':'Pending confirmation'}[invoice.status])}</span>
                   </td>
-                  <td className="px-4 py-4">{formatDate(invoice.dueDate)}</td>
+                    <td className="px-4 py-4">{invoice.dueDate?<bdi>{formatDate(invoice.dueDate)}</bdi>:(isArabic?'غير محدد':'Not set')}</td>
                   <td className="px-4 py-4">
                     <select
                       value={invoice.status}

@@ -265,7 +265,7 @@ export const DashboardLayout = () => {
             : seoText(language, "Private student workspace for Study Birds.", "مساحة خاصة للطالب داخل Study Birds.");
 
   return (
-    <div className="dashboard-workspace min-h-screen bg-slate-50">
+    <div className={`dashboard-workspace min-h-screen bg-slate-50 ${['admin','employee'].includes(user?.role || '') ? 'admin-workspace' : ''}`}>
       <Seo title={user?.role === "employee" ? seoText(language, "Employee Dashboard", "لوحة الموظف") : seoTitle} description={seoDescription} noIndex />
       <Navbar />
       <main className="mx-auto w-full max-w-[1800px] px-4 py-6 sm:px-6 lg:px-8">

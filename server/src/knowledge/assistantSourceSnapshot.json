@@ -1,6 +1,6 @@
 {
   "version": "2026.10.23.3",
-  "catalogSHA256": "8de6d8f81707f4df04464c3657827e6c096a78772f7a0b524a166ce68b1ffce0",
+  "catalogSHA256": "6617898f6bee74ce4507134cdf9d301191e8481a651d3181269ae811882cc0bf",
   "sources": [
     {
       "path": "mobile:lib/app_shell.dart",
@@ -6395,7 +6395,7 @@
     },
     {
       "path": "website:src/components/admin/FollowUpReminders.tsx",
-      "sha256": "4883b440aec0dcad700f400c1c79a9a70b92c94c74449cae695ee365730ba8e2",
+      "sha256": "4166be740363333cad8ce0e85f3fc9ef26d10f55ea47da35d84c5ec26afefc14",
       "dependencies": [
         "website:src/lib/api.ts",
         "website:src/hooks/useLanguage.ts"
@@ -6427,7 +6427,7 @@
     },
     {
       "path": "website:src/components/admin/ReferralPolicies.tsx",
-      "sha256": "dabdbcd1fc263eb8d608290922b8b3c22a4856f3e0d85d40a43067448895cbaa",
+      "sha256": "cdf0e9087f6274bf4ec1808d497c260c46ae132c5cfb8780ffc55d5066a2c45f",
       "dependencies": [
         "website:src/lib/api.ts",
         "website:src/hooks/useLanguage.ts",
@@ -6677,7 +6677,7 @@
     },
     {
       "path": "website:src/components/FloatingAssistant.tsx",
-      "sha256": "f3943dc8c4516df98c5fc803c00f46512a254244f1c4930955fdd52f5fa6d42c",
+      "sha256": "762e780d8f996e0eb42a5fa6ca5916bd1eca4939630b833b998f6f7ce9b887ba",
       "dependencies": [
         "website:src/hooks/useAuth.ts",
         "website:src/hooks/useLanguage.ts",
@@ -7206,7 +7206,7 @@
     },
     {
       "path": "website:src/layouts/DashboardLayout.tsx",
-      "sha256": "39264d9cbea5769caca1a691665b6d928e64b23f8d81b4e4e9fa8a801685cf50",
+      "sha256": "30d8ce57c10d394af221052ae8f713de5ae6df915015aabe8db232633e264fca",
       "dependencies": [
         "website:src/components/ContentLoading.tsx",
         "website:src/components/dashboard/DashboardDataBoundary.tsx",
@@ -7355,12 +7355,13 @@
     },
     {
       "path": "website:src/main.tsx",
-      "sha256": "82a17c065ab0e4770c59c15eba107e61935b7cc30c9092263a81ac8f829fa4b9",
+      "sha256": "cadda23884048e495993c669e1e91cff14829c601e13c6a076df467849dec6b0",
       "dependencies": [
         "website:src/app/App.tsx",
         "website:src/context/AuthContext.tsx",
         "website:src/context/LanguageContext.tsx",
-        "website:src/app/index.css"
+        "website:src/app/index.css",
+        "website:src/app/admin-layout.css"
       ],
       "screens": [],
       "routes": []
@@ -7478,7 +7479,7 @@
     },
     {
       "path": "website:src/pages/admin/AdminApplicationsPage.tsx",
-      "sha256": "85d6717d1f4d36ea082733bf27a2c3fed80c397d8dfe2407487cea9e04bcc85d",
+      "sha256": "c9cf72f51b90422b8aebfc3f98d1fb207d891c310c1a867fd883e6921c302eb5",
       "dependencies": [
         "website:src/components/admin/FollowUpReminders.tsx",
         "website:src/components/admin/ApplicationAssignment.tsx",
@@ -7929,7 +7930,7 @@
     },
     {
       "path": "website:src/pages/admin/AdminStudentFinancialsEnhancedPage.tsx",
-      "sha256": "cf057fedb158ff2bf0692327d9da6f24f05671b76b57f7b9565fb2a43c833341",
+      "sha256": "70eac35ff539e7552bd8df35f16763c2c118382ae56178eb2205824e13b4762b",
       "dependencies": [
         "website:src/components/DocumentFileLink.tsx",
         "website:src/services/adminService.ts",

@@ -547,7 +547,7 @@ export const FloatingAssistant = () => {
         }
 
         return clampPosition({
-          x: window.innerWidth - 188,
+          x: window.innerWidth - (pathname.startsWith('/admin') ? 64 : 188),
           y: window.innerHeight - 80,
         });
       });
@@ -904,7 +904,7 @@ export const FloatingAssistant = () => {
           type="button"
           onPointerDown={handleButtonPointerDown}
           onClick={handleButtonClick}
-          className={`inline-flex items-center gap-2 rounded-full bg-fusion px-3 py-2.5 text-sm font-semibold text-white shadow-[0_16px_40px_rgba(10,25,49,0.28)] transition hover:brightness-110 ${
+          className={`inline-flex items-center rounded-full bg-fusion text-sm font-semibold text-white shadow-[0_16px_40px_rgba(10,25,49,0.28)] transition hover:brightness-110 ${pathname.startsWith('/admin') ? 'h-12 w-12 justify-center' : 'gap-2 px-3 py-2.5'} ${
             isDragging ? "cursor-grabbing" : "cursor-grab"
           }`}
           style={{ touchAction: "none", userSelect: "none", WebkitUserSelect: "none" }}
@@ -914,12 +914,12 @@ export const FloatingAssistant = () => {
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/14">
             <Bot size={18} />
           </span>
-          <span className="flex flex-col items-start leading-tight">
+          {!pathname.startsWith('/admin') && <span className="flex flex-col items-start leading-tight">
             <span>{ASSISTANT_NAME}</span>
             <span className="text-[11px] font-medium text-brand-100">
               {language === "ar" ? "اسحبني لأي مكان" : "Drag me anywhere"}
             </span>
-          </span>
+          </span>}
         </button>
       </div>
     </div>

@@ -28,17 +28,17 @@ export const ReferralPolicies=()=>{
     {error&&<p role="alert" className="text-red-700">{error}</p>}{success&&<p role="status" className="text-emerald-700">{success}</p>}
     <button type="button" disabled={busy} onClick={()=>{void load().catch(e=>setError(getErrorMessage(e,'Unable to refresh')));}}>{text('تحديث الإعدادات','Refresh policies')}</button>
     {!ready&&<p role="status">{text('جارٍ التحميل…','Loading…')}</p>}
-    {rows.map(row=><form key={row._id} className="flex flex-wrap items-end gap-3 rounded-xl bg-slate-50 p-4" onSubmit={(event:FormEvent)=>{event.preventDefault();void save(row);}}>
-      <div className="flex-1"><strong>{row.scope==='default'?text('المبلغ الافتراضي','Default reward'):row.student?.name}</strong><p className="text-sm">{row.student?.email}</p></div>
-      <label>{text('المبلغ USD','Amount USD')}<input className={`${input} block w-32`} type="number" min="0" max="10000" step="0.01" required disabled={busy} value={row.amount} onChange={e=>change(row._id,{amount:Number(e.target.value)})}/></label>
-      <label><input type="checkbox" checked={row.enabled} disabled={busy} onChange={e=>change(row._id,{enabled:e.target.checked})}/>{text('مفعّل','Enabled')}</label>
-      <button disabled={busy} className={input}>{text('حفظ','Save')}</button>
-      {row.scope!=='default'&&<button type="button" disabled={busy} onClick={()=>void remove(row)}>{text('العودة للمبلغ الافتراضي','Use default reward')}</button>}
+    {rows.map(row=><form key={row._id} className="referral-policy-row grid gap-4 rounded-xl bg-slate-50 p-4" onSubmit={(event:FormEvent)=>{event.preventDefault();void save(row);}}>
+      <div className="min-w-0"><strong>{row.scope==='default'?text('المبلغ الافتراضي','Default reward'):row.student?.name}</strong><p className="text-sm">{row.student?.email}</p></div>
+      <label>{text('المبلغ USD','Amount USD')}<input className={`${input} block w-full`} type="number" min="0" max="10000" step="0.01" required disabled={busy} value={row.amount} onChange={e=>change(row._id,{amount:Number(e.target.value)})}/></label>
+      <label className="inline-flex min-h-11 items-center gap-2 self-end"><input type="checkbox" checked={row.enabled} disabled={busy} onChange={e=>change(row._id,{enabled:e.target.checked})}/>{text('مفعّل','Enabled')}</label>
+      <button disabled={busy} className={`${input} self-end bg-slate-900 text-white`}>{text('حفظ','Save')}</button>
+      {row.scope!=='default'&&<button type="button" className="referral-policy-reset min-h-11 text-start text-sm text-slate-600 underline" disabled={busy} onClick={()=>void remove(row)}>{text('العودة للمبلغ الافتراضي','Use default reward')}</button>}
     </form>)}
-    <form className="flex flex-wrap items-end gap-3 border-t pt-4" onSubmit={e=>{e.preventDefault();void save();}}>
-      <label>{text('تخصيص لطالب','Student override')}<select required className={`${input} block max-w-sm`} value={studentId} disabled={busy||!ready} onChange={e=>setStudentId(e.target.value)}><option value="">{text('اختر صاحب كود الدعوة','Choose the invitation owner')}</option>{students.filter(s=>!rows.some(r=>r.scope===s._id)).map(s=><option key={s._id} value={s._id}>{s.name} — {s.email}</option>)}</select></label>
-      <label>{text('المبلغ USD','Amount USD')}<input className={`${input} block w-32`} type="number" min="0" max="10000" step="0.01" value={amount} required disabled={busy} onChange={e=>setAmount(e.target.value)}/></label>
-      <button disabled={busy||!ready||!studentId} className={input}>{text('إضافة تخصيص','Add override')}</button>
+    <form className="referral-policy-create grid gap-4 border-t pt-4" onSubmit={e=>{e.preventDefault();void save();}}>
+      <label>{text('تخصيص لطالب','Student override')}<select required className={`${input} block w-full`} value={studentId} disabled={busy||!ready} onChange={e=>setStudentId(e.target.value)}><option value="">{text('اختر صاحب كود الدعوة','Choose the invitation owner')}</option>{students.filter(s=>!rows.some(r=>r.scope===s._id)).map(s=><option key={s._id} value={s._id}>{s.name} — {s.email}</option>)}</select></label>
+      <label>{text('المبلغ USD','Amount USD')}<input className={`${input} block w-full`} type="number" min="0" max="10000" step="0.01" value={amount} required disabled={busy} onChange={e=>setAmount(e.target.value)}/></label>
+      <button disabled={busy||!ready||!studentId} className={`${input} self-end bg-slate-900 text-white`}>{text('إضافة تخصيص','Add override')}</button>
     </form>
   </section>;
 };

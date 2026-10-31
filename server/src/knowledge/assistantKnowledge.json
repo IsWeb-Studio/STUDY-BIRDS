@@ -2885,11 +2885,13 @@
       "steps": {
         "ar": [
           "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
-          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات."
+          "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات.",
+          "في صندوق طلبات الموقع، راجع بيانات المتقدم والمستندات في بطاقة الطلب، ثم استخدم قسم مراجعة الطلب لحفظ ملاحظة أو اختيار إجراء. افتح سجل الحالة لعرض التغييرات السابقة، واستخدم إدارة المتابعة والمستندات لأدوات المتابعة المتاحة."
         ],
         "en": [
           "Open the authorized section visible in your administration dashboard.",
-          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls."
+          "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls.",
+          "In the website application inbox, review applicant details and documents in the application card, then use Review application to save a note or choose a review action. Expand Status timeline to see previous changes; use Manage follow-up and documents for the existing follow-up tools."
         ]
       },
       "location": {

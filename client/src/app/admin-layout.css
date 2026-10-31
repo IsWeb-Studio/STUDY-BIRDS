@@ -1,0 +1,76 @@
+/* Administration layouts respond to their available space beside the sidebar. */
+.admin-workspace .dashboard-content :where(.grid, .flex) > * {
+  min-width: 0;
+}
+
+.admin-workspace .dashboard-content :where(h2, h3, p, dd, dt, a, code, span) {
+  overflow-wrap: anywhere;
+}
+
+.admin-workspace .dashboard-content :where(label) {
+  line-height: 1.65;
+}
+
+/* Older staff screens use this semantic colour name. */
+.admin-workspace .dashboard-content .bg-brand-primary { background-color: #0f172a; }
+.admin-workspace .dashboard-content .text-brand-primary { color: #0f172a; }
+.referral-policy-row, .referral-policy-create { grid-template-columns: minmax(0, 1fr); }
+.referral-policy-reset { grid-column: 1 / -1; }
+
+@container dashboard (min-width: 52rem) {
+  .referral-policy-row { grid-template-columns: minmax(0, 1fr) 9rem auto auto; align-items: end; }
+  .referral-policy-create { grid-template-columns: minmax(0, 1fr) 9rem auto; align-items: end; }
+}
+
+.admin-workspace .dashboard-content :where(button:not([role="switch"])) {
+  min-height: 2.5rem;
+}
+
+.admin-workspace .dashboard-content :where(input:not([type="checkbox"]):not([type="radio"]):not([type="color"]):not([type="range"]), select) {
+  min-height: 2.75rem;
+}
+
+.application-review-card { padding: 1.25rem; padding: clamp(1rem, 2.5cqi, 1.75rem); }
+.application-review-heading { padding-bottom: 1.25rem; margin-bottom: 1.5rem; border-bottom: 1px solid #e2e8f0; }
+.application-review-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.application-details-area { min-width: 0; container: application-details / inline-size; }
+.application-info-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.application-profile-fields { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.application-profile-fields > div { min-width: 0; overflow-wrap: anywhere; }
+.application-profile-fields > div > span { display: block; margin-bottom: .25rem; color: #64748b; font-size: .75rem; font-weight: 500; }
+.application-profile-fields [class*="col-span"] { grid-column: 1 / -1; }
+.application-document { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: .75rem; align-items: center; }
+.application-review-actions { min-width: 0; padding: 1.25rem; border: 1px solid #e2e8f0; border-radius: 1rem; background: #f8fafc; }
+.application-review-actions textarea { min-height: 8rem; resize: vertical; }
+.application-timeline { margin-top: .5rem; border-top: 1px solid #e2e8f0; padding-top: .5rem; }
+
+@container dashboard (min-width: 60rem) {
+  .application-review-layout { grid-template-columns: minmax(0, 1fr) 20rem; }
+  .application-review-actions { position: sticky; top: 1rem; }
+}
+
+@container application-details (min-width: 48rem) {
+  .application-info-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+@container application-details (min-width: 28rem) {
+  .application-profile-fields { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+@container dashboard (max-width: 70rem) {
+  .admin-workspace .dashboard-content [class~="xl:flex-row"] { flex-direction: column; }
+  .admin-workspace .dashboard-content [class~="xl:max-w-sm"] { max-width: none; }
+  .admin-workspace .dashboard-content [class~="xl:grid-cols-4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@container dashboard (max-width: 48rem) {
+  .admin-workspace .dashboard-content [class~="lg:flex-row"] { flex-direction: column; align-items: stretch; }
+  .admin-workspace .dashboard-content [class~="xl:grid-cols-4"] { grid-template-columns: minmax(0, 1fr); }
+}
+
+@container dashboard (max-width: 35rem) {
+  .application-document { grid-template-columns: minmax(0, 1fr); }
+  .application-document button { justify-self: start; }
+  .application-review-actions { padding: 1rem; }
+  .admin-workspace .dashboard-content :where(button:not([role="switch"])) { min-height: 2.75rem; }
+}

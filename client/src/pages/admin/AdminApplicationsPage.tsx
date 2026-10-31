@@ -127,8 +127,6 @@ export const AdminApplicationsPage = () => {
 
   return (
     <div className="space-y-6">
-      <FollowUpReminders onOpen={id => { setFocusedApplication(id); setStatusFilter("all"); setDocumentEditor(id); }} />
-      {focusedApplication && <button className="min-h-11 rounded-xl border px-4" onClick={() => setFocusedApplication(undefined)}>{language === "ar" ? "عرض جميع الطلبات" : "Show all applications"}</button>}
       <section className="panel p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div className="flex items-center gap-3">
@@ -158,6 +156,8 @@ export const AdminApplicationsPage = () => {
         {formError ? <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{formError}</div> : null}
       </section>
 
+      <FollowUpReminders onOpen={id => { setFocusedApplication(id); setStatusFilter("all"); setDocumentEditor(id); }} />
+      {focusedApplication && <button className="min-h-11 rounded-xl border px-4" onClick={() => setFocusedApplication(undefined)}>{language === "ar" ? "عرض جميع الطلبات" : "Show all applications"}</button>}
       <section className="space-y-4">
         {filteredApplications.map((application) => {
           const applicantProfile = application.applicantProfile;
@@ -182,30 +182,30 @@ export const AdminApplicationsPage = () => {
           const timeline = [...(application.statusTimeline || [])].reverse();
 
           return (
-            <div key={application._id} className="panel p-6">
-              <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                <div className="min-w-0 flex-1">
+            <article key={application._id} className="application-review-card panel">
+              <header className="application-review-heading">
                   <div className="flex flex-wrap items-center gap-3">
                     <h2 className="text-xl font-semibold text-slate-900">{application.program?.title || "Untitled application"}</h2>
                     <ApplicationStatusBadge status={application.status} />
                   </div>
-                  <p className="mt-2 text-sm text-slate-500">
-                    {applicantName} - {applicantEmail} - {application.program?.university?.name || "Unknown university"}
-                  </p>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-slate-500"><span>{applicantName}</span><span aria-hidden="true">·</span><span>{application.program?.university?.name || "Unknown university"}</span><span className="basis-full"><bdi dir="ltr">{applicantEmail}</bdi></span></div>
 
                   <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-500">
-                    <span className="rounded-full bg-slate-100 px-3 py-1">Submitted: {formatDate(application.submittedAt || application.createdAt)}</span>
+                    <span className="rounded-full bg-slate-100 px-3 py-1">{language==='ar'?'تاريخ التقديم:':'Submitted:'} <bdi>{formatDate(application.submittedAt || application.createdAt)}</bdi></span>
                     <span className="rounded-full bg-slate-100 px-3 py-1">{dt(language, "documents")}: {application.documents?.length || 0}</span>
                     <span className="rounded-full bg-slate-100 px-3 py-1">{dt(language, "programIntake")}: {application.program?.intake || dt(language, "flexible")}</span>
                   </div>
 
-                  <div className="mt-5 grid gap-4 xl:grid-cols-2">
+              </header>
+              <div className="application-review-layout">
+                <div className="application-details-area">
+                  <div className="application-info-grid">
                     <div className="rounded-3xl border border-slate-200 p-4">
                       <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{dt(language, "applicantProfile")}</h3>
-                      <div className="mt-4 grid gap-3 sm:grid-cols-2 text-sm text-slate-600">
+                      <div className="application-profile-fields mt-4 text-sm text-slate-600">
                         <div><span className="font-semibold text-slate-800">{t("name")}:</span> {applicantName}</div>
                         <div><span className="font-semibold text-slate-800">{t("email")}:</span> {applicantEmail}</div>
-                        <div><span className="font-semibold text-slate-800">{t("phone")}:</span> {applicantPhone || dt(language, "notAvailable")}</div>
+                        <div><span className="font-semibold text-slate-800">{t("phone")}:</span> <bdi dir="ltr">{applicantPhone || dt(language, "notAvailable")}</bdi></div>
                         <div><span className="font-semibold text-slate-800">{dt(language, "dateOfBirth")}:</span> {applicantDateOfBirth ? formatDate(applicantDateOfBirth) : dt(language, "notAvailable")}</div>
                         <div><span className="font-semibold text-slate-800">{t("nationality")}:</span> {applicantNationality || dt(language, "notAvailable")}</div>
                         <div><span className="font-semibold text-slate-800">{t("currentEducation")}:</span> {applicantCurrentEducation || dt(language, "notAvailable")}</div>
@@ -222,16 +222,16 @@ export const AdminApplicationsPage = () => {
                       <div className="mt-4 space-y-3">
                         {application.documents?.length ? (
                           application.documents.map((document) => (
-                            <div key={document._id} className="flex items-center justify-between gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm">
-                              <div>
+                            <div key={document._id} className="application-document rounded-2xl bg-slate-50 px-4 py-3 text-sm">
+                              <div className="min-w-0">
                                 <p className="font-medium text-slate-900">{documentTypeLabels[document.type] || document.type}</p>
-                                <p className="text-xs text-slate-500">{document.fileName}</p>
+                                <p className="mt-1 text-xs leading-5 text-slate-500" dir="auto">{document.fileName}</p>
                               </div>
                               <button
                                 type="button"
                                 onClick={() => handleDocumentDownload(document)}
                                 disabled={downloadingDocumentId === document._id}
-                                className="font-semibold text-brand-700 disabled:cursor-not-allowed disabled:text-slate-400"
+                                className="min-h-11 whitespace-nowrap rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-brand-700 disabled:cursor-not-allowed disabled:text-slate-400"
                               >
                                 {downloadingDocumentId === document._id
                                   ? language === "ar"
@@ -260,7 +260,7 @@ export const AdminApplicationsPage = () => {
                   <div className="mt-4 rounded-3xl border border-slate-200 p-4">
                     <button className="mb-3 min-h-11 font-semibold" aria-expanded={documentEditor === application._id} onClick={() => setDocumentEditor(documentEditor === application._id ? undefined : application._id)}>{language === 'ar' ? 'إدارة المتابعة والمستندات' : 'Manage follow-up and documents'}</button>
                     {documentEditor === application._id && <><ApplicationAssignment id={application._id} /><ApplicationPostAdmission key={application._id} id={application._id} /><ApplicationDocumentRequests id={application._id} /></>}
-                    <h3 className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">{dt(language, "statusTimelineLabel")}</h3>
+                    <details className="application-timeline"><summary className="cursor-pointer py-2 text-sm font-semibold text-slate-600">{dt(language, "statusTimelineLabel")} ({timeline.length})</summary>
                     <div className="mt-4 space-y-3">
                       {timeline.length ? (
                         timeline.map((item, index) => (
@@ -276,10 +276,12 @@ export const AdminApplicationsPage = () => {
                         <p className="text-sm text-slate-500">{dt(language, "noStatusTimeline")}</p>
                       )}
                     </div>
+                    </details>
                   </div>
                 </div>
 
-                <div className="w-full xl:max-w-sm">
+                <aside className="application-review-actions">
+                  <h3 className="mb-4 text-base font-semibold text-slate-900">{language==='ar'?'مراجعة الطلب':'Review application'}</h3>
                   <label className="block">
                     <span className="mb-2 block text-sm font-medium text-slate-700">{dt(language, "reviewNote")}</span>
                     <textarea
@@ -334,7 +336,7 @@ export const AdminApplicationsPage = () => {
 
                   <button
                     onClick={() => handleStatusChange(application._id, application.status)}
-                    className="mt-3 inline-flex items-center gap-2 rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white"
+                    className="mt-4 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white"
                   >
                     <SendHorizontal className="h-4 w-4" />
                     {dt(language, "saveNoteOnly")}
@@ -343,14 +345,14 @@ export const AdminApplicationsPage = () => {
                   <button
                     type="button"
                     onClick={() => setDeleteTarget(application)}
-                    className="mt-3 inline-flex items-center gap-2 rounded-full border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700"
+                    className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-3 text-sm font-semibold text-rose-700"
                   >
                     <Trash2 className="h-4 w-4" />
                     {language === "ar" ? "حذف الطلب" : "Delete Application"}
                   </button>
-                </div>
+                </aside>
               </div>
-            </div>
+            </article>
           );
         })}
 
