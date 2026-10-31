@@ -78,12 +78,15 @@ test('stories: authorization, concurrent rewards, durable replay, seen, expiry a
     different.forEach(r => assert.equal(r.status, 200));
     assert.equal((await call('GET', '/progress')).data.total_points, 350);
     let feed = await call('GET', '', 1);
-    assert.equal(feed.data.stories.find(s => s.id === id).seen, false);
+    assert.equal(feed.data.stories.find(s => s.id === id).seen, true, 'liking a story also records viewing it');
     assert.equal((await call('POST', `/${id}/seen`, 1)).status, 200);
     feed = await call('GET', '', 1);
     assert.equal(feed.data.stories.find(s => s.id === id).seen, true);
     assert.equal(feed.data.stories.find(s => s.id === id).loved, true);
-    assert.equal((await call('GET', '', 2)).data.stories.find(s => s.id === id).seen, false);
+    assert.equal((await call('GET', '', 2)).data.stories.find(s => s.id === id).seen, true);
+    assert.equal((await call('GET', '', 6)).data.stories.find(s => s.id === id).seen, false);
+    assert.equal((await call('POST', `/${id}/seen`, 6)).status, 200);
+    assert.equal((await call('GET', '', 6)).data.stories.find(s => s.id === id).seen, true);
     // Eleven distinct new stories; cap is global across authors/stories.
     const more = [];
     for (let i = 0; i < 11; i++) { const r = await post(i % 2 === 0 ? 0 : 2); assert.equal(r.status, 201); more.push(r.data.id); }
