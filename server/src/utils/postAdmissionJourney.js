@@ -1,3 +1,4 @@
+const { applicationStatusInfo } = require('../constants/statusCatalog');
 const STAGES = Object.freeze({
   visa: ['التأشيرة', 'Visa'],
   travel: ['ترتيبات السفر', 'Travel arrangements'],
@@ -6,13 +7,12 @@ const STAGES = Object.freeze({
   registration: ['التسجيل في الجامعة', 'University registration'],
   residence: ['الإقامة والدعم المستمر', 'Residence and ongoing support'],
 });
-// travel auto-completes when all four sub-stages are done
-const TRAVEL_SUB_STAGES = ['housing', 'arrival', 'registration', 'residence'];
+// University registration is a separate post-arrival milestone, not a travel prerequisite.
+const TRAVEL_SUB_STAGES = ['housing', 'arrival', 'residence'];
 const STATES = ['not-started', 'in-progress', 'action-required', 'waiting-team', 'waiting-university', 'completed', 'not-required'];
 function isPostAdmissionEligible(app) {
   if (['rejected', 'file-completed-rejected', 'file-completed-accepted'].includes(app.status)) return false;
-  return ['accepted', 'final-admission', 'visa-preparation'].includes(app.detailedStatus || app.status)
-    || (!app.detailedStatus && app.status === 'final-accepted');
+  return ['accepted', 'final-admission', 'visa-preparation'].includes(applicationStatusInfo(app).status);
 }
 function postAdmissionStages(app, now = new Date()) {
   if (!isPostAdmissionEligible(app) && !Object.values(app.postAdmission || {}).some(item => item?.updatedAt)) return [];
@@ -27,14 +27,16 @@ function postAdmissionStages(app, now = new Date()) {
       const totalSubCount = TRAVEL_SUB_STAGES.length;
       // derive state from sub-stages; fallback to explicit travel status if nothing started yet
       if (completedSubCount === totalSubCount) state = 'completed';
-      else if (activeSubCount > 0) state = 'in-progress';
+      else if (activeSubCount > 0 && !['completed', 'not-required'].includes(state)) state = 'in-progress';
       // else keep the explicitly set travel status
-      extra = { completedSubCount, totalSubCount };
+      extra = ['completed', 'not-required'].includes(item.status) ? {} : { completedSubCount, totalSubCount };
     }
     const finished = ['completed', 'not-required'].includes(state);
     const overdue = !finished && Boolean(item.dueAt && new Date(item.dueAt) < now);
     return { key, titleAr, titleEn, status: overdue ? 'overdue' : state, recordedStatus: state,
-      descriptionAr: item.note || 'لم يحدد الفريق إجراءات هذه المرحلة بعد. تواصل مع مسؤول متابعتك.',
+      descriptionAr: item.note || (key === 'registration'
+        ? 'التسجيل النهائي في الجامعة خطوة مستقلة بعد القبول. يؤكد الفريق اكتمالها بعد إنهاء إجراءات التسجيل؛ قبول الطلب وحده لا يعني اكتمال التسجيل.'
+        : 'لم يحدد الفريق إجراءات هذه المرحلة بعد. تواصل مع مسؤول متابعتك.'),
       dueAt: item.dueAt || null, reference: item.reference || '',
       destination: 'support', updatedAt: item.updatedAt || null, ...extra };
   });

@@ -56,6 +56,21 @@ test('staff can assign an airport driver and a travel alert; students see only t
     // A different student has no request of their own and isn't affected.
     const othersRequest = await call('GET', '/students/arrival-services', other);
     assert.deepEqual(othersRequest, []);
+
+    const Application = require('../src/models/Application');
+    const appFields = { student: student._id, program: new mongoose.Types.ObjectId(), university: new mongoose.Types.ObjectId(), detailedStatus: 'accepted' };
+    const linked = await Application.create({ ...appFields, createdAt: new Date('2026-01-01') });
+    const newer = await Application.create(appFields);
+    request.application = linked._id;
+    request.services = { airportPickup: true, studentHousing: true, residencePermitSupport: true };
+    await request.save();
+    for (const serviceKey of ['airportPickup', 'studentHousing', 'residencePermitSupport']) {
+      await call('PATCH', route, arrivalsOfficer, { serviceKey, serviceStatus: 'completed' });
+    }
+    const stages = require('../src/utils/postAdmissionJourney').postAdmissionStages(await Application.findById(linked._id).lean());
+    assert.equal(stages.find(stage => stage.key === 'travel').status, 'completed');
+    assert.equal(stages.find(stage => stage.key === 'registration').status, 'not-started');
+    assert.equal((await Application.findById(newer._id)).postAdmission?.arrival?.status || 'not-started', 'not-started');
   } finally {
     if (server) await new Promise(resolve => server.close(resolve));
     await mongoose.disconnect(); await mongo.stop();

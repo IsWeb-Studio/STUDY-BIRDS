@@ -61,8 +61,9 @@ export const AdminSupportTicketsEnhancedPage = () => {
     }
   }, [page, totalPages]);
 
-  const handleReply = async (id: string) => {
-    if (!replies[id]?.trim()) {
+  const handleReply = async (id: string, statusOnly = false) => {
+    if (sendingId) return;
+    if (!statusOnly && !replies[id]?.trim()) {
       const message = isArabic ? "اكتب الرد أولًا." : "Write a reply first.";
       setError(message);
       pushToast(message, "error");
@@ -74,12 +75,14 @@ export const AdminSupportTicketsEnhancedPage = () => {
 
     try {
       const updated = await adminService.replySupportTicket(id, {
-        message: replies[id],
+        message: statusOnly ? (isArabic
+          ? `تم تغيير حالة التذكرة إلى: ${{ open: 'مفتوحة', 'in-progress': 'قيد المعالجة', answered: 'تم الرد', closed: 'مغلقة' }[statuses[id] || 'open']}`
+          : `Ticket status changed to: ${{ open: 'Open', 'in-progress': 'In progress', answered: 'Answered', closed: 'Closed' }[statuses[id] || 'open']}`) : replies[id],
         status: statuses[id] || "answered",
       });
       setItems((current) => current.map((item) => (item._id === id ? updated : item)));
-      setReplies((current) => ({ ...current, [id]: "" }));
-      pushToast(isArabic ? "تم إرسال الرد." : "Reply sent successfully.", "success");
+      if (!statusOnly) setReplies((current) => ({ ...current, [id]: "" }));
+      pushToast(statusOnly ? (isArabic ? "تم تحديث الحالة." : "Status updated.") : (isArabic ? "تم إرسال الرد." : "Reply sent successfully."), "success");
     } catch (issue) {
       const message = getErrorMessage(issue, isArabic ? "تعذر إرسال الرد." : "Unable to send reply.");
       setError(message);
@@ -157,6 +160,7 @@ export const AdminSupportTicketsEnhancedPage = () => {
                   <option value="answered">{isArabic ? "تم الرد" : "Answered"}</option>
                   <option value="closed">{isArabic ? "مغلقة" : "Closed"}</option>
                 </select>
+                <button type="button" disabled={Boolean(sendingId) || (statuses[item._id] || item.status) === item.status} onClick={() => handleReply(item._id, true)} className="w-full rounded-2xl border border-slate-200 px-4 py-3 disabled:opacity-60">{isArabic ? "\u062d\u0641\u0638 \u0627\u0644\u062d\u0627\u0644\u0629" : "Save status"}</button>
                 <button type="button" disabled={sendingId === item._id} onClick={() => handleReply(item._id)} className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white disabled:opacity-60">
                   <Send className="h-4 w-4" />
                   {sendingId === item._id ? (isArabic ? "جارٍ الإرسال..." : "Sending...") : isArabic ? "إرسال الرد" : "Send Reply"}

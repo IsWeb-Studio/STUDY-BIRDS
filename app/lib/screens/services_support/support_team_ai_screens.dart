@@ -419,6 +419,30 @@ class _SupportTicketDetailScreenState extends State<SupportTicketDetailScreen> {
   }
 
   bool get _isClosed => _ticket['status'] == 'closed';
+  bool get _isStaff => [UserRole.admin, UserRole.employee]
+      .contains(AuthSession.instance.currentUser?.role);
+
+  Future<void> _changeStatus(String? status) async {
+    if (!_isStaff || status == null || status == _ticket['status'] || _sending)
+      return;
+    setState(() => _sending = true);
+    try {
+      final updated = await AdminModulesRepository.instance.replySupportTicket(
+        _ticket['_id'] as String,
+        message: 'تم تغيير حالة التذكرة إلى: ${ticketStatusMeta(status).label}',
+        status: status,
+      );
+      if (mounted) setState(() => _ticket = updated);
+    } catch (e) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+            content: Text(e is ApiException
+                ? e.message
+                : 'تعذر تغيير حالة التذكرة. حاول مجددًا.')));
+    } finally {
+      if (mounted) setState(() => _sending = false);
+    }
+  }
 
   Future<void> _send() async {
     final msg = _replyCtrl.text.trim();
@@ -478,6 +502,28 @@ class _SupportTicketDetailScreenState extends State<SupportTicketDetailScreen> {
                     alignment: Alignment.centerRight,
                     child: StatusBadge(label: meta.label, color: meta.color)),
                 const SizedBox(height: 16),
+                if (_isStaff) ...[
+                  DropdownButtonFormField<String>(
+                    key: ValueKey('ticket-status-${_ticket['status']}'),
+                    initialValue: ['open', 'in-progress', 'answered', 'closed']
+                            .contains(_ticket['status'])
+                        ? _ticket['status'] as String
+                        : 'open',
+                    decoration: featureInput('حالة التذكرة'),
+                    items: ['open', 'in-progress', 'answered', 'closed']
+                        .map((status) => DropdownMenuItem(
+                            value: status,
+                            child: Text(ticketStatusMeta(status).label)))
+                        .toList(),
+                    onChanged: _sending ? null : _changeStatus,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                if (replies.isEmpty &&
+                    (_ticket['message'] as String?)?.isNotEmpty == true)
+                  Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Text(_ticket['message'] as String)),
                 if (attachment?['filePath'] is String)
                   OutlinedButton.icon(
                     icon: const Icon(Icons.attach_file_rounded),
@@ -525,7 +571,9 @@ class _SupportTicketDetailScreenState extends State<SupportTicketDetailScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                                isStudent
+                                reply['user'] is Map &&
+                                        Json.map(reply['user'])['_id'] ==
+                                            AuthSession.instance.currentUser?.id
                                     ? 'أنت'
                                     : reply['displayName']?.toString() ??
                                         Json.map(reply['user'])['name']
@@ -559,7 +607,7 @@ class _SupportTicketDetailScreenState extends State<SupportTicketDetailScreen> {
             ),
           ),
           // Reply bar — hidden only when ticket is closed
-          if (!_isClosed)
+          if (!_isClosed || _isStaff)
             SafeArea(
               top: false,
               child: Container(
@@ -613,7 +661,8 @@ class MyTeamScreen extends StatefulWidget {
   State<MyTeamScreen> createState() => _MyTeamScreenState();
 }
 
-class _MyTeamScreenState extends State<MyTeamScreen> with CachedResource<MyTeamScreen> {
+class _MyTeamScreenState extends State<MyTeamScreen>
+    with CachedResource<MyTeamScreen> {
   @override
   Iterable<String> get cachedPaths => const ["/students/support-team"];
   @override

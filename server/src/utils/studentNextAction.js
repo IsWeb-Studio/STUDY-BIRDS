@@ -1,8 +1,9 @@
+const { applicationStatusInfo } = require('../constants/statusCatalog');
 // Read-only evaluation: never promotes an admission or approves a payment.
 // The caller must supply records scoped to the authenticated student.
 const CLOSED = new Set(['rejected', 'completed']);
 const id = (record) => String(record?._id || record || '');
-const status = (record) => record.status === 'rejected' ? 'rejected' : record.detailedStatus || record.status;
+const status = (record) => ['rejected', 'file-completed-rejected'].includes(record.status) ? 'rejected' : applicationStatusInfo(record).status;
 const { missingDocumentTypes } = require('./applicationRequirements');
 const { postAdmissionNextAction } = require('./postAdmissionJourney');
 const { documentLabel } = require('../constants/documentTypes');

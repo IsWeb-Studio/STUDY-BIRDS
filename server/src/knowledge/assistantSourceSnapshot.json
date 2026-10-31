@@ -2792,7 +2792,7 @@
     },
     {
       "path": "mobile:lib/screens/services_support/support_team_ai_screens.dart",
-      "sha256": "9f85b1c91d77447725af89879e4191b8ac2a5bd6340d21464391e62cbd5088ed",
+      "sha256": "811c8c421f2f047a23b4e7301caa8ccd44126d095db98fa6bcee52265eade433",
       "dependencies": [
         "mobile:lib/core/widgets/cached_resource.dart",
         "mobile:lib/core/utils/json_safe.dart",
@@ -4975,7 +4975,7 @@
     },
     {
       "path": "server:src/controllers/adminStudentModulesController.js",
-      "sha256": "00a220f10e968afeb99b7393a2ecc048130e33c24dcfe0a8fe353384fc29565c",
+      "sha256": "2c29e3c174a7e11af1227ca828dd2eae4353ddb6c6d3173be67817fd90edcad1",
       "dependencies": [
         "server:src/utils/journeyAutomation.js",
         "server:src/utils/pushNotifications.js",
@@ -5880,8 +5880,10 @@
     },
     {
       "path": "server:src/utils/postAdmissionJourney.js",
-      "sha256": "04c7e5b706ff683706a334eff471be4236d8065682f4bf18333804b1f3e612d5",
-      "dependencies": [],
+      "sha256": "40ffaa84381ae00fe4515fc14e5e0e8b589a99115ceeda8502ccf4423fc380e1",
+      "dependencies": [
+        "server:src/constants/statusCatalog.js"
+      ],
       "screens": [],
       "routes": []
     },
@@ -6011,19 +6013,21 @@
     },
     {
       "path": "server:src/utils/studentJourney.js",
-      "sha256": "b88b1eb0d372d45dd3a0a35526b5c9657664bcc84f8cb82c442d5ed0bbaf8fac",
+      "sha256": "e6de965e05fd6d73be4edce26e596ab6ff4d0762469a5eb9d6883837a52dcc99",
       "dependencies": [
         "server:src/utils/applicationRequirements.js",
         "server:src/utils/studentNextAction.js",
-        "server:src/utils/postAdmissionJourney.js"
+        "server:src/utils/postAdmissionJourney.js",
+        "server:src/constants/statusCatalog.js"
       ],
       "screens": [],
       "routes": []
     },
     {
       "path": "server:src/utils/studentNextAction.js",
-      "sha256": "6a0da84d6e813c2c048af2ddf96961554d89aa5acdd06ee8730a5597303b3861",
+      "sha256": "4daed5c7943fa7b15298a82ecebe3f9dfc3f0102655444f11758a46cc1f9e09a",
       "dependencies": [
+        "server:src/constants/statusCatalog.js",
         "server:src/utils/applicationRequirements.js",
         "server:src/utils/postAdmissionJourney.js",
         "server:src/constants/documentTypes.js"
@@ -7798,8 +7802,18 @@
       "routes": []
     },
     {
+      "path": "website:src/pages/admin/AdminSupportTicketsEnhancedPage.test.tsx",
+      "sha256": "09f88881f2c233aa04e7c5ce069eb2acc0e91253b2b7b95cb901f205ac6c276f",
+      "dependencies": [
+        "website:src/pages/admin/AdminSupportTicketsEnhancedPage.tsx",
+        "website:src/services/adminService.ts"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
       "path": "website:src/pages/admin/AdminSupportTicketsEnhancedPage.tsx",
-      "sha256": "e08811711d664c975cca1b09598959392039de708d196b26a3b1b4dfa14d1f9c",
+      "sha256": "b6c359f27b3056fc65f5a5eeb08cad78284505b9c24e59cf7c6047630ee45921",
       "dependencies": [
         "website:src/components/VoiceReply.tsx",
         "website:src/components/DocumentFileLink.tsx",

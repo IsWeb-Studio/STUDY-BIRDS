@@ -2,6 +2,7 @@
 const { missingDocumentTypes, requiredDocumentTypesFor } = require('./applicationRequirements');
 const { studentNextAction } = require('./studentNextAction');
 const { postAdmissionStages } = require('./postAdmissionJourney');
+const { applicationStatusInfo } = require('../constants/statusCatalog');
 const id = value => String(value?._id || value || '');
 function studentJourneys({ applications = [], documents = [], invoices = [] }, now = new Date()) {
   return applications.map((app, appIndex) => {
@@ -9,7 +10,7 @@ function studentJourneys({ applications = [], documents = [], invoices = [] }, n
     const files = documents.filter(doc => linked.has(id(doc)));
     // Unlinked invoices appear only on the oldest application to avoid showing on newly created journeys
     const bills = invoices.filter(invoice => id(invoice.application) === id(app) || (!invoice.application && appIndex === applications.length - 1));
-    const state = app.status === 'rejected' ? 'rejected' : app.detailedStatus || app.status;
+    const state = ['rejected', 'file-completed-rejected'].includes(app.status) ? 'rejected' : applicationStatusInfo(app).status;
     const closed = ['rejected', 'completed'].includes(state);
     const required = app.requiredDocumentTypes ?? requiredDocumentTypesFor(app.program);
     const missing = missingDocumentTypes(required, files);

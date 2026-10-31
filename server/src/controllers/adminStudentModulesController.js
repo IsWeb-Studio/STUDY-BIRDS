@@ -358,12 +358,16 @@ const updateArrivalRequestAdmin = asyncHandler(async (req, res) => {
     const now3 = new Date();
     const eligibleApp3 = await Application.findOne({
       student: item.student,
+      ...(item.application ? { _id: item.application } : {}),
       status: { $nin: ['rejected', 'file-completed-rejected', 'file-completed-accepted'] },
       $or: [
         { detailedStatus: { $in: ['accepted', 'final-admission', 'visa-preparation'] } },
         { status: 'final-accepted' },
       ],
     }).sort({ createdAt: -1 });
+    if (!eligibleApp3) {
+      return res.status(409).json({ message: 'No active accepted application is linked to this travel request. Review the application first.' });
+    }
     if (eligibleApp3) {
       await Application.updateOne({ _id: eligibleApp3._id }, {
         $set: { [`postAdmission.${stageName}.status`]: serviceStatus, [`postAdmission.${stageName}.updatedAt`]: now3 }
@@ -402,6 +406,7 @@ const updateArrivalRequestAdmin = asyncHandler(async (req, res) => {
       : 'not-started';
     const eligibleApp = await Application.findOne({
       student: item.student,
+      ...(item.application ? { _id: item.application } : {}),
       status: { $nin: ['rejected', 'file-completed-rejected', 'file-completed-accepted'] },
       $or: [
         { detailedStatus: { $in: ['accepted', 'final-admission', 'visa-preparation'] } },
@@ -508,6 +513,7 @@ const syncArrivalStagesAdmin = asyncHandler(async (req, res) => {
   for (const item of completed) {
     const eligibleApp = await Application.findOne({
       student: item.student,
+      ...(item.application ? { _id: item.application } : {}),
       status: { $nin: ['rejected', 'file-completed-rejected', 'file-completed-accepted'] },
       $or: [
         { detailedStatus: { $in: ['accepted', 'final-admission', 'visa-preparation'] } },
