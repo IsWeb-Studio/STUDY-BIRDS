@@ -1205,7 +1205,7 @@
     },
     {
       "path": "mobile:lib/screens/community/student_community_hub.dart",
-      "sha256": "62933802e4606fbd91ef81e50702a7c431d2493700719035ce243a532d009be8",
+      "sha256": "9d3d9c87ddcc2a2ad789016912efb7c8f65fe995adc361609397ea99fa46d45c",
       "dependencies": [
         "mobile:lib/core/repositories/stories_repository.dart",
         "mobile:lib/core/widgets/keep_alive_section.dart",
@@ -1218,8 +1218,7 @@
         "mobile:lib/core/network/api_client.dart",
         "mobile:lib/core/services/auth_session.dart",
         "mobile:lib/screens/stories/student_stories.dart",
-        "mobile:lib/screens/services_support/messaging_and_emergency_screens.dart",
-        "mobile:lib/screens/services_support/community_screen.dart"
+        "mobile:lib/screens/services_support/messaging_and_emergency_screens.dart"
       ],
       "screens": [
         "StudentCommunityHub"

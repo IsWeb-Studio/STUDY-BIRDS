@@ -14,7 +14,6 @@ import '../../core/network/api_client.dart';
 import '../../core/services/auth_session.dart';
 import '../stories/student_stories.dart';
 import '../services_support/messaging_and_emergency_screens.dart';
-import '../services_support/community_screen.dart';
 import 'admin_community_control_center.dart';
 
 bool _hubIsArabic(BuildContext context) =>
@@ -483,16 +482,8 @@ class _StudentCommunityHubState extends State<StudentCommunityHub>
       ? const SizedBox.shrink()
       : Scaffold(
           key: const ValueKey('student-community-hub'),
-          appBar: AppBar(
-              title: Text(_hubText(context, 'المجتمع', 'Community')),
-              actions: [
-                IconButton(
-                    onPressed: () => Navigator.of(context).push(
-                        MaterialPageRoute(
-                            builder: (_) => const StudentCommunityScreen())),
-                    icon: const Icon(Icons.feed_outlined),
-                    tooltip: _hubText(context, 'المنشورات', 'Posts')),
-              ]),
+          appBar:
+              AppBar(title: Text(_hubText(context, 'المجتمع', 'Community'))),
           body: RefreshIndicator(
               color: AppColors.navy,
               onRefresh: _refreshPage,
