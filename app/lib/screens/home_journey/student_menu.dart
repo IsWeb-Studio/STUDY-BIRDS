@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/config/app_theme.dart';
 import '../../core/services/auth_session.dart';
+import '../../core/widgets/sponsor_credit.dart';
+import '../stories/friends_screen.dart';
 import '../../main.dart' show RootChooserScreen;
 import '../applications_documents_payments/applications_screens.dart';
 import '../applications_documents_payments/documents_screens.dart';
@@ -242,12 +244,26 @@ class StudentMenuPanel extends StatelessWidget {
           ],
         ))),
         const Divider(height: 1),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                key: const ValueKey('menu-refer-friends'),
+                onPressed: () => onOpen(const FriendsScreen()),
+                icon: const Icon(Icons.person_add_alt_1_outlined),
+                label: const Text('Refer Friends'),
+              )),
+        ),
         ListTile(
             key: const ValueKey('menu-logout'),
             leading: const Icon(Icons.logout_rounded, color: AppColors.danger),
             title: Text(text('تسجيل الخروج', 'Sign out'),
                 style: const TextStyle(color: AppColors.danger)),
             onTap: onLogout),
+        const Padding(
+            padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: SponsorCredit()),
       ])),
     );
   }

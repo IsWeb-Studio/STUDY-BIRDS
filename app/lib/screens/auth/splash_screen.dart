@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
+import '../../core/widgets/sponsor_credit.dart';
 
 class SplashScreen extends StatefulWidget {
   final VoidCallback? onFinished;
@@ -35,7 +36,7 @@ class _SplashScreenState extends State<SplashScreen> {
             padding: const EdgeInsets.all(12),
             child: LayoutBuilder(builder: (context, constraints) {
               final width =
-                  math.min(constraints.maxWidth, constraints.maxHeight / 1.66);
+                  math.min(constraints.maxWidth, constraints.maxHeight / 1.76);
               return Center(
                   child: SizedBox(
                       width: width,
@@ -77,6 +78,10 @@ class _SplashScreenState extends State<SplashScreen> {
                                   letterSpacing: width * .012,
                                   fontWeight: FontWeight.w800,
                                   color: const Color(0xFF041E4A))),
+                          SizedBox(height: width * .02),
+                          SponsorCredit(
+                              fontSize: width * .035,
+                              textScaler: TextScaler.noScaling),
                         ],
                       )));
             }),

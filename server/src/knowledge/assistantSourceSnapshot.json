@@ -726,6 +726,15 @@
       "routes": []
     },
     {
+      "path": "mobile:lib/core/widgets/sponsor_credit.dart",
+      "sha256": "17895e0effd11212eda94017824a214874e62688158239de9fe0b17f608599dc",
+      "dependencies": [
+        "mobile:lib/core/config/app_theme.dart"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
       "path": "mobile:lib/core/widgets/state_widgets.dart",
       "sha256": "2dd0e2b27f06facde81c832eff74c4498169cd2457fcea0dfb4dc38ab6688a77",
       "dependencies": [
@@ -1124,8 +1133,10 @@
     },
     {
       "path": "mobile:lib/screens/auth/splash_screen.dart",
-      "sha256": "16fa084977f00ef6204d908d67cc1c5387a5ac3e577d53856b58c19678d092be",
-      "dependencies": [],
+      "sha256": "1e8d37feeef93e3f0e7406d0c9786c82f1471f99b480318ca09864c55b550a17",
+      "dependencies": [
+        "mobile:lib/core/widgets/sponsor_credit.dart"
+      ],
       "screens": [
         "SplashScreen"
       ],
@@ -1550,10 +1561,12 @@
     },
     {
       "path": "mobile:lib/screens/home_journey/student_menu.dart",
-      "sha256": "768c0d91bd66ebd0bf6145f995c7e81de3fa203544ea9be9c4f786691d463803",
+      "sha256": "9dc13c4625213683432164ec3fce4b7c1fe321ab744c92271ffc8230cc1c5fd0",
       "dependencies": [
         "mobile:lib/core/config/app_theme.dart",
         "mobile:lib/core/services/auth_session.dart",
+        "mobile:lib/core/widgets/sponsor_credit.dart",
+        "mobile:lib/screens/stories/friends_screen.dart",
         "mobile:lib/main.dart",
         "mobile:lib/screens/applications_documents_payments/applications_screens.dart",
         "mobile:lib/screens/applications_documents_payments/documents_screens.dart",

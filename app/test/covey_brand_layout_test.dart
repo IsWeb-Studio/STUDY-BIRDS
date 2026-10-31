@@ -64,6 +64,9 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: SplashScreen()));
       await tester.pumpAndSettle();
       expect(find.text('COVEY'), findsOneWidget);
+      expect(find.text('Sponsored by Study Birds'), findsOneWidget);
+      expect(tester.getRect(find.text('Sponsored by Study Birds')).bottom,
+          lessThanOrEqualTo(size.height));
       final logo =
           tester.getRect(find.byKey(const ValueKey('splash-covey-mark')));
       expect(logo.width, closeTo(logo.height, .01));
