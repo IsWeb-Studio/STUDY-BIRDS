@@ -80,7 +80,9 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
   // fallback local image per index (cycles if fewer remote banners)
   static const _localImages = ['campus', 'library', 'students'];
 
-  late List<_BannerSlide> _slides = widget.placement == 'home' ? _fallback : [];
+  List<_BannerSlide> get _defaultSlides =>
+      widget.placement == 'home' ? _fallback : [_fallback.first];
+  late List<_BannerSlide> _slides = _defaultSlides;
 
   @override
   void initState() {
@@ -134,8 +136,7 @@ class _StudentBannerCarouselState extends State<StudentBannerCarousel>
       if (mounted) {
         if (_pages.hasClients) _pages.jumpToPage(0);
         setState(() {
-          _slides =
-              slides.isEmpty && widget.placement == 'home' ? _fallback : slides;
+          _slides = slides.isEmpty ? _defaultSlides : slides;
           _index = 0;
         });
       }

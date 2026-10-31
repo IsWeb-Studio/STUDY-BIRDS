@@ -10,7 +10,7 @@ void main() {
   setUp(() => ApiClient.instance.clearCache());
   tearDown(() => ApiClient.instance.clearCache());
   testWidgets(
-      'community ads exclude home content, navigate and disappear after refresh',
+      'community ads replace the local banner and return to it when removed',
       (tester) async {
     var active = true;
     String? opened;
@@ -36,7 +36,11 @@ void main() {
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
       expect(find.text('Community offer'), findsNothing);
-      expect(find.byType(PageView), findsNothing);
+      expect(find.byType(PageView), findsOneWidget);
+      expect(
+          find.byWidgetPredicate(
+              (widget) => widget is Image && widget.image is ResizeImage),
+          findsWidgets);
       await tester.pumpWidget(const SizedBox());
       expect(tester.takeException(), isNull);
     },
@@ -57,8 +61,7 @@ void main() {
                   headers: {'content-type': 'application/json'});
             }));
   });
-  testWidgets(
-      'no active community ads produces no fallback promotion or blank carousel',
+  testWidgets('no active community ads shows the bundled campus banner',
       (tester) async {
     await http.runWithClient(() async {
       await tester.pumpWidget(MaterialApp(
@@ -67,7 +70,8 @@ void main() {
                   placement: 'community', onExplore: (_) {}))));
       await tester.pump();
       await tester.pump(const Duration(milliseconds: 200));
-      expect(find.byType(PageView), findsNothing);
+      expect(find.byType(PageView), findsOneWidget);
+      expect(find.byType(Image), findsWidgets);
       await tester.pumpWidget(const SizedBox());
       expect(tester.takeException(), isNull);
     }, () => MockClient((_) async => http.Response('[]', 200)));

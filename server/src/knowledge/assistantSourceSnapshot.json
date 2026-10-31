@@ -1559,7 +1559,7 @@
     },
     {
       "path": "mobile:lib/screens/home_journey/student_banner_carousel.dart",
-      "sha256": "af1ad68307e7cc95bba67b07b91dd47e3ea4cda278fcda88303c5daa98b9804d",
+      "sha256": "b68100f5aa14be03c434f29c9a64081244e010606dfdb96d719ddc9157c5919a",
       "dependencies": [
         "mobile:lib/core/widgets/cached_resource.dart",
         "mobile:lib/core/utils/json_safe.dart",

@@ -13,6 +13,10 @@ void main() {
   testWidgets(
       'community keeps stories above inbox and promotes incoming unread chat',
       (tester) async {
+    tester.view.physicalSize = const Size(800, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     var updated = false;
     final read = <String>[];
     Map<String, dynamic> row(String id, String name, String body, int unread) =>
