@@ -52,7 +52,7 @@ export function PushAnnouncementComposer() {
     <form className="space-y-3" onSubmit={event => { event.preventDefault(); void send(); }}>
       <label className="block">{ar ? 'العنوان' : 'Title'}<input required maxLength={80} disabled={busy || !!requestId} value={title} onChange={e => setTitle(e.target.value)} className="block w-full rounded-xl border p-3" /></label>
       <label className="block">{ar ? 'نص الإعلان' : 'Message'}<textarea required maxLength={1000} disabled={busy || !!requestId} value={body} onChange={e => setBody(e.target.value)} className="block w-full rounded-xl border p-3" /></label>
-      <div className="rounded-xl bg-slate-50 p-4" aria-label={ar ? 'معاينة' : 'Preview'}><strong>{title || 'COVEY'}</strong><p className="whitespace-pre-wrap">{body}</p></div>
+      <div className="rounded-xl bg-slate-50 p-4" aria-label={ar ? 'معاينة' : 'Preview'}><strong>{title || 'Study Birds'}</strong><p className="whitespace-pre-wrap">{body}</p></div>
       <button disabled={busy || !enabled || !title.trim() || !body.trim()} className="rounded-xl bg-slate-900 px-4 py-3 text-white disabled:opacity-50">{busy ? (ar ? 'جارٍ الإرسال…' : 'Sending…') : requestId ? (ar ? 'إعادة محاولة نفس الإعلان' : 'Retry same announcement') : (ar ? 'إرسال للجميع' : 'Send to all')}</button>
     </form>
     {error && <p role="alert">{error}</p>}{message && <p role="status">{message}</p>}

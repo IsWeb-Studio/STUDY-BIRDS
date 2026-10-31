@@ -6354,7 +6354,7 @@
     },
     {
       "path": "website:src/components/admin/PushAnnouncementComposer.tsx",
-      "sha256": "2dd8c8aeb05bd3d3c7eafe8dff5d0390e10b92a351fce09f148680ef47c96155",
+      "sha256": "40de0ef3a9c00360750e2b4add2f3e60c19051ca074a2e375691ed4cd0aaf580",
       "dependencies": [
         "website:src/lib/api.ts",
         "website:src/hooks/useAuth.ts",
@@ -6585,7 +6585,7 @@
     },
     {
       "path": "website:src/components/FloatingAssistant.tsx",
-      "sha256": "e9e4adc787fb9a2aa5ce1b9d0c2c2b7793808afefc9759949bc5226cad01cd42",
+      "sha256": "f3943dc8c4516df98c5fc803c00f46512a254244f1c4930955fdd52f5fa6d42c",
       "dependencies": [
         "website:src/hooks/useAuth.ts",
         "website:src/hooks/useLanguage.ts",
@@ -7000,7 +7000,7 @@
     },
     {
       "path": "website:src/context/LanguageContext.tsx",
-      "sha256": "b2df8f79955dc90362ba601a60b86734ea8b8643051cb53087cc303b0990d039",
+      "sha256": "4d48e754efbaff3b0964ef4f96874d9ef6b9d118ce4c8c089fea3519429711ae",
       "dependencies": [
         "website:src/seo/site.ts",
         "website:src/utils/textCodec.ts"
@@ -7114,7 +7114,7 @@
     },
     {
       "path": "website:src/layouts/DashboardLayout.tsx",
-      "sha256": "da4f25cbe6ddd0f4efc99799eba8e2b6a582d2ee13f1d13b3aea62711ee2a840",
+      "sha256": "e5c0e2008831efa6ce5a5f9f94a1b46a8d43dd907c673ddcf84ac3a24c13550b",
       "dependencies": [
         "website:src/components/Navbar.tsx",
         "website:src/components/dashboard/DashboardSidebar.tsx",
@@ -7256,7 +7256,7 @@
     },
     {
       "path": "website:src/pages/AboutPage.tsx",
-      "sha256": "62580e77ba994fe3d6425ec6ab31d9089ee90af55125c3621995e4854ca2e801",
+      "sha256": "c63d700a6b01cfa8ed95e5156dba8d89ae1323b4ac60408465f5dfbd466bd09a",
       "dependencies": [
         "website:src/components/seo/Seo.tsx",
         "website:src/hooks/useLanguage.ts",
@@ -7293,7 +7293,7 @@
     },
     {
       "path": "website:src/pages/AccountDeletionRequestPage.tsx",
-      "sha256": "ad5e92ba2023431e4537523015b0f97187e06637a883a4c550ced741d6326418",
+      "sha256": "7e44096c711b9d9c6a708236f79e466a9db132831f724c3fddac73fcabce0a51",
       "dependencies": [
         "website:src/hooks/useLanguage.ts",
         "website:src/lib/api.ts",
@@ -7496,7 +7496,7 @@
     },
     {
       "path": "website:src/pages/admin/AdminExhibitionsPage.tsx",
-      "sha256": "05cd5eacfce331b8836510f4488ecd5a7ff7dbcd7364eda6c356dec72bfa14f0",
+      "sha256": "29bce61b70e5fa0bf0b6ec4aadeae893322e8e6b38a7ae8215f8e7f31e49c0aa",
       "dependencies": [
         "website:src/components/admin/ArticleContentFields.tsx",
         "website:src/constants/articleContent.ts",
@@ -8087,7 +8087,7 @@
     },
     {
       "path": "website:src/pages/auth/AccountSecurityPage.tsx",
-      "sha256": "13f5361e15b5ca5a3b57cfa213eaaaef43cb48b395d7763a24170c7a651cc8d4",
+      "sha256": "e12095fb5214833c2dcf4e774dd96392a7629c2028413523301f7b4163ad3910",
       "dependencies": [
         "website:src/components/auth/IdentitySettings.tsx",
         "website:src/lib/api.ts",
@@ -8112,7 +8112,7 @@
     },
     {
       "path": "website:src/pages/auth/ForgotPasswordPage.tsx",
-      "sha256": "162aad9515021347d895f6d8d7548c2626dc35d718bb467bb332a1e62ab981a1",
+      "sha256": "36b50c76fe3ee1e5456c223a2f42def9460639ffde8ba78cc2931e626541dfd9",
       "dependencies": [
         "website:src/components/forms/FormInput.tsx",
         "website:src/components/forms/PasswordStrengthBar.tsx",
@@ -8173,7 +8173,7 @@
     },
     {
       "path": "website:src/pages/BecomeAgentPage.tsx",
-      "sha256": "73dc94e2b10b2192d8a513937e63a668b2f29e38b9f4f3b6b8221cc137c70953",
+      "sha256": "776f309a9792a990cec2475be99ac586fe23c8a6ca8b9aad6ed0dc9491a6e8b1",
       "dependencies": [
         "website:src/components/seo/Seo.tsx",
         "website:src/hooks/useAuth.ts",
@@ -8188,7 +8188,7 @@
     },
     {
       "path": "website:src/pages/BlogCategoryPage.tsx",
-      "sha256": "a077dc3e2bf4de44688eb351c00b18427bad98c8dcaeeb7010adea0ee8e93c7d",
+      "sha256": "2c38509d4d0e7db6bc4d3ac5f16aab60c91518efedeb665f7cfac20646518373",
       "dependencies": [
         "website:src/components/seo/Seo.tsx",
         "website:src/hooks/useLanguage.ts",
@@ -8201,7 +8201,7 @@
     },
     {
       "path": "website:src/pages/ConsultationsPage.tsx",
-      "sha256": "a34f36e444f51723cc2d89eff824b0e9982aee5950f7c859c020f691416f9a98",
+      "sha256": "675d824903c6e6d56bb91edb7d59390fb5934a1b6d3c113b01b9ffb4eae1303b",
       "dependencies": [
         "website:src/lib/api.ts",
         "website:src/hooks/useLanguage.ts",
@@ -8309,7 +8309,7 @@
     },
     {
       "path": "website:src/pages/OurEventPage.tsx",
-      "sha256": "934e4a8bbac2ea3fab59fe593ac72371c8bae6f7d73f468476d0b4b10dcbe6cc",
+      "sha256": "2c656bac60b1da6d400c6d95f61bfdbbcb6ae61306496d3312bbc31dc41fd00a",
       "dependencies": [
         "website:src/components/forms/PhoneNumberField.tsx",
         "website:src/components/seo/Seo.tsx",
@@ -8327,7 +8327,7 @@
     },
     {
       "path": "website:src/pages/OurStoryPage.tsx",
-      "sha256": "460500a63fec3eb56d979c59e23c28ef575011e4bebe95a1a4d5b8acd43fb37d",
+      "sha256": "4acd0945815d8edf96e3fff017d6492c411f96c27977ee5568ff54db07c0a4f3",
       "dependencies": [
         "website:src/components/seo/Seo.tsx",
         "website:src/hooks/useLanguage.ts",
@@ -8341,7 +8341,7 @@
     },
     {
       "path": "website:src/pages/parent/ParentChildOverviewPage.tsx",
-      "sha256": "eb212677744e1a673e0666620e441ef874283d5965702530034081a636e2189d",
+      "sha256": "c1ec7e571703f760a58d9a06f46e93b20bcf5f506ea25cda2da216e903b53948",
       "dependencies": [
         "website:src/components/ApplicationStatusBadge.tsx",
         "website:src/services/parentService.ts",
@@ -8354,7 +8354,7 @@
     },
     {
       "path": "website:src/pages/parent/ParentDashboardPage.tsx",
-      "sha256": "3e57a782f15cb5f3be86b7f8a722a4ce40f84ab7ada23c12feae73e015de1d56",
+      "sha256": "620978337cc75d0ac562aabbae561a4ca5064eb33b7b9e52e40a06a675428e04",
       "dependencies": [
         "website:src/services/parentService.ts",
         "website:src/utils/errors.ts",
@@ -8378,7 +8378,7 @@
     },
     {
       "path": "website:src/pages/partner/PartnerDashboardPage.tsx",
-      "sha256": "0ee27fe25f132aa505b75a1c77183170e7ff9c24db251c622dee7a6ea13481f2",
+      "sha256": "cbb74be6d5fbb8787e69ab7871df5aac6c5d8272d1d14c27d85e3f09082abda8",
       "dependencies": [
         "website:src/components/dashboard/StatsCard.tsx",
         "website:src/components/EmptyState.tsx",
@@ -8717,7 +8717,7 @@
     },
     {
       "path": "website:src/pages/student/StudentBecomeAgentPage.tsx",
-      "sha256": "74e87f9004fe079f3c797f8d4333fd52f05c4a1f7aa1122de4f1db357839f4c9",
+      "sha256": "1a870ddad5e7ee1e6148cd1055cdb1832f0a2a2dd900285240393058204d944b",
       "dependencies": [
         "website:src/hooks/useLanguage.ts",
         "website:src/hooks/useSiteSettings.ts",
@@ -8741,7 +8741,7 @@
     },
     {
       "path": "website:src/pages/student/StudentDashboardPage.tsx",
-      "sha256": "761d9a4851101a89aed621ab7d35947b63ed3ea9504413e14e9c8e52cdfe327c",
+      "sha256": "ce06ac64280a6ebab47be9adbc28aca38c2f106ab7c9619b0dc680391b04cb3d",
       "dependencies": [
         "website:src/components/ApplicationStatusBadge.tsx",
         "website:src/components/EmptyState.tsx",
@@ -8888,7 +8888,7 @@
     },
     {
       "path": "website:src/pages/student/StudentProfilePage.tsx",
-      "sha256": "4da04b8eb680e70983380b309c535f84734588f5f734509946a5ab67895dfe69",
+      "sha256": "29b86a3fe9c0ec32ae803c175aa3b2cf412512b45708fd07f4e70876ec57618e",
       "dependencies": [
         "website:src/components/forms/DateOfBirthField.tsx",
         "website:src/components/forms/FormInput.tsx",
@@ -8965,7 +8965,7 @@
     },
     {
       "path": "website:src/pages/student/StudentVisaCenterPage.tsx",
-      "sha256": "c40a31388b681ac1c8379faea2daacadeb9f38448aa8bae8d619effa1cd5d51e",
+      "sha256": "e1021094e8fcce51e0997230acc059d01f9a75dc192bbf7150e250e3ac2e1d1d",
       "dependencies": [
         "website:src/components/EmptyState.tsx",
         "website:src/hooks/useLanguage.ts",
@@ -9206,7 +9206,7 @@
     },
     {
       "path": "website:src/seo/site.ts",
-      "sha256": "08b02d41b0213951d03a067e8ea5de98aedf242a0c47fa77b540aa3d07e73f10",
+      "sha256": "5276d7d113abbfe072d0fc04b42d74936c2b503e83ebd3b5dd88cf81d7933ac2",
       "dependencies": [
         "website:src/context/LanguageContext.tsx"
       ],
@@ -9340,7 +9340,7 @@
     },
     {
       "path": "website:src/utils/dashboardTranslations.ts",
-      "sha256": "4dfedb9502bd859e374ca671eed8e49c594229df0cfcff6808fc6ac31ba09e53",
+      "sha256": "66162f16c4e11237f791c85429b0958b7870d896b10b2e036ea43a4173371102",
       "dependencies": [
         "website:src/context/LanguageContext.tsx",
         "website:src/seo/site.ts"

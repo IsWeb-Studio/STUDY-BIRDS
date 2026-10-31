@@ -94,8 +94,8 @@ export const OurStoryPage = () => {
             <p className="mt-5 max-w-3xl text-base leading-8 text-slate-200 sm:text-lg">
               {story.heroBody ||
                 (language === "ar"
-                  ? "نؤمن أن الدراسة بالخارج رحلة تحتاج إلى وضوح ودعم حقيقي، لذلك بنينا COVEY لتكون نقطة انطلاق موثوقة للطالب العربي."
-                  : "We believe studying abroad needs clarity and real support, so we built COVEY to be a trusted launch point for students.")}
+                  ? "نؤمن أن الدراسة بالخارج رحلة تحتاج إلى وضوح ودعم حقيقي، لذلك بنينا Study Birds لتكون نقطة انطلاق موثوقة للطالب العربي."
+                  : "We believe studying abroad needs clarity and real support, so we built Study Birds to be a trusted launch point for students.")}
             </p>
             {story.heroCtaText ? (
               story.heroCtaLink ? (

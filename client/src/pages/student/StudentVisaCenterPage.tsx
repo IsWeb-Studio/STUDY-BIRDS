@@ -225,8 +225,8 @@ export const StudentVisaCenterPage = () => {
               {/* Notice */}
               <p className="rounded-xl bg-blue-50 p-4 text-sm text-blue-700">
                 {t(
-                  "الموعد الدقيق لمقابلة القنصلية يُحدَّد من قِبل فريق COVEY وسيتم إبلاغك عبر الإشعارات.",
-                  "The exact consulate interview date is scheduled by the COVEY team. You will be notified via notifications."
+                  "الموعد الدقيق لمقابلة القنصلية يُحدَّد من قِبل فريق Study Birds وسيتم إبلاغك عبر الإشعارات.",
+                  "The exact consulate interview date is scheduled by the Study Birds team. You will be notified via notifications."
                 )}
               </p>
             </div>

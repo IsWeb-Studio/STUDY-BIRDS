@@ -25,12 +25,12 @@ export const BecomeAgentPage = () => {
     ? [
         "وسّع دورك من طالب إلى وكيل يساعد طلابًا آخرين في رحلتهم الدراسية.",
         "استفد من منصة منظمة لمتابعة البرامج والجامعات والتواصل بشكل أوضح.",
-        "ابدأ طلب الانضمام كوكيل مباشرة عبر فريق COVEY.",
+        "ابدأ طلب الانضمام كوكيل مباشرة عبر فريق Study Birds.",
       ]
     : [
         "Grow from student to agent and support other students in their study journey.",
         "Use an organized platform to follow programs, universities, and communication more clearly.",
-        "Start your onboarding request directly with the COVEY team.",
+        "Start your onboarding request directly with the Study Birds team.",
       ];
 
   useEffect(() => {
@@ -90,10 +90,10 @@ export const BecomeAgentPage = () => {
         <div className="max-w-3xl">
           <div className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-4 py-2 text-sm font-semibold text-brand-700">
             <BriefcaseBusiness className="h-4 w-4" />
-            {isArabic ? "فرصة جديدة داخل COVEY" : "A new role inside COVEY"}
+            {isArabic ? "فرصة جديدة داخل Study Birds" : "A new role inside Study Birds"}
           </div>
           <h1 className="mt-5 text-4xl font-semibold text-slate-900 sm:text-5xl">
-            {isArabic ? "كن وكيلاً مع COVEY" : `Become an Agent with ${SITE_NAME}`}
+            {isArabic ? "كن وكيلاً مع Study Birds" : `Become an Agent with ${SITE_NAME}`}
           </h1>
           <p className="mt-5 text-lg leading-8 text-slate-600">
             {isArabic

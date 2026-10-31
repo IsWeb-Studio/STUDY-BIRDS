@@ -19,12 +19,12 @@ export const StudentBecomeAgentPage = () => {
   const steps = isArabic
     ? [
         "حدّث ملفك الشخصي وبياناتك الأكاديمية داخل لوحة الطالب.",
-        "تواصل مع فريق COVEY لطلب التحول إلى وكيل.",
+        "تواصل مع فريق Study Birds لطلب التحول إلى وكيل.",
         "بعد المراجعة، يتم توجيهك للخطوات التالية للانضمام كوكيل.",
       ]
     : [
         "Update your profile and academic details from your dashboard.",
-        "Contact the COVEY team to request becoming an agent.",
+        "Contact the Study Birds team to request becoming an agent.",
         "After review, you will be guided through the next onboarding steps.",
       ];
 
@@ -76,8 +76,8 @@ export const StudentBecomeAgentPage = () => {
           <h1 className="mt-3 text-3xl font-semibold text-slate-900">{isArabic ? "كن وكيلاً" : "Become an Agent"}</h1>
           <p className="mt-4 text-base leading-7 text-slate-600">
             {isArabic
-              ? "إذا رغبت في أن تصبح وكيلاً مع COVEY، ابدأ من هنا. هذا القسم يوضح لك الطريقة الأسرع لبدء الطلب والتواصل مع الفريق."
-              : "If you want to become an agent with COVEY, start here. This section gives you the fastest way to begin and contact the team."}
+              ? "إذا رغبت في أن تصبح وكيلاً مع Study Birds، ابدأ من هنا. هذا القسم يوضح لك الطريقة الأسرع لبدء الطلب والتواصل مع الفريق."
+              : "If you want to become an agent with Study Birds, start here. This section gives you the fastest way to begin and contact the team."}
           </p>
 
           {statusLabel ? (
