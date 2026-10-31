@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/utils/knowledge_resource.dart';
 import '../../core/widgets/external_link.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -712,7 +713,7 @@ class _AgentPartnerAreaScreenState extends State<_AgentPartnerAreaScreen> {
     }
     return items.map((raw) {
       final item = Json.map(raw);
-      final url = '${item['videoUrl'] ?? item['fileUrl'] ?? ''}';
+      final url = knowledgeResourceUrl(item);
       return AppCard(
           child:
               Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -725,7 +726,17 @@ class _AgentPartnerAreaScreenState extends State<_AgentPartnerAreaScreen> {
         if (url.isNotEmpty)
           TextButton.icon(
               onPressed: () async {
-                await openExternalLink(context, url);
+                try {
+                  final uri = await resolveKnowledgeResource(url);
+                  if (!mounted) return;
+                  await openExternalLink(context, uri.toString());
+                } catch (_) {
+                  if (mounted)
+                    _notice(
+                        _t('رابط المورد غير صالح أو لم يعد متاحًا. تواصل مع الدعم لتحديثه.',
+                            'The resource link is invalid or no longer available. Ask support to update it.'),
+                        error: true);
+                }
               },
               icon: const Icon(Icons.open_in_new),
               label: Text(_t('فتح المورد', 'Open resource'))),

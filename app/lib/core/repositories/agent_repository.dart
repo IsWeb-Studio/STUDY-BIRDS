@@ -98,7 +98,7 @@ class AgentRepository {
   }
 
   Future<Map<String, dynamic>> getReferralSummary() async {
-    final data = await ApiClient.instance.get('/partners/referral', token: _token);
+    final data = await ApiClient.instance.get('/partners/referral', token: _token, cached: false);
     return Json.map(data);
   }
 

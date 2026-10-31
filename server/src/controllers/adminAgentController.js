@@ -1,3 +1,4 @@
+const { knowledgeLinkFields } = require('../utils/knowledgeLinks');
 const mongoose = require('mongoose');
 const { notifySupport } = require('../utils/supportNotifications');
 const { supportActor } = require('../utils/supportActor');
@@ -388,14 +389,14 @@ const getKnowledgeBaseAdmin = asyncHandler(async (req, res) => {
 });
 
 const createKnowledgeBaseItemAdmin = asyncHandler(async (req, res) => {
+  const links = knowledgeLinkFields(req.body);
   const item = await KnowledgeBaseItem.create({
     title: String(req.body.title || "").trim(),
     body: String(req.body.body || "").trim(),
     category: String(req.body.category || "general").trim(),
     summary: String(req.body.summary || "").trim(),
     resourceType: String(req.body.resourceType || "article").trim(),
-    fileUrl: String(req.body.fileUrl || "").trim(),
-    videoUrl: String(req.body.videoUrl || "").trim(),
+    ...links,
     targetRole: String(req.body.targetRole || "all").trim(),
     sortOrder: Number(req.body.sortOrder || 0),
     published: req.body.published !== false,
@@ -406,6 +407,7 @@ const createKnowledgeBaseItemAdmin = asyncHandler(async (req, res) => {
 });
 
 const updateKnowledgeBaseItemAdmin = asyncHandler(async (req, res) => {
+  const links = knowledgeLinkFields(req.body);
   const item = await KnowledgeBaseItem.findByIdAndUpdate(
     req.params.id,
     {
@@ -414,8 +416,7 @@ const updateKnowledgeBaseItemAdmin = asyncHandler(async (req, res) => {
       category: req.body.category,
       summary: req.body.summary,
       resourceType: req.body.resourceType,
-      fileUrl: req.body.fileUrl,
-      videoUrl: req.body.videoUrl,
+      ...links,
       targetRole: req.body.targetRole,
       sortOrder: Number(req.body.sortOrder || 0),
       published: req.body.published,

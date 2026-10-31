@@ -12,7 +12,8 @@ class AgentProgramPricingScreen extends StatefulWidget {
   const AgentProgramPricingScreen({super.key});
 
   @override
-  State<AgentProgramPricingScreen> createState() => _AgentProgramPricingScreenState();
+  State<AgentProgramPricingScreen> createState() =>
+      _AgentProgramPricingScreenState();
 }
 
 class _AgentProgramPricingScreenState extends State<AgentProgramPricingScreen> {
@@ -38,7 +39,9 @@ class _AgentProgramPricingScreenState extends State<AgentProgramPricingScreen> {
         _programs = data;
         _loading = false;
       });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/agent_program_pricing_screen.dart:39');
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/agent_program_pricing_screen.dart:39');
       if (!mounted) return;
       setState(() {
         _error = 'تعذر تحميل البرامج.';
@@ -59,7 +62,10 @@ class _AgentProgramPricingScreenState extends State<AgentProgramPricingScreen> {
             : _error != null
                 ? ErrorState(message: _error!, onRetry: _load)
                 : _programs.isEmpty
-                    ? const EmptyState(icon: Icons.menu_book_outlined, title: 'لا توجد برامج', message: 'ستظهر هنا كل البرامج المتاحة بأسعار الوكلاء.')
+                    ? const EmptyState(
+                        icon: Icons.menu_book_outlined,
+                        title: 'لا توجد برامج',
+                        message: 'ستظهر هنا كل البرامج المتاحة بأسعار الوكلاء.')
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: _programs.length,
@@ -72,18 +78,27 @@ class _AgentProgramPricingScreenState extends State<AgentProgramPricingScreen> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(p['title'] as String? ?? '—', style: AppTextStyles.cardTitle),
-                                Text(uni?['name'] as String? ?? '', style: AppTextStyles.caption),
+                                Text(p['title'] as String? ?? '—',
+                                    style: AppTextStyles.cardTitle),
+                                Text(uni?['name'] as String? ?? '',
+                                    style: AppTextStyles.caption),
                                 const Divider(height: 20),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                Wrap(
+                                  spacing: 16,
+                                  runSpacing: 8,
                                   children: [
                                     if (publicPrice != null)
-                                      Text('السعر العام: \$$publicPrice', style: AppTextStyles.caption.copyWith(decoration: TextDecoration.lineThrough)),
+                                      Text('السعر العام: \$$publicPrice',
+                                          style: AppTextStyles.caption),
                                     if (partnerPrice != null)
-                                      Text('سعرك: \$$partnerPrice', style: const TextStyle(color: AppColors.success, fontWeight: FontWeight.w800, fontSize: 15))
+                                      Text('السعر: \$$partnerPrice',
+                                          style: const TextStyle(
+                                              color: AppColors.success,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 15))
                                     else
-                                      const Text('لا يوجد سعر وكيل مسجّل', style: AppTextStyles.caption),
+                                      const Text('لا يوجد سعر وكيل مسجّل',
+                                          style: AppTextStyles.caption),
                                   ],
                                 ),
                               ],

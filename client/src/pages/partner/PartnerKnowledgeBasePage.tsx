@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import { EmptyState } from "../../components/EmptyState";
+import { DocumentFileLink } from "../../components/DocumentFileLink";
 import { partnerService } from "../../services/partnerService";
 import type { KnowledgeBaseItem } from "../../types";
 import { useLanguage } from "../../hooks/useLanguage";
@@ -44,6 +45,10 @@ export const PartnerKnowledgeBasePage = () => {
                 {isArabic ? "فتح الفيديو" : "Open Video"}
               </a>
             ) : null}
+            {item.fileUrl ? <DocumentFileLink path={item.fileUrl} className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700">
+              <ExternalLink className="h-4 w-4" />
+              {isArabic ? "فتح المورد" : "Open resource"}
+            </DocumentFileLink> : null}
           </div>
           <p className="mt-4 whitespace-pre-line text-sm leading-7 text-slate-600">{item.body}</p>
         </article>

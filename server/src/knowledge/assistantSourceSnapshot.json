@@ -95,7 +95,7 @@
     },
     {
       "path": "mobile:lib/core/repositories/agent_repository.dart",
-      "sha256": "4d65e88be87498242d75c83a4214d2fab47a0d2e80102a4acfa78473347152c4",
+      "sha256": "d8c80be32595ee83c5c82088ed5786fed7daa167e8b907fe2cf8a31f0e5f02ab",
       "dependencies": [
         "mobile:lib/core/utils/json_safe.dart",
         "mobile:lib/core/network/api_client.dart",
@@ -428,6 +428,15 @@
       "dependencies": [
         "mobile:lib/core/network/api_client.dart",
         "mobile:lib/core/services/error_reporter.dart"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "mobile:lib/core/utils/knowledge_resource.dart",
+      "sha256": "9c2757dbdcdfefa4eb9b983c878f9892ffc40a278b383f9d9b3a2fd95a842eda",
+      "dependencies": [
+        "mobile:lib/core/network/api_client.dart"
       ],
       "screens": [],
       "routes": []
@@ -2174,8 +2183,9 @@
     },
     {
       "path": "mobile:lib/screens/roles/agent_partner_workspace_screen.dart",
-      "sha256": "a4f2c80ca031842f07af225b38f18e7000d5314d46327a2efe66bbd80dcde7a1",
+      "sha256": "3cd21004eb0487187e37e8f48c731bf14d0f571bfe4cccec7979c62c807692fe",
       "dependencies": [
+        "mobile:lib/core/utils/knowledge_resource.dart",
         "mobile:lib/core/widgets/external_link.dart",
         "mobile:lib/core/config/app_theme.dart",
         "mobile:lib/core/repositories/agent_repository.dart",
@@ -2191,7 +2201,7 @@
     },
     {
       "path": "mobile:lib/screens/roles/agent_program_pricing_screen.dart",
-      "sha256": "cebca2a7aa35901917ec4e61ff5174087001d5f4aac8cb1f00edbf3266f997ad",
+      "sha256": "561614a21a33584f4f7b742067011171ed17e70797f51a1b20efb807b60980b5",
       "dependencies": [
         "mobile:lib/core/utils/json_safe.dart",
         "mobile:lib/core/services/error_reporter.dart",
@@ -4887,8 +4897,9 @@
     },
     {
       "path": "server:src/controllers/adminAgentController.js",
-      "sha256": "57b177d25ed1f837c2525c383206211e64322aa9ef82130bb6b23c0f8324acec",
+      "sha256": "865c5c4476ffb779f5856056344d93912a8a9f5138c56443ab4d9d4fdf68a647",
       "dependencies": [
+        "server:src/utils/knowledgeLinks.js",
         "server:src/utils/supportNotifications.js",
         "server:src/utils/supportActor.js",
         "server:src/models/User.js",
@@ -5206,7 +5217,7 @@
     },
     {
       "path": "server:src/controllers/partnerController.js",
-      "sha256": "8b48fd204921611d2a4bf3340b2319f4f806876ecb2e679b726fdeb98d25330d",
+      "sha256": "69d889a6ab8d7f6e11abcb65aea84dc9567b8bc49e04e9d7b40cad869c17176c",
       "dependencies": [
         "server:src/utils/privateDocumentStorage.js",
         "server:src/models/StudentProfile.js",
@@ -5223,7 +5234,8 @@
         "server:src/models/ActivityLog.js",
         "server:src/utils/asyncHandler.js",
         "server:src/utils/logActivity.js",
-        "server:src/utils/documentLibrary.js"
+        "server:src/utils/documentLibrary.js",
+        "server:src/utils/knowledgeLinks.js"
       ],
       "screens": [],
       "routes": []
@@ -5777,6 +5789,13 @@
         "server:src/models/StudentProfile.js",
         "server:src/controllers/studentRewardsController.js"
       ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "server:src/utils/knowledgeLinks.js",
+      "sha256": "bbd0881bd7e235efcc394a040f659f7918bb02adfff4ca6e4ec6ec46fda3c9b6",
+      "dependencies": [],
       "screens": [],
       "routes": []
     },
@@ -8291,10 +8310,20 @@
       "routes": []
     },
     {
+      "path": "website:src/pages/partner/PartnerKnowledgeBasePage.test.tsx",
+      "sha256": "6259f813ee8940fc7186267570064f76edc327287c02c1be6825adb999c19416",
+      "dependencies": [
+        "website:src/pages/partner/PartnerKnowledgeBasePage.tsx"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
       "path": "website:src/pages/partner/PartnerKnowledgeBasePage.tsx",
-      "sha256": "edfd359d7ad630ffd2a274402506f00e50e7072ca1bdd30fdc45e503a129af08",
+      "sha256": "dabc2db0e652580a051527276256f0576f9ec2f691b74d107252700d5ef8cf28",
       "dependencies": [
         "website:src/components/EmptyState.tsx",
+        "website:src/components/DocumentFileLink.tsx",
         "website:src/services/partnerService.ts",
         "website:src/hooks/useLanguage.ts",
         "website:src/utils/errors.ts"

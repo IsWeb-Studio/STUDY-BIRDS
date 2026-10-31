@@ -382,14 +382,17 @@ const requestPayout = asyncHandler(async (req, res) => {
 
 const getReferralSummary = asyncHandler(async (req, res) => {
   const profile = await ensurePartnerProfile(req.user);
-  const events = await ReferralEvent.find({ agent: req.user._id });
+  const [events, acceptedStudents] = await Promise.all([
+    ReferralEvent.find({ agent: req.user._id }),
+    AgentStudent.countDocuments({ agent: req.user._id, applicationStatus: { $in: ['preliminary-accepted', 'final-accepted'] } }),
+  ]);
   const baseUrl = String(process.env.CLIENT_URL || "https://studybirds.net").replace(/\/+$/, "");
   const referralLink = `${baseUrl}/register?ref=${profile.referralCode}`;
 
   const summary = {
     clicks: events.filter((event) => event.type === "click").length,
     signups: events.filter((event) => event.type === "signup").length,
-    acceptedStudents: events.filter((event) => event.type === "accepted").length,
+    acceptedStudents,
     generatedCommissions: events.filter((event) => event.type === "commission").reduce((sum, event) => sum + Number(event.amount || 0), 0),
   };
 
@@ -551,8 +554,8 @@ const getPartnerActivityLog = asyncHandler(async (req, res) => {
 });
 
 const getKnowledgeBase = asyncHandler(async (req, res) => {
-  const items = await KnowledgeBaseItem.find({ published: true }).sort({ sortOrder: 1, createdAt: -1 });
-  res.json(items);
+  const items = await KnowledgeBaseItem.find({ published: true, targetRole: { $in: ['all', 'partner'] } }).sort({ sortOrder: 1, createdAt: -1 });
+  res.json(items.map(require('../utils/knowledgeLinks').publicKnowledgeItem));
 });
 
 module.exports = {
