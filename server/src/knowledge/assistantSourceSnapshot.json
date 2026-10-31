@@ -1,6 +1,6 @@
 {
   "version": "2026.10.23.3",
-  "catalogSHA256": "bfc5e9cb9e9bcef286fad7cedf0c2327bfa5813dda5b281a5ef11014a9566b76",
+  "catalogSHA256": "994ad2966423c7d0a894385554f64fbf09bdafa92f300c6af8a0ff7fc6360618",
   "sources": [
     {
       "path": "mobile:lib/app_shell.dart",
