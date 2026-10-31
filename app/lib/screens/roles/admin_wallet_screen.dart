@@ -7,7 +7,8 @@ import '../../core/utils/json_safe.dart';
 import '../../core/utils/form_input_validation.dart';
 
 class AdminWalletScreen extends StatefulWidget {
-  const AdminWalletScreen({super.key});
+  final bool partnerMode;
+  const AdminWalletScreen({super.key, this.partnerMode = false});
   @override
   State<AdminWalletScreen> createState() => _AdminWalletScreenState();
 }
@@ -45,8 +46,8 @@ class _AdminWalletScreenState extends State<AdminWalletScreen> {
       _error = null;
     });
     try {
-      final rows =
-          await _repo.getWalletEntries(studentId: _filterId.text.trim());
+      final rows = await _repo.getWalletEntries(
+          studentId: _filterId.text.trim(), partnerMode: widget.partnerMode);
       if (mounted) {
         setState(() => _entries = rows
             .whereType<Map>()
@@ -91,7 +92,7 @@ class _AdminWalletScreenState extends State<AdminWalletScreen> {
       title: _ar ? 'تأكيد التسوية المالية' : 'Confirm wallet adjustment',
       message: _ar
           ? 'سيتم ${_direction == 'credit' ? 'إضافة' : 'خصم'} $amount من محفظة الطالب. راجع المعرّف والسبب قبل المتابعة.'
-          : '${_direction == 'credit' ? 'Credit' : 'Debit'} $amount from this student wallet. Check the ID and reason before continuing.',
+          : '${_direction == 'credit' ? 'Credit' : 'Debit'} $amount from this account wallet. Check the ID and reason before continuing.',
       confirmLabel: _ar ? 'تسجيل التسوية' : 'Record adjustment',
     );
     if (!confirmed || !mounted) return;
@@ -102,6 +103,7 @@ class _AdminWalletScreenState extends State<AdminWalletScreen> {
     });
     try {
       await _repo.createWalletAdjustment(
+          partnerMode: widget.partnerMode,
           studentId: student,
           direction: _direction,
           amount: amount,
@@ -123,7 +125,9 @@ class _AdminWalletScreenState extends State<AdminWalletScreen> {
   Widget build(BuildContext context) {
     final ar = _ar;
     return AppScaffold(
-      title: ar ? 'محافظ الطلاب' : 'Student wallets',
+      title: widget.partnerMode
+          ? (ar ? 'أرصدة الوكلاء' : 'Agent balances')
+          : (ar ? 'محافظ الطلاب' : 'Student wallets'),
       body: RefreshIndicator(
         onRefresh: _load,
         child: ListView(padding: const EdgeInsets.all(16), children: [
@@ -148,7 +152,9 @@ class _AdminWalletScreenState extends State<AdminWalletScreen> {
                             controller: _studentId,
                             maxLength: 24,
                             decoration: InputDecoration(
-                                labelText: ar ? 'معرّف الطالب' : 'Student ID')),
+                                labelText: widget.partnerMode
+                                    ? (ar ? 'معرّف الوكيل' : 'Agent ID')
+                                    : (ar ? 'معرّف الطالب' : 'Student ID'))),
                         DropdownButtonFormField<String>(
                           initialValue: _direction,
                           decoration: InputDecoration(
@@ -220,7 +226,9 @@ class _AdminWalletScreenState extends State<AdminWalletScreen> {
                     : 'Wallet transactions will appear here.')
           else
             ..._entries.map((entry) {
-              final student = Json.mapOrNull(entry['student']) ?? {};
+              final student = Json.mapOrNull(
+                      entry[widget.partnerMode ? 'agent' : 'student']) ??
+                  {};
               final creator = Json.mapOrNull(entry['createdBy']) ?? {};
               final credit = entry['direction'] == 'credit';
               return Card(

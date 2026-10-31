@@ -131,31 +131,8 @@ const getPayoutRequestsAdmin = asyncHandler(async (req, res) => {
 });
 
 const updatePayoutRequestStatusAdmin = asyncHandler(async (req, res) => {
-  const request = await PayoutRequest.findById(req.params.id);
-  if (!request) {
-    res.status(404);
-    throw new Error("Payout request not found");
-  }
-
-  request.status = req.body.status || request.status;
-  request.reviewNote = String(req.body.reviewNote || "").trim();
-  request.reviewedBy = req.user._id;
-  request.reviewedAt = new Date();
-  await request.save();
-
-  if (request.status === "paid") {
-    await AgentWalletEntry.create({
-      agent: request.agent,
-      direction: "debit",
-      kind: "payout",
-      amount: request.amount,
-      status: "paid",
-      method: request.method,
-      details: request.payoutDetails,
-      notes: request.notes,
-      paidAt: new Date(),
-    });
-  }
+  const request = await require('../utils/agentWallet').reviewPayout(
+    req.params.id, req.body.status, String(req.body.reviewNote || '').trim(), req.user._id);
 
   const payoutStatusMessages = {
     approved: `تمت الموافقة على طلب سحب رصيدك بقيمة $${request.amount}. سيتم التحويل إلى طريقة الدفع المحددة قريباً.`,

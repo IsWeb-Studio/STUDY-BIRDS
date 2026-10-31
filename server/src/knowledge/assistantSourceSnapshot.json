@@ -1,6 +1,6 @@
 {
   "version": "2026.10.23.3",
-  "catalogSHA256": "994ad2966423c7d0a894385554f64fbf09bdafa92f300c6af8a0ff7fc6360618",
+  "catalogSHA256": "38dcb347abf53539d38327f3aabd8cbd3940ecf21428870f71e040bd54c719fb",
   "sources": [
     {
       "path": "mobile:lib/app_shell.dart",
@@ -84,7 +84,7 @@
     },
     {
       "path": "mobile:lib/core/repositories/admin_modules_repository.dart",
-      "sha256": "4a303c9e43cb7da2c6d4d9e1335b7f875e8a48bb423fc0b892276c142df5e9ae",
+      "sha256": "062962dc0de26ba4256101642d26bae899f45f512f14664413e127adc329fa21",
       "dependencies": [
         "mobile:lib/core/utils/json_safe.dart",
         "mobile:lib/core/network/api_client.dart",
@@ -95,7 +95,7 @@
     },
     {
       "path": "mobile:lib/core/repositories/agent_repository.dart",
-      "sha256": "d8c80be32595ee83c5c82088ed5786fed7daa167e8b907fe2cf8a31f0e5f02ab",
+      "sha256": "bdfa36c3631aa1df96afe70bcbc4e8fe067ee4ff91c408a42276da0d06a40668",
       "dependencies": [
         "mobile:lib/core/utils/json_safe.dart",
         "mobile:lib/core/network/api_client.dart",
@@ -882,7 +882,7 @@
     },
     {
       "path": "mobile:lib/screens/ai/assistant_navigation.dart",
-      "sha256": "7346d198594628cb8b82caad723d73acfea0b2f8ac34f1f68283b2bba46f2d38",
+      "sha256": "24ee317589fe584bc0c6589567f172e2dd24ece54e187837bec278f4cee36737",
       "dependencies": [
         "mobile:lib/core/services/auth_session.dart",
         "mobile:lib/core/services/locale_controller.dart",
@@ -1878,7 +1878,7 @@
     },
     {
       "path": "mobile:lib/screens/roles/admin_approval_screens.dart",
-      "sha256": "df725533f0c95ae26183d8de2701696662d3d27d215afeb2c4dd521e5ec599ac",
+      "sha256": "fca1202ae832ebc768c7f57602f4430c3c47b23be73648c5282a86ee18014b56",
       "dependencies": [
         "mobile:lib/core/utils/json_safe.dart",
         "mobile:lib/core/services/error_reporter.dart",
@@ -1965,7 +1965,7 @@
     },
     {
       "path": "mobile:lib/screens/roles/admin_partner_profile_screen.dart",
-      "sha256": "6cbae643bea7aa60f39975c8786539b88cdc10baab61e6347bf967fb02878ac5",
+      "sha256": "f38cb832f960c2f417d55a18f1c1ccd2db88715fd490644fa8a026a675281702",
       "dependencies": [
         "mobile:lib/core/config/app_theme.dart",
         "mobile:lib/core/repositories/admin_modules_repository.dart",
@@ -2145,7 +2145,7 @@
     },
     {
       "path": "mobile:lib/screens/roles/admin_wallet_screen.dart",
-      "sha256": "d24014f0c665fd5603de1c2872cb4eaf9d46aa24c0d1a8ec61126a90f10d88f5",
+      "sha256": "13c645f59ffa6a605019942697d56695b078584387da04541939fd51e819b2eb",
       "dependencies": [
         "mobile:lib/core/config/app_theme.dart",
         "mobile:lib/core/repositories/admin_modules_repository.dart",
@@ -2215,7 +2215,7 @@
     },
     {
       "path": "mobile:lib/screens/roles/agent_student_detail_screen.dart",
-      "sha256": "f5262788e3dab6d9de9f83b18cee9e0ebcfb24c3690e377cdf606de7e3f21a8a",
+      "sha256": "83dd306e27b465661f381f7f3c8d452f3fde89ecdabc686d35cfeb460036ce6d",
       "dependencies": [
         "mobile:lib/core/utils/json_safe.dart",
         "mobile:lib/core/services/error_reporter.dart",
@@ -3145,7 +3145,7 @@
     },
     {
       "path": "server:src/routes/adminRoutes.js",
-      "sha256": "fa7081242c128e1b2e0e8092238b370ed72853b8f9007d042f5b86283dff866a",
+      "sha256": "9f81e011e8bdf889189f8af05e9232364d5e8cccfe9c4d52238ab13e12d67473",
       "dependencies": [
         "server:src/controllers/adminController.js",
         "server:src/controllers/studyFieldController.js",
@@ -3166,6 +3166,8 @@
         "server:src/controllers/studentServicesController.js",
         "server:src/controllers/studentSupportTeamController.js",
         "server:src/controllers/studentSupportTeamController.js",
+        "server:src/controllers/agentWalletController.js",
+        "server:src/controllers/agentWalletController.js",
         "server:src/models/SupportTicket.js",
         "server:src/utils/studentSupportTeam.js",
         "server:src/controllers/studentSupportTeamController.js",
@@ -3254,6 +3256,8 @@
         "PATCH /partner-students/:studentId",
         "GET /partners/:id",
         "GET /payout-requests",
+        "GET /payout-requests/wallet-entries",
+        "POST /payout-requests/wallet-entries",
         "PATCH /payout-requests/:id",
         "GET /marketing-assets",
         "POST /marketing-assets",
@@ -4333,7 +4337,7 @@
     },
     {
       "path": "server:src/models/AgentWalletEntry.js",
-      "sha256": "0f103347a6d773842f8fe34f2534134fb34609e21e21618754880704f4e3f329",
+      "sha256": "501c62830ecc5d0c4ed67734a00799ae31d1352b5b65b77ec2db80c6f701a6e3",
       "dependencies": [],
       "screens": [],
       "routes": []
@@ -4644,7 +4648,7 @@
     },
     {
       "path": "server:src/models/PayoutRequest.js",
-      "sha256": "f18f674e93747a2f9baec2c3c05f35829ce357d399ed6032c2ce144b54741f3e",
+      "sha256": "16f4bb8d00e37c1eadf7123a44b4e42c6442c58fa7b03061e9b02b96c24179a2",
       "dependencies": [],
       "screens": [],
       "routes": []
@@ -4897,7 +4901,7 @@
     },
     {
       "path": "server:src/controllers/adminAgentController.js",
-      "sha256": "865c5c4476ffb779f5856056344d93912a8a9f5138c56443ab4d9d4fdf68a647",
+      "sha256": "36cab6c3623e93702be9022bee55181620ca201a7991118d94369a92967ed140",
       "dependencies": [
         "server:src/utils/knowledgeLinks.js",
         "server:src/utils/supportNotifications.js",
@@ -4916,6 +4920,7 @@
         "server:src/utils/uploadToCloudinary.js",
         "server:src/utils/pushNotifications.js",
         "server:src/middleware/employeeAccess.js",
+        "server:src/utils/agentWallet.js",
         "server:src/utils/studentSupportTeam.js",
         "server:src/utils/studentSupportTeam.js"
       ],
@@ -5009,6 +5014,20 @@
         "server:src/constants/documentTypes.js",
         "server:src/utils/financialPolicy.js",
         "server:src/utils/financialPolicy.js"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "server:src/controllers/agentWalletController.js",
+      "sha256": "330172f2c2e2740eaa8187954ca51302c7883ef574d2378041cf01913e65c185",
+      "dependencies": [
+        "server:src/models/User.js",
+        "server:src/models/AgentWalletEntry.js",
+        "server:src/utils/agentWallet.js",
+        "server:src/utils/financialTransaction.js",
+        "server:src/utils/financialPolicy.js",
+        "server:src/utils/asyncHandler.js"
       ],
       "screens": [],
       "routes": []
@@ -5217,7 +5236,7 @@
     },
     {
       "path": "server:src/controllers/partnerController.js",
-      "sha256": "69d889a6ab8d7f6e11abcb65aea84dc9567b8bc49e04e9d7b40cad869c17176c",
+      "sha256": "33f396658c3a33241410514e8aa19a27bd69375de3e7c04ba8899c8765b96110",
       "dependencies": [
         "server:src/utils/privateDocumentStorage.js",
         "server:src/models/StudentProfile.js",
@@ -5234,7 +5253,11 @@
         "server:src/models/ActivityLog.js",
         "server:src/utils/asyncHandler.js",
         "server:src/utils/logActivity.js",
+        "server:src/utils/agentWallet.js",
         "server:src/utils/documentLibrary.js",
+        "server:src/utils/agentWallet.js",
+        "server:src/utils/agentWallet.js",
+        "server:src/utils/financialPolicy.js",
         "server:src/utils/knowledgeLinks.js"
       ],
       "screens": [],
@@ -5485,6 +5508,18 @@
         "server:src/models/Invoice.js",
         "server:src/models/PaymentProof.js",
         "server:src/models/StudentWalletEntry.js"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "server:src/utils/agentWallet.js",
+      "sha256": "bb476fbdcc1378f88ed0ebbea34bfe2827091741494d2b3fcbe69acbd38abbfd",
+      "dependencies": [
+        "server:src/models/AgentWalletEntry.js",
+        "server:src/models/PayoutRequest.js",
+        "server:src/utils/financialTransaction.js",
+        "server:src/utils/financialPolicy.js"
       ],
       "screens": [],
       "routes": []
@@ -6196,6 +6231,26 @@
       "dependencies": [
         "website:src/components/ToastViewport.tsx",
         "website:src/components/ToastViewport.tsx"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "website:src/components/admin/AgentWalletAdjustment.test.tsx",
+      "sha256": "b91f9522a764351adcf0164599ee3851ff47d236231946f1c097b2cb21c79ff6",
+      "dependencies": [
+        "website:src/components/admin/AgentWalletAdjustment.tsx",
+        "website:src/lib/api.ts"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "website:src/components/admin/AgentWalletAdjustment.tsx",
+      "sha256": "32f1e2c30d4d9334855590637d492c56421ceec7cd963a9bf538040eb212998f",
+      "dependencies": [
+        "website:src/lib/api.ts",
+        "website:src/utils/errors.ts"
       ],
       "screens": [],
       "routes": []
@@ -7255,7 +7310,7 @@
     },
     {
       "path": "website:src/pages/admin/AdminAgentsResponsivePage.tsx",
-      "sha256": "58e2e47c03d5f87e9be4a0bc4a22df531216347cb491e185f3db4b2c08ce9b79",
+      "sha256": "d32e52e79457d8711c284bc007718afb42dbcf99cf880ea5312739c5f5b248b6",
       "dependencies": [
         "website:src/components/DocumentFileLink.tsx",
         "website:src/services/adminService.ts",
@@ -7543,7 +7598,7 @@
     },
     {
       "path": "website:src/pages/admin/AdminPayoutRequestsEnhancedPage.tsx",
-      "sha256": "7c1e77efda5a94434332f2ec40754302c077c7594d0b66e2ec120f4f3f858f0e",
+      "sha256": "7c59249379d34b67cdb2dc8ed6b57308aea0bdb07182712ed829bbad29b9d752",
       "dependencies": [
         "website:src/services/adminService.ts",
         "website:src/hooks/useLanguage.ts",
@@ -7552,7 +7607,8 @@
         "website:src/components/admin/AdminPagination.tsx",
         "website:src/components/admin/AdminToastViewport.tsx",
         "website:src/hooks/useAdminToasts.ts",
-        "website:src/utils/format.ts"
+        "website:src/utils/format.ts",
+        "website:src/components/admin/AgentWalletAdjustment.tsx"
       ],
       "screens": [],
       "routes": []
@@ -8456,7 +8512,7 @@
     },
     {
       "path": "website:src/pages/partner/PartnerWalletPage.tsx",
-      "sha256": "2cf64029bc320de6070221f2c55e4e1c3fecc26c580b710cb192b6bdce94fcf0",
+      "sha256": "95ad85d6331990ff547505eb6993360ad02afdf40f13e7b0b1975e858fd57bdc",
       "dependencies": [
         "website:src/components/dashboard/StatsCard.tsx",
         "website:src/components/EmptyState.tsx",

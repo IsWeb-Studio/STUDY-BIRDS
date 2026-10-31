@@ -28,6 +28,8 @@ const agentWalletEntrySchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected", "paid"],
       default: "pending",
     },
+    operationKey: { type: String, unique: true, sparse: true },
+    recordedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     method: String,
     details: String,
     notes: String,

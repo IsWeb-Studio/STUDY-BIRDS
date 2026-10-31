@@ -32,6 +32,7 @@ const payoutRequestSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected", "paid"],
       default: "pending",
     },
+    operationKey: { type: String, unique: true, sparse: true },
     reviewNote: String,
     reviewedAt: Date,
     reviewedBy: {

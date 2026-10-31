@@ -773,7 +773,12 @@ class MyCommissionsScreen extends StatefulWidget {
   State<MyCommissionsScreen> createState() => _MyCommissionsScreenState();
 }
 
+String _walletStatus(dynamic value) => switch (value) {
+  'approved' => 'معتمد — بانتظار التحويل', 'paid' => 'تم التحويل', 'rejected' => 'مرفوض', _ => 'قيد المراجعة',
+};
+
 class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
+  bool _submitting = false;
   Map<String, dynamic>? _wallet;
   bool _loading = true;
   String? _error;
@@ -796,22 +801,35 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final data = await AgentRepository.instance.getWallet();
       if (!mounted) return;
-      setState(() { _wallet = data; _loading = false; });
-    } catch (swallowedError, swallowedStack) { ErrorReporter.swallowed(swallowedError, swallowedStack, 'screens/roles/agent_student_detail_screen.dart:674');
+      setState(() {
+        _wallet = data;
+        _loading = false;
+      });
+    } catch (swallowedError, swallowedStack) {
+      ErrorReporter.swallowed(swallowedError, swallowedStack,
+          'screens/roles/agent_student_detail_screen.dart:674');
       if (!mounted) return;
-      setState(() { _error = 'تعذر تحميل بيانات المحفظة.'; _loading = false; });
+      setState(() {
+        _error = 'تعذر تحميل بيانات المحفظة.';
+        _loading = false;
+      });
     }
   }
 
   Future<void> _requestPayout() async {
+    if (_submitting) return;
     final summary = Json.mapOrNull(_wallet?['summary']) ?? {};
     final available = (summary['availableBalance'] as num?)?.toDouble() ?? 0;
     if (available < 1) {
-      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: const Text('لا يوجد رصيد متاح للسحب.')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          AppSnackBar(content: const Text('لا يوجد رصيد متاح للسحب.')));
       return;
     }
 
@@ -825,32 +843,54 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           title: const Text('طلب سحب رصيد'),
-          content: SingleChildScrollView(child: Column(mainAxisSize: MainAxisSize.min, children: [
+          content: SingleChildScrollView(
+              child: Column(mainAxisSize: MainAxisSize.min, children: [
             Text('المتاح للسحب: \$${available.toStringAsFixed(2)}'),
-            TextField(controller: _payoutAmount, keyboardType: const TextInputType.numberWithOptions(decimal: true), decoration: const InputDecoration(labelText: 'المبلغ')),
+            TextField(
+                controller: _payoutAmount,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(labelText: 'المبلغ')),
             const SizedBox(height: 8),
             DropdownButtonFormField<String>(
               initialValue: method,
               decoration: const InputDecoration(labelText: 'طريقة الدفع'),
               items: const [
-                DropdownMenuItem(value: 'bank-account', child: Text('حساب بنكي')),
+                DropdownMenuItem(
+                    value: 'bank-account', child: Text('حساب بنكي')),
                 DropdownMenuItem(value: 'usdt', child: Text('USDT')),
                 DropdownMenuItem(value: 'wise', child: Text('Wise')),
                 DropdownMenuItem(value: 'other', child: Text('أخرى')),
               ],
-              onChanged: (value) { if (value != null) setDialogState(() => method = value); },
+              onChanged: (value) {
+                if (value != null) setDialogState(() => method = value);
+              },
             ),
-            TextField(controller: _payoutDetails, minLines: 2, maxLines: 3, decoration: const InputDecoration(labelText: 'بيانات التحويل')),
-            TextField(controller: _payoutNotes, decoration: const InputDecoration(labelText: 'ملاحظات اختيارية')),
-            if (formError != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(formError!, style: const TextStyle(color: AppColors.danger))),
+            TextField(
+                controller: _payoutDetails,
+                minLines: 2,
+                maxLines: 3,
+                decoration: const InputDecoration(labelText: 'بيانات التحويل')),
+            TextField(
+                controller: _payoutNotes,
+                decoration:
+                    const InputDecoration(labelText: 'ملاحظات اختيارية')),
+            if (formError != null)
+              Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(formError!,
+                      style: const TextStyle(color: AppColors.danger))),
           ])),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(dialogContext), child: const Text('إلغاء')),
+            TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('إلغاء')),
             FilledButton(
               onPressed: () {
                 final parsed = double.tryParse(_payoutAmount.text.trim());
                 if (parsed == null || parsed < 1 || parsed > available) {
-                  setDialogState(() => formError = 'أدخل مبلغًا من 1 وحتى الرصيد المتاح.');
+                  setDialogState(
+                      () => formError = 'أدخل مبلغًا من 1 وحتى الرصيد المتاح.');
                   return;
                 }
                 if (_payoutDetails.text.trim().isEmpty) {
@@ -870,7 +910,8 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
         ),
       ),
     );
-    if (request == null || !mounted) return;
+    if (request == null || !mounted || _submitting) return;
+    setState(() => _submitting = true);
     try {
       await AgentRepository.instance.requestPayout(
         amount: (request['amount'] as num).toDouble(),
@@ -879,13 +920,67 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
         notes: request['notes'] as String,
       );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: const Text('تم إرسال طلب السحب.'), backgroundColor: AppColors.success));
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+          content: const Text('تم إرسال طلب السحب.'),
+          backgroundColor: AppColors.success));
       await _load();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(content: Text('تعذر إرسال طلب السحب: $error'), backgroundColor: AppColors.danger));
+      ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+          content: Text('تعذر إرسال طلب السحب: $error'),
+          backgroundColor: AppColors.danger));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
+
+  Future<void> _requestCreditReview() async {
+    if (_submitting) return;
+    var text = '';
+    final details = await showDialog<String>(
+        context: context,
+        builder: (dialog) => AlertDialog(
+              title: const Text('طلب مراجعة رصيد أو عمولة'),
+              content: TextField(
+                  minLines: 3,
+                  maxLines: 6,
+                  maxLength: 2000,
+                  onChanged: (value) => text = value,
+                  decoration: const InputDecoration(
+                      labelText:
+                          'الطالب أو الطلب والمبلغ المطلوب مراجعته (مطلوب)')),
+              actions: [
+                TextButton(
+                    onPressed: () => Navigator.pop(dialog),
+                    child: const Text('إلغاء')),
+                TextButton(
+                    onPressed: () {
+                      if (text.trim().isNotEmpty)
+                        Navigator.pop(dialog, text.trim());
+                    },
+                    child: const Text('إرسال للمراجعة'))
+              ],
+            ));
+    if (details == null || !mounted || _submitting) return;
+    setState(() => _submitting = true);
+    try {
+      await AgentRepository.instance.createSupportTicket(
+          subject: 'مراجعة رصيد أو عمولة الوكيل',
+          message: details,
+          category: 'commission');
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(AppSnackBar(
+            content: const Text(
+                'تم إنشاء تذكرة مراجعة. تابع الرد في تذاكر الدعم.')));
+    } catch (error) {
+      if (mounted)
+        ScaffoldMessenger.of(context).showSnackBar(
+            AppSnackBar(content: Text('تعذر إرسال الطلب: $error')));
+    } finally {
+      if (mounted) setState(() => _submitting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppScaffold(
@@ -914,49 +1009,90 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(colors: [AppColors.navy, AppColors.navyLight], begin: Alignment.topRight, end: Alignment.bottomLeft),
+            gradient: const LinearGradient(
+                colors: [AppColors.navy, AppColors.navyLight],
+                begin: Alignment.topRight,
+                end: Alignment.bottomLeft),
             borderRadius: BorderRadius.circular(AppRadius.card),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _WalletStat(value: '\$${summary['availableBalance'] ?? 0}', label: 'متاح', color: Colors.greenAccent),
-              _WalletStat(value: '\$${summary['pendingBalance'] ?? 0}', label: 'معلّق', color: AppColors.greenInk),
-              _WalletStat(value: '\$${summary['receivedBalance'] ?? 0}', label: 'مستلم', color: Colors.white),
+              _WalletStat(
+                  value: '\$${summary['availableBalance'] ?? 0}',
+                  label: 'متاح',
+                  color: Colors.greenAccent),
+              _WalletStat(
+                  value: '\$${summary['pendingBalance'] ?? 0}',
+                  label: 'معلّق',
+                  color: AppColors.greenInk),
+              _WalletStat(
+                  value: '\$${summary['receivedBalance'] ?? 0}',
+                  label: 'مستلم',
+                  color: Colors.white),
             ],
           ),
         ),
         const SizedBox(height: 12),
-        PrimaryButton(label: 'طلب سحب الرصيد المتاح', onPressed: _requestPayout, icon: Icons.account_balance_wallet_outlined),
+        Text('محجوز لطلبات السحب: \$${summary['reservedBalance'] ?? 0}',
+            style: AppTextStyles.body),
+        const SizedBox(height: 12),
+        const AppCard(
+            child: Text(
+                'كيف تعمل المحفظة؟\n١. تُضاف العمولات أو التسويات بعد اعتماد الإدارة.\n٢. إذا كان لديك مبلغ غير مسجل، أرسل طلب مراجعة رصيد مع بيانات الطالب أو الطلب.\n٣. اسحب من الرصيد المتاح وأدخل طريقة الاستلام وبيانات التحويل.\n٤. يُحجز مبلغ الطلب أثناء المراجعة ويُخصم بعد تسجيل التحويل الفعلي. رفض الطلب يحرر المبلغ.')),
+        OutlinedButton.icon(
+            onPressed: _submitting ? null : _requestCreditReview,
+            icon: const Icon(Icons.support_agent),
+            label: const Text('طلب مراجعة رصيد أو عمولة')),
+        PrimaryButton(
+            label: 'طلب سحب الرصيد المتاح',
+            onPressed: _submitting ? null : _requestPayout,
+            icon: Icons.account_balance_wallet_outlined),
         const SizedBox(height: 20),
         const Text('سجل الحركات', style: AppTextStyles.sectionLabel),
         const SizedBox(height: 10),
         if (entries.isEmpty)
-          const EmptyState(icon: Icons.receipt_long_outlined, title: 'لا توجد حركات بعد', message: 'ستظهر هنا العمولات وعمليات المحفظة.')
+          const EmptyState(
+              icon: Icons.receipt_long_outlined,
+              title: 'لا توجد حركات بعد',
+              message: 'ستظهر هنا العمولات وعمليات المحفظة.')
         else
           ...entries.map((raw) {
             final entry = Json.map(raw);
             final isCredit = entry['direction'] == 'credit';
-            return AppCard(child: ListTile(
+            return AppCard(
+                child: ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: Icon(isCredit ? Icons.arrow_downward_rounded : Icons.arrow_upward_rounded, color: isCredit ? AppColors.success : AppColors.danger),
-              title: Text(entry['description'] as String? ?? (isCredit ? 'عمولة' : 'سحب')),
-              trailing: Text('${isCredit ? '+' : '-'}\$${entry['amount'] ?? 0}'),
+              leading: Icon(
+                  isCredit
+                      ? Icons.arrow_downward_rounded
+                      : Icons.arrow_upward_rounded,
+                  color: isCredit ? AppColors.success : AppColors.danger),
+              title: Text(entry['notes'] as String? ?? entry['description'] as String? ??
+                  (isCredit ? 'عمولة' : 'سحب')),
+              trailing:
+                  Text('${isCredit ? '+' : '-'}\$${entry['amount'] ?? 0}'),
             ));
           }),
         const SizedBox(height: 20),
         const Text('طلبات السحب', style: AppTextStyles.sectionLabel),
         const SizedBox(height: 10),
         if (payouts.isEmpty)
-          const EmptyState(icon: Icons.account_balance_wallet_outlined, title: 'لا توجد طلبات سحب', message: 'ستظهر هنا حالة طلبات السحب.')
+          const EmptyState(
+              icon: Icons.account_balance_wallet_outlined,
+              title: 'لا توجد طلبات سحب',
+              message: 'ستظهر هنا حالة طلبات السحب.')
         else
           ...payouts.map((raw) {
             final payout = Json.map(raw);
             final note = '${payout['reviewNote'] ?? ''}';
-            return AppCard(child: ListTile(
+            return AppCard(
+                child: ListTile(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(Icons.receipt_long_outlined, color: AppColors.navy),
-              title: Text('\$${payout['amount'] ?? 0} - ${payout['status'] ?? 'pending'}'),
+              leading: const Icon(Icons.receipt_long_outlined,
+                  color: AppColors.navy),
+              title: Text(
+                  '\$${payout['amount'] ?? 0} - ${_walletStatus(payout['status'])}'),
               subtitle: Text([
                 '${payout['method'] ?? ''}',
                 '${payout['payoutDetails'] ?? ''}',
@@ -965,7 +1101,6 @@ class _MyCommissionsScreenState extends State<MyCommissionsScreen> {
               isThreeLine: true,
             ));
           }),
-
       ],
     );
   }
@@ -975,14 +1110,18 @@ class _WalletStat extends StatelessWidget {
   final String value;
   final String label;
   final Color color;
-  const _WalletStat({required this.value, required this.label, required this.color});
+  const _WalletStat(
+      {required this.value, required this.label, required this.color});
   @override
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Text(value, style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: color)),
+        Text(value,
+            style: TextStyle(
+                fontSize: 17, fontWeight: FontWeight.w800, color: color)),
         const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.white70)),
+        Text(label,
+            style: const TextStyle(fontSize: 12, color: Colors.white70)),
       ],
     );
   }

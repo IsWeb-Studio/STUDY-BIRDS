@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from 'react-router-dom';
 import { DollarSign, Landmark, Wallet } from "lucide-react";
 import { StatsCard } from "../../components/dashboard/StatsCard";
 import { EmptyState } from "../../components/EmptyState";
@@ -8,7 +9,7 @@ import { useLanguage } from "../../hooks/useLanguage";
 import { getErrorMessage } from "../../utils/errors";
 
 const formatCurrency = (value: number) =>
-  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(value || 0);
+  new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value || 0);
 
 export const PartnerWalletPage = () => {
   const { language } = useLanguage();
@@ -37,6 +38,11 @@ export const PartnerWalletPage = () => {
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
+    if (submitting) return;
+    const amount = Number(form.amount);
+    if (!Number.isFinite(amount) || amount < 1 || amount > summary.availableBalance || !form.payoutDetails.trim()) {
+      setError(isArabic ? 'أدخل مبلغًا ضمن الرصيد المتاح وبيانات الاستلام.' : 'Enter an amount within your available balance and payout details.'); return;
+    }
     setError("");
     setSuccess("");
     setSubmitting(true);
@@ -59,6 +65,12 @@ export const PartnerWalletPage = () => {
 
   return (
     <div className="space-y-6">
+      <section className="panel p-6">
+        <h2 className="text-xl font-semibold">{isArabic ? 'كيف تعمل المحفظة؟' : 'How the wallet works'}</h2>
+        <p>{isArabic ? 'تعتمد الإدارة العمولات أو التسويات لتصبح متاحة. طلب السحب يحجز المبلغ حتى المراجعة؛ يُخصم بعد تسجيل التحويل الفعلي ويعود متاحًا إذا رُفض الطلب.' : 'Admin-approved commissions and adjustments become available. A payout request reserves its amount until review. It is deducted after the actual transfer is recorded, or released if rejected.'}</p>
+        <p>{isArabic ? 'محجوز لطلبات السحب: ' : 'Reserved for payouts: '}{formatCurrency(payouts.filter(p => ['pending', 'approved'].includes(p.status)).reduce((total, p) => total + p.amount, 0))}</p>
+        <Link to="/partner/tickets" className="font-semibold underline">{isArabic ? 'طلب مراجعة رصيد أو عمولة — اختر قسم العمولات وأضف بيانات الطالب أو الطلب' : 'Request a balance or commission review — choose Commission and include the student or application details'}</Link>
+      </section>
       <div className="grid gap-5 md:grid-cols-3">
         <StatsCard label={isArabic ? "المتاح للسحب" : "Available Balance"} value={formatCurrency(summary.availableBalance)} icon={<Wallet className="h-5 w-5" />} />
         <StatsCard label={isArabic ? "الأرباح المعلقة" : "Pending Earnings"} value={formatCurrency(summary.pendingBalance)} icon={<DollarSign className="h-5 w-5" />} />

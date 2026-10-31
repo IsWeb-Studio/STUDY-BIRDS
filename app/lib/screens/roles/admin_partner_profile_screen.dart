@@ -152,6 +152,7 @@ class _AdminPartnerProfileScreenState extends State<AdminPartnerProfileScreen> {
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text('${partner['name'] ?? '—'}', style: AppTextStyles.screenTitle),
               const SizedBox(height: 4), Text('${partner['email'] ?? ''}'),
+              SelectableText('معرّف الوكيل: ${partner['_id'] ?? widget.partnerId}'),
               const Divider(height: 24),
               for (final entry in <String, String>{
                 'الشركة': '${profile['companyName'] ?? '—'}',

@@ -83,7 +83,7 @@ class AgentRepository {
   }
 
   Future<Map<String, dynamic>> getWallet() async {
-    final data = await ApiClient.instance.get('/partners/wallet', token: _token);
+    final data = await ApiClient.instance.get('/partners/wallet', token: _token, cached: false);
     return Json.map(data);
   }
 

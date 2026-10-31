@@ -227,6 +227,8 @@ router.get("/partners/:id/students", getPartnerStudentsAdmin);
 router.patch("/partner-students/:studentId", updatePartnerStudentStatusAdmin);
 router.get("/partners/:id", getPartnerDetailsAdmin);
 router.get("/payout-requests", getPayoutRequestsAdmin);
+router.get('/payout-requests/wallet-entries', require('../controllers/agentWalletController').list);
+router.post('/payout-requests/wallet-entries', require('../controllers/agentWalletController').adjust);
 router.patch("/payout-requests/:id", updatePayoutRequestStatusAdmin);
 router.get("/marketing-assets", getMarketingAssetsAdmin);
 router.post("/marketing-assets", upload.single("file"), createMarketingAssetAdmin);

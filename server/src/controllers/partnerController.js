@@ -127,17 +127,14 @@ const getPartnerOverview = asyncHandler(async (req, res) => {
       agent: req.user._id,
       applicationStatus: { $in: ["preliminary-accepted", "final-accepted"] },
     }),
-    AgentWalletEntry.find({ agent: req.user._id }).sort({ createdAt: -1 }).limit(12),
-    PayoutRequest.find({ agent: req.user._id }).sort({ createdAt: -1 }).limit(5),
+    AgentWalletEntry.find({ agent: req.user._id }).sort({ createdAt: -1 }),
+    PayoutRequest.find({ agent: req.user._id }).sort({ createdAt: -1 }),
     Notification.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(5),
     ensurePartnerProfile(req.user),
   ]);
-  const totalReceivedEarnings = walletEntries
-    .filter((item) => item.direction === "credit" && item.status === "paid")
-    .reduce((sum, item) => sum + item.amount, 0);
-  const pendingEarnings = walletEntries
-    .filter((item) => item.direction === "credit" && item.status === "pending")
-    .reduce((sum, item) => sum + item.amount, 0);
+  const balances = require('../utils/agentWallet').walletSummary(walletEntries, payouts);
+  const totalReceivedEarnings = balances.receivedBalance;
+  const pendingEarnings = balances.pendingBalance;
 
   res.json({
     stats: {
@@ -320,62 +317,22 @@ const uploadAgentStudentDocument = asyncHandler(async (req, res) => {
 });
 
 const getPartnerWallet = asyncHandler(async (req, res) => {
-  const [entries, payouts] = await Promise.all([
-    AgentWalletEntry.find({ agent: req.user._id }).sort({ createdAt: -1 }),
-    PayoutRequest.find({ agent: req.user._id }).sort({ createdAt: -1 }),
-  ]);
-
-  const availableBalance = entries
-    .filter((item) => item.direction === "credit" && item.status === "approved")
-    .reduce((sum, item) => sum + item.amount, 0);
-  const pendingBalance = entries
-    .filter((item) => item.direction === "credit" && item.status === "pending")
-    .reduce((sum, item) => sum + item.amount, 0);
-  const receivedBalance = entries
-    .filter((item) => item.direction === "credit" && item.status === "paid")
-    .reduce((sum, item) => sum + item.amount, 0);
-
-  res.json({
-    summary: {
-      availableBalance,
-      pendingBalance,
-      receivedBalance,
-    },
-    entries,
-    payouts,
-  });
+  res.json(await require('../utils/agentWallet').readWallet(req.user._id));
 });
 
 const requestPayout = asyncHandler(async (req, res) => {
-  const { amount, method, payoutDetails, notes } = req.body;
-  const numericAmount = Number(amount);
-
-  if (!numericAmount || numericAmount <= 0) {
-    res.status(400);
-    throw new Error("Valid payout amount is required");
-  }
-
-  if (!method || !payoutDetails) {
-    res.status(400);
-    throw new Error("Payout method and details are required");
-  }
-
-  const payout = await PayoutRequest.create({
-    agent: req.user._id,
-    amount: numericAmount,
-    method,
-    payoutDetails: String(payoutDetails).trim(),
-    notes: String(notes || "").trim(),
-  });
+  const { amount, method, payoutDetails, notes = '' } = req.body;
+  const payout = await require('../utils/agentWallet').reservePayout(req.user._id, { amount, method, payoutDetails, notes }, require('../utils/financialPolicy').operationKey(req, `agent-payout:${req.user._id}`));
+  const numericAmount = payout.amount;
 
   await Notification.create({
     user: req.user._id,
     title: "تم إرسال طلب السحب",
     message: `تم استلام طلب سحب رصيدك بقيمة $${numericAmount} وهو قيد المراجعة من الفريق المالي. سيتم إشعارك بعد اتخاذ القرار.`,
     type: "info",
-  });
+  }).catch(error => console.error("Payout notification failed", error.message));
 
-  await logActivity(req, req.user._id, "wallet.payout-requested", `Requested payout of ${numericAmount}`, { payoutId: payout._id });
+  await logActivity(req, req.user._id, "wallet.payout-requested", `Requested payout of ${numericAmount}`, { payoutId: payout._id }).catch(error => console.error("Payout activity failed", error.message));
 
   res.status(201).json(payout);
 });

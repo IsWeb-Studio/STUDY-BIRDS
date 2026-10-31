@@ -524,20 +524,22 @@ class AdminModulesRepository {
         'staffNote': staffNote,
       }));
 
-  Future<List<dynamic>> getWalletEntries({String? studentId}) async =>
+  Future<List<dynamic>> getWalletEntries(
+          {String? studentId, bool partnerMode = false}) async =>
       Json.list(await ApiClient.instance.get(
-        '/admin/student-financials/wallet-entries${studentId == null || studentId.isEmpty ? '' : '?student=${Uri.encodeQueryComponent(studentId)}'}',
+        '/admin/${partnerMode ? 'payout-requests' : 'student-financials'}/wallet-entries${studentId == null || studentId.isEmpty ? '' : '?student=${Uri.encodeQueryComponent(studentId)}'}',
         token: _token,
       ));
 
   Future<Map<String, dynamic>> createWalletAdjustment({
+    bool partnerMode = false,
     required String studentId,
     required String direction,
     required num amount,
     required String notes,
   }) async =>
       Json.map(await ApiClient.instance.post(
-          '/admin/student-financials/wallet-entries',
+          '/admin/${partnerMode ? 'payout-requests' : 'student-financials'}/wallet-entries',
           token: _token,
           body: {
             'studentId': studentId,

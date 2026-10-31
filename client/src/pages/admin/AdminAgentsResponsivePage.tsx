@@ -307,6 +307,7 @@ export const AdminAgentsResponsivePage = () => {
                     <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600 sm:col-span-2">
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{isArabic ? "البريد" : "Email"}</p>
                       <p className="mt-2 break-all font-medium text-slate-900">{details.partner.email}</p>
+                      <p className="mt-2 select-all break-all text-sm">{isArabic ? 'معرّف الوكيل' : 'Agent ID'}: {details.partner._id}</p>
                     </div>
                     <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-600">
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{isArabic ? "الهاتف" : "Phone"}</p>

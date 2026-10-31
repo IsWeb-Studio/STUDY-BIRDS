@@ -2058,11 +2058,15 @@
       "steps": {
         "ar": [
           "راجع الطلاب ومراحل طلباتهم المتاحة في لوحة الوكيل.",
-          "استخدم إضافة طالب أو محفظتي أو العمولة المعروضة ضمن صلاحياتك؛ المساعد لا يعدل أسعارًا أو يحوّل أموالًا."
+          "استخدم إضافة طالب أو محفظتي أو العمولة المعروضة ضمن صلاحياتك؛ المساعد لا يعدل أسعارًا أو يحوّل أموالًا.",
+          "من محفظتي راجع المتاح والعمولات المعلقة والمبالغ المحجوزة للسحب. طلب مراجعة رصيد أو عمولة يفتح تذكرة عمولات ولا يضيف رصيدًا فورًا. طلب السحب يحجز المبلغ؛ الرفض يحرره وتسجيل التحويل الفعلي يخصمه مرة واحدة.",
+          "الأدمن يدخل قسم السحوبات ثم إضافة أو تسوية رصيد وكيل ويسجل المبلغ المعتمد ومعرّف الوكيل والسبب. الموافقة على السحب لا تحول أموالًا تلقائيًا؛ تُسجل حالة تم التحويل بعد التحويل الخارجي الفعلي."
         ],
         "en": [
           "Review your permitted students and application stages in the Agent dashboard.",
-          "Use Add student, My wallet or the displayed commission controls within your permissions; the assistant changes no prices or funds."
+          "Use Add student, My wallet or the displayed commission controls within your permissions; the assistant changes no prices or funds.",
+          "My wallet shows available funds, pending commissions and payout reservations. Request a balance or commission review creates a Commission support ticket, not immediate credit. A payout request reserves funds; rejection releases them and recording the actual payment deducts them once.",
+          "Admins use Payout requests then Agent wallet adjustment to record approved credits or debits with an agent ID and reason. Approval does not transfer money; record Paid only after the actual external transfer."
         ]
       },
       "location": {
@@ -2072,7 +2076,11 @@
       "screen": "roles/agent_dashboard_screen.dart",
       "sources": [
         "mobile:lib/screens/roles/agent_dashboard_screen.dart",
-        "server:src/routes/partnerRoutes.js"
+        "server:src/routes/partnerRoutes.js",
+        "server:src/utils/agentWallet.js",
+        "server:src/controllers/agentWalletController.js",
+        "mobile:lib/screens/roles/admin_wallet_screen.dart",
+        "website:src/components/admin/AgentWalletAdjustment.tsx"
       ],
       "roles": [
         "partner"
@@ -3816,5 +3824,5 @@
       "reviewed": true
     }
   ],
-  "revision": "2026.10.31.3"
+  "revision": "2026.10.31.4"
 }

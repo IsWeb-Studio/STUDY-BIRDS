@@ -9,6 +9,7 @@ import { AdminPagination } from "../../components/admin/AdminPagination";
 import { AdminToastViewport } from "../../components/admin/AdminToastViewport";
 import { useAdminToasts } from "../../hooks/useAdminToasts";
 import { formatCurrency } from "../../utils/format";
+import { AgentWalletAdjustment } from "../../components/admin/AgentWalletAdjustment";
 
 const PAGE_SIZE = 6;
 
@@ -89,6 +90,7 @@ export const AdminPayoutRequestsEnhancedPage = () => {
 
   return (
     <div className="space-y-6">
+      <AgentWalletAdjustment ar={isArabic} />
       <section className="panel p-6">
         <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
