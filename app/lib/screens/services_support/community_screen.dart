@@ -1,4 +1,5 @@
 import '../../core/widgets/cached_resource.dart';
+import '../stories/story_photo_editor.dart';
 import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import '../../core/widgets/community_reactions.dart';
@@ -885,14 +886,46 @@ class _CommunityComposeScreenState extends State<CommunityComposeScreen> {
       }
       final bytes = await file.readAsBytes();
       if (!mounted || owner != AuthSession.instance.currentUser?.id) return;
+      final edited = await Navigator.of(context).push<EditedStoryPhoto>(
+          MaterialPageRoute(
+              builder: (_) => StoryPhotoEditor(bytes: bytes, forPost: true)));
+      if (!mounted ||
+          edited == null ||
+          owner != AuthSession.instance.currentUser?.id) {
+        return;
+      }
       setState(() {
-        _image = bytes;
-        _imageName = file.name;
+        _image = edited.image;
+        _imageName = edited.imageName;
         _operation = ApiClient.newOperationId();
         error = null;
       });
     } catch (failure) {
       if (mounted) setState(() => error = mediaPickerError(failure));
+    } finally {
+      if (mounted) setState(() => picking = false);
+    }
+  }
+
+  Future<void> _editImage() async {
+    if (busy || picking || _image == null) return;
+    final owner = AuthSession.instance.currentUser?.id;
+    setState(() => picking = true);
+    try {
+      final edited = await Navigator.of(context).push<EditedStoryPhoto>(
+          MaterialPageRoute(
+              builder: (_) => StoryPhotoEditor(bytes: _image!, forPost: true)));
+      if (!mounted ||
+          edited == null ||
+          owner != AuthSession.instance.currentUser?.id) {
+        return;
+      }
+      setState(() {
+        _image = edited.image;
+        _imageName = edited.imageName;
+        _operation = ApiClient.newOperationId();
+        error = null;
+      });
     } finally {
       if (mounted) setState(() => picking = false);
     }
@@ -906,7 +939,7 @@ class _CommunityComposeScreenState extends State<CommunityComposeScreen> {
   }
 
   Future<void> submit() async {
-    if (busy) return;
+    if (busy || picking) return;
     if (!ready) {
       setState(() => _bodyTouched = true);
       return;
@@ -1001,6 +1034,13 @@ class _CommunityComposeScreenState extends State<CommunityComposeScreen> {
                       child: Image.memory(_image!,
                           height: 200, fit: BoxFit.cover))),
             Wrap(spacing: 8, children: [
+              if (_image != null)
+                OutlinedButton.icon(
+                    key: const ValueKey('community-edit-photo'),
+                    onPressed: busy || picking ? null : _editImage,
+                    icon: const Icon(Icons.edit_outlined),
+                    label: Text(
+                        _communityText(context, 'تعديل الصورة', 'Edit photo'))),
               OutlinedButton.icon(
                   onPressed: busy || picking ? null : _pickImage,
                   icon: const Icon(Icons.add_photo_alternate_outlined),
@@ -1008,7 +1048,7 @@ class _CommunityComposeScreenState extends State<CommunityComposeScreen> {
                       'Add photo (optional)'))),
               if (_image != null)
                 TextButton(
-                    onPressed: busy
+                    onPressed: busy || picking
                         ? null
                         : () => setState(() {
                               _image = null;

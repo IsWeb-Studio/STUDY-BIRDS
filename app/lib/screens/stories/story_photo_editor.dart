@@ -24,8 +24,12 @@ class EditedStoryPhoto {
 class StoryPhotoEditor extends StatefulWidget {
   final Uint8List bytes;
   final bool publishOnConfirm;
+  final bool forPost;
   const StoryPhotoEditor(
-      {super.key, required this.bytes, this.publishOnConfirm = false});
+      {super.key,
+      required this.bytes,
+      this.publishOnConfirm = false,
+      this.forPost = false});
   @override
   State<StoryPhotoEditor> createState() => _StoryPhotoEditorState();
 }
@@ -140,7 +144,10 @@ class _StoryPhotoEditorState extends State<StoryPhotoEditor>
 
   @override
   Widget build(BuildContext context) => Scaffold(
-        appBar: AppBar(title: Text(t('تعديل الستوري', 'Edit story'))),
+        appBar: AppBar(
+            title: Text(widget.forPost
+                ? t('تعديل صورة المنشور', 'Edit post photo')
+                : t('تعديل الستوري', 'Edit story'))),
         body: Column(children: [
           Expanded(
               child: Center(child: Image.memory(_image, fit: BoxFit.contain))),
@@ -178,10 +185,11 @@ class _StoryPhotoEditorState extends State<StoryPhotoEditor>
                             icon: const Icon(Icons.edit),
                             label: Text(t('كتابة، ملصقات وفلاتر',
                                 'Text, stickers & filters'))),
-                        OutlinedButton.icon(
-                            onPressed: _busy ? null : _pickAudio,
-                            icon: const Icon(Icons.music_note),
-                            label: Text(t('صوت من الجهاز', 'Device audio'))),
+                        if (!widget.forPost)
+                          OutlinedButton.icon(
+                              onPressed: _busy ? null : _pickAudio,
+                              icon: const Icon(Icons.music_note),
+                              label: Text(t('صوت من الجهاز', 'Device audio'))),
                         FilledButton(
                             onPressed: _busy
                                 ? null

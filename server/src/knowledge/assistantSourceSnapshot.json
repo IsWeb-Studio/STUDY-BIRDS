@@ -1,6 +1,6 @@
 {
   "version": "2026.10.23.3",
-  "catalogSHA256": "e0ddd235f1ac6da9a48580be817efc7dfc58b863780f0aec0b988347b99f8775",
+  "catalogSHA256": "2ea1ceb683045e3559a7196f38e326b4f3e4e919c655c8e220ec118ae1ba0c38",
   "sources": [
     {
       "path": "mobile:lib/app_shell.dart",
@@ -866,7 +866,7 @@
     },
     {
       "path": "mobile:lib/screens/ai/assistant_navigation.dart",
-      "sha256": "bf83c9709da1ea9a14622bb17e7ab4bb05bdb120e5bfb6ddabbf7285fb28d5a7",
+      "sha256": "cc8fb99e368e6ed604b4a3cb4bc5993435273743b205defb64691b62c55504a2",
       "dependencies": [
         "mobile:lib/core/services/auth_session.dart",
         "mobile:lib/core/services/locale_controller.dart",
@@ -2575,9 +2575,10 @@
     },
     {
       "path": "mobile:lib/screens/services_support/community_screen.dart",
-      "sha256": "84d7b8ce974587b17955ae815d22577386e5a2287d5dc33eff8f492502dd3b77",
+      "sha256": "e7fcb2dbc431366272223d5101fa1c01c3efc3f7839f3d48cd05e7f6a2c4100b",
       "dependencies": [
         "mobile:lib/core/widgets/cached_resource.dart",
+        "mobile:lib/screens/stories/story_photo_editor.dart",
         "mobile:lib/core/widgets/community_reactions.dart",
         "mobile:lib/core/widgets/community_post_image.dart",
         "mobile:lib/core/widgets/gallery_access.dart",
@@ -2827,7 +2828,7 @@
     },
     {
       "path": "mobile:lib/screens/stories/story_photo_editor.dart",
-      "sha256": "bdb05e4d3e022a42ddeb818f8ebf10fb25ed4e15bd1ef1a21fb86ea7d8ab4996",
+      "sha256": "a2ab2fc17b50d40b5623e62ad2c33cb117b9b97528d4b6a333f074fa825b035e",
       "dependencies": [],
       "screens": [],
       "routes": []

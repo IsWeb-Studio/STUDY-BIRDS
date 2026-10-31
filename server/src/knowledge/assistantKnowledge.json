@@ -2546,12 +2546,14 @@
         "ar": [
           "من مجتمع الطلاب اضغط منشور جديد أسفل الصفحة.",
           "املأ نص المنشور المعلّم بإجباري؛ العنوان والصورة اختياريان. راجع المحتوى ثم انشر؛ لا يستطيع المساعد نشره عنك.",
+          "عند إضافة صورة يفتح محرّر الصورة للكتابة والرسم وملصقات الإيموجي والقص والفلاتر. اضغط استخدام الصورة للعودة للمنشور، ويمكنك تعديلها مجددًا بزر تعديل الصورة قبل النشر. الإلغاء يحافظ على المرفق السابق. الصورة اختيارية، والصوت متاح للستوري فقط.",
           "كل المنشورات يعرض المحتوى المتاح، ومنشوراتي يعرض منشوراتك، ومنشورات الإدارة يعرض منشورات الأدمن فقط.",
           "إذا ظهرت خدمة النشر غير متاحة، احتفظ بالنص ولا تكرر الإرسال؛ تحقق من الاتصال وتحديث التطبيق وتواصل مع الدعم. قد يحتاج السيرفر تحديثًا؛ لا يعني ذلك أن منشورك نُشر."
         ],
         "en": [
           "In Student Community, tap New post at the bottom.",
           "Fill in the post text marked Required. The title and image are optional. Review and publish yourself; the assistant cannot publish for you.",
+          "Adding a photo opens the photo editor for text, drawing, emoji stickers, crop and filters. Use photo returns the edited image to the draft; Edit photo reopens it before publishing. Cancel preserves the previous attachment. Images remain optional; soundtracks are available for stories only.",
           "All posts shows available content, My posts shows yours, and Administration posts shows only posts authored by an administrator.",
           "If publishing is unavailable, keep your text and avoid duplicate submissions. Check connectivity and app updates, then contact support. The server may need an update; this message does not confirm publication."
         ]
@@ -2565,7 +2567,8 @@
         "mobile:lib/screens/services_support/community_screen.dart",
         "mobile:lib/screens/community/student_community_hub.dart",
         "mobile:lib/screens/community/student_public_profile.dart",
-        "server:src/routes/communityRoutes.js"
+        "server:src/routes/communityRoutes.js",
+        "mobile:lib/screens/stories/story_photo_editor.dart"
       ],
       "roles": [
         "student"
@@ -3800,5 +3803,5 @@
       "reviewed": true
     }
   ],
-  "revision": "2026.10.31.1"
+  "revision": "2026.10.31.2"
 }

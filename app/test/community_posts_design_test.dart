@@ -1,3 +1,7 @@
+import 'dart:typed_data';
+import 'package:image/image.dart' as img;
+import 'package:pro_image_editor/pro_image_editor.dart';
+import 'package:study_birds/screens/stories/story_photo_editor.dart';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -162,6 +166,26 @@ void main() {
         if (photo) {
           await tester.tap(find.text('Add photo (optional)'));
           await tester.pumpAndSettle();
+          expect(find.byType(StoryPhotoEditor), findsOneWidget);
+          expect(find.text('Device audio'), findsNothing);
+          await tester.tap(find.text('Text, stickers & filters'));
+          await tester.pump();
+          await tester.runAsync(() async {
+            await Future<void>.delayed(const Duration(milliseconds: 300));
+          });
+          await tester.pump(const Duration(milliseconds: 400));
+          final editor =
+              tester.widget<ProImageEditor>(find.byType(ProImageEditor));
+          await editor.callbacks.onImageEditingComplete!(Uint8List.fromList(
+              img.encodeJpg(img.Image(width: 32, height: 32))));
+          await tester.pumpAndSettle();
+          await tester.tap(find.text('Use photo'));
+          await tester.pumpAndSettle();
+          expect(find.text('Remove photo'), findsOneWidget);
+          await tester.tap(find.byKey(const ValueKey('community-edit-photo')));
+          await tester.pumpAndSettle();
+          await tester.pageBack();
+          await tester.pumpAndSettle();
           expect(find.text('Remove photo'), findsOneWidget);
         }
         final button = find.widgetWithText(FilledButton, 'Publish');
@@ -188,7 +212,11 @@ void main() {
                   expect(r.headers['content-type'],
                       contains('multipart/form-data'));
                   final text = latin1.decode(r.bodyBytes);
-                  expect(text, contains('photo.png'));
+                  expect(text, contains('story.jpg'));
+                  expect(
+                      text,
+                      contains(latin1.decode(
+                          img.encodeJpg(img.Image(width: 32, height: 32)))));
                   expect(text, contains('operationId'));
                 }
                 return reply({});
