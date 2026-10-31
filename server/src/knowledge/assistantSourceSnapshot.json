@@ -1,6 +1,6 @@
 {
   "version": "2026.10.23.3",
-  "catalogSHA256": "f3790fc2b296134350db6f8a61edfab8202f4458af627939865e1f9790d028e9",
+  "catalogSHA256": "bfc5e9cb9e9bcef286fad7cedf0c2327bfa5813dda5b281a5ef11014a9566b76",
   "sources": [
     {
       "path": "mobile:lib/app_shell.dart",
@@ -4641,7 +4641,7 @@
     },
     {
       "path": "server:src/models/Program.js",
-      "sha256": "ba16c82fb3394e8f560e0b75513a108db8b27050e3605ce9a192b560e3d84426",
+      "sha256": "64f7d68236d948e57a4bdde015b8eac610d94767bb9271dd079195e4764b4244",
       "dependencies": [],
       "screens": [],
       "routes": []
@@ -5243,7 +5243,7 @@
     },
     {
       "path": "server:src/controllers/programController.js",
-      "sha256": "4c68b3a4122f262b77287c71c7825d20c0ce3c040b78cef8df10c3849fe3eb83",
+      "sha256": "d4f4963a9201b7064444fcf888a3ff29077863a581efa32526d46538495a20e7",
       "dependencies": [
         "server:src/utils/catalogRevision.js",
         "server:src/middleware/requestSafety.js",
@@ -5400,7 +5400,7 @@
     },
     {
       "path": "server:src/controllers/universityController.js",
-      "sha256": "616760c9eaef7a3206e656d300180b71c879d0a408fc76bb5bf05637911095ca",
+      "sha256": "d1caf961fd0dddfda70ce1861ef2c0d7eafa50a735debd1f9ddaa575544a7263",
       "dependencies": [
         "server:src/utils/catalogRevision.js",
         "server:src/models/University.js",
@@ -7562,8 +7562,20 @@
       "routes": []
     },
     {
+      "path": "website:src/pages/admin/AdminProgramsPage.test.tsx",
+      "sha256": "726a418aa265707329177f429d55f25eaa03a7b7402b079946b0ad778773449d",
+      "dependencies": [
+        "website:src/pages/admin/AdminProgramsPage.tsx",
+        "website:src/services/programService.ts",
+        "website:src/services/universityService.ts",
+        "website:src/services/adminService.ts"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
       "path": "website:src/pages/admin/AdminProgramsPage.tsx",
-      "sha256": "5080c6ec2d59ece3cbdaf02939ccefd10704d9ca0f85dc7e138155fa6235ffae",
+      "sha256": "0d7fafc62283c7df3d6868f92ef6fd300ef8bfb36060bb7f7c591d8055728b8d",
       "dependencies": [
         "website:src/lib/sharedReadState.ts",
         "website:src/components/admin/ArticleContentFields.tsx",
@@ -9151,7 +9163,7 @@
     },
     {
       "path": "website:src/services/programService.ts",
-      "sha256": "e73e9094d3903c18b50ebadba5192f5fa5ca18f493f030dd8c95fc1affbbc44f",
+      "sha256": "f519705dda873a9eaf58c447c5f11048ee2b6de8bb04c9883754a456d3df3879",
       "dependencies": [
         "website:src/lib/api.ts"
       ],
@@ -9178,7 +9190,7 @@
     },
     {
       "path": "website:src/services/universityService.ts",
-      "sha256": "9f782e619b63acca2628fc9bd44af5a4fbba99958164e837adec962dd30627f8",
+      "sha256": "ee6ae1f1fc094a98977b97cbfd688b7caf16257346301e1b8a8e8fc9226e656f",
       "dependencies": [
         "website:src/lib/api.ts"
       ],
