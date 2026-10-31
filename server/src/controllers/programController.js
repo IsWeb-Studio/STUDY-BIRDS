@@ -17,7 +17,14 @@ const getPrograms = asyncHandler(async (req, res) => {
   const shouldPaginate = "page" in req.query || "limit" in req.query || req.query.paginate === "true";
 
   if (req.query.keyword) {
-    query.title = { $regex: escapeSearch(req.query.keyword), $options: "i" };
+    const pattern = { $regex: escapeSearch(req.query.keyword), $options: "i" };
+    if (req.query.adminSearch === "true") {
+      const universities = await University.find({ $or: [{ name: pattern }, { nameEn: pattern }] }).select("_id").lean();
+      query.$and = [{ $or: [
+        ...["title", "titleEn", "fieldOfStudy", "fieldsOfStudy", "degreeLevel", "language"].map(field => ({ [field]: pattern })),
+        { university: { $in: universities.map(row => row._id) } },
+      ] }];
+    } else query.title = pattern;
   }
 
   if (req.query.country) {
@@ -75,7 +82,7 @@ const getPrograms = asyncHandler(async (req, res) => {
       select: "name nameEn slug city language ranking logo tuitionRange country featured isPartnerInstitution",
       populate: { path: "country", select: "name nameAr slug code heroImage featured" },
     })
-    .sort(sortMap[req.query.sortBy] || { featured: -1, createdAt: -1 });
+    .sort(sortMap[req.query.sortBy] || { featured: -1, createdAt: -1, _id: -1 });
 
   if (shouldPaginate) {
     listQuery.skip(skip).limit(limit);

@@ -26,6 +26,10 @@ export const universityService = {
     const { data } = await api.get<Country[]>("/universities/available-countries");
     return data;
   },
+  getOptions: async () => {
+    const { data } = await api.get<University[]>("/universities", { params: { options: true } });
+    return data;
+  },
   getAll: async (params?: { country?: string; featured?: boolean; page?: number; limit?: number; paginate?: boolean }) => {
     const { data } = await api.get<University[] | PaginatedResponse<University>>("/universities", { params });
     return data;

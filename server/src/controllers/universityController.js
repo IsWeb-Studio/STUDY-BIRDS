@@ -52,6 +52,14 @@ const getUniversities = asyncHandler(async (req, res) => {
     query.featured = req.query.featured === "true";
   }
 
+  // Selectors need identities and labels, not every campus image and article.
+  if (req.query.options === "true") {
+    const options = await University.find(query).select("name nameEn slug").sort({ name: 1, _id: 1 }).lean();
+    res.set("X-Response-Time", `${Date.now() - requestStartedAt}ms`);
+    res.json(options);
+    return;
+  }
+
   const listQuery = University.find(query)
     .select(
       "name nameEn slug city language studentCount specialtyCount overview overviewEn ranking tuitionRange logo campusImages articleTitle articleTitleColor articleHeadingColor articleBodyColor articleHeadings articleBodies articleTitleEn articleHeadingsEn articleBodiesEn featured isPartnerInstitution country createdAt updatedAt __v"
