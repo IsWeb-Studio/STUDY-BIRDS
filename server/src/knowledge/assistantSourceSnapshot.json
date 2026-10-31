@@ -6618,6 +6618,26 @@
       "routes": []
     },
     {
+      "path": "website:src/components/dashboard/DashboardDataBoundary.test.tsx",
+      "sha256": "b0c23df61be0184f0628d1fe0520f5717a7141975f48b86c03dd55a6c6421af9",
+      "dependencies": [
+        "website:src/components/dashboard/DashboardDataBoundary.tsx",
+        "website:src/lib/dashboardLoading.ts"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "website:src/components/dashboard/DashboardDataBoundary.tsx",
+      "sha256": "1071ee89d26ae67c41e2ca3a7f7f1de4964f21f40735f05a62a0ee4a112bf897",
+      "dependencies": [
+        "website:src/lib/dashboardLoading.ts",
+        "website:src/components/ContentLoading.tsx"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
       "path": "website:src/components/dashboard/DashboardSidebar.tsx",
       "sha256": "b6493b7563446ea268599b117b683a875fd42debf5850cd4950b8bbd2b8dc3ab",
       "dependencies": [
@@ -7186,8 +7206,10 @@
     },
     {
       "path": "website:src/layouts/DashboardLayout.tsx",
-      "sha256": "e5c0e2008831efa6ce5a5f9f94a1b46a8d43dd907c673ddcf84ac3a24c13550b",
+      "sha256": "39264d9cbea5769caca1a691665b6d928e64b23f8d81b4e4e9fa8a801685cf50",
       "dependencies": [
+        "website:src/components/ContentLoading.tsx",
+        "website:src/components/dashboard/DashboardDataBoundary.tsx",
         "website:src/components/Navbar.tsx",
         "website:src/components/dashboard/DashboardSidebar.tsx",
         "website:src/components/admin/StaffUnreadPanel.tsx",
@@ -7213,11 +7235,12 @@
     },
     {
       "path": "website:src/lib/api.ts",
-      "sha256": "b2289a38bd4aad93c532de03b46ce983312d5edbd7e812beb94cd4004b6716d2",
+      "sha256": "d4ddb7c5b3f3fdac2bfea9642f67f690f9186eb98cbb4a36bc1fd8d109335889",
       "dependencies": [
         "website:src/lib/connectivity.ts",
         "website:src/lib/apiResilience.ts",
-        "website:src/lib/sessionStore.ts"
+        "website:src/lib/sessionStore.ts",
+        "website:src/lib/dashboardLoading.ts"
       ],
       "screens": [],
       "routes": []
@@ -7285,6 +7308,22 @@
       "dependencies": [
         "website:src/lib/api.ts"
       ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "website:src/lib/dashboardLoading.test.ts",
+      "sha256": "cddc9241e282ccf35908362326745d6576421ff6811d6d553ebf69e2af241267",
+      "dependencies": [
+        "website:src/lib/dashboardLoading.ts"
+      ],
+      "screens": [],
+      "routes": []
+    },
+    {
+      "path": "website:src/lib/dashboardLoading.ts",
+      "sha256": "e9772a7e942fdd84db6a1b14a6f9096a0a7bb9bf0d8f89b0146ed28c690cfa63",
+      "dependencies": [],
       "screens": [],
       "routes": []
     },
@@ -7529,14 +7568,16 @@
     },
     {
       "path": "website:src/pages/admin/AdminDashboardPage.tsx",
-      "sha256": "28d4c4609a6d3fbe831300c017e9008fbb9a9aa44fe27a148e189ebfa828af59",
+      "sha256": "a347b566b6d62a71df96760728ba38492eae312e012d4f04b85e0a5490bf7be5",
       "dependencies": [
         "website:src/components/ApplicationStatusBadge.tsx",
         "website:src/components/dashboard/StatsCard.tsx",
         "website:src/services/adminService.ts",
         "website:src/utils/format.ts",
         "website:src/hooks/useLanguage.ts",
-        "website:src/utils/dashboardTranslations.ts"
+        "website:src/utils/dashboardTranslations.ts",
+        "website:src/components/ContentLoading.tsx",
+        "website:src/utils/errors.ts"
       ],
       "screens": [],
       "routes": []

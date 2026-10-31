@@ -2,6 +2,7 @@ import axios from "axios";
 import { configureConnectivity, connectivity } from "./connectivity";
 import { installResilience } from "./apiResilience";
 import { broadcastLogout, sessionStore } from './sessionStore';
+import { installDashboardLoading } from './dashboardLoading';
 
 const resolveApiUrl = () => {
   const configuredApiUrl = import.meta.env.VITE_API_URL?.trim();
@@ -186,3 +187,5 @@ api.interceptors.response.use((response) => {
   }
   return Promise.reject(error);
 });
+
+installDashboardLoading(api);

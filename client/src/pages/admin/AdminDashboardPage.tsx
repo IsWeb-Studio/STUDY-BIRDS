@@ -7,6 +7,8 @@ import type { AdminOverview } from "../../types";
 import { formatDate } from "../../utils/format";
 import { useLanguage } from "../../hooks/useLanguage";
 import { dt } from "../../utils/dashboardTranslations";
+import { ContentLoading } from '../../components/ContentLoading';
+import { getErrorMessage } from '../../utils/errors';
 
 const emptyOverview: AdminOverview = {
   stats: {
@@ -29,10 +31,18 @@ const emptyOverview: AdminOverview = {
 export const AdminDashboardPage = () => {
   const { language, t } = useLanguage();
   const [overview, setOverview] = useState<AdminOverview>(emptyOverview);
+  const [loading,setLoading]=useState(true),[error,setError]=useState('');
+  const load=()=>{
+    setLoading(true);setError('');
+    void adminService.getOverview().then(setOverview).catch(issue=>setError(getErrorMessage(issue,language==='ar'?'تعذر تحميل بيانات لوحة التحكم.':'Unable to load dashboard data.'))).finally(()=>setLoading(false));
+  };
 
   useEffect(() => {
-    adminService.getOverview().then(setOverview);
+    load();
   }, []);
+
+  if(loading)return <ContentLoading layout="cards" />;
+  if(error)return <div className="panel space-y-4 p-6"><p role="alert" className="text-rose-700">{error}</p><button type="button" className="rounded-xl border px-4 py-2" onClick={load}>{language==='ar'?'إعادة المحاولة':'Try again'}</button></div>;
 
   const { stats, recentApplications, recentUsers, applicationsByStatus } = overview;
 

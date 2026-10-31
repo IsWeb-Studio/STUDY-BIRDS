@@ -28,7 +28,9 @@
   PanelLeftOpen,
   Image,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { ContentLoading } from '../components/ContentLoading';
+import { DashboardDataBoundary } from '../components/dashboard/DashboardDataBoundary';
 import { Outlet, useLocation } from "react-router-dom";
 import { Navbar } from "../components/Navbar";
 import { DashboardSidebar } from "../components/dashboard/DashboardSidebar";
@@ -290,7 +292,7 @@ export const DashboardLayout = () => {
           subtitle={user?.role === "employee" ? (language === "ar" ? "الأقسام المسموح لك بإدارتها." : "The sections you are allowed to manage.") : sidebarSubtitle}
         />
         </div>
-        <div className="dashboard-content min-w-0"><StaffUnreadPanel key={location.pathname} /><Outlet /></div>
+        <div className="dashboard-content min-w-0"><StaffUnreadPanel key={location.pathname} /><Suspense fallback={<ContentLoading layout="cards" />}>{['admin','employee'].includes(user?.role || '') ? <DashboardDataBoundary key={location.pathname} route={location.pathname + location.search}><Outlet /></DashboardDataBoundary> : <Outlet />}</Suspense></div>
         </div>
       </main>
     </div>
