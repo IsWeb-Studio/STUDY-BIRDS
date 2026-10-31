@@ -1,18 +1,18 @@
 import { markStaffRecord } from "../../lib/sharedReadState";
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { BookOpenText, Check, ChevronDown, PencilLine, Plus, Search, Trash2, X } from "lucide-react";
 import { ArticleContentFields } from "../../components/admin/ArticleContentFields";
 import { useLanguage } from "../../hooks/useLanguage";
 import { adminService } from "../../services/adminService";
 import { programService } from "../../services/programService";
 import { universityService } from "../../services/universityService";
-import type { Program, StudyField, University } from "../../types";
+import type { PaginationMeta, Program, StudyField, University } from "../../types";
 import { createEmptyArticleBodies, createEmptyArticleHeadings, normalizeArticleBodies, normalizeArticleHeadings } from "../../constants/articleContent";
 import { findProgramLanguage, PROGRAM_DEGREE_LEVELS, PROGRAM_LANGUAGES } from "../../constants/programOptions";
 import { getErrorMessage } from "../../utils/errors";
 import { formatCurrency } from "../../utils/format";
 import { dt } from "../../utils/dashboardTranslations";
-import { getPaginatedItems } from "../../utils/pagination";
+import { getPaginatedItems, getPaginationMeta } from "../../utils/pagination";
 
 const appendArticleItem = (items: string[]) => [...items, ""];
 const removeArticleItem = (items: string[], index: number) => (items.length > 1 ? items.filter((_, i) => i !== index) : items);
@@ -149,19 +149,55 @@ export const AdminProgramsPage = () => {
     if (editorOpen) editorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [editorOpen, editingId]);
 
-  const loadData = async () => {
-    const [programsData, universitiesData, studyFieldsData] = await Promise.all([
-      programService.getAll(),
-      universityService.getAll(),
-      adminService.getStudyFields(),
-    ]);
-    setPrograms(getPaginatedItems(programsData));
-    setUniversities(getPaginatedItems(universitiesData));
-    setStudyFields(studyFieldsData);
-  };
+  const [page, setPage] = useState(1);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
+  const [listLoading, setListLoading] = useState(false);
+  const [listError, setListError] = useState("");
+  const [lookupError, setLookupError] = useState("");
+  const [savedMessage, setSavedMessage] = useState("");
+  const listRequest = useRef(0);
+  const saveInFlight = useRef(false);
+  const loadPrograms = useCallback(async (signal?: AbortSignal) => {
+    const request = ++listRequest.current;
+    setListLoading(true);
+    try {
+      const result = await programService.getAll({ page, limit: 20, keyword: searchTerm, adminSearch: true }, signal);
+      if (request !== listRequest.current || signal?.aborted) return;
+      const meta = getPaginationMeta(result);
+      if (meta && page > meta.totalPages) { setPage(meta.totalPages); return; }
+      setPrograms(getPaginatedItems(result));
+      setPagination(meta);
+      setListError("");
+    } catch (error) {
+      if (request === listRequest.current && !signal?.aborted) throw error;
+    } finally {
+      if (request === listRequest.current && !signal?.aborted) setListLoading(false);
+    }
+  }, [page, searchTerm]);
 
   useEffect(() => {
-    loadData().catch((error) => setFormError(getErrorMessage(error, dt(language, "loadProgramsFailed"))));
+    const timer = setTimeout(() => { setPage(1); setSearchTerm(programSearch.trim()); }, 300);
+    return () => clearTimeout(timer);
+  }, [programSearch]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    loadPrograms(controller.signal).catch(error => {
+      if (!controller.signal.aborted) setListError(getErrorMessage(error, dt(language, "loadProgramsFailed")));
+    });
+    return () => { controller.abort(); ++listRequest.current; };
+  }, [loadPrograms, language]);
+
+  useEffect(() => {
+    let active = true;
+    setLookupError("");
+    // A lookup outage must not hide an otherwise successful programs response.
+    universityService.getOptions().then(rows => { if (active) setUniversities(rows); })
+      .catch(error => { if (active) setLookupError(getErrorMessage(error, language === "ar" ? "تعذر تحميل الجامعات" : "Unable to load universities")); });
+    adminService.getStudyFields().then(rows => { if (active) setStudyFields(rows); })
+      .catch(error => { if (active) setLookupError(getErrorMessage(error, language === "ar" ? "تعذر تحميل مجالات الدراسة" : "Unable to load study fields")); });
+    return () => { active = false; };
   }, [language]);
 
   const resetForm = () => {
@@ -214,12 +250,15 @@ export const AdminProgramsPage = () => {
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
+    if (saveInFlight.current) return;
     setFormError("");
+    setSavedMessage("");
 
     if (!form.university || !form.degreeLevel || !form.fieldOfStudy) {
       setFormError(language === "ar" ? "اختر الجامعة والدرجة العلمية ومجال الدراسة الأساسي." : "Select a university, degree level and primary study field.");
       return;
     }
+    saveInFlight.current = true;
     setSaving(true);
     const payload = {
       requiredDocumentTypes: form.requiredDocumentTypes,
@@ -251,17 +290,22 @@ export const AdminProgramsPage = () => {
     };
 
     try {
-      if (editingId) {
-        await programService.update(editingId, { ...payload, expectedVersion: editingVersion });
-      } else {
-        await programService.create(payload);
-      }
+      const saved = editingId
+        ? await programService.update(editingId, { ...payload, expectedVersion: editingVersion })
+        : await programService.create(payload);
+      // The write response confirms success. A later refresh is a separate read.
+      ++listRequest.current;
+      const row = { ...saved, university: universities.find(item => item._id === form.university) };
+      setPrograms(current => editingId ? current.map(item => item._id === saved._id ? row : item) : [row, ...current].slice(0, 20));
+      setSavedMessage(language === "ar" ? "تم حفظ البرنامج بنجاح." : "Program saved successfully.");
       resetForm();
       setEditorOpen(false);
-      await loadData();
+      void loadPrograms().catch(error => setListError(
+        `${language === "ar" ? "تم الحفظ، لكن تعذر تحديث القائمة. أعد تحميل القائمة فقط." : "Saved, but the list could not refresh. Retry loading the list only."} ${getErrorMessage(error, "")}`));
     } catch (error) {
       setFormError(getErrorMessage(error, dt(language, "saveProgramFailed")));
     } finally {
+      saveInFlight.current = false;
       setSaving(false);
     }
   };
@@ -271,11 +315,12 @@ export const AdminProgramsPage = () => {
     try {
       const program = programs.find(row => row._id === id);
       if (!program) {
-        await loadData();
+        await loadPrograms();
         return;
       }
       await programService.remove(id, program.__v ?? 0);
       setPrograms((current) => current.filter((item) => item._id !== id));
+      void loadPrograms().catch(error => setListError(getErrorMessage(error, dt(language, "loadProgramsFailed"))));
       if (editingId === id) {
         resetForm();
       }
@@ -284,18 +329,7 @@ export const AdminProgramsPage = () => {
     }
   };
 
-  const filteredPrograms = useMemo(() => {
-    const q = programSearch.trim().toLowerCase();
-    if (!q) return programs;
-    return programs.filter(
-      (p) =>
-        p.title.toLowerCase().includes(q) ||
-        (p.university?.name || "").toLowerCase().includes(q) ||
-        (p.fieldOfStudy || "").toLowerCase().includes(q) ||
-        (p.degreeLevel || "").toLowerCase().includes(q) ||
-        (p.language || "").toLowerCase().includes(q),
-    );
-  }, [programs, programSearch]);
+  const filteredPrograms = programs;
 
   const studyFieldOptions =
     form.fieldOfStudy && !studyFields.some((studyField) => studyField.name === form.fieldOfStudy)
@@ -311,6 +345,9 @@ export const AdminProgramsPage = () => {
         </div>
         <button type="button" onClick={() => { resetForm(); setFormError(""); setEditorOpen(true); }} className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white hover:bg-slate-800"><Plus className="h-4 w-4" />{dt(language, "createProgram")}</button>
       </header>
+      {savedMessage && <p role="status" className="rounded-xl bg-emerald-50 p-4 text-emerald-800">{savedMessage}</p>}
+      {lookupError && <p role="alert" className="rounded-xl bg-amber-50 p-4 text-amber-800">{lookupError}</p>}
+      {listError && <div role="alert" className="rounded-xl bg-rose-50 p-4 text-rose-800">{listError}<button type="button" className="ms-3 underline" onClick={() => { void loadPrograms().catch(error => setListError(getErrorMessage(error, dt(language, "loadProgramsFailed")))); }}>{language === "ar" ? "تحديث القائمة" : "Reload list"}</button></div>}
       {!editorOpen && formError && <div role="alert" className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">{formError}</div>}
       {editorOpen && <section ref={editorRef} className="panel scroll-mt-6 p-5 sm:p-7">
         <div className="flex items-center gap-3">
@@ -587,7 +624,7 @@ export const AdminProgramsPage = () => {
 
       <section className="space-y-4">
         <div className="panel flex flex-wrap items-center justify-between gap-4 px-5 py-4">
-          <div><h2 className="font-semibold text-slate-900">{language === "ar" ? "دليل البرامج" : "Program catalog"}</h2><p className="mt-1 text-xs text-slate-500">{filteredPrograms.length} / {programs.length} {language === "ar" ? "برنامج" : "programs"}</p></div>
+          <div><h2 className="font-semibold text-slate-900">{language === "ar" ? "دليل البرامج" : "Program catalog"}</h2><p className="mt-1 text-xs text-slate-500">{programs.length} / {pagination?.total ?? programs.length} {language === "ar" ? "برنامج" : "programs"}</p></div>
           <div className="relative w-full sm:w-80">
             <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
             <input
@@ -599,11 +636,18 @@ export const AdminProgramsPage = () => {
           </div>
           {programSearch ? (
             <p className="mt-2 text-xs text-slate-500">
-              {filteredPrograms.length} {dt(language, "programsFound")}
+              {pagination?.total ?? programs.length} {dt(language, "programsFound")}
             </p>
           ) : null}
         </div>
         <div className="grid min-w-0 gap-3">
+        <div className="flex items-center justify-between gap-3 p-3" aria-busy={listLoading}>
+          <span>{listLoading ? (language === "ar" ? "جارٍ تحميل البرامج…" : "Loading programs…") : `${page} / ${pagination?.totalPages ?? 1}`}</span>
+          <div className="flex gap-3">
+            <button type="button" disabled={listLoading || !pagination?.hasPreviousPage} onClick={() => setPage(value => value - 1)}>{language === "ar" ? "السابق" : "Previous"}</button>
+            <button type="button" disabled={listLoading || !pagination?.hasNextPage} onClick={() => setPage(value => value + 1)}>{language === "ar" ? "التالي" : "Next"}</button>
+          </div>
+        </div>
         {filteredPrograms.map((program) => (
           <div key={program._id} className="panel min-w-0 p-5 transition-shadow hover:shadow-md">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
@@ -650,7 +694,7 @@ export const AdminProgramsPage = () => {
           </div>
         ))}
         </div>
-        {filteredPrograms.length === 0 && <div className="panel p-10 text-center"><Search className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3 font-medium text-slate-600">{language === "ar" ? "لا توجد برامج لعرضها" : "No programs to display"}</p><p className="mt-1 text-sm text-slate-400">{language === "ar" ? "غيّر كلمات البحث أو أضف برنامجًا جديدًا." : "Try another search or add a new program."}</p></div>}
+        {!listLoading && !listError && filteredPrograms.length === 0 && <div className="panel p-10 text-center"><Search className="mx-auto h-8 w-8 text-slate-300" /><p className="mt-3 font-medium text-slate-600">{language === "ar" ? "لا توجد برامج لعرضها" : "No programs to display"}</p><p className="mt-1 text-sm text-slate-400">{language === "ar" ? "غيّر كلمات البحث أو أضف برنامجًا جديدًا." : "Try another search or add a new program."}</p></div>}
       </section>
     </div>
   );

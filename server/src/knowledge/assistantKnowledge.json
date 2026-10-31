@@ -2807,12 +2807,14 @@
         "ar": [
           "من لوحة الإدارة افتح القسم المصرّح الذي يظهر لحسابك.",
           "راجع السجلات والحقول المعروضة، واستخدم أزرار الإضافة أو التعديل أو المراجعة المتاحة فقط بعد التأكيد المطلوب. لا ينفذ المساعد تغييرًا أو تجاوزًا للصلاحيات.",
-          "من البنرات في إدارة المحتوى، أضف صورة الإعلان والعنوان ثم اختر مكان العرض: الرئيسية أو مجتمع الطلاب أو المكانين. فعّل الإعلان وحدد ترتيبه واحفظ. يمكنك تعديله أو إخفاؤه أو حذفه من نفس الصفحة على الهاتف والويب."
+          "من البنرات في إدارة المحتوى، أضف صورة الإعلان والعنوان ثم اختر مكان العرض: الرئيسية أو مجتمع الطلاب أو المكانين. فعّل الإعلان وحدد ترتيبه واحفظ. يمكنك تعديله أو إخفاؤه أو حذفه من نفس الصفحة على الهاتف والويب.",
+          "في إدارة البرامج على الويب، استخدم البحث وأزرار الصفحات للوصول للبرنامج. ظهور تأكيد الحفظ يعني نجاح الكتابة؛ إذا تعذر تحديث القائمة بعده أعد تحميل القائمة فقط، ولا تكرر إنشاء البرنامج."
         ],
         "en": [
           "Open the authorized section visible in your administration dashboard.",
           "Review its records and fields, then use only the available create/edit/review controls with required confirmation. The assistant never mutates records or bypasses access controls.",
-          "In Content management → Banners, add the ad image and title, choose Home, Student Community or both, enable it and set its order, then save. Edit, hide or delete it from the same page on mobile or web."
+          "In Content management → Banners, add the ad image and title, choose Home, Student Community or both, enable it and set its order, then save. Edit, hide or delete it from the same page on mobile or web.",
+          "In web program management, use search and page buttons to find a program. A save confirmation means the write succeeded; if the list fails to refresh afterward, reload the list only rather than creating the program again."
         ]
       },
       "location": {
@@ -2826,7 +2828,10 @@
         "mobile:lib/screens/roles/generic_crud_screen.dart",
         "server:src/routes/adminRoutes.js",
         "server:src/controllers/bannerController.js",
-        "website:src/pages/admin/AdminBannersPage.tsx"
+        "website:src/pages/admin/AdminBannersPage.tsx",
+        "website:src/pages/admin/AdminProgramsPage.tsx",
+        "server:src/controllers/programController.js",
+        "server:src/controllers/universityController.js"
       ],
       "roles": [
         "admin"

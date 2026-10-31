@@ -28,8 +28,8 @@ type ProgramPayload = {
 };
 
 export const programService = {
-  getAll: async (params?: Record<string, string | number | boolean>) => {
-    const { data } = await api.get<Program[] | PaginatedResponse<Program>>("/programs", { params });
+  getAll: async (params?: Record<string, string | number | boolean>, signal?: AbortSignal) => {
+    const { data } = await api.get<Program[] | PaginatedResponse<Program>>("/programs", { params, signal });
     return data;
   },
   getById: async (id: string) => {
