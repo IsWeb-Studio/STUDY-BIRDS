@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { ContentLoading } from '../components/ContentLoading';
 import { ChevronLeft, ChevronRight, ScrollText, Sparkles } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { ProgramCard } from "../components/marketing/ProgramCard";
@@ -62,12 +63,15 @@ export const ProgramsPage = () => {
   }, []);
 
   useEffect(() => {
+    let active = true;
     setLoading(true);
     const params = { keyword, ...filters, page, limit: 12, paginate: true };
     programService.getAll(params).then((response) => {
+      if (!active) return;
       setPrograms(getPaginatedItems(response));
       setProgramPagination(getPaginationMeta(response));
-    }).finally(() => setLoading(false));
+    }).finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [keyword, filters, page]);
 
   useEffect(() => {
@@ -159,17 +163,16 @@ export const ProgramsPage = () => {
         onFilterChange={(key, value) => setFilters((current) => ({ ...current, [key]: value }))}
         onUniversitySelect={(universityId) => setFilters((current) => ({ ...current, university: universityId }))}
       />
-      {loading ? (
-        <div className="panel p-8 text-sm text-slate-500">{language === "ar" ? "جاري تحميل البرامج..." : "Loading programs..."}</div>
-      ) : programs.length ? (
-        <div className="space-y-3">
+      {loading && <ContentLoading compact={programs.length > 0} />}
+      {programs.length ? (
+        <div className="space-y-3" aria-busy={loading}>
           {programs.map((program) => (
             <ProgramCard key={program._id} program={program} />
           ))}
         </div>
-      ) : (
+      ) : !loading ? (
         <EmptyState title={t("noPrograms")} description={t("noProgramsDescription")} />
-      )}
+      ) : null}
       {programPagination ? (
         <div className="flex items-center justify-between gap-4 rounded-2xl border border-slate-200 px-4 py-3">
           <p className="text-sm text-slate-600">
@@ -180,7 +183,7 @@ export const ProgramsPage = () => {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              disabled={!programPagination.hasPreviousPage}
+              disabled={loading || !programPagination.hasPreviousPage}
               onClick={() => setPage((current) => Math.max(1, current - 1))}
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
             >
@@ -189,7 +192,7 @@ export const ProgramsPage = () => {
             </button>
             <button
               type="button"
-              disabled={!programPagination.hasNextPage}
+              disabled={loading || !programPagination.hasNextPage}
               onClick={() => setPage((current) => current + 1)}
               className="inline-flex items-center gap-2 rounded-full border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 disabled:opacity-50"
             >
